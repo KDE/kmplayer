@@ -236,7 +236,6 @@ public:
 
     QString record_file;
     QString recorder;
-    TimerInfoPtrW timer;
     bool has_video;
 };
 

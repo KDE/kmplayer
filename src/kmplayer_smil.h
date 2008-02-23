@@ -136,8 +136,8 @@ public:
     int repeat_count;
 protected:
     NodePtrW element;
-    TimerInfoPtrW start_timer;
-    TimerInfoPtrW duration_timer;
+    EventPtrW start_timer;
+    EventPtrW duration_timer;
 };
 
 class KMPLAYER_NO_EXPORT MouseListeners {
@@ -207,7 +207,7 @@ public:
     void closed ();
     void childDone (NodePtr child);
     bool expose () const;
-    bool handleEvent (EventPtr event);
+    bool handleEvent (Event *event);
     void accept (Visitor *);
     void jump (const QString & id);
     static Smil * findSmilNode (Node * node);
@@ -242,7 +242,7 @@ public:
     void childDone (NodePtr child);
     void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual bool handleEvent (EventPtr event);
+    virtual bool handleEvent (Event *event);
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
      */
@@ -406,7 +406,7 @@ public:
     bool expose () const { return false; }
     void childBegan (NodePtr child);
     void childDone (NodePtr child);
-    virtual bool handleEvent (EventPtr event);
+    virtual bool handleEvent (Event *event);
     virtual NodeRefListPtr listeners (unsigned int event_id);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     void init ();
@@ -455,7 +455,7 @@ public:
     void activate ();
     void begin ();
     void deactivate ();
-    bool handleEvent (EventPtr);
+    bool handleEvent (Event *);
     void setJumpNode (NodePtr);
 protected:
     KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d, short id) : TimedMrl (d, id) {}
@@ -508,7 +508,7 @@ public:
     void begin ();
     void deactivate ();
     void childDone (NodePtr child);
-    virtual bool handleEvent (EventPtr event);
+    virtual bool handleEvent (Event *event);
 private:
     typedef ListNode <ConnectionPtr> ConnectionStoreItem;
     List <ConnectionStoreItem> started_event_list;
@@ -596,7 +596,7 @@ public:
     SRect calculateBounds ();
     void boundsUpdate (); // recalculates and repaint old and new bounds
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual bool handleEvent (EventPtr event);
+    virtual bool handleEvent (Event *event);
     NodeRefListPtr listeners (unsigned int event_id);
 
     SurfacePtrW sub_surface;
@@ -627,8 +627,8 @@ protected:
     ConnectionPtr region_mouse_leave;      // attached region has mouse left
     ConnectionPtr region_mouse_click;      // attached region is clicked
     ConnectionPtr region_attach;           // attached to region
-    TimerInfoPtrW trans_timer;
-    TimerInfoPtrW trans_out_timer;
+    EventPtrW trans_timer;
+    EventPtrW trans_out_timer;
     ConnectionPtr document_postponed;      // pause audio/video accordantly
     PostponePtr postpone_lock;
 };
@@ -656,7 +656,7 @@ public:
     virtual void begin ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
-    virtual bool handleEvent (EventPtr event);
+    virtual bool handleEvent (Event *event);
     void dataArrived ();
 };
 
@@ -668,7 +668,7 @@ public:
     virtual void begin ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
-    virtual bool handleEvent (EventPtr event);
+    virtual bool handleEvent (Event *event);
     void dataArrived ();
 
     QString font_name;
@@ -723,14 +723,14 @@ public:
     virtual void finish ();
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual bool handleEvent (EventPtr event);
+    virtual bool handleEvent (Event *event);
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     PlayType playType () { return play_type_none; }
 private:
     void applyStep ();
     bool timerTick();
 
-    TimerInfoPtrW anim_timer;
+    EventPtrW anim_timer;
     enum { acc_none, acc_sum } accumulate;
     enum { add_replace, add_sum } additive;
     int change_by;
@@ -751,7 +751,7 @@ public:
     virtual void finish ();
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual bool handleEvent (EventPtr event);
+    virtual bool handleEvent (Event *event);
     KDE_NO_EXPORT const char * nodeName () const { return "animateMotion"; }
     PlayType playType () { return play_type_none; }
 private:
@@ -760,7 +760,7 @@ private:
     bool setInterval ();
     void applyStep ();
     bool getCoordinates (const QString &coord, SizeType &x, SizeType &y);
-    TimerInfoPtrW anim_timer;
+    EventPtrW anim_timer;
     enum { acc_none, acc_sum } accumulate;
     enum { add_replace, add_sum } additive;
     enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;

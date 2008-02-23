@@ -271,6 +271,7 @@ typedef Item<Node>::WeakType NodePtrW;
 typedef Item<Attribute>::SharedType AttributePtr;
 typedef Item<Attribute>::WeakType AttributePtrW;
 typedef Item<Event>::SharedType EventPtr;
+typedef Item<Event>::WeakType EventPtrW;
 typedef List<Node> NodeList;                 // eg. for Node's children
 typedef Item<NodeList>::SharedType NodeListPtr;
 typedef Item<NodeList>::WeakType NodeListPtrW;
@@ -375,7 +376,7 @@ public:
     /*
      * Event send to this node, return true if handled
      */
-    virtual bool handleEvent (EventPtr event);
+    virtual bool handleEvent (Event *event);
     /*
      * Dispatch Event to all listeners of event->id()
      */
@@ -577,7 +578,7 @@ public:
      * By default support one event handler (eg. SMIL or RP child document)
      */
     virtual Surface *getSurface (Mrl *mrl);
-    virtual bool handleEvent (EventPtr event);
+    virtual bool handleEvent (Event *event);
 
     /**
      * If this Mrl is top node of external document, opener has the
@@ -663,31 +664,13 @@ public:
 ITEM_AS_POINTER(KMPlayer::Surface)
 
 /**
- * To have a somewhat synchronized time base, node having timers should use
- * this. Idea is that if a node still waiting for network data, it can hold
- * this time line.
- */
-class KMPLAYER_NO_EXPORT TimerInfo : public ListNodeBase <TimerInfo> {
-public:
-    TimerInfo (NodePtr n, unsigned id, struct timeval & now, int ms);
-    KDE_NO_CDTOR_EXPORT ~TimerInfo () {}
-    NodePtrW node;
-    unsigned event_id;
-    struct timeval timeout;
-    int milli_sec;
-};
-
-ITEM_AS_POINTER(KMPlayer::TimerInfo)
-typedef Item <TimerInfo>::SharedType TimerInfoPtr;
-typedef Item <TimerInfo>::WeakType TimerInfoPtrW;
-
-/**
  * Event signaling a timer event
  */
 class KMPLAYER_NO_EXPORT TimerEvent : public Event {
 public:
-    TimerEvent (TimerInfoPtr tinfo);
-    TimerInfoPtrW timer_info;
+    TimerEvent (int ms, unsigned eid=0);
+    unsigned event_id;
+    int milli_sec;
     bool interval; // set to 'true' in 'Node::handleEvent()' to make it repeat
 };
 
@@ -716,6 +699,16 @@ public:
 typedef SharedPtr <Postpone> PostponePtr;
 typedef WeakPtr <Postpone> PostponePtrW;
 
+struct KMPLAYER_NO_EXPORT EventData {
+    EventData (Node *t, Event *e, EventData *n);
+
+    NodePtrW target;
+    EventPtr event;
+    struct timeval timeout;
+
+    EventData *next;
+};
+
 /**
  * The root of the DOM tree
  */
@@ -736,19 +729,16 @@ public:
     virtual void defer ();
     virtual void undefer ();
     virtual void reset ();
-    /**
-     * Ask for TimerEvent for Node n in ms milli-seconds.
-     * Returns weak ref to TimerInfo ptr, which is an item in the timers list
-     */
-    TimerInfoPtrW setTimeout (NodePtr n, int ms, unsigned id=0);
-    void cancelTimer (TimerInfoPtr ti);
+
+    Event *postEvent (Node *n, Event *event);
+    void cancelEvent (Event *event);
+
     void timeOfDay (struct timeval &);
     PostponePtr postpone ();
     /**
-     * Called by PlayListNotify, creates TimerEvent on first item in timers. 
-     * Returns true if to repeat this same timeout FIXME.
+     * Called by PlayListNotify, processes events in event_queue with timeout set to now
      */
-    bool timer ();
+    void timer ();
     /**
      * Document has list of postponed listeners, eg. for running (gif)movies
      */
@@ -758,18 +748,19 @@ public:
      */
     virtual Surface *getSurface (Mrl *mrl);
 
-    List <TimerInfo> timers; //FIXME: make as connections
-    PlayListNotify * notify_listener;
+    PlayListNotify *notify_listener;
     unsigned int m_tree_version;
     unsigned int last_event_time;
 private:
     void proceed (const struct timeval & postponed_time);
+    void insertEvent (Node *n, Event *e, const struct timeval &tv);
     PostponePtrW postpone_ref;
     PostponePtr postpone_lock;
     NodeRefListPtr m_PostponedListeners;
+    EventData *event_queue;
+    EventData *cur_event;
     int cur_timeout;
     struct timeval first_event_time;
-    bool intimer;
 };
 
 /**

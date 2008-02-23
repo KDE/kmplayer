@@ -87,7 +87,7 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
                 break;
         }
     if (duration > 0)
-        duration_timer = document ()->setTimeout (this, duration * 100);
+        duration_timer = document ()->postEvent (this, new TimerEvent (duration * 100));
     else if (!timings_count)
         finish ();
 }
@@ -96,7 +96,7 @@ KDE_NO_EXPORT void RP::Imfl::finish () {
     kDebug () << "RP::Imfl::finish ";
     Mrl::finish ();
     if (duration_timer) {
-        document ()->cancelTimer (duration_timer);
+        document ()->cancelEvent (duration_timer);
         duration_timer = 0;
     }
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
@@ -132,15 +132,12 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     rp_surface = Mrl::getSurface (NULL);
 }
 
-KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
+KDE_NO_EXPORT bool RP::Imfl::handleEvent (Event *event) {
     if (event->id () == event_timer) {
-        TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
-        if (te->timer_info == duration_timer) {
-            kDebug () << "RP::Imfl timer " << duration;
-            duration_timer = 0;
-            if (unfinished ())
-                finish ();
-        }
+        kDebug () << "RP::Imfl timer " << duration;
+        duration_timer = 0;
+        if (unfinished ())
+            finish ();
     }
     return true;
 }
@@ -230,7 +227,7 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
     }
 }
 
-bool RP::Image::handleEvent (EventPtr event) {
+bool RP::Image::handleEvent (Event *event) {
     if (event->id () != event_media_ready)
         return Mrl::handleEvent (event);
     dataArrived ();
@@ -306,7 +303,7 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
             srch = a->value ().toInt ();
         }
     }
-    start_timer = document ()->setTimeout (this, start *100);
+    start_timer = document ()->postEvent (this, new TimerEvent (start *100));
 }
 
 KDE_NO_EXPORT void RP::TimingsBase::deactivate () {
@@ -315,17 +312,17 @@ KDE_NO_EXPORT void RP::TimingsBase::deactivate () {
     setState (state_deactivated);
 }
 
-KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (EventPtr event) {
+KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (Event *event) {
     if (event->id () == event_timer) {
-        TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
-        if (te->timer_info == update_timer && duration > 0) {
+        TimerEvent * te = static_cast <TimerEvent *> (event);
+        if (event == update_timer && duration > 0) {
             update (100 * ++curr_step / duration);
             te->interval = true;
-        } else if (te->timer_info == start_timer) {
+        } else if (event == start_timer) {
             start_timer = 0;
-            duration_timer = document ()->setTimeout (this, duration * 100);
+            duration_timer = document()->postEvent (this, new TimerEvent(duration * 100));
             begin ();
-        } else if (te->timer_info == duration_timer) {
+        } else if (event == duration_timer) {
             duration_timer = 0;
             update (100);
             finish ();
@@ -333,7 +330,7 @@ KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (EventPtr event) {
             return false;
         return true;
     } else if (event->id () == event_postponed) {
-        if (!static_cast <PostponedEvent *> (event.ptr ())->is_postponed) {
+        if (!static_cast <PostponedEvent *> (event)->is_postponed) {
             document_postponed = 0L; // disconnect
             update (duration > 0 ? 0 : 100);
         }
@@ -348,7 +345,7 @@ KDE_NO_EXPORT void RP::TimingsBase::begin () {
         target->begin ();
     if (duration > 0) {
         steps = duration; // 10/s updates
-        update_timer = document ()->setTimeout (this, 100); // 50ms
+        update_timer = document ()->postEvent (this, new TimerEvent (100)); // 50ms
         curr_step = 1;
     }
 }
@@ -363,14 +360,14 @@ KDE_NO_EXPORT void RP::TimingsBase::update (int percentage) {
 KDE_NO_EXPORT void RP::TimingsBase::finish () {
     progress = 100;
     if (start_timer) {
-        document ()->cancelTimer (start_timer);
+        document ()->cancelEvent (start_timer);
         start_timer = 0;
     } else if (duration_timer) {
-        document ()->cancelTimer (duration_timer);
+        document ()->cancelEvent (duration_timer);
         duration_timer = 0;
     }
     if (update_timer) {
-        document ()->cancelTimer (update_timer);
+        document ()->cancelEvent (update_timer);
         update_timer = 0;
     }
     document_postponed = 0L; // disconnect

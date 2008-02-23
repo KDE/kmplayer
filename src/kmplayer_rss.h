@@ -46,7 +46,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "rss"; }
     bool expose () const { return false; }
 };
-    
+
 class KMPLAYER_NO_EXPORT Channel : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Mrl (d, id_node_channel) {}
@@ -67,9 +67,9 @@ public:
     void closed ();
     void activate ();
     void deactivate ();
-    bool handleEvent (EventPtr event);
+    bool handleEvent (Event *event);
     NodePtrW enclosure;
-    TimerInfoPtrW timer;
+    EventPtrW timer;
 };
 
 class KMPLAYER_NO_EXPORT Enclosure : public Mrl {

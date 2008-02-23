@@ -124,14 +124,15 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
                 s = p >= 0 ? s.left (p) : QString ();
             }
             if (d > 0.00001)
-                duration_timer = document()->setTimeout (this, int (d * 1000));
+                duration_timer = document()->postEvent (
+                        this, new TimerEvent (int (d * 1000)));
         }
     Mrl::activate ();
 }
 
-KDE_NO_EXPORT bool ASX::Entry::handleEvent (EventPtr event) {
+KDE_NO_EXPORT bool ASX::Entry::handleEvent (Event *event) {
     if (event->id () == event_timer) {
-        document()->cancelTimer (duration_timer);
+        document()->cancelEvent (duration_timer);
         deactivate ();
     }
 }
@@ -141,7 +142,7 @@ KDE_NO_EXPORT void ASX::Entry::deactivate () {
     if (n)
         n->setInfoMessage (QString ());
     if (duration_timer)
-        document()->cancelTimer (duration_timer);
+        document()->cancelEvent (duration_timer);
     Mrl::deactivate ();
 }
 
