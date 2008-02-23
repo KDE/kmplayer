@@ -396,6 +396,7 @@ TrieString StringPool::attr_target;
 TrieString StringPool::attr_type;
 TrieString StringPool::attr_value;
 TrieString StringPool::attr_fill;
+TrieString StringPool::attr_fit;
 
 void StringPool::init() {
     attr_width = "width";
@@ -413,6 +414,7 @@ void StringPool::init() {
     attr_id = "id";
     attr_href = "href";
     attr_height = "height";
+    attr_fit = "fit";
     attr_fill = "fill";
     attr_end = "end";
     attr_dur = "dur";
@@ -441,6 +443,7 @@ void StringPool::reset() {
     attr_type.clear ();
     attr_value.clear ();
     attr_fill.clear ();
+    attr_fit.clear ();
     if (root_trie->first_child) {
         qWarning ("Trie not empty");
         dumpTrie ();

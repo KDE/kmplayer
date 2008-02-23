@@ -1279,7 +1279,10 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
     bool need_repaint = false;
     SRect rect = SRect (x, y, w, h);
     bool dim_changed;
-    if (name == "background-color" || name == "backgroundColor") {
+    if (name == StringPool::attr_fit) {
+        fit = parseFit (val.ascii ());
+        need_repaint = true;
+    } else if (name == "background-color" || name == "backgroundColor") {
         if (val.isEmpty ())
             background_color = 0;
         else
@@ -1328,9 +1331,6 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
             else
                 need_repaint = true;
         }
-    } else if (name == "fit") {
-        fit = parseFit (val.ascii ());
-        need_repaint = true;
     }
     if (need_repaint && active () && surface() && region_surface->parentNode ())
         region_surface->parentNode ()->repaint (rect);
@@ -2168,14 +2168,14 @@ KDE_NO_EXPORT void SMIL::MediaType::closed () {
 KDE_NO_EXPORT
 void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
     bool update_surface = true;
-    if (para == "fit") {
+    if (para == StringPool::attr_fit) {
         fit = parseFit (val.ascii ());
+    } else if (para == StringPool::attr_type) {
+        mimetype = val;
     } else if (para == "rn:mediaOpacity") {
         opacity = (int) SizeType (val).size (100);
     } else if (para == "system-bitrate") {
         bitrate = val.toInt ();
-    } else if (para == StringPool::attr_type) {
-        mimetype = val;
     } else if (para == "transIn") {
         trans_in = findTransition (this, val);
         if (!trans_in)

@@ -76,6 +76,7 @@ public:
     static TrieString attr_type;
     static TrieString attr_value;
     static TrieString attr_fill;
+    static TrieString attr_fit;
 };
 
 inline bool TrieString::isNull () const {
