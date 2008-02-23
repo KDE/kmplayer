@@ -969,13 +969,23 @@ void Document::timeOfDay (struct timeval & tv) {
         last_event_time = diffTime (tv, first_event_time) / 100;
 }
 
+static bool postponedSensible (Event *e) {
+    return e->id () == event_timer;
+}
+
 void Document::insertEvent (Node *n, Event *e, const struct timeval &tv) {
     if (!notify_listener)
         return;
+    bool postponed_sensible = postponedSensible (e);
     EventData *prev = NULL;
     EventData *ed = event_queue;
-    for (; ed && diffTime (ed->timeout, tv) <= 0; ed = ed->next)
+    for (; ed; ed = ed->next) {
+        int diff = diffTime (ed->timeout, tv);
+        bool psens = postponedSensible (ed->event.ptr ());
+        if ((diff > 0 && postponed_sensible == psens) || (!postponed_sensible && psens))
+            break;
         prev = ed;
+    }
     ed = new EventData (n, e, ed);
     ed->timeout = tv;
     if (prev)
@@ -988,16 +998,9 @@ void Document::insertEvent (Node *n, Event *e, const struct timeval &tv) {
 void Document::setNextTimeout (const struct timeval &now) {
     if (!cur_event) {              // if we're not processing events
         int timeout = 0x7FFFFFFF;
-        if (event_queue && active ()) {
-            if (!postpone_ref)     // not paused
-                timeout = diffTime (event_queue->timeout, now);
-            else                   // paused, allow non-timer events
-                for (EventData *ed = event_queue; ed; ed = ed->next)
-                    if (event_timer != ed->event->id ()) {
-                        timeout = diffTime (ed->timeout, now);
-                        break;
-                    }
-        }
+        if (event_queue && active () &&
+                (!postpone_ref || !postponedSensible (event_queue->event.ptr ())))
+            timeout = diffTime (event_queue->timeout, now);
         timeout = 0x7FFFFFFF != timeout ? (timeout > 0 ? timeout : 0) : -1;
         if (timeout != cur_timeout) {
             cur_timeout = timeout;
@@ -1013,7 +1016,7 @@ Event *Document::postEvent (Node *n, Event *e) {
     tv = now;
     addTime (tv, ms);
     insertEvent (n, e, tv);
-    if (postpone_ref || event_queue && event_queue->event.ptr () == e)
+    if (postpone_ref || event_queue->event.ptr () == e)
         setNextTimeout (now);
     return e;
 }
@@ -1050,7 +1053,9 @@ void Document::timer () {
         struct timeval start = cur_event->timeout;
 
         // handle max 100 timeouts with timeout set to now
-        for (int i = 0; cur_event && !postpone_ref && i < 100 && active (); ++i) {
+        for (int i = 0; cur_event && i < 100 && active (); ++i) {
+            if (postpone_ref && postponedSensible (cur_event->event.ptr ()))
+                break;
             event_queue = cur_event->next;
             if (!cur_event->target) {
                 // some part of document has gone and didn't remove timer
