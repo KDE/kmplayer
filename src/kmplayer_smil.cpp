@@ -1788,11 +1788,39 @@ static bool childMediaTypeReady (Node *p) {
     return true;
 }
 
+namespace {
+
+class KMPLAYER_NO_EXPORT GroupBaseInitVisitor : public Visitor {
+public:
+    using Visitor::visit;
+
+    void visit (Node *n) {
+        Node *s = n->nextSibling ().ptr ();
+        if (s)
+            s->accept (this);
+    }
+    void visit (SMIL::TimedMrl *tm) {
+        tm->init ();
+        visit (static_cast <Node *> (tm));
+    }
+    void visit (SMIL::PriorityClass *pc) {
+        pc->init ();
+        Node *n = pc->firstChild ().ptr ();
+        if (n)
+            n->accept (this);
+        visit (static_cast <Node *> (pc));
+    }
+};
+
+}
+
 KDE_NO_EXPORT void SMIL::GroupBase::activate () {
     TimedMrl::activate ();
-    for (NodePtr n = firstChild (); n; n = n->nextSibling ())
-        if (isTimedMrl (n))
-            convertNode <Element> (n)->init ();
+    Node *n = firstChild ().ptr ();
+    if (n) {
+        GroupBaseInitVisitor visitor;
+        n->accept (&visitor);
+    }
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::begin () {
@@ -1916,55 +1944,140 @@ KDE_NO_EXPORT void SMIL::Seq::childDone (NodePtr child) {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_EXPORT NodePtr SMIL::Excl::childFromTag (const QString &tag) {
+    if (tag == "priorityClass")
+        return new PriorityClass (m_doc);
+    return GroupBase::childFromTag (tag);
+}
+
+namespace {
+
+class KMPLAYER_NO_EXPORT ExclActivateVisitor : public Visitor {
+    SMIL::Excl *excl;
+public:
+    ExclActivateVisitor (SMIL::Excl *ex) : excl (ex) {}
+
+    using Visitor::visit;
+
+    void visit (Node *n) {
+        Node *s = n->nextSibling ().ptr ();
+        if (s)
+            s->accept (this);
+    }
+    void visit (SMIL::TimedMrl *tm) {
+        // make aboutToStart connection with TimedMrl
+        ConnectionPtr c = tm->connectTo (excl, event_to_be_started);
+        excl->started_event_list.append(new SMIL::Excl::ConnectionStoreItem(c));
+        tm->activate ();
+        visit (static_cast <Node *> (tm));
+    }
+    void visit (SMIL::PriorityClass *pc) {
+        pc->state = Node::state_activated;
+        Node *n = pc->firstChild ().ptr ();
+        if (n)
+            n->accept (this);
+        visit (static_cast <Node *> (pc));
+    }
+};
+
+}
+
 KDE_NO_EXPORT void SMIL::Excl::begin () {
     //kDebug () << "SMIL::Excl::begin";
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-        e->activate ();
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-        if (isTimedMrl (e)) {
-            SMIL::TimedMrl * tm = static_cast <SMIL::TimedMrl *> (e.ptr ());
-            if (tm) { // make aboutToStart connection with TimedMrl children
-                ConnectionPtr c = tm->connectTo (this, event_to_be_started);
-                started_event_list.append (new ConnectionStoreItem (c));
-            }
-        }
+    Node *n = firstChild ().ptr ();
+    if (n) {
+        ExclActivateVisitor visitor (this);
+        n->accept (&visitor);
+    }
     GroupBase::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::Excl::deactivate () {
     started_event_list.clear (); // auto disconnect on destruction of data items
+    stopped_connection = NULL;
     GroupBase::deactivate ();
 }
 
 KDE_NO_EXPORT void SMIL::Excl::childDone (NodePtr /*child*/) {
-    // first check if somenode has taken over
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-        if (isTimedMrl (e)) {
-            Runtime *tr = convertNode <SMIL::TimedMrl> (e)->runtime();
-            if (tr->state () == Runtime::timings_started)
-                return;
-        }
-    // now finish unless 'dur="indefinite/some event/.."'
-    Runtime * tr = runtime ();
-    if (tr->state () == Runtime::timings_started)
-        tr->propagateStop (false); // still running, wait for runtime to finish
-    else
-        finish (); // we're done
+    // do nothing
 }
 
 KDE_NO_EXPORT bool SMIL::Excl::handleEvent (Event *event) {
     if (event->id () == event_to_be_started) {
-        //kDebug () << "Excl::handleEvent " << se->node->nodeName();
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
-            if (e == event->source) // stop all _other_ child elements
-                continue;
-            if (!isTimedMrl (e))
-                continue; // definitely a stowaway
-            convertNode<SMIL::TimedMrl>(e)->runtime()->propagateStop(true);
-        }
+        Node *n = cur_node.ptr ();
+        cur_node = event->source;
+        stopped_connection = cur_node->connectTo (this, event_stopped);
+        if (n)
+            convertNode <SMIL::TimedMrl> (n)->runtime ()->propagateStop (true);
         return true;
+    } else if (event->id () == event_stopped && event->source.ptr () != this) {
+        ASSERT (event->source == cur_node);
+        cur_node = NULL;
+        stopped_connection = NULL;
+        // now finish unless 'dur="indefinite/some event/.."'
+        Runtime *tr = runtime ();
+        if (tr->state () == Runtime::timings_started)
+            tr->propagateStop (false); // wait for runtime to finish
+        else
+            finish (); // we're done
     } else
-        return TimedMrl::handleEvent (event);
+        return GroupBase::handleEvent (event);
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT NodePtr SMIL::PriorityClass::childFromTag (const QString &tag) {
+    Element * elm = fromScheduleGroup (m_doc, tag);
+    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
+    if (!elm) elm = fromContentControlGroup (m_doc, tag);
+    if (!elm) elm = fromAnimateGroup (m_doc, tag);
+    if (elm)
+        return elm;
+    return NULL;
+}
+
+KDE_NO_EXPORT void
+SMIL::PriorityClass::parseParam (const TrieString &name, const QString &val) {
+    if (name == "peers") {
+        if (val == "pause")
+            peers = PeersPause;
+        else if (val == "defer")
+            peers = PeersDefer;
+        else if (val == "never")
+            peers = PeersNever;
+        else
+            peers = PeersStop;
+    } else if (name == "higher") {
+        if (val == "stop")
+            higher = HigherStop;
+        else
+            higher = HigherPause;
+    } else if (name == "lower") {
+        if (val == "never")
+            lower = LowerNever;
+        else
+            lower = LowerDefer;
+    } else if (name == "pauseDisplay") {
+        if (val == "disable")
+            pause_display = PauseDisplayDisable;
+        else if (val == "hide")
+            pause_display = PauseDisplayHide;
+        else
+            pause_display = PauseDisplayShow;
+    }
+}
+
+KDE_NO_EXPORT void SMIL::PriorityClass::init () {
+    //if (!inited) {
+    peers = PeersStop;
+    higher = HigherPause;
+    lower = LowerDefer;
+    pause_display = PauseDisplayShow;
+    Element::init ();
+}
+
+KDE_NO_EXPORT void SMIL::PriorityClass::childDone (NodePtr /*child*/) {
+    // do nothing
 }
 
 //-----------------------------------------------------------------------------
@@ -3471,6 +3584,10 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::Transition * n) {
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::TimedMrl * n) {
+    visit (static_cast <Element *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::PriorityClass * n) {
     visit (static_cast <Element *> (n));
 }
 

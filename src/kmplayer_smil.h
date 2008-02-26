@@ -172,6 +172,7 @@ const short id_node_animate = 133;
 const short id_node_title = 140;
 const short id_node_param = 141;
 const short id_node_meta = 142;
+const short id_node_priorityclass = 143;
 const short id_node_anchor = 150;
 const short id_node_area = 151;
 const short id_node_first = id_node_smil;
@@ -495,13 +496,37 @@ class KMPLAYER_NO_EXPORT Excl : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Excl (NodePtr & d) : GroupBase (d, id_node_excl) {}
     KDE_NO_EXPORT const char * nodeName () const { return "excl"; }
+    NodePtr childFromTag (const QString & tag);
     void begin ();
     void deactivate ();
     void childDone (NodePtr child);
     virtual bool handleEvent (Event *event);
-private:
+
     typedef ListNode <ConnectionPtr> ConnectionStoreItem;
     List <ConnectionStoreItem> started_event_list;
+    ConnectionPtr stopped_connection;
+    NodeRefList priority_queue;
+    NodePtrW cur_node;
+};
+
+/**
+ * A PriorityClass groups children within an Excl element
+ */
+class KMPLAYER_NO_EXPORT PriorityClass : public Element {
+public:
+    KDE_NO_CDTOR_EXPORT PriorityClass (NodePtr &d)
+        : Element (d, id_node_priorityclass) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "priorityClass"; }
+    NodePtr childFromTag (const QString & tag);
+    void init ();
+    void parseParam (const TrieString &, const QString &);
+    void childDone (NodePtr child);
+    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+
+    enum { PeersStop, PeersPause, PeersDefer, PeersNever } peers;
+    enum { HigherStop, HigherPause } higher;
+    enum { LowerDefer, LowerNever } lower;
+    enum { PauseDisplayDisable, PauseDisplayHide, PauseDisplayShow } pause_display;
 };
 
 /*

@@ -820,6 +820,7 @@ namespace SMIL {
     class AVMediaType;
     class Brush;
     class TimedMrl;
+    class PriorityClass;
     class Anchor;
     class Area;
 }
@@ -843,6 +844,7 @@ public:
     virtual void visit (SMIL::Layout *);
     virtual void visit (SMIL::Transition *);
     virtual void visit (SMIL::TimedMrl *);
+    virtual void visit (SMIL::PriorityClass *);
     virtual void visit (SMIL::MediaType *);
     virtual void visit (SMIL::ImageMediaType *);
     virtual void visit (SMIL::TextMediaType *);
