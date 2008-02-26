@@ -7,14 +7,19 @@
       <region id="reg_but2" left="5" top="55" width="80" height="30" background-color="MistyRose"/>
       <region id="reg_but3" left="5" top="95" width="80" height="30" background-color="MistyRose"/>
       <region left="5" top="135" width="80" height="40">
-        <region id="reg_text" left="5" top="0" width="70" height="18""/>
-        <region id="reg_ext" left="5" top="22" width="30" height="18""/>
+        <region id="reg_text" left="5" top="0" width="70" height="18"/>
+        <region id="reg_ext" left="5" top="22" width="30" height="18"/>
         <region id="reg_int" left="45" top="22" width="30" height="18"/>
       </region>
-      <region id="reg_but4" left="5" top="185" width="80" height="30" background-color="IndianRed"/>
+      <region left="5" top="176" width="80" height="40">
+        <region id="reg_pause" left="5" top="0" width="35" height="18"/>
+        <region id="reg_play" left="42" top="0" width="35" height="18"/>
+      </region>
+      <region id="reg_but4" left="5" top="195" width="80" height="30" background-color="IndianRed"/>
       <region left="95" top="15" width="210" height="210" background-color="steelblue">
         <region id="reg_img" left="5" top="5" width="64" height="24" background-color="orange"/>
       </region>
+      <region id="reg_paused" left="225" top="225" width="80" height="15"/>
     </layout>
   </head>
   <body>
@@ -74,7 +79,27 @@
         <param name="fontSize" value="+1"/>
         <param name="backgroundColor" value="red"/>
       </text>
-      <video src="img_scale_rep.smil" id="vid" region="reg_img" fill="freeze" fit="meet" repeatCount="indefinite"/>
+      <text src="data:,Pause" id="but_pause" region="reg_pause" fill="freeze">
+        <param name="backgroundColor" value="green"/>
+        <param name="fontColor" value="white"/>
+      </text>
+      <text src="data:,Play" id="but_play" region="reg_play" fill="freeze">
+        <param name="backgroundColor" value="green"/>
+        <param name="fontColor" value="gray"/>
+      </text>
+      <excl dur="indefinite">
+        <priorityClass peers="pause">
+          <video src="img_scale_rep.smil" id="vid" region="reg_img"
+                 fill="freeze" fit="meet" repeatCount="indefinite"/>
+          <text src="data:,Paused" region="reg_paused" fill="freeze"
+               begin="reg_pause.activateEvent" end="but_play.activateEvent">
+          </text>
+        </priorityClass>
+      </excl>
+      <set targetElement="but_pause" attributeName="fontColor" to="gray"
+               begin="but_pause.activateEvent" end="but_play.activateEvent"/>
+      <set targetElement="but_play" attributeName="fontColor" to="white"
+               begin="but_pause.activateEvent" end="but_play.activateEvent"/>
       <excl dur="indefinite">
         <animateMotion targetElement="reg_img" from="5,5" to="140,5"
                        begin="but1.activateEvent" dur="2" fill="freeze"
