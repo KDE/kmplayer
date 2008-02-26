@@ -221,6 +221,15 @@ void Node::begin () {
         kError () << nodeName() << " begin call on not active element" << endl;
 }
 
+void Node::pause () {
+    if (state_began == state)
+        setState (state_paused);
+    else if (state_paused == state)
+        setState (state_began);
+    else
+        kError () << nodeName() << " pause call on not began element" << endl;
+}
+
 void Node::defer () {
     if (active ()) {
         setState (state_deferred);

@@ -602,6 +602,7 @@ public:
     virtual void defer ();
     virtual void undefer ();
     virtual void begin ();
+    virtual void pause ();
     virtual void finish ();
     virtual void childDone (NodePtr child);
     virtual Surface *getSurface (Mrl *mrl);

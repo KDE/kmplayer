@@ -317,7 +317,8 @@ class KMPLAYER_EXPORT Node : public TreeNode <Node> {
 public:
     enum State {
         state_init, state_deferred,
-        state_activated, state_began, state_finished, state_deactivated
+        state_activated, state_began, state_paused,
+        state_finished, state_deactivated
     };
     enum PlayType {
         play_type_none, play_type_unknown, play_type_info,
@@ -409,6 +410,10 @@ public:
      * Sets state to state_begin when active
      */
     virtual void begin ();
+    /**
+     * Sets state to state_paused when begun and to began when paused
+     */
+    virtual void pause ();
     /**
      * Sets state to state_finish when >= state_activated.
      * Notifies parent with a childDone call.

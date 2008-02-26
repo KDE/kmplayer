@@ -1994,6 +1994,7 @@ KDE_NO_EXPORT void SMIL::Excl::begin () {
 
 KDE_NO_EXPORT void SMIL::Excl::deactivate () {
     started_event_list.clear (); // auto disconnect on destruction of data items
+    priority_queue.clear ();
     stopped_connection = NULL;
     GroupBase::deactivate ();
 }
@@ -2007,21 +2008,51 @@ KDE_NO_EXPORT bool SMIL::Excl::handleEvent (Event *event) {
         Node *n = cur_node.ptr ();
         cur_node = event->source;
         stopped_connection = cur_node->connectTo (this, event_stopped);
-        if (n)
+        if (n) {
+            if (SMIL::id_node_priorityclass == cur_node->parentNode ()->id) {
+                switch (static_cast <SMIL::PriorityClass *>
+                        (cur_node->parentNode ().ptr ())->peers) {
+                    case PriorityClass::PeersPause:
+                        n->pause ();
+                        priority_queue.insertBefore (
+                                new NodeRefItem (n), priority_queue.first ());
+                        return true;
+                    default:
+                        break; //TODO
+                }
+            }
             convertNode <SMIL::TimedMrl> (n)->runtime ()->propagateStop (true);
+        }
         return true;
     } else if (event->id () == event_stopped && event->source.ptr () != this) {
         ASSERT (event->source == cur_node);
-        cur_node = NULL;
-        stopped_connection = NULL;
-        // now finish unless 'dur="indefinite/some event/.."'
-        Runtime *tr = runtime ();
-        if (tr->state () == Runtime::timings_started)
-            tr->propagateStop (false); // wait for runtime to finish
-        else
-            finish (); // we're done
+
+        NodeRefItemPtr ref = priority_queue.first ();
+        while (ref && (!ref->data || !ref->data->active ())) {
+            // should not happen, but consider a backend crash or so
+            priority_queue.remove (ref);
+            ref = priority_queue.first ();
+        }
+        if (ref) {
+            cur_node = ref->data;
+            priority_queue.remove (ref);
+            stopped_connection = cur_node->connectTo (this, event_stopped);
+            if (state_paused == cur_node->state)
+                cur_node->pause ();
+            // else TODO
+        } else {
+            cur_node = NULL;
+            stopped_connection = NULL;
+            // now finish unless 'dur="indefinite/some event/.."'
+            Runtime *tr = runtime ();
+            if (tr->state () == Runtime::timings_started)
+                tr->propagateStop (false); // wait for runtime to finish
+            else
+                finish (); // we're done
+        }
     } else
         return GroupBase::handleEvent (event);
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -2448,6 +2479,18 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         kWarning () << nodeName() << "::begin " << src << " region '" <<
             param (StringPool::attr_region) << "' not found" << endl;
     TimedMrl::begin ();
+}
+
+KDE_NO_EXPORT void SMIL::MediaType::pause () {
+    if (media_object) {
+        if (state_began == state)
+            media_object->pause ();
+        else if (state_paused == state)
+            media_object->unpause ();
+        if (surface ())
+            sub_surface->repaint ();
+    }
+    TimedMrl::pause ();
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::clipStart () {
