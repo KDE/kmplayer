@@ -124,10 +124,12 @@ private:
 public:
     TimingState timingstate;
     int repeat_count;
-protected:
-    NodePtrW element;
     EventPtrW start_timer;
     EventPtrW duration_timer;
+    EventPtrW started_timer;
+    EventPtrW stopped_timer;
+protected:
+    NodePtrW element;
 };
 
 class KMPLAYER_NO_EXPORT MouseListeners {
@@ -199,7 +201,7 @@ public:
     void childDone (NodePtr child);
     bool expose () const;
     bool handleEvent (Event *event);
-    void accept (Visitor *);
+    void accept (Visitor *v) { v->visit (this); }
     void jump (const QString & id);
     static Smil * findSmilNode (Node * node);
 
@@ -391,6 +393,7 @@ public:
     void closed ();
     void activate ();
     void begin ();
+    void pause ();
     void finish ();
     void deactivate ();
     void reset ();
@@ -408,6 +411,7 @@ public:
     static bool keepContent (Node *n);
     static Fill getDefaultFill (NodePtr n);
     unsigned int begin_time;
+    unsigned int pause_time;
     unsigned int finish_time;
     Fill fill;
     Fill fill_def;
@@ -602,7 +606,6 @@ public:
     virtual void defer ();
     virtual void undefer ();
     virtual void begin ();
-    virtual void pause ();
     virtual void finish ();
     virtual void childDone (NodePtr child);
     virtual Surface *getSurface (Mrl *mrl);

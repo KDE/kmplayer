@@ -270,6 +270,7 @@ public:
     ~CairoPaintVisitor ();
     using Visitor::visit;
     void visit (Node * n);
+    void visit (SMIL::Smil *);
     void visit (SMIL::Layout *);
     void visit (SMIL::Region *);
     void visit (SMIL::Transition *);
@@ -324,6 +325,11 @@ KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (Node * n) {
     kWarning() << "Paint called on " << n->nodeName();
+}
+
+KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Smil *s) {
+    if (s->active () && s->layout_node)
+        s->layout_node->accept (this);
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
@@ -1177,6 +1183,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~MouseVisitor () {}
     using Visitor::visit;
     void visit (Node * n);
+    void visit (SMIL::Smil *);
     void visit (SMIL::Layout *);
     void visit (SMIL::Region *);
     void visit (SMIL::TimedMrl * n);
@@ -1195,6 +1202,11 @@ MouseVisitor::MouseVisitor (unsigned int evt, int a, int b)
 
 KDE_NO_EXPORT void MouseVisitor::visit (Node * n) {
     kDebug () << "Mouse event ignored for " << n->nodeName ();
+}
+
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Smil *s) {
+    if (s->active () && s->layout_node)
+        s->layout_node->accept (this);
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {

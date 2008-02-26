@@ -748,6 +748,8 @@ public:
      * Called by PlayListNotify, processes events in event_queue with timeout set to now
      */
     void timer ();
+    void updateTimeout ();
+    void addPausedTime (Node *n, unsigned int ms);
     /**
      * Document has list of postponed listeners, eg. for running (gif)movies
      */
@@ -769,6 +771,7 @@ private:
     PostponePtr postpone_lock;
     NodeRefListPtr m_PostponedListeners;
     EventData *event_queue;
+    EventData *paused_queue;
     EventData *cur_event;
     int cur_timeout;
     struct timeval first_event_time;
@@ -815,6 +818,7 @@ protected:
 };
 
 namespace SMIL {
+    class Smil;
     class Region;
     class Layout;
     class Transition;
@@ -845,6 +849,7 @@ public:
     KDE_NO_CDTOR_EXPORT Visitor () {}
     KDE_NO_CDTOR_EXPORT virtual ~Visitor () {}
     virtual void visit (Node *) {}
+    virtual void visit (SMIL::Smil *) {}
     virtual void visit (SMIL::Region *);
     virtual void visit (SMIL::Layout *);
     virtual void visit (SMIL::Transition *);

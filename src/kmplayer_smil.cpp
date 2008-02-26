@@ -478,7 +478,8 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
             ASSERT (!duration_timer);
         }
         if (was_started && element->document ()->active ())
-            element->document()->postEvent (element, new Event (element, event_stopped));
+            stopped_timer = element->document()->postEvent (
+                    element, new Event (element, event_stopped));
         else if (element->unfinished ())
             element->finish ();
     } else {
@@ -495,7 +496,7 @@ KDE_NO_EXPORT void Runtime::propagateStart () {
             e->document ()->cancelEvent (start_timer);
         ASSERT (!start_timer);
         timingstate = timings_started;
-        element->document ()->postEvent (element, new Event (e, event_started));
+        started_timer = e->document()->postEvent(e, new Event(e,event_started));
     } else {
         reset ();
     }
@@ -986,11 +987,6 @@ KDE_NO_EXPORT void SMIL::Smil::childDone (NodePtr child) {
 KDE_NO_EXPORT bool SMIL::Smil::expose () const {
     return !pretty_name.isEmpty () || //return false if no title and only one
         previousSibling () || nextSibling ();
-}
-
-KDE_NO_EXPORT void SMIL::Smil::accept (Visitor * v) {
-    if (active () && layout_node)
-        layout_node->accept( v );
 }
 
 void SMIL::Smil::jump (const QString & id) {
@@ -1552,6 +1548,66 @@ KDE_NO_EXPORT void SMIL::TimedMrl::begin () {
     runtime ()->propagateStop (false); //see whether this node has a livetime or not
 }
 
+namespace {
+
+class KMPLAYER_NO_EXPORT TimedMrlPauseVisitor : public Visitor {
+    bool pause;
+    unsigned int pause_time;
+public:
+    TimedMrlPauseVisitor (bool p, unsigned int pt) : pause(p), pause_time(pt) {}
+
+    using Visitor::visit;
+
+    void visit (Node *node) {
+        for (Node *c = node->firstChild (); c; c = c->nextSibling ())
+            c->accept (this);
+    }
+    void visit (SMIL::TimedMrl *tm) {
+        if (!tm->active ())
+            return; // nothing to do
+        if (pause) {
+            tm->pause_time = pause_time;
+            tm->state = Node::state_paused;
+        } else {
+            tm->document ()->addPausedTime (tm, pause_time * 100);
+            tm->begin_time += pause_time;
+            tm->state = Node::state_began;
+        }
+        visit (static_cast <Node *> (tm));
+    }
+    void visit (SMIL::MediaType *mt) {
+        if (mt->media_object) {
+            if (pause)
+                mt->media_object->pause ();
+            else
+                mt->media_object->unpause ();
+            if (mt->surface ())
+                mt->sub_surface->repaint ();
+        }
+        visit (static_cast <SMIL::TimedMrl *> (mt));
+    }
+    void visit (SMIL::Smil *s) {
+        for (Node *c = s->firstChild (); c; c = c->nextSibling ())
+            if (SMIL::id_node_body == c->id)
+                c->accept (this);
+    }
+};
+
+}
+
+KDE_NO_EXPORT void SMIL::TimedMrl::pause () {
+    unsigned int ptime;
+    if (state_paused == state)
+        ptime = document ()->last_event_time - pause_time;
+    else if (active ())
+        ptime = document ()->last_event_time;
+    else
+        return;
+    TimedMrlPauseVisitor visitor (state_paused != state, ptime);
+    accept (&visitor);
+    document ()->updateTimeout ();
+}
+
 KDE_NO_EXPORT void SMIL::TimedMrl::deactivate () {
     //kDebug () << "SMIL::TimedMrl(" << nodeName() << ")::deactivate";
     if (unfinished ())
@@ -2005,6 +2061,8 @@ KDE_NO_EXPORT void SMIL::Excl::childDone (NodePtr /*child*/) {
 
 KDE_NO_EXPORT bool SMIL::Excl::handleEvent (Event *event) {
     if (event->id () == event_to_be_started) {
+        if (event->source == cur_node)
+            return true; // eg. repeating
         Node *n = cur_node.ptr ();
         cur_node = event->source;
         stopped_connection = cur_node->connectTo (this, event_stopped);
@@ -2479,18 +2537,6 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         kWarning () << nodeName() << "::begin " << src << " region '" <<
             param (StringPool::attr_region) << "' not found" << endl;
     TimedMrl::begin ();
-}
-
-KDE_NO_EXPORT void SMIL::MediaType::pause () {
-    if (media_object) {
-        if (state_began == state)
-            media_object->pause ();
-        else if (state_paused == state)
-            media_object->unpause ();
-        if (surface ())
-            sub_surface->repaint ();
-    }
-    TimedMrl::pause ();
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::clipStart () {
