@@ -377,36 +377,6 @@ KDE_NO_EXPORT void Runtime::beginAndStart () {
     }
 }
 
-static Event *activeEvent (Runtime *r) {
-    Event *event = NULL;
-    if (r->start_timer)
-        event = r->start_timer.ptr ();
-    else if (r->started_timer)
-        event = r->started_timer.ptr ();
-    else if (r->duration_timer)
-        event = r->duration_timer.ptr ();
-    else if (r->stopped_timer)
-        event = r->stopped_timer.ptr ();
-    return event;
-}
-
-KDE_NO_EXPORT void Runtime::pause (Node *by) {
-    paused_by = by;
-    unpaused_state = timingstate;
-    timingstate = timings_paused;
-    Event *event = activeEvent (this);
-    if (event)
-        by->document ()->pauseEvent (event);
-}
-
-KDE_NO_EXPORT void Runtime::unpause (int ms) {
-    paused_by = NULL;
-    timingstate = unpaused_state;
-    Event *event = activeEvent (this);
-    if (event && element)
-        element->document ()->unpauseEvent (event, ms);
-}
-
 KDE_NO_EXPORT
 bool Runtime::parseParam (const TrieString & name, const QString & val) {
     //kDebug () << "Runtime::parseParam " << name << "=" << val;
@@ -1577,94 +1547,6 @@ KDE_NO_EXPORT void SMIL::TimedMrl::begin () {
     runtime ()->propagateStop (false); //see whether this node has a livetime or not
 }
 
-namespace {
-
-class KMPLAYER_NO_EXPORT TimedMrlPauseVisitor : public Visitor {
-    bool pause;
-    Node *paused_by;
-    unsigned int pause_time;
-
-    void updatePauseStateEvent (Node *n, Event *event) {
-        if (event) {
-            if (pause)
-                n->document ()->pauseEvent (event);
-            else
-                n->document ()->unpauseEvent (event, pause_time * 100);
-        }
-    }
-public:
-    TimedMrlPauseVisitor (bool p, Node *pb, unsigned int pt)
-        : pause(p), paused_by (pb), pause_time(pt) {}
-
-    using Visitor::visit;
-
-    void visit (Node *node) {
-        for (Node *c = node->firstChild (); c; c = c->nextSibling ())
-            c->accept (this);
-    }
-    void visit (SMIL::TimedMrl *tm) {
-        if (!tm->active ())
-            return; // nothing to do
-        Runtime *rt = tm->runtime ();
-        if (pause) {
-            tm->pause_time = pause_time;
-            rt->pause (paused_by);
-        } else {
-            rt->unpause (pause_time * 100);
-            tm->begin_time += pause_time;
-        }
-        visit (static_cast <Node *> (tm));
-    }
-    void visit (SMIL::MediaType *mt) {
-        if (mt->media_object) {
-            if (pause)
-                mt->media_object->pause ();
-            else
-                mt->media_object->unpause ();
-            if (mt->surface ())
-                mt->sub_surface->repaint ();
-        }
-
-        Event *event = NULL;
-        if (mt->trans_timer)
-            event = mt->trans_timer.ptr ();
-        else if (mt->trans_out_timer)
-            event = mt->trans_out_timer.ptr ();
-        updatePauseStateEvent (mt, event);
-
-        visit (static_cast <SMIL::TimedMrl *> (mt));
-    }
-    void visit (SMIL::Animate *an) {
-        updatePauseStateEvent (an, an->anim_timer.ptr ());
-        visit (static_cast <SMIL::TimedMrl *> (an));
-    }
-    void visit (SMIL::AnimateMotion *an) {
-        updatePauseStateEvent (an, an->anim_timer.ptr ());
-        visit (static_cast <SMIL::TimedMrl *> (an));
-    }
-    void visit (SMIL::Smil *s) {
-        for (Node *c = s->firstChild (); c; c = c->nextSibling ())
-            if (SMIL::id_node_body == c->id)
-                c->accept (this);
-    }
-};
-
-}
-
-KDE_NO_EXPORT void SMIL::TimedMrl::pause () {
-    if (!active ())
-        return;
-    unsigned int ptime;
-    bool pausing = Runtime::timings_paused != runtime ()->state ();
-    if (pausing)
-        ptime = document ()->last_event_time;
-    else
-        ptime = document ()->last_event_time - pause_time;
-    TimedMrlPauseVisitor visitor (pausing, this, ptime);
-    accept (&visitor);
-    document ()->updateTimeout ();
-}
-
 KDE_NO_EXPORT void SMIL::TimedMrl::deactivate () {
     //kDebug () << "SMIL::TimedMrl(" << nodeName() << ")::deactivate";
     if (unfinished ())
@@ -2093,6 +1975,96 @@ public:
     }
 };
 
+class KMPLAYER_NO_EXPORT ExclPauseVisitor : public Visitor {
+    bool pause;
+    Node *paused_by;
+    unsigned int cur_time;
+
+    void updatePauseStateEvent (Event *event, int pause_time) {
+        if (event) {
+            if (pause)
+                paused_by->document ()->pauseEvent (event);
+            else
+                paused_by->document ()->unpauseEvent (event, (cur_time-pause_time)*100);
+        }
+    }
+    static Event *activeEvent (Runtime *r) {
+        Event *event = NULL;
+        if (r->start_timer)
+            event = r->start_timer.ptr ();
+        else if (r->started_timer)
+            event = r->started_timer.ptr ();
+        else if (r->duration_timer)
+            event = r->duration_timer.ptr ();
+        else if (r->stopped_timer)
+            event = r->stopped_timer.ptr ();
+        return event;
+    }
+
+public:
+    ExclPauseVisitor (bool p, Node *pb, unsigned int pt)
+        : pause(p), paused_by (pb), cur_time (pt) {}
+    ~ExclPauseVisitor () {
+        paused_by->document ()->updateTimeout ();
+    }
+
+    using Visitor::visit;
+
+    void visit (Node *node) {
+        for (Node *c = node->firstChild (); c; c = c->nextSibling ())
+            c->accept (this);
+    }
+    void visit (SMIL::TimedMrl *tm) {
+        if (!tm->active ())
+            return; // nothing to do
+        Runtime *rt = tm->runtime ();
+        if (pause) {
+            rt->paused_time = cur_time;
+            rt->paused_by = paused_by;
+            rt->unpaused_state = rt->timingstate;
+            rt->timingstate = Runtime::timings_paused;
+        } else {
+            rt->paused_by = NULL;
+            rt->timingstate = rt->unpaused_state;
+            tm->begin_time += cur_time;
+        }
+        updatePauseStateEvent (activeEvent (rt), rt->paused_time);
+        visit (static_cast <Node *> (tm));
+    }
+    void visit (SMIL::MediaType *mt) {
+        if (mt->media_object) {
+            if (pause)
+                mt->media_object->pause ();
+            else
+                mt->media_object->unpause ();
+            if (mt->surface ())
+                mt->sub_surface->repaint ();
+        }
+
+        Event *event = NULL;
+        if (mt->trans_timer)
+            event = mt->trans_timer.ptr ();
+        else if (mt->trans_out_timer)
+            event = mt->trans_out_timer.ptr ();
+        updatePauseStateEvent (event, mt->runtime ()->paused_time);
+
+        visit (static_cast <SMIL::TimedMrl *> (mt));
+    }
+    void visit (SMIL::Animate *an) {
+        updatePauseStateEvent(an->anim_timer.ptr(), an->runtime()->paused_time);
+        visit (static_cast <SMIL::TimedMrl *> (an));
+    }
+    void visit (SMIL::AnimateMotion *an) {
+        updatePauseStateEvent(an->anim_timer.ptr(), an->runtime()->paused_time);
+        visit (static_cast <SMIL::TimedMrl *> (an));
+    }
+    void visit (SMIL::Smil *s) {
+        for (Node *c = s->firstChild (); c; c = c->nextSibling ())
+            if (SMIL::id_node_body == c->id)
+                c->accept (this);
+    }
+};
+
 }
 
 KDE_NO_EXPORT void SMIL::Excl::begin () {
@@ -2127,14 +2099,14 @@ KDE_NO_EXPORT bool SMIL::Excl::handleEvent (Event *event) {
             if (SMIL::id_node_priorityclass == cur_node->parentNode ()->id) {
                 switch (static_cast <SMIL::PriorityClass *>
                         (cur_node->parentNode ().ptr ())->peers) {
-                    case PriorityClass::PeersPause:
-                        if (isTimedMrl (n)) {
-                            convertNode <SMIL::TimedMrl> (n)->pause ();
-                            priority_queue.insertBefore (
-                                  new NodeRefItem (n), priority_queue.first ());
-                            return true;
-                        }
-                        // fall through
+                    case PriorityClass::PeersPause: {
+                        ExclPauseVisitor visitor (
+                                true, this, document ()->last_event_time);
+                        n->accept (&visitor);
+                        priority_queue.insertBefore (
+                                new NodeRefItem (n), priority_queue.first ());
+                        return true;
+                    }
                     default:
                         break; //TODO
                 }
@@ -2155,9 +2127,8 @@ KDE_NO_EXPORT bool SMIL::Excl::handleEvent (Event *event) {
             cur_node = ref->data;
             priority_queue.remove (ref);
             stopped_connection = cur_node->connectTo (this, event_stopped);
-            TimedMrl *tm = convertNode <SMIL::TimedMrl> (cur_node);
-            if (tm->runtime ()->state () == Runtime::timings_paused)
-                tm->pause ();
+            ExclPauseVisitor visitor (false, this, document()->last_event_time);
+            cur_node->accept (&visitor);
             // else TODO
         } else {
             cur_node = NULL;

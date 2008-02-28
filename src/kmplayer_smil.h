@@ -97,8 +97,6 @@ public:
      */
     void begin ();
     void beginAndStart (); // skip start timer (if any)
-    void pause (Node *by);
-    void unpause (int ms);
     /**
      * Reset all data, called from end() and init()
      */
@@ -125,9 +123,7 @@ public:
     KDE_NO_EXPORT DurationItem & beginTime () { return durations[begin_time]; }
     KDE_NO_EXPORT DurationItem & durTime () { return durations[duration_time]; }
     KDE_NO_EXPORT DurationItem & endTime () { return durations [end_time]; }
-private:
-    void setDurationItem (DurationTime item, const QString & val);
-public:
+
     TimingState timingstate;
     TimingState unpaused_state;
     int repeat_count;
@@ -136,7 +132,9 @@ public:
     EventPtrW started_timer;
     EventPtrW stopped_timer;
     NodePtrW paused_by;
-protected:
+    unsigned int paused_time;
+private:
+    void setDurationItem (DurationTime item, const QString & val);
     NodePtrW element;
 };
 
@@ -419,7 +417,6 @@ public:
     static bool keepContent (Node *n);
     static Fill getDefaultFill (NodePtr n);
     unsigned int begin_time;
-    unsigned int pause_time;
     unsigned int finish_time;
     Fill fill;
     Fill fill_def;
