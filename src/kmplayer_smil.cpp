@@ -1684,14 +1684,6 @@ void SMIL::TimedMrl::parseParam (const TrieString &para, const QString &value) {
     }
 }
 
-KDE_NO_EXPORT
-Runtime::DurationItem * SMIL::TimedMrl::getDuration (NodePtr n) {
-    if (!isTimedMrl (n) || !n->active ())
-        return 0L;
-    TimedMrl * tm = convertNode <SMIL::TimedMrl> (n);
-    return &tm->runtime ()->durations [Runtime::duration_time];
-}
-
 KDE_NO_EXPORT bool SMIL::TimedMrl::keepContent (Node *n) {
     if (isTimedMrl (n)) {
         TimedMrl * tm = convertNode <SMIL::TimedMrl> (n);

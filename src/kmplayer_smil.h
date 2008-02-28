@@ -412,7 +412,6 @@ public:
     void init ();
     virtual void parseParam (const TrieString &, const QString &);
     Runtime * runtime ();
-    static Runtime::DurationItem * getDuration (NodePtr n);
     static bool isTimedMrl (const Node *n);
     static bool keepContent (Node *n);
     static Fill getDefaultFill (NodePtr n);
