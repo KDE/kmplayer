@@ -427,8 +427,8 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void Runtime::processEvent (unsigned int event) {
-    SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (element);
-    if (tm) {
+    Node *e = element.ptr ();
+    if (e) {
         if (!started () && beginTime ().durval == event) {
             if (start_timer)
                 element->document ()->cancelEvent (start_timer);
@@ -437,8 +437,8 @@ KDE_NO_EXPORT void Runtime::processEvent (unsigned int event) {
                         new TimerEvent (100 * beginTime ().offset, start_timer_id));
             else //FIXME neg. offsets
                 propagateStart ();
-            if (tm->state == Node::state_finished)
-                tm->state = Node::state_activated; // rewind to activated
+            if (e->state == Node::state_finished)
+                e->state = Node::state_activated; // rewind to activated
         } else if (started () && (unsigned int) endTime ().durval == event)
             propagateStop (true);
     } else
