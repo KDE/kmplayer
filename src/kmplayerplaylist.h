@@ -721,8 +721,8 @@ class KMPLAYER_EXPORT Document : public Mrl {
 public:
     Document (const QString &, PlayListNotify * notify = 0L);
     ~Document ();
-    NodePtr getElementById (const QString & id);
-    NodePtr getElementById (NodePtr start, const QString & id, bool inter_doc);
+    Node *getElementById (const QString & id);
+    Node *getElementById (Node *start, const QString & id, bool inter_doc);
     /** All nodes have shared pointers to Document,
      * so explicitly dispose it (calls clear and set m_doc to 0L)
      * */

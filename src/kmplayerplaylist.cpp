@@ -871,15 +871,15 @@ Document::~Document () {
     kDebug () << "~Document " << src;
 }
 
-static NodePtr getElementByIdImpl (NodePtr n, const QString & id, bool inter) {
+static Node *getElementByIdImpl (Node *n, const QString & id, bool inter) {
     NodePtr elm;
     if (!n->isElementNode ())
-        return elm;
-    Element * e = convertNode <Element> (n);
+        return NULL;
+    Element *e = static_cast <Element *> (n);
     if (e->getAttribute (StringPool::attr_id) == id)
         return n;
-    for (NodePtr c = e->firstChild (); c; c = c->nextSibling ()) {
-        if (!inter && c->mrl () && c->mrl ()->opener == n)
+    for (Node *c = e->firstChild ().ptr (); c; c = c->nextSibling ().ptr ()) {
+        if (!inter && c->mrl () && c->mrl ()->opener.ptr () == n)
             continue;
         if ((elm = getElementByIdImpl (c, id, inter)))
             break;
@@ -887,11 +887,11 @@ static NodePtr getElementByIdImpl (NodePtr n, const QString & id, bool inter) {
     return elm;
 }
 
-NodePtr Document::getElementById (const QString & id) {
+Node *Document::getElementById (const QString & id) {
     return getElementByIdImpl (this, id, true);
 }
 
-NodePtr Document::getElementById (NodePtr n, const QString & id, bool inter) {
+Node *Document::getElementById (Node *n, const QString & id, bool inter) {
     return getElementByIdImpl (n, id, inter);
 }
 

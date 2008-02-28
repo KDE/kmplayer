@@ -163,9 +163,8 @@ static SMIL::Transition * findTransition (NodePtr n, const QString & id) {
     return 0L;
 }
 
-static NodePtr findLocalNodeById (NodePtr n, const QString & id) {
-    //kDebug() << "findLocalNodeById " << id;
-    SMIL::Smil * s = SMIL::Smil::findSmilNode (n);
+static Node *findLocalNodeById (Node *n, const QString & id) {
+    SMIL::Smil *s = SMIL::Smil::findSmilNode (n);
     if (s)
         return s->document ()->getElementById (s, id, false);
     return 0L;
@@ -410,11 +409,10 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
     } else if (name == "endsync") {
         if ((durTime ().durval == dur_media || durTime ().durval == 0) &&
                 endTime ().durval == dur_media) {
-            NodePtr e = findLocalNodeById (element, val);
-            if (SMIL::TimedMrl::isTimedMrl (e)) {
-                SMIL::TimedMrl * tm = static_cast <SMIL::TimedMrl *> (e.ptr ());
+            Node *e = findLocalNodeById (element, val);
+            if (e) {
                 durations [(int) end_time].connection =
-                    tm->connectTo (element, event_stopped);
+                    e->connectTo (element, event_stopped);
                 durations [(int) end_time].durval = (Duration) event_stopped;
             }
         }
