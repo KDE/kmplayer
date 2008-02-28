@@ -317,8 +317,7 @@ class KMPLAYER_EXPORT Node : public TreeNode <Node> {
 public:
     enum State {
         state_init, state_deferred,
-        state_activated, state_began, state_paused,
-        state_finished, state_deactivated
+        state_activated, state_began, state_finished, state_deactivated
     };
     enum PlayType {
         play_type_none, play_type_unknown, play_type_info,
@@ -410,10 +409,6 @@ public:
      * Sets state to state_begin when active
      */
     virtual void begin ();
-    /**
-     * Sets state to state_paused when begun and to began when paused
-     */
-    virtual void pause ();
     /**
      * Sets state to state_finish when >= state_activated.
      * Notifies parent with a childDone call.
@@ -741,6 +736,8 @@ public:
 
     Event *postEvent (Node *n, Event *event);
     void cancelEvent (Event *event);
+    void pauseEvent (Event *e);
+    void unpauseEvent (Event *e, int ms);
 
     void timeOfDay (struct timeval &);
     PostponePtr postpone ();
@@ -749,7 +746,6 @@ public:
      */
     void timer ();
     void updateTimeout ();
-    void addPausedTime (Node *n, unsigned int ms);
     /**
      * Document has list of postponed listeners, eg. for running (gif)movies
      */
@@ -822,6 +818,8 @@ namespace SMIL {
     class Region;
     class Layout;
     class Transition;
+    class Animate;
+    class AnimateMotion;
     class MediaType;
     class ImageMediaType;
     class TextMediaType;
@@ -853,6 +851,8 @@ public:
     virtual void visit (SMIL::Region *);
     virtual void visit (SMIL::Layout *);
     virtual void visit (SMIL::Transition *);
+    virtual void visit (SMIL::Animate *);
+    virtual void visit (SMIL::AnimateMotion *);
     virtual void visit (SMIL::TimedMrl *);
     virtual void visit (SMIL::PriorityClass *);
     virtual void visit (SMIL::MediaType *);

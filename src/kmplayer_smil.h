@@ -81,7 +81,8 @@ public:
 class KMPLAYER_NO_EXPORT Runtime {
 public:
     enum TimingState {
-        timings_reset = 0, timings_began, timings_started, timings_stopped
+        timings_reset = 0, timings_began,
+        timings_started, timings_paused, timings_stopped
     };
     enum DurationTime { begin_time = 0, duration_time, end_time, durtime_last };
     enum Duration {
@@ -96,6 +97,8 @@ public:
      */
     void begin ();
     void beginAndStart (); // skip start timer (if any)
+    void pause (Node *by);
+    void unpause (int ms);
     /**
      * Reset all data, called from end() and init()
      */
@@ -114,7 +117,10 @@ public:
         int offset;
         ConnectionPtr connection;
     } durations [(const int) durtime_last];
-    void started ();
+    void setDuration ();
+    bool started () const {
+        return timingstate == timings_started || timingstate == timings_paused;
+    }
     void stopped ();
     KDE_NO_EXPORT DurationItem & beginTime () { return durations[begin_time]; }
     KDE_NO_EXPORT DurationItem & durTime () { return durations[duration_time]; }
@@ -123,11 +129,13 @@ private:
     void setDurationItem (DurationTime item, const QString & val);
 public:
     TimingState timingstate;
+    TimingState unpaused_state;
     int repeat_count;
     EventPtrW start_timer;
     EventPtrW duration_timer;
     EventPtrW started_timer;
     EventPtrW stopped_timer;
+    NodePtrW paused_by;
 protected:
     NodePtrW element;
 };
@@ -631,6 +639,8 @@ public:
     unsigned int bitrate;
     unsigned int trans_step;
     unsigned int trans_steps;
+    EventPtrW trans_timer;
+    EventPtrW trans_out_timer;
     enum { sens_opaque, sens_transparent, sens_percentage } sensitivity;
     bool trans_out_active;
     bool has_mouse;
@@ -646,8 +656,6 @@ protected:
     ConnectionPtr region_mouse_leave;      // attached region has mouse left
     ConnectionPtr region_mouse_click;      // attached region is clicked
     ConnectionPtr region_attach;           // attached to region
-    EventPtrW trans_timer;
-    EventPtrW trans_out_timer;
     ConnectionPtr document_postponed;      // pause audio/video accordantly
     PostponePtr postpone_lock;
 };
@@ -743,13 +751,15 @@ public:
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual bool handleEvent (Event *event);
+    virtual void accept (Visitor *v) { v->visit (this); }
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     PlayType playType () { return play_type_none; }
+
+    EventPtrW anim_timer;
 private:
     void applyStep ();
     bool timerTick();
 
-    EventPtrW anim_timer;
     enum { acc_none, acc_sum } accumulate;
     enum { add_replace, add_sum } additive;
     int change_by;
@@ -771,15 +781,17 @@ public:
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual bool handleEvent (Event *event);
+    virtual void accept (Visitor *v) { v->visit (this); }
     KDE_NO_EXPORT const char * nodeName () const { return "animateMotion"; }
     PlayType playType () { return play_type_none; }
+
+    EventPtrW anim_timer;
 private:
     bool timerTick();
     bool checkTarget (Node *n);
     bool setInterval ();
     void applyStep ();
     bool getCoordinates (const QString &coord, SizeType &x, SizeType &y);
-    EventPtrW anim_timer;
     enum { acc_none, acc_sum } accumulate;
     enum { add_replace, add_sum } additive;
     enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
