@@ -1259,19 +1259,23 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
         int saved_event = event;
         if (node->active ()) {
             bool propagate_listeners = !child_handled;
+            bool pass_event = !child_handled;
             if (event == event_pointer_moved) {
-                propagate_listeners = true; // always pass move events
+                pass_event = true; // always pass move events
                 if (region->has_mouse && (!inside || child_handled)) {
+                    propagate_listeners = true;
                     region->has_mouse = false;
                     event = event_outbounds;
                 } else if (inside && !child_handled && !region->has_mouse) {
+                    propagate_listeners = true;
                     region->has_mouse = true;
                     event = event_inbounds;
                 }
             }// else // event_pointer_clicked
-            if (propagate_listeners) {
-                NodeRefListPtr nl = region->listeners (
-                        event == event_pointer_moved ? mediatype_attached : event);
+            if (propagate_listeners)
+                region->propagateEvent (new Event (region, event));
+            if (pass_event) {
+                NodeRefListPtr nl = region->listeners (mediatype_attached);
                 if (nl) {
                     for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
                         if (c->data)
