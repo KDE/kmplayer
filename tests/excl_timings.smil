@@ -91,7 +91,7 @@
         <priorityClass peers="pause">
           <video src="img_scale_rep.smil" id="vid" region="reg_img"
                  fill="freeze" fit="meet" repeatCount="indefinite"/>
-          <text src="data:,Paused" region="reg_paused" fill="freeze"
+          <text src="data:,Paused" region="reg_paused"
                begin="reg_pause.activateEvent" end="but_play.activateEvent">
           </text>
         </priorityClass>
