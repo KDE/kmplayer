@@ -161,7 +161,7 @@ KDE_NO_EXPORT void View::dragEnterEvent (QDragEnterEvent* dee) {
         dee->accept ();
 }
 
-KDE_NO_EXPORT void View::initDock (QWidget *central) {
+void View::initDock (QWidget *central) {
     m_dockarea = new QMainWindow;
     m_dockarea->setCentralWidget (central);
     central->setVisible (true);
