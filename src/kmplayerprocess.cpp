@@ -58,7 +58,7 @@
 #include "kmplayerpartbase.h"
 #include "masteradaptor.h"
 #include "streammasteradaptor.h"
-#if KMPLAYER_WITH_NPP
+#ifdef KMPLAYER_WITH_NPP
 # include "callbackadaptor.h"
 # include "streamadaptor.h"
 #endif
