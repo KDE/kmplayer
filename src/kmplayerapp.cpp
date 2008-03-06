@@ -1131,6 +1131,7 @@ KDE_NO_EXPORT void KMPlayerApp::broadcastStopped () {
 
 KDE_NO_EXPORT bool KMPlayerApp::broadcasting () const {
     //return m_broadcastconfig->broadcasting ();
+    return false;
 }
 
 KDE_NO_EXPORT void KMPlayerApp::saveOptions()
