@@ -1515,7 +1515,7 @@ KDE_NO_EXPORT void ViewArea::stopTimers () {
 KDE_NO_EXPORT void ViewArea::fullScreen () {
     stopTimers ();
     if (m_fullscreen) {
-        showNormal ();
+        setWindowState( windowState() & ~Qt::WindowFullScreen ); // reset
         m_view->dockArea ()->setCentralWidget (this);
         m_view->dockArea ()->restoreState (m_dock_state);
         for (unsigned i = 0; i < m_collection->count (); ++i)
@@ -1530,7 +1530,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         m_dock_state = m_view->dockArea ()->saveState ();
         m_topwindow_rect = topLevelWidget ()->geometry ();
         reparent (0L, 0, qApp->desktop()->screenGeometry(this).topLeft(), true);
-        showFullScreen ();
+        setWindowState( windowState() | Qt::WindowFullScreen ); // set
         for (unsigned i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (true);
         m_view->controlPanel ()->scaleLabelAction->setVisible (true);
