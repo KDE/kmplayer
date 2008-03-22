@@ -1,3 +1,11 @@
+Changes since version 0.11.0-rc2
+- Change LoadOnDemand icon to default KDE's video icon
+- Begin of support for SMIL::PriorityClass
+- Fix controlpanel leaking menu's
+- Support for simple calls to the npp plugin, onces that don't pass or return
+  object, such as flash' GotoFrame
+- Replace cairo_push_group by using XPixmap instead
+- Save half of the dbus calls with npp's NPRuntime
 Changes since version 0.11.0-rc1
 - Fix browser function 'evalutate' in npp
 - Make forward/backward buttons work again
