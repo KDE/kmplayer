@@ -278,7 +278,7 @@ KDE_NO_CDTOR_EXPORT
 KMPlayerMenuButton::KMPlayerMenuButton (QWidget * parent, QBoxLayout * l, const char ** p, int key)
  : QPushButton (QIconSet (QPixmap(p)), QString (), parent) {
 #if QT_VERSION > 0x040399
-    b->setAttribute (Qt::WA_NativeWindow);
+    setAttribute (Qt::WA_NativeWindow);
 #endif
     setFocusPolicy (Qt::NoFocus);
     setFlat (true);
@@ -307,7 +307,7 @@ KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
 KDE_NO_CDTOR_EXPORT VolumeBar::VolumeBar (QWidget * parent, View * view)
  : QWidget (parent), m_view (view), m_value (100) {
 #if QT_VERSION > 0x040399
-    b->setAttribute (Qt::WA_NativeWindow);
+    setAttribute (Qt::WA_NativeWindow);
 #endif
     setSizePolicy( QSizePolicy (QSizePolicy::Minimum, QSizePolicy::Fixed));
     setMinimumSize (QSize (51, button_height_only_buttons + 2));
@@ -372,7 +372,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
    m_auto_controls (true),
    m_popup_clicked (false) {
 #if QT_VERSION > 0x040399
-    b->setAttribute (Qt::WA_NativeWindow);
+    setAttribute (Qt::WA_NativeWindow);
 #endif
     m_buttonbox = new QHBoxLayout (this, 5, 4);
     m_buttonbox->setMargin (2);
