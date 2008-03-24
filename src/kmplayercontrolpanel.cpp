@@ -262,6 +262,9 @@ static const char * blue_xpm[] = {
 
 static QPushButton *ctrlButton (QWidget *w, QBoxLayout *l, const char **p, int key = 0) {
     QPushButton * b = new QPushButton (QIconSet (QPixmap(p)), QString (), w);
+#if QT_VERSION > 0x040399
+    b->setAttribute (Qt::WA_NativeWindow);
+#endif
     b->setFocusPolicy (Qt::NoFocus);
     b->setFlat (true);
     b->setAutoFillBackground (true);
@@ -274,6 +277,9 @@ static QPushButton *ctrlButton (QWidget *w, QBoxLayout *l, const char **p, int k
 KDE_NO_CDTOR_EXPORT
 KMPlayerMenuButton::KMPlayerMenuButton (QWidget * parent, QBoxLayout * l, const char ** p, int key)
  : QPushButton (QIconSet (QPixmap(p)), QString (), parent) {
+#if QT_VERSION > 0x040399
+    b->setAttribute (Qt::WA_NativeWindow);
+#endif
     setFocusPolicy (Qt::NoFocus);
     setFlat (true);
     setAutoFillBackground (true);
@@ -300,6 +306,9 @@ KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
 
 KDE_NO_CDTOR_EXPORT VolumeBar::VolumeBar (QWidget * parent, View * view)
  : QWidget (parent), m_view (view), m_value (100) {
+#if QT_VERSION > 0x040399
+    b->setAttribute (Qt::WA_NativeWindow);
+#endif
     setSizePolicy( QSizePolicy (QSizePolicy::Minimum, QSizePolicy::Fixed));
     setMinimumSize (QSize (51, button_height_only_buttons + 2));
     QToolTip::add (this, i18n ("Volume is ") + QString::number (m_value));
@@ -362,6 +371,9 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
    m_view (view),
    m_auto_controls (true),
    m_popup_clicked (false) {
+#if QT_VERSION > 0x040399
+    b->setAttribute (Qt::WA_NativeWindow);
+#endif
     m_buttonbox = new QHBoxLayout (this, 5, 4);
     m_buttonbox->setMargin (2);
     m_buttonbox->setSpacing (4);

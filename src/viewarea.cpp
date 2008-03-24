@@ -1535,6 +1535,8 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
             m_collection->action (i)->setEnabled (true);
         m_view->controlPanel ()->scaleLabelAction->setVisible (true);
         m_view->controlPanel ()->scaleAction->setVisible (true);
+        m_view->controlPanel ()->scaleLabelAction->setEnabled (true);
+        m_view->controlPanel ()->scaleAction->setEnabled (true);
         connect ( m_view->controlPanel ()->scale_slider,
                 SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (normal_window_xpm)));
