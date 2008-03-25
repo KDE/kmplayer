@@ -134,7 +134,9 @@ KDE_NO_EXPORT bool ASX::Entry::handleEvent (Event *event) {
     if (event->id () == event_timer) {
         document()->cancelEvent (duration_timer);
         deactivate ();
+        return true;
     }
+    return Mrl::handleEvent (event);
 }
 
 KDE_NO_EXPORT void ASX::Entry::deactivate () {
