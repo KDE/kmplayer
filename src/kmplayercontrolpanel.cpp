@@ -468,7 +468,6 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     scaleLabelAction = new QWidgetAction (popupMenu);
     scaleLabelAction->setDefaultWidget (new QLabel (i18n ("Scale:")));
     popupMenu->addAction (scaleLabelAction);
-    scaleLabelAction->setVisible (false);
     scaleAction = new QWidgetAction (popupMenu);
     scale_slider = new QSlider (Qt::Horizontal);
     scale_slider->setMinimum (50);
@@ -477,7 +476,6 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     scale_slider->setSliderPosition (100);
     scaleAction->setDefaultWidget (scale_slider);
     popupMenu->addAction (scaleAction);
-    scaleAction->setVisible (false);
 
     configureAction = popupMenu->addAction (KIcon ("configure"), i18n ("&Configure KMPlayer..."));
 

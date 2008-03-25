@@ -1418,22 +1418,24 @@ namespace KMPlayer {
 class KMPLAYER_NO_EXPORT ViewerAreaPrivate {
 public:
     ViewerAreaPrivate (ViewArea *v)
-        : m_view_area (v), backing_store (0) {
+        : m_view_area (v), backing_store (0), width (0), height (0) {
     }
     ~ViewerAreaPrivate() {
         destroyBackingStore ();
     }
     void resizeSurface (Surface *s) {
 #ifdef KMPLAYER_WITH_CAIRO
-        int w = (int) s->bounds.width ();
-        int h = (int) s->bounds.height ();
-        if (s->surface) {
+        int w = m_view_area->width ();
+        int h = m_view_area->height ();
+        if ((w != width || h != height) && s->surface) {
             Display *d = QX11Info::display();
             //cairo_xlib_surface_set_size (s->surface, w, h);
             XFreePixmap (d, backing_store);
             backing_store = XCreatePixmap (d, m_view_area->winId (),
                     w, h, QX11Info::appDepth ());
             cairo_xlib_surface_set_drawable(s->surface, backing_store, w,h);
+            width = w;
+            height = h;
         }
 #endif
     }
@@ -1442,6 +1444,8 @@ public:
         Display * display = QX11Info::display ();
         backing_store = XCreatePixmap (display,
                 m_view_area->winId (), w, h, QX11Info::appDepth ());
+        width = w;
+        height = h;
         return cairo_xlib_surface_create (display, backing_store,
                 DefaultVisual (display, DefaultScreen (display)), w, h);
         /*return cairo_xlib_surface_create_with_xrender_format (
@@ -1470,6 +1474,8 @@ public:
     }
     ViewArea *m_view_area;
     Drawable backing_store;
+    int width;
+    int height;
 };
 }
 
@@ -1520,10 +1526,6 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         m_view->dockArea ()->restoreState (m_dock_state);
         for (unsigned i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (false);
-        m_view->controlPanel ()->scaleLabelAction->setVisible (false);
-        m_view->controlPanel ()->scaleAction->setVisible (false);
-        disconnect ( m_view->controlPanel ()->scale_slider,
-                SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (playlist_xpm)));
         unsetCursor();
     } else {
@@ -1533,12 +1535,6 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         setWindowState( windowState() | Qt::WindowFullScreen ); // set
         for (unsigned i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (true);
-        m_view->controlPanel ()->scaleLabelAction->setVisible (true);
-        m_view->controlPanel ()->scaleAction->setVisible (true);
-        m_view->controlPanel ()->scaleLabelAction->setEnabled (true);
-        m_view->controlPanel ()->scaleAction->setEnabled (true);
-        connect ( m_view->controlPanel ()->scale_slider,
-                SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (normal_window_xpm)));
         m_mouse_invisible_timer = startTimer(MOUSE_INVISIBLE_DELAY);
     }
@@ -1697,13 +1693,20 @@ KDE_NO_EXPORT void ViewArea::scale (int) {
 KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
     Single x, y, w = width (), h = height ();
     h -= m_view->statusBarHeight ();
-    h -= m_view->controlPanel ()->isVisible ()
+    h -= m_view->controlPanel ()->isVisible () && !m_fullscreen
         ? (m_view->controlPanelMode () == View::CP_Only
                 ? h
                 : (Single) m_view->controlPanel()->maximumSize ().height ())
         : Single (0);
     surface->resize (SRect (x, y, w, h));
     Mrl *mrl = surface->node ? surface->node->mrl () : NULL;
+    int scale = m_view->controlPanel ()->scale_slider->sliderPosition ();
+    int nw = w * scale / 100;
+    int nh = h * scale / 100;
+    x += (w - nw) / 2;
+    y += (h - nh) / 2;
+    w = nw;
+    h = nh;
     if (m_view->keepSizeRatio () &&
             w > 0 && h > 0 &&
             mrl && mrl->width > 0 && mrl->height > 0) {
@@ -1745,6 +1748,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     // now scale the regions and check if video region is already sized
     if (surface->node) {
         NodePtr n = surface->node;
+        d->destroyBackingStore ();
         surface = new ViewSurface (this);
         surface->node = n;
     }
@@ -1756,13 +1760,11 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         m_view->controlPanel ()->setGeometry (0, h-hcp-hsb, w, hcp);
     if (m_view->statusBar ()->isVisible ())
         m_view->statusBar ()->setGeometry (0, h-hsb, w, hsb);
-    if (m_fullscreen && wws == w && hws == h) {
-        int scale = m_view->controlPanel ()->scale_slider->sliderPosition ();
-        wws = wws * scale / 100;
-        hws = hws * scale / 100;
-        x += (w - wws) / 2;
-        y += (h - hws) / 2;
-    }
+    int scale = m_view->controlPanel ()->scale_slider->sliderPosition ();
+    wws = wws * scale / 100;
+    hws = hws * scale / 100;
+    x += (w - wws) / 2;
+    y += (h - hws) / 2;
     m_view->console ()->setGeometry (0, 0, w, h - hsb - hcp);
     m_view->picture ()->setGeometry (0, 0, w, h - hsb - hcp);
     if (!surface->node && video_widgets.size () == 1)

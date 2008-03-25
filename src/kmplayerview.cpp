@@ -222,6 +222,8 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
 
     m_infopanel = new InfoWindow (NULL, this);
 
+    connect (m_control_panel->scale_slider, SIGNAL (valueChanged (int)),
+             m_view_area, SLOT (scale (int)));
     setFocusPolicy (Qt::ClickFocus);
 
     setAcceptDrops (true);
