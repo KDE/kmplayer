@@ -621,7 +621,7 @@ void Settings::okPressed () {
             urlchanged = false;
         } else {
             if (KUrl (url.url ()).isLocalFile () || KUrl::isRelativeUrl (url.url ())) {
-                QFileInfo fi (url.url ());
+                QFileInfo fi (url.path ());
                 int hpos = url.url ().lastIndexOf ('#');
                 QString xine_directives ("");
                 while (!fi.exists () && hpos > -1) {
@@ -640,7 +640,7 @@ void Settings::okPressed () {
                     !sub_url.url ().isEmpty () &&
                     (KUrl (sub_url.url ()).isLocalFile () ||
                      KUrl::isRelativeUrl (sub_url.url ()))) {
-                QFileInfo sfi (sub_url.url ());
+                QFileInfo sfi (sub_url.path ());
                 if (!sfi.exists ()) {
                     KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.",sub_url.url ()), i18n ("Error"));
                     configdialog->m_SourcePageURL->sub_url->setUrl (QString ());
