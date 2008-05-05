@@ -68,6 +68,7 @@ target_link_libraries(kmplayercommon
   ${KDE4_KDEUI_LIBS}
   ${QT_QT3SUPPORT_LIBRARY}
   ${KDE4_KDE3SUPPORT_LIBRARY}
+  ${X11_X11_LIB}
   kmediaplayer
 )
 
