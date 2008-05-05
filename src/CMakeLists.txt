@@ -59,10 +59,9 @@ MESSAGE("extra ${CAIROCflags} ${GLibDBusCflags}  libs ${CAIROLinkFlags} ${GLibDB
 SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES COMPILE_FLAGS
     "${CAIROCflags} ${GLibDBusCflags}")
 
-SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES LINK_FLAGS
-    "${CAIROLinkFlags} ${GLibDBusLinkFlags}"
-)
 target_link_libraries(kmplayercommon
+  ${CAIROLinkFlags}
+  ${GLibDBusLinkFlags}
   ${KDE4_KDECORE_LIBS}
   ${KDE4_KPARTS_LIBS}
   ${KDE4_KDEUI_LIBS}
@@ -133,9 +132,8 @@ if (KMPLAYER_WITH_NPP)
     SET_TARGET_PROPERTIES(knpplayer PROPERTIES COMPILE_FLAGS
         "${GLibDBusCflags} ${GTKCflags} ${GThreadCflags}"
     )
-    SET_TARGET_PROPERTIES(knpplayer PROPERTIES LINK_FLAGS
-        "${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags}"
-    )
+
+    target_link_libraries(knpplayer ${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags})
 
     install(TARGETS knpplayer DESTINATION ${BIN_INSTALL_DIR})
 
