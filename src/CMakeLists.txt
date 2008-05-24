@@ -71,7 +71,7 @@ target_link_libraries(kmplayercommon
   kmediaplayer
 )
 
-install(TARGETS kmplayercommon DESTINATION ${LIB_INSTALL_DIR} )
+install(TARGETS kmplayercommon ${INSTALL_TARGETS_DEFAULT_ARGS} )
 
 ########### next target ###############
 
@@ -113,7 +113,7 @@ target_link_libraries(kdeinit_kmplayer
 
 target_link_libraries(kmplayer kdeinit_kmplayer)
 
-install(TARGETS kdeinit_kmplayer  DESTINATION ${LIB_INSTALL_DIR} )
+install(TARGETS kdeinit_kmplayer  ${INSTALL_TARGETS_DEFAULT_ARGS} )
 
 install(TARGETS kmplayer DESTINATION ${BIN_INSTALL_DIR})
 
