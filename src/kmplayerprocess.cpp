@@ -1363,6 +1363,10 @@ void MasterProcess::streamInfo (uint64_t length, double aspect) {
     m_source->setAspect (mrl (), aspect);
 }
 
+void MasterProcess::streamMetaInfo (QString info) {
+    ((PlayListNotify *) m_source)->setInfoMessage (info);
+}
+
 void MasterProcess::playing () {
     process_info->manager->player ()->setLoaded (100);
     setState (IProcess::Playing);
@@ -2489,7 +2493,7 @@ KDE_NO_EXPORT bool NpPlayer::ready () {
         return true;
     initProcess ();
     kDebug() << "NpPlayer::ready";
-    QString cmd ("knpplayer");
+    QString cmd ("knpplayer4");
     cmd += QString (" -cb ");
     cmd += service;
     cmd += path;

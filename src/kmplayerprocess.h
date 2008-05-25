@@ -316,6 +316,7 @@ public:
     virtual bool running () const;
 
     void streamInfo (uint64_t length, double aspect);
+    void streamMetaInfo (QString info);
     void loading (int p);
     void playing ();
     void progress (uint64_t pos);

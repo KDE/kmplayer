@@ -7,6 +7,9 @@
       <arg name="length" type="t" direction="in"/>
       <arg name="aspect" type="d" direction="in"/>
     </method>
+    <method name="streamMetaInfo">
+        <arg name="info" type="s" direction="in"/>
+    </method>
     <method name="loading">
       <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
       <arg name="percentage" type="i" direction="in"/>

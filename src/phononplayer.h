@@ -71,6 +71,7 @@ private Q_SLOTS:
 
     void hasVideoChanged (bool hasVideo);
     void bufferStatus (int percentFilled);
+    void metaDataChanged ();
     void tick (qint64 time);
     void stateChanged (Phonon::State newstate, Phonon::State oldstate);
     void finished ();

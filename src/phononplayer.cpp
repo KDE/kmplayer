@@ -117,6 +117,7 @@ void Stream::init () {
 
     connect(m_media,SIGNAL(hasVideoChanged(bool)), SLOT(hasVideoChanged(bool)));
     connect (m_media, SIGNAL (bufferStatus (int)), SLOT (bufferStatus (int)));
+    connect (m_media, SIGNAL (metaDataChanged ()), SLOT (metaDataChanged ()));
     connect (m_media, SIGNAL (tick (qint64)), SLOT (tick (qint64)));
     connect (m_media, SIGNAL (stateChanged(Phonon::State, Phonon::State)),
             SLOT (stateChanged (Phonon::State, Phonon::State)));
@@ -184,6 +185,33 @@ void Stream::bufferStatus (int percent_filled) {
             control_service, m_master_stream_path,
             "org.kde.kmplayer.StreamMaster", "loading");
     msg << percent_filled;
+    QDBusConnection::sessionBus().send (msg);
+}
+
+void Stream::metaDataChanged () {
+    QString info;
+
+    QString artist = m_media->metaData (Phonon::ArtistMetaData).join (" ");
+    QString title = m_media->metaData (Phonon::TitleMetaData).join (" ");
+    QString desc = m_media->metaData (Phonon::DescriptionMetaData).join (" ");
+    qDebug ("metadata artist:%s title:%s desc:%s",
+            artist.toUtf8 ().data (), title.toUtf8 ().data (), desc.toUtf8 ().data ());
+    if (!title.isEmpty ()) {
+        if (artist.isEmpty ())
+            info = QString ("<b>") + title + QString ("</b>");
+        else
+            info = QString ("<b>") + artist + QString( " - " ) + title + QString ("</b>");
+    }
+    if (!desc.isEmpty ()) {
+        if (!info.isEmpty ())
+            info += QString ("<hr>");
+        info += QString ("<i>") + desc + QString ("</i>");
+    }
+
+    QDBusMessage msg = QDBusMessage::createMethodCall (
+            control_service, m_master_stream_path,
+            "org.kde.kmplayer.StreamMaster", "streamMetaInfo");
+    msg << info;
     QDBusConnection::sessionBus().send (msg);
 }
 
