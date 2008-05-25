@@ -1822,7 +1822,7 @@ KDE_NO_EXPORT void ViewArea::scheduleRepaint (const IRect &rect) {
         m_repaint_rect = m_repaint_rect.unite (rect);
     } else {
         m_repaint_rect = rect;
-        m_repaint_timer = startTimer (12); // 50 per with one oversample
+        m_repaint_timer = startTimer (25);
     }
 }
 
