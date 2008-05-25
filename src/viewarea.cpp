@@ -1442,6 +1442,7 @@ public:
 #ifdef KMPLAYER_WITH_CAIRO
     cairo_surface_t *createSurface (int w, int h) {
         Display * display = QX11Info::display ();
+        destroyBackingStore ();
         backing_store = XCreatePixmap (display,
                 m_view_area->winId (), w, h, QX11Info::appDepth ());
         width = w;
