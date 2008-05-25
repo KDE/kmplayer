@@ -201,6 +201,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
         kmplayerpart_static->ref ();
     setComponentData (KMPlayerFactory::componentData ());
     init (actionCollection ());
+    createBookmarkMenu (m_view->controlPanel ()->bookmarkMenu, actionCollection ());
+    m_view->controlPanel ()->bookmarkAction->setVisible (true);
     ///*KAction *playact =*/ new KAction(i18n("P&lay"), QString ("player_play"), KShortcut (), this, SLOT(play ()), actionCollection (), "play");
     ///*KAction *pauseact =*/ new KAction(i18n("&Pause"), QString ("player_pause"), KShortcut (), this, SLOT(pause ()), actionCollection (), "pause");
     ///*KAction *stopact =*/ new KAction(i18n("&Stop"), QString ("player_stop"), KShortcut (), this, SLOT(stop ()), actionCollection (), "stop");

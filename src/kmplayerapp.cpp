@@ -593,6 +593,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
             this,SLOT (slotViewStatusBar ()),ac);
     viewMenuBar = KStandardAction::create (KStandardAction::ShowMenubar,
             this, SLOT (slotViewMenuBar ()), ac);
+
     /*fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
     new KAction (i18n ("Clear &History"), 0, 0, this, SLOT (slotClearHistory ()), ac, "clear_history");
     new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
@@ -635,8 +636,17 @@ KDE_NO_EXPORT void KMPlayerApp::initStatusBar () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initMenu () {
-    setXMLFile ("kmplayerui.rc");
-    createGUI (0); // first build the one from the kmplayerui.rc
+    createGUI ("kmplayerui.rc"); // first build the one from the kmplayerui.rc
+
+    //QAction *bookmark_action = actionCollection ()->addAction ("bookmarks");
+    QList<QAction *> acts = menuBar()->actions();
+    if (acts.size () > 2) {
+        KMenu *bookmark_menu = new KMenu (this);
+        QAction *bookmark_action = menuBar()->insertMenu (acts.at(2), bookmark_menu);
+        bookmark_action->setText (i18n( "&Bookmarks"));
+        m_player->createBookmarkMenu (bookmark_menu, actionCollection ());
+    }
+
     /*QMenu *bookmarkmenu = m_view->controlPanel()->bookmarkMenu;
     m_view->controlPanel()->bookmarkAction->setVisible (false);
     menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);

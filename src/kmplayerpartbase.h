@@ -42,6 +42,7 @@ class KBookmarkMenu;
 class KBookmarkManager;
 class QTextStream;
 class Q3ListViewItem;
+class KMenu;
 class KJob;
 class KSharedConfig;
 template<class T> class KSharedPtr;
@@ -130,6 +131,7 @@ public:
      * calls init() and reschedules an activate() on the source
      * */
     void setSource (Source * source);
+    void createBookmarkMenu (KMenu *owner, KActionCollection *ac);
     void connectPanel (ControlPanel * panel);
     void connectPlaylist (PlayListView * playlist);
     void connectInfoPanel (InfoWindow * infopanel);

@@ -153,7 +153,6 @@ void PartBase::init (KActionCollection * action_collection) {
     connect(m_settings, SIGNAL(configChanged()), this, SLOT(settingsChanged()));
     m_settings->readConfig ();
     m_settings->applyColorSetting (false);
-    m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner, m_view->controlPanel ()->bookmarkMenu, action_collection);
     connect (m_view, SIGNAL (urlDropped (const KUrl::List &)), this, SLOT (openUrl (const KUrl::List &)));
     connectPlaylist (m_view->playList ());
     connectInfoPanel (m_view->infoPanel ());
@@ -199,6 +198,10 @@ void PartBase::connectPanel (ControlPanel * panel) {
     connect (this, SIGNAL (statusUpdated (const QString &)),
              panel->view (), SLOT (setStatusMessage (const QString &)));
     //connect (panel (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
+}
+
+void PartBase::createBookmarkMenu (KMenu *owner, KActionCollection *ac) {
+    m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner, owner, ac);
 }
 
 void PartBase::connectPlaylist (PlayListView * playlist) {

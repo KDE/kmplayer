@@ -451,7 +451,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
 
     bookmarkMenu = new KMPlayerPopupMenu (this, i18n("&Bookmarks"));
     bookmarkAction = popupMenu->addMenu (bookmarkMenu);
-    //bookmarkAction->setVisible (false);
+    bookmarkAction->setVisible (false);
 
     languageMenu = new KMPlayerPopupMenu (this, i18n ("&Audio languages"));
     languageAction = popupMenu->addMenu (languageMenu);
