@@ -115,7 +115,7 @@ target_link_libraries(kmplayer kdeinit_kmplayer)
 
 install(TARGETS kdeinit_kmplayer  ${INSTALL_TARGETS_DEFAULT_ARGS} )
 
-install(TARGETS kmplayer DESTINATION ${BIN_INSTALL_DIR})
+install(TARGETS kmplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 install( FILES kmplayer.desktop  DESTINATION  ${SERVICES_INSTALL_DIR} )
 
@@ -135,7 +135,7 @@ if (KMPLAYER_WITH_NPP)
 
     target_link_libraries(knpplayer ${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags})
 
-    install(TARGETS knpplayer DESTINATION ${BIN_INSTALL_DIR})
+    install(TARGETS knpplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 endif (KMPLAYER_WITH_NPP)
 #kxineplayer
@@ -162,7 +162,7 @@ target_link_libraries(kphononplayer
   ${KDE4_PHONON_LIBS}
 )
 
-install(TARGETS kphononplayer DESTINATION ${BIN_INSTALL_DIR})
+install(TARGETS kphononplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 ########### install files ###############
 
