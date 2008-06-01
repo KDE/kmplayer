@@ -166,5 +166,5 @@ install(TARGETS kphononplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 ########### install files ###############
 
-install(FILES kmplayerui.rc kmplayerpartui.rc noise.gif pluginsinfo DESTINATION  ${DATA_INSTALL_DIR}/kmplayer)
+install(FILES kmplayerui.rc kmplayerpartui.rc noise.gif pluginsinfo bookmarks.xml DESTINATION  ${DATA_INSTALL_DIR}/kmplayer)
 #install(FILES kmplayer.kcfg  DESTINATION  ${KCFG_INSTALL_DIR})
