@@ -563,12 +563,13 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
         return; // both null or handled by playListItemClicked
     if (vi->node) {
         QString src = ri->source;
+        NodePtrW node = vi->node;
         //kDebug() << src << " " << vi->node->nodeName();
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
-        if (vi->node->isPlayable ()) {
-            source->play (vi->node->mrl ()); //may become !isPlayable by lazy loading
-            if (!vi->node->isPlayable ())
-                emit treeChanged (ri->id, vi->node, 0, false, true);
+        if (node->isPlayable ()) {
+            source->play (node->mrl ()); //may become !isPlayable by lazy loading
+            if (node && !node->isPlayable ())
+                emit treeChanged (ri->id, node, 0, false, true);
         } else if (vi->firstChild ())
             vi->listView ()->setOpen (vi, !vi->isOpen ());
     } else if (vi->m_attr) {
