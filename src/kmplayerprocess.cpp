@@ -967,7 +967,7 @@ static struct MPlayerPattern {
 } _mplayer_patterns [] = {
     { i18n ("Size pattern"), "Movie Size", "VO:.*[^0-9]([0-9]+)x([0-9]+)" },
     { i18n ("Cache pattern"), "Cache Fill", "Cache fill:[^0-9]*([0-9\\.]+)%" },
-    { i18n ("Position pattern"), "Movie Position", "V:\\s*([0-9\\.]+)" },
+    { i18n ("Position pattern"), "Movie Position", "[AV]:\\s*([0-9\\.]+)" },
     { i18n ("Index pattern"), "Index Pattern", "Generating Index: +([0-9]+)%" },
     { i18n ("Reference URL pattern"), "Reference URL Pattern", "Playing\\s+(.*[^\\.])\\.?\\s*$" },
     { i18n ("Reference pattern"), "Reference Pattern", "Reference Media file" },
