@@ -1848,7 +1848,6 @@ KDE_NO_EXPORT void ViewArea::addUpdater (Node *node) {
 }
 
 KDE_NO_EXPORT void ViewArea::removeUpdater (Node *node) {
-    kDebug() << node->nodeName();
     RepaintUpdater *prev = NULL;
     for (RepaintUpdater *r = m_updaters; r; r = r->next) {
         if (r->node.ptr () == node) {
@@ -1877,6 +1876,12 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
         if (m_fullscreen)
             setCursor (QCursor (Qt::BlankCursor));
     } else if (e->timerId () == m_repaint_timer) {
+        for (RepaintUpdater *r = m_updaters; r; r = m_updaters) {
+            if (m_updaters->node)
+                break;
+            m_updaters = r->next;
+            delete r;
+        }
         if (m_updaters) {
             EventPtr event = new UpdateEvent (m_updaters->node->document ());
             for (RepaintUpdater *r = m_updaters; r; ) {

@@ -2479,10 +2479,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
     if (trans_timer)
         document ()->cancelEvent (trans_timer);
-    if (trans_start_time) {
-        document ()->notify_listener->removeRepaintUpdater (this);
-        trans_start_time = 0;
-    }
+    document ()->notify_listener->removeRepaintUpdater (this);
     if (trans_out_timer)
         document ()->cancelEvent (trans_out_timer);
     TimedMrl::deactivate (); // keep region for runtime rest
@@ -2580,10 +2577,7 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::finish () {
-    if (trans_start_time) {
-        document ()->notify_listener->removeRepaintUpdater (this);
-        trans_start_time = 0;
-    }
+    document ()->notify_listener->removeRepaintUpdater (this);
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
     TimedMrl::finish ();
@@ -2714,7 +2708,6 @@ bool SMIL::MediaType::handleEvent (Event *event) {
                                (trans_end_time - trans_start_time);
             if (trans_gain > 0.9999) {
                 document ()->notify_listener->removeRepaintUpdater (this);
-                trans_start_time = 0;
                 if (!trans_out_active)
                     active_trans = NULL;
                 trans_gain = 1.0;
@@ -2726,10 +2719,8 @@ bool SMIL::MediaType::handleEvent (Event *event) {
         case event_timer: {
             TimerEvent *te = static_cast <TimerEvent *> (event);
             if (te->event_id == trans_out_timer_id) {
-                if (active_trans) {
+                if (active_trans)
                     document ()->notify_listener->removeRepaintUpdater (this);
-                    trans_start_time = 0;
-                }
                 trans_out_timer = NULL;
                 active_trans = trans_out;
                 Transition * trans = convertNode <Transition> (trans_out);
@@ -3468,6 +3459,9 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::deactivate () {
         document ()->cancelEvent (anim_timer);
     else
         document ()->notify_listener->removeRepaintUpdater (this);
+    if (spline_table)
+        free (spline_table);
+    spline_table = NULL;
     AnimateGroup::deactivate ();
 }
 
