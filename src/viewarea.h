@@ -34,6 +34,7 @@ namespace KMPlayer {
 class View;
 class IViewer;
 class ViewerAreaPrivate;
+class RepaintUpdater;
 
 /*
  * The area in which the video widget and controlpanel are laid out
@@ -50,6 +51,8 @@ public:
     Surface *getSurface (Mrl *mrl);
     void mouseMoved ();
     void scheduleRepaint (const IRect &rect);
+    void addUpdater (Node *node);
+    void removeUpdater (Node *node);
     void resizeEvent (QResizeEvent *);
     void minimalMode ();
     IViewer *createVideoWidget ();
@@ -81,6 +84,7 @@ private:
 
     QByteArray m_dock_state;
     ViewerAreaPrivate *d;
+    RepaintUpdater *m_updaters;
     View * m_view;
     KActionCollection * m_collection;
     SurfacePtr surface;

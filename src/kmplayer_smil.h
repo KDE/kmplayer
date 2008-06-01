@@ -633,8 +633,9 @@ public:
     Fit fit;
     int opacity;
     unsigned int bitrate;
-    unsigned int trans_step;
-    unsigned int trans_steps;
+    unsigned int trans_start_time;
+    unsigned int trans_end_time;
+    float trans_gain;
     EventPtrW trans_timer;
     EventPtrW trans_out_timer;
     enum { sens_opaque, sens_transparent, sens_percentage } sensitivity;
@@ -783,7 +784,7 @@ public:
 
     EventPtrW anim_timer;
 private:
-    bool timerTick();
+    bool timerTick (unsigned int cur_time);
     bool checkTarget (Node *n);
     bool setInterval ();
     void applyStep ();
@@ -798,10 +799,10 @@ private:
     int keytime_count;
     QStringList splines;
     float control_point[4];
-    unsigned int steps;
-    unsigned int cur_step;
     unsigned int keytime_steps;
     unsigned int interval;
+    unsigned int interval_start_time;
+    unsigned int interval_end_time;
     SizeType begin_x, begin_y;
     SizeType cur_x, cur_y;
     SizeType delta_x, delta_y;

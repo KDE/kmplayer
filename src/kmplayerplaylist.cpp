@@ -950,6 +950,14 @@ static inline void addTime (struct timeval & tv, int ms) {
     tv.tv_usec = (tv.tv_usec + ms*1000) % 1000000;
 }
 
+KDE_NO_CDTOR_EXPORT UpdateEvent::UpdateEvent (Document *doc)
+ : Event (NULL, event_update) {
+    struct timeval tv;
+    doc->timeOfDay (tv);
+    cur_event_time = doc->last_event_time;
+}
+
+//-----------------------------------------------------------------------------
 /*static inline void subtractTime (struct timeval & tv, int ms) {
     int sec = ms / 1000;
     int msec = ms % 1000;
@@ -967,8 +975,9 @@ void Document::timeOfDay (struct timeval & tv) {
     if (!first_event_time.tv_sec) {
         first_event_time = tv;
         last_event_time = 0;
-    } else
-        last_event_time = diffTime (tv, first_event_time) / 100;
+    } else {
+        last_event_time = diffTime (tv, first_event_time);
+    }
 }
 
 static bool postponedSensible (Event *e) {

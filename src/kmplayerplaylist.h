@@ -249,6 +249,7 @@ extern const unsigned int event_inbounds;
 extern const unsigned int event_outbounds;
 extern const unsigned int event_postponed;
 extern const unsigned int event_timer;
+extern const unsigned int event_update;
 extern const unsigned int event_started;
 extern const unsigned int event_stopped;
 extern const unsigned int mediatype_attached;
@@ -623,6 +624,11 @@ public:
      * Request to open url with mimetype
      */
     virtual void openUrl (const KUrl &, const QString &t, const QString &srv)=0;
+    /**
+     * Change repaint updaters
+     */
+    virtual void addRepaintUpdater (Node *node)=0;
+    virtual void removeRepaintUpdater (Node *node)=0;
 };
 
 class KMPLAYER_NO_EXPORT Surface : public TreeNode <Surface> {
@@ -676,6 +682,12 @@ public:
     unsigned event_id;
     int milli_sec;
     bool interval; // set to 'true' in 'Node::handleEvent()' to make it repeat
+};
+
+class KMPLAYER_NO_EXPORT UpdateEvent : public Event {
+public:
+    UpdateEvent (Document *);
+    unsigned int cur_event_time;
 };
 
 /**

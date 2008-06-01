@@ -1064,6 +1064,16 @@ void Source::openUrl (const KUrl &url, const QString &t, const QString &srv) {
     m_player->openUrl (url, t, srv);
 }
 
+void Source::addRepaintUpdater (Node *node) {
+    if (m_player->view ())
+        m_player->viewWidget ()->viewArea()->addUpdater (node);
+}
+
+void Source::removeRepaintUpdater (Node *node) {
+    if (m_player->view ())
+        m_player->viewWidget ()->viewArea()->removeUpdater (node);
+}
+
 void Source::insertURL (NodePtr node, const QString & mrl, const QString & title) {
     if (!node || !node->mrl ()) // this should always be false
         return;

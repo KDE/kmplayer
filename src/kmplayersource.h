@@ -132,6 +132,8 @@ protected:
     void setTimeout (int ms);
     MediaManager *mediaManager () const;
     void openUrl (const KUrl &url, const QString &target, const QString &srv);
+    void addRepaintUpdater (Node *node);
+    void removeRepaintUpdater (Node *node);
 
     NodePtr m_document;
     NodePtrW m_current;

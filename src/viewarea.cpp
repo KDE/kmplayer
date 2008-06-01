@@ -456,7 +456,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
     }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
-    float perc = trans->start_progress + (trans->end_progress - trans->start_progress)*cur_media->trans_step / cur_media->trans_steps;
+    float perc = trans->start_progress + (trans->end_progress - trans->start_progress)*cur_media->trans_gain;
     if (cur_media->trans_out_active)
         perc = 1.0 - perc;
     if (SMIL::Transition::Fade == trans->type) {
@@ -1478,12 +1478,22 @@ public:
     int width;
     int height;
 };
+
+class KMPLAYER_NO_EXPORT RepaintUpdater {
+public:
+    RepaintUpdater (Node *n, RepaintUpdater *nx) : node (n), next (nx) {}
+
+    NodePtrW node;
+    RepaintUpdater *next;
+};
+
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view)
 // : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
  : //QWidget (parent),
    d (new ViewerAreaPrivate (this)),
+   m_updaters (NULL),
    m_view (view),
    m_collection (new KActionCollection (this)),
    surface (new ViewSurface (this)),
@@ -1505,6 +1515,11 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view)
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
+    while (m_updaters) {
+        RepaintUpdater *tmp = m_updaters;
+        m_updaters = m_updaters->next;
+        delete tmp;
+    }
     delete d;
 }
 
@@ -1642,7 +1657,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
             cairo_rectangle (cr, ex, ey, ew, eh);
             //cairo_fill (cr);
             cairo_clip (cr);
-            cairo_paint_with_alpha (cr, .6);
+            cairo_paint_with_alpha (cr, .8);
             swap_rect = IRect (ex, ey, ew, eh).unite (m_update_rect);
             m_update_rect = IRect (ex, ey, ew, eh);
         } else {
@@ -1826,6 +1841,35 @@ KDE_NO_EXPORT void ViewArea::scheduleRepaint (const IRect &rect) {
     }
 }
 
+KDE_NO_EXPORT void ViewArea::addUpdater (Node *node) {
+    m_updaters = new RepaintUpdater (node, m_updaters);
+    if (!m_repaint_timer)
+        m_repaint_timer = startTimer (25);
+}
+
+KDE_NO_EXPORT void ViewArea::removeUpdater (Node *node) {
+    kDebug() << node->nodeName();
+    RepaintUpdater *prev = NULL;
+    for (RepaintUpdater *r = m_updaters; r; r = r->next) {
+        if (r->node.ptr () == node) {
+            if (prev)
+                prev->next = r->next;
+            else
+                m_updaters = r->next;
+            delete r;
+            break;
+        }
+        prev = r;
+    }
+    if (m_repaint_timer &&
+            !m_updaters &&
+            m_repaint_rect.isEmpty () &&
+            m_update_rect.isEmpty ()) {
+        killTimer (m_repaint_timer);
+        m_repaint_timer = 0;
+    }
+}
+
 KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
     if (e->timerId () == m_mouse_invisible_timer) {
         killTimer (m_mouse_invisible_timer);
@@ -1833,10 +1877,21 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
         if (m_fullscreen)
             setCursor (QCursor (Qt::BlankCursor));
     } else if (e->timerId () == m_repaint_timer) {
+        if (m_updaters) {
+            EventPtr event = new UpdateEvent (m_updaters->node->document ());
+            for (RepaintUpdater *r = m_updaters; r; ) {
+                RepaintUpdater *next = r->next;
+                if (r->node)
+                    r->node->handleEvent (event); // may call removeUpdater()
+                r = next;
+            }
+        }
         //repaint (m_repaint_rect, false);
-        syncVisual ();
-        m_repaint_rect = IRect ();
-        if (m_update_rect.isEmpty ()) {
+        if (!m_repaint_rect.isEmpty () || !m_update_rect.isEmpty ()) {
+            syncVisual ();
+            m_repaint_rect = IRect ();
+        }
+        if (m_update_rect.isEmpty () && !m_updaters) {
             killTimer (m_repaint_timer);
             m_repaint_timer = 0;
         }

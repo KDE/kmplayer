@@ -52,6 +52,7 @@ const unsigned int event_pointer_moved = (unsigned int) -11;
 const unsigned int event_timer = (unsigned int) -12;
 const unsigned int event_postponed = (unsigned int) -13;
 const unsigned int mediatype_attached = (unsigned int) -14;
+const unsigned int event_update = (unsigned int) -15;
 
 static const unsigned int start_timer_id = (unsigned int) 3;
 static const unsigned int dur_timer_id = (unsigned int) 4;
@@ -338,7 +339,7 @@ KDE_NO_EXPORT void Runtime::begin () {
                 con->connectee->state >= Node::state_began) {
             offset = beginTime ().offset;
             if (SMIL::TimedMrl::isTimedMrl (con->connectee))
-                offset -= element->document ()->last_event_time -
+                offset -= element->document ()->last_event_time/100 -
                     convertNode <SMIL::TimedMrl>(con->connectee)->begin_time;
             stop = false;
             kWarning() << "start trigger on started element";
@@ -349,7 +350,7 @@ KDE_NO_EXPORT void Runtime::begin () {
                 con->connectee->state >= Node::state_finished) {
             int offset = beginTime ().offset;
             if (SMIL::TimedMrl::isTimedMrl (con->connectee))
-                offset -= element->document ()->last_event_time -
+                offset -= element->document ()->last_event_time/100 -
                     convertNode<SMIL::TimedMrl>(con->connectee)->finish_time;
             stop = false;
             kWarning() << "start trigger on finished element";
@@ -1540,7 +1541,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::begin () {
-    begin_time = document ()->last_event_time;
+    begin_time = document ()->last_event_time/100;
     Element::begin ();
     runtime ()->propagateStop (false); //see whether this node has a livetime or not
 }
@@ -1563,7 +1564,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::finish () {
              m_runtime->state () == Runtime::timings_began)) {
         runtime ()->propagateStop (true); // reschedule through Runtime::stopped
     } else {
-        finish_time = document ()->last_event_time;
+        finish_time = document ()->last_event_time/100;
         NodePtrW guard = this;
         Mrl::finish ();
         if (guard && document ()->active ()) // check for reset
@@ -2091,7 +2092,7 @@ KDE_NO_EXPORT bool SMIL::Excl::handleEvent (Event *event) {
                         (cur_node->parentNode ().ptr ())->peers) {
                     case PriorityClass::PeersPause: {
                         ExclPauseVisitor visitor (
-                                true, this, document ()->last_event_time);
+                                true, this, document ()->last_event_time/100);
                         n->accept (&visitor);
                         priority_queue.insertBefore (
                                 new NodeRefItem (n), priority_queue.first ());
@@ -2117,7 +2118,7 @@ KDE_NO_EXPORT bool SMIL::Excl::handleEvent (Event *event) {
             cur_node = ref->data;
             priority_queue.remove (ref);
             stopped_connection = cur_node->connectTo (this, event_stopped);
-            ExclPauseVisitor visitor (false, this, document()->last_event_time);
+            ExclPauseVisitor visitor (false, this, document()->last_event_time/100);
             cur_node->accept (&visitor);
             // else TODO
         } else {
@@ -2356,7 +2357,7 @@ KDE_NO_EXPORT NodeRefListPtr SMIL::Area::listeners (unsigned int id) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, short id)
- : TimedMrl (d, id), m_type (t), bitrate (0), trans_step (0), trans_steps (0),
+ : TimedMrl (d, id), m_type (t), bitrate (0), trans_start_time (0),
    sensitivity (sens_opaque), trans_out_active (false), has_mouse (false),
    m_MediaAttached (new NodeRefList) {
 }
@@ -2455,6 +2456,7 @@ KDE_NO_EXPORT void SMIL::MediaType::boundsUpdate () {
 KDE_NO_EXPORT void SMIL::MediaType::init () {
     if (!inited) {
         trans_out_active = false;
+        trans_start_time = 0;
         fit = fit_default;
         opacity = 100;
         TimedMrl::init (); // sets all attributes
@@ -2473,11 +2475,14 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     region_mouse_leave = 0L;
     region_mouse_click = 0L;
     region_attach = 0L;
-    trans_step = trans_steps = 0;
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
     if (trans_timer)
         document ()->cancelEvent (trans_timer);
+    if (trans_start_time) {
+        document ()->notify_listener->removeRepaintUpdater (this);
+        trans_start_time = 0;
+    }
     if (trans_out_timer)
         document ()->cancelEvent (trans_out_timer);
     TimedMrl::deactivate (); // keep region for runtime rest
@@ -2533,16 +2538,10 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         Transition * trans = convertNode <Transition> (trans_in);
         if (trans && trans->supported ()) {
             active_trans = trans_in;
-            trans_step = 1;
-            if (Transition::Fade == trans->type) {
-                trans_steps = trans->dur;
-                trans_timer = document()->postEvent (
-                        this, new TimerEvent (100, trans_timer_id));
-            } else {
-                trans_steps = 4 * trans->dur;
-                trans_timer = document()->postEvent (
-                        this, new TimerEvent (25, trans_timer_id));
-            }
+            trans_gain = 0.0;
+            document ()->notify_listener->addRepaintUpdater (this);
+            trans_start_time = document ()->last_event_time;
+            trans_end_time = trans_start_time + 100 * trans->dur;
         }
         if (Runtime::dur_timer == runtime ()->durTime().durval &&
                 runtime ()->durTime().offset > 0) {
@@ -2581,9 +2580,9 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::finish () {
-    if (trans_timer && !keepContent (this)) {
-        document ()->cancelEvent (trans_timer);
-        ASSERT(!trans_timer);
+    if (trans_start_time) {
+        document ()->notify_listener->removeRepaintUpdater (this);
+        trans_start_time = 0;
     }
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
@@ -2709,32 +2708,36 @@ bool SMIL::MediaType::handleEvent (Event *event) {
             }
             return true;
         }
-        case event_timer: {
-            TimerEvent * te = static_cast <TimerEvent *> (event);
-            if (te->event_id == trans_timer_id) {
-                if (trans_step >= trans_steps)
+        case event_update: {
+            UpdateEvent *ue = static_cast <UpdateEvent *> (event);
+            trans_gain = 1.0 * (ue->cur_event_time - trans_start_time) /
+                               (trans_end_time - trans_start_time);
+            if (trans_gain > 0.9999) {
+                document ()->notify_listener->removeRepaintUpdater (this);
+                trans_start_time = 0;
+                if (!trans_out_active)
                     active_trans = NULL;
-                else
-                    te->interval = trans_step++ < trans_steps;
-                if (s && s->parentNode())
-                    s->parentNode()->repaint (s->bounds);
-                return true;
-            } else if (te->event_id == trans_out_timer_id) {
+                trans_gain = 1.0;
+            }
+            if (s && s->parentNode())
+                s->parentNode()->repaint (s->bounds);
+            return true;
+        }
+        case event_timer: {
+            TimerEvent *te = static_cast <TimerEvent *> (event);
+            if (te->event_id == trans_out_timer_id) {
+                if (active_trans) {
+                    document ()->notify_listener->removeRepaintUpdater (this);
+                    trans_start_time = 0;
+                }
+                trans_out_timer = NULL;
                 active_trans = trans_out;
                 Transition * trans = convertNode <Transition> (trans_out);
                 if (trans) {
-                    if (trans_timer) // eg. overlapping transIn/transOut
-                        document ()->cancelEvent (trans_timer);
-                    trans_step = 1;
-                    if (Transition::Fade == trans->type) {
-                        trans_steps = trans->dur;
-                        trans_timer = document()->postEvent (
-                                this, new TimerEvent (100, trans_timer_id));
-                    } else {
-                        trans_steps = 4 * trans->dur;
-                        trans_timer = document()->postEvent (
-                                this, new TimerEvent (25, trans_timer_id));
-                    }
+                    trans_gain = 0.0;
+                    document ()->notify_listener->addRepaintUpdater (this);
+                    trans_start_time = document ()->last_event_time;
+                    trans_end_time = trans_start_time + 100 * trans->dur;
                     trans_out_active = true;
                     if (s)
                         s->repaint ();
@@ -3354,8 +3357,7 @@ KDE_NO_EXPORT bool SMIL::Animate::timerTick () {
 KDE_NO_CDTOR_EXPORT SMIL::AnimateMotion::AnimateMotion (NodePtr &d)
  : AnimateGroup (d, id_node_animate),
    keytimes (NULL),
-   keytime_count (0),
-   steps (0) {}
+   keytime_count (0) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::AnimateMotion::~AnimateMotion () {
     if (keytimes)
@@ -3378,8 +3380,6 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
         keytimes = NULL;
         keytime_count = 0;
         splines.clear ();
-        steps = 0;
-        cur_step = 0;
         cur_x = cur_y = delta_x = delta_y = SizeType();
         AnimateGroup::init ();
     }
@@ -3436,16 +3436,17 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
     if (!setInterval ())
         return;
     applyStep ();
-    anim_timer = document ()->postEvent (this, new TimerEvent (25, anim_timer_id));
+    if (calc_discrete != calcMode)
+        document ()->notify_listener->addRepaintUpdater (this);
     AnimateGroup::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::finish () {
     if (anim_timer) // make sure timers are stopped
         document ()->cancelEvent (anim_timer);
+    document ()->notify_listener->removeRepaintUpdater (this);
     ASSERT (!anim_timer);
-    if (active () && (cur_step < steps || (interval > 1 && calcMode == calc_discrete))) {
-        steps = 0;
+    if (active ()) {
         if (cur_x.size () != end_x.size () || cur_y.size () != end_y.size ()) {
             cur_x = end_x;
             cur_y = end_y;
@@ -3458,6 +3459,8 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::finish () {
 KDE_NO_EXPORT void SMIL::AnimateMotion::deactivate () {
     if (anim_timer)
         document ()->cancelEvent (anim_timer);
+    else
+        document ()->notify_listener->removeRepaintUpdater (this);
     AnimateGroup::deactivate ();
 }
 
@@ -3465,10 +3468,14 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::handleEvent (Event *event) {
     if (event->id () == event_timer) {
         TimerEvent * te = static_cast <TimerEvent *> (event);
         if (te->event_id == anim_timer_id) {
-            if (timerTick ())
-                te->interval = true;
+            anim_timer = NULL;
+            timerTick (0);
             return true;
         }
+    } else if (event->id () == event_update) {
+        UpdateEvent *ue = static_cast <UpdateEvent *> (event);
+        timerTick (ue->cur_event_time);
+        return true;
     }
     return AnimateGroup::handleEvent (event);
 }
@@ -3558,19 +3565,17 @@ bool SMIL::AnimateMotion::setInterval () {
         runtime ()->propagateStop (true);
         return false;
     }
-    steps = cs * 4 / 10; // 40 per sec
-    cur_step = 0;
     cur_x = begin_x;
     cur_y = begin_y;
     delta_x = end_x;
     delta_x -= begin_x;
     delta_y = end_y;
     delta_y -= begin_y;
+    interval_start_time = document ()->last_event_time;
+    interval_end_time = interval_start_time + 10 * cs;
     switch (calcMode) {
         case calc_paced: // FIXME
         case calc_linear:
-            delta_x /= steps;
-            delta_y /= steps;
             break;
         case calc_spline:
             if (splines.size () > interval) {
@@ -3593,6 +3598,10 @@ bool SMIL::AnimateMotion::setInterval () {
                         " has not 4 values" << endl;
                 }
             }
+            break;
+        case calc_discrete:
+            anim_timer = document ()->postEvent (
+                    this, new TimerEvent (10 * cs, anim_timer_id));
             break;
         default:
             break;
@@ -3624,15 +3633,19 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::applyStep () {
     }
 }
 
-KDE_NO_EXPORT bool SMIL::AnimateMotion::timerTick () {
-    if (!anim_timer) {
-        kError () << "spurious animateMotion timer tick" << endl;
-    } else if (cur_step++ < steps) {
+KDE_NO_EXPORT bool SMIL::AnimateMotion::timerTick (unsigned int cur_time) {
+    if (cur_time && cur_time <= interval_end_time) {
+        float gain = 1.0 * (cur_time - interval_start_time) /
+                           (interval_end_time - interval_start_time);
         switch (calcMode) {
             case calc_paced: // FIXME
             case calc_linear:
-                cur_x += delta_x;
-                cur_y += delta_y;
+                cur_x = delta_x;
+                cur_y = delta_y;
+                cur_x *= gain;
+                cur_y *= gain;
+                cur_x += begin_x;
+                cur_y += begin_y;
                 break;
             case calc_spline: {
                 Point2D ps[4] = {
@@ -3641,7 +3654,7 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::timerTick () {
                     { control_point[2], control_point[3] },
                     { 1, 1 }
                 };
-                Point2D p = PointOnCubicBezier (ps, 1.0 * cur_step / steps);
+                Point2D p = PointOnCubicBezier (ps, gain);
                 cur_x = delta_x;
                 cur_y = delta_y;
                 cur_x *= p.y;
@@ -3663,7 +3676,6 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::timerTick () {
             return true;
         }
     }
-    anim_timer = NULL;
     return false;
 }
 
