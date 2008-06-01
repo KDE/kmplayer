@@ -3560,7 +3560,8 @@ bool SMIL::AnimateMotion::getCoordinates (const QString &coord, SizeType &x, Siz
     return false;
 }
 
-static SMIL::AnimateMotion::Point2D cubicBezier (SMIL::AnimateMotion::Point2D *cp, float ax, float bx, float cx, float ay, float by, float cy, float t) {
+static SMIL::AnimateMotion::Point2D cubicBezier (float ax, float bx, float cx,
+        float ay, float by, float cy, float t) {
     float   tSquared, tCubed;
     SMIL::AnimateMotion::Point2D result;
 
@@ -3630,12 +3631,7 @@ bool SMIL::AnimateMotion::setInterval () {
                     if (spline_table)
                         free (spline_table);
                     spline_table = (Point2D *) malloc (100 * sizeof (Point2D));
-                    Point2D ps[4] = {
-                        { 0, 0 },
-                        { control_point[0], control_point[1] },
-                        { control_point[2], control_point[3] },
-                        { 1, 1 }
-                    };
+
                     /* calculate the polynomial coefficients */
                     float ax, bx, cx;
                     float ay, by, cy;
@@ -3648,7 +3644,7 @@ bool SMIL::AnimateMotion::setInterval () {
                     ay = 1.0 - cy - by;
 
                     for (int i = 0; i < 100; ++i)
-                        spline_table[i] = cubicBezier (ps, ax, bx, cx, ay, by, cy, 1.0*i/100);
+                        spline_table[i] = cubicBezier (ax, bx, cx, ay, by, cy, 1.0*i/100);
                 } else {
                     kWarning () << "keySplines " << interval <<
                         " has not 4 values" << endl;
