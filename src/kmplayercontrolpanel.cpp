@@ -448,6 +448,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     colorMenu->insertItem (label);
     m_saturationSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
     colorMenu->insertItem (m_saturationSlider);*/
+    colorAction->setVisible (false);
 
     bookmarkMenu = new KMPlayerPopupMenu (this, i18n("&Bookmarks"));
     bookmarkAction = popupMenu->addMenu (bookmarkMenu);
