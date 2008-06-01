@@ -3144,7 +3144,7 @@ KDE_NO_EXPORT void SMIL::Set::begin () {
 }
 
 //-----------------------------------------------------------------------------
-
+/*
 //http://en.wikipedia.org/wiki/B%C3%A9zier_curve
 typedef struct {
     float x;
@@ -3157,7 +3157,7 @@ static Point2D PointOnCubicBezier (Point2D *cp, float t) {
     float   tSquared, tCubed;
     Point2D result;
 
-    /* calculate the polynomial coefficients */
+    // calculate the polynomial coefficients
 
     cx = 3.0 * (cp[1].x - cp[0].x);
     bx = 3.0 * (cp[2].x - cp[1].x) - cx;
@@ -3167,7 +3167,7 @@ static Point2D PointOnCubicBezier (Point2D *cp, float t) {
     by = 3.0 * (cp[2].y - cp[1].y) - cy;
     ay = cp[3].y - cp[0].y - cy - by;
 
-    /* calculate the curve point at parameter value t */
+    // calculate the curve point at parameter value t
 
     tSquared = t * t;
     tCubed = tSquared * t;
@@ -3177,6 +3177,7 @@ static Point2D PointOnCubicBezier (Point2D *cp, float t) {
 
     return result;
 }
+*/
 
 KDE_NO_CDTOR_EXPORT SMIL::Animate::Animate (NodePtr &d)
  : AnimateGroup (d, id_node_animate), change_by (0), steps (0) {}
@@ -3357,11 +3358,14 @@ KDE_NO_EXPORT bool SMIL::Animate::timerTick () {
 KDE_NO_CDTOR_EXPORT SMIL::AnimateMotion::AnimateMotion (NodePtr &d)
  : AnimateGroup (d, id_node_animate),
    keytimes (NULL),
+   spline_table (NULL),
    keytime_count (0) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::AnimateMotion::~AnimateMotion () {
     if (keytimes)
         free (keytimes);
+    if (spline_table)
+        free (spline_table);
 }
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
@@ -3379,6 +3383,9 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
             free (keytimes);
         keytimes = NULL;
         keytime_count = 0;
+        if (spline_table)
+            free (spline_table);
+        spline_table = NULL;
         splines.clear ();
         cur_x = cur_y = delta_x = delta_y = SizeType();
         AnimateGroup::init ();
@@ -3553,6 +3560,33 @@ bool SMIL::AnimateMotion::getCoordinates (const QString &coord, SizeType &x, Siz
     return false;
 }
 
+static SMIL::AnimateMotion::Point2D cubicBezier (SMIL::AnimateMotion::Point2D *cp, float ax, float bx, float cx, float ay, float by, float cy, float t) {
+    float   tSquared, tCubed;
+    SMIL::AnimateMotion::Point2D result;
+
+    /* calculate the curve point at parameter value t */
+
+    tSquared = t * t;
+    tCubed = tSquared * t;
+
+    result.x = (ax * tCubed) + (bx * tSquared) + (cx * t);
+    result.y = (ay * tCubed) + (by * tSquared) + (cy * t);
+
+    return result;
+}
+
+static
+float cubicBezier (SMIL::AnimateMotion::Point2D *table, int a, int b, float x) {
+    if (b > a + 1) {
+        int mid = (a + b) / 2;
+        if (table[mid].x > x)
+            return cubicBezier (table, a, mid, x);
+        else
+            return cubicBezier (table, mid, b, x);
+    }
+    return table[a].y + (x - table[a].x) / (table[b].x - table[a].x) * (table[b].y - table[a].y);
+}
+
 bool SMIL::AnimateMotion::setInterval () {
     int cs = 10 * runtime ()->durTime ().offset;
     if (keytime_count > interval + 1)
@@ -3593,6 +3627,28 @@ bool SMIL::AnimateMotion::setInterval () {
                             break;
                         }
                     }
+                    if (spline_table)
+                        free (spline_table);
+                    spline_table = (Point2D *) malloc (100 * sizeof (Point2D));
+                    Point2D ps[4] = {
+                        { 0, 0 },
+                        { control_point[0], control_point[1] },
+                        { control_point[2], control_point[3] },
+                        { 1, 1 }
+                    };
+                    /* calculate the polynomial coefficients */
+                    float ax, bx, cx;
+                    float ay, by, cy;
+                    cx = 3.0 * control_point[0];
+                    bx = 3.0 * (control_point[2] - control_point[0]) - cx;
+                    ax = 1.0 - cx - bx;
+
+                    cy = 3.0 * control_point[1];
+                    by = 3.0 * (control_point[3] - control_point[1]) - cy;
+                    ay = 1.0 - cy - by;
+
+                    for (int i = 0; i < 100; ++i)
+                        spline_table[i] = cubicBezier (ps, ax, bx, cx, ay, by, cy, 1.0*i/100);
                 } else {
                     kWarning () << "keySplines " << interval <<
                         " has not 4 values" << endl;
@@ -3637,6 +3693,10 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::timerTick (unsigned int cur_time) {
     if (cur_time && cur_time <= interval_end_time) {
         float gain = 1.0 * (cur_time - interval_start_time) /
                            (interval_end_time - interval_start_time);
+        if (gain > 1.0) {
+            document ()->notify_listener->removeRepaintUpdater (this);
+            gain = 1.0;
+        }
         switch (calcMode) {
             case calc_paced: // FIXME
             case calc_linear:
@@ -3647,22 +3707,17 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::timerTick (unsigned int cur_time) {
                 cur_x += begin_x;
                 cur_y += begin_y;
                 break;
-            case calc_spline: {
-                Point2D ps[4] = {
-                    { 0, 0 },
-                    { control_point[0], control_point[1] },
-                    { control_point[2], control_point[3] },
-                    { 1, 1 }
-                };
-                Point2D p = PointOnCubicBezier (ps, gain);
-                cur_x = delta_x;
-                cur_y = delta_y;
-                cur_x *= p.y;
-                cur_y *= p.y;
-                cur_x += begin_x;
-                cur_y += begin_y;
+            case calc_spline:
+                if (spline_table) {
+                    float y = cubicBezier (spline_table, 0, 99, gain);
+                    cur_x = delta_x;
+                    cur_y = delta_y;
+                    cur_x *= y;
+                    cur_y *= y;
+                    cur_x += begin_x;
+                    cur_y += begin_y;
+                }
                 break;
-            }
             case calc_discrete:
                 return true; // very sub-optimal timer
         }

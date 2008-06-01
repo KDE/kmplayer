@@ -770,6 +770,10 @@ private:
 
 class KMPLAYER_NO_EXPORT AnimateMotion : public AnimateGroup {
 public:
+    struct Point2D {
+        float x;
+        float y;
+    };
     AnimateMotion (NodePtr & d);
     ~AnimateMotion ();
     virtual void init ();
@@ -796,6 +800,7 @@ private:
     QString change_by;
     QStringList values;
     float *keytimes;
+    Point2D *spline_table;
     int keytime_count;
     QStringList splines;
     float control_point[4];
