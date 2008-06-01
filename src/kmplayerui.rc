@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE gui SYSTEM "kpartgui.dtd">
-<kpartgui name="kmplayer" version="29">
+<kpartgui name="kmplayer" version="30">
 <MenuBar>
   <Menu name="file"><text>&amp;File</text>
     <Action name="open"/>
@@ -9,7 +9,7 @@
     <Action name="save_as"/>
     <Action name="clear_history"/>
     <Separator/>
-    <Action name="source_pipe"/>
+    <!--Action name="source_pipe"/>
     <Menu name="vdr"><text>VD&amp;R</text>
       <Action name="vdr_connect"/>
       <Action name="vdr_key_up"/>
@@ -24,7 +24,7 @@
       <Action name="vdr_key_yellow"/>
       <Action name="vdr_key_blue"/>
       <Action name="vdr_key_custom"/>
-    </Menu>
+    </Menu-->
   </Menu>
   <Menu name="view"><text>&amp;View</text>
     <Action name="view_video"/>
