@@ -1074,6 +1074,11 @@ void Source::removeRepaintUpdater (Node *node) {
         m_player->viewWidget ()->viewArea()->removeUpdater (node);
 }
 
+void Source::enableRepaintUpdaters (bool enable, unsigned int off_time) {
+    if (m_player->view ())
+        m_player->viewWidget ()->viewArea()->enableUpdaters (enable, off_time);
+}
+
 void Source::insertURL (NodePtr node, const QString & mrl, const QString & title) {
     if (!node || !node->mrl ()) // this should always be false
         return;

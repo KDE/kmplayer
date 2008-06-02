@@ -54,6 +54,7 @@ public:
     void addUpdater (Node *node);
     void removeUpdater (Node *node);
     void resizeEvent (QResizeEvent *);
+    void enableUpdaters (bool enable, unsigned int off_time);
     void minimalMode ();
     IViewer *createVideoWidget ();
     void destroyVideoWidget (IViewer *widget);
@@ -97,6 +98,7 @@ private:
     int m_repaint_timer;
     bool m_fullscreen;
     bool m_minimal;
+    bool m_updaters_enabled;
 };
 
 /*

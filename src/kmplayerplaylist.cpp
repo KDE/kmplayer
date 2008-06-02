@@ -230,8 +230,12 @@ void Node::defer () {
 
 void Node::undefer () {
     if (state == state_deferred) {
-        setState (state_activated);
-        activate ();
+        if (firstChild () && firstChild ()->state > state_init) {
+            state = state_began;
+        } else {
+            setState (state_activated);
+            activate ();
+        }
     } else
         kWarning () << nodeName () << " call on not deferred element";
 }
@@ -950,8 +954,8 @@ static inline void addTime (struct timeval & tv, int ms) {
     tv.tv_usec = (tv.tv_usec + ms*1000) % 1000000;
 }
 
-KDE_NO_CDTOR_EXPORT UpdateEvent::UpdateEvent (Document *doc)
- : Event (NULL, event_update) {
+KDE_NO_CDTOR_EXPORT UpdateEvent::UpdateEvent (Document *doc, unsigned int skip)
+ : Event (NULL, event_update), skipped_time (skip) {
     struct timeval tv;
     doc->timeOfDay (tv);
     cur_event_time = doc->last_event_time;
@@ -1176,6 +1180,8 @@ PostponePtr Document::postpone () {
     PostponePtr p = new Postpone (this);
     postpone_ref = p;
     propagateEvent (new PostponedEvent (true));
+    if (notify_listener)
+        notify_listener->enableRepaintUpdaters (false, 0);
     if (!cur_event) {
         struct timeval now;
         if (event_queue) // save a sys call
@@ -1188,15 +1194,17 @@ PostponePtr Document::postpone () {
 void Document::proceed (const struct timeval &postponed_time) {
     kDebug () << "proceed";
     postpone_ref = NULL;
+    struct timeval now;
+    timeOfDay (now);
+    int diff = diffTime (now, postponed_time);
     if (event_queue) {
-        struct timeval now;
-        timeOfDay (now);
-        int diff = diffTime (now, postponed_time);
         for (EventData *ed = event_queue; ed; ed = ed->next)
             if (ed->event && postponedSensible (ed->event))
                 addTime (ed->timeout, diff);
         setNextTimeout (now);
     }
+    if (notify_listener)
+        notify_listener->enableRepaintUpdaters (true, diff);
     propagateEvent (new PostponedEvent (false));
 }
 

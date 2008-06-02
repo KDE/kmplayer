@@ -2704,6 +2704,10 @@ bool SMIL::MediaType::handleEvent (Event *event) {
         }
         case event_update: {
             UpdateEvent *ue = static_cast <UpdateEvent *> (event);
+
+            trans_start_time += ue->skipped_time;
+            trans_end_time += ue->skipped_time;
+
             trans_gain = 1.0 * (ue->cur_event_time - trans_start_time) /
                                (trans_end_time - trans_start_time);
             if (trans_gain > 0.9999) {
@@ -3475,6 +3479,8 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::handleEvent (Event *event) {
         }
     } else if (event->id () == event_update) {
         UpdateEvent *ue = static_cast <UpdateEvent *> (event);
+        interval_start_time += ue->skipped_time;
+        interval_end_time += ue->skipped_time;
         timerTick (ue->cur_event_time);
         return true;
     }

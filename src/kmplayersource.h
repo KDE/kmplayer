@@ -134,6 +134,7 @@ protected:
     void openUrl (const KUrl &url, const QString &target, const QString &srv);
     void addRepaintUpdater (Node *node);
     void removeRepaintUpdater (Node *node);
+    void enableRepaintUpdaters (bool enable, unsigned int off_time);
 
     NodePtr m_document;
     NodePtrW m_current;

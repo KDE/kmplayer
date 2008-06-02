@@ -629,6 +629,7 @@ public:
      */
     virtual void addRepaintUpdater (Node *node)=0;
     virtual void removeRepaintUpdater (Node *node)=0;
+    virtual void enableRepaintUpdaters (bool enable, unsigned int off_time)=0;
 };
 
 class KMPLAYER_NO_EXPORT Surface : public TreeNode <Surface> {
@@ -686,8 +687,9 @@ public:
 
 class KMPLAYER_NO_EXPORT UpdateEvent : public Event {
 public:
-    UpdateEvent (Document *);
+    UpdateEvent (Document *, unsigned int off_time);
     unsigned int cur_event_time;
+    unsigned int skipped_time;
 };
 
 /**

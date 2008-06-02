@@ -1500,7 +1500,8 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view)
    m_mouse_invisible_timer (0),
    m_repaint_timer (0),
    m_fullscreen (false),
-   m_minimal (false) {
+   m_minimal (false),
+   m_updaters_enabled (true) {
 #ifdef KMPLAYER_WITH_CAIRO
     setAttribute (Qt::WA_OpaquePaintEvent, true);
     setAttribute (Qt::WA_PaintOnScreen, true);
@@ -1861,9 +1862,44 @@ KDE_NO_EXPORT void ViewArea::removeUpdater (Node *node) {
         prev = r;
     }
     if (m_repaint_timer &&
-            !m_updaters &&
+            (!m_updaters_enabled || !m_updaters) &&
             m_repaint_rect.isEmpty () &&
             m_update_rect.isEmpty ()) {
+        killTimer (m_repaint_timer);
+        m_repaint_timer = 0;
+    }
+}
+
+static RepaintUpdater *getFirstUpdater (RepaintUpdater *updaters) {
+    for (RepaintUpdater *r = updaters; r; r = updaters) {
+        if (updaters->node)
+            return updaters;
+        updaters = r->next;
+        delete r;
+    }
+    return NULL;
+}
+
+static void propagateUpdatersEvent (RepaintUpdater *updaters, Event *event) {
+    for (RepaintUpdater *r = updaters; r; ) {
+        RepaintUpdater *next = r->next;
+        if (r->node)
+            r->node->handleEvent (event); // may call removeUpdater()
+        r = next;
+    }
+}
+
+KDE_NO_EXPORT
+void ViewArea::enableUpdaters (bool enable, unsigned int skip) {
+    m_updaters_enabled = enable;
+    m_updaters = getFirstUpdater (m_updaters);
+    if (enable && m_updaters) {
+        EventPtr event = new UpdateEvent (m_updaters->node->document (), skip);
+        propagateUpdatersEvent (m_updaters, event);
+        if (!m_repaint_timer)
+            m_repaint_timer = startTimer (25);
+    } else if (!enable && m_repaint_timer &&
+            m_repaint_rect.isEmpty () && m_update_rect.isEmpty ()) {
         killTimer (m_repaint_timer);
         m_repaint_timer = 0;
     }
@@ -1876,27 +1912,17 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
         if (m_fullscreen)
             setCursor (QCursor (Qt::BlankCursor));
     } else if (e->timerId () == m_repaint_timer) {
-        for (RepaintUpdater *r = m_updaters; r; r = m_updaters) {
-            if (m_updaters->node)
-                break;
-            m_updaters = r->next;
-            delete r;
-        }
-        if (m_updaters) {
-            EventPtr event = new UpdateEvent (m_updaters->node->document ());
-            for (RepaintUpdater *r = m_updaters; r; ) {
-                RepaintUpdater *next = r->next;
-                if (r->node)
-                    r->node->handleEvent (event); // may call removeUpdater()
-                r = next;
-            }
+        m_updaters = getFirstUpdater (m_updaters);
+        if (m_updaters_enabled && m_updaters) {
+            EventPtr event = new UpdateEvent (m_updaters->node->document (), 0);
+            propagateUpdatersEvent (m_updaters, event);
         }
         //repaint (m_repaint_rect, false);
         if (!m_repaint_rect.isEmpty () || !m_update_rect.isEmpty ()) {
             syncVisual ();
             m_repaint_rect = IRect ();
         }
-        if (m_update_rect.isEmpty () && !m_updaters) {
+        if (m_update_rect.isEmpty () && (!m_updaters_enabled || !m_updaters)) {
             killTimer (m_repaint_timer);
             m_repaint_timer = 0;
         }
