@@ -288,8 +288,10 @@ static char *nsVariant2Str (const NPVariant *value) {
     switch (value->type) {
         case NPVariantType_String:
             str = (char *) malloc (value->value.stringValue.utf8length + 3);
-            snprintf (str, value->value.stringValue.utf8length + 3,
-                    "'%s'", value->value.stringValue.utf8characters);
+            str[0] = str[value->value.stringValue.utf8length + 1] = '\'';
+            strncpy (str + 1, value->value.stringValue.utf8characters,
+                    value->value.stringValue.utf8length);
+            str[value->value.stringValue.utf8length + 2] = 0;
             break;
         case NPVariantType_Int32:
             str = (char *) malloc (16);
