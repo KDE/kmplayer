@@ -1059,7 +1059,7 @@ QString KMPlayerLiveConnectExtension::evaluate (const QString &script) {
     args.push_back(qMakePair(KParts::LiveConnectExtension::TypeString, script));
     script_result.clear ();
     emit partEvent (0, "eval", args);
-    kDebug() << script << script_result;
+    //kDebug() << script << script_result;
     return script_result;
 }
 
@@ -1159,7 +1159,6 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
         rval = "Access denied";
         return true;
     }
-    kDebug () << "[01;35mget[00m " << name;
     rid = id;
     QString req_result;
     emit requestGet (id, name, &req_result);
@@ -1167,6 +1166,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
         if (str2LC (req_result, type, rval))
             return true;
     }
+    kDebug () << "[01;35mget[00m " << name;
     const char * str = name.ascii ();
     const JSCommandEntry * entry = getJSCommandEntry (str);
     if (!entry)

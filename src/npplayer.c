@@ -288,7 +288,8 @@ static char *nsVariant2Str (const NPVariant *value) {
     switch (value->type) {
         case NPVariantType_String:
             str = (char *) malloc (value->value.stringValue.utf8length + 3);
-            sprintf (str, "'%s'", value->value.stringValue.utf8characters);
+            snprintf (str, value->value.stringValue.utf8length + 3,
+                    "'%s'", value->value.stringValue.utf8characters);
             break;
         case NPVariantType_Int32:
             str = (char *) malloc (16);
@@ -1171,7 +1172,7 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     }
     if (width > 0 && height > 0)
         callFunction (-1, "dimension",
-                DBUS_TYPE_UINT32, &width, DBUS_TYPE_UINT32, &height,
+                DBUS_TYPE_INT32, &width, DBUS_TYPE_INT32, &height,
                 DBUS_TYPE_INVALID);
 
     npp = (NPP_t*)malloc (sizeof (NPP_t));
@@ -1250,9 +1251,25 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
     const char *sender = dbus_message_get_sender (msg);
     const char *iface = "org.kde.kmplayer.backend";
     (void)user_data; (void)connection;
+
+    if (dbus_message_get_type (msg) == DBUS_MESSAGE_TYPE_SIGNAL)
+        return DBUS_HANDLER_RESULT_HANDLED;
+
+    if (dbus_message_get_type (msg) == DBUS_MESSAGE_TYPE_ERROR) {
+        if (dbus_message_iter_init (msg, &args) &&
+                DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
+            char *param = 0;
+            dbus_message_iter_get_basic (&args, &param);
+            print ("dbusFilter error %s\n", param);
+        }
+        return DBUS_HANDLER_RESULT_HANDLED;
+    }
+
     if (!dbus_message_has_destination (msg, service_name))
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-    print ("dbusFilter %s %s\n", sender,dbus_message_get_interface (msg));
+
+    print ("dbusFilter %s %s %s\n", sender, dbus_message_get_interface (msg),
+            dbus_message_get_signature (msg));
     if (dbus_message_is_method_call (msg, iface, "play")) {
         DBusMessageIter ait;
         char *param = 0;

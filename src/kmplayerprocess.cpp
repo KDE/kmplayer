@@ -2670,11 +2670,18 @@ void NpPlayer::requestGet (const uint32_t id, const QString &prop, QString *res)
             remote_service, "/plugin", "org.kde.kmplayer.backend", "get");
     msg << id << prop;
     QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg);
-    kDebug() << "get " << prop << rmsg.arguments ().size ();
-    if (rmsg.arguments ().size ()) {
-        QString s = rmsg.arguments ().first ().toString ();
-        if (s != "error")
-            *res = s;
+    if (rmsg.type () == QDBusMessage::ReplyMessage) {
+        kDebug() << "get " << prop << rmsg.arguments ().size ();
+        if (rmsg.arguments ().size ()) {
+            QString s = rmsg.arguments ().first ().toString ();
+            if (s != "error")
+                *res = s;
+        } else {
+            *res = QString ("'null'"); //FIXME
+        }
+    } else {
+        kError() << "get" << prop << rmsg.type () << rmsg.errorMessage ();
+        *res = QString ("'null'"); //FIXME
     }
 }
 
