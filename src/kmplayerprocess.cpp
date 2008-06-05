@@ -2594,7 +2594,7 @@ void NpPlayer::sendFinish (Q_UINT32 sid, Q_UINT32 bytes, NpStream::Reason becaus
     kDebug() << "NpPlayer::sendFinish " << sid << " bytes:" << bytes;
     if (running ()) {
         uint32_t reason = (int) because;
-        QString objpath = QString ("/plugin/stream_%1").arg (sid);
+        QString objpath = QString ("/stream_%1").arg (sid);
         QDBusMessage msg = QDBusMessage::createMethodCall (
                 remote_service, objpath, "org.kde.kmplayer.backend", "eof");
         msg << bytes << reason;
@@ -2655,7 +2655,7 @@ KDE_NO_EXPORT void NpPlayer::streamStateChanged () {
 KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t sid, const KUrl &u) {
     if (running ()) {
         kDebug() << "redirected " << sid << " to " << u.url();
-        QString objpath = QString ("/plugin/stream_%1").arg (sid);
+        QString objpath = QString ("/stream_%1").arg (sid);
         QDBusMessage msg = QDBusMessage::createMethodCall (
                 remote_service, objpath, "org.kde.kmplayer.backend", "redirected");
         msg << u.url ();
@@ -2669,9 +2669,9 @@ void NpPlayer::requestGet (const uint32_t id, const QString &prop, QString *res)
     QDBusMessage msg = QDBusMessage::createMethodCall (
             remote_service, "/plugin", "org.kde.kmplayer.backend", "get");
     msg << id << prop;
-    QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg);
+    QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg, QDBus::BlockWithGui);
     if (rmsg.type () == QDBusMessage::ReplyMessage) {
-        kDebug() << "get " << prop << rmsg.arguments ().size ();
+        //kDebug() << "get " << prop << rmsg.arguments ().size ();
         if (rmsg.arguments ().size ()) {
             QString s = rmsg.arguments ().first ().toString ();
             if (s != "error")
@@ -2690,8 +2690,8 @@ KDE_NO_EXPORT void NpPlayer::requestCall (const uint32_t id, const QString &func
     QDBusMessage msg = QDBusMessage::createMethodCall (
             remote_service, "/plugin", "org.kde.kmplayer.backend", "call");
     msg << id << func << args;
-    QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg);
-    kDebug() << "call " << func << rmsg.arguments ().size ();
+    QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg, QDBus::BlockWithGui);
+    //kDebug() << "call " << func << rmsg.arguments ().size ();
     if (rmsg.arguments ().size ()) {
         QString s = rmsg.arguments ().first ().toString ();
         if (s != "error")
@@ -2753,7 +2753,7 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
     //kDebug() << "NpPlayer::processStreams " << stream;
     if (stream) {
         if (!stream->bytes && (!stream->mimetype.isEmpty() || stream->content_length)) {
-            QString objpath = QString ("/plugin/stream_%1").arg (stream->stream_id);
+            QString objpath = QString ("/stream_%1").arg (stream->stream_id);
             QDBusMessage msg = QDBusMessage::createMethodCall (
                     remote_service, objpath, "org.kde.kmplayer.backend", "streamInfo");
             msg << stream->mimetype << stream->content_length;

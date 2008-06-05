@@ -1229,7 +1229,6 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
   (const unsigned long id, const QString & name,
    const QStringList & args, KParts::LiveConnectExtension::Type & type,
    unsigned long & rid, QString & rval) {
-    kDebug () << "[01;35mentry[00m " << name;
     QString req_result;
     QStringList arglst;
     for (QList<QString>::const_iterator i = args.begin (); i != args.end (); ++i) {
@@ -1252,6 +1251,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
         if (str2LC (req_result, type, rval))
             return true;
     }
+    kDebug () << "[01;35mentry[00m " << name;
     const JSCommandEntry * entry = lastJSCommandEntry;
     const char * str = name.ascii ();
     if (!entry || strcmp (entry->name, str))

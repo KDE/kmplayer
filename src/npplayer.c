@@ -56,6 +56,7 @@ static gchar *object_url;
 static gchar *mimetype;
 
 static DBusConnection *dbus_connection;
+static DBusObjectPathVTable stream_vtable;
 static char *service_name;
 static gchar *callback_service;
 static gchar *callback_path;
@@ -109,6 +110,10 @@ static void callFunction(int stream, const char *func, int first_arg_type, ...);
 static void readStdin (gpointer d, gint src, GdkInputCondition cond);
 static char *evaluate (const char *script, bool store);
 
+static
+DBusHandlerResult dbusStreamMessage(DBusConnection *c, DBusMessage *m, void *u);
+static void dbusStreamUnregister (DBusConnection *conn, void *user_data);
+
 /*----------------%<---------------------------------------------------------*/
 
 static void print (const char * format, ...) {
@@ -117,6 +122,14 @@ static void print (const char * format, ...) {
     vprintf (format, vl);
     va_end (vl);
     fflush (stdout);
+}
+
+static void *nsAlloc (uint32 size) {
+    return g_malloc (size);
+}
+
+static void nsMemFree (void* ptr) {
+    g_free (ptr);
 }
 
 static void createPath (int stream, char *buf, int buf_len) {
@@ -135,20 +148,24 @@ static gint streamCompare (gconstpointer a, gconstpointer b) {
 }
 
 static void freeStream (StreamInfo *si) {
+    char stream_name[64];
+    sprintf (stream_name, "/stream_%d", (long) si->np_stream.ndata);
     if (!g_tree_remove (stream_list, si->np_stream.ndata))
         print ("WARNING freeStream not in tree\n");
+    else
+        dbus_connection_unregister_object_path (dbus_connection, stream_name);
     g_free (si->url);
     if (si->mimetype)
         g_free (si->mimetype);
     if (si->target)
         g_free (si->target);
-    free (si);
+    nsMemFree (si);
 }
 
 static gboolean requestStream (void * p) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
     if (si) {
-        char *path = (char *)malloc (64);
+        char *path = (char *)nsAlloc (64);
         char *target = si->target ? si->target : g_strdup ("");
         if (!callback_service)
             current_stream_id = p;
@@ -159,7 +176,7 @@ static gboolean requestStream (void * p) {
                 DBUS_TYPE_STRING, &path,
                 DBUS_TYPE_STRING, &si->url,
                 DBUS_TYPE_STRING, &target, DBUS_TYPE_INVALID);
-        free (path);
+        nsMemFree (path);
         if (!si->target)
             g_free (target);
     } else {
@@ -243,7 +260,8 @@ static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
 }
 
 static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify_data, bool notify) {
-    StreamInfo *si = (StreamInfo *) malloc (sizeof (StreamInfo));
+    StreamInfo *si = (StreamInfo *) nsAlloc (sizeof (StreamInfo));
+    char stream_name[64];
 
     memset (si, 0, sizeof (StreamInfo));
     si->url = g_strdup (url);
@@ -256,6 +274,10 @@ static StreamInfo *addStream (const char *url, const char *mime, const char *tar
     si->notify = notify;
     si->np_stream.ndata = (void *) (long) (stream_id_counter++);
     print ("add stream %d\n", (long) si->np_stream.ndata);
+    sprintf (stream_name, "/stream_%d", (long) si->np_stream.ndata);
+    if (!dbus_connection_register_object_path (dbus_connection, stream_name,
+                &stream_vtable, si))
+        g_printerr ("dbus_connection_register_object_path error\n");
     g_tree_insert (stream_list, si->np_stream.ndata, si);
 
     g_timeout_add (0, requestStream, si->np_stream.ndata);
@@ -271,7 +293,7 @@ static void createJsName (JsObject * obj, char **name, uint32_t * len) {
         *len += slen + 1;
         createJsName (obj->parent, name, len);
     } else {
-        *name = (char *) malloc (*len + slen + 1);
+        *name = (char *) nsAlloc (*len + slen + 1);
         *(*name + *len + slen) = 0;
         *len = 0;
     }
@@ -287,18 +309,18 @@ static char *nsVariant2Str (const NPVariant *value) {
     char *str;
     switch (value->type) {
         case NPVariantType_String:
-            str = (char *) malloc (value->value.stringValue.utf8length + 3);
+            str = (char *) nsAlloc (value->value.stringValue.utf8length + 3);
             str[0] = str[value->value.stringValue.utf8length + 1] = '\'';
             strncpy (str + 1, value->value.stringValue.utf8characters,
                     value->value.stringValue.utf8length);
             str[value->value.stringValue.utf8length + 2] = 0;
             break;
         case NPVariantType_Int32:
-            str = (char *) malloc (16);
+            str = (char *) nsAlloc (16);
             snprintf (str, 15, "%d", value->value.intValue);
             break;
         case NPVariantType_Double:
-            str = (char *) malloc (64);
+            str = (char *) nsAlloc (64);
             snprintf (str, 63, "%f", value->value.doubleValue);
             break;
         case NPVariantType_Bool:
@@ -314,7 +336,7 @@ static char *nsVariant2Str (const NPVariant *value) {
                 uint32_t vlen = 0;
                 createJsName (jv, &val, &vlen);
                 str = strdup (val);
-                free (val);
+                nsMemFree (val);
             } else {
                 str = strdup ("null"); /* TODO track plugin objects */
             }
@@ -333,7 +355,7 @@ static NPObject * nsCreateObject (NPP instance, NPClass *aClass) {
     if (aClass && aClass->allocate) {
         obj = aClass->allocate (instance, aClass);
     } else {
-        obj = (NPObject *) malloc (sizeof (NPObject));
+        obj = (NPObject *) nsAlloc (sizeof (NPObject));
         memset (obj, 0, sizeof (NPObject));
         obj->_class = aClass;
         /*obj = js_class.allocate (instance, &js_class);/ *add null class*/
@@ -411,14 +433,6 @@ static const char* nsUserAgent (NPP instance) {
     (void)instance;
     print ("NPN_UserAgent\n");
     return "";
-}
-
-static void *nsAlloc (uint32 size) {
-    return malloc (size);
-}
-
-static void nsMemFree (void* ptr) {
-    free (ptr);
 }
 
 static uint32 nsMemFlush (uint32 size) {
@@ -657,13 +671,13 @@ static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
     print ("NPN_Evaluate:");
     escaped = g_strescape (script->utf8characters, "");
     str.utf8length = strlen (escaped) + 9;
-    jsscript = (char *) malloc (str.utf8length);
+    jsscript = (char *) nsAlloc (str.utf8length);
     sprintf (jsscript, "eval(\"%s\")", escaped);
     str.utf8characters = jsscript;
 
     res = doEvaluate (instance, npobj, &str, result);
 
-    free (jsscript);
+    nsMemFree (jsscript);
     g_free (escaped);
 
     return res;
@@ -749,8 +763,8 @@ static bool doInvoke (uint32_t obj, const char *func, GSList *arglst,
                 GSList *sl;
                 int i;
                 if (arg_count) {
-                    args = (NPVariant *) malloc (arg_count * sizeof (NPVariant *));
-                    memset (args, 0, arg_count * sizeof (NPVariant *));
+                    args = (NPVariant *) nsAlloc (arg_count * sizeof (NPVariant));
+                    memset (args, 0, arg_count * sizeof (NPVariant));
                     for (sl = arglst, i = 0; sl; sl = sl->next, i++)
                         str2NPVariant (npp, (const char *) sl->data, args + i);
                 }
@@ -764,7 +778,7 @@ static bool doInvoke (uint32_t obj, const char *func, GSList *arglst,
                 if (args) {
                     for (sl = arglst, i = 0; sl; sl = sl->next, i++)
                         nsReleaseVariantValue (args + i);
-                    free (args);
+                    nsMemFree (args);
                 }
             }
             nsReleaseObject (npobj);
@@ -813,7 +827,7 @@ static bool doGet (uint32_t obj, const char *prop, char **resultstring) {
 static NPObject * windowClassAllocate (NPP instance, NPClass *aClass) {
     (void)instance;
     /*print ("windowClassAllocate\n");*/
-    JsObject * jo = (JsObject *) malloc (sizeof (JsObject));
+    JsObject * jo = (JsObject *) nsAlloc (sizeof (JsObject));
     memset (jo, 0, sizeof (JsObject));
     jo->npobject._class = aClass;
     return (NPObject *) jo;
@@ -825,11 +839,11 @@ static void windowClassDeallocate (NPObject *npobj) {
     if (jo->parent) {
         nsReleaseObject ((NPObject *) jo->parent);
     } else if (jo->name && !strncmp (jo->name, "this.__kmplayer__obj_", 21)) {
-        char *script = (char *) malloc (strlen (jo->name) + 7);
+        char *script = (char *) nsAlloc (strlen (jo->name) + 7);
         char *result;
         sprintf (script, "%s=null;", jo->name);
         result = evaluate (script, false);
-        free (script);
+        nsMemFree (script);
         g_free (result);
     }
     if (jo->name)
@@ -838,7 +852,7 @@ static void windowClassDeallocate (NPObject *npobj) {
         print ("WARNING deleting window object\n");
         js_window = NULL;
     }
-    free (npobj);
+    nsMemFree (npobj);
 }
 
 static void windowClassInvalidate (NPObject *npobj) {
@@ -856,7 +870,7 @@ static bool windowClassInvoke (NPObject *npobj, NPIdentifier method,
         const NPVariant *args, uint32_t arg_count, NPVariant *result) {
     JsObject * jo = (JsObject *) npobj;
     NPString str = { NULL, 0 };
-    char buf[512];
+    char buf[4096];
     int pos, i;
     bool res;
     char * id = (char *) g_tree_lookup (identifiers, method);
@@ -872,11 +886,11 @@ static bool windowClassInvoke (NPObject *npobj, NPIdentifier method,
     print ("Invoke %s\n", id);
     createJsName (jo, (char **)&str.utf8characters, &str.utf8length);
     pos = snprintf (buf, sizeof (buf), "%s.%s(", str.utf8characters, id);
-    free ((char *) str.utf8characters);
+    nsMemFree ((char *) str.utf8characters);
     for (i = 0; i < arg_count; i++) {
         char *arg = nsVariant2Str (args + i);
         pos += snprintf (buf + pos, sizeof (buf) - pos, i ? ",%s" : "%s", arg);
-        free (arg);
+        nsMemFree (arg);
     }
     pos += snprintf (buf + pos, sizeof (buf) - pos, ")");
 
@@ -927,7 +941,7 @@ static bool windowClassGetProperty (NPObject *npobj, NPIdentifier property,
 
     res = doEvaluate (npp, npobj, &fullname, result);
 
-    free ((char *) fullname.utf8characters);
+    nsMemFree ((char *) fullname.utf8characters);
 
     return res;
 }
@@ -947,16 +961,16 @@ static bool windowClassSetProperty (NPObject *npobj, NPIdentifier property,
     createJsName (&jo, &var_name, &len);
 
     var_val = nsVariant2Str (value);
-    script = (char *) malloc (len + strlen (var_val) + 3);
+    script = (char *) nsAlloc (len + strlen (var_val) + 3);
     sprintf (script, "%s=%s;", var_name, var_val);
-    free (var_name);
-    free (var_val);
+    nsMemFree (var_name);
+    nsMemFree (var_val);
     print ("SetProperty %s\n", script);
 
     res = evaluate (script, false);
     if (res)
         g_free (res);
-    free (script);
+    nsMemFree (script);
 
 
     return true;
@@ -975,7 +989,7 @@ static void shutDownPlugin() {
     if (npShutdown) {
         if (npp) {
             np_funcs.destroy (npp, &saved_data);
-            free (npp);
+            nsMemFree (npp);
             npp = 0L;
         }
         npShutdown();
@@ -1177,7 +1191,7 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
                 DBUS_TYPE_INT32, &width, DBUS_TYPE_INT32, &height,
                 DBUS_TYPE_INVALID);
 
-    npp = (NPP_t*)malloc (sizeof (NPP_t));
+    npp = (NPP_t*)nsAlloc (sizeof (NPP_t));
     memset (npp, 0, sizeof (NPP_t));
     np_err = np_funcs.newp (mime, npp, NP_EMBED, argc, argn, argv, saved_data);
     if (np_err != NPERR_NO_ERROR) {
@@ -1247,58 +1261,153 @@ static StreamInfo *getStreamInfo (const char *path, gpointer *stream_id) {
     return (StreamInfo *) g_tree_lookup (stream_list, *stream_id);
 }
 
-static DBusHandlerResult dbusFilter (DBusConnection * connection,
-        DBusMessage *msg, void * user_data) {
-    DBusMessageIter args;
-    const char *sender = dbus_message_get_sender (msg);
-    const char *iface = "org.kde.kmplayer.backend";
-    (void)user_data; (void)connection;
+static void defaultReply (DBusConnection *conn, DBusMessage *msg) {
+    if (!dbus_message_get_no_reply (msg)) {
+        DBusMessage *rmsg = dbus_message_new_method_return (msg);
+        dbus_connection_send (conn, rmsg, NULL);
+        dbus_connection_flush (conn);
+        dbus_message_unref (rmsg);
+        g_printf ("send default reply\n");
+    } else
+        g_printf ("send no reply\n");
+}
 
-    if (dbus_message_get_type (msg) == DBUS_MESSAGE_TYPE_SIGNAL)
-        return DBUS_HANDLER_RESULT_HANDLED;
-
-    if (dbus_message_get_type (msg) == DBUS_MESSAGE_TYPE_ERROR) {
-        if (dbus_message_iter_init (msg, &args) &&
-                DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
-            char *param = 0;
-            dbus_message_iter_get_basic (&args, &param);
-            print ("dbusFilter error %s\n", param);
-        }
-        return DBUS_HANDLER_RESULT_HANDLED;
+static bool dbusMsgIterGet (DBusMessage *msg, DBusMessageIter *it,
+        int arg_type, void *p, bool first) {
+    if ((first && dbus_message_iter_init (msg, it)) ||
+            (!first && dbus_message_iter_has_next (it) &&
+             dbus_message_iter_next (it)) &&
+            dbus_message_iter_get_arg_type (it) == arg_type) {
+        dbus_message_iter_get_basic (it, p);
+        return true;
     }
+    return false;
+}
 
-    if (!dbus_message_has_destination (msg, service_name))
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+static DBusHandlerResult dbusStreamMessage (DBusConnection *conn,
+        DBusMessage *msg, void *user_data) {
+    DBusMessageIter args;
+    const char *iface = "org.kde.kmplayer.backend";
+    gpointer stream_id;
+    StreamInfo *si;
 
-    print ("dbusFilter %s %s %s\n", sender, dbus_message_get_interface (msg),
-            dbus_message_get_signature (msg));
-    if (dbus_message_is_method_call (msg, iface, "play")) {
+    print ("dbusStreamMessage %s %s %s\n", dbus_message_get_interface (msg),
+            dbus_message_get_member (msg), dbus_message_get_signature (msg));
+    if (dbus_message_is_method_call (msg, iface, "redirected")) {
+        char *url = 0;
+        si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
+        if (dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &url, true)) {
+            if (si) {
+                dbus_message_iter_get_basic (&args, &url);
+                nsMemFree (si->url);
+                si->url = g_strdup (url);
+                si->np_stream.url = si->url;
+                print ("redirect %d (had data %d) to %s\n", (long)stream_id, si->called_plugin, url);
+            } else {
+                print ("redirect %d not found\n", (long)stream_id);
+            }
+        }
+        defaultReply (conn, msg);
+    } else if (dbus_message_is_method_call (msg, iface, "eof")) {
+        unsigned int total;
+        if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT32, &total, true)) {
+            unsigned int reason;
+            if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT32, &reason, false)) {
+                si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
+                if (si) {
+                    si->total = total;
+                    si->reason = reason;
+                    print ("eof %d bytes:%d reason:%d\n", (long)stream_id, si->total, si->reason);
+                    if (si->stream_pos == si->total || si->destroyed)
+                        removeStream (stream_id);
+                } else {
+                    print ("stream %d not found\n", stream_id);
+                }
+            }
+        }
+        defaultReply (conn, msg);
+    } else if (dbus_message_is_method_call (msg, iface, "streamInfo")) {
+        const char *mime;
+        if (dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &mime, true)) {
+            uint32_t length;
+            si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
+            if (si && *mime) {
+                if (si->mimetype)
+                    g_free (si->mimetype);
+                si->mimetype = g_strdup (mime);
+            }
+            if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT32, &length, false)) {
+                if (si)
+                    si->np_stream.end = length;
+            }
+            print ("streamInfo %d size:%d mime:%s\n", (long)stream_id, length,
+                    mime ? mime : "");
+        }
+        defaultReply (conn, msg);
+    }
+    return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+static void dbusStreamUnregister (DBusConnection *conn, void *user_data) {
+    print( "dbusStreamUnregister\n");
+}
+
+static void dbusPluginUnregister (DBusConnection *conn, void *user_data) {
+    print( "dbusPluginUnregister\n");
+}
+
+static const char *plugin_inspect =
+    "<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+    "\"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd\">"
+    "<node name=\"/plugin\">"
+    " <interface name=\"org.kde.kmplayer.backend\">"
+    "  <method name=\"play\">"
+    "   <arg name=\"url\" type=\"s\" direction=\"in\"/>"
+    "   <arg name=\"mimetype\" type=\"s\" direction=\"in\"/>"
+    "   <arg name=\"plugin\" type=\"s\" direction=\"in\"/>"
+    "   <arg name=\"arguments\" type=\"a{sv}\" direction=\"in\"/>"
+    "  </method>"
+    " </interface>"
+    "</node>";
+
+static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
+        DBusMessage *msg, void *user_data) {
+
+    DBusMessageIter args;
+    const char *iface = "org.kde.kmplayer.backend";
+    (void) user_data;
+
+    print ("dbusPluginMessage %s %s %s\n", dbus_message_get_interface (msg),
+            dbus_message_get_member (msg), dbus_message_get_signature (msg));
+    if (dbus_message_is_method_call (msg,
+                "org.freedesktop.DBus.Introspectable", "Introspect")) {
+        DBusMessage * rmsg = dbus_message_new_method_return (msg);
+        dbus_message_append_args (rmsg,
+                DBUS_TYPE_STRING, &plugin_inspect, DBUS_TYPE_INVALID);
+        dbus_connection_send (conn, rmsg, NULL);
+        dbus_connection_flush (conn);
+        dbus_message_unref (rmsg);
+    } else if (dbus_message_is_method_call (msg, iface, "play")) {
         DBusMessageIter ait;
         char *param = 0;
         unsigned int params = 0;
         char **argn = NULL;
         char **argv = NULL;
         GSList *arglst = NULL;
-        if (!dbus_message_iter_init (msg, &args) ||
-                DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
+        if (!dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &param, true)) {
             g_printerr ("missing url arg");
             return DBUS_HANDLER_RESULT_HANDLED;
         }
-        dbus_message_iter_get_basic (&args, &param);
         object_url = g_strdup (param);
-        if (!dbus_message_iter_next (&args) ||
-                DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
+        if (!dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &param, false)) {
             g_printerr ("missing mimetype arg");
             return DBUS_HANDLER_RESULT_HANDLED;
         }
-        dbus_message_iter_get_basic (&args, &param);
         mimetype = g_strdup (param);
-        if (!dbus_message_iter_next (&args) ||
-                DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
+        if (!dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &param, false)) {
             g_printerr ("missing plugin arg");
             return DBUS_HANDLER_RESULT_HANDLED;
         }
-        dbus_message_iter_get_basic (&args, &param);
         plugin = g_strdup (param);
         if (!dbus_message_iter_next (&args) ||
                 DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type (&args)) {
@@ -1334,12 +1443,13 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
             arglst = g_slist_append (arglst, g_strdup (value));
             params++;
             print ("param %d:%s='%s'\n", params, key, value);
-        } while (dbus_message_iter_next (&ait));
+        } while (dbus_message_iter_has_next (&ait) &&
+                dbus_message_iter_next (&ait));
         if (params > 0 && params < 100) {
             int i;
             GSList *sl = arglst;
-            argn = (char**) malloc (params * sizeof (char *));
-            argv = (char**) malloc (params * sizeof (char *));
+            argn = (char**) nsAlloc (params * sizeof (char *));
+            argv = (char**) nsAlloc (params * sizeof (char *));
             for (i = 0; sl; i++) {
                 argn[i] = (gchar *)sl->data;
                 sl = sl->next;
@@ -1351,135 +1461,72 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         print ("play %s %s %s params:%d\n", object_url,
                 mimetype ? mimetype : "", plugin, params);
         startPlugin (object_url, mimetype, params, argn, argv);
-    } else if (dbus_message_is_method_call (msg, iface, "redirected")) {
-        char *url = 0;
-        gpointer stream_id;
-        StreamInfo *si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
-        if (si && dbus_message_iter_init (msg, &args) && 
-                DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
-            dbus_message_iter_get_basic (&args, &url);
-            free (si->url);
-            si->url = g_strdup (url);
-            si->np_stream.url = si->url;
-            print ("redirect %d (had data %d) to %s\n", (long)stream_id, si->called_plugin, url);
+        defaultReply (conn, msg);
+    } else if (dbus_message_is_method_call (msg, iface, "get")) {
+        DBusMessage * rmsg;
+        uint32_t object;
+        char *prop;
+        if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT32, &object, true) &&
+                dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &prop, false)) {
+            char *result = NULL;
+            doGet (object, prop, &result);
+            print ("get %s => %s\n", prop, result ? result : "NULL");
+            rmsg = dbus_message_new_method_return (msg);
+            dbus_message_append_args (rmsg,
+                    DBUS_TYPE_STRING, &result, DBUS_TYPE_INVALID);
+            dbus_connection_send (conn, rmsg, NULL);
+            dbus_connection_flush (conn);
+            dbus_message_unref (rmsg);
+            g_free (result);
         }
-    } else if (dbus_message_is_method_call (msg, iface, "eof")) {
-        gpointer stream_id;
-        StreamInfo *si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
-        if (si && dbus_message_iter_init (msg, &args) &&
-                DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
-            dbus_message_iter_get_basic (&args, &si->total);
-            if (dbus_message_iter_next (&args) &&
-                   DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
-                dbus_message_iter_get_basic (&args, &si->reason);
-                print ("eof %d bytes:%d reason:%d\n", (long)stream_id, si->total, si->reason);
-                if (si->stream_pos == si->total || si->destroyed)
-                    removeStream (stream_id);
+    } else if (dbus_message_is_method_call (msg, iface, "call")) {
+        DBusMessage * rmsg;
+        DBusMessageIter ait;
+        uint32_t object;
+        char *func;
+        GSList *arglst = NULL;
+        GSList *sl;
+        uint32_t arg_count = 0;
+        char *result = NULL;
+        if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT32, &object, true) &&
+                dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &func, false)) {
+            if (!dbus_message_iter_next (&args) ||
+                    DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type (&args)) {
+                g_printerr ("missing arguments array");
+                return DBUS_HANDLER_RESULT_HANDLED;
+            }
+            dbus_message_iter_recurse (&args, &ait);
+            print ("call %d:%s(", object, func);
+            do {
+                char *arg;
+                if (dbus_message_iter_get_arg_type (&ait) != DBUS_TYPE_STRING)
+                    break;
+                dbus_message_iter_get_basic (&ait, &arg);
+                print ("%s, ", arg);
+                arglst = g_slist_append (arglst, g_strdup (arg));
+                arg_count++;
+            } while (dbus_message_iter_has_next (&ait) &&
+                    dbus_message_iter_next (&ait));
+            doInvoke (object, func, arglst, arg_count, &result);
+            print (") %s\n", result ? result : "NULL");
+            rmsg = dbus_message_new_method_return (msg);
+            dbus_message_append_args (rmsg,
+                    DBUS_TYPE_STRING, &result, DBUS_TYPE_INVALID);
+            dbus_connection_send (conn, rmsg, NULL);
+            dbus_connection_flush (conn);
+            dbus_message_unref (rmsg);
+            g_free (result);
+            if (arglst) {
+                for (sl = arglst; sl; sl = sl->next)
+                    g_free ((char *)sl->data);
+                g_slist_free (arglst);
             }
         }
     } else if (dbus_message_is_method_call (msg, iface, "quit")) {
         print ("quit\n");
         shutDownPlugin();
+        defaultReply (conn, msg);
         gtk_main_quit();
-    } else if (dbus_message_is_method_call (msg, iface, "streamInfo")) {
-        gpointer stream_id;
-        StreamInfo *si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
-        const char *mime;
-        uint32_t length;
-        if (si && dbus_message_iter_init (msg, &args) &&
-                DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
-            dbus_message_iter_get_basic (&args, &mime);
-            if (*mime) {
-                if (si->mimetype)
-                    g_free (si->mimetype);
-                si->mimetype = g_strdup (mime);
-            }
-            if (dbus_message_iter_next (&args) &&
-                   DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
-                dbus_message_iter_get_basic (&args, &length);
-                si->np_stream.end = length;
-            }
-            print ("streamInfo %d size:%d mime:%s\n", (long)stream_id, length,
-                    mime ? mime : "");
-        }
-    } else if (dbus_message_is_method_call (msg, iface, "get")) {
-        DBusMessage * rmsg;
-        uint32_t object;
-        char *property;
-        char *result = NULL;
-        if (!dbus_message_iter_init (msg, &args) ||
-                DBUS_TYPE_UINT32 != dbus_message_iter_get_arg_type (&args)) {
-            g_printerr ("missing object");
-            return DBUS_HANDLER_RESULT_HANDLED;
-        }
-        dbus_message_iter_get_basic (&args, &object);
-        if (!dbus_message_iter_next (&args) ||
-                DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
-            g_printerr ("missing function");
-            return DBUS_HANDLER_RESULT_HANDLED;
-        }
-        dbus_message_iter_get_basic (&args, &property);
-        doGet (object, property, &result);
-        print ("get %s => %s\n", property, result ? result : "NULL");
-        rmsg = dbus_message_new_method_return (msg);
-        dbus_message_append_args (rmsg, DBUS_TYPE_STRING, &result, DBUS_TYPE_INVALID);
-        dbus_connection_send (connection, rmsg, NULL);
-        dbus_connection_flush (connection);
-        dbus_message_unref (rmsg);
-        g_free (result);
-    } else if (dbus_message_is_method_call (msg, iface, "call")) {
-        DBusMessage * rmsg;
-        DBusMessageIter ait;
-        uint32_t object;
-        char *function;
-        GSList *arglst = NULL;
-        GSList *sl;
-        uint32_t arg_count = 0;
-        char *result = NULL;
-        if (!dbus_message_iter_init (msg, &args) ||
-                DBUS_TYPE_UINT32 != dbus_message_iter_get_arg_type (&args)) {
-            g_printerr ("missing object");
-            return DBUS_HANDLER_RESULT_HANDLED;
-        }
-        dbus_message_iter_get_basic (&args, &object);
-        if (!dbus_message_iter_next (&args) ||
-                DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
-            g_printerr ("missing function");
-            return DBUS_HANDLER_RESULT_HANDLED;
-        }
-        dbus_message_iter_get_basic (&args, &function);
-        if (!dbus_message_iter_next (&args) ||
-                DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type (&args)) {
-            g_printerr ("missing arguments array");
-            return DBUS_HANDLER_RESULT_HANDLED;
-        }
-        dbus_message_iter_recurse (&args, &ait);
-        print ("call %d:%s(", object, function);
-        do {
-            char *arg;
-            if (dbus_message_iter_get_arg_type (&ait) != DBUS_TYPE_STRING)
-                break;
-            dbus_message_iter_get_basic (&ait, &arg);
-            print ("%s, ", arg);
-            arglst = g_slist_append (arglst, g_strdup (arg));
-            arg_count++;
-        } while (dbus_message_iter_next (&ait));
-        doInvoke (object, function, arglst, arg_count, &result);
-        print (") %s\n", result ? result : "NULL");
-        rmsg = dbus_message_new_method_return (msg);
-        dbus_message_append_args (rmsg, DBUS_TYPE_STRING, &result, DBUS_TYPE_INVALID);
-        dbus_connection_send (connection, rmsg, NULL);
-        dbus_connection_flush (connection);
-        dbus_message_unref (rmsg);
-        g_free (result);
-        if (arglst) {
-            for (sl = arglst; sl; sl = sl->next)
-                g_free ((char *)sl->data);
-            g_slist_free (arglst);
-        }
-    } else {
-        print ("unknown message\n");
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
     return DBUS_HANDLER_RESULT_HANDLED;
 }
@@ -1650,6 +1697,7 @@ static void windowDestroyEvent (GtkWidget *w, gpointer d) {
 }
 
 static gboolean initPlayer (void * p) {
+    static DBusObjectPathVTable pluginVTable;
     GtkWidget *window;
     GdkColormap *color_map;
     GdkColor bg_color;
@@ -1710,13 +1758,13 @@ static gboolean initPlayer (void * p) {
             dbus_connection_unref (dbus_connection);
             return -1;
         }
-        dbus_bus_add_match (dbus_connection, serv, &dberr);
-        if (dbus_error_is_set (&dberr)) {
-            g_printerr ("dbus_bus_add_match error: %s\n", dberr.message);
-            dbus_connection_unref (dbus_connection);
-            return -1;
-        }
-        dbus_connection_add_filter (dbus_connection, dbusFilter, 0L, 0L);
+
+        pluginVTable.unregister_function = dbusPluginUnregister;
+        pluginVTable.message_function = dbusPluginMessage;
+        if (!dbus_connection_register_object_path (dbus_connection, "/plugin",
+                    &pluginVTable, NULL))
+            g_printerr ("dbus_connection_register_object_path error\n");
+
 
         /* TODO: remove DBUS_BUS_SESSION and create a private connection */
         callFunction (-1, "running",
@@ -1759,6 +1807,8 @@ int main (int argc, char **argv) {
 
     identifiers = g_tree_new (strcmp);
     stream_list = g_tree_new (streamCompare);
+    stream_vtable.unregister_function = dbusStreamUnregister;
+    stream_vtable.message_function = dbusStreamMessage;
 
     g_timeout_add (0, initPlayer, NULL);
 
