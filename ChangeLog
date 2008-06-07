@@ -2,7 +2,8 @@ Changes since version 0.11.0-rc3
 - Silence most of the QDBus warnings about missing members or spurious replies
 - Fix crash in npplayer for the GetVariable call from Javascript
 - Bookmark updates from Edgar Klingberg
-- Commented out lo
+- Commented out lots of not (yet) implemented or empty menu's
+- Phonon stream information is now shown
 - Fix leaking XPixmap's in the back buffer code
 Changes since version 0.11.0-rc2
 - Change LoadOnDemand icon to default KDE's video icon
