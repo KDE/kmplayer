@@ -49,6 +49,7 @@
 #ifdef KMPLAYER_WITH_CAIRO
 # include <cairo-xlib.h>
 # include <cairo-xlib-xrender.h>
+# include <pango/pangocairo.h>
 #endif
 #include "mediaobject.h"
 #include "kmplayer_smil.h"
@@ -751,6 +752,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     //kDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
     if (!s)
         return;
+    if (!s->surface) {
+        txt->width = txt->height = 0;
+        s->bounds = txt->calculateBounds ();
+    }
     SRect rect = s->bounds;
     Single x = rect.x (), y = rect.y(), w = rect.width(), h = rect.height();
     matrix.getXYWH (x, y, w, h);
@@ -773,109 +778,46 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         QPixmap pix = QPixmap::grabWidget (edit, rect.x () - (int) xoff,
                 rect.y () - (int) yoff, rect.width (), rect.height ());*/
 
-        float scale = 1.0 * w / rect.width (); // TODO: make an image
-        cairo_set_font_size (cr, scale * txt->font_size);
-        cairo_font_extents_t txt_fnt;
-        cairo_font_extents (cr, &txt_fnt);
-        QString str = tm->text;
-        struct Line {
-            Line (const QString & ln) : txt (ln), next(0) {}
-            QString txt;
-            cairo_text_extents_t txt_ext;
-            Single xoff;
-            Line * next;
-        } *lines = 0, *last_line = 0;
-        Single y1 = y;
-        Single max_width;
-        int line_count = 0;
-        Single min_xoff = w;
-        while (!str.isEmpty ()) {
-            int len = str.find (QChar ('\n'));
-            bool skip_cr = false;
-            if (len > 1 && str[len-1] == QChar ('\r')) {
-                --len;
-                skip_cr = true;
-            }
-            QString para = len > -1 ? str.left (len) : str;
-            Line * line = new Line (para);
-            ++line_count;
-            if (!lines)
-                lines = line;
-            else
-                last_line->next = line;
-            last_line = line;
-            int ppos = 0;
-            while (true) {
-                cairo_text_extents (cr, line->txt.utf8 ().constData (), &line->txt_ext);
-                float frag = line->txt_ext.width > 0.1
-                    ? w / line->txt_ext.width : 1.1;
-                if (frag < 1.0) {
-                    int br_pos = int (line->txt.length () * frag); //educated guess
-                    while (br_pos > 0) {
-                        line->txt.truncate (br_pos);
-                        br_pos = line->txt.lastIndexOf (QChar (' '));
-                        if (br_pos < 1)
-                            break;
-                        line->txt.truncate (br_pos);
-                        cairo_text_extents (cr, line->txt.utf8 ().constData (), &line->txt_ext);
-                        if (line->txt_ext.width < (double)w)
-                            break;
-                    }
-                }
-                if (line->txt_ext.width > (double)max_width)
-                    max_width = line->txt_ext.width;
+        cairo_surface_t *draw = cairo_surface_create_similar (cairo_surface,
+                CAIRO_CONTENT_COLOR, (int) w, (int) h * 2); //FIXME
+        cairo_t *cr_txt = cairo_create (draw);
+        CAIRO_SET_SOURCE_RGB (cr_txt, txt->background_color);
+        cairo_paint (cr_txt);
 
-                if (txt->halign == SMIL::TextMediaType::align_center)
-                    line->xoff = (w - Single (line->txt_ext.width)) / 2;
-                else if (txt->halign == SMIL::TextMediaType::align_right)
-                    line->xoff = w - Single (line->txt_ext.width);
-                if (line->xoff < min_xoff)
-                    min_xoff = line->xoff;
-
-                y1 += Single (txt_fnt.height);
-                ppos += line->txt.length () + 1;
-                if (ppos >= para.length ())
-                    break;
-
-                line->next = new Line (para.mid (ppos));
-                ++line_count;
-                line = line->next;
-                last_line = line;
-            }
-            if (len < 0)
-                break;
-            str = str.mid (len + (skip_cr ? 2 : 1));
-        }
-        // new coord in screen space
-        x += min_xoff;
-        w = (double)max_width + txt_fnt.max_x_advance / 2;
-        h = y1 - y /*txt_fnt.height + txt_fnt.descent*/;
-
-        s->surface = cairo_surface_create_similar (cairo_surface,
-                CAIRO_CONTENT_COLOR, (int) w, (int) h);
-        cairo_t * cr_txt = cairo_create (s->surface);
-        cairo_set_font_size (cr_txt, scale * txt->font_size);
-        if (txt->bg_opacity) { // TODO real alpha
-            cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
-            CAIRO_SET_SOURCE_RGB (cr_txt, txt->background_color);
-            cairo_paint (cr_txt);
-        }
         CAIRO_SET_SOURCE_RGB (cr_txt, txt->font_color);
-        y1 = 0;
-        while (lines) {
-            Line * line = lines;
-            line->xoff += Single (txt_fnt.max_x_advance / 4);
-            cairo_move_to (cr_txt, line->xoff - min_xoff, y1 + Single (txt_fnt.ascent));
-            cairo_show_text (cr_txt, line->txt.utf8 ().constData ());
-            y1 += Single (txt_fnt.height);
-            lines = lines->next;
-            delete line;
-        }
-        //cairo_stroke (cr);
+        PangoLayout *layout = pango_cairo_create_layout (cr_txt);
+        pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
+        pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
+        pango_layout_set_text (layout, tm->text.toUtf8().data(), -1);
+
+        PangoFontDescription *desc = pango_font_description_new ();
+        pango_font_description_set_family (desc, "Sans");
+        pango_font_description_set_absolute_size (desc,
+                w * PANGO_SCALE * txt->font_size / rect.width ());
+        pango_layout_set_font_description (layout, desc);
+        pango_font_description_free (desc);
+
+        pango_cairo_show_layout (cr_txt, layout);
+        int pxw, pxh;
+        pango_layout_get_pixel_size (layout, &pxw, &pxh);
+        g_object_unref (layout);
         cairo_destroy (cr_txt);
 
+        cairo_pattern_t *pat = cairo_pattern_create_for_surface (draw);
+        cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+        s->surface = cairo_surface_create_similar (cairo_surface,
+                CAIRO_CONTENT_COLOR, pxw, pxh);
+        cr_txt = cairo_create (s->surface);
+        cairo_set_operator (cr_txt, CAIRO_OPERATOR_SOURCE);
+        cairo_set_source (cr_txt, pat);
+        cairo_paint (cr_txt);
+
+        cairo_destroy (cr_txt);
+        cairo_pattern_destroy (pat);
+        cairo_surface_destroy (draw);
+
         // update bounds rect
-        Single sx = x, sy = y, sw = w, sh = h;
+        Single sx = x, sy = y, sw = pxw, sh = pxh;
         matrix.invXYWH (sx, sy, sw, sh);
         txt->width = sw;
         txt->height = sh;
