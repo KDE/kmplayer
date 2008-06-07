@@ -1267,9 +1267,7 @@ static void defaultReply (DBusConnection *conn, DBusMessage *msg) {
         dbus_connection_send (conn, rmsg, NULL);
         dbus_connection_flush (conn);
         dbus_message_unref (rmsg);
-        g_printf ("send default reply\n");
-    } else
-        g_printf ("send no reply\n");
+    }
 }
 
 static bool dbusMsgIterGet (DBusMessage *msg, DBusMessageIter *it,
@@ -1357,17 +1355,22 @@ static void dbusPluginUnregister (DBusConnection *conn, void *user_data) {
 }
 
 static const char *plugin_inspect =
-    "<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
-    "\"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd\">"
-    "<node name=\"/plugin\">"
-    " <interface name=\"org.kde.kmplayer.backend\">"
-    "  <method name=\"play\">"
-    "   <arg name=\"url\" type=\"s\" direction=\"in\"/>"
-    "   <arg name=\"mimetype\" type=\"s\" direction=\"in\"/>"
-    "   <arg name=\"plugin\" type=\"s\" direction=\"in\"/>"
-    "   <arg name=\"arguments\" type=\"a{sv}\" direction=\"in\"/>"
+    "<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN\""
+    " \"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd\">"
+    "<node>"
+    " <interface name=\"org.freedesktop.DBus.Introspectable\">"
+    "  <method name=\"Introspect\">"
+    "   <arg name=\"xml_data\" type=\"s\" direction=\"out\"/>"
     "  </method>"
     " </interface>"
+    "  <interface name=\"org.kde.kmplayer.backend\">"
+    "   <method name=\"play\">"
+    "    <arg name=\"url\" type=\"s\" direction=\"in\"/>"
+    "    <arg name=\"mimetype\" type=\"s\" direction=\"in\"/>"
+    "    <arg name=\"plugin\" type=\"s\" direction=\"in\"/>"
+    "    <arg name=\"arguments\" type=\"a{sv}\" direction=\"in\"/>"
+    "   </method>"
+    "  </interface>"
     "</node>";
 
 static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
