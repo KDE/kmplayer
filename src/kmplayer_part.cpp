@@ -437,6 +437,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
     //}
     if (!m_grab_file.isEmpty ())
         ::unlink (m_grab_file.toLocal8Bit ().data ());
+    if (m_source)
+        m_source->deactivate ();
     m_config = 0L;
     kmplayerpart_static->unref ();
 }
