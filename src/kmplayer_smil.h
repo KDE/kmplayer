@@ -78,11 +78,15 @@ public:
 /**
  * Live representation of a SMIL element having timings
  */
-class KMPLAYER_NO_EXPORT Runtime {
+class KMPLAYER_NO_EXPORT Runtime : public Role {
 public:
     enum TimingState {
         timings_reset = 0, timings_began,
         timings_started, timings_paused, timings_stopped
+    };
+    enum Fill {
+        fill_default, fill_inherit, fill_remove, fill_freeze,
+        fill_hold, fill_transition, fill_auto
     };
     enum DurationTime { begin_time = 0, duration_time, end_time, durtime_last };
     enum Duration {
@@ -90,12 +94,13 @@ public:
         dur_activated, dur_inbounds, dur_outbounds,
         dur_end, dur_start, dur_last_dur
     };
-    Runtime (NodePtr e);
+    Runtime (Node *e);
     ~Runtime ();
     /**
      * Called when element is pulled in scope, from Node::activate()
      */
     void begin ();
+    void finish ();
     void beginAndStart (); // skip start timer (if any)
     /**
      * Reset all data, called from end() and init()
@@ -105,7 +110,9 @@ public:
     TimingState state () const { return timingstate; }
     void propagateStop (bool forced);
     void propagateStart ();
-    void processEvent (unsigned int event);
+    bool handleEvent (Event *event);
+    void processEvent (int event_id);
+    NodeRefListPtr listeners (unsigned int event_id);
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
@@ -127,15 +134,23 @@ public:
     TimingState timingstate;
     TimingState unpaused_state;
     int repeat_count;
+    NodeRefListPtr m_StartListeners;        // Element about to be started
+    NodeRefListPtr m_StartedListeners;      // Element is started
+    NodeRefListPtr m_StoppedListeners;      // Element stopped
     EventPtrW start_timer;
     EventPtrW duration_timer;
     EventPtrW started_timer;
     EventPtrW stopped_timer;
     NodePtrW paused_by;
+    unsigned int start_time;
+    unsigned int finish_time;
     unsigned int paused_time;
+    Fill fill;
+    Fill fill_def;
+    Fill fill_active;
+    Node *element;
 private:
     void setDurationItem (DurationTime item, const QString & val);
-    NodePtrW element;
 };
 
 class KMPLAYER_NO_EXPORT MouseListeners {
@@ -387,79 +402,31 @@ public:
 };
 
 /**
- * Base for all SMIL media elements having begin/dur/end/.. attributes
+ * Abstract base for the group elements (par/seq/excl/..)
  */
-class KMPLAYER_NO_EXPORT TimedMrl : public Mrl {
+class KMPLAYER_NO_EXPORT GroupBase : public Element {
 public:
-    enum Fill {
-        fill_default, fill_inherit, fill_remove, fill_freeze,
-        fill_hold, fill_transition, fill_auto
-    };
-    ~TimedMrl ();
-    void closed ();
+    ~GroupBase ();
+    NodePtr childFromTag (const QString & tag);
+    PlayType playType () { return play_type_none; }
+    Role *role (RoleType rt);
+    void parseParam (const TrieString &name, const QString &value);
+    void init ();
+    void finish ();
     void activate ();
     void begin ();
-    void pause ();
-    void finish ();
     void deactivate ();
     void reset ();
     bool expose () const { return false; }
-    void childBegan (NodePtr child);
-    void childDone (NodePtr child);
-    virtual bool handleEvent (Event *event);
-    virtual NodeRefListPtr listeners (unsigned int event_id);
-    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
-    void init ();
-    virtual void parseParam (const TrieString &, const QString &);
-    Runtime * runtime ();
-    static bool isTimedMrl (const Node *n);
-    static bool keepContent (Node *n);
-    static Fill getDefaultFill (NodePtr n);
-    unsigned int begin_time;
-    unsigned int finish_time;
-    Fill fill;
-    Fill fill_def;
-    Fill fill_active;
-protected:
-    TimedMrl (NodePtr & d, short id);
-
-    NodeRefListPtr m_StartListeners;        // Element about to be started
-    NodeRefListPtr m_StartedListeners;      // Element is started
-    NodeRefListPtr m_StoppedListeners;      // Element stopped
-    Runtime * m_runtime;
-    bool inited;
-};
-
-KDE_NO_EXPORT inline Runtime * TimedMrl::runtime () {
-    if (!m_runtime)
-        m_runtime = new Runtime (this);
-    return m_runtime;
-}
-
-KDE_NO_EXPORT inline bool TimedMrl::isTimedMrl (const Node *n) {
-    return n &&
-        n->id >= id_node_first_timed_mrl &&
-        n->id <= id_node_last_timed_mrl;
-}
-
-/**
- * Abstract base for the group elements (par/seq/excl/..)
- */
-class KMPLAYER_NO_EXPORT GroupBase : public TimedMrl {
-public:
-    KDE_NO_CDTOR_EXPORT ~GroupBase () {}
-    NodePtr childFromTag (const QString & tag);
-    PlayType playType () { return play_type_none; }
-    void finish ();
-    void activate ();
-    void begin ();
-    void deactivate ();
     bool handleEvent (Event *);
+    NodeRefListPtr listeners (unsigned int event_id);
     void setJumpNode (NodePtr);
+    Runtime *runtime;
 protected:
-    KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d, short id) : TimedMrl (d, id) {}
+    GroupBase (NodePtr & d, short id);
     NodePtrW jump_node;
     PostponePtr postpone_lock;
+    bool inited;
 };
 
 /**
@@ -596,7 +563,7 @@ public:
 /**
  * Abstract base for the MediaType classes (video/audio/text/img/..)
  */
-class KMPLAYER_NO_EXPORT MediaType : public TimedMrl {
+class KMPLAYER_NO_EXPORT MediaType : public Mrl {
 public:
     MediaType (NodePtr & d, const QString & t, short id);
     ~MediaType ();
@@ -611,7 +578,9 @@ public:
     virtual void undefer ();
     virtual void begin ();
     virtual void finish ();
+    virtual void reset ();
     virtual void childDone (NodePtr child);
+    Role *role (RoleType rt);
     virtual Surface *getSurface (Mrl *mrl);
     /* (new) sub-region or NULL if not displayed */
     Surface *surface ();
@@ -622,6 +591,7 @@ public:
     virtual bool handleEvent (Event *event);
     NodeRefListPtr listeners (unsigned int event_id);
 
+    Runtime *runtime;
     SurfacePtrW sub_surface;
     NodePtrW external_tree; // if src points to playlist, the resolved top node
     NodePtrW trans_in;
@@ -655,6 +625,7 @@ protected:
     ConnectionPtr region_attach;           // attached to region
     ConnectionPtr document_postponed;      // pause audio/video accordantly
     PostponePtr postpone_lock;
+    bool inited;
 };
 
 class KMPLAYER_NO_EXPORT AVMediaType : public MediaType {
@@ -715,12 +686,21 @@ public:
     virtual void accept (Visitor *);
 };
 
-class KMPLAYER_NO_EXPORT AnimateGroup : public TimedMrl {
+class KMPLAYER_NO_EXPORT AnimateGroup : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT ~AnimateGroup () {}
+    ~AnimateGroup ();
+    virtual void init ();
+    virtual void begin ();
+    virtual void activate ();
     virtual void finish ();
     virtual void deactivate ();
+    virtual void reset ();
+    virtual bool expose () const { return false; }
     virtual void parseParam (const TrieString & name, const QString & value);
+    virtual bool handleEvent (Event *event);
+    virtual NodeRefListPtr listeners (unsigned int event_id);
+    virtual Role *role (RoleType rt);
+    Runtime *runtime;
 protected:
     void restoreModification ();
     NodePtr targetElement ();
@@ -729,6 +709,7 @@ protected:
     TrieString changed_attribute;
     QString change_to;
     int modification_id;
+    bool inited;
 };
 
 class KMPLAYER_NO_EXPORT Set : public AnimateGroup {

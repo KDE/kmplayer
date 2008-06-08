@@ -450,6 +450,10 @@ Node::PlayType Node::playType () {
     return play_type_none;
 }
 
+Role *Node::role (RoleType rt) {
+    return NULL;
+}
+
 void Node::opened () {}
 
 void Node::closed () {}
@@ -634,6 +638,10 @@ void Element::clear () {
 
 void Element::setAttributes (AttributeListPtr attrs) {
     m_attributes = attrs;
+}
+
+void Element::accept (Visitor * v) {
+    v->visit (this);
 }
 
 //-----------------------------------------------------------------------------
@@ -1296,6 +1304,12 @@ void GenericMrl::closed () {
 bool GenericMrl::expose () const {
     return !pretty_name.isEmpty () || //return false if no title and only one
         previousSibling () || nextSibling ();
+}
+
+//-----------------------------------------------------------------------------
+
+void Visitor::visit (Element *elm) {
+    visit (static_cast <Node *> (elm));
 }
 
 //-----------------------------------------------------------------------------

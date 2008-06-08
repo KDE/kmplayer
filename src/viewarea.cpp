@@ -1125,10 +1125,10 @@ public:
     KDE_NO_CDTOR_EXPORT ~MouseVisitor () {}
     using Visitor::visit;
     void visit (Node * n);
+    void visit (Element *);
     void visit (SMIL::Smil *);
     void visit (SMIL::Layout *);
     void visit (SMIL::Region *);
-    void visit (SMIL::TimedMrl * n);
     void visit (SMIL::MediaType * n);
     void visit (SMIL::Anchor *);
     void visit (SMIL::Area *);
@@ -1310,8 +1310,10 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
     }
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::TimedMrl * timedmrl) {
-    timedmrl->runtime ()->processEvent (event);
+KDE_NO_EXPORT void MouseVisitor::visit (Element *elm) {
+    Runtime *rt = static_cast <Runtime *> (elm->role (RoleTypeTiming));
+    if (rt)
+        rt->processEvent (event);
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
@@ -1344,7 +1346,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
                 return;
         }
     if (event != event_pointer_moved)
-        visit (static_cast <SMIL::TimedMrl *> (mt));
+        visit (static_cast <Element *> (mt));
     if (event != event_inbounds && event != event_outbounds) {
       SMIL::RegionBase *r=convertNode<SMIL::RegionBase>(mt->region_node);
       if (r && r->surface () &&

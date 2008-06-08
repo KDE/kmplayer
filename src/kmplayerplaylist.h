@@ -243,6 +243,18 @@ enum Fit {
     fit_scroll     // keep aspect and don't scale, add scollbars if needed
 };
 
+enum RoleType
+{
+    RoleTypeTiming
+};
+
+class KMPLAYER_NO_EXPORT Role {
+public:
+    Role (RoleType rt) : type (rt) {}
+
+    RoleType type;
+};
+
 extern const unsigned int event_pointer_clicked;
 extern const unsigned int event_pointer_moved;
 extern const unsigned int event_inbounds;
@@ -340,6 +352,7 @@ public:
      * If this is a derived Mrl object and has a SRC attribute
      */
     virtual PlayType playType ();
+    virtual Role *role (RoleType rt);
     bool isPlayable () { return playType () > play_type_none; }
     virtual bool isElementNode () { return false; }
     /**
@@ -499,6 +512,7 @@ public:
     virtual void reset ();
     virtual void clear ();
     virtual bool isElementNode () { return true; }
+    virtual void accept (Visitor * v);
     /**
      * Params are like attributes, but meant to be set dynamically. Caller may
      * pass a modification id, that it can use to restore the old value.
@@ -840,7 +854,6 @@ namespace SMIL {
     class RefMediaType;
     class AVMediaType;
     class Brush;
-    class TimedMrl;
     class PriorityClass;
     class Anchor;
     class Area;
@@ -861,13 +874,13 @@ public:
     KDE_NO_CDTOR_EXPORT Visitor () {}
     KDE_NO_CDTOR_EXPORT virtual ~Visitor () {}
     virtual void visit (Node *) {}
+    virtual void visit (Element *);
     virtual void visit (SMIL::Smil *) {}
     virtual void visit (SMIL::Region *);
     virtual void visit (SMIL::Layout *);
     virtual void visit (SMIL::Transition *);
     virtual void visit (SMIL::Animate *);
     virtual void visit (SMIL::AnimateMotion *);
-    virtual void visit (SMIL::TimedMrl *);
     virtual void visit (SMIL::PriorityClass *);
     virtual void visit (SMIL::MediaType *);
     virtual void visit (SMIL::ImageMediaType *);
