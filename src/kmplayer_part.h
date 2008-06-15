@@ -22,6 +22,7 @@
 #include <kparts/browserextension.h>
 #include "kmplayerpartbase.h"
 #include "kmplayersource.h"
+#include "config-kmplayer.h"
 
 
 class KMPlayerPart;

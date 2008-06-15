@@ -22,7 +22,6 @@
 #include <list>
 #include <algorithm>
 
-#include "config-kmplayer.h"
 #include <qmenu.h>
 #include <qtimer.h>
 #include <qpushbutton.h>
