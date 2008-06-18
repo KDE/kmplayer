@@ -96,11 +96,11 @@ QTextStream & operator << (QTextStream & out, const XMLStringlet & txt) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT
-Connection::Connection (NodeRefListPtr ls, NodePtr node, NodePtr inv)
+Connection::Connection (NodeRefList *ls, Node *node, Node *inv)
  : connectee (inv), listeners (ls) {
     if (listeners) {
         NodeRefItemPtr nci = new NodeRefItem (node);
-        listeners->append (nci);
+        ls->append (nci);
         listen_item = nci;
     }
 }
@@ -456,16 +456,12 @@ void Node::opened () {}
 
 void Node::closed () {}
 
-NodeRefListPtr Node::receivers (MessageType /*msg*/) {
-    return NodeRefListPtr ();
-}
-
 void *Node::message (MessageType, void *) {
     return NULL;
 }
 
 KDE_NO_EXPORT void Node::deliver (MessageType msg, void *content) {
-    NodeRefListPtr nl = receivers (msg);
+    NodeRefListPtr nl = nodeMessageReceivers (this, msg);
     if (nl)
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
             if (c->data)
@@ -477,8 +473,8 @@ void Node::accept (Visitor * v) {
 }
 
 KDE_NO_EXPORT
-ConnectionPtr Node::connectTo (NodePtr node, MessageType msg) {
-    NodeRefListPtr nl = receivers (msg);
+ConnectionPtr Node::connectTo (Node *node, MessageType msg) {
+    NodeRefList *nl = (NodeRefList *) message (MsgQueryReceivers, (void *) (long) msg);
     if (nl)
         return ConnectionPtr (new Connection (nl, node, this));
     return ConnectionPtr ();
@@ -1229,10 +1225,11 @@ Surface *Document::getSurface (Mrl *mrl) {
     return NULL;
 }
 
-NodeRefListPtr Document::receivers (MessageType id) {
-    if (id == MsgEventPostponed)
-        return m_PostponedListeners;
-    return Mrl::receivers (id);
+void *Document::message (MessageType msg, void *content) {
+    MessageType m = (MessageType) (long) content;
+    if (MsgEventPostponed == m)
+        return m_PostponedListeners.ptr ();
+    return Mrl::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------

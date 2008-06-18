@@ -261,8 +261,12 @@ enum MessageType
     MsgMediaFinished,
     MsgQueryRoleTiming,
     MsgQueryRoleDisplay,
-    MsgQueryRoleSizer
+    MsgQueryRoleSizer,
+    MsgQueryReceivers
 };
+
+#define nodeMessageReceivers(node, msg)                                     \
+    (NodeRefList*)(node)->message (MsgQueryReceivers, (void*)(long)(msg))
 
 // convenient types
 typedef void Role;
@@ -299,7 +303,7 @@ public:
     void disconnect ();
     NodePtrW connectee; // the one that will, when ever, trigger the event
 private:
-    Connection (NodeRefListPtr ls, NodePtr node, NodePtr invoker);
+    Connection (NodeRefList *ls, Node *node, Node *invoker);
     NodeRefListPtrW listeners;
     NodeRefItemPtrW listen_item;
 };
@@ -370,23 +374,19 @@ public:
      * Return a NULL ptr if event_id is not supported.
      * \sa: Connection::disconnect()
      */
-    ConnectionPtr connectTo (NodePtr node, MessageType msg);
+    ConnectionPtr connectTo (Node *node, MessageType msg);
     /*
      * Event send to this node, return true if handled
      */
     virtual void *message (MessageType msg, void *content=NULL);
     /*
-     * Dispatch Event to all receivers of event->id()
+     * Dispatch Event to all connectorss of MessageType
      */
     void deliver (MessageType msg, void *content);
     /**
      * Alternative to event handling is the Visitor pattern
      */
     virtual void accept (Visitor *);
-    /*
-     * Returns a listener list for event_id, or a null ptr if not supported.
-     */
-    virtual NodeRefListPtr receivers (MessageType msg);
     /**
      * Adds node to call 'message()' for all events that gets
      * delivered to this node, ignored by default
@@ -769,7 +769,7 @@ public:
     /**
      * Document has list of postponed receivers, eg. for running (gif)movies
      */
-    virtual NodeRefListPtr receivers (MessageType msg);
+    virtual void *message (MessageType msg, void *content=NULL);
     /**
      * Reimplement, so it will call PlayListNotify::getSurface()
      */

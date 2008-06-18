@@ -569,6 +569,17 @@ KDE_NO_EXPORT void *Runtime::message (MessageType msg, void *content) {
             }
             break;
         }
+        case MsgQueryReceivers: {
+            MessageType m = (MessageType) (long) content;
+            if (m == MsgEventStopped)
+                return m_StoppedListeners.ptr ();
+            else if (m == MsgEventStarted)
+                return m_StartedListeners.ptr ();
+            else if (m == MsgEventStarting)
+                return m_StartListeners.ptr ();
+            kWarning () << "unknown event requested";
+            return NULL;
+        }
         default:
             break;
     }
@@ -592,17 +603,6 @@ KDE_NO_EXPORT void Runtime::processEvent (MessageType msg) {
     } else if (started () && endTime ().durval == (Duration) msg) {
         propagateStop (true);
     }
-}
-
-KDE_NO_EXPORT NodeRefListPtr Runtime::receivers (MessageType id) {
-    if (id == MsgEventStopped)
-        return m_StoppedListeners;
-    else if (id == MsgEventStarted)
-        return m_StartedListeners;
-    else if (id == MsgEventStarting)
-        return m_StartListeners;
-    kWarning () << "unknown event requested";
-    return NodeRefListPtr ();
 }
 
 KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
@@ -970,14 +970,14 @@ KDE_NO_CDTOR_EXPORT MouseListeners::MouseListeners () :
    m_OutOfBoundsListeners (new NodeRefList),
    m_InBoundsListeners (new NodeRefList) {}
 
-NodeRefListPtr MouseListeners::receivers (MessageType eid) {
+NodeRefList *MouseListeners::receivers (MessageType eid) {
     switch (eid) {
         case MsgEventClicked:
-            return m_ActionListeners;
+            return m_ActionListeners.ptr ();
         case MsgEventPointerInBounds:
-            return m_InBoundsListeners;
+            return m_InBoundsListeners.ptr ();
         case MsgEventPointerOutBounds:
-            return m_OutOfBoundsListeners;
+            return m_OutOfBoundsListeners.ptr ();
         default:
             break;
     }
@@ -1215,6 +1215,10 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         root_layout->setAuxiliaryNode (true);
         insertBefore (root_layout, firstChild ());
         root_layout->closed ();
+    } else if (root_layout != firstChild ()) {
+        NodePtr rl = root_layout;
+        removeChild (root_layout);
+        insertBefore (root_layout, firstChild ());
     }
 }
 
@@ -1382,16 +1386,6 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
     Element::parseParam (name, val);
 }
 
-NodeRefListPtr SMIL::RegionBase::receivers (MessageType eid) {
-    switch (eid) {
-        case MsgSurfaceAttach:
-            return m_AttachedMediaTypes;
-        default:
-            break;
-    }
-    return Element::receivers (eid);
-}
-
 void *SMIL::RegionBase::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgMediaReady:
@@ -1409,6 +1403,10 @@ void *SMIL::RegionBase::message (MessageType msg, void *content) {
                 }
             }
             return region_surface.ptr ();
+        case MsgQueryReceivers:
+            if (MsgSurfaceAttach == (MessageType) (long) content)
+                return m_AttachedMediaTypes.ptr ();
+            // fall through
         default:
             break;
     }
@@ -1520,11 +1518,12 @@ void SMIL::Region::calculateBounds (Single pw, Single ph) {
     //kDebug () << "parent:" << pw << "x" << ph << " this:" << (int)x << "," << (int)y << " " << (int)w << "x" << (int)h;
 }
 
-NodeRefListPtr SMIL::Region::receivers (MessageType msg) {
-    NodeRefListPtr l = mouse_listeners.receivers (msg);
+void *SMIL::Region::message (MessageType msg, void *content) {
+    MessageType m = (MessageType) (long) content;
+    NodeRefList *l = mouse_listeners.receivers (m);
     if (l)
         return l;
-    return RegionBase::receivers (msg);
+    return RegionBase::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------
@@ -1759,10 +1758,6 @@ KDE_NO_EXPORT void *SMIL::GroupBase::message (MessageType msg, void *content) {
             break;
     }
     return runtime->message (msg, content);
-}
-
-KDE_NO_EXPORT NodeRefListPtr SMIL::GroupBase::receivers (MessageType id) {
-    return runtime->receivers (id);
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
@@ -2307,11 +2302,12 @@ void SMIL::Area::parseParam (const TrieString & para, const QString & val) {
         LinkingBase::parseParam (para, val);
 }
 
-KDE_NO_EXPORT NodeRefListPtr SMIL::Area::receivers (MessageType msg) {
-    NodeRefListPtr l = mouse_listeners.receivers (msg);
+KDE_NO_EXPORT void *SMIL::Area::message (MessageType msg, void *content) {
+    MessageType m = (MessageType) (long) content;
+    NodeRefList *l = mouse_listeners.receivers (m);
     if (l)
         return l;
-    return Element::receivers (msg);
+    return Element::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------
@@ -2720,23 +2716,18 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                 }
             }
             return sub_surface.ptr ();
+        case MsgQueryReceivers: {
+            MessageType m = (MessageType) (long) content;
+            NodeRefList *l = mouse_listeners.receivers (m);
+            if (l)
+                return l;
+            if (MsgSurfaceAttach == m)
+                return m_MediaAttached.ptr ();
+        } // fall through
         default:
             break;
     }
     return runtime->message (msg, content);
-}
-
-KDE_NO_EXPORT NodeRefListPtr SMIL::MediaType::receivers (MessageType id) {
-    NodeRefListPtr l = mouse_listeners.receivers (id);
-    if (l)
-        return l;
-    switch (id) {
-        case MsgSurfaceAttach:
-            return m_MediaAttached;
-        default:
-            break;
-    }
-    return runtime->receivers (id);
 }
 
 //-----------------------------------------------------------------------------
@@ -3135,10 +3126,6 @@ KDE_NO_EXPORT void *SMIL::AnimateGroup::message (MessageType msg, void *data) {
             break;
     }
     return runtime->message (msg, data);
-}
-
-KDE_NO_EXPORT NodeRefListPtr SMIL::AnimateGroup::receivers (MessageType msg) {
-    return runtime->receivers (msg);
 }
 
 KDE_NO_EXPORT void SMIL::AnimateGroup::restoreModification () {

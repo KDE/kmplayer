@@ -335,7 +335,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Smil *s) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (Node *node) {
     // next visit receivers
-    NodeRefListPtr nl = node->receivers (MsgSurfaceAttach);
+    NodeRefListPtr nl = nodeMessageReceivers (node, MsgSurfaceAttach);
     if (nl) {
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
             if (c->data)
@@ -1220,7 +1220,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
                 region->deliver (event, &mouse_event);
             }
             if (pass_event) {
-                NodeRefListPtr nl = region->receivers (MsgSurfaceAttach);
+                NodeRefListPtr nl = nodeMessageReceivers (region, MsgSurfaceAttach);
                 if (nl) {
                     for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
                         if (c->data)
@@ -1298,7 +1298,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
             if (event == MsgEventPointerMoved)
                 cursor.setShape (Qt::PointingHandCursor);
             else {
-                NodeRefListPtr nl = area->receivers (event);
+                NodeRefListPtr nl = nodeMessageReceivers (area, event);
                 if (nl)
                     for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
                         if (c->data)
@@ -1339,7 +1339,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
         return;
     mt->has_mouse = inside;
 
-    NodeRefListPtr nl = mt->receivers (
+    NodeRefListPtr nl = nodeMessageReceivers (mt,
             event == MsgEventPointerMoved ? MsgSurfaceAttach : event);
     if (nl)
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {

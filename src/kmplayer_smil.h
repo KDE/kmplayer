@@ -117,7 +117,6 @@ public:
     void propagateStart ();
     void *message (MessageType msg, void *content=NULL);
     void processEvent (MessageType msg);
-    NodeRefListPtr receivers (MessageType msg);
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
@@ -162,7 +161,7 @@ class KMPLAYER_NO_EXPORT MouseListeners {
 public:
     MouseListeners();
 
-    NodeRefListPtr receivers (MessageType msg);
+    NodeRefList *receivers (MessageType msg);
 
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
@@ -277,8 +276,7 @@ public:
     virtual void childDone (NodePtr child);
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    void *message (MessageType msg, void *content=NULL);
-    virtual NodeRefListPtr receivers (MessageType msg);
+    virtual void *message (MessageType msg, void *content=NULL);
     virtual void accept (Visitor *v) { v->visit (this); }
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
@@ -337,7 +335,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     NodePtr childFromTag (const QString & tag);
     void calculateBounds (Single w, Single h);
-    virtual NodeRefListPtr receivers (MessageType msg);
+    void *message (MessageType msg, void *content=NULL);
 private:
     MouseListeners mouse_listeners;
 };
@@ -422,7 +420,6 @@ public:
     void reset ();
     bool expose () const { return false; }
     void *message (MessageType msg, void *content=NULL);
-    NodeRefListPtr receivers (MessageType msg);
     void setJumpNode (NodePtr);
     Runtime *runtime;
 protected:
@@ -556,7 +553,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return tag.ascii (); }
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     void parseParam (const TrieString & name, const QString & value);
-    NodeRefListPtr receivers (MessageType msg);
+    void *message (MessageType msg, void *content=NULL);
     SizeType * coords;
     int nr_coords;
     const QString tag;
@@ -590,7 +587,6 @@ public:
     void boundsUpdate (); // recalculates and repaint old and new bounds
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual void *message (MessageType msg, void *content=NULL);
-    NodeRefListPtr receivers (MessageType msg);
     bool expose () const { return false; }
 
     Runtime *runtime;
@@ -698,7 +694,6 @@ public:
     virtual bool expose () const { return false; }
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual void *message (MessageType msg, void *content=NULL);
-    virtual NodeRefListPtr receivers (MessageType msg);
     Runtime *runtime;
 protected:
     void restoreModification ();
