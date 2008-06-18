@@ -124,27 +124,29 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
                 s = p >= 0 ? s.left (p) : QString ();
             }
             if (d > 0.00001)
-                duration_timer = document()->postEvent (
-                        this, new TimerEvent (int (d * 1000)));
+                duration_timer = document()->post (
+                        this, new TimerPosting (int (d * 1000)));
         }
     Mrl::activate ();
 }
 
-KDE_NO_EXPORT bool ASX::Entry::handleEvent (Event *event) {
-    if (event->id () == event_timer) {
-        document()->cancelEvent (duration_timer);
+KDE_NO_EXPORT void *ASX::Entry::message (MessageType msg, void *content) {
+    if (msg == MsgEventTimer) {
+        duration_timer = NULL;
         deactivate ();
-        return true;
+        return NULL;
     }
-    return Mrl::handleEvent (event);
+    return Mrl::message (msg, content);
 }
 
 KDE_NO_EXPORT void ASX::Entry::deactivate () {
     PlayListNotify * n = document ()->notify_listener;
     if (n)
         n->setInfoMessage (QString ());
-    if (duration_timer)
-        document()->cancelEvent (duration_timer);
+    if (duration_timer) {
+        document()->cancelPosting (duration_timer);
+        duration_timer = NULL;
+    }
     Mrl::deactivate ();
 }
 

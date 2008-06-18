@@ -42,10 +42,6 @@ namespace KIO {
 
 namespace KMPlayer {
 
-extern const unsigned int event_media_ready;
-extern const unsigned int event_img_updated;
-extern const unsigned int event_img_anim_finished;
-
 class IViewer;
 class PartBase;
 class Process;

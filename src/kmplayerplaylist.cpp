@@ -114,9 +114,11 @@ KDE_NO_EXPORT void Connection::disconnect () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT
-TimerEvent::TimerEvent (int ms, unsigned eid)
- : Event (NULL, event_timer), event_id (eid), milli_sec (ms), interval (false) {}
+KDE_NO_CDTOR_EXPORT TimerPosting::TimerPosting (int ms, unsigned eid)
+ : Posting (NULL, MsgEventTimer),
+   event_id (eid),
+   milli_sec (ms),
+   interval (false) {}
 
 //-----------------------------------------------------------------------------
 
@@ -450,7 +452,7 @@ Node::PlayType Node::playType () {
     return play_type_none;
 }
 
-Role *Node::role (RoleType rt) {
+Role *Node::role (RoleType) {
     return NULL;
 }
 
@@ -458,19 +460,20 @@ void Node::opened () {}
 
 void Node::closed () {}
 
-NodeRefListPtr Node::listeners (unsigned int /*event_id*/) {
+NodeRefListPtr Node::receivers (MessageType /*msg*/) {
     return NodeRefListPtr ();
 }
 
-bool Node::handleEvent (Event * /*event*/) { return false; }
+void *Node::message (MessageType, void *) {
+    return NULL;
+}
 
-KDE_NO_EXPORT void Node::propagateEvent (Event *event) {
-    EventPtr store (event);
-    NodeRefListPtr nl = listeners (event->id ());
+KDE_NO_EXPORT void Node::deliver (MessageType msg, void *content) {
+    NodeRefListPtr nl = receivers (msg);
     if (nl)
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
             if (c->data)
-                c->data->handleEvent (event);
+                c->data->message (msg, content);
 }
 
 void Node::accept (Visitor * v) {
@@ -478,8 +481,8 @@ void Node::accept (Visitor * v) {
 }
 
 KDE_NO_EXPORT
-ConnectionPtr Node::connectTo (NodePtr node, unsigned int evt_id) {
-    NodeRefListPtr nl = listeners (evt_id);
+ConnectionPtr Node::connectTo (NodePtr node, MessageType msg) {
+    NodeRefListPtr nl = receivers (msg);
     if (nl)
         return ConnectionPtr (new Connection (nl, node, this));
     return ConnectionPtr ();
@@ -791,10 +794,6 @@ Surface *Mrl::getSurface (Mrl *mrl) {
     return NULL;
 }
 
-bool Mrl::handleEvent (Event *) {
-    return false;
-}
-
 void Mrl::parseParam (const TrieString & para, const QString & val) {
     if (para == StringPool::attr_src && !src.startsWith ("#")) {
         QString abs = absolutePath ();
@@ -846,9 +845,12 @@ void Surface::markDirty () {
 
 //-----------------------------------------------------------------------------
 
-EventData::EventData (Node *t, Event *e, EventData *n)
+EventData::EventData (Node *t, Posting *e, EventData *n)
  : target (t), event (e), next (n) {}
 
+EventData::~EventData () {
+    delete event;
+}
 //-----------------------------------------------------------------------------
 
 Postpone::Postpone (NodePtr doc) : m_doc (doc) {
@@ -870,10 +872,10 @@ Document::Document (const QString & s, PlayListNotify * n)
    notify_listener (n),
    m_tree_version (0),
    m_PostponedListeners (new NodeRefList),
-   cur_timeout (-1),
    event_queue (NULL),
    paused_queue (NULL),
-   cur_event (NULL) {
+   cur_event (NULL),
+   cur_timeout (-1) {
     m_doc = m_self; // just-in-time setting fragile m_self to m_doc
     src = s;
     editable = false;
@@ -963,7 +965,7 @@ static inline void addTime (struct timeval & tv, int ms) {
 }
 
 KDE_NO_CDTOR_EXPORT UpdateEvent::UpdateEvent (Document *doc, unsigned int skip)
- : Event (NULL, event_update), skipped_time (skip) {
+ : skipped_time (skip) {
     struct timeval tv;
     doc->timeOfDay (tv);
     cur_event_time = doc->last_event_time;
@@ -992,21 +994,21 @@ void Document::timeOfDay (struct timeval & tv) {
     }
 }
 
-static bool postponedSensible (Event *e) {
-    return e->id () == event_timer ||
-        e->id () == event_started ||
-        e->id () == event_stopped;
+static bool postponedSensible (MessageType msg) {
+    return msg == MsgEventTimer ||
+        msg == MsgEventStarted ||
+        msg == MsgEventStopped;
 }
 
-void Document::insertEvent (Node *n, Event *e, const struct timeval &tv) {
+void Document::insertPosting (Node *n, Posting *e, const struct timeval &tv) {
     if (!notify_listener)
         return;
-    bool postponed_sensible = postponedSensible (e);
+    bool postponed_sensible = postponedSensible (e->message);
     EventData *prev = NULL;
     EventData *ed = event_queue;
     for (; ed; ed = ed->next) {
         int diff = diffTime (ed->timeout, tv);
-        bool psens = postponedSensible (ed->event.ptr ());
+        bool psens = postponedSensible (ed->event->message);
         if ((diff > 0 && postponed_sensible == psens) || (!postponed_sensible && psens))
             break;
         prev = ed;
@@ -1024,7 +1026,7 @@ void Document::setNextTimeout (const struct timeval &now) {
     if (!cur_event) {              // if we're not processing events
         int timeout = 0x7FFFFFFF;
         if (event_queue && active () &&
-                (!postpone_ref || !postponedSensible (event_queue->event.ptr ())))
+                (!postpone_ref || !postponedSensible (event_queue->event->message)))
             timeout = diffTime (event_queue->timeout, now);
         timeout = 0x7FFFFFFF != timeout ? (timeout > 0 ? timeout : 0) : -1;
         if (timeout != cur_timeout) {
@@ -1045,8 +1047,10 @@ void Document::updateTimeout () {
     }
 }
 
-Event *Document::postEvent (Node *n, Event *e) {
-    int ms = e->id () == event_timer ? static_cast <TimerEvent *> (e)->milli_sec : 0;
+Posting *Document::post (Node *n, Posting *e) {
+    int ms = e->message == MsgEventTimer
+        ? static_cast<TimerPosting *>(e)->milli_sec
+        : 0;
     struct timeval now, tv;
     if (cur_event)
         now = cur_event->timeout;
@@ -1054,31 +1058,32 @@ Event *Document::postEvent (Node *n, Event *e) {
         timeOfDay (now);
     tv = now;
     addTime (tv, ms);
-    insertEvent (n, e, tv);
-    if (postpone_ref || event_queue->event.ptr () == e)
+    insertPosting (n, e, tv);
+    if (postpone_ref || event_queue->event == e)
         setNextTimeout (now);
     return e;
 }
 
-static EventData *findEvent (EventData *queue, EventData **prev, const Event *e) {
+static EventData *findPosting (EventData *queue, EventData **prev, const Posting *e) {
     *prev = NULL;
     for (EventData *ed = queue; ed; ed = ed->next) {
-        if (e == ed->event.ptr ())
+        if (e == ed->event)
             return ed;
         *prev = ed;
     }
     return NULL;
 }
 
-void Document::cancelEvent (Event *e) {
-    if (cur_event && cur_event->event.ptr () == e) {
+void Document::cancelPosting (Posting *e) {
+    if (cur_event && cur_event->event == e) {
+        delete cur_event->event;
         cur_event->event = NULL;
     } else {
         EventData *prev;
         EventData **queue = &event_queue;
-        EventData *ed = findEvent (event_queue, &prev, e);
+        EventData *ed = findPosting (event_queue, &prev, e);
         if (!ed) {
-            ed = findEvent (paused_queue, &prev, e);
+            ed = findPosting (paused_queue, &prev, e);
             queue = &paused_queue;
         }
         if (ed) {
@@ -1095,18 +1100,19 @@ void Document::cancelEvent (Event *e) {
             }
             delete ed;
         } else {
-            kError () << "Event not found";
+            kError () << "Posting not found";
         }
     }
 }
 
-void Document::pauseEvent (Event *e) {
-    if (cur_event && cur_event->event.ptr () == e) {
+void Document::pausePosting (Posting *e) {
+    if (cur_event && cur_event->event == e) {
         paused_queue = new EventData (cur_event->target, cur_event->event, paused_queue);
         paused_queue->timeout = cur_event->timeout;
+        cur_event->event = NULL;
     } else {
         EventData *prev;
-        EventData *ed = findEvent (event_queue, &prev, e);
+        EventData *ed = findPosting (event_queue, &prev, e);
         if (ed) {
             if (prev)
                 prev->next = ed->next;
@@ -1120,19 +1126,19 @@ void Document::pauseEvent (Event *e) {
     }
 }
 
-void Document::unpauseEvent (Event *e, int ms) {
+void Document::unpausePosting (Posting *e, int ms) {
     EventData *prev;
-    EventData *ed = findEvent (paused_queue, &prev, e);
+    EventData *ed = findPosting (paused_queue, &prev, e);
     if (ed) {
         if (prev)
             prev->next = ed->next;
         else
             paused_queue = ed->next;
         addTime (ed->timeout, ms);
-        insertEvent (ed->target, ed->event, ed->timeout);
+        insertPosting (ed->target, ed->event, ed->timeout);
         delete ed;
     } else {
-        kError () << "pauseEvent not found";
+        kError () << "pausePosting not found";
     }
 }
 
@@ -1146,7 +1152,7 @@ void Document::timer () {
 
         // handle max 100 timeouts with timeout set to now
         for (int i = 0; i < 100 && active (); ++i) {
-            if (postpone_ref && postponedSensible (cur_event->event.ptr ()))
+            if (postpone_ref && postponedSensible (cur_event->event->message))
                 break;
             // remove from queue
             event_queue = cur_event->next;
@@ -1156,18 +1162,20 @@ void Document::timer () {
                 kError () << "spurious timer" << endl;
             } else {
                 EventData *ed = cur_event;
-                cur_event->target->handleEvent (cur_event->event.ptr ());
+                cur_event->target->message (cur_event->event->message, cur_event->event);
                 if (!guard) {
                     delete ed;
                     return;
                 }
-                if (cur_event->event && cur_event->event->id() == event_timer) {
-                    TimerEvent *te = static_cast <TimerEvent *> (cur_event->event.ptr ());
+                if (cur_event->event && cur_event->event->message == MsgEventTimer) {
+                    TimerPosting *te = static_cast <TimerPosting *> (cur_event->event);
                     if (te->interval) {
                         te->interval = false; // reset interval
                         addTime (cur_event->timeout, te->milli_sec);
-                        insertEvent (cur_event->target,
-                                cur_event->event.ptr (), cur_event->timeout);
+                        insertPosting (cur_event->target,
+                                cur_event->event,
+                                cur_event->timeout);
+                        cur_event->event = NULL;
                     }
                 }
             }
@@ -1187,7 +1195,8 @@ PostponePtr Document::postpone () {
     kDebug () << "postpone";
     PostponePtr p = new Postpone (this);
     postpone_ref = p;
-    propagateEvent (new PostponedEvent (true));
+    PostponedEvent event (true);
+    deliver (MsgEventPostponed, &event);
     if (notify_listener)
         notify_listener->enableRepaintUpdaters (false, 0);
     if (!cur_event) {
@@ -1207,13 +1216,14 @@ void Document::proceed (const struct timeval &postponed_time) {
     int diff = diffTime (now, postponed_time);
     if (event_queue) {
         for (EventData *ed = event_queue; ed; ed = ed->next)
-            if (ed->event && postponedSensible (ed->event))
+            if (ed->event && postponedSensible (ed->event->message))
                 addTime (ed->timeout, diff);
         setNextTimeout (now);
     }
     if (notify_listener)
         notify_listener->enableRepaintUpdaters (true, diff);
-    propagateEvent (new PostponedEvent (false));
+    PostponedEvent event (false);
+    deliver (MsgEventPostponed, &event);
 }
 
 Surface *Document::getSurface (Mrl *mrl) {
@@ -1222,10 +1232,10 @@ Surface *Document::getSurface (Mrl *mrl) {
     return NULL;
 }
 
-NodeRefListPtr Document::listeners (unsigned int id) {
-    if (id == event_postponed)
+NodeRefListPtr Document::receivers (MessageType id) {
+    if (id == MsgEventPostponed)
         return m_PostponedListeners;
-    return Mrl::listeners (id);
+    return Mrl::receivers (id);
 }
 
 //-----------------------------------------------------------------------------

@@ -41,24 +41,13 @@
 using namespace KMPlayer;
 
 namespace KMPlayer {
-static const unsigned int event_activated = (unsigned int) Runtime::dur_activated;
-const unsigned int event_inbounds = (unsigned int) Runtime::dur_inbounds;
-const unsigned int event_outbounds = (unsigned int) Runtime::dur_outbounds;
-const unsigned int event_stopped = (unsigned int) Runtime::dur_end;
-const unsigned int event_started = (unsigned int)Runtime::dur_start;
-static const unsigned int event_to_be_started = 1 + (unsigned int) Runtime::dur_last_dur;
-const unsigned int event_pointer_clicked = (unsigned int) event_activated;
-const unsigned int event_pointer_moved = (unsigned int) -11;
-const unsigned int event_timer = (unsigned int) -12;
-const unsigned int event_postponed = (unsigned int) -13;
-const unsigned int mediatype_attached = (unsigned int) -14;
-const unsigned int event_update = (unsigned int) -15;
 
-static const unsigned int start_timer_id = (unsigned int) 3;
+static const unsigned int begin_timer_id = (unsigned int) 3;
 static const unsigned int dur_timer_id = (unsigned int) 4;
 static const unsigned int anim_timer_id = (unsigned int) 5;
 static const unsigned int trans_timer_id = (unsigned int) 6;
 static const unsigned int trans_out_timer_id = (unsigned int) 7;
+
 }
 
 /* Intrinsic duration
@@ -205,7 +194,7 @@ static Fit parseFit (const char *cval) {
 //-----------------------------------------------------------------------------
 
 PostponedEvent::PostponedEvent (bool postponed)
- : Event (NULL, event_postponed), is_postponed (postponed) {}
+ : is_postponed (postponed) {}
 
 //-----------------------------------------------------------------------------
 
@@ -271,23 +260,27 @@ KDE_NO_CDTOR_EXPORT Runtime::Runtime (Node *e)
    m_StartListeners (new NodeRefList),
    m_StartedListeners (new NodeRefList),
    m_StoppedListeners (new NodeRefList),
+   begin_timer (NULL),
+   duration_timer (NULL),
+   started_timer (NULL),
+   stopped_timer (NULL),
    fill_active (fill_auto),
    element (e) {}
 
 
 KDE_NO_CDTOR_EXPORT Runtime::~Runtime () {
-    if (start_timer || duration_timer) // ugh
+    if (begin_timer || duration_timer) // ugh
         reset ();
 }
 
 KDE_NO_EXPORT void Runtime::reset () {
-    if (start_timer) {
-        element->document ()->cancelEvent (start_timer);
-        ASSERT (!start_timer);
+    if (begin_timer) {
+        element->document ()->cancelPosting (begin_timer);
+        begin_timer = NULL;
     }
     if (duration_timer) {
-        element->document ()->cancelEvent (duration_timer);
-        ASSERT (!duration_timer);
+        element->document ()->cancelPosting (duration_timer);
+        duration_timer = NULL;
     }
     repeat_count = 0;
     timingstate = timings_reset;
@@ -383,7 +376,7 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
                 kWarning () << "setDuration no match " << cval;
             if (target && dur != dur_timer) {
                 durations [(int) item].connection =
-                    target->connectTo (element, dur);
+                    target->connectTo (element, (MessageType) dur);
             }
         }
         //kDebug () << "setDuration " << dur << " id:'" << idref << "' off:" << offset;
@@ -397,7 +390,7 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
  */
 KDE_NO_EXPORT void Runtime::start () {
     //kDebug () << "Runtime::begin " << element->nodeName();
-    if (start_timer || duration_timer)
+    if (begin_timer || duration_timer)
         convertNode <Element> (element)->init ();
     timingstate = timings_began;
 
@@ -432,8 +425,8 @@ KDE_NO_EXPORT void Runtime::start () {
     if (stop)                          // wait for event
         propagateStop (false);
     else if (offset > 0)               // start timer
-        start_timer = element->document ()->postEvent (
-                element, new TimerEvent (100 * offset, start_timer_id));
+        begin_timer = element->document ()->post (element,
+                new TimerPosting (100 * offset, begin_timer_id));
     else                               // start now
         propagateStart ();
 }
@@ -445,13 +438,15 @@ KDE_NO_EXPORT void Runtime::finish () {
         finish_time = element->document ()->last_event_time/100;
         NodePtrW guard = element;
         element->Node::finish ();
-        if (guard && element->document ()->active ()) // check for reset
-            element->propagateEvent (new Event (element, event_stopped));
+        if (guard && element->document ()->active ()) { // check for reset
+            Posting event (element, MsgEventStopped);
+            element->deliver (MsgEventStopped, &event);
+        }
     }
 }
 
 KDE_NO_EXPORT void Runtime::startAndBeginNode () {
-    if (start_timer || duration_timer)
+    if (begin_timer || duration_timer)
         convertNode <Element> (element)->init ();
     timingstate = timings_began;
     propagateStart ();
@@ -462,14 +457,16 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
     //kDebug () << "Runtime::parseParam " << name << "=" << val;
     if (name == StringPool::attr_begin) {
         setDurationItem (begin_time, val);
-        if ((timingstate == timings_began && !start_timer) ||
+        if ((timingstate == timings_began && !begin_timer) ||
                 timingstate == timings_stopped) {
             if (beginTime ().offset > 0) { // create a timer for start
-                if (start_timer)
-                    element->document ()->cancelEvent (start_timer);
+                if (begin_timer) {
+                    element->document ()->cancelPosting (begin_timer);
+                    begin_timer = NULL;
+                }
                 if (beginTime ().durval == dur_timer)
-                    start_timer = element->document ()->postEvent (element,
-                            new TimerEvent (100 * beginTime ().offset, start_timer_id));
+                    begin_timer = element->document ()->post (element,
+                            new TimerPosting (100 * beginTime ().offset, begin_timer_id));
             } else {                              // start now
                 propagateStart ();
             }
@@ -518,8 +515,8 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
             Node *e = findLocalNodeById (element, val);
             if (e) {
                 durations [(int) end_time].connection =
-                    e->connectTo (element, event_stopped);
-                durations [(int) end_time].durval = (Duration) event_stopped;
+                    e->connectTo (element, MsgEventStopped);
+                durations [(int) end_time].durval = (Duration) MsgEventStopped;
             }
         }
     } else if (name.startsWith ("repeat")) {
@@ -532,65 +529,77 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
     return true;
 }
 
-KDE_NO_EXPORT bool Runtime::handleEvent (Event *event) {
-    int event_id = event->id ();
-    switch (event_id) {
-        case event_timer: {
-            TimerEvent *te = static_cast <TimerEvent *> (event);
-            if (te->event_id == start_timer_id)
+KDE_NO_EXPORT void *Runtime::message (MessageType msg, void *content) {
+    switch (msg) {
+        case MsgEventTimer: {
+            TimerPosting *te = static_cast <TimerPosting *> (content);
+            if (te->event_id == begin_timer_id) {
+                begin_timer = NULL;
                 propagateStart ();
-            else if (te->event_id == dur_timer_id)
+            } else if (te->event_id == dur_timer_id) {
+                duration_timer = NULL;
                 propagateStop (true);
-            else
+            } else {
                 kWarning () << "unhandled timer event";
-            return true;
+            }
+            return NULL;
         }
-        case event_started:
+        case MsgEventStarted: {
+            Posting *event = static_cast <Posting *> (content);
             if (event->source.ptr () == element) {
+                started_timer = NULL;
                 start_time = element->document ()->last_event_time/100;
                 setDuration ();
                 NodePtrW guard = element;
-                element->propagateEvent (event);
+                element->deliver (MsgEventStarted, event);
                 if (guard) {
                     element->begin ();
                     propagateStop (false);
                 }
-                return true;
+                return NULL;
             }
             break;
-        case event_stopped:
+        }
+        case MsgEventStopped: {
+            Posting *event = static_cast <Posting *> (content);
             if (event->source.ptr () == element) {
+                stopped_timer = NULL;
                 stopped ();
-                return true;
+                return NULL;
             }
+            break;
+        }
+        default:
             break;
     }
-    processEvent (event_id);
-    return true;
+    processEvent (msg);
+    return NULL;
 }
 
-KDE_NO_EXPORT void Runtime::processEvent (int event_id) {
-    if (!started () && beginTime ().durval == event_id) {
-        if (start_timer)
-            element->document ()->cancelEvent (start_timer);
+KDE_NO_EXPORT void Runtime::processEvent (MessageType msg) {
+    if (!started () && beginTime ().durval == (Duration) msg) {
+        if (begin_timer) {
+            element->document ()->cancelPosting (begin_timer);
+            begin_timer = NULL;
+        }
         if (element && beginTime ().offset > 0)
-            start_timer = element->document ()->postEvent (element,
-                    new TimerEvent (100 * beginTime ().offset, start_timer_id));
+            begin_timer = element->document ()->post (element,
+                  new TimerPosting (100 * beginTime ().offset, begin_timer_id));
         else //FIXME neg. offsets
             propagateStart ();
         if (element->state == Node::state_finished)
             element->state = Node::state_activated; // rewind to activated
-    } else if (started () && (unsigned int) endTime ().durval == event_id) {
+    } else if (started () && endTime ().durval == (Duration) msg) {
         propagateStop (true);
     }
 }
 
-KDE_NO_EXPORT NodeRefListPtr Runtime::listeners (unsigned int id) {
-    if (id == event_stopped)
+KDE_NO_EXPORT NodeRefListPtr Runtime::receivers (MessageType id) {
+    if (id == MsgEventStopped)
         return m_StoppedListeners;
-    else if (id == event_started)
+    else if (id == MsgEventStarted)
         return m_StartedListeners;
-    else if (id == event_to_be_started)
+    else if (id == MsgEventStarting)
         return m_StartListeners;
     kWarning () << "unknown event requested";
     return NodeRefListPtr ();
@@ -616,43 +625,44 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
     }
     bool was_started (started ());
     timingstate = timings_stopped;
-    if (start_timer) {
-        element->document ()->cancelEvent (start_timer);
-        ASSERT (!start_timer);
+    if (begin_timer) {
+        element->document ()->cancelPosting (begin_timer);
+        begin_timer = NULL;
     }
     if (duration_timer) {
-        element->document ()->cancelEvent (duration_timer);
-        ASSERT (!duration_timer);
+        element->document ()->cancelPosting (duration_timer);
+        duration_timer = NULL;
     }
     if (was_started && element->document ()->active ())
-        stopped_timer = element->document()->postEvent (
-                element, new Event (element, event_stopped));
+        stopped_timer = element->document()->post (
+                element, new Posting (element, MsgEventStopped));
     else if (element->unfinished ())
         element->finish ();
 }
 
 KDE_NO_EXPORT void Runtime::propagateStart () {
-    element->propagateEvent (new Event (element, event_to_be_started));
-    if (start_timer)
-        element->document ()->cancelEvent (start_timer);
-    ASSERT (!start_timer);
+    element->deliver (MsgEventStarting, element);
+    if (begin_timer)
+        element->document ()->cancelPosting (begin_timer);
     timingstate = timings_started;
-    started_timer = element->document()->postEvent(
-            element, new Event(element,event_started));
+    started_timer = element->document()->post (
+            element, new Posting (element, MsgEventStarted));
 }
 
 /**
- * start_timer timer expired
+ * begin_timer timer expired
  */
 KDE_NO_EXPORT void Runtime::setDuration () {
     //kDebug () << (element ? element->nodeName() : "-");
-    if (start_timer)
-        element->document ()->cancelEvent (start_timer);
+    if (begin_timer) {
+        element->document ()->cancelPosting (begin_timer);
+        begin_timer = NULL;
+    }
     if (durTime ().offset > 0 && durTime ().durval == dur_timer) {
         if (duration_timer)
-            element->document ()->cancelEvent (duration_timer);
-        duration_timer = element->document ()->postEvent
-            (element, new TimerEvent (100 * durTime ().offset, dur_timer_id));
+            element->document ()->cancelPosting (duration_timer);
+        duration_timer = element->document ()->post (element,
+                new TimerPosting (100 * durTime ().offset, dur_timer_id));
     }
     // kDebug () << "Runtime::started set dur timer " << durTime ().offset;
 }
@@ -665,10 +675,12 @@ KDE_NO_EXPORT void Runtime::stopped () {
         if (repeat_count == dur_infinite || 0 < repeat_count--) {
             if (beginTime ().offset > 0 &&
                     beginTime ().durval == dur_timer) {
-                if (start_timer)
-                    element->document ()->cancelEvent (start_timer);
-                start_timer = element->document ()->postEvent
-                    (element, new TimerEvent (100 * beginTime ().offset, start_timer_id));
+                if (begin_timer) {
+                    element->document ()->cancelPosting (begin_timer);
+                    begin_timer = NULL;
+                }
+                begin_timer = element->document()->post (element,
+                        new TimerPosting (100 * beginTime ().offset, begin_timer_id));
             } else {
                 propagateStart ();
             }
@@ -958,16 +970,18 @@ KDE_NO_CDTOR_EXPORT MouseListeners::MouseListeners () :
    m_OutOfBoundsListeners (new NodeRefList),
    m_InBoundsListeners (new NodeRefList) {}
 
-NodeRefListPtr MouseListeners::listeners (unsigned int eid) {
+NodeRefListPtr MouseListeners::receivers (MessageType eid) {
     switch (eid) {
-        case event_activated:
+        case MsgEventClicked:
             return m_ActionListeners;
-        case event_inbounds:
+        case MsgEventPointerInBounds:
             return m_InBoundsListeners;
-        case event_outbounds:
+        case MsgEventPointerOutBounds:
             return m_OutOfBoundsListeners;
+        default:
+            break;
     }
-    return 0L;
+    return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -1053,8 +1067,8 @@ KDE_NO_EXPORT void SMIL::Smil::deactivate () {
     Mrl::deactivate ();
 }
 
-KDE_NO_EXPORT bool SMIL::Smil::handleEvent (Event *event) {
-    return layout_node ? layout_node->handleEvent (event) : false;
+KDE_NO_EXPORT void *SMIL::Smil::message (MessageType msg, void *content) {
+    return layout_node ? layout_node->message (msg, content) : NULL;
 }
 
 KDE_NO_EXPORT void SMIL::Smil::closed () {
@@ -1383,20 +1397,22 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
     Element::parseParam (name, val);
 }
 
-NodeRefListPtr SMIL::RegionBase::listeners (unsigned int eid) {
+NodeRefListPtr SMIL::RegionBase::receivers (MessageType eid) {
     switch (eid) {
-        case mediatype_attached:
+        case MsgSurfaceAttach:
             return m_AttachedMediaTypes;
+        default:
+            break;
     }
-    return Element::listeners (eid);
+    return Element::receivers (eid);
 }
 
-bool SMIL::RegionBase::handleEvent (Event *event) {
-    if (event->id () == event_media_ready)
+void *SMIL::RegionBase::message (MessageType msg, void *content) {
+    if (msg == MsgMediaReady)
         dataArrived ();
     else
-        return Element::handleEvent (event);
-    return true;
+        return Element::message (msg, content);
+    return NULL;
 }
 
 //--------------------------%<-------------------------------------------------
@@ -1504,11 +1520,11 @@ void SMIL::Region::calculateBounds (Single pw, Single ph) {
     //kDebug () << "parent:" << pw << "x" << ph << " this:" << (int)x << "," << (int)y << " " << (int)w << "x" << (int)h;
 }
 
-NodeRefListPtr SMIL::Region::listeners (unsigned int eid) {
-    NodeRefListPtr l = mouse_listeners.listeners (eid);
+NodeRefListPtr SMIL::Region::receivers (MessageType msg) {
+    NodeRefListPtr l = mouse_listeners.receivers (msg);
     if (l)
         return l;
-    return RegionBase::listeners (eid);
+    return RegionBase::receivers (msg);
 }
 
 //-----------------------------------------------------------------------------
@@ -1741,18 +1757,18 @@ KDE_NO_EXPORT void SMIL::GroupBase::begin () {
         postpone_lock = document ()->postpone ();
 }
 
-KDE_NO_EXPORT bool SMIL::GroupBase::handleEvent (Event *event) {
-    if (event->id () == event_media_ready) {
+KDE_NO_EXPORT void *SMIL::GroupBase::message (MessageType msg, void *content) {
+    if (MsgMediaReady == msg) {
         if (postpone_lock && childMediaTypeReady (this))
             postpone_lock = NULL;
     } else {
-        return runtime->handleEvent (event);
+        return runtime->message (msg, content);
     }
-    return true;
+    return NULL;
 }
 
-KDE_NO_EXPORT NodeRefListPtr SMIL::GroupBase::listeners (unsigned int id) {
-    return runtime->listeners (id);
+KDE_NO_EXPORT NodeRefListPtr SMIL::GroupBase::receivers (MessageType id) {
+    return runtime->receivers (id);
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
@@ -1892,7 +1908,7 @@ public:
     void visit (Element *elm) {
         if (elm->role (RoleTypeTiming)) {
             // make aboutToStart connection with Timing
-            ConnectionPtr c = elm->connectTo (excl, event_to_be_started);
+            ConnectionPtr c = elm->connectTo (excl, MsgEventStarting);
             excl->started_event_list.append (
                     new SMIL::Excl::ConnectionStoreItem (c));
             elm->activate ();
@@ -1913,24 +1929,24 @@ class KMPLAYER_NO_EXPORT ExclPauseVisitor : public Visitor {
     Node *paused_by;
     unsigned int cur_time;
 
-    void updatePauseStateEvent (Event *event, int pause_time) {
+    void updatePauseStateEvent (Posting *event, int pause_time) {
         if (event) {
             if (pause)
-                paused_by->document ()->pauseEvent (event);
+                paused_by->document ()->pausePosting (event);
             else
-                paused_by->document ()->unpauseEvent (event, (cur_time-pause_time)*100);
+                paused_by->document ()->unpausePosting (event, (cur_time-pause_time)*100);
         }
     }
-    static Event *activeEvent (Runtime *r) {
-        Event *event = NULL;
-        if (r->start_timer)
-            event = r->start_timer.ptr ();
+    static Posting *activeEvent (Runtime *r) {
+        Posting *event = NULL;
+        if (r->begin_timer)
+            event = r->begin_timer;
         else if (r->started_timer)
-            event = r->started_timer.ptr ();
+            event = r->started_timer;
         else if (r->duration_timer)
-            event = r->duration_timer.ptr ();
+            event = r->duration_timer;
         else if (r->stopped_timer)
-            event = r->stopped_timer.ptr ();
+            event = r->stopped_timer;
         return event;
     }
 
@@ -1977,21 +1993,19 @@ public:
                 s->repaint ();
         }
 
-        Event *event = NULL;
-        if (mt->trans_timer)
-            event = mt->trans_timer.ptr ();
-        else if (mt->trans_out_timer)
-            event = mt->trans_out_timer.ptr ();
+        Posting *event = NULL;
+        if (mt->trans_out_timer)
+            event = mt->trans_out_timer;
         updatePauseStateEvent (event, mt->runtime->paused_time);
 
         visit (static_cast <Element *> (mt));
     }
     void visit (SMIL::Animate *an) {
-        updatePauseStateEvent(an->anim_timer.ptr(), an->runtime->paused_time);
+        updatePauseStateEvent(an->anim_timer, an->runtime->paused_time);
         visit (static_cast <Element *> (an));
     }
     void visit (SMIL::AnimateMotion *an) {
-        updatePauseStateEvent(an->anim_timer.ptr(), an->runtime->paused_time);
+        updatePauseStateEvent(an->anim_timer, an->runtime->paused_time);
         visit (static_cast <Element *> (an));
     }
     void visit (SMIL::Smil *s) {
@@ -2024,60 +2038,68 @@ KDE_NO_EXPORT void SMIL::Excl::childDone (NodePtr /*child*/) {
     // do nothing
 }
 
-KDE_NO_EXPORT bool SMIL::Excl::handleEvent (Event *event) {
-    if (event->id () == event_to_be_started) {
-        if (event->source == cur_node)
-            return true; // eg. repeating
-        Node *n = cur_node.ptr ();
-        cur_node = event->source;
-        stopped_connection = cur_node->connectTo (this, event_stopped);
-        if (n) {
-            if (SMIL::id_node_priorityclass == cur_node->parentNode ()->id) {
-                switch (static_cast <SMIL::PriorityClass *>
-                        (cur_node->parentNode ().ptr ())->peers) {
-                    case PriorityClass::PeersPause: {
-                        ExclPauseVisitor visitor (
-                                true, this, document ()->last_event_time/100);
-                        n->accept (&visitor);
-                        priority_queue.insertBefore (
-                                new NodeRefItem (n), priority_queue.first ());
-                        return true;
+KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
+    switch (msg) {
+        case MsgEventStarting: {
+            Node *source = (Node *) content;
+            Node *n = cur_node.ptr ();
+            if (source == n)
+                return NULL; // eg. repeating
+            cur_node = source;
+            stopped_connection = cur_node->connectTo (this, MsgEventStopped);
+            if (n) {
+                if (SMIL::id_node_priorityclass == cur_node->parentNode ()->id) {
+                    switch (static_cast <SMIL::PriorityClass *>
+                            (cur_node->parentNode ().ptr ())->peers) {
+                        case PriorityClass::PeersPause: {
+                            ExclPauseVisitor visitor (
+                                  true, this, document ()->last_event_time/100);
+                            n->accept (&visitor);
+                            priority_queue.insertBefore (
+                                  new NodeRefItem (n), priority_queue.first ());
+                            return NULL;
+                        }
+                        default:
+                            break; //TODO
                     }
-                    default:
-                        break; //TODO
+                }
+                ((Runtime *) n->role(RoleTypeTiming))->propagateStop(true);
+            }
+            return NULL;
+        }
+        case MsgEventStopped: {
+            Posting *event = static_cast <Posting *> (content);
+            if (event->source.ptr () != this) {
+                ASSERT (event->source == cur_node);
+
+                NodeRefItemPtr ref = priority_queue.first ();
+                while (ref && (!ref->data || !ref->data->active ())) {
+                    // should not happen, but consider a backend crash or so
+                    priority_queue.remove (ref);
+                    ref = priority_queue.first ();
+                }
+                if (ref) {
+                    cur_node = ref->data;
+                    priority_queue.remove (ref);
+                    stopped_connection = cur_node->connectTo (this, MsgEventStopped);
+                    ExclPauseVisitor visitor (false, this, document()->last_event_time/100);
+                    cur_node->accept (&visitor);
+                    // else TODO
+                } else {
+                    cur_node = NULL;
+                    stopped_connection = NULL;
+                    // now finish unless 'dur="indefinite/some event/.."'
+                    if (runtime->started ())
+                        runtime->propagateStop (false); // wait for runtime to finish
+                    else
+                        finish (); // we're done
                 }
             }
-            static_cast<Runtime*>(n->role(RoleTypeTiming))->propagateStop(true);
-        }
-        return true;
-    } else if (event->id () == event_stopped && event->source.ptr () != this) {
-        ASSERT (event->source == cur_node);
-
-        NodeRefItemPtr ref = priority_queue.first ();
-        while (ref && (!ref->data || !ref->data->active ())) {
-            // should not happen, but consider a backend crash or so
-            priority_queue.remove (ref);
-            ref = priority_queue.first ();
-        }
-        if (ref) {
-            cur_node = ref->data;
-            priority_queue.remove (ref);
-            stopped_connection = cur_node->connectTo (this, event_stopped);
-            ExclPauseVisitor visitor (false, this, document()->last_event_time/100);
-            cur_node->accept (&visitor);
-            // else TODO
-        } else {
-            cur_node = NULL;
-            stopped_connection = NULL;
-            // now finish unless 'dur="indefinite/some event/.."'
-            if (runtime->started ())
-                runtime->propagateStop (false); // wait for runtime to finish
-            else
-                finish (); // we're done
-        }
-    } else
-        return GroupBase::handleEvent (event);
-    return true;
+        } // fall through
+        default:
+            return GroupBase::message (msg, content);
+    }
+    return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -2238,8 +2260,8 @@ KDE_NO_EXPORT void SMIL::Anchor::activate () {
     init ();
     for (NodePtr c = firstChild(); c; c = c->nextSibling ())
         if (c->id >=id_node_first_mediatype && c->id <=id_node_last_mediatype) {
-            mediatype_activated = c->connectTo (this, event_activated);
-            mediatype_attach = c->connectTo (this, mediatype_attached);
+            mediatype_activated = c->connectTo (this, MsgEventClicked);
+            mediatype_attach = c->connectTo (this, MsgSurfaceAttach);
             break;
         }
     Element::activate ();
@@ -2272,8 +2294,8 @@ KDE_NO_EXPORT void SMIL::Area::activate () {
     if (parentNode () &&
             parentNode ()->id >= id_node_first_mediatype &&
             parentNode ()->id <= id_node_last_mediatype) {
-        mediatype_activated = parentNode ()->connectTo (this, event_activated);
-        mediatype_attach = parentNode ()->connectTo (this, mediatype_attached);
+        mediatype_activated = parentNode ()->connectTo (this, MsgEventClicked);
+        mediatype_attach = parentNode ()->connectTo (this, MsgSurfaceAttach);
     }
     Element::activate ();
 }
@@ -2291,11 +2313,11 @@ void SMIL::Area::parseParam (const TrieString & para, const QString & val) {
         LinkingBase::parseParam (para, val);
 }
 
-KDE_NO_EXPORT NodeRefListPtr SMIL::Area::listeners (unsigned int id) {
-    NodeRefListPtr l = mouse_listeners.listeners (id);
+KDE_NO_EXPORT NodeRefListPtr SMIL::Area::receivers (MessageType msg) {
+    NodeRefListPtr l = mouse_listeners.receivers (msg);
     if (l)
         return l;
-    return Element::listeners (id);
+    return Element::receivers (msg);
 }
 
 //-----------------------------------------------------------------------------
@@ -2306,6 +2328,7 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
    m_type (t),
    bitrate (0),
    trans_start_time (0),
+   trans_out_timer (NULL),
    sensitivity (sens_opaque),
    trans_out_active (false),
    has_mouse (false),
@@ -2460,11 +2483,11 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     region_attach = 0L;
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
-    if (trans_timer)
-        document ()->cancelEvent (trans_timer);
     document ()->notify_listener->removeRepaintUpdater (this);
-    if (trans_out_timer)
-        document ()->cancelEvent (trans_out_timer);
+    if (trans_out_timer) {
+        document ()->cancelPosting (trans_out_timer);
+        trans_out_timer = NULL;
+    }
     if (unfinished ())
         finish ();
     runtime->reset ();
@@ -2502,17 +2525,19 @@ KDE_NO_EXPORT void SMIL::MediaType::undefer () {
 
 KDE_NO_EXPORT void SMIL::MediaType::begin () {
     SMIL::RegionBase *r = findRegion (this, param (StringPool::attr_region));
-    if (trans_timer) // eg transOut and we're repeating
-        document ()->cancelEvent (trans_timer);
+    if (trans_out_timer) { // eg transOut and we're repeating
+        document ()->cancelPosting (trans_out_timer);
+        trans_out_timer = NULL;
+    }
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c != external_tree)
             c->activate (); // activate param/set/animate.. children
     if (r) {
         region_node = r;
-        region_mouse_enter = r->connectTo (this, event_inbounds);
-        region_mouse_leave = r->connectTo (this, event_outbounds);
-        region_mouse_click = r->connectTo (this, event_activated);
-        region_attach = r->connectTo (this, mediatype_attached);
+        region_mouse_enter = r->connectTo (this, MsgEventPointerInBounds);
+        region_mouse_leave = r->connectTo (this, MsgEventPointerOutBounds);
+        region_mouse_click = r->connectTo (this, MsgEventClicked);
+        region_attach = r->connectTo (this, MsgSurfaceAttach);
         r->repaint ();
         clipStart ();
         Transition * trans = convertNode <Transition> (trans_in);
@@ -2529,9 +2554,8 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
             trans = convertNode <Transition> (trans_out);
             if (trans && trans->supported () &&
                     (int) trans->dur < runtime->durTime().offset)
-                trans_out_timer = document()->postEvent (
-                        this,
-                        new TimerEvent ((runtime->durTime().offset - trans->dur) * 100,
+                trans_out_timer = document()->post (this,
+                        new TimerPosting ((runtime->durTime().offset - trans->dur) * 100,
                         trans_out_timer_id));
         }
     } else {
@@ -2652,11 +2676,11 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
     return SRect ();
 }
 
-bool SMIL::MediaType::handleEvent (Event *event) {
+void *SMIL::MediaType::message (MessageType msg, void *content) {
     Surface *s = static_cast <Surface *> (role (RoleTypeDisplay));
-    switch (event->id ()) {
-        case event_postponed: {
-            PostponedEvent * pe = static_cast <PostponedEvent *> (event);
+    switch (msg) {
+        case MsgEventPostponed: {
+            PostponedEvent *pe = static_cast <PostponedEvent *> (content);
             if (media_object) {
                 if (pe->is_postponed) {
                     if (unfinished ()) {
@@ -2668,10 +2692,10 @@ bool SMIL::MediaType::handleEvent (Event *event) {
                     media_object->unpause ();
                 }
             }
-            return true;
+            return NULL;
         }
-        case event_update: {
-            UpdateEvent *ue = static_cast <UpdateEvent *> (event);
+        case MsgSurfaceUpdate: {
+            UpdateEvent *ue = static_cast <UpdateEvent *> (content);
 
             trans_start_time += ue->skipped_time;
             trans_end_time += ue->skipped_time;
@@ -2686,10 +2710,10 @@ bool SMIL::MediaType::handleEvent (Event *event) {
             }
             if (s && s->parentNode())
                 s->parentNode()->repaint (s->bounds);
-            return true;
+            return NULL;
         }
-        case event_timer: {
-            TimerEvent *te = static_cast <TimerEvent *> (event);
+        case MsgEventTimer: {
+            TimerPosting *te = static_cast <TimerPosting *> (content);
             if (te->event_id == trans_out_timer_id) {
                 if (active_trans)
                     document ()->notify_listener->removeRepaintUpdater (this);
@@ -2705,23 +2729,25 @@ bool SMIL::MediaType::handleEvent (Event *event) {
                     if (s)
                         s->repaint ();
                 }
-                return true;
+                return NULL;
             }
         } // fall through
         default:
-            return runtime->handleEvent (event);
+            return runtime->message (msg, content);
     }
 }
 
-KDE_NO_EXPORT NodeRefListPtr SMIL::MediaType::listeners (unsigned int id) {
-    NodeRefListPtr l = mouse_listeners.listeners (id);
+KDE_NO_EXPORT NodeRefListPtr SMIL::MediaType::receivers (MessageType id) {
+    NodeRefListPtr l = mouse_listeners.receivers (id);
     if (l)
         return l;
     switch (id) {
-        case mediatype_attached:
+        case MsgSurfaceAttach:
             return m_MediaAttached;
+        default:
+            break;
     }
-    return runtime->listeners (id);
+    return runtime->receivers (id);
 }
 
 //-----------------------------------------------------------------------------
@@ -2741,7 +2767,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::clipStart () {
         repeat = runtime->repeat_count == Runtime::dur_infinite
             ? 9998 : runtime->repeat_count;
         runtime->repeat_count = 0;
-        document_postponed = document()->connectTo (this, event_postponed);
+        document_postponed = document()->connectTo (this, MsgEventPostponed);
     }
     MediaType::clipStart ();
 }
@@ -2892,26 +2918,33 @@ void SMIL::ImageMediaType::dataArrived () {
         MediaType::begin ();
 }
 
-bool SMIL::ImageMediaType::handleEvent (Event *event) {
+void *SMIL::ImageMediaType::message (MessageType msg, void *content) {
     ImageMedia *im = static_cast <ImageMedia *> (media_object);
-    if (im && event->id () == event_img_updated) {
-        resetSurface ();
-        Surface *s = static_cast <Surface *> (role (RoleTypeDisplay));
-        if (s)
-            s->repaint ();
-        if (state >= state_finished)
-            clipStop ();
-    } else if (im && event->id () == event_img_anim_finished) {
-        if (state >= Node::state_began)
-            runtime->propagateStop (false);
-    } else if (im && event->id () == event_media_ready) {
-        dataArrived ();
-        if (parentNode ())
-            parentNode ()->handleEvent (event);
-    } else {
-        return MediaType::handleEvent (event);
+    if (im) {
+        switch (msg) {
+            case MsgMediaUpdated: {
+                resetSurface ();
+                Surface *s = static_cast <Surface *> (role (RoleTypeDisplay));
+                if (s)
+                    s->repaint ();
+                if (state >= state_finished)
+                    clipStop ();
+                return NULL;
+            }
+            case MsgMediaFinished:
+                if (state >= Node::state_began)
+                    runtime->propagateStop (false);
+                return NULL;
+            case MsgMediaReady:
+                dataArrived ();
+                if (parentNode ())
+                    parentNode ()->message (msg, content);
+                return NULL;
+            default:
+                break;
+        }
     }
-    return true;
+    return MediaType::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------
@@ -3008,15 +3041,15 @@ void SMIL::TextMediaType::dataArrived () {
         MediaType::begin ();
 }
 
-bool SMIL::TextMediaType::handleEvent (Event *event) {
-    if (event->id () == event_media_ready) {
+void *SMIL::TextMediaType::message (MessageType msg, void *content) {
+    if (MsgMediaReady == msg) {
         dataArrived ();
         if (parentNode ())
-            parentNode ()->handleEvent (event);
+            parentNode ()->message (msg, content);
     } else {
-        return MediaType::handleEvent (event);
+        return MediaType::message (msg, content);
     }
-    return true;
+    return NULL;
 }
 
 KDE_NO_EXPORT void SMIL::TextMediaType::accept (Visitor * v) {
@@ -3105,12 +3138,12 @@ KDE_NO_EXPORT void SMIL::AnimateGroup::deactivate () {
     Element::deactivate ();
 }
 
-KDE_NO_EXPORT bool SMIL::AnimateGroup::handleEvent (Event *event) {
-    return runtime->handleEvent (event);
+KDE_NO_EXPORT void *SMIL::AnimateGroup::message (MessageType msg, void *data) {
+    return runtime->message (msg, data);
 }
 
-KDE_NO_EXPORT NodeRefListPtr SMIL::AnimateGroup::listeners (unsigned int id) {
-    return runtime->listeners (id);
+KDE_NO_EXPORT NodeRefListPtr SMIL::AnimateGroup::receivers (MessageType id) {
+    return runtime->receivers (id);
 }
 
 Role *SMIL::AnimateGroup::role (RoleType rt) {
@@ -3196,13 +3229,17 @@ static Point2D PointOnCubicBezier (Point2D *cp, float t) {
 */
 
 KDE_NO_CDTOR_EXPORT SMIL::Animate::Animate (NodePtr &d)
- : AnimateGroup (d, id_node_animate), change_by (0), steps (0) {}
+ : AnimateGroup (d, id_node_animate),
+   anim_timer (NULL),
+   change_by (0),
+   steps (0) {}
 
 KDE_NO_EXPORT void SMIL::Animate::init () {
     if (!inited) {
-        if (anim_timer)
-            document ()->cancelEvent (anim_timer);
-        ASSERT (!anim_timer);
+        if (anim_timer) {
+            document ()->cancelPosting (anim_timer);
+            anim_timer = NULL;
+        }
         accumulate = acc_none;
         additive = add_replace;
         change_by = 0;
@@ -3217,8 +3254,10 @@ KDE_NO_EXPORT void SMIL::Animate::init () {
 }
 
 KDE_NO_EXPORT void SMIL::Animate::deactivate () {
-    if (anim_timer)
-        document ()->cancelEvent (anim_timer);
+    if (anim_timer) {
+        document ()->cancelPosting (anim_timer);
+        anim_timer = NULL;
+    }
     AnimateGroup::deactivate ();
 }
 
@@ -3226,8 +3265,10 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
     bool success = false;
     //kDebug () << "Animate::started " << rt->durTime ().durval << endl;
     restoreModification ();
-    if (anim_timer) // FIXME: repeating doesn't reinit
-        document ()->cancelEvent (anim_timer);
+    if (anim_timer) { // FIXME: repeating doesn't reinit
+        document ()->cancelPosting (anim_timer);
+        anim_timer = NULL;
+    }
     do {
         NodePtr protect = target_element;
         Element *target = convertNode <Element> (targetElement ());
@@ -3264,8 +3305,8 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
             }
             steps = 20 * runtime->durTime ().offset / 5; // 40 per sec
             if (steps > 0) {
-                anim_timer = document ()->postEvent (
-                        this, new TimerEvent (25, anim_timer_id)); // 25 ms for now FIXME
+                anim_timer = document ()->post (this,
+                        new TimerPosting (25, anim_timer_id)); // 25 ms for now FIXME
                 change_delta = (change_to_val - change_from_val) / steps;
                 //kDebug () << "Animate::started " << target_element->nodeName () << "." << changed_attribute << " " << change_from_val << "->" << change_to_val << " in " << steps << " using:" << change_delta << " inc" << endl;
                 success = true;
@@ -3282,8 +3323,8 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
                  break;
             }
             //kDebug () << "Animate::started " << target_element->nodeName () << "." << changed_attribute << " " << change_values.first () << "->" << change_values.last () << " in " << steps << " interval:" << interval << endl;
-            anim_timer = document ()->postEvent (
-                    this, new TimerEvent (interval, anim_timer_id));// 50 /s for now FIXME
+            anim_timer = document ()->post (this,
+                    new TimerPosting (interval, anim_timer_id));// 50 /s for now FIXME
             target->setParam (changed_attribute, change_values.first (),
                     &modification_id);
             success = true;
@@ -3296,9 +3337,10 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
 }
 
 KDE_NO_EXPORT void SMIL::Animate::finish () {
-    if (anim_timer) // make sure timers are stopped
-        document ()->cancelEvent (anim_timer);
-    ASSERT (!anim_timer);
+    if (anim_timer) { // make sure timers are stopped
+        document ()->cancelPosting (anim_timer);
+        anim_timer = NULL;
+    }
     if (steps > 0 && active ()) {
         steps = 0;
         if (calcMode == calc_linear)
@@ -3328,16 +3370,18 @@ void SMIL::Animate::parseParam (const TrieString &name, const QString &val) {
     }
 }
 
-KDE_NO_EXPORT bool SMIL::Animate::handleEvent (Event *event) {
-    if (event->id () == event_timer) {
-        TimerEvent * te = static_cast <TimerEvent *> (event);
+KDE_NO_EXPORT void *SMIL::Animate::message (MessageType msg, void *content) {
+    if (MsgEventTimer == msg) {
+        TimerPosting * te = static_cast <TimerPosting *> (content);
         if (te->event_id == anim_timer_id) {
             if (timerTick ())
                 te->interval = true;
-            return true;
+            else
+                anim_timer = NULL;
+            return NULL;
         }
     }
-    return AnimateGroup::handleEvent (event);
+    return AnimateGroup::message (msg, content);
 }
 
 KDE_NO_EXPORT void SMIL::Animate::applyStep () {
@@ -3361,8 +3405,8 @@ KDE_NO_EXPORT bool SMIL::Animate::timerTick () {
         applyStep ();
         return true;
     } else {
-        document ()->cancelEvent (anim_timer);
-        ASSERT (!anim_timer);
+        document ()->cancelPosting (anim_timer);
+        anim_timer = NULL;
         runtime->propagateStop (true); // not sure, actually
     }
     return false;
@@ -3372,6 +3416,7 @@ KDE_NO_EXPORT bool SMIL::Animate::timerTick () {
 
 KDE_NO_CDTOR_EXPORT SMIL::AnimateMotion::AnimateMotion (NodePtr &d)
  : AnimateGroup (d, id_node_animate),
+  anim_timer (NULL),
    keytimes (NULL),
    spline_table (NULL),
    keytime_count (0) {}
@@ -3385,9 +3430,10 @@ KDE_NO_CDTOR_EXPORT SMIL::AnimateMotion::~AnimateMotion () {
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
     if (!inited) {
-        if (anim_timer)
-            document ()->cancelEvent (anim_timer);
-        ASSERT (!anim_timer);
+        if (anim_timer) {
+            document ()->cancelPosting (anim_timer);
+            anim_timer = NULL;
+        }
         accumulate = acc_none;
         additive = add_replace;
         calcMode = calc_linear;
@@ -3412,8 +3458,10 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
     Element *target = convertNode <Element> (targetElement ());
     if (!checkTarget (target))
         return;
-    if (anim_timer)
-        document ()->cancelEvent (anim_timer);
+    if (anim_timer) {
+        document ()->cancelPosting (anim_timer);
+        anim_timer = NULL;
+    }
     interval = 0;
     if (change_from.isEmpty ()) {
         if (values.size () > 1) {
@@ -3464,10 +3512,11 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
 }
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::finish () {
-    if (anim_timer) // make sure timers are stopped
-        document ()->cancelEvent (anim_timer);
+    if (anim_timer) { // make sure timers are stopped
+        document ()->cancelPosting (anim_timer);
+        anim_timer = NULL;
+    }
     document ()->notify_listener->removeRepaintUpdater (this);
-    ASSERT (!anim_timer);
     if (active ()) {
         if (cur_x.size () != end_x.size () || cur_y.size () != end_y.size ()) {
             cur_x = end_x;
@@ -3479,32 +3528,40 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::finish () {
 }
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::deactivate () {
-    if (anim_timer)
-        document ()->cancelEvent (anim_timer);
-    else
+    if (anim_timer) {
+        document ()->cancelPosting (anim_timer);
+        anim_timer = NULL;
+    } else {
         document ()->notify_listener->removeRepaintUpdater (this);
+    }
     if (spline_table)
         free (spline_table);
     spline_table = NULL;
     AnimateGroup::deactivate ();
 }
 
-KDE_NO_EXPORT bool SMIL::AnimateMotion::handleEvent (Event *event) {
-    if (event->id () == event_timer) {
-        TimerEvent * te = static_cast <TimerEvent *> (event);
-        if (te->event_id == anim_timer_id) {
-            anim_timer = NULL;
-            timerTick (0);
-            return true;
+KDE_NO_EXPORT void *SMIL::AnimateMotion::message (MessageType msg, void *data) {
+    switch (msg) {
+        case MsgEventTimer: {
+            TimerPosting *te = static_cast <TimerPosting *> (data);
+            if (te->event_id == anim_timer_id) {
+                anim_timer = NULL;
+                timerTick (0);
+                return NULL;
+            }
+            break;
         }
-    } else if (event->id () == event_update) {
-        UpdateEvent *ue = static_cast <UpdateEvent *> (event);
-        interval_start_time += ue->skipped_time;
-        interval_end_time += ue->skipped_time;
-        timerTick (ue->cur_event_time);
-        return true;
+        case MsgSurfaceUpdate: {
+            UpdateEvent *ue = static_cast <UpdateEvent *> (data);
+            interval_start_time += ue->skipped_time;
+            interval_end_time += ue->skipped_time;
+            timerTick (ue->cur_event_time);
+            return NULL;
+        }
+        default:
+            break;
     }
-    return AnimateGroup::handleEvent (event);
+    return AnimateGroup::message (msg, data);
 }
 
 void SMIL::AnimateMotion::parseParam (const TrieString &name, const QString &val) {
@@ -3560,8 +3617,10 @@ bool SMIL::AnimateMotion::checkTarget (Node *n) {
                     SMIL::id_node_last_mediatype >= n->id))) {
         kWarning () << "animateMotion target element not " <<
             (n ? "supported" : "found") << endl;
-        if (anim_timer)
-            document ()->cancelEvent (anim_timer);
+        if (anim_timer) {
+            document ()->cancelPosting (anim_timer);
+            anim_timer = NULL;
+        }
         runtime->propagateStop (true);
         return false;
     }
@@ -3672,8 +3731,8 @@ bool SMIL::AnimateMotion::setInterval () {
             }
             break;
         case calc_discrete:
-            anim_timer = document ()->postEvent (
-                    this, new TimerEvent (10 * cs, anim_timer_id));
+            anim_timer = document ()->post (this,
+                    new TimerPosting (10 * cs, anim_timer_id));
             break;
         default:
             break;

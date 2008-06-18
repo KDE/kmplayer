@@ -60,13 +60,13 @@ public:
     virtual void childDone (NodePtr child); // for if no duration_timer set
     KDE_NO_EXPORT virtual bool expose () const { return false; }
     KDE_NO_EXPORT virtual PlayType playType () { return play_type_image; }
-    virtual bool handleEvent (Event *event);
+    virtual void *message (MessageType msg, void *content);
     virtual void accept (Visitor *);
     Surface *surface ();
     void repaint (); // called whenever something changes on image
     Fit fit;        // how to layout images
     unsigned int duration; // cached attributes of head
-    EventPtrW duration_timer;
+    Posting *duration_timer;
     SurfacePtrW rp_surface;
     int needs_scene_img;
 };
@@ -79,7 +79,7 @@ public:
     virtual void begin ();       // start_timer has expired
     virtual void finish ();      // ?duration_timer has expired?
     virtual void deactivate ();  // disabled
-    virtual bool handleEvent (Event *event);
+    virtual void *message (MessageType msg, void *content);
     KDE_NO_EXPORT virtual bool expose () const { return false; }
     int progress;
     Single x, y, w, h;
@@ -87,11 +87,12 @@ public:
     NodePtrW target;
 protected:
     void update (int percentage);
+    void cancelTimers ();
     unsigned int start, duration;
     int steps, curr_step;
-    EventPtrW start_timer;
-    EventPtrW duration_timer;
-    EventPtrW update_timer;
+    Posting *start_timer;
+    Posting *duration_timer;
+    Posting *update_timer;
     ConnectionPtr document_postponed;
 };
 
@@ -173,7 +174,7 @@ public:
     virtual void begin ();
     virtual void deactivate ();
     virtual void closed ();
-    virtual bool handleEvent (Event *event);
+    virtual void *message (MessageType msg, void *content);
     bool isReady (bool postpone_if_not = false); // is downloading ready
     Surface *surface ();
     SurfacePtrW img_surface;

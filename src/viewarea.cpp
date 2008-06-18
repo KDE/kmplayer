@@ -334,8 +334,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Smil *s) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (Node *node) {
-    // next visit listeners
-    NodeRefListPtr nl = node->listeners (mediatype_attached);
+    // next visit receivers
+    NodeRefListPtr nl = node->receivers (MsgSurfaceAttach);
     if (nl) {
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
             if (c->data)
@@ -1117,12 +1117,12 @@ namespace KMPlayer {
 class KMPLAYER_NO_EXPORT MouseVisitor : public Visitor {
     Matrix matrix;
     NodePtr node;
-    unsigned int event;
+    MessageType event;
     int x, y;
     bool handled;
     bool bubble_up;
 public:
-    MouseVisitor (unsigned int evt, int x, int y);
+    MouseVisitor (MessageType evt, int x, int y);
     KDE_NO_CDTOR_EXPORT ~MouseVisitor () {}
     using Visitor::visit;
     void visit (Node * n);
@@ -1139,7 +1139,7 @@ public:
 } // namespace
 
 KDE_NO_CDTOR_EXPORT
-MouseVisitor::MouseVisitor (unsigned int evt, int a, int b)
+MouseVisitor::MouseVisitor (MessageType evt, int a, int b)
     : event (evt), x (a), y (b), handled (false), bubble_up (false) {
 }
 
@@ -1181,7 +1181,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
         matrix.getXYWH (rx, ry, rw, rh);
         handled = false;
         bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
-        if (!inside && (event == event_pointer_clicked || !region->has_mouse))
+        if (!inside && (event == MsgEventClicked || !region->has_mouse))
             return;
         Matrix m = matrix;
         matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
@@ -1199,26 +1199,28 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
         child_handled &= !bubble_up;
         bubble_up = false;
 
-        int saved_event = event;
+        MessageType saved_event = event;
         if (node->active ()) {
-            bool propagate_listeners = !child_handled;
+            bool notify_receivers = !child_handled;
             bool pass_event = !child_handled;
-            if (event == event_pointer_moved) {
+            if (event == MsgEventPointerMoved) {
                 pass_event = true; // always pass move events
                 if (region->has_mouse && (!inside || child_handled)) {
-                    propagate_listeners = true;
+                    notify_receivers = true;
                     region->has_mouse = false;
-                    event = event_outbounds;
+                    event = MsgEventPointerOutBounds;
                 } else if (inside && !child_handled && !region->has_mouse) {
-                    propagate_listeners = true;
+                    notify_receivers = true;
                     region->has_mouse = true;
-                    event = event_inbounds;
+                    event = MsgEventPointerInBounds;
                 }
-            }// else // event_pointer_clicked
-            if (propagate_listeners)
-                region->propagateEvent (new Event (region, event));
+            }// else // MsgEventClicked
+            if (notify_receivers) {
+                Posting mouse_event (region, event);
+                region->deliver (event, &mouse_event);
+            }
             if (pass_event) {
-                NodeRefListPtr nl = region->listeners (mediatype_attached);
+                NodeRefListPtr nl = region->receivers (MsgSurfaceAttach);
                 if (nl) {
                     for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
                         if (c->data)
@@ -1262,9 +1264,9 @@ static void followLink (SMIL::LinkingBase * link) {
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
-    if (event == event_pointer_moved)
+    if (event == MsgEventPointerMoved)
         cursor.setShape (Qt::PointingHandCursor);
-    else if (event == event_pointer_clicked)
+    else if (event == MsgEventClicked)
         followLink (anchor);
 }
 
@@ -1293,10 +1295,10 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
                         return;
                 }
             }
-            if (event == event_pointer_moved)
+            if (event == MsgEventPointerMoved)
                 cursor.setShape (Qt::PointingHandCursor);
             else {
-                NodeRefListPtr nl = area->listeners (event);
+                NodeRefListPtr nl = area->receivers (event);
                 if (nl)
                     for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
                         if (c->data)
@@ -1304,7 +1306,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
                         if (!node->active ())
                             return;
                     }
-                if (event == event_pointer_clicked && !area->href.isEmpty ())
+                if (event == MsgEventClicked && !area->href.isEmpty ())
                     followLink (area);
             }
         }
@@ -1333,12 +1335,12 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
     Single rx = rect.x(), ry = rect.y(), rw = rect.width(), rh = rect.height();
     matrix.getXYWH (rx, ry, rw, rh);
     const bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
-    if (!inside && (event == event_pointer_clicked || inside == mt->has_mouse))
+    if (!inside && (event == MsgEventClicked || inside == mt->has_mouse))
         return;
     mt->has_mouse = inside;
 
-    NodeRefListPtr nl = mt->listeners (
-            event == event_pointer_moved ? mediatype_attached : event);
+    NodeRefListPtr nl = mt->receivers (
+            event == MsgEventPointerMoved ? MsgSurfaceAttach : event);
     if (nl)
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
             if (c->data && c->data.ptr () != mt)
@@ -1346,9 +1348,9 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
             if (!node->active ())
                 return;
         }
-    if (event != event_pointer_moved)
+    if (event != MsgEventPointerMoved)
         visit (static_cast <Element *> (mt));
-    if (event != event_inbounds && event != event_outbounds) {
+    if (event != MsgEventPointerInBounds && event != MsgEventPointerOutBounds) {
       SMIL::RegionBase *r=convertNode<SMIL::RegionBase>(mt->region_node);
       if (r && r->role (RoleTypeDisplay) &&
               r->id != SMIL::id_node_smil &&
@@ -1536,7 +1538,7 @@ KDE_NO_EXPORT void ViewArea::accelActivated () {
 
 KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
     if (surface->node) {
-        MouseVisitor visitor (event_pointer_clicked, e->x(), e->y());
+        MouseVisitor visitor (MsgEventClicked, e->x(), e->y());
         surface->node->accept (&visitor);
     }
 }
@@ -1549,7 +1551,7 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton)
         m_view->mouseMoved (e->x (), e->y ());
     if (surface->node) {
-        MouseVisitor visitor (event_pointer_moved, e->x(), e->y());
+        MouseVisitor visitor (MsgEventPointerMoved, e->x(), e->y());
         surface->node->accept (&visitor);
         setCursor (visitor.cursor);
     }
@@ -1825,11 +1827,11 @@ static RepaintUpdater *getFirstUpdater (RepaintUpdater *updaters) {
     return NULL;
 }
 
-static void propagateUpdatersEvent (RepaintUpdater *updaters, Event *event) {
+static void propagateUpdatersEvent (RepaintUpdater *updaters, void *event) {
     for (RepaintUpdater *r = updaters; r; ) {
         RepaintUpdater *next = r->next;
         if (r->node)
-            r->node->handleEvent (event); // may call removeUpdater()
+            r->node->message (MsgSurfaceUpdate, event); // may call removeUpdater()
         r = next;
     }
 }
@@ -1839,8 +1841,8 @@ void ViewArea::enableUpdaters (bool enable, unsigned int skip) {
     m_updaters_enabled = enable;
     m_updaters = getFirstUpdater (m_updaters);
     if (enable && m_updaters) {
-        EventPtr event = new UpdateEvent (m_updaters->node->document (), skip);
-        propagateUpdatersEvent (m_updaters, event);
+        UpdateEvent event (m_updaters->node->document (), skip);
+        propagateUpdatersEvent (m_updaters, &event);
         if (!m_repaint_timer)
             m_repaint_timer = startTimer (25);
     } else if (!enable && m_repaint_timer &&
@@ -1859,8 +1861,8 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
     } else if (e->timerId () == m_repaint_timer) {
         m_updaters = getFirstUpdater (m_updaters);
         if (m_updaters_enabled && m_updaters) {
-            EventPtr event = new UpdateEvent (m_updaters->node->document (), 0);
-            propagateUpdatersEvent (m_updaters, event);
+            UpdateEvent event (m_updaters->node->document (), 0);
+            propagateUpdatersEvent (m_updaters, &event);
         }
         //repaint (m_repaint_rect, false);
         if (!m_repaint_rect.isEmpty () || !m_update_rect.isEmpty ()) {

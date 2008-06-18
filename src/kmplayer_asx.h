@@ -57,9 +57,9 @@ public:
 class KMPLAYER_NO_EXPORT Entry : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Entry (NodePtr & d)
-        : Mrl (d, id_node_entry), ref_child_count (0) {}
+        : Mrl (d, id_node_entry), duration_timer (NULL), ref_child_count (0) {}
     NodePtr childFromTag (const QString & tag);
-    bool handleEvent (Event *event);
+    void *message (MessageType msg, void *content);
     KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
     /**
      * False, but since we might have a 'base' child, we can have a rel. src
@@ -69,7 +69,7 @@ public:
     void deactivate ();
     bool expose () const;
 
-    EventPtrW duration_timer;
+    Posting *duration_timer;
     int ref_child_count;
 };
 

@@ -40,7 +40,7 @@ namespace KMPlayer {
 
 class Document;
 class Node;
-class Event;
+class Posting;
 class Mrl;
 class Surface;
 class ElementPrivate;
@@ -98,7 +98,7 @@ private:
  * Because of the m_self member of Item<T>, it's not allowed to assign a
  * Item<T>* directly to SharedPtr<Item<T>>. Item<T>* will then reside in
  * two independent SharedData<Item<T>> objects.
- * So specialize constructor and assignment operators to fetch the 
+ * So specialize constructor and assignment operators to fetch the
  * SharedData<Item<T>> from the Item<T>* instead of creating a new one
  */
 #define ITEM_AS_POINTER(CLASS)                                         \
@@ -143,7 +143,7 @@ template <class T>
 class KMPLAYER_EXPORT List : public Item <List <T> > {
 public:
     List () {}
-    List (typename Item<T>::SharedType f, typename Item<T>::SharedType l) 
+    List (typename Item<T>::SharedType f, typename Item<T>::SharedType l)
         : m_first (f), m_last (l) {}
     ~List () { clear (); }
 
@@ -250,16 +250,23 @@ enum RoleType
     RoleTypeSizer
 };
 
-extern const unsigned int event_pointer_clicked;
-extern const unsigned int event_pointer_moved;
-extern const unsigned int event_inbounds;
-extern const unsigned int event_outbounds;
-extern const unsigned int event_postponed;
-extern const unsigned int event_timer;
-extern const unsigned int event_update;
-extern const unsigned int event_started;
-extern const unsigned int event_stopped;
-extern const unsigned int mediatype_attached;
+enum MessageType
+{
+    MsgEventTimer = 0,
+    MsgEventClicked,
+    MsgEventPointerMoved,
+    MsgEventPointerInBounds,
+    MsgEventPointerOutBounds,
+    MsgEventPostponed,
+    MsgEventStarting,
+    MsgEventStarted,
+    MsgEventStopped,
+    MsgSurfaceUpdate,
+    MsgSurfaceAttach,
+    MsgMediaReady,
+    MsgMediaUpdated,
+    MsgMediaFinished
+};
 
 // convenient types
 typedef void Role;
@@ -267,8 +274,6 @@ typedef Item<Node>::SharedType NodePtr;
 typedef Item<Node>::WeakType NodePtrW;
 typedef Item<Attribute>::SharedType AttributePtr;
 typedef Item<Attribute>::WeakType AttributePtrW;
-typedef Item<Event>::SharedType EventPtr;
-typedef Item<Event>::WeakType EventPtrW;
 typedef List<Node> NodeList;                 // eg. for Node's children
 typedef Item<NodeList>::SharedType NodeListPtr;
 typedef Item<NodeList>::WeakType NodeListPtrW;
@@ -281,7 +286,7 @@ ITEM_AS_POINTER(KMPlayer::NodeRefItem)
 //typedef ListNode<NodePtr> NodeStoreItem;   // list stores Nodes
 typedef NodeRefItem::SharedType NodeRefItemPtr;
 typedef NodeRefItem::WeakType NodeRefItemPtrW;
-typedef List<NodeRefItem> NodeRefList;       // ref nodes, eg. event listeners
+typedef List<NodeRefItem> NodeRefList;       // ref nodes, eg. event receivers
 typedef Item<NodeRefList>::SharedType NodeRefListPtr;
 typedef Item<NodeRefList>::WeakType NodeRefListPtrW;
 ITEM_AS_POINTER(KMPlayer::NodeRefList)
@@ -289,7 +294,7 @@ typedef Item<Surface>::SharedType SurfacePtr;
 typedef Item<Surface>::WeakType SurfacePtrW;
 
 /*
- * Weak ref of the listeners list from signaler and the listener node
+ * Weak ref of the receivers list from signaler and the listener node
  */
 class KMPLAYER_EXPORT Connection {
     friend class Node;
@@ -370,15 +375,15 @@ public:
      * Return a NULL ptr if event_id is not supported.
      * \sa: Connection::disconnect()
      */
-    ConnectionPtr connectTo (NodePtr node, unsigned int event_id);
+    ConnectionPtr connectTo (NodePtr node, MessageType msg);
     /*
      * Event send to this node, return true if handled
      */
-    virtual bool handleEvent (Event *event);
+    virtual void *message (MessageType msg, void *content);
     /*
-     * Dispatch Event to all listeners of event->id()
+     * Dispatch Event to all receivers of event->id()
      */
-    void propagateEvent (Event *event);
+    void deliver (MessageType msg, void *content);
     /**
      * Alternative to event handling is the Visitor pattern
      */
@@ -386,9 +391,9 @@ public:
     /*
      * Returns a listener list for event_id, or a null ptr if not supported.
      */
-    virtual NodeRefListPtr listeners (unsigned int event_id);
+    virtual NodeRefListPtr receivers (MessageType msg);
     /**
-     * Adds node to call 'handleEvent()' for all events that gets
+     * Adds node to call 'message()' for all events that gets
      * delivered to this node, ignored by default
      */
     virtual Surface *getSurface (Mrl *mrl);
@@ -412,7 +417,7 @@ public:
      */
     virtual void defer ();
     /**
-     * Puts a deferred element in activated again, calls activate() again 
+     * Puts a deferred element in activated again, calls activate() again
      */
     virtual void undefer ();
     /**
@@ -425,7 +430,7 @@ public:
      */
     virtual void finish ();
     /**
-     * Stops element, sets state to state_deactivated. Calls deactivate() on 
+     * Stops element, sets state to state_deactivated. Calls deactivate() on
      * activated/deferred children. May call childDone() when active() and not
      * finished yet.
      */
@@ -577,7 +582,6 @@ public:
      * By default support one event handler (eg. SMIL or RP child document)
      */
     virtual Surface *getSurface (Mrl *mrl);
-    virtual bool handleEvent (Event *event);
 
     /**
      * If this Mrl is top node of external document, opener has the
@@ -669,33 +673,29 @@ public:
 ITEM_AS_POINTER(KMPlayer::Surface)
 
 /*
- * A generic event type
- */
-class KMPLAYER_EXPORT Event : public Item <Event> {
+ *  A generic type for posting messages
+ **/
+class KMPLAYER_EXPORT Posting {
 public:
-    KDE_NO_CDTOR_EXPORT Event (Node *n, unsigned int event_id)
-        : source (n), m_event_id (event_id) {}
-    KDE_NO_CDTOR_EXPORT virtual ~Event () {}
-    KDE_NO_EXPORT unsigned int id () const { return m_event_id; }
+    KDE_NO_CDTOR_EXPORT Posting (Node *n, MessageType msg)
+        : source (n), message (msg) {}
+    KDE_NO_CDTOR_EXPORT virtual ~Posting () {}
     NodePtrW source;
-protected:
-    unsigned int m_event_id;
+    MessageType message;
 };
-
-ITEM_AS_POINTER(KMPlayer::Event)
 
 /**
- * Event signaling a timer event
+ * Posting signaling a timer event
  */
-class KMPLAYER_NO_EXPORT TimerEvent : public Event {
+class KMPLAYER_NO_EXPORT TimerPosting : public Posting {
 public:
-    TimerEvent (int ms, unsigned eid=0);
+    TimerPosting (int ms, unsigned eid=0);
     unsigned event_id;
     int milli_sec;
-    bool interval; // set to 'true' in 'Node::handleEvent()' to make it repeat
+    bool interval; // set to 'true' in 'Node::message()' to make it repeat
 };
 
-class KMPLAYER_NO_EXPORT UpdateEvent : public Event {
+class KMPLAYER_NO_EXPORT UpdateEvent {
 public:
     UpdateEvent (Document *, unsigned int off_time);
     unsigned int cur_event_time;
@@ -705,7 +705,7 @@ public:
 /**
  * Event signaling postponed or proceeded
  */
-class KMPLAYER_NO_EXPORT PostponedEvent : public Event {
+class KMPLAYER_NO_EXPORT PostponedEvent {
 public:
     PostponedEvent (bool postponed);
     bool is_postponed; // postponed or proceeded
@@ -728,10 +728,11 @@ typedef SharedPtr <Postpone> PostponePtr;
 typedef WeakPtr <Postpone> PostponePtrW;
 
 struct KMPLAYER_NO_EXPORT EventData {
-    EventData (Node *t, Event *e, EventData *n);
+    EventData (Node *t, Posting *e, EventData *n);
+    ~EventData ();
 
     NodePtrW target;
-    EventPtr event;
+    Posting *event;
     struct timeval timeout;
 
     EventData *next;
@@ -758,10 +759,10 @@ public:
     virtual void undefer ();
     virtual void reset ();
 
-    Event *postEvent (Node *n, Event *event);
-    void cancelEvent (Event *event);
-    void pauseEvent (Event *e);
-    void unpauseEvent (Event *e, int ms);
+    Posting *post (Node *n, Posting *event);
+    void cancelPosting (Posting *event);
+    void pausePosting (Posting *e);
+    void unpausePosting (Posting *e, int ms);
 
     void timeOfDay (struct timeval &);
     PostponePtr postpone ();
@@ -771,9 +772,9 @@ public:
     void timer ();
     void updateTimeout ();
     /**
-     * Document has list of postponed listeners, eg. for running (gif)movies
+     * Document has list of postponed receivers, eg. for running (gif)movies
      */
-    virtual NodeRefListPtr listeners (unsigned int event_id);
+    virtual NodeRefListPtr receivers (MessageType msg);
     /**
      * Reimplement, so it will call PlayListNotify::getSurface()
      */
@@ -784,7 +785,7 @@ public:
     unsigned int last_event_time;
 private:
     void proceed (const struct timeval & postponed_time);
-    void insertEvent (Node *n, Event *e, const struct timeval &tv);
+    void insertPosting (Node *n, Posting *e, const struct timeval &tv);
     void setNextTimeout (const struct timeval &now);
 
     PostponePtrW postpone_ref;

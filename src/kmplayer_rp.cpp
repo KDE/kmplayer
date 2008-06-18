@@ -34,6 +34,7 @@ KDE_NO_CDTOR_EXPORT RP::Imfl::Imfl (NodePtr & d)
   : Mrl (d, id_node_imfl),
     fit (fit_hidden),
     duration (0),
+    duration_timer (NULL),
     needs_scene_img (0) {}
 
 KDE_NO_CDTOR_EXPORT RP::Imfl::~Imfl () {
@@ -87,7 +88,8 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
                 break;
         }
     if (duration > 0)
-        duration_timer = document ()->postEvent (this, new TimerEvent (duration * 100));
+        duration_timer = document ()->post (this,
+                new TimerPosting (duration * 100));
     else if (!timings_count)
         finish ();
 }
@@ -96,7 +98,7 @@ KDE_NO_EXPORT void RP::Imfl::finish () {
     kDebug () << "RP::Imfl::finish ";
     Mrl::finish ();
     if (duration_timer) {
-        document ()->cancelEvent (duration_timer);
+        document ()->cancelPosting (duration_timer);
         duration_timer = 0;
     }
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
@@ -123,6 +125,10 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     kDebug () << "RP::Imfl::deactivate ";
     if (unfinished ())
         finish ();
+    else if (duration_timer) {
+        document ()->cancelPosting (duration_timer);
+        duration_timer = 0;
+    }
     if (!active ())
         return; // calling finish might call deactivate() as well
     setState (state_deactivated);
@@ -132,14 +138,14 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     rp_surface = Mrl::getSurface (NULL);
 }
 
-KDE_NO_EXPORT bool RP::Imfl::handleEvent (Event *event) {
-    if (event->id () == event_timer) {
+KDE_NO_EXPORT void *RP::Imfl::message (MessageType msg, void *) {
+    if (msg == MsgEventTimer) {
         kDebug () << "RP::Imfl timer " << duration;
         duration_timer = 0;
         if (unfinished ())
             finish ();
     }
-    return true;
+    return NULL;
 }
 
 KDE_NO_EXPORT void RP::Imfl::accept (Visitor * v) {
@@ -227,11 +233,11 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
     }
 }
 
-bool RP::Image::handleEvent (Event *event) {
-    if (event->id () != event_media_ready)
-        return Mrl::handleEvent (event);
+KDE_NO_EXPORT void *RP::Image::message (MessageType msg, void *content) {
+    if (msg != MsgMediaReady)
+        return Mrl::message (msg, content);
     dataArrived ();
-    return true;
+    return NULL;
 }
 
 KDE_NO_EXPORT void RP::Image::dataArrived () {
@@ -265,7 +271,8 @@ KDE_NO_EXPORT Surface *RP::Image::surface () {
 }
 
 KDE_NO_CDTOR_EXPORT RP::TimingsBase::TimingsBase (NodePtr & d, const short i)
- : Element (d, i), x (0), y (0), w (0), h (0), start (0), duration (0) {}
+ : Element (d, i), x (0), y (0), w (0), h (0), start (0), duration (0),
+   start_timer (NULL), duration_timer (NULL), update_timer (NULL) {}
 
 KDE_NO_EXPORT void RP::TimingsBase::activate () {
     setState (state_activated);
@@ -303,39 +310,48 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
             srch = a->value ().toInt ();
         }
     }
-    start_timer = document ()->postEvent (this, new TimerEvent (start *100));
+    start_timer = document ()->post (this, new TimerPosting (start *100));
 }
 
 KDE_NO_EXPORT void RP::TimingsBase::deactivate () {
     if (unfinished ())
         finish ();
+    else
+        cancelTimers ();
     setState (state_deactivated);
 }
 
-KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (Event *event) {
-    if (event->id () == event_timer) {
-        TimerEvent * te = static_cast <TimerEvent *> (event);
-        if (event == update_timer && duration > 0) {
-            update (100 * ++curr_step / duration);
-            te->interval = true;
-        } else if (event == start_timer) {
-            start_timer = 0;
-            duration_timer = document()->postEvent (this, new TimerEvent(duration * 100));
-            begin ();
-        } else if (event == duration_timer) {
-            duration_timer = 0;
-            update (100);
-            finish ();
-        } else
-            return false;
-        return true;
-    } else if (event->id () == event_postponed) {
-        if (!static_cast <PostponedEvent *> (event)->is_postponed) {
-            document_postponed = 0L; // disconnect
-            update (duration > 0 ? 0 : 100);
+KDE_NO_EXPORT void *RP::TimingsBase::message (MessageType msg, void *content) {
+    switch (msg) {
+        case MsgEventTimer: {
+            TimerPosting *te = static_cast <TimerPosting *> (content);
+            if (te == update_timer && duration > 0) {
+                update (100 * ++curr_step / duration);
+                te->interval = true;
+            } else if (te == start_timer) {
+                start_timer = 0;
+                duration_timer = document()->post (this,
+                        new TimerPosting (duration * 100));
+                begin ();
+            } else if (te == duration_timer) {
+                duration_timer = 0;
+                update (100);
+                finish ();
+            }
+            break;
         }
+        case MsgEventPostponed: {
+            PostponedEvent *pe = static_cast <PostponedEvent *> (content);
+            if (!pe->is_postponed) {
+                document_postponed = 0L; // disconnect
+                update (duration > 0 ? 0 : 100);
+            }
+            break;
+        }
+        default:
+            break;
     }
-    return false;
+    return NULL;
 }
 
 KDE_NO_EXPORT void RP::TimingsBase::begin () {
@@ -345,7 +361,7 @@ KDE_NO_EXPORT void RP::TimingsBase::begin () {
         target->begin ();
     if (duration > 0) {
         steps = duration; // 10/s updates
-        update_timer = document ()->postEvent (this, new TimerEvent (100)); // 50ms
+        update_timer = document ()->post (this, new TimerPosting (100)); // 50ms
         curr_step = 1;
     }
 }
@@ -359,19 +375,23 @@ KDE_NO_EXPORT void RP::TimingsBase::update (int percentage) {
 
 KDE_NO_EXPORT void RP::TimingsBase::finish () {
     progress = 100;
+    cancelTimers ();
+    document_postponed = 0L; // disconnect
+    Element::finish ();
+}
+
+KDE_NO_EXPORT void RP::TimingsBase::cancelTimers () {
     if (start_timer) {
-        document ()->cancelEvent (start_timer);
+        document ()->cancelPosting (start_timer);
         start_timer = 0;
     } else if (duration_timer) {
-        document ()->cancelEvent (duration_timer);
+        document ()->cancelPosting (duration_timer);
         duration_timer = 0;
     }
     if (update_timer) {
-        document ()->cancelEvent (update_timer);
+        document ()->cancelPosting (update_timer);
         update_timer = 0;
     }
-    document_postponed = 0L; // disconnect
-    Element::finish ();
 }
 
 KDE_NO_EXPORT void RP::Crossfade::activate () {
@@ -384,7 +404,7 @@ KDE_NO_EXPORT void RP::Crossfade::begin () {
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
         if (!img->isReady (true))
-            document_postponed = document()->connectTo (this, event_postponed);
+            document_postponed = document()->connectTo(this, MsgEventPostponed);
         else
             update (duration > 0 ? 0 : 100);
     }
@@ -406,7 +426,7 @@ KDE_NO_EXPORT void RP::Fadein::begin () {
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
         if (!img->isReady (true))
-            document_postponed = document()->connectTo (this, event_postponed);
+            document_postponed = document()->connectTo(this, MsgEventPostponed);
         else
             update (duration > 0 ? 0 : 100);
     }
@@ -463,7 +483,7 @@ KDE_NO_EXPORT void RP::Wipe::begin () {
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
         if (!img->isReady (true))
-            document_postponed = document()->connectTo (this, event_postponed);
+            document_postponed = document()->connectTo(this, MsgEventPostponed);
         else
             update (duration > 0 ? 0 : 100);
     }

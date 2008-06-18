@@ -59,7 +59,8 @@ public:
 
 class KMPLAYER_NO_EXPORT Item : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Item (NodePtr & d) : Mrl (d, id_node_item) {}
+    KDE_NO_CDTOR_EXPORT Item (NodePtr & d)
+        : Mrl (d, id_node_item), timer (NULL) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "item"; }
     PlayType playType () { return cached_play_type; }
@@ -67,9 +68,9 @@ public:
     void closed ();
     void activate ();
     void deactivate ();
-    bool handleEvent (Event *event);
+    void *message (MessageType msg, void *content);
     NodePtrW enclosure;
-    EventPtrW timer;
+    Posting *timer;
 };
 
 class KMPLAYER_NO_EXPORT Enclosure : public Mrl {

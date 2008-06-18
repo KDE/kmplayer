@@ -90,9 +90,14 @@ public:
     };
     enum DurationTime { begin_time = 0, duration_time, end_time, durtime_last };
     enum Duration {
-        dur_infinite = -1, dur_timer = 0, dur_media,
-        dur_activated, dur_inbounds, dur_outbounds,
-        dur_end, dur_start, dur_last_dur
+        dur_infinite = -1,
+        dur_timer = (int) MsgEventTimer,
+        dur_activated = (int) MsgEventClicked,
+        dur_inbounds = (int) MsgEventPointerInBounds,
+        dur_outbounds = (int) MsgEventPointerOutBounds,
+        dur_start = (int) MsgEventStarted,
+        dur_end = (int) MsgEventStopped,
+        dur_media, dur_last_dur
     };
     Runtime (Node *e);
     ~Runtime ();
@@ -110,9 +115,9 @@ public:
     TimingState state () const { return timingstate; }
     void propagateStop (bool forced);
     void propagateStart ();
-    bool handleEvent (Event *event);
-    void processEvent (int event_id);
-    NodeRefListPtr listeners (unsigned int event_id);
+    void *message (MessageType msg, void *content);
+    void processEvent (MessageType msg);
+    NodeRefListPtr receivers (MessageType msg);
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
@@ -137,10 +142,10 @@ public:
     NodeRefListPtr m_StartListeners;        // Element about to be started
     NodeRefListPtr m_StartedListeners;      // Element is started
     NodeRefListPtr m_StoppedListeners;      // Element stopped
-    EventPtrW start_timer;
-    EventPtrW duration_timer;
-    EventPtrW started_timer;
-    EventPtrW stopped_timer;
+    Posting *begin_timer;
+    Posting *duration_timer;
+    Posting *started_timer;
+    Posting *stopped_timer;
     NodePtrW paused_by;
     unsigned int start_time;
     unsigned int finish_time;
@@ -157,7 +162,7 @@ class KMPLAYER_NO_EXPORT MouseListeners {
 public:
     MouseListeners();
 
-    NodeRefListPtr listeners (unsigned int event_id);
+    NodeRefListPtr receivers (MessageType msg);
 
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
@@ -221,7 +226,7 @@ public:
     void closed ();
     void childDone (NodePtr child);
     bool expose () const;
-    bool handleEvent (Event *event);
+    void *message (MessageType msg, void *content);
     void accept (Visitor *v) { v->visit (this); }
     void jump (const QString & id);
     static Smil * findSmilNode (Node * node);
@@ -272,8 +277,8 @@ public:
     virtual void childDone (NodePtr child);
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual bool handleEvent (Event *event);
-    virtual NodeRefListPtr listeners (unsigned int event_id);
+    void *message (MessageType msg, void *content);
+    virtual NodeRefListPtr receivers (MessageType msg);
     virtual void accept (Visitor *v) { v->visit (this); }
     virtual Role *role (RoleType rt);
     /**
@@ -333,7 +338,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     NodePtr childFromTag (const QString & tag);
     void calculateBounds (Single w, Single h);
-    virtual NodeRefListPtr listeners (unsigned int event_id);
+    virtual NodeRefListPtr receivers (MessageType msg);
 private:
     MouseListeners mouse_listeners;
 };
@@ -418,8 +423,8 @@ public:
     void deactivate ();
     void reset ();
     bool expose () const { return false; }
-    bool handleEvent (Event *);
-    NodeRefListPtr listeners (unsigned int event_id);
+    void *message (MessageType msg, void *content);
+    NodeRefListPtr receivers (MessageType msg);
     void setJumpNode (NodePtr);
     Runtime *runtime;
 protected:
@@ -475,7 +480,7 @@ public:
     void begin ();
     void deactivate ();
     void childDone (NodePtr child);
-    virtual bool handleEvent (Event *event);
+    void *message (MessageType msg, void *content);
 
     typedef ListNode <ConnectionPtr> ConnectionStoreItem;
     List <ConnectionStoreItem> started_event_list;
@@ -553,7 +558,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return tag.ascii (); }
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     void parseParam (const TrieString & name, const QString & value);
-    NodeRefListPtr listeners (unsigned int event_id);
+    NodeRefListPtr receivers (MessageType msg);
     SizeType * coords;
     int nr_coords;
     const QString tag;
@@ -587,8 +592,8 @@ public:
     SRect calculateBounds ();
     void boundsUpdate (); // recalculates and repaint old and new bounds
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual bool handleEvent (Event *event);
-    NodeRefListPtr listeners (unsigned int event_id);
+    virtual void *message (MessageType msg, void *content);
+    NodeRefListPtr receivers (MessageType msg);
     bool expose () const { return false; }
 
     Runtime *runtime;
@@ -606,8 +611,7 @@ public:
     unsigned int trans_start_time;
     unsigned int trans_end_time;
     float trans_gain;
-    EventPtrW trans_timer;
-    EventPtrW trans_out_timer;
+    Posting *trans_out_timer;
     enum { sens_opaque, sens_transparent, sens_percentage } sensitivity;
     bool trans_out_active;
     bool has_mouse;
@@ -651,7 +655,7 @@ public:
     virtual void begin ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
-    virtual bool handleEvent (Event *event);
+    virtual void *message (MessageType msg, void *content);
     void dataArrived ();
 };
 
@@ -663,7 +667,7 @@ public:
     virtual void begin ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
-    virtual bool handleEvent (Event *event);
+    virtual void *message (MessageType msg, void *content);
     void dataArrived ();
 
     QString font_name;
@@ -696,8 +700,8 @@ public:
     virtual void reset ();
     virtual bool expose () const { return false; }
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual bool handleEvent (Event *event);
-    virtual NodeRefListPtr listeners (unsigned int event_id);
+    virtual void *message (MessageType msg, void *content);
+    virtual NodeRefListPtr receivers (MessageType msg);
     virtual Role *role (RoleType rt);
     Runtime *runtime;
 protected:
@@ -727,12 +731,12 @@ public:
     virtual void finish ();
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual bool handleEvent (Event *event);
+    virtual void *message (MessageType msg, void *content);
     virtual void accept (Visitor *v) { v->visit (this); }
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     PlayType playType () { return play_type_none; }
 
-    EventPtrW anim_timer;
+    Posting *anim_timer;
 private:
     void applyStep ();
     bool timerTick();
@@ -761,12 +765,12 @@ public:
     virtual void finish ();
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual bool handleEvent (Event *event);
+    virtual void *message (MessageType msg, void *content);
     virtual void accept (Visitor *v) { v->visit (this); }
     KDE_NO_EXPORT const char * nodeName () const { return "animateMotion"; }
     PlayType playType () { return play_type_none; }
 
-    EventPtrW anim_timer;
+    Posting *anim_timer;
 private:
     bool timerTick (unsigned int cur_time);
     bool checkTarget (Node *n);

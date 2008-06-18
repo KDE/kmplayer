@@ -97,8 +97,8 @@ KDE_NO_EXPORT void RSS::Item::activate () {
                 if (!enclosure && !s.isEmpty ()) {
                     setState (state_activated);
                     begin ();
-                    timer = document ()->postEvent (
-                            this, new TimerEvent (5000+s.length()*200));
+                    timer = document ()->post (this,
+                            new TimerPosting (5000+s.length()*200));
                     return;
                 }
                 break;
@@ -109,7 +109,7 @@ KDE_NO_EXPORT void RSS::Item::activate () {
 
 KDE_NO_EXPORT void RSS::Item::deactivate () {
     if (timer) {
-        document ()->cancelEvent (timer);
+        document ()->cancelPosting (timer);
         timer = 0L;
     }
     PlayListNotify * n = document()->notify_listener;
@@ -118,12 +118,12 @@ KDE_NO_EXPORT void RSS::Item::deactivate () {
     Mrl::deactivate ();
 }
 
-KDE_NO_EXPORT bool RSS::Item::handleEvent (Event *event) {
-    if (event->id () == event_timer) {
+KDE_NO_EXPORT void *RSS::Item::message (MessageType msg, void *content) {
+    if (msg == MsgEventTimer) {
         timer = 0L;
         finish ();
     }
-    return true;
+    return NULL;
 }
 
 KDE_NO_EXPORT void RSS::Enclosure::closed () {

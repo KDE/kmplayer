@@ -38,14 +38,6 @@
 #include "kmplayerview.h"
 #include "viewarea.h"
 
-namespace KMPlayer {
-
-const unsigned int event_media_ready = 100;
-const unsigned int event_img_updated = 101;
-const unsigned int event_img_anim_finished = 102;
-
-}
-
 using namespace KMPlayer;
 
 namespace {
@@ -434,7 +426,7 @@ KDE_NO_EXPORT void MediaObject::slotResult (KJob *kjob) {
 
 KDE_NO_EXPORT void MediaObject::ready (const QString &) {
     if (m_node)
-        m_node->document()->postEvent (m_node.ptr(), new Event (NULL, event_media_ready));
+        m_node->document()->post (m_node.ptr(), new Posting (m_node, MsgMediaReady));
 }
 
 KDE_NO_EXPORT void MediaObject::cachePreserveRemoved (const QString & str) {
@@ -694,7 +686,7 @@ KDE_NO_EXPORT bool ImageMedia::wget (const QString &str) {
 KDE_NO_EXPORT void ImageMedia::movieResize (const QSize &) {
     //kDebug () << "movieResize" << endl;
     if (m_node)
-        m_node->document ()->postEvent (m_node, new Event (NULL, event_img_updated));
+        m_node->document ()->post (m_node, new Posting (m_node, MsgMediaUpdated));
 }
 
 KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
@@ -705,13 +697,13 @@ KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
         cached_img->setImage (img);
         cached_img->flags = (int)(ImageData::ImagePixmap | ImageData::ImageAnimated); //TODO
         if (m_node)
-            m_node->document ()->postEvent (m_node, new Event (NULL, event_img_updated));
+            m_node->document ()->post (m_node, new Posting (m_node, MsgMediaUpdated));
     }
 }
 
 KDE_NO_EXPORT void ImageMedia::movieStatus (QMovie::MovieState status) {
     if (QMovie::NotRunning == status && m_node)
-        m_node->document ()->postEvent(m_node, new Event (NULL, event_img_anim_finished));
+        m_node->document ()->post (m_node, new Posting (m_node, MsgMediaFinished));
 }
 
 //------------------------%<----------------------------------------------------
