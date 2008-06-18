@@ -99,9 +99,9 @@ public:
     /**
      * Called when element is pulled in scope, from Node::activate()
      */
-    void begin ();
+    void start ();
     void finish ();
-    void beginAndStart (); // skip start timer (if any)
+    void startAndBeginNode (); // skip start timer (if any)
     /**
      * Reset all data, called from end() and init()
      */
@@ -690,7 +690,6 @@ class KMPLAYER_NO_EXPORT AnimateGroup : public Element {
 public:
     ~AnimateGroup ();
     virtual void init ();
-    virtual void begin ();
     virtual void activate ();
     virtual void finish ();
     virtual void deactivate ();

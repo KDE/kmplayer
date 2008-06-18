@@ -384,7 +384,7 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
 /**
  * start, or restart in case of re-use, the durations
  */
-KDE_NO_EXPORT void Runtime::begin () {
+KDE_NO_EXPORT void Runtime::start () {
     //kDebug () << "Runtime::begin " << element->nodeName();
     if (start_timer || duration_timer)
         convertNode <Element> (element)->init ();
@@ -439,7 +439,7 @@ KDE_NO_EXPORT void Runtime::finish () {
     }
 }
 
-KDE_NO_EXPORT void Runtime::beginAndStart () {
+KDE_NO_EXPORT void Runtime::startAndBeginNode () {
     if (start_timer || duration_timer)
         convertNode <Element> (element)->init ();
     timingstate = timings_began;
@@ -536,11 +536,14 @@ KDE_NO_EXPORT bool Runtime::handleEvent (Event *event) {
         }
         case event_started:
             if (event->source.ptr () == element) {
+                start_time = element->document ()->last_event_time/100;
                 setDuration ();
                 NodePtrW guard = element;
                 element->propagateEvent (event);
-                if (guard)
+                if (guard) {
                     element->begin ();
+                    propagateStop (false);
+                }
                 return true;
             }
             break;
@@ -1703,7 +1706,7 @@ public:
 KDE_NO_EXPORT void SMIL::GroupBase::activate () {
     init ();
     setState (state_activated);
-    runtime->begin ();
+    runtime->start ();
     Node *n = firstChild ().ptr ();
     if (n) {
         GroupBaseInitVisitor visitor;
@@ -1775,7 +1778,7 @@ KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         if (n->role (RoleTypeTiming))
             convertNode <Element> (n)->init ();
-    runtime->beginAndStart (); // undefer through begin()
+    runtime->startAndBeginNode (); // undefer through begin()
 }
 
 //-----------------------------------------------------------------------------
@@ -2413,7 +2416,7 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
 KDE_NO_EXPORT void SMIL::MediaType::activate () {
     init (); // sets all attributes
     setState (state_activated);
-    runtime->begin ();
+    runtime->start ();
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
@@ -2505,9 +2508,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         kWarning () << nodeName() << "::begin " << src << " region '" <<
             param (StringPool::attr_region) << "' not found" << endl;
     }
-    runtime->start_time = document ()->last_event_time/100;
     Element::begin ();
-    runtime->propagateStop (false); //see whether this node has a livetime or not
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::clipStart () {
@@ -3064,13 +3065,7 @@ KDE_NO_EXPORT void SMIL::AnimateGroup::init () {
 KDE_NO_EXPORT void SMIL::AnimateGroup::activate () {
     init ();
     setState (state_activated);
-    runtime->begin ();
-}
-
-KDE_NO_EXPORT void SMIL::AnimateGroup::begin () {
-    runtime->start_time = document ()->last_event_time/100;
-    Element::begin ();
-    runtime->propagateStop (false); //see whether this node has a livetime or not
+    runtime->start ();
 }
 
 /**
