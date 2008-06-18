@@ -244,6 +244,22 @@ public:
 };
 
 /**
+ * Defines region layout, should reside below 'head' element
+ */
+class KMPLAYER_NO_EXPORT Layout : public Element {
+public:
+    Layout (NodePtr & d);
+    NodePtr childFromTag (const QString & tag);
+    KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
+    void closed ();
+    void childDone (NodePtr child);
+    void accept (Visitor *v) { v->visit (this); }
+    bool expose () const { return false; }
+
+    NodePtrW root_layout;
+};
+
+/**
  * Base class for SMIL::Region, SMIL::RootLayout and SMIL::Layout
  */
 class KMPLAYER_NO_EXPORT RegionBase : public Element {
@@ -251,12 +267,15 @@ public:
     enum ShowBackground { ShowAlways, ShowWhenActive };
 
     ~RegionBase ();
-    bool expose () const { return false; }
-    void activate ();
-    void childDone (NodePtr child);
-    void deactivate ();
+    virtual bool expose () const { return false; }
+    virtual void activate ();
+    virtual void childDone (NodePtr child);
+    virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual bool handleEvent (Event *event);
+    virtual NodeRefListPtr listeners (unsigned int event_id);
+    virtual void accept (Visitor *v) { v->visit (this); }
+    virtual Role *role (RoleType rt);
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
      */
@@ -270,7 +289,6 @@ public:
     virtual void updateDimensions ();
     void boundsUpdate (); // recalculates and repaint old and new bounds
 
-    Role *role (RoleType rt);
     SurfacePtrW region_surface;
     ImageMedia *bg_image;
     CalculatedSizer sizes;
@@ -281,6 +299,11 @@ public:
     QString background_image;
     ShowBackground show_background;
     Fit fit;
+    NodeRefListPtr m_AttachedMediaTypes;   // active attached mediatypes
+    /**
+     * boolean for check if pointerEntered/pointerLeft should be called by View
+     */
+    bool has_mouse;
 protected:
     RegionBase (NodePtr & d, short id);
     PostponePtr postpone_lock;               // pause while loading bg image
@@ -288,24 +311,17 @@ protected:
 };
 
 /**
- * Defines region layout, should reside below 'head' element
+ * Represents the root area for the other regions
  */
-class KMPLAYER_NO_EXPORT Layout : public RegionBase {
+class KMPLAYER_NO_EXPORT RootLayout : public RegionBase {
 public:
-    Layout (NodePtr & d);
-    NodePtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
-    void activate ();
+    KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d)
+        : RegionBase (d, id_node_root_layout) {}
     void closed ();
-    virtual void accept (Visitor *);
-    /**
-     * recursively calculates dimensions of this and child regions
-     */
-    virtual void updateDimensions ();
-    virtual Role *role (RoleType rt);
-
-    NodePtrW root_layout;
-    NodePtrW default_region;
+    void activate ();
+    Role *role (RoleType rt);
+    KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
+    void updateDimensions ();
 };
 
 /**
@@ -318,24 +334,8 @@ public:
     NodePtr childFromTag (const QString & tag);
     void calculateBounds (Single w, Single h);
     virtual NodeRefListPtr listeners (unsigned int event_id);
-    virtual void accept (Visitor *);
-    /**
-     * boolean for check if pointerEntered/pointerLeft should be called by View
-     */
-    bool has_mouse;
-    NodeRefListPtr m_AttachedMediaTypes;   // active attached mediatypes
 private:
     MouseListeners mouse_listeners;
-};
-
-/**
- * Represents the root area for the other regions
- */
-class KMPLAYER_NO_EXPORT RootLayout : public RegionBase {
-public:
-    KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d)
-        : RegionBase (d, id_node_root_layout) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
 };
 
 /**
@@ -589,6 +589,7 @@ public:
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual bool handleEvent (Event *event);
     NodeRefListPtr listeners (unsigned int event_id);
+    bool expose () const { return false; }
 
     Runtime *runtime;
     SurfacePtrW sub_surface;

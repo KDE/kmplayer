@@ -261,7 +261,7 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     float opacity;
     bool toplevel;
 
-    void traverseRegion (SMIL::RegionBase * reg);
+    void traverseRegion (Node *reg);
     void updateExternal (SMIL::MediaType *av, SurfacePtr s);
     void paint(SMIL::MediaType *, Surface *, int x, int y, const IRect &);
 public:
@@ -273,7 +273,7 @@ public:
     void visit (Node * n);
     void visit (SMIL::Smil *);
     void visit (SMIL::Layout *);
-    void visit (SMIL::Region *);
+    void visit (SMIL::RegionBase *);
     void visit (SMIL::Transition *);
     void visit (SMIL::ImageMediaType *);
     void visit (SMIL::TextMediaType *);
@@ -333,9 +333,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Smil *s) {
         s->layout_node->accept (this);
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
+KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (Node *node) {
     // next visit listeners
-    NodeRefListPtr nl = reg->listeners (mediatype_attached);
+    NodeRefListPtr nl = node->listeners (mediatype_attached);
     if (nl) {
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
             if (c->data)
@@ -343,7 +343,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
     }
     // finally visit children, accounting for z-order FIXME optimize
     NodeRefList sorted;
-    for (NodePtr n = reg->firstChild (); n; n = n->nextSibling ()) {
+    for (NodePtr n = node->firstChild (); n; n = n->nextSibling ()) {
         if (n->id != SMIL::id_node_region)
             continue;
         SMIL::Region * r = static_cast <SMIL::Region *> (n.ptr ());
@@ -360,38 +360,39 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
         r->data->accept (this);
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
+KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *reg) {
     //kDebug() << "Visit " << reg->nodeName();
-    SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (reg->root_layout);
-    Surface *s = static_cast <Surface *> (reg->role (RoleTypeDisplay));
-    if (s && rb) {
-        //cairo_save (cr);
-        Matrix m = matrix;
+    if (reg->root_layout) {
+        Surface *s = static_cast <Surface *> (reg->root_layout->role (RoleTypeDisplay));
+        if (s) {
+            //cairo_save (cr);
+            Matrix m = matrix;
 
-        SRect rect = s->bounds;
-        Single x, y, w = rect.width(), h = rect.height();
-        matrix.getXYWH (x, y, w, h);
+            SRect rect = s->bounds;
+            Single x, y, w = rect.width(), h = rect.height();
+            matrix.getXYWH (x, y, w, h);
 
-        IRect clip_save = clip;
-        clip = clip.intersect (IRect (x, y, w, h));
+            IRect clip_save = clip;
+            clip = clip.intersect (IRect (x, y, w, h));
 
-        s->background_color = rb->background_color;
-        if (s->background_color & 0xff000000) {
-            CAIRO_SET_SOURCE_RGB (cr, s->background_color);
-            cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
-            cairo_fill (cr);
+            if (s->background_color & 0xff000000) {
+                CAIRO_SET_SOURCE_RGB (cr, s->background_color);
+                cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
+                cairo_fill (cr);
+            }
+
+            matrix = Matrix (0, 0, s->xscale, s->yscale);
+            matrix.transform (m);
+            traverseRegion (reg->root_layout);
+            traverseRegion (reg);
+            //cairo_restore (cr);
+            matrix = m;
+            clip = clip_save;
         }
-
-        matrix = Matrix (0, 0, s->xscale, s->yscale);
-        matrix.transform (m);
-        traverseRegion (reg);
-        //cairo_restore (cr);
-        matrix = m;
-        clip = clip_save;
     }
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
+KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
     Surface *s = static_cast <Surface *> (reg->role (RoleTypeDisplay));
     if (s) {
         SRect rect = s->bounds;
@@ -1128,7 +1129,7 @@ public:
     void visit (Element *);
     void visit (SMIL::Smil *);
     void visit (SMIL::Layout *);
-    void visit (SMIL::Region *);
+    void visit (SMIL::RegionBase *);
     void visit (SMIL::MediaType * n);
     void visit (SMIL::Anchor *);
     void visit (SMIL::Area *);
@@ -1152,11 +1153,11 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Smil *s) {
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {
-    if (layout->role (RoleTypeDisplay)) {
+    Surface *s = static_cast <Surface *> (layout->root_layout->role (RoleTypeDisplay));
+    if (s) {
         Matrix m = matrix;
-        SRect rect = layout->region_surface->bounds;
-        matrix = Matrix (rect.x(), rect.y(),
-                layout->region_surface->xscale, layout->region_surface->yscale);
+        SRect rect = s->bounds;
+        matrix = Matrix (rect.x(), rect.y(), s->xscale, s->yscale);
         matrix.transform (m);
 
         NodePtr node_save = node;
@@ -1173,7 +1174,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {
     }
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
     if (region->role (RoleTypeDisplay)) {
         SRect rect = region->region_surface->bounds;
         Single rx = rect.x(), ry = rect.y(), rw = rect.width(), rh = rect.height();

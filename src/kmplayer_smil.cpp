@@ -128,7 +128,7 @@ KDE_NO_EXPORT bool KMPlayer::parseTime (const QString & vl, int & dur) {
     return true;
 }
 
-static SMIL::Region * findRegion (NodePtr p, const QString & id) {
+static SMIL::Region * findRegion2 (NodePtr p, const QString &id) {
     TrieString regionname_attr ("regionName");
     for (NodePtr c = p->firstChild (); c; c = c->nextSibling ()) {
         if (c->id == SMIL::id_node_region) {
@@ -141,11 +141,23 @@ static SMIL::Region * findRegion (NodePtr p, const QString & id) {
                 return r;
             }
         }
-        SMIL::Region * r = findRegion (c, id);
+        SMIL::Region * r = findRegion2 (c, id);
         if (r)
             return r;
     }
     return 0L;
+}
+
+static SMIL::RegionBase *findRegion (Node *n, const QString &id) {
+    SMIL::RegionBase *region = NULL;
+    SMIL::Smil *smil = SMIL::Smil::findSmilNode (n);
+    if (smil) {
+        SMIL::Layout *layout = convertNode <SMIL::Layout> (smil->layout_node);
+        region = findRegion2 (layout, id);
+        if (!region)
+            region = convertNode <SMIL::RegionBase> (layout->root_layout);
+    }
+    return region;
 }
 
 static SMIL::Transition * findTransition (NodePtr n, const QString & id) {
@@ -1029,22 +1041,14 @@ KDE_NO_EXPORT NodePtr SMIL::Smil::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void SMIL::Smil::activate () {
     //kDebug () << "Smil::activate";
     resolved = true;
-    SMIL::Layout * layout = convertNode <SMIL::Layout> (layout_node);
-    if (layout && layout->region_surface) {
-        kError() << "Layout already has a surface" << endl;
-    }
-    if (layout)
+    if (layout_node)
         Element::activate ();
     else
         Element::deactivate(); // some unfortunate reset in parent doc
 }
 
 KDE_NO_EXPORT void SMIL::Smil::deactivate () {
-    if (layout_node)
-        convertNode <SMIL::Layout> (layout_node)->repaint ();
     state = state_deactivated;
-    if (layout_node)
-        convertNode <SMIL::Layout> (layout_node)->region_surface = NULL;
     Mrl::getSurface (NULL);
     Mrl::deactivate ();
 }
@@ -1081,10 +1085,6 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
             else if (name == QString::fromLatin1 ("base"))
                 src = elm->getAttribute ("content");
         }
-    }
-    if (!layout_node) {
-        kError () << "no <root-layout>" << endl;
-        return;
     }
 }
 
@@ -1137,7 +1137,7 @@ SMIL::Smil * SMIL::Smil::findSmilNode (Node * node) {
 
 //-----------------------------------------------------------------------------
 
-static void headChildDone (NodePtr node, NodePtr child) {
+static void headChildDone (Node *node, NodePtr child) {
     if (node->unfinished ()) {
         if (child->nextSibling ())
             child->nextSibling ()->activate ();
@@ -1180,7 +1180,7 @@ KDE_NO_EXPORT void SMIL::Head::childDone (NodePtr child) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT SMIL::Layout::Layout (NodePtr & d)
- : RegionBase (d, id_node_layout) {}
+ : Element (d, id_node_layout) {}
 
 KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
     const char * ctag = tag.ascii ();
@@ -1196,98 +1196,16 @@ KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::Layout::closed () {
-    SMIL::RegionBase * rl = convertNode <SMIL::RootLayout> (root_layout);
-    bool has_root (rl);
-    if (!has_root) { // just add one if none there
-        rl = new SMIL::RootLayout (m_doc);
-        NodePtr sr = rl; // protect against destruction
-        rl->setAuxiliaryNode (true);
-        root_layout = rl;
-        int w_root =0, h_root = 0;
-        for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
-            if (n->id == id_node_region) {
-                SMIL::Region * rb =convertNode <SMIL::Region> (n);
-                rb->init ();
-                rb->calculateBounds (0, 0);
-                if (int (rb->x + rb->w) > w_root)
-                    w_root = rb->x + rb->w;
-                if (int (rb->y + rb->h) > h_root)
-                    h_root = rb->y + rb->h;
-            }
-        }
-        if (!w_root || !h_root)
-            w_root = 320; h_root = 240; // have something to start with
-        rl->setAttribute(StringPool::attr_width, QString::number(w_root));
-        rl->setAttribute(StringPool::attr_height,QString::number(h_root));
-        insertBefore (sr, firstChild ());
-    } else {
-        Smil *s = Smil::findSmilNode (this);
-        if (s) {
-            s->width = rl->getAttribute(StringPool::attr_width).toDouble ();
-            s->height = rl->getAttribute(StringPool::attr_height).toDouble();
-        }
-    }
-    if (!default_region) {
-        SMIL::Region *r = new SMIL::Region (m_doc);
-        insertBefore (r, rl->nextSibling ());
-        r->setAuxiliaryNode (true);
-        default_region = r;
+    if (!root_layout) { // just add one if none there
+        root_layout = new SMIL::RootLayout (m_doc);
+        root_layout->setAuxiliaryNode (true);
+        insertBefore (root_layout, firstChild ());
+        root_layout->closed ();
     }
 }
 
-KDE_NO_EXPORT void SMIL::Layout::activate () {
-    //kDebug () << "SMIL::Layout::activate";
-    RegionBase::activate ();
-    if (role (RoleTypeDisplay)) {
-        updateDimensions ();
-        repaint ();
-    }
-    finish (); // proceed and allow 'head' to finish
-}
-
-KDE_NO_EXPORT void SMIL::Layout::updateDimensions () {
-    RegionBase * rb = static_cast <RegionBase *> (root_layout.ptr ());
-    x = y = 0;
-    w = rb->sizes.width.size ();
-    h = rb->sizes.height.size ();
-    //kDebug () << (int)w << "," << (int)h;
-    SMIL::RegionBase::updateDimensions ();
-}
-
-Role *SMIL::Layout::role (RoleType rt) {
-    switch (rt) {
-        case RoleTypeDisplay:
-            if (!region_surface) {
-                SMIL::Smil *s = Smil::findSmilNode (this);
-                if (s && s->active ()) {
-                    SMIL::RegionBase *rl = convertNode <SMIL::RootLayout> (root_layout);
-                    region_surface = s->getSurface (s);
-                    w = s->width;
-                    h = s->height;
-                    if (region_surface) {
-                        SRect rect = region_surface->bounds;
-                        if (rl && rl->auxiliaryNode ()) {
-                            w = rect.width ();
-                            h = rect.height ();
-                            rl->setAttribute (StringPool::attr_width, QString::number ((int)w));
-                            rl->setAttribute (StringPool::attr_height, QString::number ((int)h));
-                            rl->sizes.width = QString::number ((int) w);
-                            rl->setParam (StringPool::attr_height, QString::number((int)h));
-                        } else if (region_surface && w > 0 && h > 0) {
-                            updateDimensions ();
-                        }
-                    }
-                }
-            }
-            return region_surface.ptr ();
-        default:
-            break;
-    }
-    return Element::role (rt);
-}
-
-KDE_NO_EXPORT void SMIL::Layout::accept (Visitor * v) {
-    v->visit (this);
+KDE_NO_EXPORT void SMIL::Layout::childDone (NodePtr child) {
+    headChildDone (this, child);
 }
 
 //-----------------------------------------------------------------------------
@@ -1296,8 +1214,10 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id),
    bg_image (NULL),
    x (0), y (0), w (0), h (0),
-   z_order (1), background_color (0)
-   {}
+   z_order (1), background_color (0),
+   m_AttachedMediaTypes (new NodeRefList),
+   has_mouse (false)
+{}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
     if (region_surface)
@@ -1308,10 +1228,7 @@ KDE_NO_EXPORT void SMIL::RegionBase::activate () {
     show_background = ShowAlways;
     fit = fit_default;
     init ();
-    setState (state_activated);
-    for (NodePtr r = firstChild (); r; r = r->nextSibling ())
-        if (r->id == id_node_region || r->id == id_node_root_layout)
-            r->activate ();
+    Element::activate ();
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::childDone (NodePtr child) {
@@ -1319,6 +1236,7 @@ KDE_NO_EXPORT void SMIL::RegionBase::childDone (NodePtr child) {
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
+    show_background = ShowAlways;
     background_color = 0;
     background_image.truncate (0);
     if (region_surface)
@@ -1362,15 +1280,16 @@ KDE_NO_EXPORT void SMIL::RegionBase::updateDimensions () {
 
 KDE_NO_EXPORT void SMIL::RegionBase::boundsUpdate () {
     // if there is a region_surface and it's moved, do a limit repaint
-    NodePtr p = parentNode ();
-    if (p && (p->id==SMIL::id_node_region || p->id==SMIL::id_node_layout) &&
-            region_surface) {
-        RegionBase *pr = convertNode <SMIL::RegionBase> (p);
-        SRect old_bounds = region_surface->bounds;
-        w = 0; h = 0;
-        sizes.calcSizes (this, pr->w, pr->h, x, y, w, h);
-        region_surface->bounds = SRect (x, y, w, h);
-        pr->repaint (region_surface->bounds.unite (old_bounds));
+    if (region_surface) {
+        Surface *pr = region_surface->parentNode ();
+        if (pr) {
+            SRect old_bounds = region_surface->bounds;
+            w = 0; h = 0;
+            sizes.calcSizes (this, pr->bounds.width (), pr->bounds.height (),
+                    x, y, w, h);
+            region_surface->bounds = SRect (x, y, w, h);
+            pr->repaint (region_surface->bounds.unite (old_bounds));
+        }
     }
 }
 
@@ -1379,14 +1298,12 @@ Role *SMIL::RegionBase::role (RoleType rt) {
         case RoleTypeDisplay:
             if (!region_surface && active ()) {
                 Node *n = parentNode ().ptr ();
-                if (n &&
-                        (SMIL::id_node_region == n->id ||
-                         SMIL::id_node_layout == n->id)) {
-                    Surface *ps = static_cast <Surface *>(n->role (RoleTypeDisplay));
-                    if (ps) {
-                        region_surface = ps->createSurface (this, SRect (x, y, w, h));
-                        region_surface->background_color = background_color;
-                    }
+                if (n && SMIL::id_node_layout == n->id)
+                    n = n->firstChild ();
+                Surface *s = static_cast <Surface *>(n->role (RoleTypeDisplay));
+                if (s) {
+                    region_surface = s->createSurface(this, SRect (x, y, w, h));
+                    region_surface->background_color = background_color;
                 }
             }
             return region_surface.ptr ();
@@ -1410,10 +1327,10 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
             background_color = 0;
         else
             background_color = 0xff000000 | QColor (val).rgb ();
-        Surface *s = static_cast <Surface *> (role (RoleTypeDisplay));
-        if (s)
-            s->background_color = background_color;
-        need_repaint = true;
+        if (region_surface) {
+            region_surface->background_color = background_color;
+            need_repaint = true;
+        }
     } else if (name == "z-index") {
         z_order = val.toInt ();
         need_repaint = true;
@@ -1428,7 +1345,9 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
                 }
             }
             NodePtr p = parentNode ();
-            if (p &&(p->id==SMIL::id_node_region ||p->id==SMIL::id_node_layout))
+            if (p && SMIL::id_node_layout == p->id)
+                p = p->firstChild ();
+            if (p &&(p->id==SMIL::id_node_region ||p->id==SMIL::id_node_root_layout))
                 convertNode <SMIL::RegionBase> (p)->updateDimensions ();
             rect = rect.unite (SRect (x, y, w, h));
             need_repaint = true;
@@ -1456,10 +1375,20 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
                 need_repaint = true;
         }
     }
-    Surface *s = static_cast <Surface *> (role (RoleTypeDisplay));
-    if (need_repaint && s && s->parentNode ())
-        s->parentNode ()->repaint (rect);
+    if (active ()) {
+        Surface *s = static_cast <Surface *> (role (RoleTypeDisplay));
+        if (need_repaint && s && s->parentNode ())
+            s->parentNode ()->repaint (rect);
+    }
     Element::parseParam (name, val);
+}
+
+NodeRefListPtr SMIL::RegionBase::listeners (unsigned int eid) {
+    switch (eid) {
+        case mediatype_attached:
+            return m_AttachedMediaTypes;
+    }
+    return Element::listeners (eid);
 }
 
 bool SMIL::RegionBase::handleEvent (Event *event) {
@@ -1470,10 +1399,90 @@ bool SMIL::RegionBase::handleEvent (Event *event) {
     return true;
 }
 
+//--------------------------%<-------------------------------------------------
+
+KDE_NO_EXPORT void SMIL::RootLayout::closed () {
+    QString width = getAttribute (StringPool::attr_width);
+    QString height = getAttribute (StringPool::attr_height);
+    if (parentNode () && (width.isEmpty () || height.isEmpty ())) {
+        int wr = 0, hr = 0;
+        for (NodePtr n = nextSibling (); n; n = n->nextSibling ()) {
+            if (n->id == id_node_region) {
+                SMIL::Region *rb = convertNode <SMIL::Region> (n);
+                rb->init ();
+                rb->calculateBounds (0, 0);
+                if (int (rb->x + rb->w) > wr)
+                    wr = rb->x + rb->w;
+                if (int (rb->y + rb->h) > hr)
+                    hr = rb->y + rb->h;
+            }
+        }
+        if (!wr || !hr)
+            wr = 320; hr = 240; // have something to start with
+        setAttribute (StringPool::attr_width, QString::number (wr));
+        setAttribute (StringPool::attr_height,QString::number (hr));
+    } else {
+        Smil *s = Smil::findSmilNode (this);
+        if (s) {
+            s->width = width.toDouble ();
+            s->height = height.toDouble();
+        }
+    }
+}
+
+KDE_NO_EXPORT void SMIL::RootLayout::activate () {
+    RegionBase::activate ();
+    if (role (RoleTypeDisplay)) {
+        updateDimensions ();
+        repaint ();
+    }
+}
+
+Role *SMIL::RootLayout::role (RoleType rt) {
+    switch (rt) {
+        case RoleTypeDisplay:
+            if (!region_surface) {
+                SMIL::Smil *s = Smil::findSmilNode (this);
+                if (s && s->active ()) {
+                    Surface *surface = s->getSurface (s);
+                    region_surface = surface;
+                    w = s->width;
+                    h = s->height;
+                    if (surface) {
+                        surface->background_color = background_color;
+                        if (auxiliaryNode ()) {
+                            w = surface->bounds.width ();
+                            h = surface->bounds.height ();
+                            sizes.width = QString::number ((int) w);
+                            sizes.height = QString::number ((int) h);
+                        }
+                    }
+                    updateDimensions ();
+                }
+            }
+            return region_surface.ptr ();
+        default:
+            break;
+    }
+    return RegionBase::role (rt);
+}
+
+KDE_NO_EXPORT void SMIL::RootLayout::updateDimensions () {
+    w = sizes.width.size ();
+    h = sizes.height.size ();
+    if (w > 0 && h > 0)
+        for (NodePtr n = nextSibling(); n; n = n->nextSibling())
+            if (n->id == SMIL::id_node_region) {
+                Region *r = static_cast <SMIL::Region *> (n.ptr ());
+                r->calculateBounds (w, h);
+                r->updateDimensions ();
+            }
+}
+
+//--------------------------%<-------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT SMIL::Region::Region (NodePtr & d)
- : RegionBase (d, id_node_region),
-   has_mouse (false),
-   m_AttachedMediaTypes (new NodeRefList) {}
+ : RegionBase (d, id_node_region) {}
 
 KDE_NO_EXPORT NodePtr SMIL::Region::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "region"))
@@ -1492,22 +1501,14 @@ void SMIL::Region::calculateBounds (Single pw, Single ph) {
     Surface *s = static_cast <Surface *> (role (RoleTypeDisplay));
     if (s)
         s->bounds = SRect (x, y, w, h);
-    //kDebug () << "Region::calculateBounds parent:" << pw << "x" << ph << " this:" << x << "," << y << " " << w << "x" << h;
+    //kDebug () << "parent:" << pw << "x" << ph << " this:" << (int)x << "," << (int)y << " " << (int)w << "x" << (int)h;
 }
 
 NodeRefListPtr SMIL::Region::listeners (unsigned int eid) {
     NodeRefListPtr l = mouse_listeners.listeners (eid);
     if (l)
         return l;
-    switch (eid) {
-        case mediatype_attached:
-            return m_AttachedMediaTypes;
-    }
     return RegionBase::listeners (eid);
-}
-
-KDE_NO_EXPORT void SMIL::Region::accept (Visitor * v) {
-    v->visit (this);
 }
 
 //-----------------------------------------------------------------------------
@@ -2500,11 +2501,7 @@ KDE_NO_EXPORT void SMIL::MediaType::undefer () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::begin () {
-    SMIL::Smil * s = Smil::findSmilNode (parentNode ().ptr ());
-    SMIL::Region * r = s ?
-        findRegion (s->layout_node, param (StringPool::attr_region)) : 0L;
-    if (!r)
-        r = convertNode <SMIL::Region> (convertNode <SMIL::Layout> (s->layout_node)->default_region);
+    SMIL::RegionBase *r = findRegion (this, param (StringPool::attr_region));
     if (trans_timer) // eg transOut and we're repeating
         document ()->cancelEvent (trans_timer);
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
@@ -3767,12 +3764,12 @@ KDE_NO_EXPORT void SMIL::Param::activate () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT void Visitor::visit (SMIL::Region * n) {
-    visit (static_cast <SMIL::RegionBase *> (n));
+KDE_NO_EXPORT void Visitor::visit (SMIL::Layout *n) {
+    visit (static_cast <Element *> (n));
 }
 
-KDE_NO_EXPORT void Visitor::visit (SMIL::Layout * n) {
-    visit (static_cast <SMIL::RegionBase *> (n));
+KDE_NO_EXPORT void Visitor::visit (SMIL::RegionBase *n) {
+    visit (static_cast <Element *> (n));
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::Transition * n) {

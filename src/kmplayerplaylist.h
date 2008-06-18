@@ -839,8 +839,8 @@ protected:
 
 namespace SMIL {
     class Smil;
-    class Region;
     class Layout;
+    class RegionBase;
     class Transition;
     class Animate;
     class AnimateMotion;
@@ -872,8 +872,8 @@ public:
     virtual void visit (Node *) {}
     virtual void visit (Element *);
     virtual void visit (SMIL::Smil *) {}
-    virtual void visit (SMIL::Region *);
     virtual void visit (SMIL::Layout *);
+    virtual void visit (SMIL::RegionBase *);
     virtual void visit (SMIL::Transition *);
     virtual void visit (SMIL::Animate *);
     virtual void visit (SMIL::AnimateMotion *);
