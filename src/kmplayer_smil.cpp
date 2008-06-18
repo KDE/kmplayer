@@ -642,8 +642,10 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
 
 KDE_NO_EXPORT void Runtime::propagateStart () {
     element->deliver (MsgEventStarting, element);
-    if (begin_timer)
+    if (begin_timer) {
         element->document ()->cancelPosting (begin_timer);
+        begin_timer = NULL;
+    }
     timingstate = timings_started;
     started_timer = element->document()->post (
             element, new Posting (element, MsgEventStarted));
@@ -675,10 +677,8 @@ KDE_NO_EXPORT void Runtime::stopped () {
         if (repeat_count == dur_infinite || 0 < repeat_count--) {
             if (beginTime ().offset > 0 &&
                     beginTime ().durval == dur_timer) {
-                if (begin_timer) {
+                if (begin_timer)
                     element->document ()->cancelPosting (begin_timer);
-                    begin_timer = NULL;
-                }
                 begin_timer = element->document()->post (element,
                         new TimerPosting (100 * beginTime ().offset, begin_timer_id));
             } else {
