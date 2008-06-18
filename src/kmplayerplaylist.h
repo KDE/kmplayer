@@ -243,13 +243,6 @@ enum Fit {
     fit_scroll     // keep aspect and don't scale, add scollbars if needed
 };
 
-enum RoleType
-{
-    RoleTypeTiming,
-    RoleTypeDisplay,
-    RoleTypeSizer
-};
-
 enum MessageType
 {
     MsgEventTimer = 0,
@@ -265,7 +258,10 @@ enum MessageType
     MsgSurfaceAttach,
     MsgMediaReady,
     MsgMediaUpdated,
-    MsgMediaFinished
+    MsgMediaFinished,
+    MsgQueryRoleTiming,
+    MsgQueryRoleDisplay,
+    MsgQueryRoleSizer
 };
 
 // convenient types
@@ -353,7 +349,6 @@ public:
      * If this is a derived Mrl object and has a SRC attribute
      */
     virtual PlayType playType ();
-    virtual Role *role (RoleType rt);
     bool isPlayable () { return playType () > play_type_none; }
     virtual bool isElementNode () { return false; }
     /**
@@ -379,7 +374,7 @@ public:
     /*
      * Event send to this node, return true if handled
      */
-    virtual void *message (MessageType msg, void *content);
+    virtual void *message (MessageType msg, void *content=NULL);
     /*
      * Dispatch Event to all receivers of event->id()
      */

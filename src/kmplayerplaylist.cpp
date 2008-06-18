@@ -452,10 +452,6 @@ Node::PlayType Node::playType () {
     return play_type_none;
 }
 
-Role *Node::role (RoleType) {
-    return NULL;
-}
-
 void Node::opened () {}
 
 void Node::closed () {}
@@ -1136,6 +1132,7 @@ void Document::unpausePosting (Posting *e, int ms) {
             paused_queue = ed->next;
         addTime (ed->timeout, ms);
         insertPosting (ed->target, ed->event, ed->timeout);
+        ed->event = NULL;
         delete ed;
     } else {
         kError () << "pausePosting not found";

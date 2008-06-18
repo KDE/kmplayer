@@ -115,7 +115,7 @@ public:
     TimingState state () const { return timingstate; }
     void propagateStop (bool forced);
     void propagateStart ();
-    void *message (MessageType msg, void *content);
+    void *message (MessageType msg, void *content=NULL);
     void processEvent (MessageType msg);
     NodeRefListPtr receivers (MessageType msg);
     /**
@@ -226,7 +226,7 @@ public:
     void closed ();
     void childDone (NodePtr child);
     bool expose () const;
-    void *message (MessageType msg, void *content);
+    void *message (MessageType msg, void *content=NULL);
     void accept (Visitor *v) { v->visit (this); }
     void jump (const QString & id);
     static Smil * findSmilNode (Node * node);
@@ -277,10 +277,9 @@ public:
     virtual void childDone (NodePtr child);
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    void *message (MessageType msg, void *content);
+    void *message (MessageType msg, void *content=NULL);
     virtual NodeRefListPtr receivers (MessageType msg);
     virtual void accept (Visitor *v) { v->visit (this); }
-    virtual Role *role (RoleType rt);
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
      */
@@ -324,7 +323,7 @@ public:
         : RegionBase (d, id_node_root_layout) {}
     void closed ();
     void activate ();
-    Role *role (RoleType rt);
+    void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
     void updateDimensions ();
 };
@@ -414,7 +413,6 @@ public:
     ~GroupBase ();
     NodePtr childFromTag (const QString & tag);
     PlayType playType () { return play_type_none; }
-    Role *role (RoleType rt);
     void parseParam (const TrieString &name, const QString &value);
     void init ();
     void finish ();
@@ -423,7 +421,7 @@ public:
     void deactivate ();
     void reset ();
     bool expose () const { return false; }
-    void *message (MessageType msg, void *content);
+    void *message (MessageType msg, void *content=NULL);
     NodeRefListPtr receivers (MessageType msg);
     void setJumpNode (NodePtr);
     Runtime *runtime;
@@ -480,7 +478,7 @@ public:
     void begin ();
     void deactivate ();
     void childDone (NodePtr child);
-    void *message (MessageType msg, void *content);
+    void *message (MessageType msg, void *content=NULL);
 
     typedef ListNode <ConnectionPtr> ConnectionStoreItem;
     List <ConnectionStoreItem> started_event_list;
@@ -585,14 +583,13 @@ public:
     virtual void finish ();
     virtual void reset ();
     virtual void childDone (NodePtr child);
-    Role *role (RoleType rt);
     virtual Surface *getSurface (Mrl *mrl);
     /* (new) sub-region or NULL if not displayed */
     void resetSurface ();
     SRect calculateBounds ();
     void boundsUpdate (); // recalculates and repaint old and new bounds
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void *message (MessageType msg, void *content);
+    virtual void *message (MessageType msg, void *content=NULL);
     NodeRefListPtr receivers (MessageType msg);
     bool expose () const { return false; }
 
@@ -655,7 +652,7 @@ public:
     virtual void begin ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
-    virtual void *message (MessageType msg, void *content);
+    virtual void *message (MessageType msg, void *content=NULL);
     void dataArrived ();
 };
 
@@ -667,7 +664,7 @@ public:
     virtual void begin ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
-    virtual void *message (MessageType msg, void *content);
+    virtual void *message (MessageType msg, void *content=NULL);
     void dataArrived ();
 
     QString font_name;
@@ -700,9 +697,8 @@ public:
     virtual void reset ();
     virtual bool expose () const { return false; }
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void *message (MessageType msg, void *content);
+    virtual void *message (MessageType msg, void *content=NULL);
     virtual NodeRefListPtr receivers (MessageType msg);
-    virtual Role *role (RoleType rt);
     Runtime *runtime;
 protected:
     void restoreModification ();
@@ -731,7 +727,7 @@ public:
     virtual void finish ();
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void *message (MessageType msg, void *content);
+    virtual void *message (MessageType msg, void *content=NULL);
     virtual void accept (Visitor *v) { v->visit (this); }
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     PlayType playType () { return play_type_none; }
@@ -765,7 +761,7 @@ public:
     virtual void finish ();
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void *message (MessageType msg, void *content);
+    virtual void *message (MessageType msg, void *content=NULL);
     virtual void accept (Visitor *v) { v->visit (this); }
     KDE_NO_EXPORT const char * nodeName () const { return "animateMotion"; }
     PlayType playType () { return play_type_none; }

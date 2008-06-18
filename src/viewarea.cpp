@@ -363,7 +363,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (Node *node) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *reg) {
     //kDebug() << "Visit " << reg->nodeName();
     if (reg->root_layout) {
-        Surface *s = static_cast <Surface *> (reg->root_layout->role (RoleTypeDisplay));
+        Surface *s = (Surface *)reg->root_layout->message (MsgQueryRoleDisplay);
         if (s) {
             //cairo_save (cr);
             Matrix m = matrix;
@@ -393,7 +393,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *reg) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
-    Surface *s = static_cast <Surface *> (reg->role (RoleTypeDisplay));
+    Surface *s = (Surface *) reg->message (MsgQueryRoleDisplay);
     if (s) {
         SRect rect = s->bounds;
 
@@ -604,7 +604,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
-    Surface *s = static_cast <Surface *> (ref->role (RoleTypeDisplay));
+    Surface *s = (Surface *) ref->message (MsgQueryRoleDisplay);
     if (s) {
         if (ref->external_tree)
             updateExternal (ref, s);
@@ -704,7 +704,7 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
-    Surface *s = static_cast <Surface *> (av->role (RoleTypeDisplay));
+    Surface *s = (Surface *) av->message (MsgQueryRoleDisplay);
     if (s) {
         if (av->external_tree)
             updateExternal (av, s);
@@ -715,7 +715,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kDebug() << "Visit " << img->nodeName() << " " << img->src;
-    Surface *s = static_cast <Surface *> (img->role (RoleTypeDisplay));
+    Surface *s = (Surface *) img->message (MsgQueryRoleDisplay);
     if (!s)
         return;
     if (img->external_tree) {
@@ -749,7 +749,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     TextMedia *tm = static_cast <TextMedia *> (txt->media_object);
-    Surface *s = tm ? static_cast<Surface*>(txt->role (RoleTypeDisplay)) : NULL;
+    Surface *s = tm ? (Surface *) txt->message (MsgQueryRoleDisplay) : NULL;
     //kDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
     if (!s)
         return;
@@ -839,7 +839,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
     //kDebug() << "Visit " << brush->nodeName();
-    Surface *s = static_cast <Surface *> (brush->role (RoleTypeDisplay));
+    Surface *s = (Surface *) brush->message (MsgQueryRoleDisplay);
     if (s) {
         cairo_save (cr);
         opacity = 1.0;
@@ -1153,7 +1153,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Smil *s) {
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {
-    Surface *s = static_cast <Surface *> (layout->root_layout->role (RoleTypeDisplay));
+    Surface *s = (Surface *) layout->root_layout->message (MsgQueryRoleDisplay);
     if (s) {
         Matrix m = matrix;
         SRect rect = s->bounds;
@@ -1175,7 +1175,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
-    if (region->role (RoleTypeDisplay)) {
+    if (region->message (MsgQueryRoleDisplay)) {
         SRect rect = region->region_surface->bounds;
         Single rx = rect.x(), ry = rect.y(), rw = rect.width(), rh = rect.height();
         matrix.getXYWH (rx, ry, rw, rh);
@@ -1275,7 +1275,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
     if (n->id >= SMIL::id_node_first_mediatype &&
             n->id < SMIL::id_node_last_mediatype) {
         SMIL::MediaType * mt = convertNode <SMIL::MediaType> (n);
-        Surface *s = static_cast <Surface *> (mt->role (RoleTypeDisplay));
+        Surface *s = (Surface *) mt->message (MsgQueryRoleDisplay);
         if (s) {
             SRect rect = s->bounds;
             Single x1 = rect.x (), x2 = rect.y ();
@@ -1314,7 +1314,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (Element *elm) {
-    Runtime *rt = static_cast <Runtime *> (elm->role (RoleTypeTiming));
+    Runtime *rt = (Runtime *) elm->message (MsgQueryRoleTiming);
     if (rt)
         rt->processEvent (event);
 }
@@ -1324,7 +1324,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
         bubble_up = true;
         return;
     }
-    Surface *s = static_cast <Surface *> (mt->role (RoleTypeDisplay));
+    Surface *s = (Surface *) mt->message (MsgQueryRoleDisplay);
     if (!s)
         return;
     if (s->node && s->node.ptr () != mt) {
@@ -1352,7 +1352,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
         visit (static_cast <Element *> (mt));
     if (event != MsgEventPointerInBounds && event != MsgEventPointerOutBounds) {
       SMIL::RegionBase *r=convertNode<SMIL::RegionBase>(mt->region_node);
-      if (r && r->role (RoleTypeDisplay) &&
+      if (r && r->message (MsgQueryRoleDisplay) &&
               r->id != SMIL::id_node_smil &&
               r->region_surface->node && r != r->region_surface->node.ptr ())
           return r->region_surface->node->accept (this);

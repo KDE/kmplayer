@@ -59,7 +59,7 @@ public:
     KDE_NO_CDTOR_EXPORT Entry (NodePtr & d)
         : Mrl (d, id_node_entry), duration_timer (NULL), ref_child_count (0) {}
     NodePtr childFromTag (const QString & tag);
-    void *message (MessageType msg, void *content);
+    void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
     /**
      * False, but since we might have a 'base' child, we can have a rel. src

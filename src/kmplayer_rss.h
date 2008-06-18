@@ -68,7 +68,7 @@ public:
     void closed ();
     void activate ();
     void deactivate ();
-    void *message (MessageType msg, void *content);
+    void *message (MessageType msg, void *content=NULL);
     NodePtrW enclosure;
     Posting *timer;
 };
