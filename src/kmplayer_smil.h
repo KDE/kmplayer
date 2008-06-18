@@ -78,7 +78,7 @@ public:
 /**
  * Live representation of a SMIL element having timings
  */
-class KMPLAYER_NO_EXPORT Runtime : public Role {
+class KMPLAYER_NO_EXPORT Runtime {
 public:
     enum TimingState {
         timings_reset = 0, timings_began,
@@ -270,7 +270,7 @@ public:
     virtual void updateDimensions ();
     void boundsUpdate (); // recalculates and repaint old and new bounds
 
-    virtual Surface *surface ();
+    Role *role (RoleType rt);
     SurfacePtrW region_surface;
     ImageMedia *bg_image;
     CalculatedSizer sizes;
@@ -302,7 +302,7 @@ public:
      * recursively calculates dimensions of this and child regions
      */
     virtual void updateDimensions ();
-    virtual Surface *surface ();
+    virtual Role *role (RoleType rt);
 
     NodePtrW root_layout;
     NodePtrW default_region;
@@ -583,7 +583,6 @@ public:
     Role *role (RoleType rt);
     virtual Surface *getSurface (Mrl *mrl);
     /* (new) sub-region or NULL if not displayed */
-    Surface *surface ();
     void resetSurface ();
     SRect calculateBounds ();
     void boundsUpdate (); // recalculates and repaint old and new bounds

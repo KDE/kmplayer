@@ -245,14 +245,9 @@ enum Fit {
 
 enum RoleType
 {
-    RoleTypeTiming
-};
-
-class KMPLAYER_NO_EXPORT Role {
-public:
-    Role (RoleType rt) : type (rt) {}
-
-    RoleType type;
+    RoleTypeTiming,
+    RoleTypeDisplay,
+    RoleTypeSizer
 };
 
 extern const unsigned int event_pointer_clicked;
@@ -267,6 +262,7 @@ extern const unsigned int event_stopped;
 extern const unsigned int mediatype_attached;
 
 // convenient types
+typedef void Role;
 typedef Item<Node>::SharedType NodePtr;
 typedef Item<Node>::WeakType NodePtrW;
 typedef Item<Attribute>::SharedType AttributePtr;
