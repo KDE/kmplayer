@@ -92,8 +92,9 @@ template <class T> inline void SharedData<T>::dispose () {
 #ifdef SHAREDPTR_DEBUG
     std::cerr << "SharedData::dispose use:" << use_count << " weak:" << weak_count << std::endl;
 #endif
-    delete ptr;
-    ptr = 0;
+    T *p = ptr;
+    ptr = NULL;
+    delete p;
 }
 
 template <class T> struct WeakPtr;

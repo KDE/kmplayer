@@ -38,7 +38,7 @@
 #include "mediaobject.h"
 
 #ifdef SHAREDPTR_DEBUG
-int shared_data_count;
+KMPLAYER_EXPORT int shared_data_count;
 #endif
 
 using namespace KMPlayer;
