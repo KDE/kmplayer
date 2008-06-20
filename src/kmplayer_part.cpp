@@ -752,6 +752,7 @@ KDE_NO_EXPORT void KMPlayerPart::setLoaded (int percentage) {
     if (percentage < 100) {
         m_browserextension->setLoadingProgress (percentage);
         m_browserextension->infoMessage
+		// xgettext: no-c-format
             (QString::number (percentage) + i18n ("% Cache fill"));
     }
 }
