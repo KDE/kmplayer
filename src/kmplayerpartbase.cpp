@@ -231,8 +231,9 @@ PartBase::~PartBase () {
     delete m_media_manager;
     delete m_settings;
     delete m_bookmark_menu;
+    delete m_sources ["urlsource"];
     //delete m_bookmark_manager;
-    //delete m_bookmark_owner;
+    delete m_bookmark_owner;
 }
 
 void PartBase::settingsChanged () {
