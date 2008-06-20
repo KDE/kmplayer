@@ -1220,7 +1220,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
                 region->deliver (event, &mouse_event);
             }
             if (pass_event) {
-                NodeRefListPtr nl = nodeMessageReceivers (region, MsgSurfaceAttach);
+                NodeRefList *nl = nodeMessageReceivers (region, MsgSurfaceAttach);
                 if (nl) {
                     for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
                         if (c->data)
@@ -1239,7 +1239,6 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
 
 static void followLink (SMIL::LinkingBase * link) {
     kDebug() << "link to " << link->href << " clicked";
-    NodePtr n = link;
     if (link->href.startsWith ("#")) {
         SMIL::Smil * s = SMIL::Smil::findSmilNode (link);
         if (s)
@@ -1248,9 +1247,10 @@ static void followLink (SMIL::LinkingBase * link) {
             kError() << "In document jumps smil not found" << endl;
     } else {
         PlayListNotify *notify = link->document ()->notify_listener;
-        if (notify && !link->target.isEmpty ())
+        if (notify && !link->target.isEmpty ()) {
             notify->openUrl (link->href, link->target, QString ());
-        else
+        } else {
+            NodePtr n = link;
             for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {
                 if (n->mrl () && n->mrl ()->opener == p) {
                     p->setState (Node::state_deferred);
@@ -1260,6 +1260,7 @@ static void followLink (SMIL::LinkingBase * link) {
                 }
                 n = p;
             }
+        }
     }
 }
 
@@ -1298,7 +1299,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
             if (event == MsgEventPointerMoved)
                 cursor.setShape (Qt::PointingHandCursor);
             else {
-                NodeRefListPtr nl = nodeMessageReceivers (area, event);
+                NodeRefList *nl = nodeMessageReceivers (area, event);
                 if (nl)
                     for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
                         if (c->data)
@@ -1339,7 +1340,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
         return;
     mt->has_mouse = inside;
 
-    NodeRefListPtr nl = nodeMessageReceivers (mt,
+    NodeRefList *nl = nodeMessageReceivers (mt,
             event == MsgEventPointerMoved ? MsgSurfaceAttach : event);
     if (nl)
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
