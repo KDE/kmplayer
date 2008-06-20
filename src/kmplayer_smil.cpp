@@ -269,6 +269,7 @@ KDE_NO_CDTOR_EXPORT Runtime::Runtime (Node *e)
 
 
 KDE_NO_CDTOR_EXPORT Runtime::~Runtime () {
+    m_StartListeners = NULL;
     if (begin_timer || duration_timer) // ugh
         reset ();
 }
@@ -294,7 +295,8 @@ KDE_NO_EXPORT void Runtime::reset () {
     start_time = finish_time = 0;
     fill = fill_default;
     fill_def = fill_inherit;
-    fill_active = getDefaultFill (element);
+    if (m_StartListeners)
+        fill_active = getDefaultFill (element);
 }
 
 KDE_NO_EXPORT
@@ -877,7 +879,7 @@ KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, Single w, Single h,
         if (right.isSet ())
             xoff = w - width.size (w) - right.size (w);
         else
-            xoff = (w - width.size (w)) / 2;
+            xoff = 0;
     } else
         xoff = 0;
     if (top.isSet ())
@@ -886,7 +888,7 @@ KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, Single w, Single h,
         if (bottom.isSet ())
             yoff = h - height.size (h) - bottom.size (h);
         else
-            yoff = (h - height.size (h)) / 2;
+            yoff = 0;
     } else
         yoff = 0;
     if (width.isSet ())
@@ -2206,7 +2208,7 @@ KDE_NO_EXPORT void SMIL::Switch::deactivate () {
 }
 
 KDE_NO_EXPORT void SMIL::Switch::reset () {
-    Element::reset ();
+    GroupBase::reset ();
     for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
         if (e->state != state_init)
             e->reset ();
