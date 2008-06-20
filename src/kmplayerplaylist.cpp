@@ -461,7 +461,7 @@ void *Node::message (MessageType, void *) {
 }
 
 KDE_NO_EXPORT void Node::deliver (MessageType msg, void *content) {
-    NodeRefListPtr nl = nodeMessageReceivers (this, msg);
+    NodeRefList *nl = nodeMessageReceivers (this, msg);
     if (nl)
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
             if (c->data)
@@ -474,7 +474,7 @@ void Node::accept (Visitor * v) {
 
 KDE_NO_EXPORT
 ConnectionPtr Node::connectTo (Node *node, MessageType msg) {
-    NodeRefList *nl = (NodeRefList *) message (MsgQueryReceivers, (void *) (long) msg);
+    NodeRefList *nl = nodeMessageReceivers (this, msg);
     if (nl)
         return ConnectionPtr (new Connection (nl, node, this));
     return ConnectionPtr ();
