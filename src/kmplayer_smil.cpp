@@ -1931,6 +1931,9 @@ KDE_NO_EXPORT void SMIL::Seq::begin () {
                 if (c->isElementNode ())
                     convertNode <Element> (c)->init ();
                 c->state = state_finished; // TODO: ..
+                Runtime *rt = (Runtime *) c->message (MsgQueryRoleTiming);
+                if (rt)
+                    rt->timingstate = Runtime::timings_stopped; //TODO fill_hold
             }
     } else if (firstChild ()) {
         if (firstChild ()->nextSibling()) {
