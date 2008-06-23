@@ -82,7 +82,7 @@ class KMPLAYER_NO_EXPORT Runtime {
 public:
     enum TimingState {
         timings_reset = 0, timings_began,
-        timings_started, timings_paused, timings_stopped
+        timings_started, timings_paused, timings_stopped, timings_freezed
     };
     enum Fill {
         fill_default, fill_inherit, fill_remove, fill_freeze,
@@ -101,7 +101,7 @@ public:
         dur_transition,
         dur_last_dur
     };
-    Runtime (Node *e);
+    Runtime (Element *e);
     ~Runtime ();
     /**
      * Called when element is pulled in scope, from Node::activate()
@@ -132,6 +132,9 @@ public:
     bool started () const {
         return timingstate == timings_started || timingstate == timings_paused;
     }
+    bool active () const {
+        return timingstate >= timings_started && timingstate != timings_stopped;
+    }
     void stopped ();
     KDE_NO_EXPORT DurationItem & beginTime () { return durations[begin_time]; }
     KDE_NO_EXPORT DurationItem & durTime () { return durations[duration_time]; }
@@ -154,7 +157,7 @@ public:
     Fill fill;
     Fill fill_def;
     Fill fill_active;
-    Node *element;
+    Element *element;
 private:
     void setDurationItem (DurationTime item, const QString & val);
 };
@@ -449,6 +452,7 @@ public:
     void begin ();
     void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+    ConnectionPtr starting_connection;
 protected:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d, short id) : GroupBase(d, id) {}
 };

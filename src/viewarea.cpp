@@ -151,7 +151,6 @@ public:
     void resize (const SRect & rect);
     void repaint ();
     void repaint (const SRect &rect);
-    void video (Mrl *mt);
 
     NodePtrW current_video;
     ViewArea * view_widget;
@@ -226,20 +225,6 @@ void ViewSurface::repaint () {
     view_widget->scheduleRepaint (clipToScreen (0, 0, bounds.width (), bounds.height ()));
 }
 
-KDE_NO_EXPORT void ViewSurface::video (Mrl *m) {
-    xscale = yscale = 1; // either scale width/heigt or use bounds
-    if (m->media_object &&
-            MediaManager::AudioVideo == m->media_object->type ()) {
-        AudioVideoMedia *avm = static_cast<AudioVideoMedia *> (m->media_object);
-        if (avm->viewer &&
-                avm->process &&
-                avm->process->state () > IProcess::Ready &&
-                strcmp (m->nodeName (), "audio"))
-            avm->viewer->setGeometry (toScreen (
-                        0, 0, bounds.width(), bounds.height ()));
-    }
-}
-
 //-------------------------------------------------------------------------
 
 #ifdef KMPLAYER_WITH_CAIRO
@@ -264,6 +249,7 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     void traverseRegion (Node *reg);
     void updateExternal (SMIL::MediaType *av, SurfacePtr s);
     void paint(SMIL::MediaType *, Surface *, int x, int y, const IRect &);
+    void video (Mrl *mt, Surface *s);
 public:
     cairo_t * cr;
     CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
@@ -603,14 +589,31 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
     }
 }
 
+KDE_NO_EXPORT void CairoPaintVisitor::video (Mrl *m, Surface *s) {
+    if (m->media_object &&
+            MediaManager::AudioVideo == m->media_object->type ()) {
+        AudioVideoMedia *avm = static_cast<AudioVideoMedia *> (m->media_object);
+        if (avm->viewer) {
+            if (s &&
+                    avm->process &&
+                    avm->process->state () > IProcess::Ready &&
+                    strcmp (m->nodeName (), "audio")) {
+                s->xscale = s->yscale = 1; // either scale width/heigt or use bounds
+                avm->viewer->setGeometry (s->toScreen (
+                            0, 0, s->bounds.width(), s->bounds.height ()));
+            } else {
+                avm->viewer->setGeometry (IRect (-60, -60, 50, 50));
+            }
+        }
+    }
+}
+
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
     Surface *s = (Surface *) ref->message (MsgQueryRoleDisplay);
-    if (s) {
-        if (ref->external_tree)
-            updateExternal (ref, s);
-        else
-            s->video (ref);
-    }
+    if (s && ref->external_tree)
+        updateExternal (ref, s);
+    else
+        video (ref, s);
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
@@ -674,7 +677,7 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
     if (!ext_mrl)
         return;
     if (!rp_or_smil) {
-        s->video (ext_mrl);
+        video (ext_mrl, s.ptr ());
         return;
     }
     SRect rect = s->bounds;
@@ -705,12 +708,10 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
     Surface *s = (Surface *) av->message (MsgQueryRoleDisplay);
-    if (s) {
-        if (av->external_tree)
-            updateExternal (av, s);
-        else
-            s->video (av);
-    }
+    if (s && av->external_tree)
+        updateExternal (av, s);
+    else
+        video (av, s);
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
