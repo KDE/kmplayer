@@ -613,7 +613,9 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
     if (state() == timings_reset || state() == timings_stopped)
         return; // nothing to stop
     if (!forced) {
-        if (durTime ().durval == dur_media && endTime ().durval == dur_media)
+        if ((durTime ().durval == dur_media ||
+                    durTime ().durval == dur_transition ) &&
+                endTime ().durval == dur_media)
             return; // wait for external eof
         if (endTime ().durval != dur_timer && endTime ().durval != dur_media &&
                 (started () || beginTime().durval == dur_timer))
@@ -2546,6 +2548,10 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
             document ()->notify_listener->addRepaintUpdater (this);
             trans_start_time = document ()->last_event_time;
             trans_end_time = trans_start_time + 100 * trans->dur;
+            if (Runtime::dur_timer == runtime->durTime ().durval &&
+                    0 == runtime->durTime ().offset &&
+                    Runtime::dur_media == runtime->endTime ().durval)
+                runtime->durTime ().durval = Runtime::dur_transition;
         }
         if (Runtime::dur_timer == runtime->durTime().durval &&
                 runtime->durTime().offset > 0) {
@@ -2687,6 +2693,10 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                 if (!trans_out_active)
                     active_trans = NULL;
                 trans_gain = 1.0;
+                if (Runtime::dur_transition == runtime->durTime ().durval) {
+                    runtime->durTime ().durval = Runtime::dur_timer;
+                    runtime->propagateStop (false);
+                }
             }
             Surface *s = (Surface *) message (MsgQueryRoleDisplay);
             if (s && s->parentNode())
@@ -2738,11 +2748,6 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             return runtime;
 
         case MsgQueryRoleDisplay:
-/**
- * Re-implement from Mrl, because we may have children like
- * param/set/animatie that should all be activate, but also other smil or imfl
- * documents, that should only be activated if the runtime has started
- */
             if (!keepContent (this)) {
                 resetSurface ();
             } else if (!sub_surface && region_node) {
@@ -2788,7 +2793,6 @@ KDE_NO_EXPORT NodePtr SMIL::AVMediaType::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void SMIL::AVMediaType::clipStart () {
     PlayListNotify *n = document ()->notify_listener;
-    //kDebug() << resolved;
     if (n && region_node && !external_tree && !src.isEmpty()) {
         repeat = runtime->repeat_count == Runtime::dur_infinite
             ? 9998 : runtime->repeat_count;
@@ -2805,12 +2809,12 @@ KDE_NO_EXPORT void SMIL::AVMediaType::clipStop () {
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
+    if (0 == runtime->durTime ().offset &&
+            Runtime::dur_media == runtime->endTime ().durval)
+        runtime->durTime ().durval = Runtime::dur_media; // duration of clip
     if (!external_tree && !resolved) {
         defer ();
     } else {
-        if (0 == runtime->durTime ().offset &&
-            Runtime::dur_media == runtime->endTime ().durval)
-            runtime->durTime ().durval = Runtime::dur_media; // duration of clip
         if (!external_tree && !media_object)
             media_object = document ()->notify_listener->mediaManager()->
                 createMedia (MediaManager::AudioVideo, this);

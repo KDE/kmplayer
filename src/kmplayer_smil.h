@@ -98,7 +98,8 @@ public:
         dur_start = (int) MsgEventStarted,
         dur_end = (int) MsgEventStopped,
         dur_media = (int)MsgMediaFinished,
-        dur_last_dur = (int)MsgMediaFinished + 1
+        dur_transition,
+        dur_last_dur
     };
     Runtime (Node *e);
     ~Runtime ();
