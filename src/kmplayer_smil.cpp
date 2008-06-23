@@ -1699,53 +1699,51 @@ KDE_NO_EXPORT void SMIL::GroupBase::finish () {
     runtime->finish ();
 }
 
-static bool childMediaTypeReady (Node *p) {
-    for (Node *c = p->firstChild ().ptr (); c; c = c->nextSibling ().ptr ())
-        if (c->id >= SMIL::id_node_first_mediatype &&
-                c->id <= SMIL::id_node_last_mediatype) {
-            SMIL::MediaType *mt = static_cast <SMIL::MediaType *> (c);
-            if (mt->media_object && mt->media_object->downloading ())
-                return false;
-        }
-    return true;
-}
-
 namespace {
 
 class KMPLAYER_NO_EXPORT GroupBaseInitVisitor : public Visitor {
 public:
     using Visitor::visit;
 
-    void visit (Node *n) {
-        Node *s = n->nextSibling ().ptr ();
-        if (s)
-            s->accept (this);
+    void visit (Node *node) {
+        if (node->nextSibling ())
+            node->nextSibling ()->accept (this);
     }
     void visit (Element *elm) {
         if (elm->message (MsgQueryRoleTiming))
             elm->init ();
-        visit (static_cast <Node *> (elm));
+        else
+            visit (static_cast <Node *> (elm));
     }
     void visit (SMIL::PriorityClass *pc) {
         pc->init ();
-        Node *n = pc->firstChild ().ptr ();
-        if (n)
+        for (NodePtr n = pc->firstChild (); n; n = n->nextSibling ())
             n->accept (this);
-        visit (static_cast <Node *> (pc));
+    }
+    void visit (SMIL::Seq *seq) {
+        seq->init ();
+        if (seq->firstChild ())
+             seq->firstChild ()->accept (this);
+    }
+    void visit (SMIL::Anchor *a) {
+        a->init ();
+        if (a->firstChild ())
+             a->firstChild ()->accept (this);
+    }
+    void visit (SMIL::Par *par) {
+        par->init ();
+        for (NodePtr n = par->firstChild (); n; n = n->nextSibling ())
+            n->accept (this);
     }
 };
 
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::activate () {
-    init ();
+    GroupBaseInitVisitor visitor;
+    accept (&visitor);
     setState (state_activated);
     runtime->start ();
-    Node *n = firstChild ().ptr ();
-    if (n) {
-        GroupBaseInitVisitor visitor;
-        n->accept (&visitor);
-    }
 }
 
 KDE_NO_EXPORT
@@ -1754,17 +1752,8 @@ void SMIL::GroupBase::parseParam (const TrieString &para, const QString &val) {
         Element::parseParam (para, val);
 }
 
-KDE_NO_EXPORT void SMIL::GroupBase::begin () {
-    if (!childMediaTypeReady (this))
-        postpone_lock = document ()->postpone ();
-}
-
 KDE_NO_EXPORT void *SMIL::GroupBase::message (MessageType msg, void *content) {
     switch (msg) {
-        case MsgMediaReady:
-            if (postpone_lock && childMediaTypeReady (this))
-                postpone_lock = NULL;
-            return NULL;
         case MsgQueryRoleTiming:
             return runtime;
         default:
@@ -1781,7 +1770,6 @@ KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->active ())
             e->deactivate ();
-    postpone_lock = NULL;
     if (unfinished ())
         finish ();
     runtime->reset ();
@@ -1828,7 +1816,6 @@ KDE_NO_EXPORT void SMIL::Par::begin () {
     jump_node = 0L; // TODO: adjust timings
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         e->activate ();
-    GroupBase::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::Par::reset () {
@@ -1873,9 +1860,13 @@ KDE_NO_EXPORT void SMIL::Seq::begin () {
                     convertNode <Element> (c)->init ();
                 c->state = state_finished; // TODO: ..
             }
-    } else if (firstChild ())
+    } else if (firstChild ()) {
+        if (firstChild ()->nextSibling()) {
+            GroupBaseInitVisitor visitor;
+            firstChild ()->nextSibling ()->accept (&visitor);
+        }
         firstChild ()->activate ();
-    GroupBase::begin ();
+    }
 }
 
 KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
@@ -1885,10 +1876,18 @@ KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
             if (state != state_deferred) {
                 if (!keepContent (post->source) && post->source->active ())
                     post->source->deactivate ();
-                if (post->source && post->source->nextSibling ())
-                    post->source->nextSibling ()->activate ();
-                else
+                Node *next = post->source
+                    ? post->source->nextSibling ().ptr()
+                    : NULL;
+                if (next) {
+                    if (next->nextSibling()) {
+                        GroupBaseInitVisitor visitor;
+                        next->nextSibling ()->accept (&visitor);
+                    }
+                    next->activate ();
+                } else {
                     finish ();
+                }
             } else if (jump_node)
                 finish ();
         }
@@ -2038,7 +2037,6 @@ KDE_NO_EXPORT void SMIL::Excl::begin () {
         ExclActivateVisitor visitor (this);
         n->accept (&visitor);
     }
-    GroupBase::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::Excl::deactivate () {
@@ -2220,7 +2218,6 @@ KDE_NO_EXPORT void SMIL::Switch::begin () {
             chosenOne = (fallback ? fallback : firstChild ());
         chosenOne->activate ();
     }
-    GroupBase::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {
@@ -2967,8 +2964,6 @@ void *SMIL::ImageMediaType::message (MessageType msg, void *content) {
                 return NULL;
             case MsgMediaReady:
                 dataArrived ();
-                if (parentNode ())
-                    parentNode ()->message (msg, content);
                 return NULL;
             default:
                 break;
@@ -3074,8 +3069,6 @@ void SMIL::TextMediaType::dataArrived () {
 void *SMIL::TextMediaType::message (MessageType msg, void *content) {
     if (MsgMediaReady == msg) {
         dataArrived ();
-        if (parentNode ())
-            parentNode ()->message (msg, content);
         return NULL;
     }
     return MediaType::message (msg, content);
@@ -3853,6 +3846,14 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::Layout *n) {
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::RegionBase *n) {
     visit (static_cast <Element *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::Seq *n) {
+    visit (static_cast <SMIL::GroupBase *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::Par *n) {
+    visit (static_cast <SMIL::GroupBase *> (n));
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::Transition * n) {

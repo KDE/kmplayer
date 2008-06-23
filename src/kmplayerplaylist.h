@@ -833,6 +833,8 @@ namespace SMIL {
     class Smil;
     class Layout;
     class RegionBase;
+    class Seq;
+    class Par;
     class Transition;
     class Animate;
     class AnimateMotion;
@@ -866,6 +868,8 @@ public:
     virtual void visit (SMIL::Smil *) {}
     virtual void visit (SMIL::Layout *);
     virtual void visit (SMIL::RegionBase *);
+    virtual void visit (SMIL::Seq *);
+    virtual void visit (SMIL::Par *);
     virtual void visit (SMIL::Transition *);
     virtual void visit (SMIL::Animate *);
     virtual void visit (SMIL::AnimateMotion *);

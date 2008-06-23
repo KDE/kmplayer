@@ -414,7 +414,6 @@ public:
     void init ();
     void finish ();
     void activate ();
-    void begin ();
     void deactivate ();
     void reset ();
     bool expose () const { return false; }
@@ -424,7 +423,6 @@ public:
 protected:
     GroupBase (NodePtr & d, short id);
     NodePtrW jump_node;
-    PostponePtr postpone_lock;
     bool inited;
 };
 
@@ -438,6 +436,7 @@ public:
     void begin ();
     void reset ();
     void *message (MessageType msg, void *content=NULL);
+    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
 };
 
 /**
@@ -449,6 +448,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
     void begin ();
     void *message (MessageType msg, void *content=NULL);
+    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
 protected:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d, short id) : GroupBase(d, id) {}
 };
