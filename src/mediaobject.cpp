@@ -241,7 +241,9 @@ void MediaManager::stateChange (AudioVideoMedia *media,
                 mrl->endOfFile ();
         }
     } else if (IProcess::Buffering == news) {
-        if (mrl->view_mode != Mrl::SingleMode) {
+        if (AudioVideoMedia::ask_pause == media->request) {
+            media->pause ();
+        } else if (mrl->view_mode != Mrl::SingleMode) {
             media->ignore_pause = true;
             mrl->defer (); // paused the SMIL
             media->ignore_pause = false;
@@ -326,7 +328,10 @@ bool DataCache::unpreserve (const QString & url) {
 }
 
 MediaObject::MediaObject (MediaManager *manager, Node *node)
- : m_manager (manager), m_node (node), job (NULL), preserve_wait (false) {
+ : m_manager (manager), m_node (node),
+  job (NULL),
+  preserve_wait (false),
+  paused (false) {
    manager->medias ().push_back (this);
 }
 
@@ -483,7 +488,7 @@ AudioVideoMedia::~AudioVideoMedia () {
 
 bool AudioVideoMedia::play () {
     if (process) {
-        kDebug() << "AudioVideoMedia::play " << process->state () << endl;
+        kDebug() << process->state ();
         if (process->state () > IProcess::Ready) {
             kError() << "already playing" << endl;
             return true;
@@ -521,13 +526,26 @@ void AudioVideoMedia::stop () {
 }
 
 void AudioVideoMedia::pause () {
-    if (!ignore_pause && process)
-        process->pause ();
+    if (!ignore_pause && !paused && process) {
+        if (process->state () > IProcess::Ready) {
+            paused = true;
+            request = ask_nothing;
+            process->pause ();
+        } else {
+            request = ask_pause;
+        }
+    }
 }
 
 void AudioVideoMedia::unpause () {
-    if (!ignore_pause && process)
-        process->pause ();
+    if (!ignore_pause && paused && process) {
+        if (request == ask_pause) {
+            request = ask_nothing;
+        } else {
+            paused = false;
+            process->pause ();
+        }
+    }
 }
 
 void AudioVideoMedia::destroy () {

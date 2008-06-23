@@ -208,6 +208,7 @@ protected:
     QString mime;
     KIO::Job *job;
     bool preserve_wait;
+    bool paused;
 };
 
 
@@ -245,7 +246,9 @@ private:
 class KMPLAYER_NO_EXPORT AudioVideoMedia : public MediaObject {
     friend class MediaManager;
 public:
-    enum Request { ask_nothing, ask_play, ask_grab, ask_stop, ask_delete };
+    enum Request {
+        ask_nothing, ask_play, ask_pause, ask_grab, ask_stop, ask_delete
+    };
 
     AudioVideoMedia (MediaManager *manager, Node *node);
 
