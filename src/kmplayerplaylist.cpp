@@ -280,9 +280,6 @@ void Node::reset () {
     }
 }
 
-void Node::childBegan (NodePtr /*child*/) {
-}
-
 void Node::childDone (NodePtr child) {
     //kDebug () << nodeName () << child.ptr ();
     if (unfinished ()) {

@@ -436,10 +436,6 @@ public:
      */
     virtual void reset ();
     /**
-     * Notification from child that it has began.
-     */
-    virtual void childBegan (NodePtr child);
-    /**
      * Notification from child that it's finished. Will call deactivate() on
      * child if it state is state_finished. Call activate() on nexSibling
      * or deactivate() if there is none.
