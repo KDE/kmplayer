@@ -116,7 +116,7 @@ public:
     ~TVDevice ();
     KMPlayer::NodePtr childFromTag (const QString &);
     void closed ();
-    void childDone (KMPlayer::NodePtr child);
+    void *message (KMPlayer::MessageType msg, void *content=NULL);
     void setNodeName (const QString &);
     bool expose () const { return false; }
     void updateNodeName ();
@@ -132,7 +132,7 @@ public:
     KMPlayer::NodePtr childFromTag (const QString &);
     void defer ();
     KDE_NO_EXPORT const char * nodeName () const { return "tvdevices"; }
-    void childDone (KMPlayer::NodePtr child);
+    void *message (KMPlayer::MessageType msg, void *content=NULL);
 };
 
 

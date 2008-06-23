@@ -107,7 +107,7 @@ public:
     Recents (KMPlayerApp *a);
     void defer ();
     void activate ();
-    void childDone (KMPlayer::NodePtr);
+    void *message (KMPlayer::MessageType msg, void *content=NULL);
     KMPlayer::NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
     KMPlayerApp * app;
@@ -135,7 +135,7 @@ public:
 class KMPLAYER_NO_EXPORT Playlist : public FileDocument {
 public:
     Playlist (KMPlayerApp *a, KMPlayer::PlayListNotify *n, bool plmod = false);
-    void childDone (KMPlayer::NodePtr);
+    void *message (KMPlayer::MessageType msg, void *content=NULL);
     void defer ();
     void activate ();
     KMPlayer::NodePtr childFromTag (const QString & tag);
@@ -251,8 +251,12 @@ KDE_NO_EXPORT KMPlayer::NodePtr Recents::childFromTag (const QString & tag) {
     return FileDocument::childFromTag (tag);
 }
 
-KDE_NO_EXPORT void Recents::childDone (KMPlayer::NodePtr) {
-    finish ();
+KDE_NO_EXPORT void *Recents::message (KMPlayer::MessageType msg, void *data) {
+    if (KMPlayer::MsgChildFinished) {
+        finish ();
+        return NULL;
+    }
+    return FileDocument::message (msg, data);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -327,11 +331,12 @@ KDE_NO_EXPORT KMPlayer::NodePtr Playlist::childFromTag (const QString & tag) {
     return FileDocument::childFromTag (tag);
 }
 
-KDE_NO_EXPORT void Playlist::childDone (KMPlayer::NodePtr c) {
-    if (!playmode)
+KDE_NO_EXPORT void *Playlist::message (KMPlayer::MessageType msg, void *data) {
+    if (KMPlayer::MsgChildFinished && !playmode) {
         finish ();
-    else
-        FileDocument::childDone (c);
+        return NULL;
+    }
+    return FileDocument::message (msg, data);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -1739,7 +1744,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidge
 class KMPLAYER_NO_EXPORT Disks : public KMPlayer::Document {
 public:
     Disks (KMPlayerApp * a);
-    void childDone (KMPlayer::NodePtr);
+    void *message (KMPlayer::MessageType msg, void *data);
     KMPlayerApp * app;
 };
 
@@ -1756,8 +1761,12 @@ KDE_NO_CDTOR_EXPORT Disks::Disks (KMPlayerApp * a)
     pretty_name = i18n ("Optical Disks");
 }
 
-KDE_NO_EXPORT void Disks::childDone (KMPlayer::NodePtr) {
-    finish ();
+KDE_NO_EXPORT void *Disks::message (KMPlayer::MessageType msg, void *data) {
+    if (KMPlayer::MsgChildFinished) {
+        finish ();
+        return NULL;
+    }
+    return KMPlayer::Document::message (msg, data);
 }
 
 KDE_NO_CDTOR_EXPORT Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url, const QString &pn) 

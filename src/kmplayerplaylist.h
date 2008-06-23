@@ -250,20 +250,26 @@ enum MessageType
     MsgEventPointerMoved,
     MsgEventPointerInBounds,
     MsgEventPointerOutBounds,
-    MsgEventPostponed,
     MsgEventStarting,
     MsgEventStarted,
     MsgEventStopped,
-    MsgSurfaceUpdate,
-    MsgSurfaceAttach,
+    MsgMediaFinished,
+    // the above messages are ordered like SMIL timing events
     MsgMediaReady,
     MsgMediaUpdated,
-    MsgMediaFinished,
+    MsgEventPostponed,
+    MsgSurfaceUpdate,
+    MsgSurfaceAttach,
+    MsgChildFinished,
+    MsgStartQueryMessage,
     MsgQueryRoleTiming,
     MsgQueryRoleDisplay,
     MsgQueryRoleSizer,
-    MsgQueryReceivers
+    MsgQueryReceivers,
+    MsgEndQueryMessage,
 };
+
+#define MsgUnhandled ((void *) 357L)
 
 #define nodeMessageReceivers(node, msg)                                     \
     (NodeRefList*)(node)->message (MsgQueryReceivers, (void*)(long)(msg))
@@ -421,7 +427,7 @@ public:
     virtual void begin ();
     /**
      * Sets state to state_finish when >= state_activated.
-     * Notifies parent with a childDone call.
+     * Notifies parent with a MsgChildFinished message.
      */
     virtual void finish ();
     /**
@@ -435,12 +441,6 @@ public:
      * state to state_init.
      */
     virtual void reset ();
-    /**
-     * Notification from child that it's finished. Will call deactivate() on
-     * child if it state is state_finished. Call activate() on nexSibling
-     * or deactivate() if there is none.
-     */
-    virtual void childDone (NodePtr child);
     virtual void clear ();
     void clearChildren ();
     void appendChild (NodePtr c);

@@ -106,21 +106,6 @@ KDE_NO_EXPORT void RP::Imfl::finish () {
             n->finish ();
 }
 
-KDE_NO_EXPORT void RP::Imfl::childDone (NodePtr) {
-    if (unfinished () && !duration_timer) {
-        for (NodePtr n = firstChild (); n; n = n->nextSibling ())
-            switch (n->id) {
-                case RP::id_node_crossfade:
-                case RP::id_node_fadein:
-                case RP::id_node_fadeout:
-                case RP::id_node_fill:
-                    if (n->unfinished ())
-                        return;
-            }
-        finish ();
-    }
-}
-
 KDE_NO_EXPORT void RP::Imfl::deactivate () {
     kDebug () << "RP::Imfl::deactivate ";
     if (unfinished ())
@@ -138,14 +123,31 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     rp_surface = Mrl::getSurface (NULL);
 }
 
-KDE_NO_EXPORT void *RP::Imfl::message (MessageType msg, void *) {
-    if (msg == MsgEventTimer) {
-        kDebug () << "RP::Imfl timer " << duration;
-        duration_timer = 0;
-        if (unfinished ())
-            finish ();
+KDE_NO_EXPORT void *RP::Imfl::message (MessageType msg, void *content) {
+    switch (msg) {
+        case MsgEventTimer:
+            duration_timer = 0;
+            if (unfinished ())
+                finish ();
+            return NULL;
+        case MsgChildFinished:
+            if (unfinished () && !duration_timer) {
+                for (NodePtr n = firstChild (); n; n = n->nextSibling ())
+                    switch (n->id) {
+                        case RP::id_node_crossfade:
+                        case RP::id_node_fadein:
+                        case RP::id_node_fadeout:
+                        case RP::id_node_fill:
+                            if (n->unfinished ())
+                                return NULL;
+                    }
+                finish ();
+            }
+            return NULL;
+        default:
+            break;
     }
-    return NULL;
+    return Mrl::message (msg, content);
 }
 
 KDE_NO_EXPORT void RP::Imfl::accept (Visitor * v) {
@@ -349,7 +351,7 @@ KDE_NO_EXPORT void *RP::TimingsBase::message (MessageType msg, void *content) {
             break;
         }
         default:
-            break;
+            return Element::message (msg, content);
     }
     return NULL;
 }

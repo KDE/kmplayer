@@ -246,7 +246,7 @@ void Node::finish () {
     if (active ()) {
         setState (state_finished);
         if (m_parent)
-            m_parent->childDone (this);
+            document ()->post (m_parent, new Posting (this, MsgChildFinished));
         else
             deactivate (); // document deactivates itself on finish
     } else
@@ -264,7 +264,7 @@ void Node::deactivate () {
             break; // remaining not yet activated
     }
     if (need_finish && m_parent)
-        m_parent->childDone (this);
+        document ()->post (m_parent, new Posting (this, MsgChildFinished));
 }
 
 void Node::reset () {
@@ -277,18 +277,6 @@ void Node::reset () {
             e->reset ();
         // else
         //    break; // rest not activated yet
-    }
-}
-
-void Node::childDone (NodePtr child) {
-    //kDebug () << nodeName () << child.ptr ();
-    if (unfinished ()) {
-        if (child->state == state_finished)
-            child->deactivate ();
-        if (child->nextSibling ())
-            child->nextSibling ()->activate ();
-        else
-            finish (); // we're done
     }
 }
 
@@ -453,8 +441,22 @@ void Node::opened () {}
 
 void Node::closed () {}
 
-void *Node::message (MessageType, void *) {
-    return NULL;
+void *Node::message (MessageType msg, void *content) {
+    if (MsgChildFinished == msg) {
+        Posting *post = (Posting *) content;
+        if (unfinished ()) {
+            if (post->source->state == state_finished)
+                post->source->deactivate ();
+            if (post->source && post->source->nextSibling ())
+                post->source->nextSibling ()->activate ();
+            else
+                finish (); // we're done
+        }
+        return NULL;
+    }
+    if (MsgStartQueryMessage < msg && MsgEndQueryMessage > msg)
+        return NULL;
+    return MsgUnhandled;
 }
 
 KDE_NO_EXPORT void Node::deliver (MessageType msg, void *content) {
@@ -1223,9 +1225,11 @@ Surface *Document::getSurface (Mrl *mrl) {
 }
 
 void *Document::message (MessageType msg, void *content) {
-    MessageType m = (MessageType) (long) content;
-    if (MsgEventPostponed == m)
-        return m_PostponedListeners.ptr ();
+    if (MsgQueryReceivers == msg) {
+        MessageType m = (MessageType) (long) content;
+        if (MsgEventPostponed == m)
+            return m_PostponedListeners.ptr ();
+    }
     return Mrl::message (msg, content);
 }
 

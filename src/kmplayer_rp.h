@@ -57,7 +57,6 @@ public:
     virtual void activate ();   // start timings, handle paint events
     virtual void finish ();     // end the timings
     virtual void deactivate (); // stop handling paint events
-    virtual void childDone (NodePtr child); // for if no duration_timer set
     KDE_NO_EXPORT virtual bool expose () const { return false; }
     KDE_NO_EXPORT virtual PlayType playType () { return play_type_image; }
     virtual void *message (MessageType msg, void *content=NULL);

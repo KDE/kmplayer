@@ -97,7 +97,8 @@ public:
         dur_outbounds = (int) MsgEventPointerOutBounds,
         dur_start = (int) MsgEventStarted,
         dur_end = (int) MsgEventStopped,
-        dur_media, dur_last_dur
+        dur_media = (int)MsgMediaFinished,
+        dur_last_dur = (int)MsgMediaFinished + 1
     };
     Runtime (Node *e);
     ~Runtime ();
@@ -223,7 +224,6 @@ public:
     void activate ();
     void deactivate ();
     void closed ();
-    void childDone (NodePtr child);
     bool expose () const;
     void *message (MessageType msg, void *content=NULL);
     void accept (Visitor *v) { v->visit (this); }
@@ -243,7 +243,7 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "head"; }
     void closed ();
-    void childDone (NodePtr child);
+    void *message (MessageType msg, void *content=NULL);
     bool expose () const;
 };
 
@@ -256,7 +256,7 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
     void closed ();
-    void childDone (NodePtr child);
+    void *message (MessageType msg, void *content=NULL);
     void accept (Visitor *v) { v->visit (this); }
     bool expose () const { return false; }
 
@@ -273,7 +273,6 @@ public:
     ~RegionBase ();
     virtual bool expose () const { return false; }
     virtual void activate ();
-    virtual void childDone (NodePtr child);
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual void *message (MessageType msg, void *content=NULL);
@@ -320,7 +319,6 @@ public:
     KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d)
         : RegionBase (d, id_node_root_layout) {}
     void closed ();
-    void activate ();
     void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
     void updateDimensions ();
@@ -438,7 +436,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
     void begin ();
     void reset ();
-    void childDone (NodePtr child);
+    void *message (MessageType msg, void *content=NULL);
 };
 
 /**
@@ -449,7 +447,7 @@ public:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d) : GroupBase(d, id_node_seq) {}
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
     void begin ();
-    void childDone (NodePtr child);
+    void *message (MessageType msg, void *content=NULL);
 protected:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d, short id) : GroupBase(d, id) {}
 };
@@ -474,7 +472,6 @@ public:
     NodePtr childFromTag (const QString & tag);
     void begin ();
     void deactivate ();
-    void childDone (NodePtr child);
     void *message (MessageType msg, void *content=NULL);
 
     typedef ListNode <ConnectionPtr> ConnectionStoreItem;
@@ -495,7 +492,7 @@ public:
     NodePtr childFromTag (const QString & tag);
     void init ();
     void parseParam (const TrieString &, const QString &);
-    void childDone (NodePtr child);
+    void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
 
     enum { PeersStop, PeersPause, PeersDefer, PeersNever } peers;
@@ -515,7 +512,7 @@ public:
     void begin ();
     void deactivate ();
     void reset ();
-    void childDone (NodePtr child);
+    void *message (MessageType msg, void *content=NULL);
     NodePtrW chosenOne;
 };
 
@@ -539,7 +536,7 @@ public:
     Anchor (NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~Anchor () {}
     void activate ();
-    void childDone (NodePtr child);
+    void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char * nodeName () const { return "a"; }
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
@@ -579,7 +576,6 @@ public:
     virtual void begin ();
     virtual void finish ();
     virtual void reset ();
-    virtual void childDone (NodePtr child);
     virtual Surface *getSurface (Mrl *mrl);
     /* (new) sub-region or NULL if not displayed */
     void resetSurface ();

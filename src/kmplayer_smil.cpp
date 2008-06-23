@@ -585,6 +585,8 @@ KDE_NO_EXPORT void *Runtime::message (MessageType msg, void *content) {
         default:
             break;
     }
+    if ((int) msg >= (int) dur_last_dur)
+        return MsgUnhandled;
     processEvent (msg);
     return NULL;
 }
@@ -1070,7 +1072,21 @@ KDE_NO_EXPORT void SMIL::Smil::deactivate () {
 }
 
 KDE_NO_EXPORT void *SMIL::Smil::message (MessageType msg, void *content) {
-    return layout_node ? layout_node->message (msg, content) : NULL;
+    if (MsgChildFinished == msg) {
+        Posting *post = (Posting *) content;
+        if (unfinished ()) {
+            if (post->source->nextSibling ())
+                post->source->nextSibling ()->activate ();
+            else {
+                for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+                    if (e->active ())
+                        e->deactivate ();
+                finish ();
+            }
+        }
+        return NULL;
+    }
+    return Mrl::message (msg, content);
 }
 
 KDE_NO_EXPORT void SMIL::Smil::closed () {
@@ -1100,19 +1116,6 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
                 pretty_name = elm->getAttribute ("content");
             else if (name == QString::fromLatin1 ("base"))
                 src = elm->getAttribute ("content");
-        }
-    }
-}
-
-KDE_NO_EXPORT void SMIL::Smil::childDone (NodePtr child) {
-    if (unfinished ()) {
-        if (child->nextSibling ())
-            child->nextSibling ()->activate ();
-        else {
-            for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-                if (e->active ())
-                    e->deactivate ();
-            finish ();
         }
     }
 }
@@ -1153,9 +1156,9 @@ SMIL::Smil * SMIL::Smil::findSmilNode (Node * node) {
 
 //-----------------------------------------------------------------------------
 
-static void headChildDone (Node *node, NodePtr child) {
+static void headChildDone (Node *node, Node *child) {
     if (node->unfinished ()) {
-        if (child->nextSibling ())
+        if (child && child->nextSibling ())
             child->nextSibling ()->activate ();
         else
             node->finish (); // we're done
@@ -1189,8 +1192,12 @@ KDE_NO_EXPORT void SMIL::Head::closed () {
     layout->closed (); // add root-layout and a region
 }
 
-KDE_NO_EXPORT void SMIL::Head::childDone (NodePtr child) {
-    headChildDone (this, child);
+KDE_NO_EXPORT void *SMIL::Head::message (MessageType msg, void *content) {
+    if (MsgChildFinished == msg) {
+        headChildDone (this, ((Posting *) content)->source.ptr ());
+        return NULL;
+    }
+    return Element::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------
@@ -1224,8 +1231,19 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
     }
 }
 
-KDE_NO_EXPORT void SMIL::Layout::childDone (NodePtr child) {
-    headChildDone (this, child);
+KDE_NO_EXPORT void *SMIL::Layout::message (MessageType msg, void *content) {
+    if (MsgChildFinished == msg) {
+        headChildDone (this, ((Posting *) content)->source.ptr ());
+        if (state_finished == state) {
+            RootLayout *rl = static_cast <RootLayout *> (root_layout.ptr ());
+            if (rl && rl->message (MsgQueryRoleDisplay)) {
+                rl->updateDimensions ();
+                rl->repaint ();
+            }
+        }
+        return NULL;
+    }
+    return Element::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------
@@ -1249,10 +1267,6 @@ KDE_NO_EXPORT void SMIL::RegionBase::activate () {
     fit = fit_default;
     init ();
     Element::activate ();
-}
-
-KDE_NO_EXPORT void SMIL::RegionBase::childDone (NodePtr child) {
-    headChildDone (this, child);
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
@@ -1340,7 +1354,7 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
         z_order = val.toInt ();
         need_repaint = true;
     } else if (sizes.setSizeParam (name, val, dim_changed)) {
-        if (active ()) {
+        if (state_finished == state) {
             if (region_surface) {
                 if (dim_changed) {
                     region_surface->remove ();
@@ -1394,7 +1408,7 @@ void *SMIL::RegionBase::message (MessageType msg, void *content) {
             dataArrived ();
             return NULL;
         case MsgQueryRoleDisplay:
-            if (!region_surface && active ()) {
+            if (!region_surface && state_finished == state) {
                 Node *n = parentNode ().ptr ();
                 if (n && SMIL::id_node_layout == n->id)
                     n = n->firstChild ();
@@ -1405,6 +1419,9 @@ void *SMIL::RegionBase::message (MessageType msg, void *content) {
                 }
             }
             return region_surface.ptr ();
+        case MsgChildFinished:
+            headChildDone (this, ((Posting *) content)->source.ptr ());
+            return NULL;
         case MsgQueryReceivers:
             if (MsgSurfaceAttach == (MessageType) (long) content)
                 return m_AttachedMediaTypes.ptr ();
@@ -1446,18 +1463,10 @@ KDE_NO_EXPORT void SMIL::RootLayout::closed () {
     }
 }
 
-KDE_NO_EXPORT void SMIL::RootLayout::activate () {
-    RegionBase::activate ();
-    if (message (MsgQueryRoleDisplay)) {
-        updateDimensions ();
-        repaint ();
-    }
-}
-
 void *SMIL::RootLayout::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgQueryRoleDisplay:
-            if (!region_surface) {
+            if (state_finished == state && !region_surface) {
                 SMIL::Smil *s = Smil::findSmilNode (this);
                 if (s && s->active ()) {
                     Surface *surface = s->getSurface (s);
@@ -1759,7 +1768,10 @@ KDE_NO_EXPORT void *SMIL::GroupBase::message (MessageType msg, void *content) {
         default:
             break;
     }
-    return runtime->message (msg, content);
+    void *response = runtime->message (msg, content);
+    if (response == MsgUnhandled)
+        return Element::message (msg, content);
+    return response;
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
@@ -1823,21 +1835,25 @@ KDE_NO_EXPORT void SMIL::Par::reset () {
         e->reset ();
 }
 
-KDE_NO_EXPORT void SMIL::Par::childDone (NodePtr) {
-    if (unfinished ()) {
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
-            if (e->unfinished ())
-                return; // not all finished
+KDE_NO_EXPORT void *SMIL::Par::message (MessageType msg, void *content) {
+    if (MsgChildFinished == msg) {
+        if (unfinished ()) {
+            for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
+                if (e->unfinished ())
+                    return NULL; // not all finished
+            }
+            if (runtime->started ()) {
+                Runtime::Duration dv = runtime->durTime ().durval;
+                if ((dv == Runtime::dur_timer && !runtime->durTime ().offset)
+                        || dv == Runtime::dur_media)
+                    runtime->propagateStop (false);
+                return NULL; // still running, wait for runtime to finish
+            }
+            finish (); // we're done
         }
-        if (runtime->started ()) {
-            Runtime::Duration dv = runtime->durTime ().durval;
-            if ((dv == Runtime::dur_timer && !runtime->durTime ().offset)
-                    || dv == Runtime::dur_media)
-                runtime->propagateStop (false);
-            return; // still running, wait for runtime to finish
-        }
-        finish (); // we're done
+        return NULL;
     }
+    return GroupBase::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------
@@ -1860,18 +1876,23 @@ KDE_NO_EXPORT void SMIL::Seq::begin () {
     GroupBase::begin ();
 }
 
-KDE_NO_EXPORT void SMIL::Seq::childDone (NodePtr child) {
-    if (unfinished ()) {
-        if (state != state_deferred) {
-            if (!keepContent (child) && child->active ())
-                child->deactivate ();
-            if (child->nextSibling ())
-                child->nextSibling ()->activate ();
-            else
+KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
+    if (MsgChildFinished == msg) {
+        if (unfinished ()) {
+            Posting *post = (Posting *) content;
+            if (state != state_deferred) {
+                if (!keepContent (post->source) && post->source->active ())
+                    post->source->deactivate ();
+                if (post->source && post->source->nextSibling ())
+                    post->source->nextSibling ()->activate ();
+                else
+                    finish ();
+            } else if (jump_node)
                 finish ();
-        } else if (jump_node)
-            finish ();
+        }
+        return NULL;
     }
+    return GroupBase::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------
@@ -2025,10 +2046,6 @@ KDE_NO_EXPORT void SMIL::Excl::deactivate () {
     GroupBase::deactivate ();
 }
 
-KDE_NO_EXPORT void SMIL::Excl::childDone (NodePtr /*child*/) {
-    // do nothing
-}
-
 KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgEventStarting: {
@@ -2058,6 +2075,9 @@ KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
             }
             return NULL;
         }
+        case MsgChildFinished:
+            // do nothing
+            return NULL;
         case MsgEventStopped: {
             Posting *event = static_cast <Posting *> (content);
             if (event->source.ptr () != this) {
@@ -2145,8 +2165,11 @@ KDE_NO_EXPORT void SMIL::PriorityClass::init () {
     Element::init ();
 }
 
-KDE_NO_EXPORT void SMIL::PriorityClass::childDone (NodePtr /*child*/) {
-    // do nothing
+KDE_NO_EXPORT void *SMIL::PriorityClass::message (MessageType msg, void *data) {
+    if (MsgChildFinished == msg)
+        // do nothing
+        return NULL;
+    return Element::message (msg, data);
 }
 
 //-----------------------------------------------------------------------------
@@ -2215,11 +2238,15 @@ KDE_NO_EXPORT void SMIL::Switch::reset () {
     }
 }
 
-KDE_NO_EXPORT void SMIL::Switch::childDone (NodePtr child) {
-    if (child->state == state_finished)
-        child->deactivate ();
-    //kDebug () << "SMIL::Switch::childDone";
-    finish (); // only one child can run
+KDE_NO_EXPORT void *SMIL::Switch::message (MessageType msg, void *content) {
+    if (MsgChildFinished == msg) {
+        Posting *post = (Posting *) content;
+        if (post->source->state == state_finished)
+            post->source->deactivate ();
+        finish (); // only one child can run
+        return NULL;
+    }
+    return GroupBase::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------
@@ -2258,13 +2285,18 @@ KDE_NO_EXPORT void SMIL::Anchor::activate () {
     Element::activate ();
 }
 
-KDE_NO_EXPORT void SMIL::Anchor::childDone (NodePtr child) {
-    if (unfinished ()) {
-        if (child->nextSibling ())
-            child->nextSibling ()->activate ();
-        else
-            finish ();
+KDE_NO_EXPORT void *SMIL::Anchor::message (MessageType msg, void *content) {
+    if (MsgChildFinished == msg) {
+        Posting *post = (Posting *) content;
+        if (unfinished ()) {
+            if (post->source->nextSibling ())
+                post->source->nextSibling ()->activate ();
+            else
+                finish ();
+        }
+        return NULL;
     }
+    return LinkingBase::message (msg, content);
 }
 
 NodePtr SMIL::Anchor::childFromTag (const QString & tag) {
@@ -2564,26 +2596,6 @@ KDE_NO_EXPORT void SMIL::MediaType::reset () {
     runtime->reset ();
 }
 
-/**
- * Re-implement from Mrl, because we may have children like
- * param/set/animatie that should all be activate, but also other smil or imfl
- * documents, that should only be activated if the runtime has started
- */
-KDE_NO_EXPORT void SMIL::MediaType::childDone (NodePtr child) {
-    bool child_doc = child->mrl () && child->mrl ()->opener.ptr () == this;
-    if (child_doc) {
-        child->deactivate (); // should only if fill not is freeze or hold
-    } else if (active ()) {
-        if (runtime->state () < Runtime::timings_stopped) {
-            if (runtime->started ())
-                runtime->propagateStop (false); // what about repeat_count ..
-            return; // still running, wait for runtime to finish
-        }
-    }
-    if (active ())
-        finish ();
-}
-
 Surface *SMIL::MediaType::getSurface (Mrl *mrl) {
     resetSurface ();
     Surface *s = NULL;
@@ -2645,6 +2657,7 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
 
 void *SMIL::MediaType::message (MessageType msg, void *content) {
     switch (msg) {
+
         case MsgEventPostponed: {
             PostponedEvent *pe = static_cast <PostponedEvent *> (content);
             if (media_object) {
@@ -2660,6 +2673,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             }
             return NULL;
         }
+
         case MsgSurfaceUpdate: {
             UpdateEvent *ue = static_cast <UpdateEvent *> (content);
 
@@ -2679,6 +2693,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                 s->parentNode()->repaint (s->bounds);
             return NULL;
         }
+
         case MsgEventTimer: {
             TimerPosting *te = static_cast <TimerPosting *> (content);
             if (te->event_id == trans_out_timer_id) {
@@ -2701,9 +2716,33 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             }
             break;
         }
+
+        case MsgChildFinished: {
+            Posting *post = (Posting *) content;
+            if (post->source->mrl () &&
+                    post->source->mrl ()->opener.ptr () == this) {
+                post->source->deactivate (); // should only if fill not is freeze or hold
+            } else if (active ()) {
+                if (runtime->state () < Runtime::timings_stopped) {
+                    if (runtime->started ())
+                        runtime->propagateStop (false); // what about repeat_count ..
+                    return NULL; // still running, wait for runtime to finish
+                }
+            }
+            if (active ())
+                finish ();
+            return NULL;
+        }
+
         case MsgQueryRoleTiming:
             return runtime;
+
         case MsgQueryRoleDisplay:
+/**
+ * Re-implement from Mrl, because we may have children like
+ * param/set/animatie that should all be activate, but also other smil or imfl
+ * documents, that should only be activated if the runtime has started
+ */
             if (!keepContent (this)) {
                 resetSurface ();
             } else if (!sub_surface && region_node) {
@@ -2718,6 +2757,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                 }
             }
             return sub_surface.ptr ();
+
         case MsgQueryReceivers: {
             MessageType m = (MessageType) (long) content;
             NodeRefList *l = mouse_listeners.receivers (m);
@@ -2726,10 +2766,14 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             if (MsgSurfaceAttach == m)
                 return m_MediaAttached.ptr ();
         } // fall through
+
         default:
             break;
     }
-    return runtime->message (msg, content);
+    void *response = runtime->message (msg, content);
+    if (response == MsgUnhandled)
+        return Mrl::message (msg, content);
+    return response;
 }
 
 //-----------------------------------------------------------------------------
@@ -3028,10 +3072,9 @@ void *SMIL::TextMediaType::message (MessageType msg, void *content) {
         dataArrived ();
         if (parentNode ())
             parentNode ()->message (msg, content);
-    } else {
-        return MediaType::message (msg, content);
+        return NULL;
     }
-    return NULL;
+    return MediaType::message (msg, content);
 }
 
 KDE_NO_EXPORT void SMIL::TextMediaType::accept (Visitor * v) {
@@ -3127,7 +3170,10 @@ KDE_NO_EXPORT void *SMIL::AnimateGroup::message (MessageType msg, void *data) {
         default:
             break;
     }
-    return runtime->message (msg, data);
+    void *response = runtime->message (msg, data);
+    if (response == MsgUnhandled)
+        return Element::message (msg, data);
+    return response;
 }
 
 KDE_NO_EXPORT void SMIL::AnimateGroup::restoreModification () {

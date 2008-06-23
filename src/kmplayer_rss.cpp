@@ -122,8 +122,9 @@ KDE_NO_EXPORT void *RSS::Item::message (MessageType msg, void *content) {
     if (msg == MsgEventTimer) {
         timer = 0L;
         finish ();
+        return NULL;
     }
-    return NULL;
+    return Mrl::message (msg, content);
 }
 
 KDE_NO_EXPORT void RSS::Enclosure::closed () {
