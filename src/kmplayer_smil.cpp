@@ -2133,12 +2133,10 @@ KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgEventStarting: {
             Node *source = (Node *) content;
-            Node *n = cur_node.ptr ();
+            NodePtr n = cur_node.ptr ();
             if (source == n)
                 return NULL; // eg. repeating
             cur_node = source;
-            FreezeStateUpdater visitor;
-            accept (&visitor);
             stopped_connection = cur_node->connectTo (this, MsgEventStopped);
             if (n) {
                 if (SMIL::id_node_priorityclass == cur_node->parentNode ()->id) {
@@ -2161,15 +2159,23 @@ KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
             return NULL;
         }
         case MsgChildFinished: {
+            Posting *event = static_cast <Posting *> (content);
             FreezeStateUpdater visitor;
             accept (&visitor);
-            // do nothing
+            if (event->source == cur_node) {
+                Runtime* rt = (Runtime*)cur_node->message(MsgQueryRoleTiming);
+                if (rt && rt->timingstate == Runtime::timings_stopped) {
+                    cur_node = NULL;
+                    stopped_connection = NULL;
+                }
+                // now finish unless 'dur="indefinite/some event/.."'
+                runtime->propagateStop (false);
+            }
             return NULL;
         }
         case MsgEventStopped: {
             Posting *event = static_cast <Posting *> (content);
-            if (event->source.ptr () != this) {
-                ASSERT (event->source == cur_node);
+            if (event->source == cur_node) {
 
                 NodeRefItemPtr ref = priority_queue.first ();
                 while (ref && (!ref->data || !ref->data->active ())) {
@@ -2184,23 +2190,14 @@ KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
                     ExclPauseVisitor visitor (false, this, document()->last_event_time/100);
                     cur_node->accept (&visitor);
                     // else TODO
-                } else {
-                    cur_node = NULL;
-                    stopped_connection = NULL;
-                    // now finish unless 'dur="indefinite/some event/.."'
-                    if (runtime->started ())
-                        runtime->propagateStop (false); // wait for runtime to finish
-                    else
-                        finish (); // we're done
                 }
-                FreezeStateUpdater visitor;
-                accept (&visitor);
             }
-        } // fall through
+            break;
+        }
         default:
-            return GroupBase::message (msg, content);
+            break;
     }
-    return NULL;
+    return GroupBase::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------
