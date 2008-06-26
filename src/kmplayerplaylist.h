@@ -260,6 +260,7 @@ enum MessageType
     MsgEventPostponed,
     MsgSurfaceUpdate,
     MsgSurfaceAttach,
+    MsgStateFreeze,
     MsgChildFinished,
     MsgStartQueryMessage,
     MsgQueryRoleTiming,

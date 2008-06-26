@@ -588,7 +588,7 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
                 return; // a child still running
     }
     bool was_started (started ());
-    timingstate = timings_stopped;
+    timingstate = timings_freezed;
     if (begin_timer) {
         element->document ()->cancelPosting (begin_timer);
         begin_timer = NULL;
@@ -1697,8 +1697,7 @@ class KMPLAYER_NO_EXPORT FreezeStateUpdater : public Visitor {
     bool initial_node;
     bool freeze;
 
-    bool setFreezeState (Runtime *rt) {
-        bool changed = false;
+    void setFreezeState (Runtime *rt) {
         bool auto_freeze = (Runtime::dur_timer == rt->durTime ().durval &&
                     0 == rt->durTime ().offset &&
                     Runtime::dur_media == rt->endTime ().durval) &&
@@ -1708,21 +1707,12 @@ class KMPLAYER_NO_EXPORT FreezeStateUpdater : public Visitor {
 
         bool do_freeze = freeze && (auto_freeze || cfg_freeze);
         if (do_freeze && rt->timingstate == Runtime::timings_stopped) {
-            changed = true;
             rt->timingstate = Runtime::timings_freezed;
-            Surface *s = (Surface *) rt->element->message (MsgQueryRoleDisplay);
-            if (s)
-                s->repaint ();
+            rt->element->message (MsgStateFreeze);
         } else if (!do_freeze && rt->timingstate == Runtime::timings_freezed) {
-            changed = true;
-            Surface *s = (Surface *) rt->element->message (MsgQueryRoleDisplay);
-            if (s) {
-                s->repaint ();
-                s->remove ();
-            }
             rt->timingstate = Runtime::timings_stopped;
+            rt->element->message (MsgStateFreeze);
         }
-        return changed;
     }
     void updateNode (Node *n) {
         if (initial_node) {
@@ -1821,8 +1811,10 @@ void SMIL::GroupBase::parseParam (const TrieString &para, const QString &val) {
 
 KDE_NO_EXPORT void *SMIL::GroupBase::message (MessageType msg, void *content) {
     switch (msg) {
+
         case MsgQueryRoleTiming:
             return runtime;
+
         default:
             break;
     }
@@ -2675,20 +2667,33 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStart () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
-    if (media_object)
-        media_object->stop ();
-    resetSurface ();
-    if (external_tree && external_tree->active ())
-        external_tree->deactivate ();
+    Surface *s = NULL;
+    if (runtime->timingstate == Runtime::timings_stopped) {
+        region_attach = NULL;
+        if (media_object) {
+            media_object->destroy ();
+            media_object = NULL;
+        }
+        if (external_tree && external_tree->active ())
+            external_tree->deactivate ();
+        resetSurface ();
+        if (region_node)
+            s = (Surface *) region_node->message (MsgQueryRoleDisplay);
+    }
+    if (s)
+        s->repaint ();
     document_postponed = 0L;
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::finish () {
     document ()->notify_listener->removeRepaintUpdater (this);
-    if (region_node)
-        convertNode <SMIL::RegionBase> (region_node)->repaint ();
+    if (media_object)
+        media_object->pause ();
+
+    Surface *s = (Surface *) message (MsgQueryRoleDisplay);
+    if (s)
+        s->repaint ();
     runtime->finish ();
-    clipStop ();
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::reset () {
@@ -2822,6 +2827,10 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             break;
         }
 
+        case MsgStateFreeze:
+            clipStop ();
+            return NULL;
+
         case MsgChildFinished: {
             Posting *post = (Posting *) content;
             if (post->source->mrl () &&
@@ -2897,10 +2906,10 @@ KDE_NO_EXPORT void SMIL::AVMediaType::clipStart () {
     MediaType::clipStart ();
 }
 
-KDE_NO_EXPORT void SMIL::AVMediaType::clipStop () {
+KDE_NO_EXPORT void SMIL::AVMediaType::finish () {
     if (runtime->durTime ().durval == Runtime::dur_media)
         runtime->durTime ().durval = Runtime::dur_timer;//reset to make this finish
-    MediaType::clipStop ();
+    MediaType::finish ();
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
@@ -3239,8 +3248,6 @@ KDE_NO_EXPORT void SMIL::AnimateGroup::activate () {
  */
 KDE_NO_EXPORT void SMIL::AnimateGroup::finish () {
     //kDebug () << "AnimateGroup::stopped " << durTime ().durval << endl;
-    if (!runtime->active ())
-        restoreModification ();
     runtime->finish ();
 }
 
@@ -3260,8 +3267,15 @@ KDE_NO_EXPORT void SMIL::AnimateGroup::deactivate () {
 
 KDE_NO_EXPORT void *SMIL::AnimateGroup::message (MessageType msg, void *data) {
     switch (msg) {
+
         case MsgQueryRoleTiming:
             return runtime;
+
+        case MsgStateFreeze:
+            if (!runtime->active ())
+                restoreModification ();
+            return NULL;
+
         default:
             break;
     }

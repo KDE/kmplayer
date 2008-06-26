@@ -588,6 +588,7 @@ public:
     void boundsUpdate (); // recalculates and repaint old and new bounds
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual void *message (MessageType msg, void *content=NULL);
+    virtual void accept (Visitor *v) { v->visit (this); }
     bool expose () const { return false; }
 
     Runtime *runtime;
@@ -632,12 +633,12 @@ public:
     NodePtr childFromTag (const QString & tag);
     virtual void begin ();
     virtual void undefer ();
+    virtual void finish ();
     virtual void endOfFile ();
     virtual void accept (Visitor *);
     virtual bool expose () const;
     virtual void parseParam (const TrieString &, const QString &);
     virtual void clipStart ();
-    virtual void clipStop ();
 };
 
 class KMPLAYER_NO_EXPORT ImageMediaType : public MediaType {
