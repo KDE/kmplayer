@@ -478,6 +478,7 @@ public:
     void begin ();
     void deactivate ();
     void *message (MessageType msg, void *content=NULL);
+    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
 
     typedef ListNode <ConnectionPtr> ConnectionStoreItem;
     List <ConnectionStoreItem> started_event_list;

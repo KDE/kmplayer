@@ -3968,6 +3968,10 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::Par *n) {
     visit (static_cast <SMIL::GroupBase *> (n));
 }
 
+KDE_NO_EXPORT void Visitor::visit (SMIL::Excl *n) {
+    visit (static_cast <SMIL::GroupBase *> (n));
+}
+
 KDE_NO_EXPORT void Visitor::visit (SMIL::Transition * n) {
     visit (static_cast <Element *> (n));
 }
