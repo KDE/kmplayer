@@ -1020,7 +1020,10 @@ void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
     //kDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << endl;
     if (ns == Node::state_activated &&
             elm->mrl ()) {
-        if (Mrl::WindowMode != elm->mrl ()->view_mode)
+        if (Mrl::WindowMode != elm->mrl ()->view_mode &&
+                (!elm->parentNode () ||
+                 !elm->parentNode ()->mrl () ||
+                 Mrl::WindowMode != elm->parentNode ()->mrl ()->view_mode))
             setCurrent (elm->mrl ());
         if (m_current.ptr () == elm)
             emit startPlaying ();
