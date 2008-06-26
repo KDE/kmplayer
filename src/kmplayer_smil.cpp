@@ -2670,10 +2670,8 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
     Surface *s = NULL;
     if (runtime->timingstate == Runtime::timings_stopped) {
         region_attach = NULL;
-        if (media_object) {
-            media_object->destroy ();
-            media_object = NULL;
-        }
+        if (media_object)
+            media_object->stop ();
         if (external_tree && external_tree->active ())
             external_tree->deactivate ();
         resetSurface ();
