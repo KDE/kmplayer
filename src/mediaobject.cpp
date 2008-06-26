@@ -523,6 +523,8 @@ void AudioVideoMedia::stop () {
         request = ask_stop;
     if (process)
         process->stop ();
+    if (m_manager->player ()->view () && viewer)
+        viewer->unmap ();
 }
 
 void AudioVideoMedia::pause () {
