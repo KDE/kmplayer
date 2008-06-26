@@ -795,7 +795,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         PangoFontDescription *desc = pango_font_description_new ();
         pango_font_description_set_family (desc, "Sans");
         pango_font_description_set_absolute_size (desc,
-                w * PANGO_SCALE * txt->font_size / rect.width ());
+                PANGO_SCALE * (w * txt->font_size / rect.width ()));
         pango_layout_set_font_description (layout, desc);
         pango_font_description_free (desc);
 
