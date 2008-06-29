@@ -220,7 +220,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
         if (AudioVideoMedia::ask_delete == media->request) {
             delete media;
         } else if (mrl->unfinished ()) {
-            mrl->endOfFile ();
+            mrl->document ()->post (mrl, new Posting (mrl, MsgMediaFinished));
         }
     } else if (IProcess::Ready == news) {
         if (AudioVideoMedia::ask_play == media->request) {
@@ -238,7 +238,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
             if (AudioVideoMedia::ask_delete == media->request)
                 delete media;
             else if (olds > IProcess::Ready && mrl->unfinished ())
-                mrl->endOfFile ();
+                mrl->document()->post(mrl, new Posting (mrl, MsgMediaFinished));
         }
     } else if (IProcess::Buffering == news) {
         if (AudioVideoMedia::ask_pause == media->request) {

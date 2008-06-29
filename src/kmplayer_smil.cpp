@@ -2859,6 +2859,19 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             }
             return NULL;
 
+        case MsgMediaFinished:
+            if (unfinished ()) {
+                if (runtime->durTime ().durval == Runtime::dur_media)
+                    runtime->durTime ().durval = Runtime::dur_timer;
+                if (media_object) {
+                    media_object->destroy ();
+                    media_object = NULL;
+                }
+                postpone_lock = 0L;
+                runtime->tryFinish ();
+            }
+            return NULL;
+
         case MsgQueryRoleTiming:
             return runtime;
 
@@ -2942,17 +2955,6 @@ KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
         begin ();
     else
         MediaType::undefer ();
-}
-
-KDE_NO_EXPORT void SMIL::AVMediaType::endOfFile () {
-    if (!active())
-        return; // backend eof after a reset
-    if (media_object) {
-        media_object->destroy ();
-        media_object = NULL;
-    }
-    postpone_lock = 0L;
-    runtime->tryFinish ();
 }
 
 void

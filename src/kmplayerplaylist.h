@@ -563,7 +563,6 @@ public:
      */
     virtual Mrl * linkNode ();
     virtual Mrl * mrl ();
-    virtual void endOfFile ();
     QString absolutePath ();
 
     virtual void activate ();
@@ -571,6 +570,7 @@ public:
     virtual void defer ();
     virtual void undefer ();
     virtual void deactivate ();
+    virtual void *message (MessageType msg, void *content=NULL);
     /**
      * By default support one event handler (eg. SMIL or RP child document)
      */

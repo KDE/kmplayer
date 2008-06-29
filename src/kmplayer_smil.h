@@ -638,7 +638,6 @@ public:
     virtual void begin ();
     virtual void undefer ();
     virtual void finish ();
-    virtual void endOfFile ();
     virtual void accept (Visitor *);
     virtual bool expose () const;
     virtual void parseParam (const TrieString &, const QString &);

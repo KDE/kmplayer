@@ -710,13 +710,17 @@ Mrl * Mrl::mrl () {
     return this;
 }
 
-void Mrl::endOfFile () {
-    if (state == state_deferred &&
-            !isPlayable () && firstChild ()) { // if backend added child links
-        state = state_activated;
-        firstChild ()->activate ();
-    } else
-        finish ();
+void *Mrl::message (MessageType msg, void *content) {
+    if (MsgMediaFinished == msg) {
+        if (state == state_deferred &&
+                !isPlayable () && firstChild ()) {//if backend added child links
+            state = state_activated;
+            firstChild ()->activate ();
+        } else
+            finish ();
+        return NULL;
+    }
+    return Node::message (msg, content);
 }
 
 void Mrl::activate () {
