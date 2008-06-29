@@ -652,7 +652,7 @@ KDE_NO_EXPORT void ImageMedia::setupImage () {
     if (!isEmpty ()) {
         buffer = new QBuffer (&data);
         img_movie = new QMovie (buffer);
-        kDebug() << img_movie->frameCount ();
+        //kDebug() << img_movie->frameCount ();
         if (img_movie->frameCount () > 1) {
             cached_img->flags |= (short)ImageData::ImagePixmap | ImageData::ImageAnimated;
             connect (img_movie, SIGNAL (updated (const QRect &)),

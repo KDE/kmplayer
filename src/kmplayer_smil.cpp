@@ -1906,23 +1906,9 @@ KDE_NO_EXPORT void SMIL::Par::reset () {
 KDE_NO_EXPORT void *SMIL::Par::message (MessageType msg, void *content) {
     if (MsgChildFinished == msg) {
         if (unfinished ()) {
-            for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
-                if (e->unfinished ()) {
-                    FreezeStateUpdater visitor;
-                    accept (&visitor);
-                    return NULL; // not all finished
-                }
-            }
-            if (runtime->started ()) {
-                Runtime::Duration dv = runtime->durTime ().durval;
-                if ((dv == Runtime::dur_timer && !runtime->durTime ().offset)
-                        || dv == Runtime::dur_media)
-                    runtime->tryFinish ();
-                FreezeStateUpdater visitor;
-                accept (&visitor);
-                return NULL; // still running, wait for runtime to finish
-            }
-            runtime->tryFinish (); // we're done
+            FreezeStateUpdater visitor;
+            accept (&visitor);
+            runtime->tryFinish ();
         }
         return NULL;
     }
@@ -1960,9 +1946,8 @@ KDE_NO_EXPORT void SMIL::Seq::begin () {
 KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgChildFinished: {
-                Posting *post = (Posting *) content;
             if (unfinished ()) {
-                //Posting *post = (Posting *) content;
+                Posting *post = (Posting *) content;
                 if (state != state_deferred) {
                     Node *next = post->source
                         ? post->source->nextSibling ().ptr()
