@@ -162,6 +162,7 @@ private:
     void setDurationItem (DurationTime item, const QString & val);
     void propagateStop (bool forced);
     void propagateStart ();
+    int repeat;
 };
 
 class KMPLAYER_NO_EXPORT MouseListeners {

@@ -223,7 +223,8 @@ KDE_NO_CDTOR_EXPORT Runtime::Runtime (Element *e)
    started_timer (NULL),
    stopped_timer (NULL),
    fill_active (fill_auto),
-   element (e) {}
+   element (e),
+   repeat (0) {}
 
 
 KDE_NO_CDTOR_EXPORT Runtime::~Runtime () {
@@ -241,7 +242,7 @@ KDE_NO_EXPORT void Runtime::reset () {
         element->document ()->cancelPosting (duration_timer);
         duration_timer = NULL;
     }
-    repeat_count = 0;
+    repeat = repeat_count = 0;
     timingstate = timings_reset;
     for (int i = 0; i < (int) durtime_last; i++) {
         if (durations [i].connection)
@@ -396,6 +397,7 @@ KDE_NO_EXPORT void Runtime::finish () {
         doFinish (); // reschedule through Runtime::stopped
     } else {
         finish_time = element->document ()->last_event_time/100;
+        repeat_count = repeat;
         NodePtrW guard = element;
         element->Node::finish ();
         if (guard && element->document ()->active ()) { // check for reset
@@ -481,9 +483,9 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
         }
     } else if (name.startsWith ("repeat")) {
         if (val.indexOf ("indefinite") > -1)
-            repeat_count = dur_infinite;
+            repeat = repeat_count = dur_infinite;
         else
-            repeat_count = val.toInt ();
+            repeat = repeat_count = val.toInt ();
     } else
         return false;
     return true;
@@ -650,7 +652,7 @@ KDE_NO_EXPORT void Runtime::stopped () {
                 propagateStart ();
             }
         } else {
-            repeat_count = 0;
+            repeat_count = repeat;
             element->finish ();
         }
     }
@@ -2032,6 +2034,7 @@ public:
         visit (static_cast <Node *> (elm));
     }
     void visit (SMIL::PriorityClass *pc) {
+        pc->init ();
         pc->state = Node::state_activated;
         Node *n = pc->firstChild ().ptr ();
         if (n)
@@ -2153,8 +2156,8 @@ KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgEventStarting: {
             Node *source = (Node *) content;
-            NodePtr n = cur_node.ptr ();
-            if (source == n)
+            NodePtr n = cur_node;
+            if (source == n.ptr ())
                 return NULL; // eg. repeating
             cur_node = source;
             stopped_connection = cur_node->connectTo (this, MsgEventStopped);
@@ -3054,7 +3057,6 @@ void SMIL::ImageMediaType::dataArrived () {
     ImageMedia *im = static_cast <ImageMedia *> (media_object);
     resetSurface ();
     QString mime = im->mimetype ();
-    kDebug () << "ImageMediaType::dataArrived " << mime << " empty:" << im->isEmpty () << " " << src << " " << state << endl;
     if (mime.startsWith (QString::fromLatin1 ("text/"))) {
         QTextStream ts (im->rawData (), IO_ReadOnly);
         readXML (this, ts, QString ());
@@ -3297,6 +3299,10 @@ KDE_NO_EXPORT void *SMIL::AnimateGroup::message (MessageType msg, void *data) {
         case MsgStateFreeze:
             if (!runtime->active ())
                 restoreModification ();
+            return NULL;
+
+        case MsgStateRewind:
+            restoreModification ();
             return NULL;
 
         default:
@@ -3710,6 +3716,15 @@ KDE_NO_EXPORT void *SMIL::AnimateMotion::message (MessageType msg, void *data) {
             timerTick (ue->cur_event_time);
             return NULL;
         }
+        case MsgStateRewind:
+            restoreModification ();
+            if (anim_timer) {
+                document ()->cancelPosting (anim_timer);
+                anim_timer = NULL;
+            } else {
+                document ()->notify_listener->removeRepaintUpdater (this);
+            }
+            break;
         default:
             break;
     }
