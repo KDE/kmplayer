@@ -1749,15 +1749,15 @@ public:
             if (n->active ()) {
                 Runtime *rt = (Runtime *) n->message (MsgQueryRoleTiming);
                 if (rt) {
+                    bool prev_freeze = prev && freeze &&
+                        prev->fill_active == Runtime::fill_hold;
                     if (rt->timingstate < Runtime::timings_started) {
                         break;
                     } else if (rt->timingstate < Runtime::timings_stopped) {
-                        freeze = false;
+                        freeze = prev_freeze;
                         break;
                     }
-                }
-                if (rt) {
-                    if (prev && freeze && prev->fill_active == Runtime::fill_hold)
+                    if (prev_freeze)
                         prev->element->accept (this);
                     if (rt->timingstate == Runtime::timings_stopped)
                         rt->element->deactivate();
