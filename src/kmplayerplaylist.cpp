@@ -263,7 +263,7 @@ void Node::deactivate () {
         else
             break; // remaining not yet activated
     }
-    if (need_finish && m_parent)
+    if (need_finish && m_parent && m_parent->active ())
         document ()->post (m_parent, new Posting (this, MsgChildFinished));
 }
 

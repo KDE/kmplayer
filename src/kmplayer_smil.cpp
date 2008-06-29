@@ -383,7 +383,7 @@ KDE_NO_EXPORT void Runtime::start () {
         stop = false;
     }
     if (stop)                          // wait for event
-        propagateStop (false);
+        tryFinish ();
     else if (offset > 0)               // start timer
         begin_timer = element->document ()->post (element,
                 new TimerPosting (100 * offset, begin_timer_id));
@@ -393,7 +393,7 @@ KDE_NO_EXPORT void Runtime::start () {
 
 KDE_NO_EXPORT void Runtime::finish () {
     if (started () || timingstate == timings_began) {
-        propagateStop (true); // reschedule through Runtime::stopped
+        doFinish (); // reschedule through Runtime::stopped
     } else {
         finish_time = element->document ()->last_event_time/100;
         NodePtrW guard = element;
@@ -498,7 +498,7 @@ KDE_NO_EXPORT void *Runtime::message (MessageType msg, void *content) {
                 propagateStart ();
             } else if (te->event_id == dur_timer_id) {
                 duration_timer = NULL;
-                propagateStop (true);
+                doFinish ();
             } else {
                 kWarning () << "unhandled timer event";
             }
@@ -514,7 +514,7 @@ KDE_NO_EXPORT void *Runtime::message (MessageType msg, void *content) {
                 element->deliver (MsgEventStarted, event);
                 if (guard) {
                     element->begin ();
-                    propagateStop (false);
+                    tryFinish ();
                 }
                 return NULL;
             }
@@ -563,7 +563,7 @@ KDE_NO_EXPORT void Runtime::processEvent (MessageType msg) {
         if (element->state == Node::state_finished)
             element->state = Node::state_activated; // rewind to activated
     } else if (started () && endTime ().durval == (Duration) msg) {
-        propagateStop (true);
+        doFinish ();
     }
 }
 
@@ -639,6 +639,7 @@ KDE_NO_EXPORT void Runtime::setDuration () {
 KDE_NO_EXPORT void Runtime::stopped () {
     if (element->active ()) {
         if (repeat_count == dur_infinite || 0 < repeat_count--) {
+            element->message (MsgStateRewind);
             if (beginTime ().offset > 0 &&
                     beginTime ().durval == dur_timer) {
                 if (begin_timer)
@@ -1743,19 +1744,24 @@ public:
 
         Runtime *prev = NULL;
         for (NodePtr n = seq->firstChild (); n; n = n->nextSibling ()) {
-            Runtime *rt = (Runtime *) n->message (MsgQueryRoleTiming);
-            if (rt) {
-                if (rt->timingstate < Runtime::timings_started) {
-                    break;
-                } else if (rt->timingstate < Runtime::timings_stopped) {
-                    freeze = false;
-                    break;
+            if (n->active ()) {
+                Runtime *rt = (Runtime *) n->message (MsgQueryRoleTiming);
+                if (rt) {
+                    if (rt->timingstate < Runtime::timings_started) {
+                        break;
+                    } else if (rt->timingstate < Runtime::timings_stopped) {
+                        freeze = false;
+                        break;
+                    }
                 }
-            }
-            if (rt) {
-                if (prev && freeze && prev->fill_active == Runtime::fill_hold)
-                    prev->element->accept (this);
-                prev = rt;
+                if (rt) {
+                    if (prev && freeze && prev->fill_active == Runtime::fill_hold)
+                        prev->element->accept (this);
+                    if (rt->timingstate == Runtime::timings_stopped)
+                        rt->element->deactivate();
+                    else
+                        prev = rt;
+                }
             }
         }
         if (prev)
@@ -1782,11 +1788,11 @@ public:
         bool old_freeze = freeze;
 
         updateNode (excl);
-        freeze = freeze && excl->runtime->active ();
+        bool new_freeze = freeze && excl->runtime->active ();
 
         Node *cur = excl->cur_node.ptr ();
         for (NodePtr n = excl->firstChild (); n; n = n->nextSibling ()) {
-            freeze = excl->runtime->active () && n.ptr () == cur;
+            freeze = new_freeze && n.ptr () == cur;
             n->accept (this);
         }
 
@@ -1814,6 +1820,18 @@ KDE_NO_EXPORT void *SMIL::GroupBase::message (MessageType msg, void *content) {
 
         case MsgQueryRoleTiming:
             return runtime;
+
+        case MsgStateRewind:
+            if (active ()) {
+                State old = state;
+                state = state_deactivated;
+                for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+                    e->reset ();
+                state = old;
+                GroupBaseInitVisitor visitor;
+                accept (&visitor);
+            }
+            return NULL;
 
         default:
             break;
@@ -1897,12 +1915,12 @@ KDE_NO_EXPORT void *SMIL::Par::message (MessageType msg, void *content) {
                 Runtime::Duration dv = runtime->durTime ().durval;
                 if ((dv == Runtime::dur_timer && !runtime->durTime ().offset)
                         || dv == Runtime::dur_media)
-                    runtime->propagateStop (false);
+                    runtime->tryFinish ();
                 FreezeStateUpdater visitor;
                 accept (&visitor);
                 return NULL; // still running, wait for runtime to finish
             }
-            finish (); // we're done
+            runtime->tryFinish (); // we're done
         }
         return NULL;
     }
@@ -1939,9 +1957,10 @@ KDE_NO_EXPORT void SMIL::Seq::begin () {
 
 KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
     switch (msg) {
-        case MsgChildFinished:
-            if (unfinished ()) {
+        case MsgChildFinished: {
                 Posting *post = (Posting *) content;
+            if (unfinished ()) {
+                //Posting *post = (Posting *) content;
                 if (state != state_deferred) {
                     Node *next = post->source
                         ? post->source->nextSibling ().ptr()
@@ -1954,17 +1973,18 @@ KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
                         starting_connection = next->connectTo (
                                 this, MsgEventStarting);
                         next->activate ();
-                        FreezeStateUpdater visitor;
-                        accept (&visitor);
                     } else {
                         starting_connection = NULL;
-                        finish ();
+                        runtime->tryFinish ();
                     }
+                    FreezeStateUpdater visitor;
+                    accept (&visitor);
                 } else if (jump_node) {
                     finish ();
                 }
             }
             return NULL;
+        }
         case MsgEventStarting: {
             Node *source = (Node *) content;
             if (source != this && source->previousSibling ()) {
@@ -2154,7 +2174,7 @@ KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
                             break; //TODO
                     }
                 }
-                ((Runtime*)n->message(MsgQueryRoleTiming))->propagateStop(true);
+                ((Runtime*)n->message(MsgQueryRoleTiming))->doFinish ();
             }
             return NULL;
         }
@@ -2168,8 +2188,7 @@ KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
                     cur_node = NULL;
                     stopped_connection = NULL;
                 }
-                // now finish unless 'dur="indefinite/some event/.."'
-                runtime->propagateStop (false);
+                runtime->tryFinish ();
             }
             return NULL;
         }
@@ -2790,7 +2809,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                 trans_gain = 1.0;
                 if (Runtime::dur_transition == runtime->durTime ().durval) {
                     runtime->durTime ().durval = Runtime::dur_timer;
-                    runtime->propagateStop (false);
+                    runtime->tryFinish ();
                 }
             }
             Surface *s = (Surface *) message (MsgQueryRoleDisplay);
@@ -2834,7 +2853,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             } else if (active ()) {
                 if (runtime->state () < Runtime::timings_stopped) {
                     if (runtime->started ())
-                        runtime->propagateStop (false); // what about repeat_count ..
+                        runtime->tryFinish (); // what about repeat_count ..
                     return NULL; // still running, wait for runtime to finish
                 }
             }
@@ -2842,6 +2861,15 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                 finish ();
             return NULL;
         }
+
+        case MsgStateRewind:
+            if (external_tree) {
+                State old = state;
+                state = state_deactivated;
+                external_tree->reset ();
+                state = old;
+            }
+            return NULL;
 
         case MsgQueryRoleTiming:
             return runtime;
@@ -2936,7 +2964,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::endOfFile () {
         media_object = NULL;
     }
     postpone_lock = 0L;
-    runtime->propagateStop (true);
+    runtime->tryFinish ();
 }
 
 void
@@ -3062,7 +3090,7 @@ void *SMIL::ImageMediaType::message (MessageType msg, void *content) {
             }
             case MsgMediaFinished:
                 if (state >= Node::state_began)
-                    runtime->propagateStop (false);
+                    runtime->tryFinish ();
                 return NULL;
             case MsgMediaReady:
                 dataArrived ();
@@ -3457,7 +3485,7 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
     if (success)
         AnimateGroup::begin ();
     else
-        runtime->propagateStop (true);
+        runtime->doFinish ();
 }
 
 KDE_NO_EXPORT void SMIL::Animate::finish () {
@@ -3531,7 +3559,7 @@ KDE_NO_EXPORT bool SMIL::Animate::timerTick () {
     } else {
         document ()->cancelPosting (anim_timer);
         anim_timer = NULL;
-        runtime->propagateStop (true); // not sure, actually
+        runtime->doFinish (); // not sure, actually
     }
     return false;
 }
@@ -3745,7 +3773,7 @@ bool SMIL::AnimateMotion::checkTarget (Node *n) {
             document ()->cancelPosting (anim_timer);
             anim_timer = NULL;
         }
-        runtime->propagateStop (true);
+        runtime->doFinish ();
         return false;
     }
     return true;
@@ -3800,7 +3828,7 @@ bool SMIL::AnimateMotion::setInterval () {
     if (cs < 0) {
         kWarning () << "animateMotion has no valid duration interval " <<
             interval << endl;
-        runtime->propagateStop (true);
+        runtime->doFinish ();
         return false;
     }
     cur_x = begin_x;

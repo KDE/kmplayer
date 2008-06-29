@@ -261,6 +261,7 @@ enum MessageType
     MsgSurfaceUpdate,
     MsgSurfaceAttach,
     MsgStateFreeze,
+    MsgStateRewind,
     MsgChildFinished,
     MsgStartQueryMessage,
     MsgQueryRoleTiming,

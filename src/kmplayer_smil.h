@@ -107,6 +107,8 @@ public:
      * Called when element is pulled in scope, from Node::activate()
      */
     void start ();
+    void tryFinish () { propagateStop (false); }
+    void doFinish () { propagateStop (true); }
     void finish ();
     void startAndBeginNode (); // skip start timer (if any)
     /**
@@ -115,8 +117,6 @@ public:
     void reset ();
     bool parseParam (const TrieString & name, const QString & value);
     TimingState state () const { return timingstate; }
-    void propagateStop (bool forced);
-    void propagateStart ();
     void *message (MessageType msg, void *content=NULL);
     void processEvent (MessageType msg);
     /**
@@ -160,6 +160,8 @@ public:
     Element *element;
 private:
     void setDurationItem (DurationTime item, const QString & val);
+    void propagateStop (bool forced);
+    void propagateStart ();
 };
 
 class KMPLAYER_NO_EXPORT MouseListeners {
