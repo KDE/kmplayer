@@ -7,20 +7,22 @@
       <region id="reg3" left="5%" right="5%" top="45%" height="10%"/>
       <region left="5%" right="5%" bottom="5%" height="10%"
               background-color="gray">
-        <region id="but_rec" left="10%" width="30%" />
-        <region id="but_dep" right="10%" width="30%" />
+        <region id="but_rec" width="30%" />
+        <region id="but_dep" left="30%" width="30%" />
+        <region id="but_rep_seq" left="60%" width="30%" />
       </region>
     </layout>
   </head>
   <body>
     <par>
       <a href="#rec">
-        <text id="rec_txt" src="data:,Recommended" region="but_rec"
-              fill="freeze"/>
+        <text id="rec_txt" src="data:,Recommended" region="but_rec"/>
       </a>
       <a href="#dep">
-        <text id="dep_txt" src="data:,Deprecated" region="but_dep"
-              fill="freeze"/>
+        <text id="dep_txt" src="data:,Deprecated" region="but_dep"/>
+      </a>
+      <a href="#rep_seq">
+        <text id="rep_seq_txt" src="data:,Repeat" region="but_rep_seq"/>
       </a>
       <seq>
         <par id="rec">
@@ -50,6 +52,17 @@
                fill="freeze"/>
           <set target="reg2" attribute="background-color" to="red"
                fill="freeze"/>
+        </par>
+        <par id="rep_seq">
+          <text id="dtext1" src="data:,%3Cseq%20repeat=3%3E"
+                region="reg1"/>
+          <set target="rep_seq_txt" attribute="background-color" to="green"/>
+          <set target="reg2" attribute="background-color" to="white"/>
+          <set target="reg3" attribute="background-color" to="white"/>
+          <seq repeat="3">
+            <set target="reg2" attribute="background-color" to="red" dur=".5"/>
+            <set target="reg3" attribute="background-color" to="blue" dur=".5"/>
+           </seq>
         </par>
       </seq>
     </par>
