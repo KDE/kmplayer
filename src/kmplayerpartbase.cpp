@@ -1463,16 +1463,32 @@ KDE_NO_EXPORT void URLSource::read (NodePtr root, QTextStream & textstream) {
                 if (mrl)
                     Source::setDimensions (m_document->firstChild (), mrl->width, mrl->height);
             }
-        } else if (line.lower () != QString ("[reference]")) do {
-            QString mrl = line.stripWhiteSpace ();
-            if (line == QString ("--stop--"))
-                break;
-            if (mrl.lower ().startsWith (QString ("asf ")))
-                mrl = mrl.mid (4).stripWhiteSpace ();
-            if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#')))
-                cur_elm->appendChild (new GenericURL (m_document, mrl));
-            line = textstream.readLine ();
-        } while (!line.isNull ()); /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/
+        } else if (line.lower () != QString ("[reference]")) {
+            bool extm3u = line.startsWith ("#EXTM3U");
+            QString title;
+            if (extm3u)
+                line = textstream.readLine ();
+            while (!line.isNull ()) {
+             /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/
+                QString mrl = line.stripWhiteSpace ();
+                if (line == QString ("--stop--"))
+                    break;
+                if (mrl.lower ().startsWith (QString ("asf ")))
+                    mrl = mrl.mid (4).stripWhiteSpace ();
+                if (!mrl.isEmpty ()) {
+                    if (extm3u && mrl.startsWith (QChar ('#'))) {
+                        if (line.startsWith ("#EXTINF:"))
+                            title = line.mid (9);
+                        else
+                            title = mrl.mid (1);
+                    } else if (!line.startsWith (QChar ('#'))) {
+                        cur_elm->appendChild (new GenericURL (m_document, mrl, title));
+                        title.truncate (0);
+                    }
+                }
+                line = textstream.readLine ();
+            }
+        }
     }
 }
 
