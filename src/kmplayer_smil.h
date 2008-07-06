@@ -202,6 +202,8 @@ const short id_node_audio_video = 121;
 const short id_node_text = 122;
 const short id_node_ref = 123;
 const short id_node_brush = 124;
+const short id_node_smil_text = 125;
+const short id_node_text_styling = 126;
 const short id_node_set = 132;
 const short id_node_animate = 133;
 const short id_node_title = 140;
@@ -686,6 +688,30 @@ class KMPLAYER_NO_EXPORT Brush : public MediaType {
 public:
     Brush (NodePtr & d);
     virtual void accept (Visitor *);
+};
+
+class KMPLAYER_NO_EXPORT SmilText : public Element {
+public:
+    SmilText (NodePtr &doc);
+    ~SmilText ();
+    virtual void init ();
+    virtual void activate ();
+    virtual void begin ();
+    virtual void finish ();
+    virtual void deactivate ();
+    virtual void reset ();
+    virtual bool expose () const { return false; }
+    KDE_NO_EXPORT const char *nodeName () const { return "smilText"; }
+    NodePtr childFromTag (const QString & tag);
+    virtual void parseParam (const TrieString &name, const QString &value);
+    virtual void *message (MessageType msg, void *content=NULL);
+    virtual void accept (Visitor *v) { v->visit (this); }
+
+    SurfacePtrW text_surface;
+    NodePtrW region_node;
+    ConnectionPtr region_attach;
+    Runtime *runtime;
+    bool inited;
 };
 
 class KMPLAYER_NO_EXPORT AnimateGroup : public Element {

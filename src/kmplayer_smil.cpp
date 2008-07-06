@@ -998,6 +998,8 @@ static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
         return new SMIL::Brush (d);
     else if (!strcmp (taglatin, "a"))
         return new SMIL::Anchor (d);
+    else if (!strcmp (taglatin, "smilText"))
+        return new SMIL::SmilText (d);
     // animation, textstream
     return 0L;
 }
@@ -3218,6 +3220,115 @@ KDE_NO_EXPORT void SMIL::Brush::accept (Visitor * v) {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT SMIL::SmilText::SmilText (NodePtr &d)
+ : Element (d, id_node_smil_text),
+   runtime (new Runtime (this)),
+   inited (false) {}
+
+KDE_NO_CDTOR_EXPORT SMIL::SmilText::~SmilText () {
+    delete runtime;
+}
+
+void SMIL::SmilText::init () {
+    if (!inited) {
+        runtime->reset ();
+        Element::init ();
+        inited = true;
+    }
+}
+
+void SMIL::SmilText::activate () {
+    init (); // sets all attributes
+    setState (state_activated);
+    runtime->start ();
+}
+
+void SMIL::SmilText::begin () {
+    SMIL::RegionBase *r = findRegion (this, param (StringPool::attr_region));
+    if (r) {
+        region_node = r;
+        region_attach = r->connectTo (this, MsgSurfaceAttach);
+        r->repaint ();
+    }
+    Element::begin ();
+
+}
+
+void SMIL::SmilText::finish () {
+    runtime->finish ();
+}
+
+void SMIL::SmilText::deactivate () {
+    region_attach = NULL;
+    if (text_surface) {
+        text_surface->repaint ();
+        text_surface->remove ();
+        text_surface = NULL;
+    }
+    runtime->reset ();
+    Element::deactivate ();
+}
+
+void SMIL::SmilText::reset () {
+    runtime->reset ();
+    inited = false;
+    Element::reset ();
+}
+
+NodePtr SMIL::SmilText::childFromTag (const QString &tag) {
+    const char *ctag = tag.ascii ();
+    if (!strcmp (ctag, "tev"))
+    {}//return new SMIL::TextTev (m_doc);
+    return NodePtr ();
+}
+
+void SMIL::SmilText::parseParam (const TrieString &name, const QString &value) {
+    if (!runtime->parseParam (name, value)) {
+        Element::parseParam (name, value);
+    }
+}
+
+void *SMIL::SmilText::message (MessageType msg, void *content) {
+    switch (msg) {
+
+        case MsgQueryRoleDisplay:
+            if (!runtime->active ()) {
+                if (text_surface) {
+                    text_surface->remove ();
+                    text_surface = NULL;
+                }
+            } else if (!text_surface && region_node) {
+                Surface *rs = (Surface *) region_node->message(MsgQueryRoleDisplay);
+                if (rs) {
+                    SRect b = rs->bounds;
+                    text_surface = rs->createSurface (this,
+                            SRect (0, 0, b.width (), b.height ()));
+                }
+            }
+            return text_surface.ptr ();
+
+        case MsgQueryRoleTiming:
+            return runtime;
+
+        case MsgStateFreeze:
+            if (!runtime->active () && text_surface) {
+                text_surface->repaint ();
+                text_surface->remove ();
+                text_surface = NULL;
+            }
+            return NULL;
+
+        default:
+            break;
+    }
+    void *response = runtime->message (msg, content);
+    if (response == MsgUnhandled)
+        return Element::message (msg, content);
+    return response;
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT SMIL::AnimateGroup::AnimateGroup (NodePtr &d, short _id)
  : Element (d, _id),
    runtime (new Runtime (this)),
@@ -4035,6 +4146,10 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::AVMediaType * n) {
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::Brush * n) {
     visit (static_cast <SMIL::MediaType *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::SmilText *n) {
+    visit (static_cast <Element *> (n));
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::Anchor * n) {

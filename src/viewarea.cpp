@@ -264,6 +264,7 @@ public:
     void visit (SMIL::ImageMediaType *);
     void visit (SMIL::TextMediaType *);
     void visit (SMIL::Brush *);
+    void visit (SMIL::SmilText *);
     void visit (SMIL::RefMediaType *);
     void visit (SMIL::AVMediaType *);
     void visit (RP::Imfl *);
@@ -872,6 +873,57 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
         s->dirty = false;
         cairo_restore (cr);
     }
+}
+
+KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
+    Surface *s = (Surface *) txt->message (MsgQueryRoleDisplay);
+    if (!s)
+        return;
+
+    SRect rect = s->bounds;
+    Single x = rect.x (), y = rect.y(), w = rect.width(), h = rect.height();
+    matrix.getXYWH (x, y, w, h);
+
+    if (!s->surface) {
+
+        s->surface = cairo_surface_create_similar (cairo_surface,
+                CAIRO_CONTENT_COLOR_ALPHA, (int) w, (int) h);
+        cairo_t *cr_txt = cairo_create (s->surface);
+
+        CAIRO_SET_SOURCE_RGB (cr_txt, 0);
+        PangoLayout *layout = pango_cairo_create_layout (cr_txt);
+        pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
+        pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
+        pango_layout_set_text (layout, txt->innerText ().toUtf8().data(), -1);
+
+        PangoFontDescription *desc = pango_font_description_new ();
+        pango_font_description_set_family (desc, "Sans");
+        pango_font_description_set_absolute_size (desc,
+                PANGO_SCALE * (w * 11 / rect.width ()));
+        pango_layout_set_font_description (layout, desc);
+        pango_font_description_free (desc);
+
+        pango_cairo_show_layout (cr_txt, layout);
+        g_object_unref (layout);
+        cairo_destroy (cr_txt);
+    }
+    IRect clip_rect = clip.intersect (IRect (x, y, w, h));
+    if (!clip_rect.isEmpty ()) {
+        cairo_save (cr);
+        cairo_matrix_init_translate (&cur_mat, (int)-x, (int)-y);
+        cairo_pattern_t *pat = cairo_pattern_create_for_surface (s->surface);
+        cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+        cairo_pattern_set_matrix (pat, &cur_mat);
+        cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);
+        cairo_set_source (cr, pat);
+        cairo_rectangle(cr, clip_rect.x, clip_rect.y, clip_rect.w, clip_rect.h);
+        cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+        cairo_fill (cr);
+        cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+        cairo_pattern_destroy (pat);
+        cairo_restore (cr);
+    }
+    s->dirty = false;
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {

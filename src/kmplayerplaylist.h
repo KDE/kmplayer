@@ -846,6 +846,7 @@ namespace SMIL {
     class RefMediaType;
     class AVMediaType;
     class Brush;
+    class SmilText;
     class PriorityClass;
     class Anchor;
     class Area;
@@ -883,6 +884,7 @@ public:
     virtual void visit (SMIL::RefMediaType *);
     virtual void visit (SMIL::AVMediaType *);
     virtual void visit (SMIL::Brush *);
+    virtual void visit (SMIL::SmilText *);
     virtual void visit (SMIL::Anchor *);
     virtual void visit (SMIL::Area *);
     virtual void visit (RP::Imfl *) {}
