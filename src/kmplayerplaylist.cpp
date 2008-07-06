@@ -1321,6 +1321,10 @@ void Visitor::visit (Element *elm) {
     visit (static_cast <Node *> (elm));
 }
 
+void Visitor::visit (TextNode *text) {
+    visit (static_cast <Node *> (text));
+}
+
 //-----------------------------------------------------------------------------
 
 namespace KMPlayer {

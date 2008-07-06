@@ -210,6 +210,9 @@ const short id_node_title = 140;
 const short id_node_param = 141;
 const short id_node_meta = 142;
 const short id_node_priorityclass = 143;
+const short id_node_div = 144;
+const short id_node_span = 145;
+const short id_node_p = 146;
 const short id_node_anchor = 150;
 const short id_node_area = 151;
 const short id_node_first = id_node_smil;
@@ -707,11 +710,45 @@ public:
     virtual void *message (MessageType msg, void *content=NULL);
     virtual void accept (Visitor *v) { v->visit (this); }
 
+    QString richText ();
+
     SurfacePtrW text_surface;
     NodePtrW region_node;
     ConnectionPtr region_attach;
     Runtime *runtime;
     bool inited;
+};
+
+class KMPLAYER_NO_EXPORT TextFlow : public Element {
+public:
+    TextFlow (NodePtr &doc, short id, const QByteArray &tag);
+    ~TextFlow ();
+
+    virtual void init ();
+    virtual void activate ();
+    virtual bool expose () const { return false; }
+    KDE_NO_EXPORT const char *nodeName () const { return tag.data (); }
+    NodePtr childFromTag (const QString &tag);
+    virtual void parseParam (const TrieString &name, const QString &value);
+    virtual void accept (Visitor *v) { v->visit (this); }
+
+    int font_color;
+    int background_color;
+    enum { DirLtr, DirRtl, DirLtro, DirRtlo, DirInherit } text_direction;
+    QString font_family;
+    int font_size;
+    enum {
+        StyleNormal, StyleItalic, StyleOblique, StyleRevOblique, StyleInherit
+    } font_style;
+    enum { WeightNormal, WeightBold, WeightInherit } font_weight;
+    enum { ModeAppend, ModeReplace, ModeInherit } text_mode;
+    enum { PlaceStart, PlaceCenter, PlaceEnd, PlaceInherit } text_place;
+    QString text_style;
+    enum { Wrap, NoWrap, WrapInherit } text_wrap;
+    enum { SpaceDefault, SpacePreserve } space;
+    enum { WritingLrTb, WritingRlTb, WritingTbLr, WritingTbRl } text_writing;
+
+    QByteArray tag;
 };
 
 class KMPLAYER_NO_EXPORT AnimateGroup : public Element {

@@ -1010,6 +1010,17 @@ static Element * fromContentControlGroup (NodePtr & d, const QString & tag) {
     return 0L;
 }
 
+static Element *fromTextFlowGroup (NodePtr &d, const QString &tag) {
+    const char *taglatin = tag.latin1 ();
+    if (!strcmp (taglatin, "div"))
+        return new SMIL::TextFlow (d, SMIL::id_node_div, tag.toUtf8 ());
+    if (!strcmp (taglatin, "span"))
+        return new SMIL::TextFlow (d, SMIL::id_node_span, tag.toUtf8 ());
+    if (!strcmp (taglatin, "p"))
+        return new SMIL::TextFlow (d, SMIL::id_node_p, tag.toUtf8 ());
+    return 0L;
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT NodePtr SMIL::Smil::childFromTag (const QString & tag) {
@@ -3220,6 +3231,73 @@ KDE_NO_EXPORT void SMIL::Brush::accept (Visitor * v) {
 
 //-----------------------------------------------------------------------------
 
+namespace {
+
+class RichTextVisitor : public Visitor {
+    QString span (SMIL::TextFlow *flow) {
+        QString s = "<span";
+        if (flow->font_size > 0)
+            s += " size='" + QString::number (1024 * flow->font_size) + "'";
+        if (flow->font_color > -1)
+            s += QString().sprintf (" foreground='#%06x'", flow->font_color);
+        if (flow->background_color > -1)
+            s += QString().sprintf (" background='#%06x'", flow->background_color);
+        if (SMIL::TextFlow::StyleInherit != flow->font_style) {
+            s += " style='";
+            switch (flow->font_style) {
+                case SMIL::TextFlow::StyleOblique:
+                    s += "oblique'";
+                    break;
+                case SMIL::TextFlow::StyleItalic:
+                    s += "italic'";
+                    break;
+                default:
+                    s += "normal'";
+                    break;
+            }
+        }
+        if (SMIL::TextFlow::WeightInherit != flow->font_weight) {
+            s += " weight='";
+            switch (flow->font_weight) {
+                case SMIL::TextFlow::WeightBold:
+                    s += "bold'";
+                    break;
+                default:
+                    s += "normal'";
+                    break;
+            }
+        }
+        s += ">";
+        return s;
+    }
+public:
+    using Visitor::visit;
+
+    void visit (TextNode *text) {
+        rich_text += text->nodeValue ();
+        if (text->nextSibling ())
+            text->nextSibling ()->accept (this);
+    }
+    void visit (SMIL::TextFlow *flow) {
+        QString closure;
+        if (SMIL::id_node_p == flow->id) {
+            closure ="\n\n";
+            rich_text += closure;
+        }
+        if (flow->firstChild ()) {
+            rich_text += span (flow);
+            flow->firstChild ()->accept (this);
+            rich_text += "</span>";
+            rich_text += closure;
+        }
+        if (flow->nextSibling ())
+            flow->nextSibling ()->accept (this);
+    }
+    QString rich_text;
+};
+
+}
+
 KDE_NO_CDTOR_EXPORT SMIL::SmilText::SmilText (NodePtr &d)
  : Element (d, id_node_smil_text),
    runtime (new Runtime (this)),
@@ -3240,6 +3318,8 @@ void SMIL::SmilText::init () {
 void SMIL::SmilText::activate () {
     init (); // sets all attributes
     setState (state_activated);
+    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+        c->activate ();
     runtime->start ();
 }
 
@@ -3279,7 +3359,7 @@ NodePtr SMIL::SmilText::childFromTag (const QString &tag) {
     const char *ctag = tag.ascii ();
     if (!strcmp (ctag, "tev"))
     {}//return new SMIL::TextTev (m_doc);
-    return NodePtr ();
+    return fromTextFlowGroup (m_doc, tag);
 }
 
 void SMIL::SmilText::parseParam (const TrieString &name, const QString &value) {
@@ -3318,6 +3398,9 @@ void *SMIL::SmilText::message (MessageType msg, void *content) {
             }
             return NULL;
 
+        case MsgChildFinished:
+            return NULL;
+
         default:
             break;
     }
@@ -3325,6 +3408,101 @@ void *SMIL::SmilText::message (MessageType msg, void *content) {
     if (response == MsgUnhandled)
         return Element::message (msg, content);
     return response;
+}
+
+QString SMIL::SmilText::richText () {
+    if (firstChild ()) {
+        RichTextVisitor visitor;
+        firstChild ()->accept (&visitor);
+        kDebug () << visitor.rich_text;
+        return visitor.rich_text;
+    }
+    return QString ();
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT
+SMIL::TextFlow::TextFlow (NodePtr &doc, short id, const QByteArray &t)
+ : Element (doc, id), tag (t) {}
+
+KDE_NO_CDTOR_EXPORT SMIL::TextFlow::~TextFlow () {}
+
+void SMIL::TextFlow::init () {
+    font_color = -1;
+    background_color = -1;
+    text_direction = DirInherit;
+    font_family = "sans";
+    font_size = -1;
+    font_style = StyleInherit;
+    font_weight = WeightInherit;
+    text_mode = ModeInherit;
+    text_place = PlaceInherit;
+    text_style = "";
+    text_wrap = WrapInherit;
+    space = SpaceDefault;
+    text_writing = WritingLrTb;
+    Element::init ();
+}
+
+void SMIL::TextFlow::activate () {
+    init ();
+    Element::activate ();
+}
+
+NodePtr SMIL::TextFlow::childFromTag (const QString &tag) {
+    return fromTextFlowGroup (m_doc, tag);
+}
+
+void SMIL::TextFlow::parseParam(const TrieString &name, const QString &val) {
+    if (name == "textWrap") {
+        // { Wrap, NoWrap, WrapInherit } text_wrap;
+    } else if (name == "xml:space") {
+        // { SpaceDefault, SpacePreserve } space;
+    } else if (name == "textAlign") {
+    } else if (name == "textBackgroundColor") {
+        background_color = 0xffffff & QColor (val).rgb ();
+    } else if (name == "textColor") {
+        font_color = 0xffffff & QColor (val).rgb ();
+    } else if (name == "textDirection") {
+        if (val == "ltr")
+            text_direction = DirLtr;
+        else if (val == "rtl")
+            text_direction = DirRtl;
+        else
+            text_direction = DirInherit;
+        //  DirLtro, DirRtlo
+    } else if (name == "textFontFamily") {
+        font_family = val;
+    } else if (name == "textFontSize") {
+        font_size = val.toInt ();
+    } else if (name == "textFontStyle") {
+        if (val == "normal")
+            font_style = StyleNormal;
+        else if (val == "italic")
+            font_style = StyleItalic;
+        else if (val == "oblique")
+            font_style = StyleOblique;
+        else if (val == "reverseOblique")
+            font_style = StyleRevOblique;
+        else
+            font_style = StyleInherit;
+    } else if (name == "textFontWeight") {
+        if (val == "normal")
+            font_weight = WeightNormal;
+        else if (val == "bold")
+            font_weight = WeightBold;
+        else
+            font_weight = WeightInherit;
+    } else if (name == "textMode") {
+        // { ModeAppend, ModeReplace, ModeInherit } text_mode;
+    } else if (name == "textPlace") {
+        //enum { PlaceStart, PlaceCenter, PlaceEnd, PlaceInherit } text_place;
+    } else if (name == "textStyle") {
+        text_style = val;
+    } else if (name == "textWritingMode") {
+        // { WritingLrTb, WritingRlTb, WritingTbLr, WritingTbRl } text_writing;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -4149,6 +4327,10 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::Brush * n) {
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::SmilText *n) {
+    visit (static_cast <Element *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::TextFlow *n) {
     visit (static_cast <Element *> (n));
 }
 

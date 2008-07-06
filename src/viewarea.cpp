@@ -894,7 +894,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
         PangoLayout *layout = pango_cairo_create_layout (cr_txt);
         pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
         pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-        pango_layout_set_text (layout, txt->innerText ().toUtf8().data(), -1);
+
+        pango_layout_set_markup (layout, txt->richText ().toUtf8().data(), -1);
 
         PangoFontDescription *desc = pango_font_description_new ();
         pango_font_description_set_family (desc, "Sans");
