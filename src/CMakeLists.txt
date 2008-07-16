@@ -63,7 +63,6 @@ target_link_libraries(kmplayercommon
   ${CAIROLinkFlags}
   ${PANGOLinkFlags}
   ${GLibDBusLinkFlags}
-  ${KDE4_KDECORE_LIBS}
   ${KDE4_KPARTS_LIBS}
   ${KDE4_KDEUI_LIBS}
   ${QT_QT3SUPPORT_LIBRARY}
