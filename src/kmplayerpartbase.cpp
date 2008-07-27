@@ -567,7 +567,7 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
         NodePtrW node = vi->node;
         //kDebug() << src << " " << vi->node->nodeName();
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
-        if (node->isPlayable ()) {
+        if (node->isPlayable () || id_node_playlist_item == node->id) {
             source->play (node->mrl ()); //may become !isPlayable by lazy loading
             if (node && !node->isPlayable ())
                 emit treeChanged (ri->id, node, 0, false, true);
