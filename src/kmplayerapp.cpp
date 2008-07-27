@@ -134,7 +134,7 @@ public:
 
 class KMPLAYER_NO_EXPORT Playlist : public FileDocument {
 public:
-    Playlist (KMPlayerApp *a, KMPlayer::PlayListNotify *n, bool plmod = false);
+    Playlist (KMPlayerApp *a, KMPlayer::Source *s, bool plmod = false);
     void *message (KMPlayer::MessageType msg, void *content=NULL);
     void defer ();
     void activate ();
@@ -194,8 +194,8 @@ KDE_NO_EXPORT void ListsSource::activate () {
     play (m_current ? m_current->mrl () : NULL);
 }
 
-KDE_NO_CDTOR_EXPORT FileDocument::FileDocument (short i, const QString &s, KMPlayer::PlayListNotify * n)
- : KMPlayer::Document (s, n) {
+KDE_NO_CDTOR_EXPORT FileDocument::FileDocument (short i, const QString &s, KMPlayer::Source *src)
+ : KMPlayer::SourceDocument (src, s) {
     id = i;
 }
 
@@ -312,8 +312,8 @@ KDE_NO_EXPORT void Playlist::activate () {
         defer ();
 }
 
-KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::PlayListNotify *n, bool plmode)
-    : FileDocument (KMPlayer::id_node_playlist_document, "Playlist://", n),
+KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::Source *s, bool plmode)
+    : FileDocument (KMPlayer::id_node_playlist_document, "Playlist://", s),
       app(a),
       playmode (plmode) {
     pretty_name = i18n ("Persistent Playlists");

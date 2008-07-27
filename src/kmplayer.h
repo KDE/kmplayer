@@ -24,7 +24,7 @@
 #include <kxmlguiwindow.h>
 #include <kaction.h>
 #include <kurl.h>
-#include "kmplayerplaylist.h"
+#include "kmplayersource.h"
 
 static const int id_status_msg = 1;
 static const int id_status_timer = 2;
@@ -177,9 +177,9 @@ private:
     bool m_auto_resize;
 };
 
-class KMPLAYER_NO_EXPORT FileDocument : public KMPlayer::Document {
+class KMPLAYER_NO_EXPORT FileDocument : public KMPlayer::SourceDocument {
 public:
-    FileDocument (short id, const QString &, KMPlayer::PlayListNotify * notify = 0L);
+    FileDocument (short id, const QString &, KMPlayer::Source *source = 0L);
     KMPlayer::NodePtr childFromTag (const QString & tag);
     void readFromFile (const QString & file);
     void writeToFile (const QString & file);

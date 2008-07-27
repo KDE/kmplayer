@@ -839,9 +839,11 @@ void *SourceDocument::message (MessageType msg, void *data) {
         return NULL;
     }
 
-    case MsgInfoString:
-        m_source->player ()->updateInfo (data ? *(QString *) data : QString ());
+    case MsgInfoString: {
+        QString info (data ? *((QString *) data) : QString ());
+        m_source->player ()->updateInfo (info);
         return NULL;
+    }
 
     default:
         break;
