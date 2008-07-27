@@ -33,6 +33,7 @@ namespace KMPlayer {
 class PartBase;
 class MediaManager;
 
+
 /**
  * Class for a certain media, like URL, DVD, TV etc
  */
@@ -126,7 +127,6 @@ protected:
      */
     bool resolveURL (NodePtr mrl);
     void stateElementChanged (Node * element, Node::State os, Node::State ns);
-    Surface *getSurface (Mrl *mrl);
     void setInfoMessage (const QString & msg);
     void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);
@@ -162,6 +162,14 @@ private:
     int m_length;
     int m_position;
     int m_doc_timer;
+};
+
+class KMPLAYER_EXPORT SourceDocument : public Document {
+    Source *m_source;
+public:
+    SourceDocument (Source *s, const QString &url);
+
+    void *message (MessageType msg, void *data=NULL);
 };
 
 } // namespace

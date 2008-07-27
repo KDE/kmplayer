@@ -120,7 +120,7 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         if (n->active ())
             n->deactivate ();
-    rp_surface = Mrl::getSurface (NULL);
+    rp_surface = (Surface *) message (MsgQueryRoleChildDisplay, NULL);
 }
 
 KDE_NO_EXPORT void *RP::Imfl::message (MessageType msg, void *content) {
@@ -156,7 +156,7 @@ KDE_NO_EXPORT void RP::Imfl::accept (Visitor * v) {
 
 KDE_NO_EXPORT Surface *RP::Imfl::surface () {
     if (!rp_surface) {
-        rp_surface = Mrl::getSurface (this);
+        rp_surface = (Surface *) Mrl::message (MsgQueryRoleChildDisplay, this);
         if (rp_surface) {
             if (width <= 0 || width > 32000)
                 width = rp_surface->bounds.width ();

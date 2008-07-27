@@ -899,7 +899,7 @@ struct IntroSource : public KMPlayer::Source {
 KDE_NO_EXPORT void IntroSource::activate () {
     if (m_player->settings ()->autoresize)
         m_app->disconnect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
-    m_document = new KMPlayer::Document (QString (""), this);
+    m_document = new KMPlayer::SourceDocument (this, QString ());
     QString introfile = KStandardDirs::locate ("data", "kmplayer/intro.xml");
     QFile file (introfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
@@ -1275,7 +1275,7 @@ struct ExitSource : public KMPlayer::Source {
 };
 
 KDE_NO_EXPORT void ExitSource::activate () {
-    m_document = new KMPlayer::Document (QString (""), this);
+    m_document = new KMPlayer::SourceDocument (this, QString ());
     QString exitfile = KStandardDirs::locate ("data", "kmplayer/exit.xml");
     QFile file (exitfile);
     if (file.exists () && file.open (IO_ReadOnly)) {

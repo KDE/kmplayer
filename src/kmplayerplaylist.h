@@ -264,9 +264,11 @@ enum MessageType
     MsgStateFreeze,
     MsgStateRewind,
     MsgChildFinished,
+
     MsgStartQueryMessage,
     MsgQueryRoleTiming,
     MsgQueryRoleDisplay,
+    MsgQueryRoleChildDisplay,    // Mrl*
     MsgQueryRoleSizer,
     MsgQueryReceivers,
     MsgEndQueryMessage,
@@ -396,11 +398,6 @@ public:
      * Alternative to event handling is the Visitor pattern
      */
     virtual void accept (Visitor *);
-    /**
-     * Adds node to call 'message()' for all events that gets
-     * delivered to this node, ignored by default
-     */
-    virtual Surface *getSurface (Mrl *mrl);
     /**
      * Activates element, sets state to state_activated. Will call activate() on
      * firstChild or call deactivate().
@@ -572,10 +569,6 @@ public:
     virtual void undefer ();
     virtual void deactivate ();
     virtual void *message (MessageType msg, void *content=NULL);
-    /**
-     * By default support one event handler (eg. SMIL or RP child document)
-     */
-    virtual Surface *getSurface (Mrl *mrl);
 
     /**
      * If this Mrl is top node of external document, opener has the
@@ -612,10 +605,6 @@ public:
      * Element has activated or deactivated notification
      */
     virtual void stateElementChanged (Node * element, Node::State old_state, Node::State new_state) = 0;
-    /**
-     * Set element to which to send GUI events and return a surface for drawing
-     */
-    virtual Surface *getSurface (Mrl *mrl) = 0;
     /**
      * Request to show msg for informing the user
      */
@@ -768,10 +757,6 @@ public:
      * Document has list of postponed receivers, eg. for running (gif)movies
      */
     virtual void *message (MessageType msg, void *content=NULL);
-    /**
-     * Reimplement, so it will call PlayListNotify::getSurface()
-     */
-    virtual Surface *getSurface (Mrl *mrl);
 
     PlayListNotify *notify_listener;
     unsigned int m_tree_version;

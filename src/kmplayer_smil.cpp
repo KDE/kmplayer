@@ -1043,7 +1043,7 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
 
 KDE_NO_EXPORT void SMIL::Smil::deactivate () {
     state = state_deactivated;
-    Mrl::getSurface (NULL);
+    message (MsgQueryRoleChildDisplay, NULL);
     Mrl::deactivate ();
 }
 
@@ -1445,7 +1445,8 @@ void *SMIL::RootLayout::message (MessageType msg, void *content) {
             if (state_finished == state && !region_surface) {
                 SMIL::Smil *s = Smil::findSmilNode (this);
                 if (s && s->active ()) {
-                    Surface *surface = s->getSurface (s);
+                    Surface *surface = (Surface *)s->message (
+                            MsgQueryRoleChildDisplay, s);
                     region_surface = surface;
                     w = s->width;
                     h = s->height;
@@ -2717,19 +2718,6 @@ KDE_NO_EXPORT void SMIL::MediaType::reset () {
     runtime->reset ();
 }
 
-Surface *SMIL::MediaType::getSurface (Mrl *mrl) {
-    resetSurface ();
-    Surface *s = NULL;
-    if (mrl) {
-        width = mrl->width;
-        height = mrl->height;
-        s = (Surface *) message (MsgQueryRoleDisplay);
-        if (s)
-            s->node = mrl;
-    }
-    return s;
-}
-
 KDE_NO_EXPORT void SMIL::MediaType::resetSurface () {
     if (sub_surface)
         sub_surface->remove ();
@@ -2903,6 +2891,20 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                 }
             }
             return sub_surface.ptr ();
+
+        case MsgQueryRoleChildDisplay: {
+            resetSurface ();
+            Surface *s = NULL;
+            Mrl *mrl = (Mrl *) content;
+            if (mrl) {
+                width = mrl->width;
+                height = mrl->height;
+                s = (Surface *) message (MsgQueryRoleDisplay);
+                if (s)
+                    s->node = mrl;
+            }
+            return s;
+        }
 
         case MsgQueryReceivers: {
             MessageType m = (MessageType) (long) content;

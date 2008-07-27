@@ -826,6 +826,23 @@ KAboutData* PartBase::createAboutData () {
 
 //-----------------------------------------------------------------------------
 
+SourceDocument::SourceDocument (Source *s, const QString &url)
+    : Document (url, s), m_source (s) {}
+
+void *SourceDocument::message (MessageType msg, void *data) {
+    switch (msg) {
+    case MsgQueryRoleChildDisplay: {
+        PartBase *p = m_source->player ();
+        if (p->view ())
+            return p->viewWidget ()->viewArea ()->getSurface ((Mrl *) data);
+        return NULL;
+    }
+    default:
+        break;
+    }
+    return Document::message (msg, data);
+}
+
 Source::Source (const QString & name, PartBase * player, const char * n)
  : QObject (player, n),
    m_name (name), m_player (player), m_identified (false), m_auto_play (true),
@@ -933,7 +950,7 @@ void Source::setUrl (const QString &url) {
     else {
         if (m_document)
             m_document->document ()->dispose ();
-        m_document = new Document (url, this);
+        m_document = new SourceDocument (this, url);
     }
     if (m_player->source () == this)
         m_player->updateTree ();
@@ -1045,12 +1062,6 @@ void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
     }
 }
 
-Surface *Source::getSurface (Mrl *mrl) {
-    if (m_player->view ())
-        return m_player->viewWidget ()->viewArea ()->getSurface (mrl);
-    return NULL;
-}
-
 void Source::setInfoMessage (const QString & msg) {
     m_player->updateInfo (msg);
 }
@@ -1139,7 +1150,7 @@ void Source::setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur) {
 
 NodePtr Source::document () {
     if (!m_document)
-        m_document = new Document (QString (), this);
+        m_document = new SourceDocument (this, QString ());
     return m_document;
 }
 
@@ -1336,7 +1347,8 @@ void URLSource::deactivate () {
         m_document->document ()->dispose ();
         m_document = NULL;
     }
-    getSurface (NULL);
+    if (m_player->view ())
+        m_player->viewWidget ()->viewArea ()->getSurface (NULL);
 }
 
 QString URLSource::prettyName () {

@@ -590,7 +590,6 @@ public:
     virtual void begin ();
     virtual void finish ();
     virtual void reset ();
-    virtual Surface *getSurface (Mrl *mrl);
     /* (new) sub-region or NULL if not displayed */
     void resetSurface ();
     SRect calculateBounds ();

@@ -483,10 +483,6 @@ QString Node::nodeValue () const {
     return QString ();
 }
 
-Surface *Node::getSurface (Mrl *) {
-    return NULL;
-}
-
 //-----------------------------------------------------------------------------
 
 RefNode::RefNode (NodePtr & d, NodePtr ref)
@@ -711,13 +707,19 @@ Mrl * Mrl::mrl () {
 }
 
 void *Mrl::message (MessageType msg, void *content) {
-    if (MsgMediaFinished == msg) {
+    switch (msg) {
+    case MsgMediaFinished:
         if (state == state_deferred &&
                 !isPlayable () && firstChild ()) {//if backend added child links
             state = state_activated;
             firstChild ()->activate ();
         } else
             finish ();
+        return NULL;
+    case MsgQueryRoleChildDisplay:
+        for (NodePtr p = parentNode (); p; p = p->parentNode ())
+            if (p->mrl ())
+                return p->message (msg, content);
         return NULL;
     }
     return Node::message (msg, content);
@@ -780,13 +782,6 @@ void Mrl::deactivate () {
         media_object = NULL;
     }
     Node::deactivate ();
-}
-
-Surface *Mrl::getSurface (Mrl *mrl) {
-    for (NodePtr p = parentNode (); p; p = p->parentNode ())
-        if (p->mrl ())
-            return p->getSurface (mrl);
-    return NULL;
 }
 
 void Mrl::parseParam (const TrieString & para, const QString & val) {
@@ -1220,12 +1215,6 @@ void Document::proceed (const struct timeval &postponed_time) {
         notify_listener->enableRepaintUpdaters (true, diff);
     PostponedEvent event (false);
     deliver (MsgEventPostponed, &event);
-}
-
-Surface *Document::getSurface (Mrl *mrl) {
-    if (notify_listener)
-        return notify_listener->getSurface (mrl);
-    return NULL;
 }
 
 void *Document::message (MessageType msg, void *content) {
