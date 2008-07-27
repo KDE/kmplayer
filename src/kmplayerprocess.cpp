@@ -852,7 +852,8 @@ KDE_NO_EXPORT void MPlayer::processOutput (K3Process *, char * str, int slen) {
                 int e = out.find (';', p);
                 if (e > -1)
                     e -= p;
-                ((PlayListNotify *)m_source)->setInfoMessage (out.mid (p, e));
+                QString inf = out.mid (p, e);
+                mrl ()->document ()->message (MsgInfoString, &inf);
             }
         } else if (v) {
             QRegExp & m_startRegExp = patterns[MPlayerPreferencesPage::pat_start];
@@ -1364,7 +1365,7 @@ void MasterProcess::streamInfo (uint64_t length, double aspect) {
 }
 
 void MasterProcess::streamMetaInfo (QString info) {
-    ((PlayListNotify *) m_source)->setInfoMessage (info);
+    m_source->document ()->message (MsgInfoString, &info);
 }
 
 void MasterProcess::playing () {
@@ -2642,7 +2643,7 @@ KDE_NO_EXPORT void NpPlayer::processOutput (K3Process *, char * str, int slen) {
 KDE_NO_EXPORT void NpPlayer::processStopped (K3Process *) {
     terminateJobs ();
     if (m_source)
-        ((PlayListNotify *) m_source)->setInfoMessage (QString ());
+        m_source->document ()->message (MsgInfoString, NULL);
     setState (IProcess::NotRunning);
 }
 

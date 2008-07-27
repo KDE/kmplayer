@@ -126,9 +126,8 @@ KDE_NO_EXPORT void XSPF::Track::closed () {
 KDE_NO_EXPORT void XSPF::Track::activate () {
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_annotation) {
-            PlayListNotify * n = document ()->notify_listener;
-            if (n)
-                n->setInfoMessage (e->innerText ().stripWhiteSpace ());
+            QString inf = e->innerText ().stripWhiteSpace ();
+            document ()->message (MsgInfoString, &inf);
             break;
         }
     Mrl::activate ();

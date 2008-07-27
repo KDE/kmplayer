@@ -127,7 +127,6 @@ protected:
      */
     bool resolveURL (NodePtr mrl);
     void stateElementChanged (Node * element, Node::State os, Node::State ns);
-    void setInfoMessage (const QString & msg);
     void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);
     MediaManager *mediaManager () const;

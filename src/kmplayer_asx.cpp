@@ -106,10 +106,9 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
         if (e->id == id_node_param) {
             Element * elm = convertNode <Element> (e);
             if (getAsxAttribute(elm,"name").lower() == QString("clipsummary")) {
-                PlayListNotify * n = document ()->notify_listener;
-                if (n)
-                    n->setInfoMessage (KURL::decode_string (
-                                getAsxAttribute (elm, "value")));
+                QString inf = KURL::decode_string (
+                                getAsxAttribute (elm, "value"));
+                document ()->message (MsgInfoString, &inf);
             }
         } else if (e->id == id_node_duration) {
             QString s = convertNode <Element> (e)->getAttribute (
@@ -140,9 +139,7 @@ KDE_NO_EXPORT void *ASX::Entry::message (MessageType msg, void *content) {
 }
 
 KDE_NO_EXPORT void ASX::Entry::deactivate () {
-    PlayListNotify * n = document ()->notify_listener;
-    if (n)
-        n->setInfoMessage (QString ());
+    document ()->message (MsgInfoString, NULL);
     if (duration_timer) {
         document()->cancelPosting (duration_timer);
         duration_timer = NULL;

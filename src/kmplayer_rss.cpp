@@ -88,22 +88,19 @@ KDE_NO_EXPORT Mrl * RSS::Item::linkNode () {
 }
 
 KDE_NO_EXPORT void RSS::Item::activate () {
-    PlayListNotify * n = document()->notify_listener;
-    if (n) {
-        for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-            if (c->id == id_node_description) {
-                QString s = c->innerText ();
-                n->setInfoMessage (s);
-                if (!enclosure && !s.isEmpty ()) {
-                    setState (state_activated);
-                    begin ();
-                    timer = document ()->post (this,
-                            new TimerPosting (5000+s.length()*200));
-                    return;
-                }
-                break;
+    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+        if (c->id == id_node_description) {
+            QString s = c->innerText ();
+            document ()->message (MsgInfoString, &s);
+            if (!enclosure && !s.isEmpty ()) {
+                setState (state_activated);
+                begin ();
+                timer = document ()->post (this,
+                        new TimerPosting (5000+s.length()*200));
+                return;
             }
-    }
+            break;
+        }
     Mrl::activate ();
 }
 
@@ -112,9 +109,7 @@ KDE_NO_EXPORT void RSS::Item::deactivate () {
         document ()->cancelPosting (timer);
         timer = 0L;
     }
-    PlayListNotify * n = document()->notify_listener;
-    if (n)
-        n->setInfoMessage (QString ());
+    document ()->message (MsgInfoString, NULL);
     Mrl::deactivate ();
 }
 

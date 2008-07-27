@@ -831,12 +831,18 @@ SourceDocument::SourceDocument (Source *s, const QString &url)
 
 void *SourceDocument::message (MessageType msg, void *data) {
     switch (msg) {
+
     case MsgQueryRoleChildDisplay: {
         PartBase *p = m_source->player ();
         if (p->view ())
             return p->viewWidget ()->viewArea ()->getSurface ((Mrl *) data);
         return NULL;
     }
+
+    case MsgInfoString:
+        m_source->player ()->updateInfo (data ? *(QString *) data : QString ());
+        return NULL;
+
     default:
         break;
     }
@@ -1060,10 +1066,6 @@ void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
         else if (ns == Node::state_began || os == Node::state_began)
             m_player->updateTree (false);
     }
-}
-
-void Source::setInfoMessage (const QString & msg) {
-    m_player->updateInfo (msg);
 }
 
 void Source::bitRates (int & preferred, int & maximal) {

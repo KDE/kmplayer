@@ -272,6 +272,8 @@ enum MessageType
     MsgQueryRoleSizer,
     MsgQueryReceivers,
     MsgEndQueryMessage,
+
+    MsgInfoString                // QString*
 };
 
 #define MsgUnhandled ((void *) 357L)
@@ -605,10 +607,6 @@ public:
      * Element has activated or deactivated notification
      */
     virtual void stateElementChanged (Node * element, Node::State old_state, Node::State new_state) = 0;
-    /**
-     * Request to show msg for informing the user
-     */
-    virtual void setInfoMessage (const QString & msg) = 0;
     /**
      * Ask for connection bitrates settings
      */
