@@ -17,8 +17,7 @@ add_definitions(-DQT3_SUPPORT -DKDE3_SUPPORT)
 
 ADD_DEFINITIONS(${CAIROCFlags})
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR} ${CAIROIncDir})
-
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR} ${CAIROIncDir} ${EXPAT_INCLUDE_DIRS})
 
 set(libkmplayercommon_SRCS
   kmplayerview.cpp
@@ -68,6 +67,7 @@ target_link_libraries(kmplayercommon
   ${QT_QT3SUPPORT_LIBRARY}
   ${KDE4_KDE3SUPPORT_LIBRARY}
   ${X11_X11_LIB}
+  ${EXPAT_LIBRARIES}
   kmediaplayer
 )
 

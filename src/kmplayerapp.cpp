@@ -353,7 +353,9 @@ KDE_NO_EXPORT void PlaylistItemBase::activate () {
         QString data;
         QString pn;
         if (parentNode ()->id == KMPlayer::id_node_group_node) {
-            data = parentNode ()->innerXML ();
+            data = QString ("<playlist>") +
+                parentNode ()->innerXML () +
+                QString ("</playlist>");
             pn = parentNode ()->mrl ()->pretty_name;
         } else {
             data = outerXML ();

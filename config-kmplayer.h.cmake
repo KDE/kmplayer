@@ -11,3 +11,6 @@
 
 /* have NPP */
 #cmakedefine KMPLAYER_WITH_NPP 1
+
+/* use expat */
+#cmakedefine KMPLAYER_WITH_EXPAT 1

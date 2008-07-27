@@ -10,6 +10,7 @@ include_directories( ${KDE4_INCLUDES})
 if(NOT WIN32)
   OPTION(WITH_CAIRO "Enable Cairo support" ON)
   OPTION(WITH_NPP "Build NPP player" ON)
+  OPTION(WITH_EXPAT "Use expat XML parser" OFF)
   INCLUDE(UsePkgConfig)
 
   if (WITH_CAIRO)
@@ -34,6 +35,15 @@ if(NOT WIN32)
       endif (GTKCflags)
     endif (GLibDBusCflags)
   endif (WITH_NPP)
+
+  if (WITH_EXPAT)
+      INCLUDE(FindEXPAT)
+      if (EXPAT_FOUND)
+          set(KMPLAYER_WITH_EXPAT 1)
+      else (EXPAT_FOUND)
+          MESSAGE(Expat found)
+      endif (EXPAT_FOUND)
+  endif (WITH_EXPAT)
 
 endif(NOT WIN32)
 

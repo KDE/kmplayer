@@ -22,7 +22,7 @@
 #include <qtextstream.h>
 #include <kdebug.h>
 #include <kurl.h>
-#ifdef HAVE_EXPAT
+#ifdef KMPLAYER_WITH_EXPAT
 #include <expat.h>
 #endif
 #ifdef KMPLAYER_WITH_CAIRO
@@ -721,6 +721,8 @@ void *Mrl::message (MessageType msg, void *content) {
             if (p->mrl ())
                 return p->message (msg, content);
         return NULL;
+    default:
+        break;
     }
     return Node::message (msg, content);
 }
@@ -1331,7 +1333,7 @@ public:
     bool endTag (const QString & tag);
     bool characterData (const QString & data);
     bool cdataData (const QString & data);
-#ifdef HAVE_EXPAT
+#ifdef KMPLAYER_WITH_EXPAT
     void cdataStart ();
     void cdataEnd ();
 private:
@@ -1345,7 +1347,7 @@ private:
 DocumentBuilder::DocumentBuilder (NodePtr d, bool set_opener)
  : m_ignore_depth (0), m_set_opener (set_opener), m_root_is_first (false)
  , m_node (d), m_root (d)
-#ifdef HAVE_EXPAT
+#ifdef KMPLAYER_WITH_EXPAT
  , in_cdata (false)
 #endif
 {}
@@ -1417,7 +1419,7 @@ bool DocumentBuilder::endTag (const QString & tag) {
 
 bool DocumentBuilder::characterData (const QString & data) {
     if (!m_ignore_depth) {
-#ifdef HAVE_EXPAT
+#ifdef KMPLAYER_WITH_EXPAT
         if (in_cdata)
             cdata += data;
         else
@@ -1437,7 +1439,7 @@ bool DocumentBuilder::cdataData (const QString & data) {
     return true;
 }
 
-#ifdef HAVE_EXPAT
+#ifdef KMPLAYER_WITH_EXPAT
 
 void DocumentBuilder::cdataStart () {
     cdata.truncate (0);
@@ -1495,13 +1497,15 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
     XML_SetCdataSectionHandler (parser, cdataStart, cdataEnd);
     if (!firstline.isEmpty ()) {
         QString str (firstline + QChar ('\n'));
-        QCString buf = str.utf8 ();
+        QByteArray ba = str.utf8 ();
+        char *buf = ba.data();
         ok = XML_Parse(parser, buf, strlen (buf), false) != XML_STATUS_ERROR;
         if (!ok)
             kWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser);
     }
     if (ok && !in.atEnd ()) {
-        QCString buf = in.read ().utf8 ();
+        QByteArray ba = in.read ().utf8 ();
+        char *buf = ba.data();
         ok = XML_Parse(parser, buf, strlen (buf), true) != XML_STATUS_ERROR;
         if (!ok)
             kWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser);
@@ -1512,7 +1516,7 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
 }
 
 //-----------------------------------------------------------------------------
-#else // HAVE_EXPAT
+#else // KMPLAYER_WITH_EXPAT
 
 namespace {
 
@@ -2007,4 +2011,4 @@ bool SimpleSAXParser::parse (QTextStream & d) {
     return false; // need more data
 }
 
-#endif // HAVE_EXPAT
+#endif // KMPLAYER_WITH_EXPAT
