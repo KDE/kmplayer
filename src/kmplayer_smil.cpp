@@ -1043,7 +1043,6 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
 
 KDE_NO_EXPORT void SMIL::Smil::deactivate () {
     state = state_deactivated;
-    message (MsgQueryRoleChildDisplay, NULL);
     Mrl::deactivate ();
 }
 
@@ -1437,6 +1436,14 @@ KDE_NO_EXPORT void SMIL::RootLayout::closed () {
             s->height = height.toDouble();
         }
     }
+}
+
+KDE_NO_EXPORT void SMIL::RootLayout::deactivate () {
+    RegionBase::deactivate ();
+    SMIL::Smil *s = Smil::findSmilNode (this);
+    if (s)
+        s->message (MsgQueryRoleChildDisplay, NULL);
+    region_surface = NULL;
 }
 
 void *SMIL::RootLayout::message (MessageType msg, void *content) {

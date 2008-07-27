@@ -331,6 +331,7 @@ public:
     KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d)
         : RegionBase (d, id_node_root_layout) {}
     void closed ();
+    void deactivate ();
     void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
     void updateDimensions ();
