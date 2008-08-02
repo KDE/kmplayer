@@ -147,8 +147,8 @@ GrabDocument::GrabDocument (KMPlayerPart *part, const QString &url,
 }
 
 void GrabDocument::activate () {
-    media_object = notify_listener->mediaManager()->createMedia (
-            MediaManager::AudioVideo, this);
+    media_info = new MediaInfo (this, MediaManager::AudioVideo);
+    media_info->create ();
     kDebug() << src;
     Mrl::activate ();
 }
@@ -159,7 +159,7 @@ void GrabDocument::undefer () {
 
 void GrabDocument::begin () {
     setState (state_began);
-    AudioVideoMedia *av = static_cast <AudioVideoMedia *> (media_object);
+    AudioVideoMedia *av = static_cast <AudioVideoMedia *> (media_info->media);
     kDebug() << m_grab_file;
     av->grabPicture (m_grab_file, 0);
 }

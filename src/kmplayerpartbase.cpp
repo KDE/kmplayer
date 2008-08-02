@@ -34,7 +34,6 @@
 #include <qslider.h>
 #include <qfile.h>
 #include <qregexp.h>
-#include <qtextstream.h>
 
 #include <kmessagebox.h>
 #include <kaboutdata.h>
@@ -832,6 +831,9 @@ SourceDocument::SourceDocument (Source *s, const QString &url)
 void *SourceDocument::message (MessageType msg, void *data) {
     switch (msg) {
 
+    case MsgQueryMediaManager:
+        return m_source->player ()->mediaManager ();
+
     case MsgQueryRoleChildDisplay: {
         PartBase *p = m_source->player ();
         if (p->view ())
@@ -906,9 +908,10 @@ void Source::setAspect (NodePtr node, float a) {
     Mrl *mrl = node ? node->mrl () : 0L;
     bool changed = false;
     if (mrl &&
-            mrl->media_object &&
-            MediaManager::AudioVideo == mrl->media_object->type ()) {
-        static_cast <AudioVideoMedia*>(mrl->media_object)->viewer->setAspect(a);
+            mrl->media_info &&
+            mrl->media_info->media &&
+            MediaManager::AudioVideo == mrl->media_info->type) {
+        static_cast <AudioVideoMedia*>(mrl->media_info->media)->viewer->setAspect(a);
         if (mrl->view_mode == Mrl::WindowMode)
             changed |= (fabs (mrl->aspect - a) > 0.001);
         mrl->aspect = a;
@@ -1019,10 +1022,6 @@ bool Source::authoriseUrl (const QString &) {
     return true;
 }
 
-bool Source::resolveURL (NodePtr) {
-    return true;
-}
-
 void Source::setTimeout (int ms) {
     //kDebug () << "Source::setTimeout " << ms;
     if (m_doc_timer)
@@ -1073,10 +1072,6 @@ void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
 void Source::bitRates (int & preferred, int & maximal) {
     preferred = 1024 * m_player->settings ()->prefbitrate;
     maximal= 1024 * m_player->settings ()->maxbitrate;
-}
-
-MediaManager *Source::mediaManager () const {
-    return m_player->mediaManager ();
 }
 
 void Source::openUrl (const KUrl &url, const QString &t, const QString &srv) {
@@ -1313,35 +1308,20 @@ KDE_NO_EXPORT void URLSource::activate () {
         play (NULL);
 }
 
-KDE_NO_EXPORT void URLSource::stopResolving () {
-    if (m_resolve_info) {
-        for (SharedPtr <ResolveInfo> ri = m_resolve_info; ri; ri = ri->next)
-            ri->job->kill ();
-        m_resolve_info = 0L;
-        m_player->updateStatus (i18n ("Disconnected"));
-        m_player->setLoaded (100);
-    }
-}
-
 void URLSource::reset () {
-    stopResolving ();
     Source::reset ();
 }
 
 void URLSource::forward () {
-    stopResolving ();
     Source::forward ();
 }
 
 void URLSource::backward () {
-    stopResolving ();
     Source::backward ();
 }
 
 void URLSource::play (Mrl *mrl) {
-    // what should we do if currently resolving this mrl ..
-    if (!m_resolve_info)
-        Source::play (mrl);
+    Source::play (mrl);
 }
 
 void URLSource::deactivate () {
@@ -1383,201 +1363,6 @@ QString URLSource::prettyName () {
     return i18n ("Url - ") + m_url.prettyUrl ();
 }
 
-static bool isPlayListMime (const QString & mime) {
-    QString m (mime);
-    int plugin_pos = m.find ("-plugin");
-    if (plugin_pos > 0)
-        m.truncate (plugin_pos);
-    QByteArray ba = m.toAscii ();
-    const char * mimestr = ba.data ();
-    kDebug() << "isPlayListMime " << mimestr;
-    return mimestr && (!strcmp (mimestr, "audio/mpegurl") ||
-            !strcmp (mimestr, "audio/x-mpegurl") ||
-            !strncmp (mimestr, "video/x-ms", 10) ||
-            !strncmp (mimestr, "audio/x-ms", 10) ||
-            //!strcmp (mimestr, "video/x-ms-wmp") ||
-            //!strcmp (mimestr, "video/x-ms-asf") ||
-            //!strcmp (mimestr, "video/x-ms-wmv") ||
-            //!strcmp (mimestr, "video/x-ms-wvx") ||
-            //!strcmp (mimestr, "video/x-msvideo") ||
-            !strcmp (mimestr, "audio/x-scpls") ||
-            !strcmp (mimestr, "audio/x-pn-realaudio") ||
-            !strcmp (mimestr, "audio/vnd.rn-realaudio") ||
-            !strcmp (mimestr, "audio/m3u") ||
-            !strcmp (mimestr, "audio/x-m3u") ||
-            !strncmp (mimestr, "text/", 5) ||
-            (!strncmp (mimestr, "application/", 12) &&
-             strstr (mimestr + 12,"+xml")) ||
-            !strncasecmp (mimestr, "application/smil", 16) ||
-            !strncasecmp (mimestr, "application/xml", 15) ||
-            //!strcmp (mimestr, "application/rss+xml") ||
-            //!strcmp (mimestr, "application/atom+xml") ||
-            !strcmp (mimestr, "application/x-mplayer2"));
-}
-
-KDE_NO_EXPORT void URLSource::read (NodePtr root, QTextStream & textstream) {
-    QString line;
-    do {
-        line = textstream.readLine ();
-    } while (!line.isNull () && line.stripWhiteSpace ().isEmpty ());
-    if (!line.isNull ()) {
-        NodePtr cur_elm = root;
-        if (cur_elm->isPlayable ())
-            cur_elm = cur_elm->mrl ()->linkNode ();
-        if (cur_elm->mrl ()->mimetype == QString ("audio/x-scpls")) {
-            bool groupfound = false;
-            int nr = -1;
-            struct Entry {
-                QString url, title;
-            } * entries = 0L;
-            do {
-                line = line.stripWhiteSpace ();
-                if (!line.isEmpty ()) {
-                    if (line.startsWith (QString ("[")) && line.endsWith (QString ("]"))) {
-                        if (!groupfound && line.mid (1, line.length () - 2).stripWhiteSpace () == QString ("playlist"))
-                            groupfound = true;
-                        else
-                            break;
-                        kDebug () << "Group found: " << line;
-                    } else if (groupfound) {
-                        int eq_pos = line.find (QChar ('='));
-                        if (eq_pos > 0) {
-                            if (line.lower ().startsWith (QString ("numberofentries"))) {
-                                nr = line.mid (eq_pos + 1).stripWhiteSpace ().toInt ();
-                                kDebug () << "numberofentries : " << nr;
-                                if (nr > 0 && nr < 1024)
-                                    entries = new Entry[nr];
-                                else
-                                    nr = 0;
-                            } else if (nr > 0) {
-                                QString ll = line.lower ();
-                                if (ll.startsWith (QString ("file"))) {
-                                    int i = line.mid (4, eq_pos-4).toInt ();
-                                    if (i > 0 && i <= nr)
-                                        entries[i-1].url = line.mid (eq_pos + 1).stripWhiteSpace ();
-                                } else if (ll.startsWith (QString ("title"))) {
-                                    int i = line.mid (5, eq_pos-5).toInt ();
-                                    if (i > 0 && i <= nr)
-                                        entries[i-1].title = line.mid (eq_pos + 1).stripWhiteSpace ();
-                                }
-                            }
-                        }
-                    }
-                }
-                line = textstream.readLine ();
-            } while (!line.isNull ());
-            for (int i = 0; i < nr; i++)
-                if (!entries[i].url.isEmpty ())
-                    cur_elm->appendChild (new GenericURL (m_document, KUrl::decode_string (entries[i].url), entries[i].title));
-            delete [] entries;
-        } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
-            readXML (cur_elm, textstream, line);
-            //cur_elm->normalize ();
-            if (m_document && m_document->firstChild ()) {
-                // SMIL documents have set its size of root-layout
-                Mrl * mrl = m_document->firstChild ()->mrl ();
-                if (mrl)
-                    Source::setDimensions (m_document->firstChild (), mrl->width, mrl->height);
-            }
-        } else if (line.lower () != QString ("[reference]")) {
-            bool extm3u = line.startsWith ("#EXTM3U");
-            QString title;
-            if (extm3u)
-                line = textstream.readLine ();
-            while (!line.isNull ()) {
-             /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/
-                QString mrl = line.stripWhiteSpace ();
-                if (line == QString ("--stop--"))
-                    break;
-                if (mrl.lower ().startsWith (QString ("asf ")))
-                    mrl = mrl.mid (4).stripWhiteSpace ();
-                if (!mrl.isEmpty ()) {
-                    if (extm3u && mrl.startsWith (QChar ('#'))) {
-                        if (line.startsWith ("#EXTINF:"))
-                            title = line.mid (9);
-                        else
-                            title = mrl.mid (1);
-                    } else if (!line.startsWith (QChar ('#'))) {
-                        cur_elm->appendChild (new GenericURL (m_document, mrl, title));
-                        title.truncate (0);
-                    }
-                }
-                line = textstream.readLine ();
-            }
-        }
-    }
-}
-
-KDE_NO_EXPORT void URLSource::kioData (KIO::Job * job, const QByteArray & d) {
-    SharedPtr <ResolveInfo> rinfo = m_resolve_info;
-    while (rinfo && rinfo->job != job)
-        rinfo = rinfo->next;
-    if (!rinfo) {
-        kWarning () << "Spurious kioData";
-        return;
-    }
-    int size = rinfo->data.size ();
-    int newsize = size + d.size ();
-    if (!size /* first data*/ &&
-            (KMimeType::isBufferBinaryData (d) ||
-             (newsize > 4 && !strncmp (d.data (), "RIFF", 4))))
-        newsize = 0;
-    //kDebug () << "URLSource::kioData: " << newsize;
-    if (newsize <= 0 || newsize > 200000) {
-        rinfo->data.resize (0);
-        rinfo->job->kill (KJob::EmitResult);
-        m_player->setLoaded (100);
-    } else  {
-        rinfo->data.resize (newsize);
-        memcpy (rinfo->data.data () + size, d.data (), newsize - size);
-        m_player->setLoaded (++rinfo->progress);
-    }
-}
-
-KDE_NO_EXPORT void URLSource::kioMimetype (KIO::Job *job, const QString & mimestr) {
-    SharedPtr <ResolveInfo> rinfo = m_resolve_info;
-    while (rinfo && rinfo->job != job)
-        rinfo = rinfo->next;
-    if (!rinfo) {
-        kWarning () << "Spurious kioData";
-        return;
-    }
-    kDebug() << "kioMimetype " << mimestr;
-    if (rinfo->resolving_mrl)
-        rinfo->resolving_mrl->mrl ()->mimetype = mimestr;
-    if (!rinfo->resolving_mrl || !isPlayListMime (mimestr))
-        job->kill (KJob::EmitResult);
-}
-
-KDE_NO_EXPORT void URLSource::kioResult (KJob *job) {
-    kDebug() << "kioResult";
-    SharedPtr <ResolveInfo> previnfo, rinfo = m_resolve_info;
-    while (rinfo && rinfo->job != job) {
-        previnfo = rinfo;
-        rinfo = rinfo->next;
-    }
-    if (!rinfo) {
-        kWarning () << "Spurious kioData";
-        return;
-    }
-    m_player->updateStatus ("");
-    m_player->setLoaded (100);
-    if (previnfo)
-        previnfo->next = rinfo->next;
-    else
-        m_resolve_info = rinfo->next;
-
-    if (rinfo->resolving_mrl) {
-        if (rinfo->data.size () > 0 &&
-                isPlayListMime (rinfo->resolving_mrl->mrl ()->mimetype)) {
-            QTextStream textstream (rinfo->data, IO_ReadOnly);
-            read (rinfo->resolving_mrl, textstream);
-        }
-        rinfo->resolving_mrl->mrl ()->resolved = true;
-        rinfo->resolving_mrl->undefer ();
-    }
-}
-
 bool URLSource::authoriseUrl (const QString &url) {
     KUrl base = document ()->mrl ()->src;
     if (base != url) {
@@ -1607,73 +1392,6 @@ void URLSource::setUrl (const QString &url) {
         if (mimeptr)
             mrl->mimetype = mimeptr->name ();
     }
-}
-
-bool URLSource::resolveURL (NodePtr m) {
-    Mrl * mrl = m->mrl ();
-    if (!mrl || mrl->src.isEmpty ())
-        return true;
-    int depth = 0;
-    for (NodePtr e = m->parentNode (); e; e = e->parentNode ())
-        ++depth;
-    if (depth > 40)
-        return true;
-    KUrl url (mrl->absolutePath ());
-    QString mimestr = mrl->mimetype;
-    if (mimestr == "application/x-shockwave-flash" ||
-            mimestr == "application/futuresplash")
-        return true; // FIXME
-    bool maybe_playlist = isPlayListMime (mimestr);
-    kDebug () << "resolveURL " << mrl->absolutePath () << " " << mimestr;
-    if (url.isLocalFile ()) {
-        QFile file (url.path ());
-        if (!file.exists ()) {
-            kWarning () << "resolveURL " << url.path() << " not found";
-            return true;
-        }
-        if (mimestr.isEmpty ()) {
-            KMimeType::Ptr mimeptr = KMimeType::findByUrl (url);
-            if (mimeptr) {
-                mrl->mimetype = mimeptr->name ();
-                maybe_playlist = isPlayListMime (mrl->mimetype); // get new mime
-            }
-        }
-        if (maybe_playlist && file.size () < 2000000 && file.open (QIODevice::ReadOnly)) {
-            char databuf [512];
-            int nr_bytes = file.readBlock (databuf, 512);
-            if (nr_bytes > 3 &&
-                    (KMimeType::isBufferBinaryData (QByteArray (databuf, nr_bytes)) ||
-                     !strncmp (databuf, "RIFF", 4)))
-                return true;
-            file.reset ();
-            QTextStream textstream (&file);
-            read (m, textstream);
-        }
-    } else if ((maybe_playlist &&
-                url.protocol ().compare (QString ("mms")) &&
-                url.protocol ().compare (QString ("rtsp")) &&
-                url.protocol ().compare (QString ("rtp"))) ||
-            (mimestr.isEmpty () &&
-             (url.protocol ().startsWith (QString ("http")) ||
-              url.protocol () == QString::fromLatin1 ("media") ||
-              url.protocol () == QString::fromLatin1 ("remote")))) {
-        KIO::Job * job = KIO::get (url, KIO::NoReload, KIO::HideProgressInfo);
-        job->addMetaData ("PropagateHttpHeader", "true");
-        job->addMetaData ("errorPage", "false");
-        m_resolve_info = new ResolveInfo (m, job, m_resolve_info);
-        connect (m_resolve_info->job, SIGNAL(data(KIO::Job*,const QByteArray&)),
-                this, SLOT (kioData (KIO::Job *, const QByteArray &)));
-        //connect( m_job, SIGNAL(connected(KIO::Job*)),
-        //         this, SLOT(slotConnected(KIO::Job*)));
-        connect(m_resolve_info->job, SIGNAL(mimetype(KIO::Job*,const QString&)),
-                this, SLOT (kioMimetype (KIO::Job *, const QString &)));
-        connect (m_resolve_info->job, SIGNAL (result (KJob *)),
-                this, SLOT (kioResult (KJob *)));
-        m_player->updateStatus (i18n ("Connecting"));
-        m_player->setLoaded (0);
-        return false; // wait for result ..
-    }
-    return true;
 }
 
 //-----------------------------------------------------------------------------

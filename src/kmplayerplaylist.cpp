@@ -658,14 +658,14 @@ static bool hasMrlChildren (const NodePtr & e) {
 
 Mrl::Mrl (NodePtr & d, short id)
     : Element (d, id), cached_ismrl_version (~0),
-      media_object (NULL),
+      media_info (NULL),
       aspect (0), repeat (0),
       view_mode (SingleMode),
       resolved (false), bookmarkable (true), access_granted (false) {}
 
 Mrl::~Mrl () {
-    if (media_object)
-        media_object->destroy ();
+    if (media_info)
+        delete media_info;
 }
 
 Node::PlayType Mrl::playType () {
@@ -679,7 +679,7 @@ Node::PlayType Mrl::playType () {
 
 QString Mrl::absolutePath () {
     QString path = src;
-    if (!path.isEmpty()) {
+    if (!path.isEmpty() && !path.startsWith ("tv:/")) {
         for (NodePtr e = parentNode (); e; e = e->parentNode ()) {
             Mrl * mrl = e->mrl ();
             if (mrl && !mrl->src.isEmpty () && mrl->src != src) {
@@ -708,6 +708,18 @@ Mrl * Mrl::mrl () {
 
 void *Mrl::message (MessageType msg, void *content) {
     switch (msg) {
+    case MsgMediaReady:
+        linkNode ()->resolved = true;
+        if (state == state_deferred) {
+            if (isPlayable ()) {
+                setState (state_activated);
+                begin ();
+            } else {
+                Element::activate ();
+            }
+        }
+        break;
+
     case MsgMediaFinished:
         if (state == state_deferred &&
                 !isPlayable () && firstChild ()) {//if backend added child links
@@ -716,11 +728,13 @@ void *Mrl::message (MessageType msg, void *content) {
         } else
             finish ();
         return NULL;
+
     case MsgQueryRoleChildDisplay:
         for (NodePtr p = parentNode (); p; p = p->parentNode ())
             if (p->mrl ())
                 return p->message (msg, content);
         return NULL;
+
     default:
         break;
     }
@@ -729,49 +743,47 @@ void *Mrl::message (MessageType msg, void *content) {
 
 void Mrl::activate () {
     resolved |= linkNode ()->resolved;
-    if (!resolved && document ()->notify_listener)
-        resolved = document ()->notify_listener->resolveURL (this);
-    if (!resolved) {
+    if (!resolved && !src.isEmpty () && isPlayable ()) {
         setState (state_deferred);
-        return;
-    } else
-        linkNode ()->resolved = true;
-    if (!isPlayable ()) {
+        media_info = new MediaInfo (this, MediaManager::AudioVideo);
+        resolved = media_info->wget (linkNode ()->absolutePath ());
+    } else if (isPlayable ()) {
+        setState (state_activated);
+        begin ();
+    } else {
         Element::activate ();
-        return;
     }
-    setState (state_activated);
-    begin ();
 }
 
 void Mrl::begin () {
     kDebug () << nodeName () << src << this;
-    if (document ()->notify_listener) {
-        if (linkNode () != this) {
-            linkNode ()->activate ();
-            if (linkNode ()->unfinished ())
-                setState (state_began);
-        } else if (!src.isEmpty ()) {
-            if (!media_object)
-                media_object = document ()->notify_listener->mediaManager()->createMedia (MediaManager::AudioVideo, this);
-            if (media_object->play ())
-                setState (state_began);
-            else
-                deactivate ();
-        } else
-            deactivate (); // nothing to activate
+    if (linkNode () != this) {
+        linkNode ()->activate ();
+        if (linkNode ()->unfinished ())
+            setState (state_began);
+    } else if (!src.isEmpty ()) {
+        if (!media_info)
+            media_info = new MediaInfo (this, MediaManager::AudioVideo);
+        if (!media_info->media)
+            media_info->create ();
+        if (media_info->media->play ())
+            setState (state_began);
+        else
+            deactivate ();
+    } else {
+        deactivate (); // nothing to activate
     }
 }
 
 void Mrl::defer () {
-    if (media_object)
-        media_object->pause ();
+    if (media_info && media_info->media)
+        media_info->media->pause ();
     Node::defer ();
 }
 
 void Mrl::undefer () {
-    if (media_object) {
-        media_object->unpause ();
+    if (media_info && media_info->media) {
+        media_info->media->unpause ();
         setState (state_began);
     } else {
         Node::undefer ();
@@ -779,9 +791,9 @@ void Mrl::undefer () {
 }
 
 void Mrl::deactivate () {
-    if (media_object) {
-        media_object->destroy ();
-        media_object = NULL;
+    if (media_info) {
+        delete media_info;
+        media_info = NULL;
     }
     Node::deactivate ();
 }

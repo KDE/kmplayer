@@ -32,9 +32,9 @@
 #include "kmplayerplaylist.h"
 
 class QMovie;
-class QTextCodec;
 class QImage;
 class QBuffer;
+class QByteArray;
 class KJob;
 namespace KIO {
     class Job;
@@ -50,6 +50,7 @@ class MediaManager;
 class Viewer;
 class AudioVideoMedia;
 class PreferencesPage;
+class MediaObject;
 
 
 class KMPLAYER_EXPORT IProcess {
@@ -111,7 +112,7 @@ public:
  */
 class KMPLAYER_EXPORT MediaManager {
 public:
-    enum MediaType { Audio, AudioVideo, Image, Text };
+    enum MediaType { Any, Audio, AudioVideo, Image, Text };
     typedef QMap <QString, ProcessInfo *> ProcessInfoMap;
     typedef QList <IProcess *> ProcessList;
     typedef QList <MediaObject *> MediaList;
@@ -119,7 +120,7 @@ public:
     MediaManager (PartBase *player);
     ~MediaManager ();
 
-    MediaObject *createMedia (MediaType type, Node *node);
+    MediaObject *createAVMedia (Node *node, const QByteArray &b);
 
     // backend process state changed
     void stateChange (AudioVideoMedia *m, IProcess::State o, IProcess::State n);
@@ -180,14 +181,38 @@ public:
     virtual void stop () {}
     virtual void destroy ();
 
-    virtual bool wget (const QString &url);
+    Mrl *mrl ();
+
+protected:
+    MediaObject (MediaManager *manager, Node *node);
+    virtual ~MediaObject ();
+
+    MediaManager *m_manager;
+    NodePtrW m_node;
+    bool paused;
+};
+
+//------------------------%<----------------------------------------------------
+
+class KMPLAYER_EXPORT MediaInfo : public QObject {
+    Q_OBJECT
+public:
+    MediaInfo (Node *node, MediaManager::MediaType type);
+    ~MediaInfo ();
+
+    bool wget (const QString &url);
     void killWGet ();
     void clearData ();
     QString mimetype ();
     bool downloading () const;
+    void create ();
 
-    Mrl *mrl ();
     QByteArray &rawData () { return data; }
+    MediaObject *media;
+    QString url;
+    QByteArray data;
+    QString mime;
+    MediaManager::MediaType type;
 
 private slots:
     void slotResult (KJob *);
@@ -195,22 +220,14 @@ private slots:
     void slotMimetype (KIO::Job *job, const QString &mimestr);
     void cachePreserveRemoved (const QString &);
 
-protected:
-    MediaObject (MediaManager *manager, Node *node);
-    virtual ~MediaObject ();
+private:
+    void ready ();
+    bool readChildDoc ();
 
-    virtual void ready (const QString &url);
-
-    MediaManager *m_manager;
-    NodePtrW m_node;
-    QString url;
-    QByteArray data;
-    QString mime;
+    Node *node;
     KIO::Job *job;
     bool preserve_wait;
-    bool paused;
 };
-
 
 //------------------------%<----------------------------------------------------
 
@@ -315,7 +332,9 @@ typedef WeakPtr <ImageData> ImageDataPtrW;
 class KMPLAYER_NO_EXPORT ImageMedia : public MediaObject {
     Q_OBJECT
 public:
-    ImageMedia (MediaManager *manager, Node *node);
+    ImageMedia (MediaManager *manager, Node *node,
+            const QString &url, const QByteArray &data);
+    ImageMedia (Node *node, ImageDataPtr id);
 
     MediaManager::MediaType type () const { return MediaManager::Image; }
 
@@ -337,11 +356,10 @@ private slots:
 protected:
     ~ImageMedia ();
 
-    void ready (const QString &url);
-
 private:
-    void setupImage ();
+    void setupImage (const QString &url);
 
+    QByteArray data;
     QBuffer *buffer;
     QMovie *img_movie;
     int frame_nr;
@@ -354,20 +372,17 @@ private:
  */
 class KMPLAYER_NO_EXPORT TextMedia : public MediaObject {
 public:
-    TextMedia (MediaManager *manager, Node *node);
+    TextMedia (MediaManager *manager, Node *node, const QByteArray &ba);
 
     MediaManager::MediaType type () const { return MediaManager::Text; }
 
     bool play ();
 
     QString text;
-    QTextCodec *codec;
-    int default_font_size;
+    static int defaultFontSize ();
 
 protected:
     ~TextMedia ();
-
-    void ready (const QString &url);
 };
 
 } // namespace

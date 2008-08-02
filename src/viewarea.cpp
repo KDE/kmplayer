@@ -394,9 +394,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         IRect clip_save = clip;
         clip = clip.intersect (IRect (x, y, w, h));
         cairo_save (cr);
-        ImageData *bg_img = reg->bg_image && !reg->bg_image->isEmpty()
-                ? reg->bg_image->cached_img.ptr ()
-                : NULL;
+        ImageMedia *im = reg->media_info
+            ? (ImageMedia *) reg->media_info->media
+            : NULL;
+        ImageData *bg_img = im && !im->isEmpty() ? im->cached_img.ptr () : NULL;
         if ((SMIL::RegionBase::ShowAlways == reg->show_background ||
                     reg->m_AttachedMediaTypes->first ()) &&
                 (s->background_color & 0xff000000 || bg_img)) {
@@ -591,9 +592,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::video (Mrl *m, Surface *s) {
-    if (m->media_object &&
-            MediaManager::AudioVideo == m->media_object->type ()) {
-        AudioVideoMedia *avm = static_cast<AudioVideoMedia *> (m->media_object);
+    if (m->media_info &&
+            m->media_info->media &&
+            MediaManager::AudioVideo == m->media_info->type) {
+        AudioVideoMedia *avm = static_cast<AudioVideoMedia *> (m->media_info->media);
         if (avm->viewer) {
             if (s &&
                     avm->process &&
@@ -658,8 +660,8 @@ static Mrl *findActiveMrl (Node *n, bool *rp_or_smil) {
             (mrl->id >= RP::id_node_first &&
              mrl->id < RP::id_node_last);
         if (*rp_or_smil ||
-                (mrl->media_object &&
-                 MediaManager::AudioVideo == mrl->media_object->type ()))
+                (mrl->media_info &&
+                 MediaManager::AudioVideo == mrl->media_info->type))
             return mrl;
     }
     for (Node *c = n->firstChild ().ptr (); c; c = c->nextSibling ())
@@ -717,6 +719,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kDebug() << "Visit " << img->nodeName() << " " << img->src;
+    if (!img->media_info || !img->media_info->media)
+        return;
     Surface *s = (Surface *) img->message (MsgQueryRoleDisplay);
     if (!s)
         return;
@@ -724,7 +728,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
         updateExternal (img, s);
         return;
     }
-    ImageMedia *im = static_cast <ImageMedia *> (img->media_object);
+    ImageMedia *im = static_cast <ImageMedia *> (img->media_info->media);
     ImageData *id = im ? im->cached_img.ptr () : NULL;
     if (!id || im->isEmpty () || img->width <= 0 || img->height <= 0) {
         s->remove();
@@ -750,8 +754,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
-    TextMedia *tm = static_cast <TextMedia *> (txt->media_object);
-    Surface *s = tm ? (Surface *) txt->message (MsgQueryRoleDisplay) : NULL;
+    if (!txt->media_info || !txt->media_info->media)
+        return;
+    TextMedia *tm = static_cast <TextMedia *> (txt->media_info->media);
+    Surface *s = (Surface *) txt->message (MsgQueryRoleDisplay);
     //kDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
     if (!s)
         return;
@@ -990,7 +996,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
     //kDebug() << "Visit " << fi->nodeName();
     if (fi->target && fi->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (fi->target);
-        ImageMedia *im = img ? static_cast<ImageMedia*>(img->media_object):NULL;
+        ImageMedia *im = img && img->media_info
+            ? static_cast <ImageMedia*> (img->media_info->media) : NULL;
         if (im && img->surface ()) {
             Single sx = fi->srcx, sy = fi->srcy, sw = fi->srcw, sh = fi->srch;
             if (!(int)sw)
@@ -1042,7 +1049,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
     //kDebug() << "Visit " << cf->nodeName();
     if (cf->target && cf->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (cf->target);
-        ImageMedia *im = img ? static_cast<ImageMedia*>(img->media_object):NULL;
+        ImageMedia *im = img && img->media_info
+            ? static_cast <ImageMedia*> (img->media_info->media) : NULL;
         if (im && img->surface ()) {
             Single sx = cf->srcx, sy = cf->srcy, sw = cf->srcw, sh = cf->srch;
             if (!(int)sw)
@@ -1080,7 +1088,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
     //kDebug() << "Visit " << wipe->nodeName();
     if (wipe->target && wipe->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (wipe->target);
-        ImageMedia *im = img ? static_cast<ImageMedia*>(img->media_object):NULL;
+        ImageMedia *im = img && img->media_info
+            ? static_cast <ImageMedia*> (img->media_info->media) : NULL;
         if (im && img->surface ()) {
             Single x = wipe->x, y = wipe->y;
             Single tx = x, ty = y;

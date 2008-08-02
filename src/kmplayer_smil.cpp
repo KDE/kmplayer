@@ -1225,7 +1225,7 @@ KDE_NO_EXPORT void *SMIL::Layout::message (MessageType msg, void *content) {
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id),
-   bg_image (NULL),
+   media_info (NULL),
    x (0), y (0), w (0), h (0),
    z_order (1), background_color (0),
    m_AttachedMediaTypes (new NodeRefList),
@@ -1250,9 +1250,9 @@ KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
     background_image.truncate (0);
     if (region_surface)
         region_surface->background_color = 0;
-    if (bg_image) {
-        bg_image->destroy ();
-        bg_image = NULL;
+    if (media_info) {
+        delete media_info;
+        media_info = NULL;
     }
     postpone_lock = NULL;
     sizes.resetSizes ();
@@ -1260,7 +1260,8 @@ KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::dataArrived () {
-    if (!bg_image->isEmpty () && region_surface)
+    ImageMedia *im = media_info ? (ImageMedia *)media_info->media : NULL;
+    if (!im->isEmpty () && region_surface)
         region_surface->remove (); // FIXME: only surface
     postpone_lock = 0L;
 }
@@ -1356,17 +1357,15 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
         background_image = val;
         Smil * s = SMIL::Smil::findSmilNode (this);
         if (s) {
-            if (!bg_image)
-                bg_image = static_cast <ImageMedia *> (
-                        document()->notify_listener->mediaManager ()->
-                        createMedia (MediaManager::Image, this));
-            need_repaint = !bg_image->isEmpty ();
-            Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : NULL;
-            QString url = mrl ? KURL (mrl->absolutePath (), val).url () : val;
-            if (!bg_image->wget (url))
+            if (!media_info) {
+                media_info = new MediaInfo (this, MediaManager::Image);
+                Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : NULL;
+                QString url = mrl ? KURL (mrl->absolutePath(), val).url() : val;
                 postpone_lock = document ()->postpone ();
-            else
+                media_info->wget (url);
+            } else {
                 need_repaint = true;
+            }
         }
     }
     if (active ()) {
@@ -2108,11 +2107,11 @@ public:
         visit (static_cast <Node *> (elm));
     }
     void visit (SMIL::MediaType *mt) {
-        if (mt->media_object) {
+        if (mt->media_info && mt->media_info->media) {
             if (pause)
-                mt->media_object->pause ();
+                mt->media_info->media->pause ();
             else
-                mt->media_object->unpause ();
+                mt->media_info->media->unpause ();
             Surface *s = (Surface *) mt->message (MsgQueryRoleDisplay);
             if (s)
                 s->repaint ();
@@ -2584,6 +2583,12 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
 
 KDE_NO_EXPORT void SMIL::MediaType::activate () {
     init (); // sets all attributes
+    if (!media_info) {
+        kDebug() << "fallback";
+        media_info = new MediaInfo (this, MediaManager::Any);
+        if (!resolved && !src.isEmpty () && isPlayable ())
+            media_info->wget (linkNode ()->absolutePath ());
+    }
     setState (state_activated);
     runtime->start ();
 }
@@ -2606,16 +2611,16 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     runtime->reset ();
     Mrl::deactivate ();
     region_node = 0L;
-    if (media_object) {
-        media_object->destroy ();
-        media_object = NULL;
+    if (media_info) {
+        delete media_info;
+        media_info = NULL;
     }
     postpone_lock = 0L;
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::defer () {
-    if (media_object) {
-        //media_object->pause ();
+    if (media_info) {
+        //media_info->pause ();
         if (unfinished ())
             postpone_lock = document ()->postpone ();
         setState (state_deferred);
@@ -2625,8 +2630,8 @@ KDE_NO_EXPORT void SMIL::MediaType::defer () {
 KDE_NO_EXPORT void SMIL::MediaType::undefer () {
     if (runtime->started ()) {
         setState (state_began);
-        if (media_object)
-            media_object->unpause ();
+        if (media_info && media_info->media)
+            media_info->media->unpause ();
         Surface *s = (Surface *) message (MsgQueryRoleDisplay);
         if (s)
             s->repaint ();
@@ -2637,6 +2642,12 @@ KDE_NO_EXPORT void SMIL::MediaType::undefer () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::begin () {
+    if (media_info && media_info->downloading ()) {
+        postpone_lock = document ()->postpone ();
+        state = state_began;
+        return; // wait for MsgMediaReady
+    }
+
     SMIL::RegionBase *r = findRegion (this, param (StringPool::attr_region));
     if (trans_out_timer) { // eg transOut and we're repeating
         document ()->cancelPosting (trans_out_timer);
@@ -2686,8 +2697,8 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStart () {
     if (region_node && region_node->message (MsgQueryRoleDisplay)) {
         if (external_tree)
             external_tree->activate ();
-        else if (media_object)
-            media_object->play ();
+        else if (media_info && media_info->media)
+            media_info->media->play ();
     }
 }
 
@@ -2695,8 +2706,8 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
     Surface *s = NULL;
     if (runtime->timingstate == Runtime::timings_stopped) {
         region_attach = NULL;
-        if (media_object)
-            media_object->stop ();
+        if (media_info && media_info->media)
+            media_info->media->stop ();
         if (external_tree && external_tree->active ())
             external_tree->deactivate ();
         resetSurface ();
@@ -2710,8 +2721,8 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
 
 KDE_NO_EXPORT void SMIL::MediaType::finish () {
     document ()->notify_listener->removeRepaintUpdater (this);
-    if (media_object)
-        media_object->pause ();
+    if (media_info && media_info->media)
+        media_info->media->pause ();
 
     Surface *s = (Surface *) message (MsgQueryRoleDisplay);
     if (s)
@@ -2776,15 +2787,17 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
 
         case MsgEventPostponed: {
             PostponedEvent *pe = static_cast <PostponedEvent *> (content);
-            if (media_object) {
+            if (media_info) {
                 if (pe->is_postponed) {
                     if (unfinished ()) {
                         setState (state_deferred);
-                        media_object->pause ();
+                        if (media_info->media)
+                            media_info->media->pause ();
                     }
                 } else if (state == Node::state_deferred) {
                     setState (state_began);
-                    media_object->unpause ();
+                    if (media_info->media)
+                        media_info->media->unpause ();
                 }
             }
             return NULL;
@@ -2867,13 +2880,27 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             }
             return NULL;
 
+        case MsgMediaReady: {
+            resolved = true;
+            resetSurface ();
+            Mrl *mrl = external_tree ? external_tree->mrl () : NULL;
+            if (mrl) {
+                width = mrl->width;
+                height = mrl->height;
+            }
+            postpone_lock = 0L;
+            if (state == state_began)
+                begin ();
+            return NULL;
+        }
+
         case MsgMediaFinished:
             if (unfinished ()) {
                 if (runtime->durTime ().durval == Runtime::dur_media)
                     runtime->durTime ().durval = Runtime::dur_timer;
-                if (media_object) {
-                    media_object->destroy ();
-                    media_object = NULL;
+                if (media_info) {
+                    delete media_info;
+                    media_info = NULL;
                 }
                 postpone_lock = 0L;
                 runtime->tryFinish ();
@@ -2962,32 +2989,20 @@ KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
     if (0 == runtime->durTime ().offset &&
             Runtime::dur_media == runtime->endTime ().durval)
         runtime->durTime ().durval = Runtime::dur_media; // duration of clip
-    if (!external_tree && !resolved) {
-        defer ();
-    } else {
-        if (!external_tree && !media_object)
-            media_object = document ()->notify_listener->mediaManager()->
-                createMedia (MediaManager::AudioVideo, this);
-        MediaType::begin ();
-    }
-}
-
-KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
-    if (runtime->started () && resolved && !media_object)
-        begin ();
-    else
-        MediaType::undefer ();
+    MediaType::begin ();
 }
 
 void
 SMIL::AVMediaType::parseParam (const TrieString &name, const QString &val) {
-    //kDebug () << "AudioVideoData::parseParam " << name << "=" << val << endl;
+    kDebug () << name.toString() << "=" << val;
     if (name == StringPool::attr_src) {
+        if (!media_info)
+            media_info = new MediaInfo (this, MediaManager::AudioVideo);
         if (!resolved || src != val) {
             if (external_tree)
                 removeChild (external_tree);
             src = val;
-            resolved = document ()->notify_listener->resolveURL (this);
+            resolved = media_info->wget (absolutePath ());
         }
         if (state == state_began && resolved)
             clipStart ();
@@ -3017,20 +3032,9 @@ KDE_NO_EXPORT NodePtr SMIL::ImageMediaType::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::ImageMediaType::activate () {
-    PlayListNotify *n = document ()->notify_listener;
-    if (n && !media_object)
-        media_object = n->mediaManager()->createMedia(MediaManager::Image,this);
+    if (!media_info)
+        media_info = new MediaInfo (this, MediaManager::Image);
     MediaType::activate ();
-}
-
-KDE_NO_EXPORT void SMIL::ImageMediaType::begin () {
-    ImageMedia *im = static_cast <ImageMedia *> (media_object);
-    if (im && im->downloading ()) { // FIXME we shouldn't loose media_object after a pause
-        postpone_lock = document ()->postpone ();
-        state = state_began;
-        return;
-    }
-    MediaType::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::ImageMediaType::accept (Visitor * v) {
@@ -3041,55 +3045,28 @@ void
 SMIL::ImageMediaType::parseParam (const TrieString &name, const QString &val) {
     //kDebug () << "ImageRuntime::param " << name << "=" << val << endl;
     if (name == StringPool::attr_src) {
-        ImageMedia *im = static_cast <ImageMedia *> (media_object);
-        if (im)
-            im->killWGet ();
+        if (media_info)
+            media_info->killWGet ();
         if (external_tree)
             removeChild (external_tree);
         src = val;
         if (!src.isEmpty ()) {
-            if (!media_object) {
-                media_object = document ()->notify_listener->
-                    mediaManager()->createMedia(MediaManager::Image,this);
-                im = static_cast <ImageMedia *> (media_object);
+            if (!media_info) {
+                media_info = new MediaInfo (this, MediaManager::Image);
             }
-            im->wget (absolutePath ());
-        } else if (im) {
-            im->clearData ();
+            media_info->wget (absolutePath ());
+        } else if (media_info) {
+            media_info->clearData ();
         }
     } else {
         MediaType::parseParam (name, val);
     }
 }
 
-void SMIL::ImageMediaType::dataArrived () {
-    ImageMedia *im = static_cast <ImageMedia *> (media_object);
-    resetSurface ();
-    QString mime = im->mimetype ();
-    if (mime.startsWith (QString::fromLatin1 ("text/"))) {
-        QTextStream ts (im->rawData (), IO_ReadOnly);
-        readXML (this, ts, QString ());
-        Mrl *mrl = external_tree ? external_tree->mrl () : NULL;
-        if (mrl) {
-            width = mrl->width;
-            height = mrl->height;
-        }
-    } else if (!im->isEmpty ()) {
-        width = im->cached_img->width;
-        height = im->cached_img->height;
-        Surface *s = (Surface *) message (MsgQueryRoleDisplay);
-        if (s)
-            s->repaint ();
-    }
-    postpone_lock = 0L;
-    if (state == state_began)
-        MediaType::begin ();
-}
-
 void *SMIL::ImageMediaType::message (MessageType msg, void *content) {
-    ImageMedia *im = static_cast <ImageMedia *> (media_object);
-    if (im) {
+    if (media_info) {
         switch (msg) {
+
             case MsgMediaUpdated: {
                 resetSurface ();
                 Surface *s = (Surface *) message (MsgQueryRoleDisplay);
@@ -3099,13 +3076,21 @@ void *SMIL::ImageMediaType::message (MessageType msg, void *content) {
                     clipStop ();
                 return NULL;
             }
+
             case MsgMediaFinished:
                 if (state >= Node::state_began)
                     runtime->tryFinish ();
                 return NULL;
-            case MsgMediaReady:
-                dataArrived ();
-                return NULL;
+
+            case MsgMediaReady: {
+                ImageMedia *im = static_cast <ImageMedia *> (media_info->media);
+                if (im && !im->isEmpty ()) {
+                    width = im->cached_img->width;
+                    height = im->cached_img->height;
+                }
+                break;
+            }
+
             default:
                 break;
         }
@@ -3120,11 +3105,9 @@ KDE_NO_CDTOR_EXPORT SMIL::TextMediaType::TextMediaType (NodePtr & d)
 
 KDE_NO_EXPORT void SMIL::TextMediaType::init () {
     if (!inited) {
-        PlayListNotify *n = document ()->notify_listener;
-        if (n && !media_object)
-            media_object = n->mediaManager()->createMedia(MediaManager::Text, this);
-
-        font_size = static_cast <TextMedia *> (media_object)->default_font_size;
+        if (!media_info)
+            media_info = new MediaInfo (this, MediaManager::Text);
+        font_size = TextMedia::defaultFontSize ();
         font_color = 0;
         background_color = 0xffffff;
         bg_opacity = 100;
@@ -3136,31 +3119,27 @@ KDE_NO_EXPORT void SMIL::TextMediaType::init () {
 
 void
 SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
-    if (!media_object)
-        media_object = document ()->notify_listener->
-            mediaManager()->createMedia(MediaManager::Text, this);
-    TextMedia *ti = static_cast <TextMedia *> (media_object);
+    if (!media_info)
+        return;
     //kDebug () << "TextRuntime::parseParam " << name << "=" << val << endl;
     if (name == StringPool::attr_src) {
         src = val;
         if (!val.isEmpty ())
-            ti->wget (absolutePath ());
+            media_info->wget (absolutePath ());
         else
-            ti->clearData ();
+            media_info->clearData ();
         return;
     }
     if (name == "backgroundColor" || name == "background-color") {
         background_color = val.isEmpty () ? 0xffffff : QColor (val).rgb ();
     } else if (name == "fontColor") {
         font_color = val.isEmpty () ? 0 : QColor (val).rgb ();
-    } else if (name == "charset") {
-        ti->codec = QTextCodec::codecForName (val.ascii ());
     } else if (name == "fontFace") {
         ; //FIXME
     } else if (name == "fontPtSize") {
-        font_size = val.isEmpty () ? ti->default_font_size : val.toInt ();
+        font_size = val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
     } else if (name == "fontSize") {
-        font_size += val.isEmpty () ? ti->default_font_size : val.toInt ();
+        font_size += val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
     } else if (name == "backgroundOpacity") {
         bg_opacity = (int) SizeType (val).size (100);
     } else if (name == "hAlign") {
@@ -3182,37 +3161,6 @@ SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
     Surface *s = static_cast <Surface *> (message (MsgQueryRoleDisplay));
     if (s)
         s->repaint ();
-}
-
-KDE_NO_EXPORT void SMIL::TextMediaType::begin () {
-    TextMedia *tm = static_cast <TextMedia *> (media_object);
-    if (tm && tm->downloading ()) { // FIXME we shouldn't loose media_object after a pause
-        postpone_lock = document ()->postpone ();
-        state = state_began;
-        return;
-    }
-    MediaType::begin ();
-}
-
-void SMIL::TextMediaType::dataArrived () {
-    TextMedia *tm = static_cast <TextMedia *> (media_object);
-    if (tm->text.length ()) {
-        resetSurface ();
-        Surface *s = static_cast <Surface *> (message (MsgQueryRoleDisplay));
-        if (s)
-            s->repaint ();
-    }
-    postpone_lock = 0L;
-    if (state == state_began)
-        MediaType::begin ();
-}
-
-void *SMIL::TextMediaType::message (MessageType msg, void *content) {
-    if (MsgMediaReady == msg) {
-        dataArrived ();
-        return NULL;
-    }
-    return MediaType::message (msg, content);
 }
 
 KDE_NO_EXPORT void SMIL::TextMediaType::accept (Visitor * v) {

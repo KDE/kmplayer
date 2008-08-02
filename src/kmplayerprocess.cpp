@@ -305,9 +305,9 @@ RecordDocument::RecordDocument (const QString &url, const QString &rurl,
 }
 
 void RecordDocument::begin () {
-    media_object = notify_listener->mediaManager ()->createMedia (
-            MediaManager::AudioVideo, this);
-    media_object->play ();
+    media_info = new MediaInfo (this, MediaManager::AudioVideo);
+    media_info->create ();
+    media_info->media->play ();
 }
 
 void RecordDocument::endOfFile () {
@@ -316,7 +316,8 @@ void RecordDocument::endOfFile () {
 
 void RecordDocument::deactivate () {
     state = state_deactivated;
-    notify_listener->mediaManager ()->player ()->stopRecording ();
+    ((MediaManager *) message (MsgQueryMediaManager))->
+        player ()->stopRecording ();
     Document::deactivate ();
 }
 

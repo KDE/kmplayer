@@ -83,25 +83,7 @@ public slots:
     virtual void forward ();
     virtual void backward ();
     virtual void play (Mrl *);
-private slots:
-    void kioData (KIO::Job *, const QByteArray &);
-    void kioMimetype (KIO::Job *, const QString &);
-    void kioResult (KJob *);
-protected:
-    virtual bool resolveURL (NodePtr mrl);
 private:
-    void read (NodePtr mrl, QTextStream &);
-    void stopResolving ();
-    struct ResolveInfo {
-        ResolveInfo (NodePtr mrl, KIO::Job * j, SharedPtr <ResolveInfo> & n)
-            : resolving_mrl (mrl), job (j), progress (0), next (n) {}
-        NodePtrW resolving_mrl;
-        KIO::Job * job;
-        QByteArray data;
-        int progress;
-        SharedPtr <ResolveInfo> next;
-    };
-    SharedPtr <ResolveInfo> m_resolve_info;
     bool activated; // 'solve' an singleShot race w/ cmdline url's
 };
 

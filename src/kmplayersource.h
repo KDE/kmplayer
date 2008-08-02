@@ -125,11 +125,9 @@ protected:
     /**
      * PlayListNotify implementation
      */
-    bool resolveURL (NodePtr mrl);
     void stateElementChanged (Node * element, Node::State os, Node::State ns);
     void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);
-    MediaManager *mediaManager () const;
     void openUrl (const KUrl &url, const QString &target, const QString &srv);
     void addRepaintUpdater (Node *node);
     void removeRepaintUpdater (Node *node);

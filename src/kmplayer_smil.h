@@ -303,7 +303,7 @@ public:
     void boundsUpdate (); // recalculates and repaint old and new bounds
 
     SurfacePtrW region_surface;
-    ImageMedia *bg_image;
+    MediaInfo *media_info;
     CalculatedSizer sizes;
 
     Single x, y, w, h;     // unscaled values
@@ -641,7 +641,6 @@ public:
     AVMediaType (NodePtr & d, const QString & t);
     NodePtr childFromTag (const QString & tag);
     virtual void begin ();
-    virtual void undefer ();
     virtual void finish ();
     virtual void accept (Visitor *);
     virtual bool expose () const;
@@ -655,11 +654,9 @@ public:
     NodePtr childFromTag (const QString & tag);
     PlayType playType () { return play_type_image; }
     virtual void activate ();
-    virtual void begin ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
     virtual void *message (MessageType msg, void *content=NULL);
-    void dataArrived ();
 };
 
 class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {
@@ -667,11 +664,8 @@ public:
     TextMediaType (NodePtr & d);
     PlayType playType () { return play_type_info; }
     virtual void init ();
-    virtual void begin ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
-    virtual void *message (MessageType msg, void *content=NULL);
-    void dataArrived ();
 
     QString font_name;
     int font_size;

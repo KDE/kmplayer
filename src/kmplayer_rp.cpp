@@ -210,12 +210,9 @@ KDE_NO_EXPORT void RP::Image::activate () {
     kDebug () << "RP::Image::activate";
     setState (state_activated);
     isPlayable (); // update src attribute
-    if (!media_object) {
-        PlayListNotify *n = document()->notify_listener;
-        if (n)
-            media_object = n->mediaManager ()->createMedia (MediaManager::Image, this);
-    }
-    media_object->wget (absolutePath ());
+    if (!media_info)
+        media_info = new MediaInfo (this, MediaManager::Image);
+    media_info->wget (absolutePath ());
 }
 
 KDE_NO_EXPORT void RP::Image::begin () {
@@ -229,9 +226,9 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
     }
     setState (state_deactivated);
     postpone_lock = 0L;
-    if (media_object) {
-        media_object->destroy ();
-        media_object = NULL;
+    if (media_info) {
+        delete media_info;
+        media_info = NULL;
     }
 }
 
@@ -244,7 +241,7 @@ KDE_NO_EXPORT void *RP::Image::message (MessageType msg, void *content) {
 
 KDE_NO_EXPORT void RP::Image::dataArrived () {
     kDebug () << "RP::Image::remoteReady";
-    ImageMedia *im = static_cast <ImageMedia *> (media_object);
+    ImageMedia *im = media_info->media ? (ImageMedia *)media_info->media : NULL;
     if (!im->isEmpty ()) {
         width = im->cached_img->width;
         height = im->cached_img->height;
@@ -253,13 +250,14 @@ KDE_NO_EXPORT void RP::Image::dataArrived () {
 }
 
 KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
-    if (media_object->downloading () && postpone_if_not)
+    if (media_info->downloading () && postpone_if_not)
         postpone_lock = document ()->postpone ();
-    return !media_object->downloading ();
+    return !media_info->downloading ();
 }
 
 KDE_NO_EXPORT Surface *RP::Image::surface () {
-    ImageMedia *im = static_cast <ImageMedia *> (media_object);
+    ImageMedia *im = media_info && media_info->media
+        ? (ImageMedia *)media_info->media : NULL;
     if (im && !img_surface && !im->isEmpty ()) {
         Node * p = parentNode ().ptr ();
         if (p && p->id == RP::id_node_imfl) {

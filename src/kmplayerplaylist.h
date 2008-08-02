@@ -46,8 +46,7 @@ class Mrl;
 class Surface;
 class ElementPrivate;
 class Visitor;
-class MediaManager;
-class MediaObject;
+class MediaInfo;
 
 template <class T> class KMPLAYER_EXPORT GlobalShared {
     T **global;
@@ -266,6 +265,7 @@ enum MessageType
     MsgChildFinished,
 
     MsgStartQueryMessage,
+    MsgQueryMediaManager,
     MsgQueryRoleTiming,
     MsgQueryRoleDisplay,
     MsgQueryRoleChildDisplay,    // Mrl*
@@ -577,7 +577,7 @@ public:
      * location in SCR. Typically that's the parent of this node.
      */
     NodePtrW opener; //if this node is top node of external document,
-    MediaObject *media_object;
+    MediaInfo *media_info;
     QString src;
     QString pretty_name;
     QString mimetype;
@@ -598,11 +598,6 @@ class KMPLAYER_EXPORT PlayListNotify {
 public:
     virtual ~PlayListNotify () {}
 
-    virtual MediaManager *mediaManager () const = 0;
-    /**
-     * Called by an unresolved Mrl, check if this node points to a playlist
-     */
-    virtual bool resolveURL (NodePtr mrl) = 0;
     /**
      * Element has activated or deactivated notification
      */
