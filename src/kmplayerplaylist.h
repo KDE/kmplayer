@@ -783,7 +783,6 @@ namespace SMIL {
     class ImageMediaType;
     class TextMediaType;
     class RefMediaType;
-    class AVMediaType;
     class Brush;
     class SmilText;
     class TextFlow;
@@ -823,7 +822,6 @@ public:
     virtual void visit (SMIL::ImageMediaType *);
     virtual void visit (SMIL::TextMediaType *);
     virtual void visit (SMIL::RefMediaType *);
-    virtual void visit (SMIL::AVMediaType *);
     virtual void visit (SMIL::Brush *);
     virtual void visit (SMIL::SmilText *);
     virtual void visit (SMIL::TextFlow *);

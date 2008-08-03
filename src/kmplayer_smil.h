@@ -198,7 +198,6 @@ const short id_node_seq = 112;
 const short id_node_switch = 113;
 const short id_node_excl = 114;
 const short id_node_img = 120;
-const short id_node_audio_video = 121;
 const short id_node_text = 122;
 const short id_node_ref = 123;
 const short id_node_brush = 124;
@@ -636,9 +635,9 @@ protected:
     bool inited;
 };
 
-class KMPLAYER_NO_EXPORT AVMediaType : public MediaType {
+class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
-    AVMediaType (NodePtr & d, const QString & t);
+    RefMediaType (NodePtr &doc, const QString &tag);
     NodePtr childFromTag (const QString & tag);
     virtual void begin ();
     virtual void finish ();
@@ -673,12 +672,6 @@ public:
     unsigned int background_color;
     int bg_opacity;
     enum { align_left, align_center, align_right } halign;
-};
-
-class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
-public:
-    RefMediaType (NodePtr & d);
-    virtual void accept (Visitor *);
 };
 
 class KMPLAYER_NO_EXPORT Brush : public MediaType {

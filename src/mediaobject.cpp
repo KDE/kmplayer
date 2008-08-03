@@ -519,7 +519,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                             break;
                         kDebug () << "Group found: " << line;
                     } else if (groupfound) {
-                        int eq_pos = line.find (QChar ('='));
+                        int eq_pos = line.indexOf (QChar ('='));
                         if (eq_pos > 0) {
                             if (line.lower ().startsWith (QString ("numberofentries"))) {
                                 nr = line.mid (eq_pos + 1).stripWhiteSpace ().toInt ();

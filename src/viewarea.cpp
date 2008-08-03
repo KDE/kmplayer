@@ -266,7 +266,6 @@ public:
     void visit (SMIL::Brush *);
     void visit (SMIL::SmilText *);
     void visit (SMIL::RefMediaType *);
-    void visit (SMIL::AVMediaType *);
     void visit (RP::Imfl *);
     void visit (RP::Fill *);
     void visit (RP::Fadein *);
@@ -707,14 +706,6 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
         s->dirty = false;
     }
     paint (av, s.ptr (), x, y, clip_rect);
-}
-
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
-    Surface *s = (Surface *) av->message (MsgQueryRoleDisplay);
-    if (s && av->external_tree)
-        updateExternal (av, s);
-    else
-        video (av, s);
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {

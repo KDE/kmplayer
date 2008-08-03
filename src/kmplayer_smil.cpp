@@ -986,14 +986,14 @@ static Element * fromAnimateGroup (NodePtr & d, const QString & tag) {
 
 static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
     const char * taglatin = tag.latin1 ();
-    if (!strcmp (taglatin, "video") || !strcmp (taglatin, "audio"))
-        return new SMIL::AVMediaType (d, tag);
+    if (!strcmp (taglatin, "video") ||
+            !strcmp (taglatin, "audio") ||
+            !strcmp (taglatin, "ref"))
+        return new SMIL::RefMediaType (d, tag);
     else if (!strcmp (taglatin, "img"))
         return new SMIL::ImageMediaType (d);
     else if (!strcmp (taglatin, "text"))
         return new SMIL::TextMediaType (d);
-    else if (!strcmp (taglatin, "ref"))
-        return new SMIL::RefMediaType (d);
     else if (!strcmp (taglatin, "brush"))
         return new SMIL::Brush (d);
     else if (!strcmp (taglatin, "a"))
@@ -2312,7 +2312,7 @@ KDE_NO_EXPORT void SMIL::Switch::begin () {
                         fallback = e->nextSibling ();
                     }
                 }
-                if (e->id == id_node_audio_video) {
+                if (e->id == id_node_ref) {
                     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (e);
                     if (!chosenOne) {
                         chosenOne = e;
@@ -2961,14 +2961,14 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT
-SMIL::AVMediaType::AVMediaType (NodePtr & d, const QString & t)
- : SMIL::MediaType (d, t, id_node_audio_video) {}
+SMIL::RefMediaType::RefMediaType (NodePtr &d, const QString &t)
+ : SMIL::MediaType (d, t, id_node_ref) {}
 
-KDE_NO_EXPORT NodePtr SMIL::AVMediaType::childFromTag (const QString & tag) {
+KDE_NO_EXPORT NodePtr SMIL::RefMediaType::childFromTag (const QString & tag) {
     return fromXMLDocumentTag (m_doc, tag);
 }
 
-KDE_NO_EXPORT void SMIL::AVMediaType::clipStart () {
+KDE_NO_EXPORT void SMIL::RefMediaType::clipStart () {
     PlayListNotify *n = document ()->notify_listener;
     if (n && region_node && !external_tree && !src.isEmpty()) {
         repeat = runtime->repeat_count == Runtime::dur_infinite
@@ -2979,13 +2979,13 @@ KDE_NO_EXPORT void SMIL::AVMediaType::clipStart () {
     MediaType::clipStart ();
 }
 
-KDE_NO_EXPORT void SMIL::AVMediaType::finish () {
+KDE_NO_EXPORT void SMIL::RefMediaType::finish () {
     if (runtime->durTime ().durval == Runtime::dur_media)
         runtime->durTime ().durval = Runtime::dur_timer;//reset to make this finish
     MediaType::finish ();
 }
 
-KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
+KDE_NO_EXPORT void SMIL::RefMediaType::begin () {
     if (0 == runtime->durTime ().offset &&
             Runtime::dur_media == runtime->endTime ().durval)
         runtime->durTime ().durval = Runtime::dur_media; // duration of clip
@@ -2993,8 +2993,8 @@ KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
 }
 
 void
-SMIL::AVMediaType::parseParam (const TrieString &name, const QString &val) {
-    kDebug () << name.toString() << "=" << val;
+SMIL::RefMediaType::parseParam (const TrieString &name, const QString &val) {
+    //kDebug () << name.toString() << "=" << val;
     if (name == StringPool::attr_src) {
         if (!media_info)
             media_info = new MediaInfo (this, MediaManager::AudioVideo);
@@ -3011,11 +3011,11 @@ SMIL::AVMediaType::parseParam (const TrieString &name, const QString &val) {
     }
 }
 
-KDE_NO_EXPORT void SMIL::AVMediaType::accept (Visitor * v) {
+KDE_NO_EXPORT void SMIL::RefMediaType::accept (Visitor * v) {
     v->visit (this);
 }
 
-KDE_NO_EXPORT bool SMIL::AVMediaType::expose () const {
+KDE_NO_EXPORT bool SMIL::RefMediaType::expose () const {
     return !src.isEmpty () && !external_tree;
 }
 
@@ -3164,16 +3164,6 @@ SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
 }
 
 KDE_NO_EXPORT void SMIL::TextMediaType::accept (Visitor * v) {
-    v->visit (this);
-}
-
-//-----------------------------------------------------------------------------
-
-KDE_NO_CDTOR_EXPORT
-SMIL::RefMediaType::RefMediaType (NodePtr & d)
-    : SMIL::MediaType (d, "ref", id_node_ref) {}
-
-KDE_NO_EXPORT void SMIL::RefMediaType::accept (Visitor * v) {
     v->visit (this);
 }
 
@@ -4272,10 +4262,6 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::TextMediaType * n) {
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::RefMediaType * n) {
-    visit (static_cast <SMIL::MediaType *> (n));
-}
-
-KDE_NO_EXPORT void Visitor::visit (SMIL::AVMediaType * n) {
     visit (static_cast <SMIL::MediaType *> (n));
 }
 
