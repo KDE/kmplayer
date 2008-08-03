@@ -1379,7 +1379,8 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
 void *SMIL::RegionBase::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgMediaReady:
-            dataArrived ();
+            if (media_info)
+                dataArrived ();
             return NULL;
         case MsgQueryRoleDisplay:
             if (!region_surface && state_finished == state) {
@@ -1703,6 +1704,12 @@ public:
         if (seq->firstChild ())
              seq->firstChild ()->accept (this);
     }
+    void visit (SMIL::Switch *s) {
+        s->init ();
+        Node *n = s->chosenOne ();
+        if (n)
+             n->accept (this);
+    }
     void visit (SMIL::Anchor *a) {
         a->init ();
         if (a->firstChild ())
@@ -1817,6 +1824,18 @@ public:
             freeze = new_freeze && n.ptr () == cur;
             n->accept (this);
         }
+
+        freeze = old_freeze;
+    }
+    void visit (SMIL::Switch *s) {
+        bool old_freeze = freeze;
+
+        updateNode (s);
+        freeze &= s->runtime->active ();
+
+        Node *cur = s->chosenOne ();
+        if (cur)
+            cur->accept (this);
 
         freeze = old_freeze;
     }
@@ -2288,50 +2307,59 @@ KDE_NO_EXPORT void *SMIL::PriorityClass::message (MessageType msg, void *data) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT void SMIL::Switch::begin () {
-    //kDebug () << "SMIL::Switch::activate";
-    PlayListNotify * n = document()->notify_listener;
-    int pref = 0, max = 0x7fffffff, currate = 0;
-    if (n)
-        n->bitRates (pref, max);
-    if (firstChild ()) {
-        NodePtr fallback;
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-            if (e->isElementNode ()) {
-                Element *elm = convertNode <Element> (e);
-                QString lang = elm->getAttribute ("systemLanguage");
-                if (!lang.isEmpty ()) {
-                    lang = lang.replace (QChar ('-'), QChar ('_'));
-                    char *clang = getenv ("LANG");
-                    if (!clang) {
-                        if (!fallback)
-                            fallback = e;
-                    } else if (QString (clang).lower ().startsWith (lang)) {
-                        chosenOne = e;
-                    } else if (!fallback) {
-                        fallback = e->nextSibling ();
-                    }
-                }
-                if (e->id == id_node_ref) {
-                    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (e);
-                    if (!chosenOne) {
-                        chosenOne = e;
-                        currate = mt->bitrate;
-                    } else if (int (mt->bitrate) <= max) {
-                        int delta1 = pref > currate ? pref-currate : currate-pref;
-                        int delta2 = pref > int (mt->bitrate) ? pref-mt->bitrate : mt->bitrate-pref;
-                        if (delta2 < delta1) {
-                            chosenOne = e;
-                            currate = mt->bitrate;
+KDE_NO_EXPORT Node *SMIL::Switch::chosenOne () {
+    if (!chosen_one && firstChild ()) {
+        PlayListNotify * n = document()->notify_listener;
+        int pref = 0, max = 0x7fffffff, currate = 0;
+        if (n)
+            n->bitRates (pref, max);
+        if (firstChild ()) {
+            NodePtr fallback;
+            for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+                if (e->isElementNode ()) {
+                    Element *elm = convertNode <Element> (e);
+                    QString lang = elm->getAttribute ("systemLanguage");
+                    if (!lang.isEmpty ()) {
+                        lang = lang.replace (QChar ('-'), QChar ('_'));
+                        char *clang = getenv ("LANG");
+                        if (!clang) {
+                            if (!fallback)
+                                fallback = e;
+                        } else if (QString (clang).lower ().startsWith (lang)) {
+                            chosen_one = e;
+                        } else if (!fallback) {
+                            fallback = e->nextSibling ();
                         }
                     }
-                } else if (!fallback && e->isPlayable ())
-                    fallback = e;
-            }
-        if (!chosenOne)
-            chosenOne = (fallback ? fallback : firstChild ());
-        chosenOne->activate ();
+                    if (e->id == id_node_ref) {
+                        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (e);
+                        if (!chosen_one) {
+                            chosen_one = e;
+                            currate = mt->bitrate;
+                        } else if (int (mt->bitrate) <= max) {
+                            int delta1 = pref > currate ? pref-currate : currate-pref;
+                            int delta2 = pref > int (mt->bitrate) ? pref-mt->bitrate : mt->bitrate-pref;
+                            if (delta2 < delta1) {
+                                chosen_one = e;
+                                currate = mt->bitrate;
+                            }
+                        }
+                    } else if (!fallback && e->isPlayable ())
+                        fallback = e;
+                }
+            if (!chosen_one)
+                chosen_one = (fallback ? fallback : firstChild ());
+        }
     }
+    return chosen_one.ptr ();
+}
+
+KDE_NO_EXPORT void SMIL::Switch::begin () {
+    Node *n = chosenOne ();
+    if (n)
+        n->activate ();
+    else
+        finish ();
 }
 
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {
@@ -3043,7 +3071,7 @@ KDE_NO_EXPORT void SMIL::ImageMediaType::accept (Visitor * v) {
 
 void
 SMIL::ImageMediaType::parseParam (const TrieString &name, const QString &val) {
-    //kDebug () << "ImageRuntime::param " << name << "=" << val << endl;
+    //kDebug () << "ImageRuntime::param " << name.toString() << "=" << val;
     if (name == StringPool::attr_src) {
         if (media_info)
             media_info->killWGet ();
@@ -3082,14 +3110,15 @@ void *SMIL::ImageMediaType::message (MessageType msg, void *content) {
                     runtime->tryFinish ();
                 return NULL;
 
-            case MsgMediaReady: {
-                ImageMedia *im = static_cast <ImageMedia *> (media_info->media);
-                if (im && !im->isEmpty ()) {
-                    width = im->cached_img->width;
-                    height = im->cached_img->height;
+            case MsgMediaReady:
+                if (media_info) {
+                    ImageMedia *im = static_cast <ImageMedia *> (media_info->media);
+                    if (im && !im->isEmpty ()) {
+                        width = im->cached_img->width;
+                        height = im->cached_img->height;
+                    }
                 }
                 break;
-            }
 
             default:
                 break;
@@ -4222,6 +4251,10 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::RegionBase *n) {
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::Seq *n) {
+    visit (static_cast <SMIL::GroupBase *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::Switch *n) {
     visit (static_cast <SMIL::GroupBase *> (n));
 }
 

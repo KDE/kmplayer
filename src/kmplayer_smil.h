@@ -527,7 +527,11 @@ public:
     void deactivate ();
     void reset ();
     void *message (MessageType msg, void *content=NULL);
-    NodePtrW chosenOne;
+    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+
+    Node *chosenOne ();
+private:
+    NodePtrW chosen_one;
 };
 
 class KMPLAYER_NO_EXPORT LinkingBase : public Element {

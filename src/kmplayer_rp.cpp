@@ -196,8 +196,9 @@ KDE_NO_EXPORT void RP::Imfl::repaint () {
 }
 
 KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)
- : Mrl (doc, id_node_image)
-{}
+ : Mrl (doc, id_node_image) {
+    view_mode = WindowMode;
+}
 
 KDE_NO_CDTOR_EXPORT RP::Image::~Image () {
 }
@@ -235,7 +236,8 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
 KDE_NO_EXPORT void *RP::Image::message (MessageType msg, void *content) {
     if (msg != MsgMediaReady)
         return Mrl::message (msg, content);
-    dataArrived ();
+    if (media_info)
+        dataArrived ();
     return NULL;
 }
 

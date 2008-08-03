@@ -774,6 +774,7 @@ namespace SMIL {
     class Layout;
     class RegionBase;
     class Seq;
+    class Switch;
     class Par;
     class Excl;
     class Transition;
@@ -812,6 +813,7 @@ public:
     virtual void visit (SMIL::Layout *);
     virtual void visit (SMIL::RegionBase *);
     virtual void visit (SMIL::Seq *);
+    virtual void visit (SMIL::Switch *);
     virtual void visit (SMIL::Par *);
     virtual void visit (SMIL::Excl *);
     virtual void visit (SMIL::Transition *);

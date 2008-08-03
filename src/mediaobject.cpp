@@ -474,7 +474,7 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
         return true;
     }
     if (memory_cache->preserve (str)) {
-        //kDebug () << "downloading " << str << endl;
+        //kDebug () << "downloading " << str;
         job = KIO::get (kurl, KIO::NoReload, KIO::HideProgressInfo);
         job->addMetaData ("PropagateHttpHeader", "true");
         job->addMetaData ("errorPage", "false");
@@ -485,7 +485,7 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
         connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
                 this, SLOT (slotMimetype (KIO::Job *, const QString &)));
     } else {
-        //kDebug () << "download preserved " << str << endl;
+        //kDebug () << "download preserved " << str;
         connect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
                  this, SLOT (cachePreserveRemoved (const QString &)));
         preserve_wait = true;
@@ -619,7 +619,7 @@ KDE_NO_EXPORT void MediaInfo::create () {
             break;
         case MediaManager::Image:
             if (data.size () &&
-                    (!(mime.startsWith ("text/") ||
+                    (!(mimetype ().startsWith ("text/") ||
                        mime == "image/vnd.rn-realpix") ||
                      !readChildDoc ()))
                 media = new ImageMedia (mgr, node, url, data);
@@ -639,10 +639,12 @@ KDE_NO_EXPORT void MediaInfo::ready () {
 }
 
 KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
-    if (!kjob->error ())
+    if (!kjob->error ()) {
         memory_cache->add (url, data);
-    else
+    } else {
+        memory_cache->unpreserve (url);
         data.resize (0);
+    }
     job = 0L; // signal KIO::Job::result deletes itself
     ready ();
 }
