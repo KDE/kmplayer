@@ -719,7 +719,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kDebug() << "Visit " << img->nodeName() << " " << img->src;
-    if (!img->media_info || !img->media_info->media)
+    if (!img->media_info)
         return;
     Surface *s = (Surface *) img->message (MsgQueryRoleDisplay);
     if (!s)
@@ -728,6 +728,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
         updateExternal (img, s);
         return;
     }
+    if (!img->media_info->media)
+        return;
     ImageMedia *im = static_cast <ImageMedia *> (img->media_info->media);
     ImageData *id = im ? im->cached_img.ptr () : NULL;
     if (!id || im->isEmpty () || img->width <= 0 || img->height <= 0) {

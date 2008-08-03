@@ -370,6 +370,7 @@ static bool isPlayListMime (const QString & mime) {
             !strncasecmp (mimestr, "application/xml", 15) ||
             //!strcmp (mimestr, "application/rss+xml") ||
             //!strcmp (mimestr, "application/atom+xml") ||
+            !strcmp (mimestr, "image/vnd.rn-realpix") ||
             !strcmp (mimestr, "application/x-mplayer2"));
 }
 
@@ -618,7 +619,8 @@ KDE_NO_EXPORT void MediaInfo::create () {
             break;
         case MediaManager::Image:
             if (data.size () &&
-                    (!mime.startsWith (QString::fromLatin1 ("text/")) ||
+                    (!(mime.startsWith ("text/") ||
+                       mime == "image/vnd.rn-realpix") ||
                      !readChildDoc ()))
                 media = new ImageMedia (mgr, node, url, data);
             break;
