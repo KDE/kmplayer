@@ -606,7 +606,7 @@ KDE_NO_EXPORT bool MediaInfo::downloading () const {
     return !!job;
 }
 
-KDE_NO_EXPORT void MediaInfo::create () {
+void MediaInfo::create () {
     MediaManager *mgr = (MediaManager *)node->document()->message(
             MsgQueryMediaManager);
     if (!media) {
