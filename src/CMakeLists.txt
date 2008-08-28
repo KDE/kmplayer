@@ -80,7 +80,7 @@ set(kmplayerpart_SRCS kmplayer_part.cpp)
 kde4_add_plugin(kmplayerpart WITH_PREFIX ${kmplayerpart_SRCS})
 
 target_link_libraries(kmplayerpart
-  kmplayercommon
+  kmplayercommon kmediaplayer
   ${KDE4_KPARTS_LIBS}
   ${KDE4_KDEUI_LIBS}
   ${QT_QT3SUPPORT_LIBRARY}
