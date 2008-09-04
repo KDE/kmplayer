@@ -11,9 +11,9 @@
 <ActionProperties>
   <Action shortcut="F2" name="edit_playlist_item"/>
 </ActionProperties>
-<Toolbar name="mainToolBar"><text></text>
+<ToolBar name="mainToolBar"><text></text>
   <Action name="play"/>
   <Action name="pause"/>
   <Action name="stop"/>
-</Toolbar>
+</ToolBar>
 </kpartgui>
