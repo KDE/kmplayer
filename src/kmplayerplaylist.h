@@ -35,6 +35,7 @@
 typedef struct _cairo_surface cairo_surface_t;
 
 class QTextStream;
+class KUrl;
 
 namespace KMPlayer {
 
@@ -43,7 +44,6 @@ class Node;
 class TextNode;
 class Posting;
 class Mrl;
-class Surface;
 class ElementPrivate;
 class Visitor;
 class MediaInfo;
@@ -303,8 +303,6 @@ typedef List<NodeRefItem> NodeRefList;       // ref nodes, eg. event receivers
 typedef Item<NodeRefList>::SharedType NodeRefListPtr;
 typedef Item<NodeRefList>::WeakType NodeRefListPtrW;
 ITEM_AS_POINTER(KMPlayer::NodeRefList)
-typedef Item<Surface>::SharedType SurfacePtr;
-typedef Item<Surface>::WeakType SurfacePtrW;
 
 /*
  * Weak ref of the receivers list from signaler and the listener node
@@ -619,31 +617,6 @@ public:
     virtual void removeRepaintUpdater (Node *node)=0;
     virtual void enableRepaintUpdaters (bool enable, unsigned int off_time)=0;
 };
-
-class KMPLAYER_NO_EXPORT Surface : public TreeNode <Surface> {
-public:
-    Surface (NodePtr node, const SRect & rect);
-    ~Surface();
-
-    virtual SurfacePtr createSurface (NodePtr owner, const SRect & rect) = 0;
-    virtual IRect toScreen (Single x, Single y, Single w, Single h) = 0;
-    virtual void resize (const SRect & rect) = 0;
-    virtual void repaint () = 0;
-    virtual void repaint (const SRect &rect) = 0;
-    void remove ();                // remove from parent, mark ancestors dirty
-    void markDirty ();             // mark this and ancestors dirty
-
-    NodePtrW node;
-    SRect bounds;                  // bounds in in parent coord.
-    float xscale, yscale;          // internal scaling
-    unsigned int background_color; // rgba background color
-    bool dirty;                    // a decendant is removed
-#ifdef KMPLAYER_WITH_CAIRO
-    cairo_surface_t *surface;
-#endif
-};
-
-ITEM_AS_POINTER(KMPlayer::Surface)
 
 /*
  *  A generic type for posting messages

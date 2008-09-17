@@ -52,6 +52,7 @@ class AudioVideoMedia;
 class PreferencesPage;
 class MediaObject;
 class CalculatedSizer;
+class Surface;
 
 
 class KMPLAYER_EXPORT IProcess {

@@ -26,6 +26,7 @@
 #include <qstringlist.h>
 
 #include "kmplayerplaylist.h"
+#include "surface.h"
 
 struct TransTypeInfo;
 

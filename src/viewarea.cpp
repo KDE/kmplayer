@@ -142,98 +142,6 @@ void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar, C
 
 //-------------------------------------------------------------------------
 
-namespace KMPlayer {
-
-class KMPLAYER_NO_EXPORT ViewSurface : public Surface {
-public:
-    ViewSurface (ViewArea * widget);
-    ViewSurface (ViewArea * widget, NodePtr owner, const SRect & rect);
-    ~ViewSurface ();
-
-    void clear () { m_first_child = 0L; }
-
-    SurfacePtr createSurface (NodePtr owner, const SRect & rect);
-    IRect toScreen (Single x, Single y, Single w, Single h);
-    IRect clipToScreen (Single x, Single y, Single w, Single h);
-    void resize (const SRect & rect);
-    void repaint ();
-    void repaint (const SRect &rect);
-
-    NodePtrW current_video;
-    ViewArea * view_widget;
-};
-
-} // namespace
-
-KDE_NO_CDTOR_EXPORT ViewSurface::ViewSurface (ViewArea * widget)
-  : Surface (NULL, SRect (0, 0, widget->width (), widget->height ())),
-    view_widget (widget)
-{}
-
-KDE_NO_CDTOR_EXPORT
-ViewSurface::ViewSurface (ViewArea * widget, NodePtr owner, const SRect & rect)
-  : Surface (owner, rect), view_widget (widget) {}
-
-KDE_NO_CDTOR_EXPORT ViewSurface::~ViewSurface() {
-    //kDebug() << "~ViewSurface";
-}
-
-SurfacePtr ViewSurface::createSurface (NodePtr owner, const SRect & rect) {
-    SurfacePtr surface = new ViewSurface (view_widget, owner, rect);
-    appendChild (surface);
-    return surface;
-}
-
-KDE_NO_EXPORT void ViewSurface::resize (const SRect &r) {
-    bounds = r;
-    /*if (rect == nrect)
-        ;//return;
-    SRect pr = rect.unite (nrect); // for repaint
-    rect = nrect;*/
-}
-
-KDE_NO_EXPORT IRect ViewSurface::toScreen (Single x, Single y, Single w, Single h) {
-    Matrix matrix (0, 0, xscale, yscale);
-    matrix.translate (bounds.x (), bounds.y ());
-    for (SurfacePtr s = parentNode(); s; s = s->parentNode()) {
-        matrix.transform(Matrix (0, 0, s->xscale, s->yscale));
-        matrix.translate (s->bounds.x (), s->bounds.y ());
-    }
-    matrix.getXYWH (x, y, w, h);
-    return IRect (x, y, w, h);
-}
-
-KDE_NO_EXPORT IRect ViewSurface::clipToScreen (Single x, Single y, Single w, Single h) {
-    Matrix m (0, 0, xscale, yscale);
-    m.translate (bounds.x (), bounds.y ());
-    m.getXYWH (x, y, w, h);
-    SRect r = bounds.intersect (SRect (x, y, w, h));
-    x= r.x (), y = r.y (), w = r.width (), h = r.height ();
-    for (SurfacePtr s = parentNode (); s; s = s->parentNode ()) {
-        m = Matrix (0, 0, s->xscale, s->yscale);
-        m.translate (s->bounds.x (), s->bounds.y ());
-        m.getXYWH (x, y, w, h);
-        r = SRect (s->bounds).intersect (SRect (x, y, w, h));
-        x= r.x (); y = r.y (); w = r.width (); h = r.height ();
-    }
-    return IRect (x, y, w, h);
-}
-
-KDE_NO_EXPORT
-void ViewSurface::repaint (const SRect &r) {
-    markDirty ();
-    view_widget->scheduleRepaint (clipToScreen (r.x (), r.y (), r.width (), r.height ()));
-    //kDebug() << "Surface::repaint x:" << (int)x << " y:" << (int)y << " w:" << (int)w << " h:" << (int)h;
-}
-
-KDE_NO_EXPORT
-void ViewSurface::repaint () {
-    markDirty ();
-    view_widget->scheduleRepaint (clipToScreen (0, 0, bounds.width (), bounds.height ()));
-}
-
-//-------------------------------------------------------------------------
-
 #ifdef KMPLAYER_WITH_CAIRO
 
 # define CAIRO_SET_SOURCE_RGB(cr,c)           \
@@ -1507,7 +1415,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view)
    m_updaters (NULL),
    m_view (view),
    m_collection (new KActionCollection (this)),
-   surface (new ViewSurface (this)),
+   surface (new Surface (this)),
    m_mouse_invisible_timer (0),
    m_repaint_timer (0),
    m_fullscreen (false),
@@ -1777,7 +1685,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     if (surface->node) {
         NodePtr n = surface->node;
         d->destroyBackingStore ();
-        surface = new ViewSurface (this);
+        surface = new Surface (this);
         surface->node = n;
     }
     updateSurfaceBounds ();
@@ -1800,7 +1708,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
 }
 
 KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
-    static_cast <ViewSurface *> (surface.ptr ())->clear ();
+    surface->clear ();
     surface->node = mrl;
     kDebug() << mrl;
     //m_view->viewer()->resetBackgroundColor ();

@@ -25,9 +25,6 @@
 #ifdef KMPLAYER_WITH_EXPAT
 #include <expat.h>
 #endif
-#ifdef KMPLAYER_WITH_CAIRO
-# include <cairo.h>
-#endif
 #include "kmplayerplaylist.h"
 #include "kmplayer_asx.h"
 #include "kmplayer_atom.h"
@@ -802,39 +799,6 @@ void Mrl::parseParam (const TrieString & para, const QString & val) {
 }
 
 //----------------------%<-----------------------------------------------------
-
-Surface::Surface (NodePtr n, const SRect & r)
-  : node (n),
-    bounds (r),
-    xscale (1.0), yscale (1.0),
-    background_color (0),
-    dirty (false)
-#ifdef KMPLAYER_WITH_CAIRO
-    , surface (0L)
-#endif
-{}
-
-Surface::~Surface() {
-#ifdef KMPLAYER_WITH_CAIRO
-    if (surface)
-        cairo_surface_destroy (surface);
-#endif
-}
-
-void Surface::remove () {
-    Surface *sp = parentNode ().ptr ();
-    if (sp) {
-        sp->markDirty ();
-        sp->removeChild (this);
-    }
-}
-
-void Surface::markDirty () {
-    for (Surface *s = this; s; s = s->parentNode ().ptr ())
-        s->dirty = true;
-}
-
-//-----------------------------------------------------------------------------
 
 EventData::EventData (Node *t, Posting *e, EventData *n)
  : target (t), event (e), next (n) {}

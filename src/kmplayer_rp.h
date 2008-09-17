@@ -25,6 +25,7 @@
 #include <qstring.h>
 
 #include "kmplayerplaylist.h"
+#include "surface.h"
 
 namespace KMPlayer {
 

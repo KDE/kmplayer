@@ -36,6 +36,7 @@ set(libkmplayercommon_SRCS
   kmplayer_xspf.cpp
   mediaobject.cpp
   triestring.cpp
+  surface.cpp
   viewarea.cpp
 )
 

@@ -25,6 +25,7 @@
 #include <QList>
 
 #include "mediaobject.h"
+#include "surface.h"
 
 class QPaintEngine;
 class KActionCollection;
