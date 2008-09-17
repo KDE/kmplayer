@@ -531,13 +531,11 @@ private:
  */
 class RefNode : public Node {
 public:
-    RefNode (NodePtr & d, NodePtr ref);
-    virtual const char * nodeName () const { return tag_name.data (); }
+    RefNode (NodePtr &doc, NodePtr ref) : Node (doc), ref_node (ref) {}
+    virtual const char *nodeName () const { return "#ref"; }
     NodePtr refNode () const { return ref_node; }
-    void setRefNode (const NodePtr ref);
 protected:
     NodePtrW ref_node;
-    QByteArray tag_name;
 };
 
 template <class T>

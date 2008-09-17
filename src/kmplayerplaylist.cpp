@@ -485,19 +485,6 @@ QString Node::nodeValue () const {
 
 //-----------------------------------------------------------------------------
 
-RefNode::RefNode (NodePtr & d, NodePtr ref)
- : Node (d) {
-    setRefNode (ref);
-}
-
-void RefNode::setRefNode (const NodePtr ref) {
-    ref_node = ref;
-    if (ref_node)
-        tag_name = QString ("&%1").arg (ref_node->nodeName ()).toUtf8 ();
-}
-
-//-----------------------------------------------------------------------------
-
 namespace {
     struct KMPLAYER_NO_EXPORT ParamValue {
         QString val;
