@@ -174,7 +174,7 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     float opacity;
     bool toplevel;
 
-    void traverseRegion (Node *reg);
+    void traverseRegion (Node *reg, Surface *s);
     void updateExternal (SMIL::MediaType *av, SurfacePtr s);
     void paint(SMIL::MediaType *, Surface *, int x, int y, const IRect &);
     void video (Mrl *mt, Surface *s);
@@ -243,37 +243,34 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Smil *s) {
         s->layout_node->accept (this);
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (Node *node) {
-    // next visit receivers
+KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (Node *node, Surface *s) {
     NodeRefListPtr nl = nodeMessageReceivers (node, MsgSurfaceAttach);
     if (nl) {
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
             if (c->data)
                 c->data->accept (this);
     }
-    // finally visit children, accounting for z-order FIXME optimize
-    NodeRefList sorted;
-    for (NodePtr n = node->firstChild (); n; n = n->nextSibling ()) {
-        if (n->id != SMIL::id_node_region)
-            continue;
-        SMIL::Region * r = static_cast <SMIL::Region *> (n.ptr ());
-        NodeRefItemPtr rn = sorted.first ();
-        for (; rn; rn = rn->nextSibling ())
-            if (r->z_order < convertNode <SMIL::Region> (rn->data)->z_order) {
-                sorted.insertBefore (new NodeRefItem (n), rn);
-                break;
-            }
-        if (!rn)
-            sorted.append (new NodeRefItem (n));
+    /*for (SurfacePtr c = s->lastChild (); c; c = c->previousSibling ()) {
+        if (c->node && c->node->id != SMIL::id_node_region &&
+        c->node && c->node->id != SMIL::id_node_root_layout)
+            c->node->accept (this);
+        else
+            break;
+    }*/
+    // finally visit region children
+    for (SurfacePtr c = s->firstChild (); c; c = c->nextSibling ()) {
+        if (c->node && c->node->id == SMIL::id_node_region)
+            c->node->accept (this);
+        else
+            break;
     }
-    for (NodeRefItemPtr r = sorted.first (); r; r = r->nextSibling ())
-        r->data->accept (this);
+    s->dirty = false;
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *reg) {
-    //kDebug() << "Visit " << reg->nodeName();
-    if (reg->root_layout) {
-        Surface *s = (Surface *)reg->root_layout->message (MsgQueryRoleDisplay);
+KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *layout) {
+    //kDebug() << "Visit " << layout->nodeName();
+    if (layout->root_layout) {
+        Surface *s = (Surface *)layout->root_layout->message (MsgQueryRoleDisplay);
         if (s) {
             //cairo_save (cr);
             Matrix m = matrix;
@@ -293,9 +290,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *reg) {
 
             matrix = Matrix (0, 0, s->xscale, s->yscale);
             matrix.transform (m);
-            traverseRegion (reg->root_layout);
-            s->dirty = false;
-            traverseRegion (reg);
+            traverseRegion (layout->root_layout, s);
             //cairo_restore (cr);
             matrix = m;
             clip = clip_save;
@@ -354,7 +349,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
             }
             cairo_restore (cr);
         }
-        traverseRegion (reg);
+        traverseRegion (reg, s);
         cairo_restore (cr);
         matrix = m;
         clip = clip_save;

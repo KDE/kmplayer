@@ -1231,7 +1231,7 @@ KDE_NO_EXPORT void *SMIL::Layout::message (MessageType msg, void *content) {
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id),
    media_info (NULL),
-   z_order (1), background_color (0),
+   z_order (0), background_color (0),
    m_AttachedMediaTypes (new NodeRefList),
    has_mouse (false)
 {}
@@ -1287,6 +1287,54 @@ KDE_NO_EXPORT void SMIL::RegionBase::repaint (const SRect & rect) {
         s->repaint (SRect (0, 0, s->dimension ()).intersect (rect));
 }
 
+static void updateSurfaceSort (SMIL::RegionBase *rb) {
+    Surface *rs = rb->region_surface.ptr ();
+    Surface *prs = rs->parentNode ().ptr ();
+    Surface *next = NULL;
+    if (!prs)
+        return;
+    for (Surface *s = prs->firstChild ().ptr(); s; s = s->nextSibling ().ptr ())
+        if (s != rs && s->node) {
+            if (SMIL::id_node_region == s->node->id) {
+                SMIL::Region *r = static_cast <SMIL::Region *> (s->node.ptr ());
+                if (r->z_order > rb->z_order) {
+                    next = s;
+                    break;
+                } else if (r->z_order == rb->z_order) {
+                    next = s;
+                    // now take region order into account
+                    Node *n = rb->previousSibling().ptr ();
+                    for (; n; n = n->previousSibling().ptr ())
+                        if (n->id == SMIL::id_node_region) {
+                            r = static_cast <SMIL::Region *> (n);
+                            if (r->z_order <= rb->z_order) {
+                                if (r->z_order == rb->z_order) {
+                                    next = r->region_surface->nextSibling ().ptr ();
+                                    if (rs == next)
+                                        next = next->nextSibling ().ptr ();
+                                }
+                                break;
+                            }
+                        }
+                    break;
+                }
+            } else if (SMIL::id_node_root_layout != s->node->id) {
+                // break at attached media types
+                Surface *m = (Surface *) s->node->message (MsgQueryRoleDisplay);
+                if (m) {
+                    next = m;
+                    break;
+                }
+            }
+        }
+    if (rs->nextSibling ().ptr () == next) {
+        return;
+    }
+    SurfacePtr protect (rs);
+    prs->removeChild (rs);
+    prs->insertBefore (rs, next);
+}
+
 KDE_NO_EXPORT
 void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
     //kDebug () << "RegionBase::parseParam " << getAttribute ("id") << " " << name << "=" << val << " active:" << active();
@@ -1305,6 +1353,8 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
         }
     } else if (name == "z-index") {
         z_order = val.toInt ();
+        if (region_surface)
+            updateSurfaceSort (this);
         need_repaint = true;
     } else if (sizes.setSizeParam (name, val)) {
         if (state_finished == state && region_surface)

@@ -302,22 +302,9 @@ void Node::appendChild (NodePtr c) {
 }
 
 void Node::insertBefore (NodePtr c, NodePtr b) {
-    if (!b) {
-        appendChild (c);
-    } else {
-        ASSERT (!c->parentNode ());
-        document()->m_tree_version++;
-        if (b->m_prev) {
-            b->m_prev->m_next = c;
-            c->m_prev = b->m_prev;
-        } else {
-            c->m_prev = 0L;
-            m_first_child = c;
-        }
-        b->m_prev = c;
-        c->m_next = b;
-        c->m_parent = this;
-    }
+    ASSERT (!c->parentNode ());
+    document()->m_tree_version++;
+    TreeNode<Node>::insertBefore (c, b);
 }
 
 void Node::removeChild (NodePtr c) {

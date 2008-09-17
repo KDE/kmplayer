@@ -197,6 +197,7 @@ class KMPLAYER_EXPORT TreeNode : public ListNodeBase <T> {
 public:
     virtual ~TreeNode () {}
 
+    virtual void insertBefore (typename Item<T>::SharedType c, typename Item<T>::SharedType b);
     virtual void appendChild (typename Item<T>::SharedType c);
     virtual void removeChild (typename Item<T>::SharedType c);
 
@@ -954,6 +955,25 @@ inline void TreeNode<T>::appendChild (typename Item<T>::SharedType c) {
         m_last_child = c;
     }
     c->m_parent = Item<T>::m_self;
+}
+
+template <class T>
+inline void TreeNode<T>::insertBefore (
+        typename Item<T>::SharedType c, typename Item<T>::SharedType b) {
+    if (!b) {
+        appendChild (c);
+    } else {
+        if (b->m_prev) {
+            b->m_prev->m_next = c;
+            c->m_prev = b->m_prev;
+        } else {
+            c->m_prev = 0L;
+            m_first_child = c;
+        }
+        b->m_prev = c;
+        c->m_next = b;
+        c->m_parent = Item<T>::m_self;
+    }
 }
 
 template <class T>
