@@ -299,7 +299,6 @@ public:
     MediaInfo *media_info;
     CalculatedSizer sizes;
 
-    Single x, y, w, h;     // unscaled values
     int z_order;
     unsigned int background_color;
     QString background_image;

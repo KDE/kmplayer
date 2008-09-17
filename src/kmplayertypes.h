@@ -102,24 +102,38 @@ public:
     // void rotate (float phi); // add this when needed
 };
 
+class KMPLAYER_NO_EXPORT SSize {
+public:
+    SSize () {}
+    SSize (Single w, Single h) : width (w), height (h) {}
+
+    bool isEmpty () const { return width <= 0 || height <= 0; }
+    bool operator == (const SSize &s) const;
+    bool operator != (const SSize &s) const;
+
+    Single width, height;
+};
+
 class KMPLAYER_NO_EXPORT SRect {
-    Single _x, _y, _w, _h;
+    Single _x, _y;
 #ifdef _KDEBUG_H_
     friend QDebug & operator << (QDebug &dbg, const SRect &r);
 #endif
 public:
     SRect () {}
     SRect (Single a, Single b, Single w, Single h)
-        : _x (a), _y (b), _w (w), _h (h) {}
+        : _x (a), _y (b), size (w, h) {}
+    SRect (Single a, Single b, const SSize &s) : _x (a), _y (b), size (s) {}
     Single x () const { return _x; }
     Single y () const { return _y; }
-    Single width () const { return _w; }
-    Single height () const { return _h; }
+    Single width () const { return size.width; }
+    Single height () const { return size.height; }
     SRect unite (const SRect & r) const;
     SRect intersect (const SRect & r) const;
-    bool isValid () const { return _w >= Single (0) && _h >= Single (0); }
     bool operator == (const SRect & r) const;
     bool operator != (const SRect & r) const;
+
+    SSize size;
 };
 
 class KMPLAYER_NO_EXPORT IRect {
@@ -147,7 +161,7 @@ inline QDebug & operator << (QDebug & dbg, Single s) {
 }
 
 inline QDebug & operator << (QDebug & dbg, const SRect &r) {
-    dbg << "SRect(x=" << r._x << " y=" << r._y << " w=" << r._w << " h=" << r._h << ")";
+    dbg << "SRect(x=" << r._x << " y=" << r._y << " w=" << r.size.width << " h=" << r.size.height << ")";
     return dbg;
 }
 
@@ -296,8 +310,16 @@ inline Single operator - (const Single s) {
 
 //-----------------------------------------------------------------------------
 
+inline bool SSize::operator == (const SSize &s) const {
+    return width == s.width && height == s.height;
+}
+
+inline bool SSize::operator != (const SSize &s) const { return !(*this == s); }
+
+//-----------------------------------------------------------------------------
+
 inline bool SRect::operator == (const SRect & r) const {
-    return _x == r._x && _y == r._y && _w == r._w && _h == r._h;
+    return _x == r._x && _y == r._y && size == r.size;
 }
 
 inline bool SRect::operator != (const SRect & r) const { return !(*this == r); }

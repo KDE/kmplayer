@@ -35,7 +35,7 @@ class ViewArea;
 
 class KMPLAYER_NO_EXPORT Surface : public TreeNode <Surface> {
 public:
-    Surface (ViewArea * widget);
+    Surface (ViewArea *widget);
     ~Surface();
 
     void clear ();
@@ -48,9 +48,11 @@ public:
     void remove ();                // remove from parent, mark ancestors dirty
     void markDirty ();             // mark this and ancestors dirty
     void updateChildren (bool parent_resized=false);
+    SSize dimension () const { return size.isEmpty () ? bounds.size : size; }
 
     NodePtrW node;
     SRect bounds;                  // bounds in in parent coord.
+    SSize size;                    // if set, dimension in Surface coord.
     float xscale, yscale;          // internal scaling
     unsigned int background_color; // rgba background color
 #ifdef KMPLAYER_WITH_CAIRO

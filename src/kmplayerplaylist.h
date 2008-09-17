@@ -553,6 +553,8 @@ protected:
     unsigned int cached_ismrl_version;
     PlayType cached_play_type;
 public:
+    enum { SingleMode = 0, WindowMode };
+
     ~Mrl ();
     PlayType playType ();
     /*
@@ -582,7 +584,7 @@ public:
     Single height;
     float aspect;
     int repeat;
-    enum { SingleMode = 0, WindowMode } view_mode;
+    unsigned char view_mode;
     bool resolved;
     bool bookmarkable;
     bool access_granted;

@@ -70,9 +70,7 @@ void Surface::resize (const SRect &rect, bool parent_resized) {
     bounds = rect;
     if (parent_resized || old_bounds != rect) {
 
-        if (parent_resized ||
-                old_bounds.width () != rect.width () ||
-                old_bounds.height () != rect.height ()) {
+        if (parent_resized || old_bounds.size != rect.size) {
             markDirty ();
 #ifdef KMPLAYER_WITH_CAIRO
             if (surface) {
@@ -144,6 +142,10 @@ KDE_NO_EXPORT void Surface::repaint (const SRect &r) {
 }
 
 KDE_NO_EXPORT void Surface::repaint () {
-    view_widget->scheduleRepaint (clipToScreen (0, 0, bounds.width (), bounds.height ()));
+    Surface *ps = parentNode ().ptr ();
+    if (ps)
+        ps->repaint (bounds);
+    else
+        view_widget->scheduleRepaint (IRect (bounds));
 }
 

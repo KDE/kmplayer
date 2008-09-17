@@ -706,23 +706,27 @@ Single SizeType::size (Single relative_to) const {
 //-----------------%<----------------------------------------------------------
 
 SRect SRect::unite (const SRect & r) const {
-    if (!(_w > 0 && _h > 0))
+    if (size.isEmpty ())
         return r;
-    if (!(r._w > 0 && r._h > 0))
+    if (r.size.isEmpty ())
         return *this;
     Single a (_x < r._x ? _x : r._x);
     Single b (_y < r._y ? _y : r._y);
-    return SRect (a, b, 
-            ((_x + _w < r._x + r._w) ? r._x + r._w : _x + _w) - a,
-            ((_y + _h < r._y + r._h) ? r._y + r._h : _y + _h) - b);
+    return SRect (a, b,
+            ((_x + size.width < r._x + r.size.width)
+             ? r._x + r.size.width : _x + size.width) - a,
+            ((_y + size.height < r._y + r.size.height)
+             ? r._y + r.size.height : _y + size.height) - b);
 }
 
 SRect SRect::intersect (const SRect & r) const {
     Single a (_x < r._x ? r._x : _x);
     Single b (_y < r._y ? r._y : _y);
     return SRect (a, b,
-            ((_x + _w < r._x + r._w) ? _x + _w : r._x + r._w) - a,
-            ((_y + _h < r._y + r._h) ? _y + _h : r._y + r._h) - b);
+            ((_x + size.width < r._x + r.size.width)
+             ? _x + size.width : r._x + r.size.width) - a,
+            ((_y + size.height < r._y + r.size.height)
+             ? _y + size.height : r._y + r.size.height) - b);
 }
 
 IRect IRect::unite (const IRect & r) const {
@@ -1227,7 +1231,6 @@ KDE_NO_EXPORT void *SMIL::Layout::message (MessageType msg, void *content) {
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id),
    media_info (NULL),
-   x (0), y (0), w (0), h (0),
    z_order (1), background_color (0),
    m_AttachedMediaTypes (new NodeRefList),
    has_mouse (false)
@@ -1275,20 +1278,19 @@ KDE_NO_EXPORT void SMIL::RegionBase::dataArrived () {
 KDE_NO_EXPORT void SMIL::RegionBase::repaint () {
     Surface *s = (Surface *) message (MsgQueryRoleDisplay);
     if (s)
-        s->repaint (SRect (0, 0, w, h));
+        s->repaint ();
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::repaint (const SRect & rect) {
     Surface *s = (Surface *) message (MsgQueryRoleDisplay);
     if (s)
-        s->repaint (SRect (0, 0, w, h).intersect (rect));
+        s->repaint (SRect (0, 0, s->dimension ()).intersect (rect));
 }
 
 KDE_NO_EXPORT
 void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
     //kDebug () << "RegionBase::parseParam " << getAttribute ("id") << " " << name << "=" << val << " active:" << active();
     bool need_repaint = false;
-    SRect rect = SRect (x, y, w, h);
     if (name == StringPool::attr_fit) {
         fit = parseFit (val.ascii ());
         need_repaint = true;
@@ -1330,8 +1332,8 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
     }
     if (active ()) {
         Surface *s = (Surface *) message (MsgQueryRoleDisplay);
-        if (need_repaint && s && s->parentNode ())
-            s->parentNode ()->repaint (rect);
+        if (need_repaint && s)
+            s->repaint ();
     }
     Element::parseParam (name, val);
 }
@@ -1401,19 +1403,19 @@ void *SMIL::RootLayout::message (MessageType msg, void *content) {
         case MsgSurfaceBoundsUpdate:
             if (region_surface) {
                 Surface *surface = region_surface.ptr ();
-                Single w1, h1;
+                Single w, h;
                 if (auxiliaryNode ()) {
-                    w1 = surface->bounds.width ();
-                    h1 = surface->bounds.height ();
-                    sizes.width = QString::number ((int) w1);
-                    sizes.height = QString::number ((int) h1);
+                    w = surface->bounds.width ();
+                    h = surface->bounds.height ();
+                    sizes.width = QString::number ((int) w);
+                    sizes.height = QString::number ((int) h);
                 } else {
-                     w1 = sizes.width.size();
-                     h1 = sizes.height.size ();
+                     w = sizes.width.size();
+                     h = sizes.height.size ();
                 }
-                if (content || w1 != w || h1 != h) {
-                    w = w1;
-                    h = h1;
+                if (content || surface->dimension () != SSize (w, h)) {
+                    surface->size.width = w;
+                    surface->size.height = h;
                     if (!auxiliaryNode ()) {
                         SMIL::Smil *s = Smil::findSmilNode (this);
                         s->width = w;
@@ -1460,15 +1462,11 @@ void *SMIL::Region::message (MessageType msg, void *content) {
 
     case MsgSurfaceBoundsUpdate:
         if (region_surface && state == state_finished) {
-            Node *pnode = parentNode ().ptr ();
-            if (pnode && id_node_layout == pnode->id)
-                pnode = pnode->firstChild ().ptr ();
-            if (pnode &&
-                    (id_node_root_layout == pnode->id ||
-                     id_node_region == pnode->id)) {
-                RegionBase *rb = static_cast <RegionBase *> (pnode);
-                Single x1 (x), y1 (y), w1 (w), h1 (h);
-                sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
+            Surface *ps = region_surface->parentNode ().ptr ();
+            if (ps) {
+                SSize dim = ps->dimension ();
+                Single x, y, w, h;
+                sizes.calcSizes (this, dim.width, dim.height, x, y, w, h);
                 region_surface->resize (SRect (x, y, w, h), !!content);
             }
         }
@@ -1481,7 +1479,7 @@ void *SMIL::Region::message (MessageType msg, void *content) {
                 n = n->firstChild ();
             Surface *s = (Surface *) n->message (MsgQueryRoleDisplay);
             if (s) {
-                region_surface = s->createSurface(this, SRect (x, y, w, h));
+                region_surface = s->createSurface (this, SRect ());
                 region_surface->background_color = background_color;
             }
         }
