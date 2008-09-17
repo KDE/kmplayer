@@ -258,6 +258,7 @@ enum MessageType
     MsgMediaReady,
     MsgMediaUpdated,
     MsgEventPostponed,
+    MsgSurfaceBoundsUpdate,      // bool parent surface resized
     MsgSurfaceUpdate,
     MsgSurfaceAttach,
     MsgStateFreeze,

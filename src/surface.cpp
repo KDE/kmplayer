@@ -23,22 +23,27 @@
 # include <cairo.h>
 #endif
 
+#include <qwidget.h>
+
+#include <kdebug.h>
+
 #include "surface.h"
 #include "viewarea.h"
 
 using namespace KMPlayer;
 
 
-KDE_NO_CDTOR_EXPORT Surface::Surface (ViewArea * widget)
+KDE_NO_CDTOR_EXPORT Surface::Surface (ViewArea *widget)
   : bounds (SRect (0, 0, widget->width (), widget->height ())),
     xscale (1.0), yscale (1.0),
-    background_color (0),
+    background_color (widget->palette().color (widget->backgroundRole()).rgb()),
 #ifdef KMPLAYER_WITH_CAIRO
     surface (0L),
 #endif
     dirty (false),
-    view_widget (widget)
-{}
+    view_widget (widget) {
+    background_color = widget->palette().color (widget->backgroundRole()).rgb();
+}
 
 Surface::~Surface() {
 #ifdef KMPLAYER_WITH_CAIRO
@@ -49,6 +54,7 @@ Surface::~Surface() {
 
 void Surface::clear () {
     m_first_child = 0L;
+    background_color = view_widget->palette().color (view_widget->backgroundRole()).rgb();
 }
 
 void Surface::remove () {
@@ -59,9 +65,43 @@ void Surface::remove () {
     }
 }
 
+void Surface::resize (const SRect &rect, bool parent_resized) {
+    SRect old_bounds = bounds;
+    bounds = rect;
+    if (parent_resized || old_bounds != rect) {
+
+        if (parent_resized ||
+                old_bounds.width () != rect.width () ||
+                old_bounds.height () != rect.height ()) {
+            markDirty ();
+#ifdef KMPLAYER_WITH_CAIRO
+            if (surface) {
+                cairo_surface_destroy (surface);
+                surface = NULL;
+            }
+#endif
+            updateChildren (true);
+        } else if (parentNode ()) {
+            parentNode ()->markDirty ();
+        }
+        if (parentNode ())
+            parentNode ()->repaint (old_bounds.unite (rect));
+        else
+            repaint ();
+    }
+}
+
 void Surface::markDirty () {
-    for (Surface *s = this; s; s = s->parentNode ().ptr ())
+    for (Surface *s = this; s && !s->dirty; s = s->parentNode ().ptr ())
         s->dirty = true;
+}
+
+void Surface::updateChildren (bool parent_resized) {
+    for (SurfacePtr c = firstChild (); c; c = c->nextSibling ())
+        if (c->node)
+            c->node->message (MsgSurfaceBoundsUpdate, (void *) parent_resized);
+        else
+            kError () << "Surface without node";
 }
 
 Surface *Surface::createSurface (NodePtr owner, const SRect & rect) {
@@ -70,14 +110,6 @@ Surface *Surface::createSurface (NodePtr owner, const SRect & rect) {
     surface->bounds = rect;
     appendChild (surface);
     return surface;
-}
-
-KDE_NO_EXPORT void Surface::resize (const SRect &r) {
-    bounds = r;
-    /*if (rect == nrect)
-        ;//return;
-    SRect pr = rect.unite (nrect); // for repaint
-    rect = nrect;*/
 }
 
 KDE_NO_EXPORT IRect Surface::toScreen (Single x, Single y, Single w, Single h) {
@@ -108,13 +140,10 @@ KDE_NO_EXPORT IRect Surface::clipToScreen (Single x, Single y, Single w, Single 
 }
 
 KDE_NO_EXPORT void Surface::repaint (const SRect &r) {
-    markDirty ();
     view_widget->scheduleRepaint (clipToScreen (r.x (), r.y (), r.width (), r.height ()));
-    //kDebug() << "Surface::repaint x:" << (int)x << " y:" << (int)y << " w:" << (int)w << " h:" << (int)h;
 }
 
 KDE_NO_EXPORT void Surface::repaint () {
-    markDirty ();
     view_widget->scheduleRepaint (clipToScreen (0, 0, bounds.width (), bounds.height ()));
 }
 

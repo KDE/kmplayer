@@ -875,30 +875,23 @@ KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, Single w, Single h,
 }
 
 KDE_NO_EXPORT
-bool CalculatedSizer::setSizeParam(const TrieString &name, const QString &val, bool &dim_changed) {
-    dim_changed = true;
+bool CalculatedSizer::setSizeParam(const TrieString &name, const QString &val) {
     if (name == StringPool::attr_left) {
         left = val;
-        dim_changed = right.isSet ();
     } else if (name == StringPool::attr_top) {
         top = val;
-        dim_changed = bottom.isSet ();
     } else if (name == StringPool::attr_width) {
         width = val;
     } else if (name == StringPool::attr_height) {
         height = val;
     } else if (name == StringPool::attr_right) {
         right = val;
-        dim_changed = left.isSet ();
     } else if (name == StringPool::attr_bottom) {
         bottom = val;
-        dim_changed = top.isSet ();
     } else if (name == "regPoint") {
         reg_point = val;
-        dim_changed = false;
     } else if (name == "regAlign") {
         reg_align = val;
-        dim_changed = false;
     } else
         return false;
     return true;
@@ -961,7 +954,7 @@ static Element * fromScheduleGroup (NodePtr & d, const QString & tag) {
         return new SMIL::Seq (d);
     else if (!strcmp (ctag, "excl"))
         return new SMIL::Excl (d);
-    return 0L;
+    return NULL;
 }
 
 static Element * fromParamGroup (NodePtr & d, const QString & tag) {
@@ -970,7 +963,7 @@ static Element * fromParamGroup (NodePtr & d, const QString & tag) {
         return new SMIL::Param (d);
     else if (!strcmp (ctag, "area") || !strcmp (ctag, "anchor"))
         return new SMIL::Area (d, tag);
-    return 0L;
+    return NULL;
 }
 
 static Element * fromAnimateGroup (NodePtr & d, const QString & tag) {
@@ -981,7 +974,7 @@ static Element * fromAnimateGroup (NodePtr & d, const QString & tag) {
         return new SMIL::Animate (d);
     else if (!strcmp (ctag, "animateMotion"))
         return new SMIL::AnimateMotion (d);
-    return 0L;
+    return NULL;
 }
 
 static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
@@ -1001,13 +994,13 @@ static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
     else if (!strcmp (taglatin, "smilText"))
         return new SMIL::SmilText (d);
     // animation, textstream
-    return 0L;
+    return NULL;
 }
 
 static Element * fromContentControlGroup (NodePtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "switch"))
         return new SMIL::Switch (d);
-    return 0L;
+    return NULL;
 }
 
 static Element *fromTextFlowGroup (NodePtr &d, const QString &tag) {
@@ -1018,7 +1011,7 @@ static Element *fromTextFlowGroup (NodePtr &d, const QString &tag) {
         return new SMIL::TextFlow (d, SMIL::id_node_span, tag.toUtf8 ());
     if (!strcmp (taglatin, "p"))
         return new SMIL::TextFlow (d, SMIL::id_node_p, tag.toUtf8 ());
-    return 0L;
+    return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -1047,7 +1040,9 @@ KDE_NO_EXPORT void SMIL::Smil::deactivate () {
 }
 
 KDE_NO_EXPORT void *SMIL::Smil::message (MessageType msg, void *content) {
-    if (MsgChildFinished == msg) {
+    switch (msg) {
+
+    case MsgChildFinished: {
         Posting *post = (Posting *) content;
         if (unfinished ()) {
             if (post->source->nextSibling ())
@@ -1059,9 +1054,20 @@ KDE_NO_EXPORT void *SMIL::Smil::message (MessageType msg, void *content) {
                 finish ();
             }
         }
-        return NULL;
+        break;
     }
-    return Mrl::message (msg, content);
+
+    case MsgSurfaceBoundsUpdate: {
+        Layout *layout = convertNode <SMIL::Layout> (layout_node);
+        if (layout && layout->root_layout)
+            return layout->root_layout->message (msg, content);
+        break;
+    }
+
+    default:
+        return Mrl::message (msg, content);
+    }
+    return NULL;
 }
 
 KDE_NO_EXPORT void SMIL::Smil::closed () {
@@ -1209,13 +1215,8 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
 KDE_NO_EXPORT void *SMIL::Layout::message (MessageType msg, void *content) {
     if (MsgChildFinished == msg) {
         headChildDone (this, ((Posting *) content)->source.ptr ());
-        if (state_finished == state) {
-            RootLayout *rl = static_cast <RootLayout *> (root_layout.ptr ());
-            if (rl && rl->message (MsgQueryRoleDisplay)) {
-                rl->updateDimensions ();
-                rl->repaint ();
-            }
-        }
+        if (state_finished == state && root_layout)
+            root_layout->message (MsgSurfaceBoundsUpdate, (void *) true);
         return NULL;
     }
     return Element::message (msg, content);
@@ -1233,13 +1234,20 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
 {}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
-    if (region_surface)
+    if (region_surface) {
         region_surface->remove ();
+        region_surface = NULL;
+    }
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
     show_background = ShowAlways;
     fit = fit_default;
+    Node *n = parentNode ().ptr ();
+    if (n && SMIL::id_node_layout == n->id)
+        n = n->firstChild ();
+    state = state_deferred;
+    message (MsgQueryRoleDisplay);
     init ();
     Element::activate ();
 }
@@ -1248,8 +1256,6 @@ KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
     show_background = ShowAlways;
     background_color = 0;
     background_image.truncate (0);
-    if (region_surface)
-        region_surface->background_color = 0;
     if (media_info) {
         delete media_info;
         media_info = NULL;
@@ -1262,7 +1268,7 @@ KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
 KDE_NO_EXPORT void SMIL::RegionBase::dataArrived () {
     ImageMedia *im = media_info ? (ImageMedia *)media_info->media : NULL;
     if (!im->isEmpty () && region_surface)
-        region_surface->remove (); // FIXME: only surface
+        region_surface->markDirty ();
     postpone_lock = 0L;
 }
 
@@ -1278,42 +1284,11 @@ KDE_NO_EXPORT void SMIL::RegionBase::repaint (const SRect & rect) {
         s->repaint (SRect (0, 0, w, h).intersect (rect));
 }
 
-KDE_NO_EXPORT void SMIL::RegionBase::updateDimensions () {
-    if (message (MsgQueryRoleDisplay))
-        for (NodePtr r = firstChild (); r; r = r->nextSibling ())
-            if (r->id == id_node_region) {
-                SMIL::Region * cr = static_cast <SMIL::Region *> (r.ptr ());
-                cr->calculateBounds (w, h);
-                cr->updateDimensions ();
-            }
-}
-
-KDE_NO_EXPORT void SMIL::RegionBase::boundsUpdate () {
-    // if there is a region_surface and it's moved, do a limit repaint
-    if (region_surface) {
-        Node *pnode = parentNode ().ptr ();
-        if (pnode && id_node_layout == pnode->id)
-            pnode = pnode->firstChild ().ptr ();
-        Surface *ps = region_surface->parentNode ().ptr ();
-        if (pnode && ps &&
-                (id_node_root_layout == pnode->id ||
-                 id_node_region == pnode->id)) {
-            RegionBase *rb = static_cast <RegionBase *> (pnode);
-            SRect old_bounds = region_surface->bounds;
-            w = 0; h = 0;
-            sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
-            region_surface->bounds = SRect (x, y, w, h);
-            ps->repaint (region_surface->bounds.unite (old_bounds));
-        }
-    }
-}
-
 KDE_NO_EXPORT
 void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
     //kDebug () << "RegionBase::parseParam " << getAttribute ("id") << " " << name << "=" << val << " active:" << active();
     bool need_repaint = false;
     SRect rect = SRect (x, y, w, h);
-    bool dim_changed;
     if (name == StringPool::attr_fit) {
         fit = parseFit (val.ascii ());
         need_repaint = true;
@@ -1329,24 +1304,9 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
     } else if (name == "z-index") {
         z_order = val.toInt ();
         need_repaint = true;
-    } else if (sizes.setSizeParam (name, val, dim_changed)) {
-        if (state_finished == state) {
-            if (region_surface) {
-                if (dim_changed) {
-                    region_surface->remove ();
-                } else {
-                    boundsUpdate ();
-                    return; // smart update of old bounds to new moved one
-                }
-            }
-            NodePtr p = parentNode ();
-            if (p && SMIL::id_node_layout == p->id)
-                p = p->firstChild ();
-            if (p &&(p->id==SMIL::id_node_region ||p->id==SMIL::id_node_root_layout))
-                convertNode <SMIL::RegionBase> (p)->updateDimensions ();
-            rect = rect.unite (SRect (x, y, w, h));
-            need_repaint = true;
-        }
+    } else if (sizes.setSizeParam (name, val)) {
+        if (state_finished == state && region_surface)
+            message (MsgSurfaceBoundsUpdate);
     } else if (name == "showBackground") {
         if (val == "whenActive")
             show_background = ShowWhenActive;
@@ -1378,29 +1338,21 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
 
 void *SMIL::RegionBase::message (MessageType msg, void *content) {
     switch (msg) {
+
         case MsgMediaReady:
             if (media_info)
                 dataArrived ();
             return NULL;
-        case MsgQueryRoleDisplay:
-            if (!region_surface && state_finished == state) {
-                Node *n = parentNode ().ptr ();
-                if (n && SMIL::id_node_layout == n->id)
-                    n = n->firstChild ();
-                Surface *s = (Surface *) n->message (MsgQueryRoleDisplay);
-                if (s) {
-                    region_surface = s->createSurface(this, SRect (x, y, w, h));
-                    region_surface->background_color = background_color;
-                }
-            }
-            return region_surface.ptr ();
+
         case MsgChildFinished:
             headChildDone (this, ((Posting *) content)->source.ptr ());
             return NULL;
+
         case MsgQueryReceivers:
             if (MsgSurfaceAttach == (MessageType) (long) content)
                 return m_AttachedMediaTypes.ptr ();
             // fall through
+
         default:
             break;
     }
@@ -1412,24 +1364,7 @@ void *SMIL::RegionBase::message (MessageType msg, void *content) {
 KDE_NO_EXPORT void SMIL::RootLayout::closed () {
     QString width = getAttribute (StringPool::attr_width);
     QString height = getAttribute (StringPool::attr_height);
-    if (parentNode () && (width.isEmpty () || height.isEmpty ())) {
-        int wr = 0, hr = 0;
-        for (NodePtr n = nextSibling (); n; n = n->nextSibling ()) {
-            if (n->id == id_node_region) {
-                SMIL::Region *rb = convertNode <SMIL::Region> (n);
-                rb->init ();
-                rb->calculateBounds (0, 0);
-                if (int (rb->x + rb->w) > wr)
-                    wr = rb->x + rb->w;
-                if (int (rb->y + rb->h) > hr)
-                    hr = rb->y + rb->h;
-            }
-        }
-        if (!wr || !hr)
-            wr = 320; hr = 240; // have something to start with
-        setAttribute (StringPool::attr_width, QString::number (wr));
-        setAttribute (StringPool::attr_height,QString::number (hr));
-    } else {
+    if (!width.isEmpty () && !height.isEmpty ()) {
         Smil *s = Smil::findSmilNode (this);
         if (s) {
             s->width = width.toDouble ();
@@ -1438,54 +1373,64 @@ KDE_NO_EXPORT void SMIL::RootLayout::closed () {
     }
 }
 
+KDE_NO_CDTOR_EXPORT SMIL::RootLayout::~RootLayout() {
+    region_surface = NULL;
+}
+
 KDE_NO_EXPORT void SMIL::RootLayout::deactivate () {
-    RegionBase::deactivate ();
     SMIL::Smil *s = Smil::findSmilNode (this);
     if (s)
         s->message (MsgQueryRoleChildDisplay, NULL);
     region_surface = NULL;
+    RegionBase::deactivate ();
 }
 
 void *SMIL::RootLayout::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgQueryRoleDisplay:
-            if (state_finished == state && !region_surface) {
+            if (!region_surface && active ()) {
                 SMIL::Smil *s = Smil::findSmilNode (this);
                 if (s && s->active ()) {
                     Surface *surface = (Surface *)s->message (
                             MsgQueryRoleChildDisplay, s);
                     region_surface = surface;
-                    w = s->width;
-                    h = s->height;
-                    if (surface) {
-                        surface->background_color = background_color;
-                        if (auxiliaryNode ()) {
-                            w = surface->bounds.width ();
-                            h = surface->bounds.height ();
-                            sizes.width = QString::number ((int) w);
-                            sizes.height = QString::number ((int) h);
-                        }
-                    }
-                    updateDimensions ();
                 }
             }
             return region_surface.ptr ();
+
+        case MsgSurfaceBoundsUpdate:
+            if (region_surface) {
+                Surface *surface = region_surface.ptr ();
+                Single w1, h1;
+                if (auxiliaryNode ()) {
+                    w1 = surface->bounds.width ();
+                    h1 = surface->bounds.height ();
+                    sizes.width = QString::number ((int) w1);
+                    sizes.height = QString::number ((int) h1);
+                } else {
+                     w1 = sizes.width.size();
+                     h1 = sizes.height.size ();
+                }
+                if (content || w1 != w || h1 != h) {
+                    w = w1;
+                    h = h1;
+                    if (!auxiliaryNode ()) {
+                        SMIL::Smil *s = Smil::findSmilNode (this);
+                        s->width = w;
+                        s->height = h;
+                    }
+                    if (content)
+                        surface->resize (surface->bounds, true);
+                    else
+                        surface->updateChildren (!!content);
+                }
+            }
+            return NULL;
+
         default:
             break;
     }
     return RegionBase::message (msg, content);
-}
-
-KDE_NO_EXPORT void SMIL::RootLayout::updateDimensions () {
-    w = sizes.width.size ();
-    h = sizes.height.size ();
-    if (w > 0 && h > 0)
-        for (NodePtr n = nextSibling(); n; n = n->nextSibling())
-            if (n->id == SMIL::id_node_region) {
-                Region *r = static_cast <SMIL::Region *> (n.ptr ());
-                r->calculateBounds (w, h);
-                r->updateDimensions ();
-            }
 }
 
 //--------------------------%<-------------------------------------------------
@@ -1493,31 +1438,62 @@ KDE_NO_EXPORT void SMIL::RootLayout::updateDimensions () {
 KDE_NO_CDTOR_EXPORT SMIL::Region::Region (NodePtr & d)
  : RegionBase (d, id_node_region) {}
 
+KDE_NO_CDTOR_EXPORT SMIL::Region::~Region () {
+    if (region_surface)
+        region_surface->remove ();
+}
+
+KDE_NO_EXPORT void SMIL::Region::deactivate () {
+    if (region_surface)
+        region_surface->remove ();
+    RegionBase::deactivate ();
+}
+
 KDE_NO_EXPORT NodePtr SMIL::Region::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "region"))
         return new SMIL::Region (m_doc);
     return NodePtr ();
 }
 
-/**
- * calculates dimensions of this regions with _w and _h as width and height
- * of parent Region (representing 100%)
- */
-KDE_NO_EXPORT
-void SMIL::Region::calculateBounds (Single pw, Single ph) {
-    Single x1 (x), y1 (y), w1 (w), h1 (h);
-    sizes.calcSizes (this, pw, ph, x, y, w, h);
-    Surface *s = (Surface *) message (MsgQueryRoleDisplay);
-    if (s)
-        s->bounds = SRect (x, y, w, h);
-    //kDebug () << "parent:" << pw << "x" << ph << " this:" << (int)x << "," << (int)y << " " << (int)w << "x" << (int)h;
-}
-
 void *SMIL::Region::message (MessageType msg, void *content) {
-    MessageType m = (MessageType) (long) content;
-    NodeRefList *l = mouse_listeners.receivers (m);
-    if (l)
-        return l;
+    switch (msg) {
+
+    case MsgSurfaceBoundsUpdate:
+        if (region_surface && state == state_finished) {
+            Node *pnode = parentNode ().ptr ();
+            if (pnode && id_node_layout == pnode->id)
+                pnode = pnode->firstChild ().ptr ();
+            if (pnode &&
+                    (id_node_root_layout == pnode->id ||
+                     id_node_region == pnode->id)) {
+                RegionBase *rb = static_cast <RegionBase *> (pnode);
+                Single x1 (x), y1 (y), w1 (w), h1 (h);
+                sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
+                region_surface->resize (SRect (x, y, w, h), !!content);
+            }
+        }
+        return NULL;
+
+    case MsgQueryRoleDisplay:
+        if (!region_surface && active ()) {
+            Node *n = parentNode ().ptr ();
+            if (n && SMIL::id_node_layout == n->id)
+                n = n->firstChild ();
+            Surface *s = (Surface *) n->message (MsgQueryRoleDisplay);
+            if (s) {
+                region_surface = s->createSurface(this, SRect (x, y, w, h));
+                region_surface->background_color = background_color;
+            }
+        }
+        return region_surface.ptr ();
+
+    default: {
+        MessageType m = (MessageType) (long) content;
+        NodeRefList *l = mouse_listeners.receivers (m);
+        if (l)
+            return l;
+    }
+    }
     return RegionBase::message (msg, content);
 }
 
@@ -1525,8 +1501,7 @@ void *SMIL::Region::message (MessageType msg, void *content) {
 
 KDE_NO_EXPORT
 void SMIL::RegPoint::parseParam (const TrieString & p, const QString & v) {
-    bool b;
-    sizes.setSizeParam (p, v, b); // TODO: if dynamic, make sure to repaint
+    sizes.setSizeParam (p, v); // TODO: if dynamic, make sure to repaint
     Element::parseParam (p, v);
 }
 
@@ -2514,7 +2489,7 @@ KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
     if (!elm) elm = fromAnimateGroup (m_doc, tag);
     if (elm)
         return elm;
-    return 0L;
+    return NULL;
 }
 
 static NodePtr findExternalTree (Mrl *mrl) {
@@ -2541,7 +2516,6 @@ KDE_NO_EXPORT void SMIL::MediaType::closed () {
 
 KDE_NO_EXPORT
 void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
-    bool update_surface = true;
     if (para == StringPool::attr_fit) {
         fit = parseFit (val.ascii ());
     } else if (para == StringPool::attr_type) {
@@ -2577,37 +2551,15 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
         //    sensitivity = sens_percentage;
         else
             sensitivity = sens_opaque;
-    } else if (sizes.setSizeParam (para, val, update_surface)) {
-        SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (region_node);
-        Fit ft = rb && fit_default == fit ? rb->fit : fit;
-        if ((!update_surface || fit_default == ft || fit_hidden == ft) &&
-                sub_surface
-#ifdef KMPLAYER_WITH_CAIRO
-                && sub_surface->surface
-#endif
-                ) {
-            boundsUpdate ();
-            return; // preserved surface by recalculationg sub_surface top-left
-        }
+    } else if (sizes.setSizeParam (para, val)) {
+        message (MsgSurfaceBoundsUpdate);
     } else if (!runtime->parseParam (para, val)) {
         if (para != StringPool::attr_src)
             Mrl::parseParam (para, val);
     }
-    if (sub_surface)
+    if (sub_surface) {
+        sub_surface->markDirty ();
         sub_surface->repaint ();
-    resetSurface ();
-    Surface *s = (Surface *) message (MsgQueryRoleDisplay);
-    if (s)
-        s->repaint ();
-}
-
-KDE_NO_EXPORT void SMIL::MediaType::boundsUpdate () {
-    SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (region_node);
-    if (rb && sub_surface) {
-        SRect new_bounds = calculateBounds ();
-        SRect repaint_rect = sub_surface->bounds.unite (new_bounds);
-        sub_surface->bounds = new_bounds;
-        rb->repaint (repaint_rect);
     }
 }
 
@@ -2745,19 +2697,15 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStart () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
-    Surface *s = NULL;
     if (runtime->timingstate == Runtime::timings_stopped) {
         region_attach = NULL;
         if (media_info && media_info->media)
             media_info->media->stop ();
         if (external_tree && external_tree->active ())
             external_tree->deactivate ();
-        resetSurface ();
-        if (region_node)
-            s = (Surface *) region_node->message (MsgQueryRoleDisplay);
     }
-    if (s)
-        s->repaint ();
+    if (sub_surface)
+        sub_surface->repaint ();
     document_postponed = 0L;
 }
 
@@ -2776,12 +2724,6 @@ KDE_NO_EXPORT void SMIL::MediaType::reset () {
     Mrl::reset ();
     inited = false;
     runtime->reset ();
-}
-
-KDE_NO_EXPORT void SMIL::MediaType::resetSurface () {
-    if (sub_surface)
-        sub_surface->remove ();
-    sub_surface = NULL;
 }
 
 KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
@@ -2869,6 +2811,17 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             return NULL;
         }
 
+        case MsgSurfaceBoundsUpdate:
+            if (sub_surface) {
+                SRect rect = calculateBounds ();
+                if (width > 0 && height > 0) {
+                    sub_surface->xscale = 1.0 * rect.width () / width;
+                    sub_surface->yscale = 1.0 * rect.height () / height;
+                }
+                sub_surface->resize (rect, !!content);
+            }
+            return NULL;
+
         case MsgEventTimer: {
             TimerPosting *te = static_cast <TimerPosting *> (content);
             if (te->event_id == trans_out_timer_id) {
@@ -2924,11 +2877,11 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
 
         case MsgMediaReady: {
             resolved = true;
-            resetSurface ();
             Mrl *mrl = external_tree ? external_tree->mrl () : NULL;
             if (mrl) {
                 width = mrl->width;
                 height = mrl->height;
+                message (MsgSurfaceBoundsUpdate);
             }
             postpone_lock = 0L;
             if (state == state_began)
@@ -2954,27 +2907,25 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
 
         case MsgQueryRoleDisplay:
             if (!runtime->active ()) {
-                resetSurface ();
+                if (sub_surface)
+                    sub_surface->remove ();
+                sub_surface = NULL;
             } else if (!sub_surface && region_node) {
                 Surface *rs = (Surface *) region_node->message(MsgQueryRoleDisplay);
                 if (rs) {
-                    SRect rect = calculateBounds ();
-                    sub_surface = rs->createSurface (this, rect);
-                    if (width > 0 && height > 0) {
-                        sub_surface->xscale = 1.0 * rect.width () / width;
-                        sub_surface->yscale = 1.0 * rect.height () / height;
-                    }
+                    sub_surface = rs->createSurface (this, SRect ());
+                    message (MsgSurfaceBoundsUpdate);
                 }
             }
             return sub_surface.ptr ();
 
         case MsgQueryRoleChildDisplay: {
-            resetSurface ();
             Surface *s = NULL;
             Mrl *mrl = (Mrl *) content;
             if (mrl) {
                 width = mrl->width;
                 height = mrl->height;
+                message (MsgSurfaceBoundsUpdate);
                 s = (Surface *) message (MsgQueryRoleDisplay);
                 if (s)
                     s->node = mrl;
@@ -3110,7 +3061,6 @@ void *SMIL::ImageMediaType::message (MessageType msg, void *content) {
         switch (msg) {
 
             case MsgMediaUpdated: {
-                resetSurface ();
                 Surface *s = (Surface *) message (MsgQueryRoleDisplay);
                 if (s)
                     s->repaint ();
@@ -3164,7 +3114,7 @@ void
 SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
     if (!media_info)
         return;
-    //kDebug () << "TextRuntime::parseParam " << name << "=" << val << endl;
+    //kDebug () << "TextRuntime::parseParam " << name.toString() << "=" << val;
     if (name == StringPool::attr_src) {
         src = val;
         if (!val.isEmpty ())
@@ -3200,10 +3150,10 @@ SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
         MediaType::parseParam (name, val);
         return;
     }
-    resetSurface ();
-    Surface *s = static_cast <Surface *> (message (MsgQueryRoleDisplay));
-    if (s)
-        s->repaint ();
+    if (sub_surface) {
+        width = height = 0;
+        sub_surface->resize (calculateBounds (), true);
+    }
 }
 
 KDE_NO_EXPORT void SMIL::TextMediaType::accept (Visitor * v) {
@@ -4061,9 +4011,9 @@ bool SMIL::AnimateMotion::checkTarget (Node *n) {
 }
 
 bool SMIL::AnimateMotion::getCoordinates (const QString &coord, SizeType &x, SizeType &y) {
-    int p = coord.find (QChar (','));
+    int p = coord.indexOf (QChar (','));
     if (p < 0)
-        p = coord.find (QChar (' '));
+        p = coord.indexOf (QChar (' '));
     if (p > 0) {
         x = coord.left (p).stripWhiteSpace ();
         y = coord.mid (p + 1).stripWhiteSpace ();
@@ -4183,16 +4133,14 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::applyStep () {
     if (!checkTarget (target))
         return;
     if (SMIL::id_node_region == target->id) {
-        SMIL::Region* r = static_cast <SMIL::Region*> (target);
-        if (r->message (MsgQueryRoleDisplay)) {
-            r->sizes.move (cur_x, cur_y);
-            r->boundsUpdate ();
-        }
+        SMIL::Region *r = static_cast <SMIL::Region*> (target);
+        r->sizes.move (cur_x, cur_y);
+        target->message (MsgSurfaceBoundsUpdate);
     } else {
         SMIL::MediaType *mt = static_cast <SMIL::MediaType *> (target);
         if (mt->message (MsgQueryRoleDisplay)) {
             mt->sizes.move (cur_x, cur_y);
-            mt->boundsUpdate ();
+            mt->message (MsgSurfaceBoundsUpdate);
         }
     }
 }

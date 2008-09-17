@@ -72,7 +72,7 @@ public:
             Single & xoff, Single & yoff, Single & w1, Single & h1);
     SizeType left, top, width, height, right, bottom;
     QString reg_point, reg_align;
-    bool setSizeParam (const TrieString &name, const QString &value, bool &dim);
+    bool setSizeParam (const TrieString &name, const QString &value);
     void move (const SizeType &x, const SizeType &y);
 };
 
@@ -294,13 +294,6 @@ public:
      */
     void repaint ();
     void repaint (const SRect & rect);
-    /**
-     * calculate the relative x,y,w,h on the child region elements
-     * given this element's w and h value
-     * and child's left/top/right/width/height/bottom attributes
-     */
-    virtual void updateDimensions ();
-    void boundsUpdate (); // recalculates and repaint old and new bounds
 
     SurfacePtrW region_surface;
     MediaInfo *media_info;
@@ -330,11 +323,11 @@ class KMPLAYER_NO_EXPORT RootLayout : public RegionBase {
 public:
     KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d)
         : RegionBase (d, id_node_root_layout) {}
+    ~RootLayout ();
     void closed ();
     void deactivate ();
     void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
-    void updateDimensions ();
 };
 
 /**
@@ -343,9 +336,10 @@ public:
 class KMPLAYER_NO_EXPORT Region : public RegionBase {
 public:
     Region (NodePtr & d);
+    ~Region ();
+    void deactivate ();
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     NodePtr childFromTag (const QString & tag);
-    void calculateBounds (Single w, Single h);
     void *message (MessageType msg, void *content=NULL);
 private:
     MouseListeners mouse_listeners;
@@ -595,10 +589,7 @@ public:
     virtual void begin ();
     virtual void finish ();
     virtual void reset ();
-    /* (new) sub-region or NULL if not displayed */
-    void resetSurface ();
     SRect calculateBounds ();
-    void boundsUpdate (); // recalculates and repaint old and new bounds
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual void *message (MessageType msg, void *content=NULL);
     virtual void accept (Visitor *v) { v->visit (this); }

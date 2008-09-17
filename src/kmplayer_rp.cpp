@@ -185,14 +185,16 @@ KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
         return new RP::Fadein (m_doc);
     else if (!strcmp (ctag, "fadeout"))
         return new RP::Fadeout (m_doc);
-    return 0L;
+    return NULL;
 }
 
 KDE_NO_EXPORT void RP::Imfl::repaint () {
-    if (!active ())
+    if (!active ()) {
         kWarning () << "Spurious Imfl repaint";
-    else if (surface () && width > 0 && height > 0)
+    } else if (surface () && width > 0 && height > 0) {
+        rp_surface->markDirty ();
         rp_surface->repaint (SRect (0, 0, width, height));
+    }
 }
 
 KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)

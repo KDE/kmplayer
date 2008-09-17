@@ -42,11 +42,12 @@ public:
     Surface *createSurface (NodePtr owner, const SRect & rect);
     IRect toScreen (Single x, Single y, Single w, Single h);
     IRect clipToScreen (Single x, Single y, Single w, Single h);
-    void resize (const SRect & rect);
+    void resize (const SRect & rect, bool parent_resized=false);
     void repaint ();
     void repaint (const SRect &rect);
     void remove ();                // remove from parent, mark ancestors dirty
     void markDirty ();             // mark this and ancestors dirty
+    void updateChildren (bool parent_resized=false);
 
     NodePtrW node;
     SRect bounds;                  // bounds in in parent coord.

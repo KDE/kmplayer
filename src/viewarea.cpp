@@ -76,8 +76,17 @@ extern const char * playlist_xpm[];
 //-------------------------------------------------------------------------
 
 #ifdef KMPLAYER_WITH_CAIRO
+static void clearSurface (cairo_t *cr, const IRect &rect) {
+    cairo_save (cr);
+    cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
+    cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
+    cairo_fill (cr);
+    cairo_restore (cr);
+}
+
 void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar, CalculatedSizer *zoom) {
     cairo_surface_t *src_sf;
+    bool clear = false;
 
     if (surface) {
         src_sf = surface;
@@ -127,7 +136,11 @@ void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar, C
         s->surface = cairo_surface_create_similar (similar,
                 has_alpha ?
                 CAIRO_CONTENT_COLOR_ALPHA : CAIRO_CONTENT_COLOR, w, h);
+    else
+        clear = true;
     cairo_t *cr = cairo_create (s->surface);
+    if (clear)
+        clearSurface (cr, IRect (0, 0, w, h));
     cairo_set_source (cr, img_pat);
     if (!has_alpha)
         cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
@@ -205,11 +218,7 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
         cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
         cairo_fill (cr);
     } else {
-        cairo_save (cr);
-        cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-        cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
-        cairo_fill (cr);
-        cairo_restore (cr);
+        clearSurface (cr, rect);
     }
 }
 
@@ -285,6 +294,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *reg) {
             matrix = Matrix (0, 0, s->xscale, s->yscale);
             matrix.transform (m);
             traverseRegion (reg->root_layout);
+            s->dirty = false;
             traverseRegion (reg);
             //cairo_restore (cr);
             matrix = m;
@@ -348,6 +358,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         cairo_restore (cr);
         matrix = m;
         clip = clip_save;
+        s->dirty = false;
     }
 }
 
@@ -1349,7 +1360,7 @@ public:
         if ((w != width || h != height) && s->surface) {
             Display *d = QX11Info::display();
             //cairo_xlib_surface_set_size (s->surface, w, h);
-            XFreePixmap (d, backing_store);
+            destroyBackingStore ();
             backing_store = XCreatePixmap (d, m_view_area->winId (),
                     w, h, QX11Info::appDepth ());
             cairo_xlib_surface_set_drawable(s->surface, backing_store, w,h);
@@ -1634,7 +1645,6 @@ KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
                 ? h
                 : (Single) m_view->controlPanel()->maximumSize ().height ())
         : Single (0);
-    surface->resize (SRect (x, y, w, h));
     Mrl *mrl = surface->node ? surface->node->mrl () : NULL;
     int scale = m_view->controlPanel ()->scale_slider->sliderPosition ();
     int nw = w * scale / 100;
@@ -1663,7 +1673,12 @@ KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
         surface->xscale = 1.0;
         surface->yscale = 1.0;
     }
-    surface->bounds = SRect (x, y, w, h);
+    if (surface->node) {
+        surface->bounds = SRect (x, y, w, h);
+        surface->node->message (MsgSurfaceBoundsUpdate, (void *) true);
+    } else {
+        surface->resize (SRect (x, y, w, h), true);
+    }
     scheduleRepaint (IRect (0, 0, width (), height ()));
 }
 
@@ -1682,12 +1697,8 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
             ? Single (0)
             : hcp) - hsb;
     // now scale the regions and check if video region is already sized
-    if (surface->node) {
-        NodePtr n = surface->node;
+    if (surface->node)
         d->destroyBackingStore ();
-        surface = new Surface (this);
-        surface->node = n;
-    }
     updateSurfaceBounds ();
     d->resizeSurface (surface.ptr ());
 
@@ -2081,7 +2092,7 @@ void VideoOutput::setGeometry (const IRect &rect) {
     if (m_view->keepSizeRatio ()) {
         // scale video widget inside region
         int hfw = heightForWidth (w);
-        if (hfw > 0)
+        if (hfw > 0) {
             if (hfw > h) {
                 int old_w = w;
                 w = int ((1.0 * h * w)/(1.0 * hfw));
@@ -2090,6 +2101,7 @@ void VideoOutput::setGeometry (const IRect &rect) {
                 y += (h - hfw) / 2;
                 h = hfw;
             }
+        }
     }
     setGeometry (x, y, w, h);
     setVisible (true);
