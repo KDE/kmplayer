@@ -2491,6 +2491,7 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
  : Mrl (d, id),
    runtime (new Runtime (this)),
    m_type (t),
+   pan_zoom (NULL),
    bitrate (0),
    trans_start_time (0),
    trans_out_timer (NULL),
@@ -2504,6 +2505,7 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
 
 KDE_NO_CDTOR_EXPORT SMIL::MediaType::~MediaType () {
     delete runtime;
+    delete pan_zoom;
 }
 
 KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
@@ -2544,6 +2546,18 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
         fit = parseFit (val.ascii ());
     } else if (para == StringPool::attr_type) {
         mimetype = val;
+    } else if (para == "panZoom") {
+        QStringList coords = QStringList::split (QString (","), val);
+        if (coords.size () < 4) {
+            kWarning () << "panZoom less then four nubmers";
+            return;
+        }
+        if (!pan_zoom)
+            pan_zoom = new CalculatedSizer;
+        pan_zoom->left = coords[0];
+        pan_zoom->top = coords[1];
+        pan_zoom->width = coords[2];
+        pan_zoom->height = coords[3];
     } else if (para == "rn:mediaOpacity") {
         opacity = (int) SizeType (val).size (100);
     } else if (para == "system-bitrate") {

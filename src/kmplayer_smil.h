@@ -612,6 +612,7 @@ public:
     NodePtrW region_node;
     QString m_type;
     CalculatedSizer sizes;
+    CalculatedSizer *pan_zoom;
     Fit fit;
     int opacity;
     unsigned int bitrate;

@@ -76,7 +76,7 @@ extern const char * playlist_xpm[];
 //-------------------------------------------------------------------------
 
 #ifdef KMPLAYER_WITH_CAIRO
-void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar) {
+void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar, CalculatedSizer *zoom) {
     cairo_surface_t *src_sf;
 
     if (surface) {
@@ -111,7 +111,14 @@ void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar) {
 
     cairo_pattern_t *img_pat = cairo_pattern_create_for_surface (src_sf);
     cairo_pattern_set_extend (img_pat, CAIRO_EXTEND_NONE);
-    if (w != width && h != height) {
+    if (zoom) {
+        cairo_matrix_t mat;
+        Single zx, zy, zw, zh;
+        zoom->calcSizes (NULL, width, height, zx, zy, zw, zh);
+        cairo_matrix_init_translate (&mat, zx, zy);
+        cairo_matrix_scale (&mat, 1.0 * zw/w, 1.0 * zh/h);
+        cairo_pattern_set_matrix (img_pat, &mat);
+    } else if (w != width && h != height) {
         cairo_matrix_t mat;
         cairo_matrix_init_scale (&mat, 1.0 * width/w, 1.0 * height/h);
         cairo_pattern_set_matrix (img_pat, &mat);
@@ -737,7 +744,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     if (clip_rect.isEmpty ())
         return;
     if (!s->surface || s->dirty)
-        id->copyImage (s, w, h, cairo_surface);
+        id->copyImage (s, w, h, cairo_surface, img->pan_zoom);
     if (id->has_alpha)
         cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
     paint (img, s, x, y, clip_rect);

@@ -51,6 +51,7 @@ class Viewer;
 class AudioVideoMedia;
 class PreferencesPage;
 class MediaObject;
+class CalculatedSizer;
 
 
 class KMPLAYER_EXPORT IProcess {
@@ -304,7 +305,7 @@ struct KMPLAYER_NO_EXPORT ImageData {
     ~ImageData();
     void setImage (QImage *img);
 #ifdef KMPLAYER_WITH_CAIRO
-    void copyImage (Surface *s, int w, int h, cairo_surface_t *similar);
+    void copyImage (Surface *s, int w, int h, cairo_surface_t *similar, CalculatedSizer *zoom=NULL);
 #endif
     bool isEmpty () const {
         return !image
