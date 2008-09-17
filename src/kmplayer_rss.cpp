@@ -34,6 +34,9 @@ KDE_NO_EXPORT NodePtr RSS::Channel::childFromTag (const QString & tag) {
         return new RSS::Item (m_doc);
     else if (!strcmp (ctag, "title"))
         return new DarkNode (m_doc, ctag, id_node_title);
+    else if (!strncmp (ctag, "itunes", 6) ||
+            !strncmp (ctag, "media", 5))
+        return new DarkNode (m_doc, ctag, id_node_ignored);
     return 0L;
 }
 
@@ -58,6 +61,12 @@ KDE_NO_EXPORT NodePtr RSS::Item::childFromTag (const QString & tag) {
         return new DarkNode (m_doc, ctag, id_node_title);
     else if (!strcmp (ctag, "description"))
         return new DarkNode (m_doc, ctag, id_node_description);
+    else if (!strcmp (ctag, "category"))
+        return new DarkNode (m_doc, ctag, id_node_category);
+    else if (!strncmp (ctag, "itunes", 6) ||
+            !strncmp (ctag, "feedburner", 10) ||
+            !strncmp (ctag, "media", 5))
+        return new DarkNode (m_doc, ctag, id_node_ignored);
     return 0L;
 }
 

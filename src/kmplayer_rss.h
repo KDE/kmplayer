@@ -35,6 +35,8 @@ const short id_node_item = 202;
 const short id_node_title = 203;
 const short id_node_description = 204;
 const short id_node_enclosure = 205;
+const short id_node_category = 206;
+const short id_node_ignored = 207;
 
 /**
  * '<RSS>' tag

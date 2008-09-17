@@ -743,10 +743,10 @@ void *Mrl::message (MessageType msg, void *content) {
 
 void Mrl::activate () {
     resolved |= linkNode ()->resolved;
-    if (!resolved && !src.isEmpty () && isPlayable ()) {
+    if (!resolved && linkNode () == this && isPlayable ()) {
         setState (state_deferred);
         media_info = new MediaInfo (this, MediaManager::AudioVideo);
-        resolved = media_info->wget (linkNode ()->absolutePath ());
+        resolved = media_info->wget (absolutePath ());
     } else if (isPlayable ()) {
         setState (state_activated);
         begin ();

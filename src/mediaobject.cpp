@@ -667,7 +667,7 @@ KDE_NO_EXPORT void MediaInfo::slotData (KIO::Job *, const QByteArray &qb) {
             //TODO
         case MediaManager::Audio:
         case MediaManager::AudioVideo:
-            if (newsize > 200000 ||
+            if (newsize > 2000000 ||
                     (!old_size &&
                      (KMimeType::isBufferBinaryData (qb) ||
                       (newsize > 4 && !strncmp (qb.data (), "RIFF", 4))))) {
