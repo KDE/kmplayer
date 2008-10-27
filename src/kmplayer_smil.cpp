@@ -3382,6 +3382,11 @@ void *SMIL::SmilText::message (MessageType msg, void *content) {
         case MsgQueryRoleTiming:
             return runtime;
 
+        case MsgSurfaceBoundsUpdate:
+            if (content && text_surface)
+                text_surface->resize (text_surface->bounds, true);
+            return NULL;
+
         case MsgStateFreeze:
             if (!runtime->active () && text_surface) {
                 text_surface->repaint ();
@@ -3406,7 +3411,7 @@ QString SMIL::SmilText::richText () {
     if (firstChild ()) {
         RichTextVisitor visitor;
         firstChild ()->accept (&visitor);
-        kDebug () << visitor.rich_text;
+        //kDebug () << visitor.rich_text;
         return visitor.rich_text;
     }
     return QString ();
