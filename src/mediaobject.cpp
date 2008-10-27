@@ -496,11 +496,11 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
 KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
     QTextStream textstream (data, IO_ReadOnly);
     QString line;
+    NodePtr cur_elm = node;
     do {
         line = textstream.readLine ();
     } while (!line.isNull () && line.stripWhiteSpace ().isEmpty ());
     if (!line.isNull ()) {
-        NodePtr cur_elm = node;
         if (cur_elm->isPlayable ())
             cur_elm = cur_elm->mrl ()->linkNode ();
         if (cur_elm->mrl ()->mimetype == QString ("audio/x-scpls")) {
@@ -583,6 +583,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
             }
         }
     }
+    return !cur_elm->isPlayable ();
 }
 
 KDE_NO_EXPORT QString MediaInfo::mimetype () {
