@@ -2656,6 +2656,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
         finish ();
     runtime->reset ();
     Mrl::deactivate ();
+    message (MsgQueryRoleDisplay);
     region_node = 0L;
     if (media_info) {
         delete media_info;
