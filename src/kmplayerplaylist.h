@@ -323,6 +323,13 @@ private:
 
 typedef SharedPtr <Connection> ConnectionPtr;
 
+struct XMLStringlet {
+    const QString str;
+    XMLStringlet (const QString & s) : str (s) {}
+};
+
+QTextStream & operator << (QTextStream &out, const XMLStringlet &txt);
+
 /*
  * Base class for XML nodes. Provides a w3c's DOM like API
  *
@@ -570,6 +577,8 @@ public:
     virtual void undefer ();
     virtual void deactivate ();
     virtual void *message (MessageType msg, void *content=NULL);
+
+    static unsigned int parseTimeString (const QString &s);
 
     /**
      * If this Mrl is top node of external document, opener has the

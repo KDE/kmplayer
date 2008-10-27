@@ -19,6 +19,7 @@
 #include "config-kmplayer.h"
 #include <kdebug.h>
 #include "kmplayer_atom.h"
+#include "kmplayer_smil.h"
 
 using namespace KMPlayer;
 
@@ -132,6 +133,8 @@ NodePtr ATOM::MediaGroup::childFromTag (const QString &tag) {
     else if (!strcmp (cstr, "media:category") ||
             !strcmp (cstr, "media:keywords"))
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_ignored);
+    else if (!strcmp (cstr, "smil"))
+        return new SMIL::Smil (m_doc);
     return NULL;
 }
 
@@ -140,6 +143,69 @@ void *ATOM::MediaGroup::message (MessageType msg, void *content) {
             ((Posting *) content)->source->isPlayable ())
         finish (); // only play one
     return Element::message (msg, content);
+}
+
+void ATOM::MediaGroup::closed () {
+    QString images;
+    QString desc;
+    QString title;
+    int img_count = 0;
+    for (Node *c = firstChild ().ptr (); c; c = c->nextSibling ().ptr ()) {
+        switch (c->id) {
+        case id_node_media_title:
+            title = c->innerText ();
+            break;
+        case id_node_media_description:
+            desc = c->innerText ();
+            break;
+        case id_node_media_thumbnail:
+        {
+            Element *e = static_cast <Element *> (c);
+            QString url = e->getAttribute (StringPool::attr_url);
+            if (!url.isEmpty ()) {
+                images += QString ("<img region=\"image\" src=\"") + url + QChar ('"');
+                QString w = e->getAttribute (StringPool::attr_width);
+                if (!w.isEmpty ())
+                    images += QString (" width=\"") + w + QChar ('"');
+                QString h = e->getAttribute (StringPool::attr_height);
+                if (!h.isEmpty ())
+                    images += QString (" height=\"") + h + QChar ('"');
+                QString t = e->getAttribute (TrieString ("time"));
+                if (!t.isEmpty ())
+                    images += QString (" dur=\"") +
+                        QString::number (Mrl::parseTimeString (t) / 10) +
+                        QChar ('"');
+                images += QString (" fit=\"meet\"/>");
+                img_count++;
+            }
+            break;
+        }
+        }
+    }
+    if (img_count) {
+        QString buf;
+        QTextOStream out (&buf);
+        out << "<smil><head>";
+        if (!title.isEmpty ())
+            out << "<title>" << title << "</title>";
+        out << "<layout><root-layout width=\"400\" height=\"300\" background-color=\"#FFFFF0\"/>"
+            "<region id=\"image\" left=\"5\" top=\"20\" width=\"130\"/>"
+            "<region id=\"text\" left=\"140\" top=\"10\"/>"
+            "</layout></head><body>"
+            "<par><seq repeatCount=\"indefinite\">";
+        out << images;
+        out << QString ("</seq><smilText region=\"text\">");
+        out << XMLStringlet (desc);
+        out << QString ("</smilText></par></body></smil>");
+        QTextStream inxml (&buf, QIODevice::ReadOnly);
+        KMPlayer::readXML (this, inxml, QString (), false);
+        NodePtr n = lastChild();
+        n->normalize ();
+        n->auxiliary_node = true;
+        removeChild (n);
+        insertBefore (n, firstChild ());
+    }
+    Element::closed ();
 }
 
 void ATOM::MediaContent::closed () {

@@ -87,6 +87,7 @@ public:
     NodePtr childFromTag (const QString &tag);
     void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char *nodeName () const { return "media:group"; }
+    void closed ();
     bool expose () const { return false; }
 };
 

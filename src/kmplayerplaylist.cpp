@@ -66,14 +66,7 @@ Node *KMPlayer::fromXMLDocumentTag (NodePtr & d, const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
-namespace {
-    struct XMLStringlet {
-        const QString str;
-        XMLStringlet (const QString & s) : str (s) {}
-    };
-} // namespace
-
-QTextStream & operator << (QTextStream & out, const XMLStringlet & txt) {
+QTextStream &KMPlayer::operator << (QTextStream &out, const XMLStringlet &txt) {
     int len = int (txt.str.length ());
     for (int i = 0; i < len; ++i) {
         if (txt.str [i] == QChar ('<')) {
@@ -787,6 +780,22 @@ void Mrl::parseParam (const TrieString & para, const QString & val) {
             }
         resolved = false;
     }
+}
+
+unsigned int Mrl::parseTimeString (const QString &ts) {
+    QString s (ts);
+    int multiply[] = { 1, 60, 60 * 60, 24 * 60 * 60, 0 };
+    int mpos = 0;
+    double d = 0;
+    while (!s.isEmpty () && multiply[mpos]) {
+        int p = s.lastIndexOf (QChar (':'));
+        QString t = p >= 0 ? s.mid (p + 1) : s;
+        d += multiply[mpos++] * t.toDouble();
+        s = p >= 0 ? s.left (p) : QString ();
+    }
+    if (d > 0.1)
+        return (unsigned int) (d * 10);
+    return 0;
 }
 
 //----------------------%<-----------------------------------------------------
