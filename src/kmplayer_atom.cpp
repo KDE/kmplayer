@@ -145,6 +145,7 @@ void *ATOM::MediaGroup::message (MessageType msg, void *content) {
     return Element::message (msg, content);
 }
 
+//http://code.google.com/apis/youtube/2.0/developers_guide_protocol.html
 void ATOM::MediaGroup::closed () {
     QString images;
     QString desc;
@@ -175,7 +176,7 @@ void ATOM::MediaGroup::closed () {
                     images += QString (" dur=\"") +
                         QString::number (Mrl::parseTimeString (t) / 10) +
                         QChar ('"');
-                images += QString (" fit=\"meet\"/>");
+                images += QString (" transIn=\"fade\" transOut=\"ellipsewipe\" fit=\"meet\"/>");
                 img_count++;
             }
             break;
@@ -191,7 +192,10 @@ void ATOM::MediaGroup::closed () {
         out << "<layout><root-layout width=\"400\" height=\"300\" background-color=\"#FFFFF0\"/>"
             "<region id=\"image\" left=\"5\" top=\"20\" width=\"130\"/>"
             "<region id=\"text\" left=\"140\" top=\"10\"/>"
-            "</layout></head><body>"
+            "</layout>"
+            "<transition id=\"fade\" dur=\"0.3\" type=\"fade\"/>"
+            "<transition id=\"ellipsewipe\" dur=\"0.5\" type=\"ellipseWipe\"/>"
+            "</head><body>"
             "<par><seq repeatCount=\"indefinite\">";
         out << images;
         out << QString ("</seq><smilText region=\"text\">");
