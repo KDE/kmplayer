@@ -1310,12 +1310,10 @@ static void updateSurfaceSort (SMIL::RegionBase *rb) {
                     for (; n; n = n->previousSibling().ptr ())
                         if (n->id == SMIL::id_node_region) {
                             r = static_cast <SMIL::Region *> (n);
-                            if (r->z_order <= rb->z_order) {
-                                if (r->z_order == rb->z_order) {
-                                    next = r->region_surface->nextSibling ().ptr ();
-                                    if (rs == next)
-                                        next = next->nextSibling ().ptr ();
-                                }
+                            if (r->z_order == rb->z_order) {
+                                next = r->region_surface->nextSibling ().ptr ();
+                                if (rs == next)
+                                    next = next->nextSibling ().ptr ();
                                 break;
                             }
                         }
@@ -1535,6 +1533,7 @@ void *SMIL::Region::message (MessageType msg, void *content) {
             if (s) {
                 region_surface = s->createSurface (this, SRect ());
                 region_surface->background_color = background_color;
+                updateSurfaceSort (this);
             }
         }
         return region_surface.ptr ();
