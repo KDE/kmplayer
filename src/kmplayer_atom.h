@@ -35,6 +35,12 @@ const short id_node_link = 302;
 const short id_node_title = 303;
 const short id_node_summary = 304;
 const short id_node_content = 305;
+const short id_node_media_group = 306;
+const short id_node_media_content = 307;
+const short id_node_media_title = 308;
+const short id_node_media_description = 309;
+const short id_node_media_thumbnail = 310;
+const short id_node_ignored = 311;
 
 /**
  * '<feed>' tag
@@ -62,6 +68,7 @@ public:
     KDE_NO_CDTOR_EXPORT Link (NodePtr & d) : Mrl (d, id_node_link) {}
     KDE_NO_EXPORT const char * nodeName () const { return "link"; }
     PlayType playType ();
+    bool expose () const { return !src.isEmpty (); }
     void closed ();
 };
 
@@ -71,7 +78,24 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "content"; }
     PlayType playType ();
     void closed ();
-    //bool expose () const { return isPlayable (); }
+    bool expose () const { return !src.isEmpty (); }
+};
+
+class KMPLAYER_NO_EXPORT MediaGroup : public Element {
+public:
+    MediaGroup (NodePtr &d) : Element (d, id_node_media_group) {}
+    NodePtr childFromTag (const QString &tag);
+    void *message (MessageType msg, void *content=NULL);
+    KDE_NO_EXPORT const char *nodeName () const { return "media:group"; }
+    bool expose () const { return false; }
+};
+
+class KMPLAYER_NO_EXPORT MediaContent : public Mrl {
+public:
+    MediaContent (NodePtr &d) : Mrl (d, id_node_media_content) {}
+    KDE_NO_EXPORT const char *nodeName () const { return "media:content"; }
+    PlayType playType ();
+    void closed ();
 };
 
 } //namespace ATOM

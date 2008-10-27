@@ -29,7 +29,7 @@ NodePtr ATOM::Feed::childFromTag (const QString & tag) {
         return new ATOM::Link (m_doc);
     else if (!strcmp (tag.latin1 (), "title"))
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_title);
-    return 0L;
+    return NULL;
 }
 
 void ATOM::Feed::closed () {
@@ -40,16 +40,26 @@ void ATOM::Feed::closed () {
         }
 }
 
-NodePtr ATOM::Entry::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "link"))
+NodePtr ATOM::Entry::childFromTag (const QString &tag) {
+    const char *cstr = tag.latin1 ();
+    if (!strcmp (cstr, "link"))
         return new ATOM::Link (m_doc);
-    else if (!strcmp (tag.latin1 (), "content"))
+    else if (!strcmp (cstr, "content"))
         return new ATOM::Content (m_doc);
-    else if (!strcmp (tag.latin1 (), "title"))
+    else if (!strcmp (cstr, "title"))
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_title);
-    else if (!strcmp (tag.latin1 (), "summary"))
+    else if (!strcmp (cstr, "summary"))
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_summary);
-    return 0L;
+    else if (!strcmp (cstr, "media:group"))
+        return new MediaGroup (m_doc);
+    else if (!strcmp (cstr, "category") ||
+            !strcmp (cstr, "author:") ||
+            !strcmp (cstr, "id") ||
+            !strcmp (cstr, "updated") ||
+            !strncmp (cstr, "yt:", 3) ||
+            !strncmp (cstr, "gd:", 3))
+        return new DarkNode (m_doc, tag.toUtf8 (), id_node_ignored);
+    return NULL;
 }
 
 void ATOM::Entry::closed () {
@@ -105,3 +115,38 @@ Node::PlayType ATOM::Content::playType () {
     return play_type_none;
 }
 
+NodePtr ATOM::MediaGroup::childFromTag (const QString &tag) {
+    const char *cstr = tag.latin1 ();
+    if (!strcmp (cstr, "media:content"))
+        return new ATOM::MediaContent (m_doc);
+    else if (!strcmp (cstr, "media:title"))
+        return new DarkNode (m_doc, tag.toUtf8 (), id_node_media_title);
+    else if (!strcmp (cstr, "media:description"))
+        return new DarkNode (m_doc, tag.toUtf8 (), id_node_media_description);
+    else if (!strcmp (cstr, "media:thumbnail"))
+        return new DarkNode (m_doc, tag.toUtf8 (), id_node_media_thumbnail);
+    else if (!strcmp (cstr, "media:category") ||
+            !strcmp (cstr, "media:keywords"))
+        return new DarkNode (m_doc, tag.toUtf8 (), id_node_ignored);
+    return NULL;
+}
+
+void *ATOM::MediaGroup::message (MessageType msg, void *content) {
+    if (MsgChildFinished == msg &&
+            ((Posting *) content)->source->isPlayable ())
+        finish (); // only play one
+    return Element::message (msg, content);
+}
+
+void ATOM::MediaContent::closed () {
+    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ()) {
+        if (a->name () == StringPool::attr_url)
+            src = a->value();
+        else if (a->name () == StringPool::attr_type)
+            mimetype = a->value ();
+    }
+}
+
+Node::PlayType ATOM::MediaContent::playType () {
+    return src.isEmpty () ? play_type_none : play_type_unknown;
+}
