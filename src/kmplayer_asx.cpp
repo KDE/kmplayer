@@ -155,7 +155,7 @@ KDE_NO_EXPORT bool ASX::Entry::expose () const {
 
 KDE_NO_EXPORT void ASX::Ref::opened () {
     src = getAsxAttribute (this, "href");
-    //kdDebug () << "Ref attr found src: " << src << endl;
+    Mrl::opened ();
 }
 
 KDE_NO_EXPORT bool ASX::Ref::expose () const {
@@ -166,6 +166,6 @@ KDE_NO_EXPORT bool ASX::Ref::expose () const {
 
 KDE_NO_EXPORT void ASX::EntryRef::opened () {
     src = getAsxAttribute (this, "href");
-    //kdDebug () << "EntryRef attr found src: " << src << endl;
+    Mrl::opened ();
 }
 

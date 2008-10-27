@@ -1103,6 +1103,7 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
                 src = elm->getAttribute ("content");
         }
     }
+    Mrl::closed ();
 }
 
 KDE_NO_EXPORT bool SMIL::Smil::expose () const {
@@ -1175,6 +1176,7 @@ KDE_NO_EXPORT void SMIL::Head::closed () {
     appendChild (layout);
     layout->setAuxiliaryNode (true);
     layout->closed (); // add root-layout and a region
+    Element::closed ();
 }
 
 KDE_NO_EXPORT void *SMIL::Head::message (MessageType msg, void *content) {
@@ -1214,6 +1216,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         removeChild (root_layout);
         insertBefore (root_layout, firstChild ());
     }
+    Element::closed ();
 }
 
 KDE_NO_EXPORT void *SMIL::Layout::message (MessageType msg, void *content) {
@@ -1423,6 +1426,7 @@ KDE_NO_EXPORT void SMIL::RootLayout::closed () {
             s->height = height.toDouble();
         }
     }
+    Element::closed ();
 }
 
 KDE_NO_CDTOR_EXPORT SMIL::RootLayout::~RootLayout() {

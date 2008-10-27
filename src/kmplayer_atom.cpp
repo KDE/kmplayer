@@ -38,6 +38,7 @@ void ATOM::Feed::closed () {
             pretty_name = c->innerText ().simplifyWhiteSpace ();
             break;
         }
+    Mrl::closed ();
 }
 
 NodePtr ATOM::Entry::childFromTag (const QString &tag) {
@@ -68,6 +69,7 @@ void ATOM::Entry::closed () {
             pretty_name = c->innerText ().simplifyWhiteSpace ();
             break;
         }
+    Mrl::closed ();
 }
 
 Node::PlayType ATOM::Link::playType () {
@@ -89,6 +91,7 @@ void ATOM::Link::closed () {
         src = href;
     else if (pretty_name.isEmpty ())
         pretty_name = href;
+    Mrl::closed ();
 }
 
 void ATOM::Content::closed () {
@@ -107,6 +110,7 @@ void ATOM::Content::closed () {
                 mimetype = v;
         }
     }
+    Mrl::closed ();
 }
 
 Node::PlayType ATOM::Content::playType () {
@@ -145,6 +149,7 @@ void ATOM::MediaContent::closed () {
         else if (a->name () == StringPool::attr_type)
             mimetype = a->value ();
     }
+    Mrl::closed ();
 }
 
 Node::PlayType ATOM::MediaContent::playType () {

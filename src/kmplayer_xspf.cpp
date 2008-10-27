@@ -65,6 +65,7 @@ KDE_NO_EXPORT void XSPF::Playlist::closed () {
         else if (e->id == id_node_location)
             src = e->innerText ().stripWhiteSpace ();
     }
+    Mrl::closed ();
 }
 
 //-----------------------------------------------------------------------------
@@ -121,6 +122,7 @@ KDE_NO_EXPORT void XSPF::Track::closed () {
                 break;
         }
     }
+    Mrl::closed ();
 }
 
 KDE_NO_EXPORT void XSPF::Track::activate () {
@@ -147,4 +149,5 @@ KDE_NO_EXPORT Mrl * XSPF::Track::linkNode () {
 
 void XSPF::Location::closed () {
     src = innerText ().stripWhiteSpace ();
+    Mrl::closed ();
 }

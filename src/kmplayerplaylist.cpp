@@ -173,7 +173,7 @@ void Matrix::translate (Single x, Single y) {
 
 KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d, short _id)
  : m_doc (d), state (state_init), id (_id),
-   auxiliary_node (false), editable (true) {}
+   auxiliary_node (false), editable (true), open (false) {}
 
 Node::~Node () {
     clear ();
@@ -421,9 +421,13 @@ Node::PlayType Node::playType () {
     return play_type_none;
 }
 
-void Node::opened () {}
+void Node::opened () {
+    open = true;
+}
 
-void Node::closed () {}
+void Node::closed () {
+    open = false;
+}
 
 void *Node::message (MessageType msg, void *content) {
     if (MsgChildFinished == msg) {
@@ -1227,6 +1231,7 @@ GenericURL::GenericURL (NodePtr & d, const QString & s, const QString & name)
 KDE_NO_EXPORT void GenericURL::closed () {
     if (src.isEmpty ())
         src = getAttribute (StringPool::attr_src);
+    Mrl::closed ();
 }
 
 //-----------------------------------------------------------------------------
@@ -1249,6 +1254,7 @@ void GenericMrl::closed () {
     }
     if (pretty_name.isEmpty ())
         pretty_name = getAttribute (StringPool::attr_name);
+    Mrl::closed ();
 }
 
 bool GenericMrl::expose () const {
@@ -1539,8 +1545,11 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
     }
     if (!in.atEnd ())
         parser.parse (in);
-    for (NodePtr e = root; e; e = e->parentNode ())
+    for (NodePtr e = root; e; e = e->parentNode ()) {
+        if (e->open)
+            break;
         e->closed ();
+    }
     //doc->normalize ();
     //kDebug () << root->outerXML ();
 }

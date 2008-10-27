@@ -471,10 +471,9 @@ protected:
 public:
     State state;
     short id;
-private:
-    bool auxiliary_node;
-protected:
-    bool editable;
+    bool auxiliary_node : 1;
+    bool editable : 1;
+    bool open : 1;
 };
 
 ITEM_AS_POINTER(KMPlayer::Node)

@@ -198,6 +198,7 @@ KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::NodePtr & d) : TVNode (d, QS
 
 KDE_NO_EXPORT void TVChannel::closed () {
     pretty_name = getAttribute (KMPlayer::StringPool::attr_name);
+    Mrl::closed ();
 }
 
 //-----------------------------------------------------------------------------
@@ -221,6 +222,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr TVInput::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void TVInput::closed () {
     //pretty_name = getAttribute (KMPlayer::StringPool::attr_name);
+    Mrl::closed ();
 }
 
 KDE_NO_EXPORT void TVInput::setNodeName (const QString & name) {
@@ -259,6 +261,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr TVDevice::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void TVDevice::closed () {
     updateNodeName ();
+    Mrl::closed ();
 }
 
 KDE_NO_EXPORT void *TVDevice::message (KMPlayer::MessageType msg, void *data) {

@@ -56,6 +56,7 @@ KDE_NO_EXPORT void RP::Imfl::closed () {
                 }
             }
         }
+    Mrl::closed ();
 }
 
 KDE_NO_EXPORT void RP::Imfl::defer () {
@@ -207,6 +208,7 @@ KDE_NO_CDTOR_EXPORT RP::Image::~Image () {
 
 KDE_NO_EXPORT void RP::Image::closed () {
     src = getAttribute (StringPool::attr_name);
+    Mrl::closed ();
 }
 
 KDE_NO_EXPORT void RP::Image::activate () {

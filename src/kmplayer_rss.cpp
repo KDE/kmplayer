@@ -46,6 +46,7 @@ KDE_NO_EXPORT void RSS::Channel::closed () {
             pretty_name = c->innerText ().simplifyWhiteSpace ();
             break;
         }
+    Mrl::closed ();
 }
 
 KDE_NO_EXPORT bool RSS::Channel::expose () const {
@@ -88,6 +89,7 @@ KDE_NO_EXPORT void RSS::Item::closed () {
     }
     if (enclosure && !enclosure->mrl ()->src.isEmpty ())
         cached_play_type = play_type_audio;
+    Mrl::closed ();
 }
 
 KDE_NO_EXPORT Mrl * RSS::Item::linkNode () {
@@ -133,4 +135,5 @@ KDE_NO_EXPORT void *RSS::Item::message (MessageType msg, void *content) {
 
 KDE_NO_EXPORT void RSS::Enclosure::closed () {
     src = getAttribute (StringPool::attr_url);
+    Mrl::closed ();
 }
