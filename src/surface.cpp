@@ -112,6 +112,7 @@ Surface *Surface::createSurface (NodePtr owner, const SRect & rect) {
 }
 
 KDE_NO_EXPORT IRect Surface::toScreen (Single x, Single y, Single w, Single h) {
+    //FIXME: handle scroll
     Matrix matrix (0, 0, xscale, yscale);
     matrix.translate (bounds.x (), bounds.y ());
     for (SurfacePtr s = parentNode(); s; s = s->parentNode()) {
@@ -122,24 +123,35 @@ KDE_NO_EXPORT IRect Surface::toScreen (Single x, Single y, Single w, Single h) {
     return IRect (x, y, w, h);
 }
 
-KDE_NO_EXPORT IRect Surface::clipToScreen (Single x, Single y, Single w, Single h) {
-    Matrix m (0, 0, xscale, yscale);
-    m.translate (bounds.x (), bounds.y ());
-    m.getXYWH (x, y, w, h);
-    SRect r = bounds.intersect (SRect (x, y, w, h));
-    x= r.x (), y = r.y (), w = r.width (), h = r.height ();
-    for (SurfacePtr s = parentNode (); s; s = s->parentNode ()) {
-        m = Matrix (0, 0, s->xscale, s->yscale);
-        m.translate (s->bounds.x (), s->bounds.y ());
+static void clipToScreen (Surface *s, Matrix &m, IRect &clip) {
+    Surface *ps = s->parentNode ().ptr ();
+    if (!ps) {
+        clip = IRect (s->bounds);
+        m = Matrix (s->bounds.x (), s->bounds.y (), s->xscale, s->yscale);
+    } else {
+        clipToScreen (ps, m, clip);
+        SRect r = s->bounds;
+        Single x = r.x (), y = r.y (), w = r.width (), h = r.height ();
         m.getXYWH (x, y, w, h);
-        r = SRect (s->bounds).intersect (SRect (x, y, w, h));
-        x= r.x (); y = r.y (); w = r.width (); h = r.height ();
+        clip = clip.intersect (IRect (x, y, w, h));
+        Matrix m1 = m;
+        m = Matrix (s->bounds.x (), s->bounds.y (), s->xscale, s->yscale);
+        m.transform (m1);
+        if (!s->virtual_size.isEmpty ())
+            m.translate (-s->x_scroll, -s->y_scroll);
     }
-    return IRect (x, y, w, h);
 }
 
+
 KDE_NO_EXPORT void Surface::repaint (const SRect &r) {
-    view_widget->scheduleRepaint (clipToScreen (r.x (), r.y (), r.width (), r.height ()));
+    Matrix matrix;
+    IRect clip;
+    clipToScreen (this, matrix, clip);
+    Single x = r.x (), y = r.y (), w = r.width (), h = r.height ();
+    matrix.getXYWH (x, y, w, h);
+    clip = clip.intersect (IRect (x, y, w, h));
+    if (!clip.isEmpty ())
+        view_widget->scheduleRepaint (clip);
 }
 
 KDE_NO_EXPORT void Surface::repaint () {

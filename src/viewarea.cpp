@@ -331,9 +331,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         cairo_save (cr);
 
         Surface *cs = s->firstChild ().ptr ();
-        if (cs && !cs->surface)
+        /*if (cs && !cs->surface)
             s->virtual_size = SSize (); //FIXME try to preserve scroll on resize
-        else if (!s->virtual_size.isEmpty ())
+        else*/ if (!s->virtual_size.isEmpty ())
             matrix.translate (-s->x_scroll, -s->y_scroll);
 
         ImageMedia *im = reg->media_info
@@ -374,7 +374,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         }
         traverseRegion (reg, s);
         cs = s->firstChild ().ptr ();
-        if (cs && cs->surface &&
+        if (cs && /*cs->surface &&*/
                 (s->scroll || cs->scroll) && cs == s->lastChild ().ptr ()) {
             SRect r = cs->bounds;
             if (r.width () > rect.width () || r.height () > rect.height ()) {
@@ -1300,7 +1300,6 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
                 knob_y = 0;
             else if (knob_y + knob_h > sbh)
                 knob_y = sbh - knob_h;
-            int scroll = vy * (y - (int) ry - 0.5 * knob_h) / sbh;
             s->y_scroll = vy * knob_y / sbh;
             view_area->scheduleRepaint (IRect (rx, ry, rw, rh));
             return;
@@ -1315,7 +1314,6 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
                 knob_x = 0;
             else if (knob_x + knob_w > sbw)
                 knob_x = sbw - knob_w;
-            int scroll = vw * (x - (int) rx - 0.5 * knob_w) / sbw;
             s->x_scroll = vw * knob_x / sbw;
             view_area->scheduleRepaint (IRect (rx, ry, rw, rh));
             return;

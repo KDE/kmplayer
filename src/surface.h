@@ -41,7 +41,6 @@ public:
     void clear ();
     Surface *createSurface (NodePtr owner, const SRect & rect);
     IRect toScreen (Single x, Single y, Single w, Single h);
-    IRect clipToScreen (Single x, Single y, Single w, Single h);
     void resize (const SRect & rect, bool parent_resized=false);
     void repaint ();
     void repaint (const SRect &rect);
