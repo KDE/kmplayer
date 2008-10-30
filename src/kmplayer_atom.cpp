@@ -190,8 +190,8 @@ void ATOM::MediaGroup::closed () {
         if (!title.isEmpty ())
             out << "<title>" << title << "</title>";
         out << "<layout><root-layout width=\"400\" height=\"300\" background-color=\"#FFFFF0\"/>"
-            "<region id=\"image\" left=\"5\" top=\"20\" width=\"130\"/>"
-            "<region id=\"text\" left=\"140\" top=\"10\" fit=\"scroll\"/>"
+            "<region id=\"image\" left=\"5\" top=\"20\" width=\"130\" bottom=\"20\"/>"
+            "<region id=\"text\" left=\"140\" top=\"10\" bottom=\"10\" right=\"10\" fit=\"scroll\"/>"
             "</layout>"
             "<transition id=\"fade\" dur=\"0.3\" type=\"fade\"/>"
             "<transition id=\"ellipsewipe\" dur=\"0.5\" type=\"ellipseWipe\"/>"
