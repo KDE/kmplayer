@@ -51,14 +51,17 @@ public:
     SSize dimension () const { return size.isEmpty () ? bounds.size : size; }
 
     NodePtrW node;
-    SRect bounds;                  // bounds in in parent coord.
+    SRect bounds;                  // bounds in parent coord.
+    SSize virtual_size;            // virtual size in screen coord.
     SSize size;                    // if set, dimension in Surface coord.
     float xscale, yscale;          // internal scaling
     unsigned int background_color; // rgba background color
+    unsigned short y_scroll;       // top of vertical knob
 #ifdef KMPLAYER_WITH_CAIRO
     cairo_surface_t *surface;
 #endif
     bool dirty;                    // a decendant is removed
+    bool scroll;
 
 private:
     NodePtrW current_video;

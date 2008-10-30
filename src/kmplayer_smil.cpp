@@ -1342,6 +1342,8 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
     bool need_repaint = false;
     if (name == StringPool::attr_fit) {
         fit = parseFit (val.ascii ());
+        if (region_surface)
+            region_surface->scroll = fit_scroll;
         need_repaint = true;
     } else if (name == "background-color" || name == "backgroundColor") {
         if (val.isEmpty ())

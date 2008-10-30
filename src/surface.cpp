@@ -41,6 +41,7 @@ KDE_NO_CDTOR_EXPORT Surface::Surface (ViewArea *widget)
     surface (0L),
 #endif
     dirty (false),
+    scroll (false),
     view_widget (widget) {
     background_color = widget->palette().color (widget->backgroundRole()).rgb();
 }
