@@ -94,6 +94,7 @@ public:
     Matrix (const Matrix & matrix);
     Matrix (Single xoff, Single yoff, float xscale, float yscale);
     void getXY (Single & x, Single & y) const;
+    void getWH (Single & w, Single & h) const;
     void getXYWH (Single & x, Single & y, Single & w, Single & h) const;
     void invXYWH (Single & x, Single & y, Single & w, Single & h) const;
     void transform (const Matrix & matrix);

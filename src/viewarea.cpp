@@ -333,8 +333,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         Surface *cs = s->firstChild ().ptr ();
         if (cs && !cs->surface)
             s->virtual_size = SSize (); //FIXME try to preserve scroll on resize
-        else if (!s->virtual_size.isEmpty () && s->y_scroll)
-            matrix.translate (0, -s->y_scroll);
+        else if (!s->virtual_size.isEmpty ())
+            matrix.translate (-s->x_scroll, -s->y_scroll);
 
         ImageMedia *im = reg->media_info
             ? (ImageMedia *) reg->media_info->media
@@ -379,29 +379,68 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
             SRect r = cs->bounds;
             if (r.width () > rect.width () || r.height () > rect.height ()) {
                 if (s->virtual_size.isEmpty ())
-                    s->y_scroll = 0;
+                    s->x_scroll = s->y_scroll = 0;
                 s->virtual_size = r.size;
+                matrix.getWH (s->virtual_size.width, s->virtual_size.height);
+                s->virtual_size.width += REGION_SCROLLBAR_WIDTH;
+                s->virtual_size.height += REGION_SCROLLBAR_WIDTH;
+                const int vy = s->virtual_size.height;
+                const int vw = s->virtual_size.width;
                 int sbw = REGION_SCROLLBAR_WIDTH;
-                int sbh = h;
-                IRect sb_clip = clip.intersect (IRect (x + w - sbw,
-                                y + h - sbh, sbw, sbh));
+                int sbx = x + w - sbw;
+                int sby = y;
+                int sbh = h - REGION_SCROLLBAR_WIDTH;
+                IRect sb_clip = clip.intersect (IRect (sbx, sby, sbw, sbh));
                 if (!sb_clip.isEmpty ()) {
-                    int sb_x = x + w - sbw;
-                    IRect knob (sb_x, y + s->y_scroll,
-                            sbw, rect.height () * sbh / r.height ());
-                    IRect knob_clip = clip.intersect (knob);
+                    int knob_h = sbh * (int) h / vy;
+                    int knob_y = (int) y + s->y_scroll * sbh / vy;
+                    IRect knob (sbx, knob_y, sbw, knob_h);
                     cairo_save (cr);
                     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+                    cairo_set_line_width (cr, 2);
+                    CAIRO_SET_SOURCE_ARGB (cr, 0x80A0A0A0);
+                    cairo_rectangle (cr, sbx + 1, sby + 1, sbw - 2, sbh - 2);
+                    cairo_stroke (cr);
                     if (s->y_scroll)
                         cairoDrawRect (cr, 0x80000000,
-                                sb_x, y,
-                                sbw, s->y_scroll);
+                                sbx + 2, sby + 2,
+                                sbw - 4, knob.y - 2);
                     cairoDrawRect (cr, 0x80808080,
-                            knob.x, knob.y,
-                            knob.w, knob.h);
-                    cairoDrawRect (cr, 0x80000000,
-                            sb_x, knob.y + knob.h,
-                            sbw, y + h - knob.y - knob.h);
+                            knob.x + 2, knob.y,
+                            knob.w - 4, knob.h);
+                    if (sby + sbh - knob.y - knob.h - 2 > 0)
+                        cairoDrawRect (cr, 0x80000000,
+                                sbx + 2, knob.y + knob.h,
+                                sbw - 4, sby + sbh - knob.y - knob.h - 2);
+                    cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+                    cairo_restore (cr);
+                }
+                sbh = REGION_SCROLLBAR_WIDTH;
+                sbx = x;
+                sby = y + h - sbh;
+                sbw = w - REGION_SCROLLBAR_WIDTH;
+                sb_clip = clip.intersect (IRect (sbx, sby, sbw, sbh));
+                if (!sb_clip.isEmpty ()) {
+                    int knob_w = sbw * (int) w / vw;
+                    int knob_x = (int) x + s->x_scroll * sbw / vw;
+                    IRect knob (knob_x, sby, knob_w, sbh);
+                    cairo_save (cr);
+                    cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+                    cairo_set_line_width (cr, 2);
+                    CAIRO_SET_SOURCE_ARGB (cr, 0x80A0A0A0);
+                    cairo_rectangle (cr, sbx + 1, sby + 1, sbw - 2, sbh - 2);
+                    cairo_stroke (cr);
+                    if (s->x_scroll)
+                        cairoDrawRect (cr, 0x80000000,
+                                sbx + 2, sby + 2,
+                                knob.x - 2, sbh - 4);
+                    cairoDrawRect (cr, 0x80808080,
+                            knob.x, knob.y + 2,
+                            knob.w, knob.h - 4);
+                    if (sbx + sbw - knob.x - knob.w - 2 > 0)
+                        cairoDrawRect (cr, 0x80000000,
+                                knob.x + knob.w, sby + 2,
+                                sbx + sbw - knob.x - knob.w - 2, sbh - 4);
                     cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
                     cairo_restore (cr);
                 }
@@ -1253,13 +1292,31 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
 
         if (event == MsgEventClicked && !s->virtual_size.isEmpty () &&
                 x > rx + rw - REGION_SCROLLBAR_WIDTH) {
-            int knob_h = rect.height () * rh / s->virtual_size.height;
-            int scroll = y - (int)ry - 0.5 * knob_h;
-            if (scroll < 0)
-                scroll = 0;
-            else if (scroll + knob_h > rh)
-                scroll = rh - knob_h;
-            s->y_scroll = scroll;
+            const int sbh = rh - REGION_SCROLLBAR_WIDTH;
+            const int vy = s->virtual_size.height;
+            const int knob_h = sbh * (int) rh / vy;
+            int knob_y = y - (int) ry - 0.5 * knob_h;
+            if (knob_y < 0)
+                knob_y = 0;
+            else if (knob_y + knob_h > sbh)
+                knob_y = sbh - knob_h;
+            int scroll = vy * (y - (int) ry - 0.5 * knob_h) / sbh;
+            s->y_scroll = vy * knob_y / sbh;
+            view_area->scheduleRepaint (IRect (rx, ry, rw, rh));
+            return;
+        }
+        if (event == MsgEventClicked && !s->virtual_size.isEmpty () &&
+                y > ry + rh - REGION_SCROLLBAR_WIDTH) {
+            const int sbw = rw - REGION_SCROLLBAR_WIDTH;
+            const int vw = s->virtual_size.width;
+            const int knob_w = sbw * (int) rw / vw;
+            int knob_x = x - (int) rx - 0.5 * knob_w;
+            if (knob_x < 0)
+                knob_x = 0;
+            else if (knob_x + knob_w > sbw)
+                knob_x = sbw - knob_w;
+            int scroll = vw * (x - (int) rx - 0.5 * knob_w) / sbw;
+            s->x_scroll = vw * knob_x / sbw;
             view_area->scheduleRepaint (IRect (rx, ry, rw, rh));
             return;
         }

@@ -56,6 +56,7 @@ public:
     SSize size;                    // if set, dimension in Surface coord.
     float xscale, yscale;          // internal scaling
     unsigned int background_color; // rgba background color
+    unsigned short x_scroll;       // top of horizontal knob
     unsigned short y_scroll;       // top of vertical knob
 #ifdef KMPLAYER_WITH_CAIRO
     cairo_surface_t *surface;

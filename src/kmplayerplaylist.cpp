@@ -125,6 +125,11 @@ void Matrix::getXY (Single & x, Single & y) const {
     y = Single (y * d) + ty;
 }
 
+void Matrix::getWH (Single &w, Single &h) const {
+    w *= a;
+    h *= d;
+}
+
 void Matrix::getXYWH (Single & x, Single & y, Single & w, Single & h) const {
     getXY (x, y);
     w *= a;
