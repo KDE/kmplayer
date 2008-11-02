@@ -331,9 +331,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         cairo_save (cr);
 
         Surface *cs = s->firstChild ().ptr ();
-        /*if (cs && !cs->surface)
-            s->virtual_size = SSize (); //FIXME try to preserve scroll on resize
-        else*/ if (!s->virtual_size.isEmpty ())
+        if (!s->virtual_size.isEmpty ())
             matrix.translate (-s->x_scroll, -s->y_scroll);
 
         ImageMedia *im = reg->media_info
@@ -374,8 +372,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         }
         traverseRegion (reg, s);
         cs = s->firstChild ().ptr ();
-        if (cs && /*cs->surface &&*/
-                (s->scroll || cs->scroll) && cs == s->lastChild ().ptr ()) {
+        if (cs && (s->scroll || cs->scroll) && cs == s->lastChild ().ptr ()) {
             SRect r = cs->bounds;
             if (r.width () > rect.width () || r.height () > rect.height ()) {
                 if (s->virtual_size.isEmpty ())
@@ -396,6 +393,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                     int knob_y = (int) y + s->y_scroll * sbh / vy;
                     IRect knob (sbx, knob_y, sbw, knob_h);
                     cairo_save (cr);
+                    cairo_rectangle (cr, sb_clip.x, sb_clip.y, sb_clip.w, sb_clip.h);
+                    cairo_clip (cr);
                     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
                     cairo_set_line_width (cr, 2);
                     CAIRO_SET_SOURCE_ARGB (cr, 0x80A0A0A0);
@@ -404,7 +403,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                     if (s->y_scroll)
                         cairoDrawRect (cr, 0x80000000,
                                 sbx + 2, sby + 2,
-                                sbw - 4, knob.y - 2);
+                                sbw - 4, knob.y - sby - 2);
                     cairoDrawRect (cr, 0x80808080,
                             knob.x + 2, knob.y,
                             knob.w - 4, knob.h);
@@ -412,7 +411,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                         cairoDrawRect (cr, 0x80000000,
                                 sbx + 2, knob.y + knob.h,
                                 sbw - 4, sby + sbh - knob.y - knob.h - 2);
-                    cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
                     cairo_restore (cr);
                 }
                 sbh = REGION_SCROLLBAR_WIDTH;
@@ -425,6 +423,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                     int knob_x = (int) x + s->x_scroll * sbw / vw;
                     IRect knob (knob_x, sby, knob_w, sbh);
                     cairo_save (cr);
+                    cairo_rectangle (cr, sb_clip.x, sb_clip.y, sb_clip.w, sb_clip.h);
+                    cairo_clip (cr);
                     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
                     cairo_set_line_width (cr, 2);
                     CAIRO_SET_SOURCE_ARGB (cr, 0x80A0A0A0);
@@ -433,7 +433,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                     if (s->x_scroll)
                         cairoDrawRect (cr, 0x80000000,
                                 sbx + 2, sby + 2,
-                                knob.x - 2, sbh - 4);
+                                knob.x - sbx - 2, sbh - 4);
                     cairoDrawRect (cr, 0x80808080,
                             knob.x, knob.y + 2,
                             knob.w, knob.h - 4);
@@ -441,7 +441,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                         cairoDrawRect (cr, 0x80000000,
                                 knob.x + knob.w, sby + 2,
                                 sbx + sbw - knob.x - knob.w - 2, sbh - 4);
-                    cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
                     cairo_restore (cr);
                 }
             }
@@ -859,18 +858,21 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
     //kDebug() << "Visit " << brush->nodeName();
     Surface *s = (Surface *) brush->message (MsgQueryRoleDisplay);
     if (s) {
-        cairo_save (cr);
         opacity = 1.0;
         SRect rect = s->bounds;
-        Single x, y, w = rect.width(), h = rect.height();
+        Single x = rect.x(), y = rect.y(), w = rect.width(), h = rect.height();
         matrix.getXYWH (x, y, w, h);
+        IRect clip_rect = clip.intersect (IRect (x, y, w, h));
+        if (clip_rect.isEmpty ())
+            return;
+        cairo_save (cr);
         unsigned int color = QColor (brush->param ("color")).rgb ();
         if (brush->active_trans) {
             cur_media = brush;
             cur_pat = NULL;
             brush->active_trans->accept (this);
         } else {
-            cairo_rectangle (cr, (int) x, (int) y, (int) w, (int) h);
+            cairo_rectangle (cr, clip_rect.x, clip_rect.y, clip_rect.w, clip_rect.h);
         }
         opacity *= brush->opacity / 100.0;
         if (opacity < 0.99) {
@@ -1322,6 +1324,8 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
         Matrix m = matrix;
         matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
         matrix.transform (m);
+        if (!s->virtual_size.isEmpty ())
+            matrix.translate (-s->x_scroll, -s->y_scroll);
         bubble_up = false;
 
         bool child_handled = false;

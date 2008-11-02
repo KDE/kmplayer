@@ -72,6 +72,7 @@ void Surface::resize (const SRect &rect, bool parent_resized) {
     if (parent_resized || old_bounds != rect) {
 
         if (parent_resized || old_bounds.size != rect.size) {
+            virtual_size = SSize (); //FIXME try to preserve scroll on resize
             markDirty ();
 #ifdef KMPLAYER_WITH_CAIRO
             if (surface) {

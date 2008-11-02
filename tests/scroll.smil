@@ -1,0 +1,70 @@
+<smil>
+  <head>
+    <layout>
+      <root-layout width="400" height="300" background-color="orange"/>
+      <region fit="scroll" left="5" top="5" right="5" bottom="5">
+        <region width="480" height="360">
+          <region id="r1" left="5" top="5" width="10" height="10"
+                  background-color="black"/>
+          <region id="r2" right="5" top="5" width="10" height="10"
+                  background-color="black"/>
+          <region id="r3" right="5" bottom="5" width="10" height="10"
+                  background-color="black"/>
+          <region id="r4" left="5" bottom="5" width="10" height="10"
+                  background-color="black"/>
+          <region id="colors1" left="280" top="10" width="60" height="60"/>
+          <region fit="scroll" left="160" top="120" width="240" height="180">
+            <region id="inner" width="320" height="240" background-color="brown">
+              <region id="r5" left="5" top="5" width="10" height="10"
+                      background-color="black"/>
+              <region id="r6" right="5" top="5" width="10" height="10"
+                      background-color="black"/>
+              <region id="r7" right="5" bottom="5" width="10" height="10"
+                      background-color="black"/>
+              <region id="r8" left="5" bottom="5" width="10" height="10"
+                      background-color="black"/>
+            </region>
+          </region>
+        </region>
+      </region>
+    </layout>
+  </head>
+  <body>
+    <par>
+      <set targetElement="r1" attribute="background-color" to="red"
+           begin="r1.activateEvent" dur="2"/>
+      <set targetElement="r2" attribute="background-color" to="red"
+           begin="r2.activateEvent" dur="2" fill="remove"/>
+      <set targetElement="r3" attribute="background-color" to="red"
+           begin="r3.activateEvent" dur="2" fill="remove"/>
+      <set targetElement="r4" attribute="background-color" to="red"
+           begin="r4.activateEvent" dur="2" fill="remove"/>
+      <seq repeat="20">
+        <set targetElement="colors1" attribute="background-color" to="red"
+             dur="2"/>
+        <set targetElement="colors1" attribute="background-color" to="white"
+             dur="2"/>
+        <set targetElement="colors1" attribute="background-color" to="blue"
+             dur="2"/>
+      </seq>
+      <set targetElement="r5" attribute="background-color" to="red"
+           begin="r5.activateEvent" dur="2"/>
+      <set targetElement="r6" attribute="background-color" to="red"
+           begin="r6.activateEvent" dur="2" fill="remove"/>
+      <set targetElement="r7" attribute="background-color" to="red"
+           begin="r7.activateEvent" dur="2" fill="remove"/>
+      <set targetElement="r8" attribute="background-color" to="red"
+           begin="r8.activateEvent" dur="2" fill="remove"/>
+      <brush id="brush1" region="inner" left="200" top="10"
+                 width="60" height="60"/>
+      <seq repeat="20">
+        <set targetElement="brush1" attribute="color" to="green"
+             dur="1"/>
+        <set targetElement="brush1" attribute="color" to="yellow"
+             dur="1"/>
+        <set targetElement="brush1" attribute="color" to="black"
+             dur="1"/>
+      </seq>
+    </par>
+  </body>
+</smil>
