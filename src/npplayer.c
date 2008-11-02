@@ -1073,7 +1073,7 @@ static int initPlugin (const char *plugin_lib) {
     print ("starting %s with %s\n", plugin_lib, object_url);
     library = g_module_open (plugin_lib, G_MODULE_BIND_LAZY);
     if (!library) {
-        print ("failed to load %s\n", plugin_lib);
+        print ("failed to load %s %s\n", plugin_lib, g_module_error ());
         return -1;
     }
     if (!g_module_symbol (library,
