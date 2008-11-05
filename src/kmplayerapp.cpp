@@ -715,12 +715,16 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
             this, SLOT (playListItemDropped (QDropEvent *, Q3ListViewItem *)));
     connect (m_view->playList(), SIGNAL (moved ()),
             this, SLOT (playListItemMoved ()));
-    /*connect (m_view->playList(), SIGNAL (prepareMenu (KMPlayer::PlayListItem *, QMenu *)), this, SLOT (preparePlaylistMenu (KMPlayer::PlayListItem *, QMenu *)));
+    connect (m_view->playList(), SIGNAL (prepareMenu (KMPlayer::PlayListItem *, QMenu *)), this, SLOT (preparePlaylistMenu (KMPlayer::PlayListItem *, QMenu *)));
     m_dropmenu = new QMenu (m_view->playList ());
-    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("view-media-playlist"), K3Icon::Small, 0, true), i18n ("&Add to list"), this, SLOT (menuDropInList ()));
-    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("folder-grey"), K3Icon::Small, 0, true), i18n ("Add in new &Group"), this, SLOT (menuDropInGroup ()));
-    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("edit-copy"), K3Icon::Small, 0, true), i18n ("&Copy here"), this, SLOT (menuCopyDrop ()));
-    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("edit-delete"), K3Icon::Small, 0, true), i18n ("&Delete"), this, SLOT (menuDeleteNode ()));*/
+    m_dropmenu->insertItem (KIcon ("view-media-playlist"),
+                i18n ("&Add to list"), this, SLOT (menuDropInList ()), 0, 0);
+    m_dropmenu->insertItem (KIcon ("folder-grey"),
+        i18n ("Add in new &Group"), this, SLOT (menuDropInGroup ()), 0, 1);
+    m_dropmenu->insertItem (KIcon ("edit-copy"),
+            i18n ("&Copy here"), this, SLOT (menuCopyDrop ()), 0, 2);
+    m_dropmenu->insertItem (KIcon ("edit-delete"),
+            i18n ("&Delete"), this, SLOT (menuDeleteNode ()), 0, 3);
     /*QMenu * viewmenu = new QMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -1551,7 +1555,7 @@ void KMPlayerApp::playListItemDropped (QDropEvent * de, Q3ListViewItem * after) 
             m_view->playList()->lastDragTreeId () == playlist_id)
         manip_node = m_view->playList()->lastDragNode ();
     if (!manip_node && ritem->id == playlist_id) {
-        KUrl::List m_drop_list = KUrl::List::fromMimeData (de->mimeData ());
+        m_drop_list = KUrl::List::fromMimeData (de->mimeData ());
         if (m_drop_list.isEmpty () && Q3TextDrag::canDecode (de)) {
             QString text;
             if (Q3TextDrag::decode (de, text) && KUrl (text).isValid ())
