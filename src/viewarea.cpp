@@ -762,6 +762,29 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     s->dirty = false;
 }
 
+static void calculateTextDimensions (PangoFontDescription *desc,
+        const char *text, Single w, Single h,
+        int *pxw, int *pxh, bool markup_text) {
+    cairo_surface_t *img_surf = cairo_image_surface_create (
+            CAIRO_FORMAT_RGB24, (int) w, h);
+    cairo_t *cr_txt = cairo_create (img_surf);
+    PangoLayout *layout = pango_cairo_create_layout (cr_txt);
+    pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
+    pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
+    if (markup_text)
+        pango_layout_set_markup (layout, text, -1);
+    else
+        pango_layout_set_text (layout, text, -1);
+    pango_layout_set_font_description (layout, desc);
+
+    pango_cairo_show_layout (cr_txt, layout);
+    pango_layout_get_pixel_size (layout, pxw, pxh);
+
+    g_object_unref (layout);
+    cairo_destroy (cr_txt);
+    cairo_surface_destroy (img_surf);
+}
+
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     if (!txt->media_info || !txt->media_info->media)
         return;
@@ -796,9 +819,19 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         QPixmap pix = QPixmap::grabWidget (edit, rect.x () - (int) xoff,
                 rect.y () - (int) yoff, rect.width (), rect.height ());*/
 
-        cairo_surface_t *draw = cairo_surface_create_similar (cairo_surface,
-                CAIRO_CONTENT_COLOR, (int) w, (int) h * 2); //FIXME
-        cairo_t *cr_txt = cairo_create (draw);
+        int pxw, pxh;
+        Single ft_size = w * txt->font_size / rect.width ();
+        const QByteArray text = tm->text.toUtf8 ();
+
+        PangoFontDescription *desc = pango_font_description_new ();
+        pango_font_description_set_family (desc, "Sans");
+        pango_font_description_set_absolute_size (desc, PANGO_SCALE * ft_size);
+
+        calculateTextDimensions (desc, text.data (), w, 2 * ft_size, &pxw, &pxh, false);
+        s->surface = cairo_surface_create_similar (cairo_surface,
+                CAIRO_CONTENT_COLOR, pxw, pxh);
+        cairo_t *cr_txt = cairo_create (s->surface);
+
         CAIRO_SET_SOURCE_RGB (cr_txt, txt->background_color);
         cairo_paint (cr_txt);
 
@@ -806,33 +839,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         PangoLayout *layout = pango_cairo_create_layout (cr_txt);
         pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
         pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-        pango_layout_set_text (layout, tm->text.toUtf8().data(), -1);
-
-        PangoFontDescription *desc = pango_font_description_new ();
-        pango_font_description_set_family (desc, "Sans");
-        pango_font_description_set_absolute_size (desc,
-                PANGO_SCALE * (w * txt->font_size / rect.width ()));
+        pango_layout_set_text (layout, text.data (), -1);
         pango_layout_set_font_description (layout, desc);
-        pango_font_description_free (desc);
 
         pango_cairo_show_layout (cr_txt, layout);
-        int pxw, pxh;
-        pango_layout_get_pixel_size (layout, &pxw, &pxh);
+
+        pango_font_description_free (desc);
         g_object_unref (layout);
         cairo_destroy (cr_txt);
-
-        cairo_pattern_t *pat = cairo_pattern_create_for_surface (draw);
-        cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
-        s->surface = cairo_surface_create_similar (cairo_surface,
-                CAIRO_CONTENT_COLOR, pxw, pxh);
-        cr_txt = cairo_create (s->surface);
-        cairo_set_operator (cr_txt, CAIRO_OPERATOR_SOURCE);
-        cairo_set_source (cr_txt, pat);
-        cairo_paint (cr_txt);
-
-        cairo_destroy (cr_txt);
-        cairo_pattern_destroy (pat);
-        cairo_surface_destroy (draw);
 
         // update bounds rect
         Single sx = x, sy = y, sw = pxw, sh = pxh;
@@ -904,38 +918,24 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
 
     if (!s->surface) {
 
-        int ft_size = w * 11 / rect.width ();
+        Single ft_size = w * 11 / rect.width ();
+        int pxw, pxh;
+        const QByteArray text = txt->richText ().toUtf8 ();
+
         PangoFontDescription *desc = pango_font_description_new ();
         pango_font_description_set_family (desc, "Sans");
         pango_font_description_set_absolute_size (desc, PANGO_SCALE * ft_size);
-
-        cairo_surface_t *img_surf = cairo_image_surface_create (
-                CAIRO_FORMAT_RGB24, (int) w, 2 * ft_size);
-        cairo_t *cr_txt = cairo_create (img_surf);
-
-        PangoLayout *layout = pango_cairo_create_layout (cr_txt);
-        pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
-        pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-        pango_layout_set_markup (layout, txt->richText ().toUtf8().data(), -1);
-        pango_layout_set_font_description (layout, desc);
-
-        pango_cairo_show_layout (cr_txt, layout);
-        int pxw, pxh;
-        pango_layout_get_pixel_size (layout, &pxw, &pxh);
-
-        g_object_unref (layout);
-        cairo_destroy (cr_txt);
-        cairo_surface_destroy (img_surf);
+        calculateTextDimensions (desc, text.data (), w, 2 * ft_size, &pxw, &pxh, true);
 
         s->surface = cairo_surface_create_similar (cairo_surface,
                 CAIRO_CONTENT_COLOR_ALPHA, (int) w, pxh);
-        cr_txt = cairo_create (s->surface);
+        cairo_t *cr_txt = cairo_create (s->surface);
 
         CAIRO_SET_SOURCE_RGB (cr_txt, 0);
-        layout = pango_cairo_create_layout (cr_txt);
+        PangoLayout *layout = pango_cairo_create_layout (cr_txt);
         pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
         pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-        pango_layout_set_markup (layout, txt->richText ().toUtf8().data(), -1);
+        pango_layout_set_markup (layout, text.data (), -1);
         pango_layout_set_font_description (layout, desc);
 
         pango_cairo_show_layout (cr_txt, layout);
