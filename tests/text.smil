@@ -29,12 +29,27 @@
       <animate target="region3" attributeName="left" from="69%" to="7%" begin="2" dur="1.5" fill="freeze"/>
       <animate target="text3" attributeName="top" from="0%" to="-50%" begin="3.5" dur="1.5" fill="freeze"/>
     </par>
-    <par dur="5">
+    <par dur="9">
       <text id="text4" src="chapter2.txt" region="region4">
         <param name="fontColor" value="blue"/>
         <param name="fontPtSize" value="11"/>
-      </text> 
-      <animate target="text4" attributeName="top" from="0%" to="-170%" begin=".5" dur="4" fill="freeze"/>
+      </text>
+      <animateMotion target="text4" from="0%,0%" to="0%,-170%"
+                     begin=".5" dur="4" fill="freeze"
+                     calcMode="spline" keySplines=".5 0 .5 1"/>
+      <animateMotion target="text4" to="0%,-130%" from="0%,-170%"
+                     begin="4.5" dur="0.5" fill="freeze"
+                     calcMode="spline" keySplines=".5 0 .5 1"/>
+      <animateMotion target="text4" to="0%,-90%" from="0%,-130%"
+                     begin="5.5" dur="0.5" fill="freeze"
+                     calcMode="spline" keySplines=".5 0 .5 1"/>
+      <animateMotion target="text4" to="0%,-50%" from="0%,-90%"
+                     begin="6.5" dur="0.5" fill="freeze"
+                     calcMode="spline" keySplines=".5 0 .5 1"/>
+      <animateMotion target="text4" to="0%,0%" from="0%,-50%"
+                     begin="7.5" dur="0.5" fill="freeze"
+                     calcMode="spline" keySplines=".5 0 .5 1"/>
+      <!--animate target="text4" attributeName="top" from="0%" to="-170%" begin=".5" dur="4" fill="freeze"/-->
     </par>
   </body>
 </smil>
