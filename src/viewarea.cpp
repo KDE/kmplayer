@@ -1844,16 +1844,14 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     if (!m_view->controlPanel ()) return;
     Single x, y, w = width (), h = height ();
     Single hsb = m_view->statusBarHeight ();
-    Single hcp = m_view->controlPanel ()->isVisible ()
+    int hcp = m_view->controlPanel ()->isVisible ()
         ? (m_view->controlPanelMode () == View::CP_Only
                 ? h-hsb
                 : (Single) m_view->controlPanel()->maximumSize ().height ())
         : Single (0);
-    Single wws = w;
     // move controlpanel over video when autohiding and playing
-    Single hws = h - (m_view->controlPanelMode () == View::CP_AutoHide
-            ? Single (0)
-            : hcp) - hsb;
+    bool auto_hide = m_view->controlPanelMode () == View::CP_AutoHide;
+    h -= Single (auto_hide ? 0 : hcp) - hsb;
     // now scale the regions and check if video region is already sized
     if (surface->node)
         d->destroyBackingStore ();
@@ -1862,18 +1860,18 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
 
     // finally resize controlpanel and video widget
     if (m_view->controlPanel ()->isVisible ())
-        m_view->controlPanel ()->setGeometry (0, h-hcp-hsb, w, hcp);
+        m_view->controlPanel ()->setGeometry (0, h-(auto_hide ? hcp:0), w, hcp);
     if (m_view->statusBar ()->isVisible ())
         m_view->statusBar ()->setGeometry (0, h-hsb, w, hsb);
     int scale = m_view->controlPanel ()->scale_slider->sliderPosition ();
-    wws = wws * scale / 100;
-    hws = hws * scale / 100;
-    x += (w - wws) / 2;
-    y += (h - hws) / 2;
-    m_view->console ()->setGeometry (0, 0, w, h - hsb - hcp);
-    m_view->picture ()->setGeometry (0, 0, w, h - hsb - hcp);
+    Single ws = w * scale / 100;
+    Single hs = h * scale / 100;
+    x += (w - ws) / 2;
+    y += (h - hs) / 2;
+    m_view->console ()->setGeometry (0, 0, w, h);
+    m_view->picture ()->setGeometry (0, 0, w, h);
     if (!surface->node && video_widgets.size () == 1)
-        video_widgets.first ()->setGeometry (IRect (x, y, wws, hws));
+        video_widgets.first ()->setGeometry (IRect (x, y, w, h));
 }
 
 KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
