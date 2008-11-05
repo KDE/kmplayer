@@ -202,6 +202,13 @@ bool Node::expose () const {
     return true;
 }
 
+QString Node::caption () const {
+    return QString ();
+}
+
+void Node::setCaption (const QString &) {
+}
+
 void Node::activate () {
     //kDebug () << nodeName () << " Node::activate";
     setState (state_activated);
@@ -622,6 +629,15 @@ void Attribute::setValue (const QString & v) {
 
 //-----------------------------------------------------------------------------
 
+QString Title::caption () const {
+    return title;
+}
+
+void Title::setCaption (const QString &) {
+}
+
+//-----------------------------------------------------------------------------
+
 static bool hasMrlChildren (const NodePtr & e) {
     for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
         if (c->isPlayable () || hasMrlChildren (c))
@@ -630,7 +646,7 @@ static bool hasMrlChildren (const NodePtr & e) {
 }
 
 Mrl::Mrl (NodePtr & d, short id)
-    : Element (d, id), cached_ismrl_version (~0),
+    : Title (d, id), cached_ismrl_version (~0),
       media_info (NULL),
       aspect (0), repeat (0),
       view_mode (SingleMode),
@@ -1239,7 +1255,7 @@ GenericURL::GenericURL (NodePtr & d, const QString & s, const QString & name)
     src = s;
     if (!src.isEmpty ())
         setAttribute (StringPool::attr_src, src);
-    pretty_name = name;
+    title = name;
 }
 
 KDE_NO_EXPORT void GenericURL::closed () {
@@ -1255,7 +1271,7 @@ GenericMrl::GenericMrl (NodePtr & d, const QString &s, const QString &name, cons
     src = s;
     if (!src.isEmpty ())
         setAttribute (StringPool::attr_src, src);
-    pretty_name = name;
+    title = name;
     if (!name.isEmpty ())
         setAttribute (StringPool::attr_name, name);
 }
@@ -1266,13 +1282,13 @@ void GenericMrl::closed () {
         if (src.isEmpty ())
             src = getAttribute (StringPool::attr_url);
     }
-    if (pretty_name.isEmpty ())
-        pretty_name = getAttribute (StringPool::attr_name);
+    if (title.isEmpty ())
+        title = getAttribute (StringPool::attr_name);
     Mrl::closed ();
 }
 
 bool GenericMrl::expose () const {
-    return !pretty_name.isEmpty () || //return false if no title and only one
+    return !title.isEmpty () || //return false if no title and only one
         previousSibling () || nextSibling ();
 }
 

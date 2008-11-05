@@ -61,7 +61,7 @@ KDE_NO_EXPORT NodePtr XSPF::Playlist::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void XSPF::Playlist::closed () {
     for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_title)
-            pretty_name = e->innerText ().simplifyWhiteSpace ();
+            title = e->innerText ().simplifyWhiteSpace ();
         else if (e->id == id_node_location)
             src = e->innerText ().stripWhiteSpace ();
     }
@@ -114,7 +114,7 @@ KDE_NO_EXPORT void XSPF::Track::closed () {
     for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
         switch (e->id) {
             case id_node_title:
-                pretty_name = e->innerText ();
+                title = e->innerText ();
                 break;
             case id_node_location:
                 location = e;

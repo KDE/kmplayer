@@ -36,7 +36,7 @@ NodePtr ATOM::Feed::childFromTag (const QString & tag) {
 void ATOM::Feed::closed () {
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
-            pretty_name = c->innerText ().simplifyWhiteSpace ();
+            title = c->innerText ().simplifyWhiteSpace ();
             break;
         }
     Mrl::closed ();
@@ -67,7 +67,7 @@ NodePtr ATOM::Entry::childFromTag (const QString &tag) {
 void ATOM::Entry::closed () {
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
-            pretty_name = c->innerText ().simplifyWhiteSpace ();
+            title = c->innerText ().simplifyWhiteSpace ();
             break;
         }
     Mrl::closed ();
@@ -84,14 +84,14 @@ void ATOM::Link::closed () {
         if (a->name () == StringPool::attr_href)
             href = a->value ();
         else if (a->name () == StringPool::attr_title)
-            pretty_name = a->value ();
+            title = a->value ();
         else if (a->name () == "rel")
             rel = a->value ();
     }
     if (!href.isEmpty () && rel == QString::fromLatin1 ("enclosure"))
         src = href;
-    else if (pretty_name.isEmpty ())
-        pretty_name = href;
+    else if (title.isEmpty ())
+        title = href;
     Mrl::closed ();
 }
 

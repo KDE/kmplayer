@@ -50,7 +50,7 @@ KDE_NO_EXPORT Node::PlayType ASX::Asx::playType () {
     if (cached_ismrl_version != document ()->m_tree_version)
         for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
             if (e->id == id_node_title)
-                pretty_name = e->innerText ().simplifyWhiteSpace ();
+                title = e->innerText ().simplifyWhiteSpace ();
             else if (e->id == id_node_base)
                 src = getAsxAttribute (convertNode <Element> (e), "href");
         }
@@ -83,7 +83,7 @@ KDE_NO_EXPORT Node::PlayType ASX::Entry::playType () {
         for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
             switch (e->id) {
             case id_node_title:
-                pretty_name = e->innerText (); // already normalized (hopefully)
+                title = e->innerText (); // already normalized (hopefully)
                 break;
             case id_node_base:
                 src = getAsxAttribute (convertNode <Element> (e), "href");
@@ -93,8 +93,8 @@ KDE_NO_EXPORT Node::PlayType ASX::Entry::playType () {
                 ref_child_count++;
             }
         }
-        if (ref_child_count == 1 && !pretty_name.isEmpty ())
-            convertNode <ASX::Ref> (ref)->pretty_name = pretty_name;
+        if (ref_child_count == 1 && !title.isEmpty ())
+            convertNode <ASX::Ref> (ref)->title = title;
         cached_ismrl_version = document()->m_tree_version;
     }
     return play_type_none;
@@ -148,7 +148,7 @@ KDE_NO_EXPORT void ASX::Entry::deactivate () {
 }
 
 KDE_NO_EXPORT bool ASX::Entry::expose () const {
-    return ref_child_count > 1 && !pretty_name.isEmpty ();
+    return ref_child_count > 1 && !title.isEmpty ();
 }
 
 //-----------------------------------------------------------------------------

@@ -379,6 +379,8 @@ public:
      * If this node should be visible to the user
      */
     virtual bool expose () const;
+    virtual QString caption () const;
+    virtual void setCaption (const QString &t);
     /**
      * If this node should be visible to the user
      */
@@ -532,27 +534,26 @@ private:
     ElementPrivate * d;
 };
 
-/**
- * Node that references another node
- */
-class RefNode : public Node {
-public:
-    RefNode (NodePtr &doc, NodePtr ref) : Node (doc), ref_node (ref) {}
-    virtual const char *nodeName () const { return "#ref"; }
-    NodePtr refNode () const { return ref_node; }
-protected:
-    NodePtrW ref_node;
-};
-
 template <class T>
 inline KDE_NO_EXPORT T * convertNode (NodePtr e) {
     return static_cast <T *> (e.ptr ());
 }
 
+class KMPLAYER_EXPORT Title : public Element {
+protected:
+    Title (NodePtr & d, short id=0) : Element (d, id ) {}
+
+public:
+    virtual QString caption () const;
+    virtual void setCaption (const QString &t);
+
+    QString title;
+};
+
 /**
  * Element representing a playable link, like URL to a movie or playlist.
  */
-class KMPLAYER_EXPORT Mrl : public Element {
+class KMPLAYER_EXPORT Mrl : public Title {
 protected:
     Mrl (NodePtr & d, short id=0);
     NodePtr childFromTag (const QString & tag);
@@ -587,7 +588,6 @@ public:
     NodePtrW opener; //if this node is top node of external document,
     MediaInfo *media_info;
     QString src;
-    QString pretty_name;
     QString mimetype;
     Single width;
     Single height;

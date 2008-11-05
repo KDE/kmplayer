@@ -65,7 +65,7 @@ KDE_NO_CDTOR_EXPORT TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodeP
     QLabel * audioLabel = new QLabel (i18n ("Audio device:"), this);
     audiodevice = new KUrlRequester (KUrl (device->getAttribute ("audio")), this);
     QLabel * nameLabel = new QLabel (i18n ("Name:"), this, 0);
-    name = new QLineEdit (device->pretty_name, this, 0);
+    name = new QLineEdit (device->title, this, 0);
     QLabel *sizewidthLabel = new QLabel (i18n ("Width:"), this, 0);
     sizewidth = new QLineEdit (device->getAttribute (KMPlayer::StringPool::attr_width), this, 0);
     QLabel *sizeheightLabel = new QLabel (i18n ("Height:"), this, 0);
@@ -102,10 +102,10 @@ KDE_NO_CDTOR_EXPORT TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodeP
             for (KMPlayer::NodePtr c=input->firstChild();c;c=c->nextSibling()) {
                 if (c->id != id_node_tv_channel)
                     continue;
-                int strwid = metrics.boundingRect (c->mrl ()->pretty_name).width ();
+                int strwid = metrics.boundingRect (c->mrl ()->title).width ();
                 if (strwid > first_column_width)
                     first_column_width = strwid + 4;
-                table->setItem (index, 0, new Q3TableItem (table, Q3TableItem::Always, c->mrl ()->pretty_name));
+                table->setItem (index, 0, new Q3TableItem (table, Q3TableItem::Always, c->mrl ()->title));
                 table->setItem (index++, 1, new Q3TableItem (table, Q3TableItem::Always, KMPlayer::convertNode<TVChannel>(c)->getAttribute ("frequency")));
             }
             table->setColumnWidth (0, first_column_width);
@@ -113,7 +113,7 @@ KDE_NO_CDTOR_EXPORT TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodeP
             tablayout->addWidget (table);
             tablayout->addLayout (vertlayout);
         }
-        inputsTab->addTab (widget, input->mrl ()->pretty_name);
+        inputsTab->addTab (widget, input->mrl ()->title);
     }
     QPushButton * delButton = new QPushButton (i18n ("Delete"), this);
     connect (delButton, SIGNAL (clicked ()), this, SLOT (slotDelete ()));
@@ -182,7 +182,7 @@ KDE_NO_CDTOR_EXPORT TVNode::TVNode (KMPlayer::NodePtr &d, const QString & s, con
 }
 
 KDE_NO_EXPORT void TVNode::setNodeName (const QString & nn) {
-    pretty_name = nn;
+    title = nn;
     setAttribute (KMPlayer::StringPool::attr_name, nn);
 }
 
@@ -197,7 +197,7 @@ KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::NodePtr & d) : TVNode (d, QS
 }
 
 KDE_NO_EXPORT void TVChannel::closed () {
-    pretty_name = getAttribute (KMPlayer::StringPool::attr_name);
+    title = getAttribute (KMPlayer::StringPool::attr_name);
     Mrl::closed ();
 }
 
@@ -221,7 +221,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr TVInput::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void TVInput::closed () {
-    //pretty_name = getAttribute (KMPlayer::StringPool::attr_name);
+    //title = getAttribute (KMPlayer::StringPool::attr_name);
     Mrl::closed ();
 }
 
@@ -229,11 +229,11 @@ KDE_NO_EXPORT void TVInput::setNodeName (const QString & name) {
     Node * p = parentNode ().ptr ();
     QString nm (name);
     if (p && p->id == id_node_tv_device) {
-        int pos = name.find (QString (" - ") + p->mrl ()->pretty_name);
+        int pos = name.find (QString (" - ") + p->mrl ()->title);
         if (pos > -1)
             nm.truncate (pos);
     }
-    pretty_name = nm + QString (" - ") + pretty_name;
+    title = nm + QString (" - ") + title;
     TVNode::setNodeName (nm);
 }
 
@@ -278,21 +278,21 @@ KDE_NO_EXPORT void TVDevice::setNodeName (const QString & name) {
 }
 
 KDE_NO_EXPORT void TVDevice::updateNodeName () {
-    pretty_name = getAttribute (KMPlayer::StringPool::attr_name);
+    title = getAttribute (KMPlayer::StringPool::attr_name);
     src = getAttribute ("path");
     for (KMPlayer::NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_tv_input) {
             TVInput * i = static_cast <TVInput *> (c.ptr ());
-            i->pretty_name = i->getAttribute (KMPlayer::StringPool::attr_name) +
-                QString (" - ") + pretty_name;
+            i->title = i->getAttribute (KMPlayer::StringPool::attr_name) +
+                QString (" - ") + title;
         }
 }
 
 KDE_NO_EXPORT void TVDevice::updateDevicePage () {
     if (!device_page)
         return;
-    pretty_name = device_page->name->text ();
-    setAttribute (KMPlayer::StringPool::attr_name, pretty_name);
+    title = device_page->name->text ();
+    setAttribute (KMPlayer::StringPool::attr_name, title);
     setAttribute ("audio", device_page->audiodevice->lineEdit()->text ());
     setAttribute ("playback", device_page->noplayback->isChecked() ? "0" : "1");
     setAttribute (KMPlayer::StringPool::attr_width, device_page->sizewidth->text ());
@@ -325,7 +325,7 @@ KDE_NO_EXPORT void TVDevice::updateDevicePage () {
 KDE_NO_CDTOR_EXPORT
 TVDocument::TVDocument (KMPlayerTVSource * source)
     : FileDocument (id_node_tv_document, "tv://", source), m_source (source) {
-    pretty_name = i18n ("Television");
+    title = i18n ("Television");
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr TVDocument::childFromTag (const QString & tag) {
@@ -407,7 +407,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildMenu () {
     int counter = 0;
     for (KMPlayer::NodePtr dp = m_document->firstChild (); dp; dp = dp->nextSibling ())
         if (dp->id == id_node_tv_device)
-            m_menu->insertItem (KMPlayer::convertNode <TVDevice> (dp)->pretty_name, this, SLOT (menuClicked (int)), 0, counter++);
+            m_menu->insertItem (KMPlayer::convertNode <TVDevice> (dp)->title, this, SLOT (menuClicked (int)), 0, counter++);
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::menuAboutToShow () {
@@ -490,7 +490,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::setCurrent (KMPlayer::Mrl *mrl) {
         m_frequency = 0;
     if (!m_videonorm.isEmpty ())
         command += QString (":norm=%1").arg (m_videonorm);
-    m_app->setCaption (i18n ("TV: ") + (channel ? channel->mrl ()->pretty_name : input->mrl ()->pretty_name), false);
+    m_app->setCaption (i18n ("TV: ") + (channel ? channel->mrl ()->title : input->mrl ()->title), false);
     setDimensions (m_cur_tvdevice,
             tvdevice->getAttribute (KMPlayer::StringPool::attr_width).toInt (),
             tvdevice->getAttribute (KMPlayer::StringPool::attr_height).toInt ());
@@ -622,7 +622,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::addTVDevicePage(TVDevice *dev, bool show) {
     if (dev->device_page)
         dev->device_page->deleteLater ();
     dev->device_page = new TVDevicePage (m_configpage->notebook, dev);
-    m_configpage->notebook->insertTab (dev->device_page, dev->pretty_name);
+    m_configpage->notebook->insertTab (dev->device_page, dev->title);
     connect (dev->device_page, SIGNAL (deleted (TVDevicePage *)),
              this, SLOT (slotDeviceDeleted (TVDevicePage *)));
     if (show)
@@ -645,9 +645,9 @@ KDE_NO_EXPORT void TVDeviceScannerSource::init () {
 
 KDE_NO_EXPORT bool TVDeviceScannerSource::processOutput (const QString & line) {
     if (m_nameRegExp.search (line) > -1) {
-        m_tvdevice->pretty_name = m_nameRegExp.cap (1);
-        m_tvdevice->setAttribute(KMPlayer::StringPool::attr_name,m_tvdevice->pretty_name);
-        kDebug() << "Name " << m_tvdevice->pretty_name;
+        m_tvdevice->title = m_nameRegExp.cap (1);
+        m_tvdevice->setAttribute(KMPlayer::StringPool::attr_name,m_tvdevice->title);
+        kDebug() << "Name " << m_tvdevice->title;
     } else if (m_sizesRegExp.search (line) > -1) {
         m_tvdevice->setAttribute (KMPlayer::StringPool::attr_width,
                 m_sizesRegExp.cap(1));
@@ -664,7 +664,7 @@ KDE_NO_EXPORT bool TVDeviceScannerSource::processOutput (const QString & line) {
         if (m_inputRegExp.cap (3).toInt () == 1)
             input->setAttribute ("tuner", "1");
         m_tvdevice->appendChild (input);
-        kDebug() << "Input " << input->mrl ()->pretty_name;
+        kDebug() << "Input " << input->mrl ()->title;
     } else
         return false;
     return true;

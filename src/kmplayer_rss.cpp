@@ -43,14 +43,14 @@ KDE_NO_EXPORT NodePtr RSS::Channel::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void RSS::Channel::closed () {
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
-            pretty_name = c->innerText ().simplifyWhiteSpace ();
+            title = c->innerText ().simplifyWhiteSpace ();
             break;
         }
-    Mrl::closed ();
+    Title::closed ();
 }
 
 KDE_NO_EXPORT bool RSS::Channel::expose () const {
-    return !pretty_name.isEmpty () || //return false if no title and only one
+    return !title.isEmpty () || //return false if no title and only one
         previousSibling () || nextSibling ();
 }
 
@@ -76,7 +76,7 @@ KDE_NO_EXPORT void RSS::Item::closed () {
     for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
         switch (c->id) {
             case id_node_title:
-                pretty_name = c->innerText ().simplifyWhiteSpace ();
+                title = c->innerText ().simplifyWhiteSpace ();
                 break;
             case id_node_enclosure:
                 enclosure = c;

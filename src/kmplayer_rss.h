@@ -49,9 +49,9 @@ public:
     bool expose () const { return false; }
 };
 
-class KMPLAYER_NO_EXPORT Channel : public Mrl {
+class KMPLAYER_NO_EXPORT Channel : public Title {
 public:
-    KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Mrl (d, id_node_channel) {}
+    KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Title (d, id_node_channel) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
     PlayType playType () { return play_type_none; }

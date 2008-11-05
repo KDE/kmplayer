@@ -186,17 +186,16 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
     }
     PlayListItem * item = pitem ? new PlayListItem (pitem, e, this) : root;
     Mrl * mrl = e->mrl ();
-    QString text (e->nodeName());
-    if (mrl && !root->show_all_nodes) {
-        if (mrl->pretty_name.isEmpty ()) {
+    QString text (e->caption ());
+    if (text.isEmpty ()) {
+        text = id_node_text == e->id ? e->nodeValue () : e->nodeName ();
+        if (mrl && !root->show_all_nodes) {
             if (!mrl->src.isEmpty())
                 text = KUrl (mrl->src).pathOrUrl ();
             else if (e->isDocument ())
                 text = e->hasChildNodes () ? i18n ("unnamed") : i18n ("none");
-        } else
-            text = mrl->pretty_name;
-    } else if (e->id == id_node_text)
-        text = e->nodeValue ();
+        }
+    }
     item->setText(0, text);
     if (focus == e)
         *curitem = item;
@@ -435,7 +434,7 @@ void PlayListView::addBookMark () {
     if (item->node) {
         Mrl * mrl = item->node->mrl ();
         KURL url (mrl ? mrl->src : QString (item->node->nodeName ()));
-        emit addBookMark (mrl->pretty_name.isEmpty () ? url.prettyUrl () : mrl->pretty_name, url.url ());
+        emit addBookMark (mrl->title.isEmpty () ? url.prettyUrl () : mrl->title, url.url ());
     }
 }
 
@@ -515,7 +514,7 @@ KDE_NO_EXPORT void PlayListView::itemIsRenamed (Q3ListViewItem * qitem) {
         RootPlayListItem * ri = rootItem (qitem);
         if (!ri->show_all_nodes && item->node->isEditable ()) {
             item->node->setNodeName (item->text (0));
-            if (item->node->mrl ()->pretty_name.isEmpty ())
+            if (item->node->caption ().isEmpty ())
                 item->setText (0, KURL (item->node->mrl ()->src).pathOrUrl ());
         } else // restore damage ..
             updateTree (ri, item->node, true);
@@ -549,7 +548,7 @@ KDE_NO_EXPORT void PlayListView::rename (Q3ListViewItem * qitem, int c) {
     } else if (item && item->node && item->node->isEditable ()) {
         if (!rootItem (qitem)->show_all_nodes &&
                 item->node->isPlayable () &&
-                item->node->mrl ()->pretty_name.isEmpty ())
+                item->node->mrl ()->title.isEmpty ())
             // populate() has crippled src, restore for editing 
             item->setText (0, item->node->mrl ()->src);
         K3ListView::rename (item, c);
@@ -646,11 +645,11 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
             if (elm && !ri->show_all_nodes) {
                 Mrl * mrl = n->mrl ();
                 if (mrl) {
-                    if (mrl->pretty_name.isEmpty ()) {
+                    if (mrl->title.isEmpty ()) {
                         if (!mrl->src.isEmpty())
                             val = KURL(mrl->src).prettyUrl();
                     } else
-                        val = mrl->pretty_name;
+                        val = mrl->title;
                 }
             } else if (!elm)
                 val = n->nodeValue ();

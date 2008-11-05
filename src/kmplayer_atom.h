@@ -51,7 +51,7 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "feed"; }
     void closed ();
-    bool expose () const { return !pretty_name.isEmpty (); }
+    bool expose () const { return !title.isEmpty (); }
 };
 
 class KMPLAYER_NO_EXPORT Entry : public Mrl {

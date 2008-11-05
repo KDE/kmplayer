@@ -470,7 +470,7 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
     } else if (name == StringPool::attr_title) {
         Mrl *mrl = element->mrl ();
         if (mrl)
-            mrl->pretty_name = val;
+            mrl->title = val;
     } else if (name == "endsync") {
         if ((durTime ().durval == dur_media || durTime ().durval == 0) &&
                 endTime ().durval == dur_media) {
@@ -1093,12 +1093,12 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
             layout_node = e;
         } else if (e->id == id_node_title) {
             QString str = e->innerText ();
-            pretty_name = str.left (str.indexOf (QChar ('\n')));
+            title = str.left (str.indexOf (QChar ('\n')));
         } else if (e->id == id_node_meta) {
             Element * elm = convertNode <Element> (e);
             const QString name = elm->getAttribute (StringPool::attr_name);
             if (name == QString::fromLatin1 ("title"))
-                pretty_name = elm->getAttribute ("content");
+                title = elm->getAttribute ("content");
             else if (name == QString::fromLatin1 ("base"))
                 src = elm->getAttribute ("content");
         }
@@ -1107,7 +1107,7 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
 }
 
 KDE_NO_EXPORT bool SMIL::Smil::expose () const {
-    return !pretty_name.isEmpty () || //return false if no title and only one
+    return !title.isEmpty () || //return false if no title and only one
         previousSibling () || nextSibling ();
 }
 
@@ -2563,7 +2563,7 @@ KDE_NO_EXPORT void SMIL::MediaType::closed () {
         width = mrl->width;
         height = mrl->height;
     }
-    pretty_name = getAttribute (StringPool::attr_title);
+    title = getAttribute (StringPool::attr_title);
     Mrl::closed ();
 }
 

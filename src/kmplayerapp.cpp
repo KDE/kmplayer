@@ -99,7 +99,7 @@ public:
         : KMPlayer::URLSource (p, KUrl ("lists://")) {}
     void play (KMPlayer::Mrl *);
     void activate ();
-    QString prettyName () { return m_document->mrl ()->pretty_name; }
+    QString prettyName () { return m_document->caption (); }
 };
 
 class KMPLAYER_NO_EXPORT Recents : public FileDocument {
@@ -122,7 +122,7 @@ public:
     KMPlayerApp * app;
 };
 
-class KMPLAYER_NO_EXPORT Group : public KMPlayer::Mrl {
+class KMPLAYER_NO_EXPORT Group : public KMPlayer::Title {
 public:
     Group (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn=QString());
     KMPlayer::NodePtr childFromTag (const QString & tag);
@@ -162,7 +162,7 @@ public:
     const char * nodeName () const KDE_NO_EXPORT { return "item"; }
 };
 
-class KMPLAYER_NO_EXPORT PlaylistGroup : public KMPlayer::Mrl {
+class KMPLAYER_NO_EXPORT PlaylistGroup : public KMPlayer::Title {
 public:
     PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn);
     PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool plmode=false);
@@ -227,7 +227,7 @@ void FileDocument::writeToFile (const QString & fn) {
 KDE_NO_CDTOR_EXPORT Recents::Recents (KMPlayerApp *a)
     : FileDocument (id_node_recent_document, "recents://"),
       app(a) {
-    pretty_name = i18n ("Most Recent");
+    title = i18n ("Most Recent");
 }
 
 KDE_NO_EXPORT void Recents::activate () {
@@ -277,8 +277,8 @@ KDE_NO_EXPORT void Recent::activate () {
 
 KDE_NO_CDTOR_EXPORT
 Group::Group (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn)
-  : KMPlayer::Mrl (doc, KMPlayer::id_node_group_node), app (a) {
-    pretty_name = pn;
+  : KMPlayer::Title (doc, KMPlayer::id_node_group_node), app (a) {
+    title = pn;
     if (!pn.isEmpty ())
         setAttribute (KMPlayer::StringPool::attr_title, pn);
 }
@@ -292,8 +292,8 @@ KDE_NO_EXPORT KMPlayer::NodePtr Group::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void Group::closed () {
-    if (pretty_name.isEmpty ())
-        pretty_name = getAttribute (KMPlayer::StringPool::attr_title);
+    if (title.isEmpty ())
+        title = getAttribute (KMPlayer::StringPool::attr_title);
 }
 
 KDE_NO_EXPORT void Playlist::defer () {
@@ -316,7 +316,7 @@ KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::Source *s, boo
     : FileDocument (KMPlayer::id_node_playlist_document, "Playlist://", s),
       app(a),
       playmode (plmode) {
-    pretty_name = i18n ("Persistent Playlists");
+    title = i18n ("Persistent Playlists");
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr Playlist::childFromTag (const QString & tag) {
@@ -356,12 +356,12 @@ KDE_NO_EXPORT void PlaylistItemBase::activate () {
             data = QString ("<playlist>") +
                 parentNode ()->innerXML () +
                 QString ("</playlist>");
-            pn = parentNode ()->mrl ()->pretty_name;
+            pn = parentNode ()->caption ();
         } else {
             data = outerXML ();
-            pn = pretty_name.isEmpty () ? src : pretty_name;
+            pn = title.isEmpty () ? src : title;
         }
-        pl->mrl ()->pretty_name = pn;
+        pl->setCaption (pn);
         //kDebug () << "cloning to " << data;
         QTextStream inxml (&data, QIODevice::ReadOnly);
         KMPlayer::readXML (pl, inxml, QString (), false);
@@ -388,8 +388,8 @@ KDE_NO_EXPORT void PlaylistItemBase::activate () {
 }
 
 void PlaylistItemBase::closed () {
-    if (pretty_name.isEmpty ())
-        pretty_name = getAttribute (KMPlayer::StringPool::attr_title);
+    if (title.isEmpty ())
+        title = getAttribute (KMPlayer::StringPool::attr_title);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -419,15 +419,15 @@ KDE_NO_EXPORT void PlaylistItem::setNodeName (const QString & s) {
 
 KDE_NO_CDTOR_EXPORT
 PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn)
-  : KMPlayer::Mrl (doc, KMPlayer::id_node_group_node), app (a), playmode (false) {
-    pretty_name = pn;
+  : KMPlayer::Title (doc, KMPlayer::id_node_group_node), app (a), playmode (false) {
+    title = pn;
     if (!pn.isEmpty ())
         setAttribute (KMPlayer::StringPool::attr_title, pn);
 }
 
 KDE_NO_CDTOR_EXPORT
 PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool lm)
-  : KMPlayer::Mrl (doc, KMPlayer::id_node_group_node), app (a), playmode (lm) {
+  : KMPlayer::Title (doc, KMPlayer::id_node_group_node), app (a), playmode (lm) {
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr PlaylistGroup::childFromTag (const QString &tag) {
@@ -442,12 +442,12 @@ KDE_NO_EXPORT KMPlayer::NodePtr PlaylistGroup::childFromTag (const QString &tag)
 }
 
 KDE_NO_EXPORT void PlaylistGroup::closed () {
-    if (pretty_name.isEmpty ())
-        pretty_name = getAttribute (KMPlayer::StringPool::attr_title);
+    if (title.isEmpty ())
+        title = getAttribute (KMPlayer::StringPool::attr_title);
 }
 
 KDE_NO_EXPORT void PlaylistGroup::setNodeName (const QString &t) {
-    pretty_name = t;
+    title = t;
     setAttribute (KMPlayer::StringPool::attr_title, t);
 }
 
@@ -1760,7 +1760,7 @@ public:
 KDE_NO_CDTOR_EXPORT Disks::Disks (KMPlayerApp * a)
                 : KMPlayer::Document ("disks://", 0L), app (a) {
     id = id_node_disk_document;
-    pretty_name = i18n ("Optical Disks");
+    title = i18n ("Optical Disks");
 }
 
 KDE_NO_EXPORT void *Disks::message (KMPlayer::MessageType msg, void *data) {
@@ -1774,7 +1774,7 @@ KDE_NO_EXPORT void *Disks::message (KMPlayer::MessageType msg, void *data) {
 KDE_NO_CDTOR_EXPORT Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url, const QString &pn) 
   : KMPlayer::Mrl (doc, id_node_disk_node), app (a) {
     src = url;
-    pretty_name = pn;
+    title = pn;
 }
 
 KDE_NO_EXPORT void Disk::activate () {
@@ -2309,7 +2309,7 @@ KDE_NO_EXPORT QString KMPlayerPipeSource::prettyName () {
 KDE_NO_EXPORT void KMPlayerPipeSource::setCommand (const QString & cmd) {
     m_pipecmd = cmd;
     if (m_document)
-        m_document->mrl ()->pretty_name = cmd;
+        m_document->mrl ()->title = cmd;
 }
 
 #include "kmplayer.moc"
