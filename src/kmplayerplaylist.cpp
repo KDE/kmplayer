@@ -522,11 +522,11 @@ Element::~Element () {
     delete d;
 }
 
-void Element::setParam (const TrieString &param, const QString &val, int *mid) {
-    ParamValue * pv = d->params [param];
+void Element::setParam (const TrieString &name, const QString &val, int *mid) {
+    ParamValue * pv = d->params [name];
     if (!pv) {
-        pv = new ParamValue (mid ? QString() : val);
-        d->params.insert (param, pv);
+        pv = new ParamValue (mid ? getAttribute (name) : val);
+        d->params.insert (name, pv);
     }
     if (mid) {
         if (!pv->modifications)
@@ -537,20 +537,21 @@ void Element::setParam (const TrieString &param, const QString &val, int *mid) {
             *mid = pv->modifications->size ();
             pv->modifications->push_back (val);
         }
-    } else
+    } else {
         pv->setValue (val);
-    parseParam (param, val);
+    }
+    parseParam (name, val);
 }
 
 QString Element::param (const TrieString & name) {
     ParamValue * pv = d->params [name];
     if (pv)
         return pv->value ();
-    return QString ();
+    return getAttribute (name);
 }
 
-void Element::resetParam (const TrieString & param, int mid) {
-    ParamValue * pv = d->params [param];
+void Element::resetParam (const TrieString &name, int mid) {
+    ParamValue * pv = d->params [name];
     if (pv && pv->modifications) {
         if (int (pv->modifications->size ()) > mid && mid > -1) {
             (*pv->modifications) [mid] = QString ();
@@ -562,24 +563,27 @@ void Element::resetParam (const TrieString & param, int mid) {
         if (pv->modifications->size () == 0) {
             delete pv->modifications;
             pv->modifications = 0L;
-            val = pv->value ();
             if (val.isNull ()) {
                 delete pv;
-                d->params.remove (param);
+                d->params.remove (name);
             }
         }
-        parseParam (param, val);
+        parseParam (name, val);
     } else
-        kError () << "resetting " << param.toString() << " that doesn't exists" << endl;
+        kError () << "resetting " << name.toString() << " that doesn't exists" << endl;
 }
 
 void Element::setAttribute (const TrieString & name, const QString & value) {
     for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
         if (name == a->name ()) {
-            a->setValue (value);
+            if (value.isNull ())
+                m_attributes->remove (a);
+            else
+                a->setValue (value);
             return;
         }
-    m_attributes->append (new Attribute (name, value));
+    if (!value.isNull ())
+        m_attributes->append (new Attribute (name, value));
 }
 
 QString Element::getAttribute (const TrieString & name) {
@@ -592,7 +596,7 @@ QString Element::getAttribute (const TrieString & name) {
 void Element::init () {
     d->clear();
     for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ())
-        setParam (a->name (), a->value ());
+        parseParam (a->name (), a->value ());
 }
 
 void Element::reset () {

@@ -752,6 +752,7 @@ protected:
     AnimateGroup (NodePtr &d, short _id);
     NodePtrW target_element;
     TrieString changed_attribute;
+    QString target_id;
     QString change_to;
     int modification_id;
     bool inited;

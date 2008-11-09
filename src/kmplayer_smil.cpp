@@ -3099,14 +3099,7 @@ namespace {
         SvgElement (NodePtr &doc, Node *img, const QString &t, short id=0)
             : Element (doc, id), tag (t), image (img) {}
 
-        void activate () {
-            init ();
-            Element::activate ();
-        }
-
         void parseParam (const TrieString &name, const QString &val) {
-            if (state < state_activated)
-                return;
             setAttribute (name, val);
             Mrl *mrl = image ? image->mrl () : NULL;
             if (mrl && mrl->media_info &&
@@ -3124,6 +3117,10 @@ namespace {
         const char *nodeName () const {
             return tag.ascii ();
         }
+
+        bool expose () const {
+            return false;
+        }
     };
 }
 
@@ -3131,7 +3128,7 @@ KDE_NO_EXPORT NodePtr SMIL::ImageMediaType::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "imfl"))
         return new RP::Imfl (m_doc);
     else if (!strcmp (tag.latin1 (), "svg"))
-        return new SvgElement (m_doc, this, tag.toUtf8 (), id_node_svg);
+        return new SvgElement (m_doc, this, tag, id_node_svg);
     return SMIL::MediaType::childFromTag (tag);
 }
 
@@ -3592,9 +3589,8 @@ KDE_NO_CDTOR_EXPORT SMIL::AnimateGroup::~AnimateGroup () {
 }
 
 void SMIL::AnimateGroup::parseParam (const TrieString &name, const QString &val) {
-    //kDebug () << "AnimateGroup::parseParam " << name << "=" << val << endl;
     if (name == StringPool::attr_target || name == "targetElement") {
-        target_element = findLocalNodeById (this, val);
+        target_id = val;
     } else if (name == "attribute" || name == "attributeName") {
         changed_attribute = TrieString (val);
     } else if (name == "to") {
@@ -3629,6 +3625,7 @@ KDE_NO_EXPORT void SMIL::AnimateGroup::finish () {
 KDE_NO_EXPORT void SMIL::AnimateGroup::reset () {
     Element::reset ();
     inited = false;
+    target_id.truncate (0);
     runtime->reset ();
 }
 
@@ -3675,13 +3672,15 @@ KDE_NO_EXPORT void SMIL::AnimateGroup::restoreModification () {
 }
 
 KDE_NO_EXPORT NodePtr SMIL::AnimateGroup::targetElement () {
-    if (!target_element) {
+    if (target_id.isEmpty ()) {
         for (Node *p = parentNode().ptr(); p; p =p->parentNode().ptr())
             if (SMIL::id_node_first_mediatype <= p->id &&
                     SMIL::id_node_last_mediatype >= p->id) {
                 target_element = p;
                 break;
             }
+    } else {
+        target_element = findLocalNodeById (this, target_id);
     }
     return target_element;
 }
