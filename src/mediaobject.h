@@ -23,6 +23,7 @@
 #include <config-kmplayer.h>
 
 #include <qobject.h>
+#include <QtCore/QPair>
 #include <qmap.h>
 #include <qstring.h>
 #include <QMovie>
@@ -33,6 +34,7 @@
 
 class QMovie;
 class QImage;
+class QSvgRenderer;
 class QBuffer;
 class QByteArray;
 class KJob;
@@ -155,15 +157,15 @@ private:
 
 class KMPLAYER_NO_EXPORT DataCache : public QObject {
     Q_OBJECT
-    typedef QMap <QString, QByteArray> DataMap;
+    typedef QMap <QString, QPair <QString, QByteArray> > DataMap;
     typedef QMap <QString, bool> PreserveMap;
     DataMap cache_map;
     PreserveMap preserve_map;
 public:
     DataCache () {}
     ~DataCache () {}
-    void add (const QString &, const QByteArray &);
-    bool get (const QString &, QByteArray &);
+    void add (const QString &, const QString &, const QByteArray &);
+    bool get (const QString &, QString &, QByteArray &);
     bool preserve (const QString &);
     bool unpreserve (const QString &);
     bool isPreserved (const QString &);
@@ -336,7 +338,7 @@ class KMPLAYER_NO_EXPORT ImageMedia : public MediaObject {
 public:
     ImageMedia (MediaManager *manager, Node *node,
             const QString &url, const QByteArray &data);
-    ImageMedia (Node *node, ImageDataPtr id);
+    ImageMedia (Node *node, ImageDataPtr id = NULL);
 
     MediaManager::MediaType type () const { return MediaManager::Image; }
 
@@ -347,6 +349,9 @@ public:
 
     bool wget (const QString &url);
     bool isEmpty () const;
+    void render (int width, int height);
+    void sizes (Single &width, Single &height);
+    void updateRender ();
 
     ImageDataPtr cached_img;
 
@@ -364,7 +369,9 @@ private:
     QByteArray data;
     QBuffer *buffer;
     QMovie *img_movie;
+    QSvgRenderer *svg_renderer;
     int frame_nr;
+    bool update_render;
 };
 
 //------------------------%<----------------------------------------------------

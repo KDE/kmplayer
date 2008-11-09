@@ -21,6 +21,8 @@
 #include <qapplication.h>
 #include <qmovie.h>
 #include <QBuffer>
+#include <QPainter>
+#include <QSvgRenderer>
 #include <qimage.h>
 #include <qfile.h>
 #include <qtextcodec.h>
@@ -300,18 +302,19 @@ KDE_NO_EXPORT void MediaObject::destroy () {
 
 //------------------------%<----------------------------------------------------
 
-void DataCache::add (const QString & url, const QByteArray & data) {
+void DataCache::add (const QString & url, const QString &mime, const QByteArray & data) {
     QByteArray bytes;
     bytes.duplicate (data);
-    cache_map.insert (url, bytes);
+    cache_map.insert (url, qMakePair (mime, bytes));
     preserve_map.erase (url);
     emit preserveRemoved (url);
 }
 
-bool DataCache::get (const QString & url, QByteArray & data) {
+bool DataCache::get (const QString & url, QString &mime, QByteArray & data) {
     DataMap::const_iterator it = cache_map.find (url);
     if (it != cache_map.end ()) {
-        data = it.data ();
+        mime = it.data ().first;
+        data = it.data ().second;
         return true;
     }
     return false;
@@ -370,6 +373,7 @@ static bool isPlayListMime (const QString & mime) {
             !strncasecmp (mimestr, "application/xml", 15) ||
             //!strcmp (mimestr, "application/rss+xml") ||
             //!strcmp (mimestr, "application/atom+xml") ||
+            !strcmp (mimestr, "image/svg+xml") ||
             !strcmp (mimestr, "image/vnd.rn-realpix") ||
             !strcmp (mimestr, "application/x-mplayer2"));
 }
@@ -467,7 +471,7 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
         return true;
     }
     QString protocol = kurl.protocol ();
-    if (memory_cache->get (str, data) ||
+    if (memory_cache->get (str, mime, data) ||
             protocol == "mms" || protocol == "rtsp" || protocol == "rtp" ||
             (only_playlist && !maybe_playlist && !mime.isEmpty () )) {
         ready ();
@@ -619,6 +623,14 @@ void MediaInfo::create () {
                 media = mgr->createAVMedia (node, data);
             break;
         case MediaManager::Image:
+            if (data.size () && mime == "image/svg+xml") {
+                readChildDoc ();
+                if (node->firstChild () &&
+                        id_node_svg == node->lastChild ()->id) {
+                    media = new ImageMedia (node);
+                    break;
+                }
+            }
             if (data.size () &&
                     (!(mimetype ().startsWith ("text/") ||
                        mime == "image/vnd.rn-realpix") ||
@@ -641,7 +653,7 @@ KDE_NO_EXPORT void MediaInfo::ready () {
 
 KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
     if (!kjob->error ()) {
-        memory_cache->add (url, data);
+        memory_cache->add (url, mime, data);
     } else {
         memory_cache->unpreserve (url);
         data.resize (0);
@@ -848,19 +860,28 @@ void ImageData::setImage (QImage *img) {
     if (image != img) {
         delete image;
 #ifdef KMPLAYER_WITH_CAIRO
-        if (surface)
+        if (surface) {
             cairo_surface_destroy (surface);
+            surface = NULL;
+        }
 #endif
         image = img;
-        width = img->width ();
-        height = img->height ();
-        has_alpha = img->hasAlphaBuffer ();
+        if (img) {
+            width = img->width ();
+            height = img->height ();
+            has_alpha = img->hasAlphaBuffer ();
+        } else {
+            width = height = 0;
+        }
     }
 }
 
 ImageMedia::ImageMedia (MediaManager *manager, Node *node,
         const QString &url, const QByteArray &ba)
- : MediaObject (manager, node), data (ba), buffer (NULL), img_movie (NULL) {
+ : MediaObject (manager, node), data (ba), buffer (NULL),
+   img_movie (NULL),
+   svg_renderer (NULL),
+   update_render (false) {
     setupImage (url);
 }
 
@@ -868,12 +889,29 @@ ImageMedia::ImageMedia (Node *node, ImageDataPtr id)
  : MediaObject ((MediaManager *)node->document()->message(MsgQueryMediaManager),
          node),
    buffer (NULL),
-   img_movie (NULL) {
-    cached_img = id;
+   img_movie (NULL),
+   svg_renderer (NULL),
+   update_render (false) {
+    if (!id) {
+        Node *c = findChildWithId (node, id_node_svg);
+        if (c) {
+            svg_renderer = new QSvgRenderer (c->outerXML().toUtf8 ());
+            if (svg_renderer->isValid ()) {
+                cached_img = new ImageData (QString ());
+                cached_img->flags = ImageData::ImageScalable;
+            } else {
+                delete svg_renderer;
+                svg_renderer = NULL;
+            }
+        }
+    } else {
+        cached_img = id;
+    }
 }
 
 ImageMedia::~ImageMedia () {
     delete img_movie;
+    delete svg_renderer;
     delete buffer;
 }
 
@@ -935,8 +973,54 @@ KDE_NO_EXPORT void ImageMedia::setupImage (const QString &url) {
     }
 }
 
+KDE_NO_EXPORT void ImageMedia::render (int width, int height) {
+    if (svg_renderer && update_render) {
+        delete svg_renderer;
+        svg_renderer = NULL;
+        Node *c = findChildWithId (m_node, id_node_svg);
+        if (c) {
+            QSvgRenderer *r = new QSvgRenderer (c->outerXML().toUtf8 ());
+            if (r->isValid ()) {
+                cached_img->setImage (NULL);
+                svg_renderer = r;
+            }
+        }
+        update_render = false;
+    }
+    if (svg_renderer &&
+            (cached_img->width != width || cached_img->height != height)) {
+        QImage *img = new QImage (width, height,
+                QImage::Format_ARGB32_Premultiplied);
+        img->fill (0x0);
+        QPainter paint (img);
+        paint.setViewport (QRect (0, 0, width, height));
+        svg_renderer->render (&paint);
+        cached_img->setImage (img);
+    }
+}
+
+KDE_NO_EXPORT void ImageMedia::updateRender () {
+    update_render = true;
+    if (m_node)
+        m_node->document()->post(m_node, new Posting (m_node, MsgMediaUpdated));
+}
+
+KDE_NO_EXPORT void ImageMedia::sizes (Single &width, Single &height) {
+    if (svg_renderer) {
+        QSize s = svg_renderer->defaultSize ();
+        width = s.width ();
+        height = s.height ();
+    } else if (cached_img) {
+        width = cached_img->width;
+        height = cached_img->height;
+    } else {
+        width = 0;
+        height = 0;
+    }
+}
+
 bool ImageMedia::isEmpty () const {
-    return !cached_img || cached_img->isEmpty ();
+    return !cached_img || (!svg_renderer && cached_img->isEmpty ());
 }
 
 KDE_NO_EXPORT void ImageMedia::movieResize (const QSize &) {

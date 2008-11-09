@@ -737,21 +737,25 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     }
     if (!img->media_info->media)
         return;
-    ImageMedia *im = static_cast <ImageMedia *> (img->media_info->media);
-    ImageData *id = im ? im->cached_img.ptr () : NULL;
-    if (!id || im->isEmpty () || img->width <= 0 || img->height <= 0) {
-        s->remove();
-        return;
-    }
     SRect rect = s->bounds;
     Single x = rect.x ();
     Single y = rect.y ();
     Single w = rect.width();
     Single h = rect.height();
     matrix.getXYWH (x, y, w, h);
+
     IRect clip_rect = clip.intersect (IRect (x, y, w, h));
     if (clip_rect.isEmpty ())
         return;
+
+    ImageMedia *im = static_cast <ImageMedia *> (img->media_info->media);
+    ImageData *id = im ? im->cached_img.ptr () : NULL;
+    if (id && id->flags == ImageData::ImageScalable)
+        im->render (w, h);
+    if (!id || im->isEmpty () || img->width <= 0 || img->height <= 0) {
+        s->remove();
+        return;
+    }
     if (!s->surface || s->dirty)
         id->copyImage (s, w, h, cairo_surface, img->pan_zoom);
     if (id->has_alpha)

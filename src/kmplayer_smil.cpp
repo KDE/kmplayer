@@ -516,7 +516,8 @@ KDE_NO_EXPORT void *Runtime::message (MessageType msg, void *content) {
                 element->deliver (MsgEventStarted, event);
                 if (guard) {
                     element->begin ();
-                    tryFinish ();
+                    if (!element->document ()->postponed ())
+                        tryFinish ();
                 }
                 return NULL;
             }
@@ -2787,6 +2788,23 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
         Single x, y, w = width, h = height;
         sizes.calcSizes (this, rr.width(), rr.height(), x, y, w, h);
         Fit ft = fit_default == fit ? rb->fit : fit;
+        ImageMedia *im;
+        switch (ft) {
+            case fit_scroll:
+            case fit_default:
+            case fit_hidden:
+                if (media_info &&
+                        (MediaManager::AudioVideo == media_info->type ||
+                        (MediaManager::Image == media_info->type &&
+                         (im = static_cast <ImageMedia *>(media_info->media)) &&
+                         !im->isEmpty () &&
+                         im->cached_img->flags & ImageData::ImageScalable)))
+                    ft = fit_meet;
+                break;
+            default:
+                break;
+        }
+
         if (width > 0 && height > 0 && w > 0 && h > 0)
             switch (ft) {
                 case fit_meet: {
@@ -3072,16 +3090,64 @@ KDE_NO_CDTOR_EXPORT
 SMIL::ImageMediaType::ImageMediaType (NodePtr & d)
     : SMIL::MediaType (d, "img", id_node_img) {}
 
+namespace {
+    class SvgElement : public Element {
+        QString tag;
+        NodePtrW image;
+
+    public:
+        SvgElement (NodePtr &doc, Node *img, const QString &t, short id=0)
+            : Element (doc, id), tag (t), image (img) {}
+
+        void activate () {
+            init ();
+            Element::activate ();
+        }
+
+        void parseParam (const TrieString &name, const QString &val) {
+            if (state < state_activated)
+                return;
+            setAttribute (name, val);
+            Mrl *mrl = image ? image->mrl () : NULL;
+            if (mrl && mrl->media_info &&
+                    MediaManager::Image == mrl->media_info->type) {
+                ImageMedia *im=static_cast<ImageMedia*>(mrl->media_info->media);
+                if (im)
+                    im->updateRender ();
+            }
+        }
+
+        NodePtr childFromTag (const QString & tag) {
+            return new SvgElement (m_doc, image.ptr (), tag);
+        }
+
+        const char *nodeName () const {
+            return tag.ascii ();
+        }
+    };
+}
+
 KDE_NO_EXPORT NodePtr SMIL::ImageMediaType::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "imfl"))
         return new RP::Imfl (m_doc);
+    else if (!strcmp (tag.latin1 (), "svg"))
+        return new SvgElement (m_doc, this, tag.toUtf8 (), id_node_svg);
     return SMIL::MediaType::childFromTag (tag);
 }
 
 KDE_NO_EXPORT void SMIL::ImageMediaType::activate () {
     if (!media_info)
         media_info = new MediaInfo (this, MediaManager::Image);
+
     MediaType::activate ();
+
+    if (src.isEmpty () && !media_info->media) {
+        Node *n = findChildWithId (this, id_node_svg);
+        if (n) {
+            media_info->media = new ImageMedia (this);
+            message (MsgMediaReady);
+        }
+    }
 }
 
 KDE_NO_EXPORT void SMIL::ImageMediaType::accept (Visitor * v) {
@@ -3094,8 +3160,13 @@ SMIL::ImageMediaType::parseParam (const TrieString &name, const QString &val) {
     if (name == StringPool::attr_src) {
         if (media_info)
             media_info->killWGet ();
-        if (external_tree)
+        if (external_tree) {
             removeChild (external_tree);
+        } else {
+            Node *n = findChildWithId (this, id_node_svg);
+            if (n)
+                removeChild (n);
+        }
         src = val;
         if (!src.isEmpty ()) {
             if (!media_info) {
@@ -3116,8 +3187,10 @@ void *SMIL::ImageMediaType::message (MessageType msg, void *content) {
 
             case MsgMediaUpdated: {
                 Surface *s = (Surface *) message (MsgQueryRoleDisplay);
-                if (s)
+                if (s) {
+                    s->markDirty ();
                     s->repaint ();
+                }
                 if (state >= state_finished)
                     clipStop ();
                 return NULL;
@@ -3128,13 +3201,15 @@ void *SMIL::ImageMediaType::message (MessageType msg, void *content) {
                     runtime->tryFinish ();
                 return NULL;
 
+            case MsgChildFinished:
+                if (id_node_svg == ((Posting *) content)->source->id)
+                    return NULL;
+
             case MsgMediaReady:
                 if (media_info) {
                     ImageMedia *im = static_cast <ImageMedia *> (media_info->media);
-                    if (im && !im->isEmpty ()) {
-                        width = im->cached_img->width;
-                        height = im->cached_img->height;
-                    }
+                    if (im && !im->isEmpty ())
+                        im->sizes (width, height);
                 }
                 break;
 

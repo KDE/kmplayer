@@ -499,6 +499,7 @@ const short id_node_playlist_item = 27;
 const short id_node_param = 28;
 const short id_node_html_object = 29;
 const short id_node_html_embed = 30;
+const short id_node_svg = 31;
 
 /*
  * Element node, XML node that can have attributes
@@ -537,6 +538,14 @@ private:
 template <class T>
 inline KDE_NO_EXPORT T * convertNode (NodePtr e) {
     return static_cast <T *> (e.ptr ());
+}
+
+KMPLAYER_NO_EXPORT
+inline Node *findChildWithId (const Node *p, const short id) {
+    for (Node *c = p->firstChild ().ptr (); c; c = c->nextSibling ().ptr ())
+        if (id == c->id)
+            return c;
+    return NULL;
 }
 
 class KMPLAYER_EXPORT Title : public Element {
@@ -724,6 +733,7 @@ public:
 
     void timeOfDay (struct timeval &);
     PostponePtr postpone ();
+    bool postponed () const { return !!postpone_ref || !! postpone_lock; }
     /**
      * Called by PlayListNotify, processes events in event_queue with timeout set to now
      */
