@@ -983,6 +983,8 @@ KDE_NO_EXPORT void ImageMedia::render (int width, int height) {
             if (r->isValid ()) {
                 cached_img->setImage (NULL);
                 svg_renderer = r;
+            } else {
+                delete r;
             }
         }
         update_render = false;
