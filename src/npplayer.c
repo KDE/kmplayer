@@ -753,7 +753,7 @@ static bool doInvoke (uint32_t obj, const char *func, GSList *arglst,
     NPVariant *args = NULL;
 
     *resultstring = NULL;
-    if (!obj) { /*TODO NPObject tracking */
+    if (!obj && npp) { /*TODO NPObject tracking */
         NPError np_err = np_funcs.getvalue ((void*)npp,
                 NPPVpluginScriptableNPObject, (void*)&npobj);
         if (np_err == NPERR_NO_ERROR && npobj) {
@@ -798,7 +798,7 @@ static bool doGet (uint32_t obj, const char *prop, char **resultstring) {
     NPVariant result;
 
     *resultstring = NULL;
-    if (!obj) { /*TODO NPObject tracking */
+    if (!obj && npp) { /*TODO NPObject tracking */
         NPError np_err = np_funcs.getvalue ((void*)npp,
                 NPPVpluginScriptableNPObject, (void*)&npobj);
         if (np_err == NPERR_NO_ERROR && npobj) {
