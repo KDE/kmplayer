@@ -638,7 +638,8 @@ void MediaInfo::create () {
                 media = new ImageMedia (mgr, node, url, data);
             break;
         case MediaManager::Text:
-            media = new TextMedia (mgr, node, data);
+            if (data.size ())
+                media = new TextMedia (mgr, node, data);
             break;
         default: // Any
             break;
