@@ -2956,8 +2956,10 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                 message (MsgSurfaceBoundsUpdate);
             }
             postpone_lock = 0L;
-            if (state == state_began)
+            if (state == state_began) {
                 begin ();
+                runtime->tryFinish ();
+            }
             return NULL;
         }
 
