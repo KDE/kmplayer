@@ -39,8 +39,10 @@ const short id_node_media_group = 306;
 const short id_node_media_content = 307;
 const short id_node_media_title = 308;
 const short id_node_media_description = 309;
-const short id_node_media_thumbnail = 310;
-const short id_node_ignored = 311;
+const short id_node_media_player = 310;
+const short id_node_media_thumbnail = 311;
+const short id_node_gd_rating = 312;
+const short id_node_ignored = 313;
 
 /**
  * '<feed>' tag
@@ -87,8 +89,8 @@ public:
     NodePtr childFromTag (const QString &tag);
     void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char *nodeName () const { return "media:group"; }
-    void closed ();
     bool expose () const { return false; }
+    void addSummary (Node *ratings);
 };
 
 class KMPLAYER_NO_EXPORT MediaContent : public Mrl {

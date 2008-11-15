@@ -694,10 +694,12 @@ public:
     virtual void accept (Visitor *v) { v->visit (this); }
 
     QString richText ();
+    Surface *surface ();
 
     SurfacePtrW text_surface;
     NodePtrW region_node;
     ConnectionPtr region_attach;
+    MouseListeners mouse_listeners;
     Runtime *runtime;
     bool inited;
 };

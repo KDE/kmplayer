@@ -2447,9 +2447,10 @@ KDE_NO_CDTOR_EXPORT SMIL::Anchor::Anchor (NodePtr & d)
 KDE_NO_EXPORT void SMIL::Anchor::activate () {
     init ();
     for (NodePtr c = firstChild(); c; c = c->nextSibling ())
-        if (c->id >=id_node_first_mediatype && c->id <=id_node_last_mediatype) {
+        if (nodeMessageReceivers (c, MsgEventClicked)) {
             mediatype_activated = c->connectTo (this, MsgEventClicked);
-            mediatype_attach = c->connectTo (this, MsgSurfaceAttach);
+            if (nodeMessageReceivers (c, MsgSurfaceAttach))
+                mediatype_attach = c->connectTo (this, MsgSurfaceAttach);
             break;
         }
     Element::activate ();
@@ -3473,6 +3474,13 @@ void *SMIL::SmilText::message (MessageType msg, void *content) {
 
         case MsgChildFinished:
             return NULL;
+
+        case MsgQueryReceivers: {
+            MessageType m = (MessageType) (long) content;
+            NodeRefList *l = mouse_listeners.receivers (m);
+            if (l)
+                return l;
+        } // fall through
 
         default:
             break;

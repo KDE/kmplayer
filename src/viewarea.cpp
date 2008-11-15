@@ -1241,6 +1241,7 @@ public:
     void visit (SMIL::Layout *);
     void visit (SMIL::RegionBase *);
     void visit (SMIL::MediaType * n);
+    void visit (SMIL::SmilText * n);
     void visit (SMIL::Anchor *);
     void visit (SMIL::Area *);
     QCursor cursor;
@@ -1504,6 +1505,18 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
     }
 }
 
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::SmilText *st) {
+    if (MsgEventClicked == event) {
+        NodeRefList *nl = nodeMessageReceivers (st, event);
+        if (nl)
+            for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
+                if (c->data && c->data.ptr () != st)
+                    c->data->accept (this);
+                if (!node->active ())
+                    return;
+            }
+    }
+}
 //-----------------------------------------------------------------------------
 
 namespace KMPlayer {

@@ -34,6 +34,7 @@
 #include <qslider.h>
 #include <qfile.h>
 #include <qregexp.h>
+#include <QtDBus/QtDBus>
 
 #include <kmessagebox.h>
 #include <kaboutdata.h>
@@ -451,6 +452,14 @@ bool PartBase::openUrl (const KUrl::List & urls) {
 
 void PartBase::openUrl (const KUrl &u, const QString &t, const QString &srv) {
     kDebug() << u << " " << t << " " << srv;
+    QDBusMessage msg = QDBusMessage::createMethodCall (
+            "org.kde.klauncher", "/KLauncher",
+            "org.kde.KLauncher", "start_service_by_name");
+    QStringList urls;
+    urls << u.url ();
+    msg << "text/html" << urls << QStringList () << QString () << true;
+    msg.setDelayedReply (false);
+    QDBusConnection::sessionBus().send (msg);
 }
 
 bool PartBase::closeUrl () {

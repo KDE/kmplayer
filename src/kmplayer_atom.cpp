@@ -54,6 +54,8 @@ NodePtr ATOM::Entry::childFromTag (const QString &tag) {
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_summary);
     else if (!strcmp (cstr, "media:group"))
         return new MediaGroup (m_doc);
+    else if (!strcmp (cstr, "gd:rating"))
+        return new DarkNode (m_doc, tag.toUtf8 (), id_node_gd_rating);
     else if (!strcmp (cstr, "category") ||
             !strcmp (cstr, "author:") ||
             !strcmp (cstr, "id") ||
@@ -65,11 +67,18 @@ NodePtr ATOM::Entry::childFromTag (const QString &tag) {
 }
 
 void ATOM::Entry::closed () {
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+    MediaGroup *group = NULL;
+    Node *rating = NULL;
+    for (Node *c = firstChild ().ptr (); c; c = c->nextSibling ().ptr ())
         if (c->id == id_node_title) {
             title = c->innerText ().simplifyWhiteSpace ();
-            break;
+        } else if (c->id == id_node_gd_rating) {
+            rating = c;
+        } else if (c->id == id_node_media_group) {
+            group = static_cast <MediaGroup *> (c);
         }
+    if (group)
+        group->addSummary (rating);
     Mrl::closed ();
 }
 
@@ -130,6 +139,8 @@ NodePtr ATOM::MediaGroup::childFromTag (const QString &tag) {
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_media_description);
     else if (!strcmp (cstr, "media:thumbnail"))
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_media_thumbnail);
+    else if (!strcmp (cstr, "media:player"))
+        return new DarkNode (m_doc, tag.toUtf8 (), id_node_media_player);
     else if (!strcmp (cstr, "media:category") ||
             !strcmp (cstr, "media:keywords"))
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_ignored);
@@ -145,12 +156,43 @@ void *ATOM::MediaGroup::message (MessageType msg, void *content) {
     return Element::message (msg, content);
 }
 
+static QString makeStar (int x, bool fill) {
+    QString path = "<path style=\"stroke:#A0A0A0;stroke-width:2px;stroke-opacity:1;";
+    if (fill)
+        path += "fill:#ff0000";
+    else
+        path += "fill:#C0C0C0";
+    path += "\" d=\"M 21.428572,23.571429 "
+        "L 10.84984,18.213257 L 0.43866021,23.890134 L 2.2655767,12.173396 "
+        "L -6.3506861,4.0260275 L 5.3571425,2.142857 L 10.443179,-8.5693712 "
+        "L 15.852098,1.9835038 L 27.611704,3.5103513 L 19.246772,11.915557 "
+        "L 21.428572,23.571429 z\""
+        " transform=\"translate(";
+    path += QString::number (x);
+    path += ",11)\"/>";
+    return path;
+}
+
 //http://code.google.com/apis/youtube/2.0/developers_guide_protocol.html
-void ATOM::MediaGroup::closed () {
+void ATOM::MediaGroup::addSummary (Node *rating_node) {
     QString images;
     QString desc;
     QString title;
+    QString player;
+    QString ratings;
     int img_count = 0;
+    if (rating_node) {
+        Element *e = static_cast <Element *> (rating_node);
+        QString nr = e->getAttribute ("average");
+        if (!nr.isEmpty ()) {
+            int rating = ((int) nr.toDouble ()) % 6;
+            ratings = "<img region=\"rating\">"
+                "<svg width=\"200\" height=\"40\">";
+            for (int i = 0; i < 5; ++i)
+                ratings += makeStar (10 + i * 40, rating > i);
+            ratings += "</svg></img>";
+        }
+    }
     for (Node *c = firstChild ().ptr (); c; c = c->nextSibling ().ptr ()) {
         switch (c->id) {
         case id_node_media_title:
@@ -158,6 +200,9 @@ void ATOM::MediaGroup::closed () {
             break;
         case id_node_media_description:
             desc = c->innerText ();
+            break;
+        case id_node_media_player:
+            player = static_cast <Element *> (c)->getAttribute (StringPool::attr_url);
             break;
         case id_node_media_thumbnail:
         {
@@ -189,16 +234,33 @@ void ATOM::MediaGroup::closed () {
         out << "<smil><head>";
         if (!title.isEmpty ())
             out << "<title>" << title << "</title>";
-        out << "<layout><root-layout width=\"400\" height=\"300\" background-color=\"#FFFFF0\"/>"
-            "<region id=\"image\" left=\"5\" top=\"20\" width=\"130\" bottom=\"20\"/>"
-            "<region id=\"text\" left=\"140\" top=\"10\" bottom=\"10\" right=\"10\" fit=\"scroll\"/>"
+        out << "<layout><root-layout width=\"400\" height=\"300\" background-color=\"#FFFFF0\"/>";
+        if (!title.isEmpty ())
+            out << "<region id=\"title\" left=\"20\" top=\"10\" height=\"18\" right=\"10\"/>";
+        out << "<region id=\"image\" left=\"5\" top=\"40\" width=\"130\" bottom=\"30\"/>";
+        if (!ratings.isEmpty ())
+            out << "<region id=\"rating\" left=\"15\" width=\"100\" height=\"20\" bottom=\"5\"/>";
+        out << "<region id=\"text\" left=\"140\" top=\"40\" bottom=\"10\" right=\"10\" fit=\"scroll\"/>"
             "</layout>"
             "<transition id=\"fade\" dur=\"0.3\" type=\"fade\"/>"
             "<transition id=\"ellipsewipe\" dur=\"0.5\" type=\"ellipseWipe\"/>"
             "</head><body>"
             "<par><seq repeatCount=\"indefinite\">";
         out << images;
-        out << QString ("</seq><smilText region=\"text\">");
+        out << "</seq>";
+        if (!title.isEmpty ()) {
+            if (!player.isEmpty ())
+                out << "<a href=\"" << XMLStringlet(player) << "\" target=\"top\">";
+            out << "<smilText region=\"title\"><div textFontWeight=\"bold\"";
+            if (!player.isEmpty ())
+                out << " textColor=\"blue\"";
+            out << ">" << XMLStringlet (title) << "</div></smilText>";
+            if (!player.isEmpty ())
+                out << "</a>";
+        }
+        if (!ratings.isEmpty ())
+            out << ratings;
+        out << "<smilText region=\"text\">";
         out << XMLStringlet (desc);
         out << QString ("</smilText></par></body></smil>");
         QTextStream inxml (&buf, QIODevice::ReadOnly);
@@ -209,7 +271,6 @@ void ATOM::MediaGroup::closed () {
         removeChild (n);
         insertBefore (n, firstChild ());
     }
-    Element::closed ();
 }
 
 void ATOM::MediaContent::closed () {
