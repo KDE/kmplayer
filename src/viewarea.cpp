@@ -155,6 +155,8 @@ void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar, C
 
 //-------------------------------------------------------------------------
 
+#define REGION_SCROLLBAR_WIDTH 20
+
 #ifdef KMPLAYER_WITH_CAIRO
 
 # define CAIRO_SET_SOURCE_RGB(cr,c)           \
@@ -305,7 +307,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *layout) {
     }
 }
 
-#define REGION_SCROLLBAR_WIDTH 20
 
 static void cairoDrawRect (cairo_t *cr, unsigned int color,
         int x, int y, int w, int h) {
