@@ -224,8 +224,8 @@ void MediaManager::stateChange (AudioVideoMedia *media,
             grabPicture (media);
         } else {
             if (!is_rec && Mrl::SingleMode == mrl->view_mode) {
-                ProcessList::iterator e = m_processes.end ();
-                for (ProcessList::iterator i = m_processes.begin(); i != e; ++i)
+                ProcessList::ConstIterator e = m_processes.constEnd ();
+                for (ProcessList::ConstIterator i = m_processes.constBegin(); i != e; ++i)
                     if (*i != media->process &&
                             (*i)->state () == IProcess::Ready)
                         (*i)->play (); // delayed playing
@@ -253,8 +253,8 @@ void MediaManager::playAudioVideo (AudioVideoMedia *media) {
         return;
     if (id_node_record_document != mrl->id &&
             Mrl::SingleMode == mrl->view_mode) {
-        ProcessList::iterator e = m_processes.end ();
-        for (ProcessList::iterator i = m_processes.begin(); i != e; ++i)
+        ProcessList::ConstIterator e = m_processes.constEnd ();
+        for (ProcessList::ConstIterator i = m_processes.constBegin(); i != e; ++i)
         {
             kDebug() << "found process " << (*i != media->process) << (*i)->state () << endl;
             if (*i != media->process && (*i)->state () > IProcess::Ready)
@@ -311,8 +311,8 @@ void DataCache::add (const QString & url, const QString &mime, const QByteArray 
 }
 
 bool DataCache::get (const QString & url, QString &mime, QByteArray & data) {
-    DataMap::const_iterator it = cache_map.find (url);
-    if (it != cache_map.end ()) {
+    DataMap::const_iterator it = cache_map.constFind (url);
+    if (it != cache_map.constEnd ()) {
         mime = it.data ().first;
         data = it.data ().second;
         return true;
@@ -321,8 +321,8 @@ bool DataCache::get (const QString & url, QString &mime, QByteArray & data) {
 }
 
 bool DataCache::preserve (const QString & url) {
-    PreserveMap::const_iterator it = preserve_map.find (url);
-    if (it == preserve_map.end ()) {
+    PreserveMap::const_iterator it = preserve_map.constFind (url);
+    if (it == preserve_map.constEnd ()) {
         preserve_map.insert (url, true);
         return true;
     }

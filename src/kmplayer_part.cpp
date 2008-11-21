@@ -238,9 +238,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                 //http://service.real.com/help/library/guides/production8/realpgd.htm?src=noref,rnhmpg_080301,rnhmtn,nosrc
                 //http://service.real.com/help/library/guides/production8/htmfiles/control.htm
                 QStringList sl = QStringList::split (QChar (','), value);
-                QStringList::const_iterator it = sl.begin ();
-                const QStringList::const_iterator e = sl.end ();
-                for (QStringList::const_iterator i = sl.begin (); i != e; ++i) {
+                QStringList::const_iterator it = sl.constBegin ();
+                const QStringList::const_iterator e = sl.constEnd ();
+                for (QStringList::const_iterator i = sl.constBegin (); i != e; ++i) {
                     QString val_lower ((*i).lower ());
                     if (val_lower == QString::fromLatin1("imagewindow")) {
                         SET_FEAT_ON (Feat_ImageWindow | Feat_Viewer)

@@ -289,8 +289,8 @@ QString PartBase::processName (Mrl *mrl) {
             !pinfos [p]->supports (m_source->name ())) {
         // finally find first supported player
         p.truncate (0);
-        const MediaManager::ProcessInfoMap::const_iterator e = pinfos.end();
-        for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin(); i != e; ++i)
+        const MediaManager::ProcessInfoMap::const_iterator e = pinfos.constEnd();
+        for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.constBegin(); i != e; ++i)
             if (i.data ()->supports (m_source->name ())) {
                 p = QString (i.data ()->name);
                 break;
@@ -314,9 +314,9 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int menu) {
     const char * srcname = m_source->name ();
     QMenu *player_menu = m_view->controlPanel ()->playerMenu;
     MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
-    const MediaManager::ProcessInfoMap::const_iterator e = pinfos.end();
+    const MediaManager::ProcessInfoMap::const_iterator e = pinfos.constEnd();
     unsigned id = 0;
-    for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin();
+    for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.constBegin();
             id < player_menu->count() && i != e;
             ++i) {
         ProcessInfo *pinfo = i.data ();
@@ -341,9 +341,9 @@ void PartBase::updatePlayerMenu (ControlPanel *panel, const QString &backend) {
     QMenu *menu = panel->playerMenu;
     menu->clear ();
     MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
-    const MediaManager::ProcessInfoMap::const_iterator e = pinfos.end();
+    const MediaManager::ProcessInfoMap::const_iterator e = pinfos.constEnd();
     int id = 0; // if multiple parts, id's should be the same for all menu's
-    for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin(); i != e; ++i) {
+    for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.constBegin(); i != e; ++i) {
         ProcessInfo *p = i.data ();
         if (p->supports (m_source ? m_source->name () : "urlsource")) {
             menu->insertItem (p->label, this, SLOT (slotPlayerMenu (int)), 0, id++);
@@ -664,8 +664,8 @@ void PartBase::record () {
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
     if (!m_view->controlPanel()->button(ControlPanel::button_record)->isOn ()) {
         MediaManager::ProcessList &r = m_media_manager->recorders ();
-        const MediaManager::ProcessList::const_iterator e = r.end ();
-        for (MediaManager::ProcessList::const_iterator i = r.begin(); i!=e; ++i)
+        const MediaManager::ProcessList::const_iterator e = r.constEnd ();
+        for (MediaManager::ProcessList::const_iterator i = r.constBegin(); i!=e; ++i)
             (*i)->quit ();
     } else {
         m_settings->show  ("RecordPage");
@@ -723,12 +723,12 @@ void PartBase::stop () {
     if (m_source)
         m_source->reset ();
     MediaManager::ProcessInfoMap &pi = m_media_manager->processInfos ();
-    const MediaManager::ProcessInfoMap::const_iterator ie = pi.end();
-    for (MediaManager::ProcessInfoMap::const_iterator i = pi.begin(); i != ie; ++i)
+    const MediaManager::ProcessInfoMap::const_iterator ie = pi.constEnd();
+    for (MediaManager::ProcessInfoMap::const_iterator i = pi.constBegin(); i != ie; ++i)
         i.data ()->quitProcesses ();
     MediaManager::ProcessList &processes = m_media_manager->processes ();
-    const MediaManager::ProcessList::const_iterator e = processes.end();
-    for (MediaManager::ProcessList::const_iterator i = processes.begin(); i != e; ++i)
+    const MediaManager::ProcessList::const_iterator e = processes.constEnd();
+    for (MediaManager::ProcessList::const_iterator i = processes.constBegin(); i != e; ++i)
         (*i)->quit ();
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));

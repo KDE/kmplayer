@@ -294,8 +294,8 @@ KDE_NO_EXPORT void Settings::readConfig () {
     brightness = general.readEntry (strBrightness, 0);
     hue = general.readEntry (strHue, 0);
     saturation = general.readEntry (strSaturation, 0);
-    const QMap <QString, Source*>::const_iterator e = m_player->sources ().end ();
-    QMap <QString, Source *>::const_iterator i = m_player->sources().begin ();
+    const QMap <QString, Source*>::const_iterator e = m_player->sources ().constEnd ();
+    QMap <QString, Source *>::const_iterator i = m_player->sources().constBegin ();
     for (; i != e; ++i)
         backends[i.data()->name ()] = general.readEntry (i.data()->name ());
     for (int i = 0; i < int (ColorSetting::last_target); i++)
@@ -377,8 +377,8 @@ KDE_NO_EXPORT bool Settings::createDialog () {
     if (configdialog) return false;
     configdialog = new Preferences (m_player, this);
     int id = 0;
-    const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().end ();
-    for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().begin(); i != e; ++i) {
+    const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
+    for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().constBegin(); i != e; ++i) {
         ProcessInfo *p = i.data ();
         if (p->supports ("urlsource")) {
             QString lbl = p->label.remove (QChar ('&'));
@@ -456,8 +456,8 @@ void Settings::show (const char * pagename) {
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
     configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (backends["urlsource"]));
     int id = 0;
-    const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().end ();
-    for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().begin(); i != e; ++i) {
+    const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
+    for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().constBegin(); i != e; ++i) {
         ProcessInfo *p = i.data ();
         if (p->supports ("urlsource")) {
             if (backends["urlsource"] == QString (p->name))
@@ -533,8 +533,8 @@ void Settings::writeConfig () {
     gen_cfg.writeEntry (strBrightness, brightness);
     gen_cfg.writeEntry (strHue, hue);
     gen_cfg.writeEntry (strSaturation, saturation);
-    const QMap<QString,QString>::iterator b_end = backends.end ();
-    for (QMap<QString,QString>::iterator i = backends.begin(); i != b_end; ++i)
+    const QMap<QString,QString>::ConstIterator b_end = backends.constEnd ();
+    for (QMap<QString,QString>::ConstIterator i = backends.constBegin(); i != b_end; ++i)
         gen_cfg.writeEntry (i.key (), i.data ());
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         gen_cfg.writeEntry (colors[i].option, colors[i].color);
@@ -688,8 +688,8 @@ void Settings::okPressed () {
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
     QString backend_name = configdialog->m_SourcePageURL->backend->currentText ();
     if (!backend_name.isEmpty ()) {
-        const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().end ();
-        for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().begin(); i != e; ++i) {
+        const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
+        for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().constBegin(); i != e; ++i) {
             ProcessInfo *p = i.data ();
             if (p->supports ("urlsource") &&
                     p->label.remove (QChar ('&')) == backend_name) {
