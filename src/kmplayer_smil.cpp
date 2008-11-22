@@ -3302,6 +3302,17 @@ KDE_NO_EXPORT void SMIL::Brush::accept (Visitor * v) {
     v->visit (this);
 }
 
+KDE_NO_EXPORT void SMIL::Brush::parseParam (const TrieString &param, const QString &val) {
+    if (param == "color") {
+        color = val.isEmpty () ? 0 : QColor (val).rgb ();
+        Surface *s = surface ();
+        if (s)
+            s->repaint ();
+    } else {
+        MediaType::parseParam (param, val);
+    }
+}
+
 //-----------------------------------------------------------------------------
 
 namespace {

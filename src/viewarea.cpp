@@ -884,7 +884,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
         if (clip_rect.isEmpty ())
             return;
         cairo_save (cr);
-        unsigned int color = QColor (brush->param ("color")).rgb ();
         if (brush->active_trans) {
             cur_media = brush;
             cur_pat = NULL;
@@ -896,12 +895,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
         if (opacity < 0.99) {
             cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
             cairo_set_source_rgba (cr,
-                    1.0 * ((color >> 16) & 0xff) / 255,
-                    1.0 * ((color >> 8) & 0xff) / 255,
-                    1.0 * (color & 0xff) / 255,
+                    1.0 * ((brush->color >> 16) & 0xff) / 255,
+                    1.0 * ((brush->color >> 8) & 0xff) / 255,
+                    1.0 * (brush->color & 0xff) / 255,
                     opacity);
         } else {
-            CAIRO_SET_SOURCE_RGB (cr, color);
+            CAIRO_SET_SOURCE_RGB (cr, brush->color);
         }
         cairo_fill (cr);
         if (opacity < 0.99)
