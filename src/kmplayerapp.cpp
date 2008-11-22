@@ -902,6 +902,16 @@ struct IntroSource : public KMPlayer::Source {
     bool finished;
 };
 
+QString makeNumber (int i) {
+    return QString (
+            "<svg width='64' height='64'>"
+            "<circle id='circle0' cx='32' cy='32' r='30' stroke='#B0B0B0'"
+            "stroke-width='4' fill='#A0A0A0'/>"
+            "<text x='15' y='50'"
+            "font-family='Sans' font-size='55' fill='black'>%1</text>"
+            "</svg>").arg (i);
+}
+
 KDE_NO_EXPORT void IntroSource::activate () {
     if (m_player->settings ()->autoresize)
         m_app->disconnect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
@@ -912,29 +922,43 @@ KDE_NO_EXPORT void IntroSource::activate () {
         QTextStream ts (&file);
         KMPlayer::readXML (m_document, ts, QString (), false);
     } else {
-        QString smil = QString::fromLatin1 (
-          "<smil><head><layout>"
-          "<root-layout width='320' height='240' background-color='black'/>"
-          "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%' z-order='1'/>"
-          "<region id='reg1' top='10%' height='80%' z-order='2'>"
-          "<region id='image2' left='128' top='72' width='64' bottom='56'/>"
-          "</region>"
-          "</layout>"
-          "<transition id='fadein-1' dur='0.6' type='fade'/>"
-          "<transition id='iris1' dur='0.3' type='irisWipe'/>"
-          "</head>"
-          "<body>"
-          "<excl>"
-          "<par>"
-          "<img src='%1' region='image1' dur='.6' fit='fill' transOut='iris1'/>"
-          "<img region='image2' src='%2' begin='0.3' dur='0.6' fit='hidden' fill='freeze' transIn='fadein-1'/>"
-          "</par>"
-          "<seq begin='reg1.activateEvent'/>"
-          "</excl>"
-          "</body></smil>"
-          ).arg (KStandardDirs::locate ("data", "kmplayer/noise.gif")).arg (KIconLoader::global()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
-        QByteArray ba = smil.toUtf8 ();
-        QTextStream ts (&ba, QIODevice::ReadOnly);
+        QString buf;
+        QTextOStream out (&buf);
+        out << "<smil><head><layout>"
+            "<root-layout width='320' height='240' background-color='black'/>"
+            "<region id='stage1' left='16' top='12' width='288' height='216'/>"
+            "<region id='stage2' top='40' height='160'/>"
+            "<region id='switch' top='30' width='20' height='20' right='20'/>"
+            "<region id='reg' left='128' width='64' top='88' height='64' z-index='1'>"
+            "<region id='icon' z-index='1'/>"
+            "<region id='two' z-index='3'/>"
+            "<region id='one' z-index='2'/>"
+            "</region></layout>"
+            "<transition id='clock1' dur='.3' type='clockWipe' direction='reverse'/>"
+            "<transition id='fade1' dur='.1' type='fade'/>"
+            "<transition id='iris' dur='0.2' type='irisWipe'/>"
+            "</head><body><excl><par>"
+            "<brush region='stage1' dur='1' color='#303030'/>"
+            "<img region='two' dur='.4' transIn='fade1' transOut='clock1'>" <<
+            makeNumber (2) <<
+            "</img><img region='switch' begin='0.08' dur='.1'>"
+            "<svg width='20' height='20'>"
+            "<path fill='white' d='M 2 2 L 18 2 L 9 12.7 z'/>"
+            "</svg></img>"
+            "<img region='one' begin='.1' dur='.8' transOut='clock1'>" <<
+            makeNumber (1) <<
+            "</img><img region='switch' begin='.7' dur='.1'>"
+            "<svg width='20' height='20'>"
+            "<circle fill='white' cx='9' cy='9' r='9'/>"
+            "</svg></img>"
+            "<brush region='stage2' begin='1' dur='.3' color='#101020'/>"
+            "<img region='icon' begin='1' dur='0.3' transIn='iris' "
+            "transOut='fade1' src='" <<
+            KIconLoader::global()->iconPath (QString::fromLatin1 ("kmplayer"), -64) <<
+            "'/></par><seq begin='stage1.activateEvent'/>"
+            "</excl></body></smil>";
+
+        QTextStream ts (&buf, QIODevice::ReadOnly);
         KMPlayer::readXML (m_document, ts, QString (), false);
     }
     //m_document->normalize ();
@@ -1290,8 +1314,8 @@ KDE_NO_EXPORT void ExitSource::activate () {
     } else {
         QString smil = QString::fromLatin1 ("<smil><head><layout>"
           "<root-layout width='320' height='240' background-color='black'/>"
-          "<region id='reg1' top='10%' height='80%' z-order='2'>"
-          "<region id='image' left='128' top='72' width='64' bottom='56'/>"
+          "<region top='40' height='160' background-color='#101020'>"
+          "<region id='image' left='128' top='28' width='64' bottom='28'/>"
           "</region></layout>"
           "<transition id='pw' dur='0.3' type='pushWipe' subtype='fromBottom'/>"
           "</head><body>"
