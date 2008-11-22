@@ -594,6 +594,8 @@ public:
     virtual void accept (Visitor *v) { v->visit (this); }
     bool expose () const { return false; }
 
+    Surface *surface ();
+
     Runtime *runtime;
     SurfacePtrW sub_surface;
     NodePtrW external_tree; // if src points to playlist, the resolved top node

@@ -628,7 +628,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::video (Mrl *m, Surface *s) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
-    Surface *s = (Surface *) ref->message (MsgQueryRoleDisplay);
+    Surface *s = ref->surface ();
     if (s && ref->external_tree)
         updateExternal (ref, s);
     else
@@ -729,7 +729,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kDebug() << "Visit " << img->nodeName() << " " << img->src;
     if (!img->media_info)
         return;
-    Surface *s = (Surface *) img->message (MsgQueryRoleDisplay);
+    Surface *s = img->surface ();
     if (!s)
         return;
     if (img->external_tree) {
@@ -794,8 +794,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     if (!txt->media_info || !txt->media_info->media)
         return;
     TextMedia *tm = static_cast <TextMedia *> (txt->media_info->media);
-    Surface *s = (Surface *) txt->message (MsgQueryRoleDisplay);
-    //kDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
+    Surface *s = txt->surface ();
     if (!s)
         return;
     if (!s->surface) {
@@ -875,7 +874,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
     //kDebug() << "Visit " << brush->nodeName();
-    Surface *s = (Surface *) brush->message (MsgQueryRoleDisplay);
+    Surface *s = brush->surface ();
     if (s) {
         opacity = 1.0;
         SRect rect = s->bounds;
@@ -913,7 +912,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
-    Surface *s = (Surface *) txt->message (MsgQueryRoleDisplay);
+    Surface *s = txt->surface ();
     if (!s)
         return;
 
@@ -1419,43 +1418,39 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
     NodePtr n = area->parentNode ();
-    if (n->id >= SMIL::id_node_first_mediatype &&
-            n->id < SMIL::id_node_last_mediatype) {
-        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (n);
-        Surface *s = (Surface *) mt->message (MsgQueryRoleDisplay);
-        if (s) {
-            SRect rect = s->bounds;
-            Single x1 = rect.x (), x2 = rect.y ();
-            Single w = rect.width (), h = rect.height ();
-            matrix.getXYWH (x1, x2, w, h);
-            if (area->nr_coords > 1) {
-                Single left = area->coords[0].size (rect.width ());
-                Single top = area->coords[1].size (rect.height ());
-                matrix.getXY (left, top);
-                if (x < left || x > left + w || y < top || y > top + h)
+    Surface *s = (Surface *) n->message (MsgQueryRoleDisplay);
+    if (s) {
+        SRect rect = s->bounds;
+        Single x1 = rect.x (), x2 = rect.y ();
+        Single w = rect.width (), h = rect.height ();
+        matrix.getXYWH (x1, x2, w, h);
+        if (area->nr_coords > 1) {
+            Single left = area->coords[0].size (rect.width ());
+            Single top = area->coords[1].size (rect.height ());
+            matrix.getXY (left, top);
+            if (x < left || x > left + w || y < top || y > top + h)
+                return;
+            if (area->nr_coords > 3) {
+                Single right = area->coords[2].size (rect.width ());
+                Single bottom = area->coords[3].size (rect.height ());
+                matrix.getXY (right, bottom);
+                if (x > right || y > bottom)
                     return;
-                if (area->nr_coords > 3) {
-                    Single right = area->coords[2].size (rect.width ());
-                    Single bottom = area->coords[3].size (rect.height ());
-                    matrix.getXY (right, bottom);
-                    if (x > right || y > bottom)
+            }
+        }
+        if (event == MsgEventPointerMoved)
+            cursor.setShape (Qt::PointingHandCursor);
+        else {
+            NodeRefList *nl = nodeMessageReceivers (area, event);
+            if (nl)
+                for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
+                    if (c->data)
+                        c->data->accept (this);
+                    if (!node->active ())
                         return;
                 }
-            }
-            if (event == MsgEventPointerMoved)
-                cursor.setShape (Qt::PointingHandCursor);
-            else {
-                NodeRefList *nl = nodeMessageReceivers (area, event);
-                if (nl)
-                    for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
-                        if (c->data)
-                            c->data->accept (this);
-                        if (!node->active ())
-                            return;
-                    }
-                if (event == MsgEventClicked && !area->href.isEmpty ())
-                    followLink (area);
-            }
+            if (event == MsgEventClicked && !area->href.isEmpty ())
+                followLink (area);
         }
     }
 }
@@ -1471,7 +1466,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
         bubble_up = true;
         return;
     }
-    Surface *s = (Surface *) mt->message (MsgQueryRoleDisplay);
+    Surface *s = mt->surface ();
     if (!s)
         return;
     if (s->node && s->node.ptr () != mt) {

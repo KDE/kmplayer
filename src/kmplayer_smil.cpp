@@ -2160,7 +2160,7 @@ public:
                 mt->media_info->media->pause ();
             else
                 mt->media_info->media->unpause ();
-            Surface *s = (Surface *) mt->message (MsgQueryRoleDisplay);
+            Surface *s = mt->surface ();
             if (s)
                 s->repaint ();
         }
@@ -2659,7 +2659,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
         finish ();
     runtime->reset ();
     Mrl::deactivate ();
-    message (MsgQueryRoleDisplay);
+    (void) surface ();
     region_node = 0L;
     if (media_info) {
         delete media_info;
@@ -2682,7 +2682,7 @@ KDE_NO_EXPORT void SMIL::MediaType::undefer () {
         setState (state_began);
         if (media_info && media_info->media)
             media_info->media->unpause ();
-        Surface *s = (Surface *) message (MsgQueryRoleDisplay);
+        Surface *s = surface ();
         if (s)
             s->repaint ();
     } else {
@@ -2770,7 +2770,7 @@ KDE_NO_EXPORT void SMIL::MediaType::finish () {
     if (media_info && media_info->media)
         media_info->media->pause ();
 
-    Surface *s = (Surface *) message (MsgQueryRoleDisplay);
+    Surface *s = surface ();
     if (s)
         s->repaint ();
     runtime->finish ();
@@ -2878,7 +2878,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                     runtime->tryFinish ();
                 }
             }
-            Surface *s = (Surface *) message (MsgQueryRoleDisplay);
+            Surface *s = surface ();
             if (s && s->parentNode())
                 s->parentNode()->repaint (s->bounds);
             return NULL;
@@ -2909,7 +2909,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                     trans_start_time = document ()->last_event_time;
                     trans_end_time = trans_start_time + 100 * trans->dur;
                     trans_out_active = true;
-                    Surface *s = (Surface *) message (MsgQueryRoleDisplay);
+                    Surface *s = surface ();
                     if (s)
                         s->repaint ();
                 }
@@ -2981,18 +2981,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             return runtime;
 
         case MsgQueryRoleDisplay:
-            if (!runtime->active ()) {
-                if (sub_surface)
-                    sub_surface->remove ();
-                sub_surface = NULL;
-            } else if (!sub_surface && region_node) {
-                Surface *rs = (Surface *) region_node->message(MsgQueryRoleDisplay);
-                if (rs) {
-                    sub_surface = rs->createSurface (this, SRect ());
-                    message (MsgSurfaceBoundsUpdate);
-                }
-            }
-            return sub_surface.ptr ();
+            return surface ();
 
         case MsgQueryRoleChildDisplay: {
             Surface *s = NULL;
@@ -3001,7 +2990,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                 width = mrl->width;
                 height = mrl->height;
                 message (MsgSurfaceBoundsUpdate);
-                s = (Surface *) message (MsgQueryRoleDisplay);
+                s = surface ();
                 if (s)
                     s->node = mrl;
             }
@@ -3024,6 +3013,21 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
     if (response == MsgUnhandled)
         return Mrl::message (msg, content);
     return response;
+}
+
+Surface *SMIL::MediaType::surface () {
+    if (!runtime->active ()) {
+        if (sub_surface)
+            sub_surface->remove ();
+        sub_surface = NULL;
+    } else if (!sub_surface && region_node) {
+        Surface *rs = (Surface *) region_node->message (MsgQueryRoleDisplay);
+        if (rs) {
+            sub_surface = rs->createSurface (this, SRect ());
+            message (MsgSurfaceBoundsUpdate);
+        }
+    }
+    return sub_surface.ptr ();
 }
 
 //-----------------------------------------------------------------------------
@@ -3186,7 +3190,7 @@ void *SMIL::ImageMediaType::message (MessageType msg, void *content) {
         switch (msg) {
 
             case MsgMediaUpdated: {
-                Surface *s = (Surface *) message (MsgQueryRoleDisplay);
+                Surface *s = surface ();
                 if (s) {
                     s->markDirty ();
                     s->repaint ();
@@ -3441,20 +3445,7 @@ void *SMIL::SmilText::message (MessageType msg, void *content) {
     switch (msg) {
 
         case MsgQueryRoleDisplay:
-            if (!runtime->active ()) {
-                if (text_surface) {
-                    text_surface->remove ();
-                    text_surface = NULL;
-                }
-            } else if (!text_surface && region_node) {
-                Surface *rs = (Surface *) region_node->message(MsgQueryRoleDisplay);
-                if (rs) {
-                    SRect b = rs->bounds;
-                    text_surface = rs->createSurface (this,
-                            SRect (0, 0, b.width (), b.height ()));
-                }
-            }
-            return text_surface.ptr ();
+            return surface ();
 
         case MsgQueryRoleTiming:
             return runtime;
@@ -3499,6 +3490,23 @@ QString SMIL::SmilText::richText () {
         return visitor.rich_text;
     }
     return QString ();
+}
+
+Surface *SMIL::SmilText::surface () {
+    if (!runtime->active ()) {
+        if (text_surface) {
+            text_surface->remove ();
+            text_surface = NULL;
+        }
+    } else if (!text_surface && region_node) {
+        Surface *rs = (Surface *) region_node->message (MsgQueryRoleDisplay);
+        if (rs) {
+            SRect b = rs->bounds;
+            text_surface = rs->createSurface (this,
+                    SRect (0, 0, b.width (), b.height ()));
+        }
+    }
+    return text_surface.ptr ();
 }
 
 //-----------------------------------------------------------------------------
