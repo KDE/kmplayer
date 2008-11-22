@@ -435,20 +435,27 @@ void Node::closed () {
 }
 
 void *Node::message (MessageType msg, void *content) {
-    if (MsgChildFinished == msg) {
-        Posting *post = (Posting *) content;
-        if (unfinished ()) {
-            if (post->source->state == state_finished)
-                post->source->deactivate ();
-            if (post->source && post->source->nextSibling ())
-                post->source->nextSibling ()->activate ();
-            else
-                finish (); // we're done
+    switch (msg) {
+        case MsgQueryReady:
+            return MsgBool (true);
+
+        case MsgChildFinished: {
+            Posting *post = (Posting *) content;
+            if (unfinished ()) {
+                if (post->source->state == state_finished)
+                    post->source->deactivate ();
+                if (post->source && post->source->nextSibling ())
+                    post->source->nextSibling ()->activate ();
+                else
+                    finish (); // we're done
+            }
+            return NULL;
         }
-        return NULL;
+
+        default:
+            if (MsgStartQueryMessage < msg && MsgEndQueryMessage > msg)
+                return NULL;
     }
-    if (MsgStartQueryMessage < msg && MsgEndQueryMessage > msg)
-        return NULL;
     return MsgUnhandled;
 }
 

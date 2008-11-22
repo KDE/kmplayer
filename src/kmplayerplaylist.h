@@ -264,9 +264,11 @@ enum MessageType
     MsgSurfaceAttach,
     MsgStateFreeze,
     MsgStateRewind,
+    MsgChildReady,
     MsgChildFinished,
 
     MsgStartQueryMessage,
+    MsgQueryReady,
     MsgQueryMediaManager,
     MsgQueryRoleTiming,
     MsgQueryRoleDisplay,
@@ -279,6 +281,9 @@ enum MessageType
 };
 
 #define MsgUnhandled ((void *) 357L)
+
+#define MsgBool(x)                                                          \
+    (void*)(long)(x)
 
 #define nodeMessageReceivers(node, msg)                                     \
     (NodeRefList*)(node)->message (MsgQueryReceivers, (void*)(long)(msg))

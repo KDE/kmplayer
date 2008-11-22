@@ -1713,6 +1713,11 @@ class KMPLAYER_NO_EXPORT GroupBaseInitVisitor : public Visitor {
 public:
     using Visitor::visit;
 
+    bool ready;
+
+    GroupBaseInitVisitor () : ready (true) {
+    }
+
     void visit (Node *node) {
         if (node->nextSibling ())
             node->nextSibling ()->accept (this);
@@ -1730,8 +1735,10 @@ public:
     }
     void visit (SMIL::Seq *seq) {
         seq->init ();
-        if (seq->firstChild ())
+        if (seq->firstChild ()) {
              seq->firstChild ()->accept (this);
+             ready = !!seq->firstChild ()->message (MsgQueryReady);
+        }
     }
     void visit (SMIL::Switch *s) {
         s->init ();
@@ -1746,8 +1753,11 @@ public:
     }
     void visit (SMIL::Par *par) {
         par->init ();
-        for (NodePtr n = par->firstChild (); n; n = n->nextSibling ())
+        for (NodePtr n = par->firstChild (); n; n = n->nextSibling ()) {
             n->accept (this);
+            if (ready)
+                ready = !!n->message (MsgQueryReady);
+        }
     }
 };
 
@@ -1876,7 +1886,8 @@ KDE_NO_EXPORT void SMIL::GroupBase::activate () {
     GroupBaseInitVisitor visitor;
     accept (&visitor);
     setState (state_activated);
-    runtime->start ();
+    if (visitor.ready)
+        runtime->start ();
 }
 
 KDE_NO_EXPORT
@@ -1961,6 +1972,7 @@ KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
 
 KDE_NO_EXPORT void SMIL::Par::begin () {
     jump_node = 0L; // TODO: adjust timings
+    setState (state_began);
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         e->activate ();
 }
@@ -1971,14 +1983,38 @@ KDE_NO_EXPORT void SMIL::Par::reset () {
         e->reset ();
 }
 
+static bool childrenReady (Node *node) {
+    for (NodePtr n = node->firstChild (); n; n = n->nextSibling ())
+        if (!n->message (MsgQueryReady))
+            return false;
+    return true;
+}
+
 KDE_NO_EXPORT void *SMIL::Par::message (MessageType msg, void *content) {
-    if (MsgChildFinished == msg) {
-        if (unfinished ()) {
-            FreezeStateUpdater visitor;
-            accept (&visitor);
-            runtime->tryFinish ();
+    switch (msg) {
+        case MsgQueryReady:
+            return MsgBool (childrenReady (this));
+
+        case MsgChildReady:
+            if (childrenReady (this)) {
+                const int cur_state = state;
+                if (cur_state == state_activated)
+                    runtime->start ();
+                if (cur_state < state_activated && parentNode ())
+                    parentNode ()->message (MsgChildReady, this);
+            }
+            return NULL;
+
+        case MsgChildFinished: {
+            if (unfinished ()) {
+                FreezeStateUpdater visitor;
+                accept (&visitor);
+                runtime->tryFinish ();
+            }
+            return NULL;
         }
-        return NULL;
+        default:
+            break;
     }
     return GroupBase::message (msg, content);
 }
@@ -1986,6 +2022,7 @@ KDE_NO_EXPORT void *SMIL::Par::message (MessageType msg, void *content) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void SMIL::Seq::begin () {
+    setState (state_began);
     if (jump_node) {
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
             if (c == jump_node) {
@@ -2013,6 +2050,22 @@ KDE_NO_EXPORT void SMIL::Seq::begin () {
 
 KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
     switch (msg) {
+        case MsgQueryReady:
+            return MsgBool (!firstChild () ||
+                    firstChild ()->message (MsgQueryReady));
+
+        case MsgChildReady:
+            if (firstChild ().ptr () == (Node *) content) {
+                if (state == state_activated)
+                    runtime->start ();
+                if (state < state_activated && parentNode ())
+                    parentNode ()->message (MsgChildReady, this);
+            } else if (unfinished ()) {
+                FreezeStateUpdater visitor;
+                accept (&visitor);
+            }
+            return NULL;
+
         case MsgChildFinished: {
             if (unfinished ()) {
                 Posting *post = (Posting *) content;
@@ -2040,6 +2093,7 @@ KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
             }
             return NULL;
         }
+
         case MsgEventStarting: {
             Node *source = (Node *) content;
             if (source != this && source->previousSibling ()) {
@@ -2457,15 +2511,28 @@ KDE_NO_EXPORT void SMIL::Anchor::activate () {
 }
 
 KDE_NO_EXPORT void *SMIL::Anchor::message (MessageType msg, void *content) {
-    if (MsgChildFinished == msg) {
-        Posting *post = (Posting *) content;
-        if (unfinished ()) {
-            if (post->source->nextSibling ())
-                post->source->nextSibling ()->activate ();
-            else
-                finish ();
+    switch (msg) {
+        case MsgQueryReady:
+            return MsgBool (childrenReady (this));
+
+        case MsgChildReady:
+            if (parentNode ())
+                parentNode ()->message (MsgChildReady, this);
+            return NULL;
+
+        case MsgChildFinished: {
+            Posting *post = (Posting *) content;
+            if (unfinished ()) {
+                if (post->source->nextSibling ())
+                    post->source->nextSibling ()->activate ();
+                else
+                    finish ();
+            }
+            return NULL;
         }
-        return NULL;
+
+        default:
+            break;
     }
     return LinkingBase::message (msg, content);
 }
@@ -2948,6 +3015,9 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             }
             return NULL;
 
+        case MsgQueryReady:
+            return MsgBool (!media_info || !media_info->downloading ());
+
         case MsgMediaReady: {
             resolved = true;
             Mrl *mrl = external_tree ? external_tree->mrl () : NULL;
@@ -2960,6 +3030,8 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             if (state == state_began) {
                 begin ();
                 runtime->tryFinish ();
+            } else if (state < state_began && parentNode ()) {
+                parentNode ()->message (MsgChildReady, this);
             }
             return NULL;
         }
