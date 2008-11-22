@@ -454,10 +454,10 @@ void PartBase::openUrl (const KUrl &u, const QString &t, const QString &srv) {
     kDebug() << u << " " << t << " " << srv;
     QDBusMessage msg = QDBusMessage::createMethodCall (
             "org.kde.klauncher", "/KLauncher",
-            "org.kde.KLauncher", "start_service_by_name");
+            "org.kde.KLauncher", "start_service_by_desktop_name");
     QStringList urls;
     urls << u.url ();
-    msg << "text/html" << urls << QStringList () << QString () << true;
+    msg << "kfmclient" << urls << QStringList () << QString () << true;
     msg.setDelayedReply (false);
     QDBusConnection::sessionBus().send (msg);
 }
