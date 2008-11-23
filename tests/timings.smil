@@ -5,7 +5,7 @@
       <region id="reg1" left="5%" right="5%" top="5%" height="10%"/>
       <region id="reg2" left="5%" right="5%" top="25%" height="10%"/>
       <region id="reg3" left="5%" right="5%" top="45%" height="10%"/>
-      <region left="5%" right="5%" bottom="5%" height="10%"
+      <region id="buttons" left="5%" right="5%" bottom="5%" height="10%"
               background-color="gray">
         <region id="but_rec" width="30%" />
         <region id="but_dep" left="30%" width="30%" />
@@ -64,6 +64,29 @@
             <set target="reg3" attribute="background-color" to="blue" dur=".5"/>
            </seq>
         </par>
+      </seq>
+    </par>
+    <par>
+      <a href="#first">
+        <text id="rec_txt" src="data:,First" region="but_rec"/>
+      </a>
+      <a href="#second">
+        <text id="dep_txt" src="data:,Second" region="but_dep"/>
+      </a>
+      <a href="#third">
+        <text id="rep_seq_txt" src="data:,Third" region="but_rep_seq"/>
+      </a>
+      <seq>
+        <seq>
+          <set id="first" target="reg1" attribute="background-color" to="pink"
+               fill="freeze" dur="4"/>
+          <set id="second" target="reg2" attribute="background-color" to="pink"
+               fill="freeze" dur="4"/>
+          <set id="third" target="reg3" attribute="background-color" to="pink"
+               fill="freeze" dur="4"/>
+        </seq>
+         <set target="buttons" attribute="background-color" to="orange"
+              dur="2"/>
       </seq>
     </par>
   </body>
