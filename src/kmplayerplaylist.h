@@ -356,7 +356,8 @@ class KMPLAYER_EXPORT Node : public TreeNode <Node> {
 public:
     enum State {
         state_init, state_deferred,
-        state_activated, state_began, state_finished, state_deactivated
+        state_activated, state_began, state_finished,
+        state_deactivated, state_resetting
     };
     enum PlayType {
         play_type_none, play_type_unknown, play_type_info,

@@ -190,7 +190,7 @@ const char * Node::nodeName () const {
 }
 
 void Node::setState (State nstate) {
-    if (state != nstate) {
+    if (state != nstate && (state_init == nstate || state != state_resetting)) {
         State old = state;
         state = nstate;
         if (document ()->notify_listener)
@@ -257,8 +257,9 @@ void Node::finish () {
 
 void Node::deactivate () {
     //kDebug () << nodeName () << " Node::deactivate";
-    bool need_finish (state_deferred != state && unfinished ());
-    setState (state_deactivated);
+    bool need_finish (unfinished ());
+    if (state_resetting != state)
+        setState (state_deactivated);
     for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
         if (e->state > state_init && e->state < state_deactivated)
             e->deactivate ();
@@ -271,9 +272,10 @@ void Node::deactivate () {
 
 void Node::reset () {
     //kDebug () << nodeName () << " Node::reset";
-    setState (state_deferred);
-    if (active ())
+    if (active ()) {
+        setState (state_resetting);
         deactivate ();
+    }
     setState (state_init);
     for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
         if (e->state != state_init)

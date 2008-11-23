@@ -1040,7 +1040,6 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
 }
 
 KDE_NO_EXPORT void SMIL::Smil::deactivate () {
-    state = state_deactivated;
     Mrl::deactivate ();
 }
 
