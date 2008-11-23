@@ -643,15 +643,11 @@ KDE_NO_EXPORT void Runtime::stopped () {
     if (element->active ()) {
         if (repeat_count == dur_infinite || 0 < --repeat_count) {
             element->message (MsgStateRewind);
-            if (beginTime ().offset > 0 &&
-                    beginTime ().durval == dur_timer) {
-                if (begin_timer)
-                    element->document ()->cancelPosting (begin_timer);
-                begin_timer = element->document()->post (element,
-                        new TimerPosting (100 * beginTime ().offset, begin_timer_id));
-            } else {
-                propagateStart ();
-            }
+            beginTime ().offset  = 0;
+            beginTime ().durval = dur_timer;
+            if (begin_timer)
+                element->document ()->cancelPosting (begin_timer);
+            propagateStart ();
         } else {
             repeat_count = repeat;
             element->finish ();
