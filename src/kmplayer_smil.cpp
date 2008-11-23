@@ -214,7 +214,7 @@ static Runtime::Fill getDefaultFill (NodePtr n) {
 
 KDE_NO_CDTOR_EXPORT Runtime::Runtime (Element *e)
  : timingstate (timings_reset),
-   repeat_count (0),
+   repeat_count (1),
    m_StartListeners (new NodeRefList),
    m_StartedListeners (new NodeRefList),
    m_StoppedListeners (new NodeRefList),
@@ -224,7 +224,7 @@ KDE_NO_CDTOR_EXPORT Runtime::Runtime (Element *e)
    stopped_timer (NULL),
    fill_active (fill_auto),
    element (e),
-   repeat (0) {}
+   repeat (1) {}
 
 
 KDE_NO_CDTOR_EXPORT Runtime::~Runtime () {
@@ -242,7 +242,7 @@ KDE_NO_EXPORT void Runtime::reset () {
         element->document ()->cancelPosting (duration_timer);
         duration_timer = NULL;
     }
-    repeat = repeat_count = 0;
+    repeat = repeat_count = 1;
     timingstate = timings_reset;
     for (int i = 0; i < (int) durtime_last; i++) {
         if (durations [i].connection)
@@ -641,7 +641,7 @@ KDE_NO_EXPORT void Runtime::setDuration () {
  */
 KDE_NO_EXPORT void Runtime::stopped () {
     if (element->active ()) {
-        if (repeat_count == dur_infinite || 0 < repeat_count--) {
+        if (repeat_count == dur_infinite || 0 < --repeat_count) {
             element->message (MsgStateRewind);
             if (beginTime ().offset > 0 &&
                     beginTime ().durval == dur_timer) {
@@ -3117,7 +3117,7 @@ KDE_NO_EXPORT void SMIL::RefMediaType::clipStart () {
     if (n && region_node && !external_tree && !src.isEmpty()) {
         repeat = runtime->repeat_count == Runtime::dur_infinite
             ? 9998 : runtime->repeat_count;
-        runtime->repeat_count = 0;
+        runtime->repeat_count = 1;
         document_postponed = document()->connectTo (this, MsgEventPostponed);
     }
     MediaType::clipStart ();
