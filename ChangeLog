@@ -1,3 +1,8 @@
+Changes since version 0.11.0-rc4
+- Extend Atom feed for Youtube queries
+- Fix crash with npp if we get a javascript call before the plugin is loaded
+- Report npp plugin loading failure
+- Fix crash with D&D in playlist
 Changes since version 0.11.0-rc3
 - Silence most of the QDBus warnings about missing members or spurious replies
 - Fix crash in npplayer for the GetVariable call from Javascript
