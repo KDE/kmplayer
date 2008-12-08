@@ -100,6 +100,19 @@ public:
 };
 
 template <class T>
+class KMPLAYER_NO_EXPORT Point {
+public:
+    Point ();
+    Point (T _x, T _y);
+
+    bool operator == (const Point<T> &p) const;
+    bool operator != (const Point<T> &p) const;
+
+    T x;
+    T y;
+};
+
+template <class T>
 class KMPLAYER_NO_EXPORT Size {
 public:
     Size ();
@@ -115,7 +128,6 @@ public:
 
 template <class T>
 class KMPLAYER_NO_EXPORT Rect {
-    T _x, _y;
 public:
     Rect ();
     Rect (T a, T b, T w, T h);
@@ -130,6 +142,7 @@ public:
     bool operator != (const Rect<T> &r) const;
     bool isEmpty () const;
 
+    Point<T> point;
     Size<T> size;
 };
 
@@ -137,6 +150,7 @@ typedef Size<Single> SSize;
 typedef Rect<Single> SRect;
 
 typedef Size<int> ISize;
+typedef Point<int> IPoint;
 typedef Rect<int> IRect;
 template <> Rect<int> Rect<int>::intersect (const Rect<int> &r) const;
 
@@ -282,6 +296,22 @@ inline Single operator - (const Single s) {
 
 //-----------------------------------------------------------------------------
 
+template <class T> inline Point<T>::Point () : x (0), y (0) {}
+
+template <class T> inline Point<T>::Point (T _x, T _y) : x (_x), y (_y) {}
+
+template <class T>
+inline bool Point<T>::Point::operator == (const Point<T> &p) const {
+    return x == p.x && y == p.y;
+}
+
+template <class T>
+inline bool Point<T>::Point::operator != (const Point<T> &p) const {
+    return !(*this == p);
+}
+
+//-----------------------------------------------------------------------------
+
 template <class T> inline Size<T>::Size () : width (0), height (0) {}
 
 template <class T> inline Size<T>::Size (T w, T h) : width (w), height (h) {}
@@ -302,24 +332,24 @@ inline bool Size<T>::Size::operator != (const Size<T> &s) const {
 
 //-----------------------------------------------------------------------------
 
-template <class T> inline Rect<T>::Rect () : _x (0), _y (0) {}
+template <class T> inline Rect<T>::Rect () {}
 
 template <class T> inline  Rect<T>::Rect (T a, T b, T w, T h)
- : _x (a), _y (b), size (w, h) {}
+ : point (a, b), size (w, h) {}
 
 template <class T> inline Rect<T>::Rect (T a, T b, const Size<T> &s)
- : _x (a), _y (b), size (s) {}
+ : point (a, b), size (s) {}
 
-template <class T> inline T Rect<T>::x () const { return _x; }
+template <class T> inline T Rect<T>::x () const { return point.x; }
 
-template <class T> inline T Rect<T>::y () const { return _y; }
+template <class T> inline T Rect<T>::y () const { return point.y; }
 
 template <class T> inline T Rect<T>::width () const { return size.width; }
 
 template <class T> inline T Rect<T>::height () const { return size.height; }
 
 template <class T> inline bool Rect<T>::operator == (const Rect<T> &r) const {
-    return _x == r._x && _y == r._y && size == r.size;
+    return point == r.point && size == r.size;
 }
 
 template <class T> inline bool Rect<T>::operator != (const Rect<T> &r) const {
@@ -335,23 +365,23 @@ template <class T> inline Rect<T> Rect<T>::unite (const Rect<T> &r) const {
         return r;
     if (r.size.isEmpty ())
         return *this;
-    T a (_x < r._x ? _x : r._x);
-    T b (_y < r._y ? _y : r._y);
+    T a (point.x < r.point.x ? point.x : r.point.x);
+    T b (point.y < r.point.y ? point.y : r.point.y);
     return Rect<T> (a, b,
-            ((_x + size.width < r._x + r.size.width)
-             ? r._x + r.size.width : _x + size.width) - a,
-            ((_y + size.height < r._y + r.size.height)
-             ? r._y + r.size.height : _y + size.height) - b);
+            ((point.x + size.width < r.point.x + r.size.width)
+             ? r.point.x + r.size.width : point.x + size.width) - a,
+            ((point.y + size.height < r.point.y + r.size.height)
+             ? r.point.y + r.size.height : point.y + size.height) - b);
 }
 
 template <class T> inline Rect<T> Rect<T>::intersect (const Rect<T> &r) const {
-    T a (_x < r._x ? r._x : _x);
-    T b (_y < r._y ? r._y : _y);
+    T a (point.x < r.point.x ? r.point.x : point.x);
+    T b (point.y < r.point.y ? r.point.y : point.y);
     return Rect<T> (a, b,
-            ((_x + size.width < r._x + r.size.width)
-             ? _x + size.width : r._x + r.size.width) - a,
-            ((_y + size.height < r._y + r.size.height)
-             ? _y + size.height : r._y + r.size.height) - b);
+            ((point.x + size.width < r.point.x + r.size.width)
+             ? point.x + size.width : r.point.x + r.size.width) - a,
+            ((point.y + size.height < r.point.y + r.size.height)
+             ? point.y + size.height : r.point.y + r.size.height) - b);
 }
 
 }  // KMPlayer namespace

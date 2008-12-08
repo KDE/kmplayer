@@ -704,13 +704,13 @@ Single SizeType::size (Single relative_to) const {
 
 template<>
 IRect IRect::intersect (const IRect & r) const {
-    int a (_x < r._x ? r._x : _x);
-    int b (_y < r._y ? r._y : _y);
+    int a (point.x < r.point.x ? r.point.x : point.x);
+    int b (point.y < r.point.y ? r.point.y : point.y);
     return IRect (a, b,
-            ((_x + size.width < r._x + r.size.width)
-             ? _x + size.width : r._x + r.size.width) - a,
-            ((_y + size.height < r._y + r.size.height)
-             ? _y + size.height : r._y + r.size.height) - b);
+            ((point.x + size.width < r.point.x + r.size.width)
+             ? point.x + size.width : r.point.x + r.size.width) - a,
+            ((point.y + size.height < r.point.y + r.size.height)
+             ? point.y + size.height : r.point.y + r.size.height) - b);
 }
 
 //-----------------------------------------------------------------------------
