@@ -78,27 +78,6 @@ public:
     operator double () const { return 1.0 * value / 256; }
 };
 
-/**                                   a  b  0
- * Matrix for coordinate transforms   c  d  0
- *                                    tx ty 1     */
-class KMPLAYER_NO_EXPORT Matrix {
-    friend class SizeEvent;
-    float a, b, c, d;
-    Single tx, ty; 
-public:
-    Matrix ();
-    Matrix (const Matrix & matrix);
-    Matrix (Single xoff, Single yoff, float xscale, float yscale);
-    void getXY (Single & x, Single & y) const;
-    void getWH (Single & w, Single & h) const;
-    void getXYWH (Single & x, Single & y, Single & w, Single & h) const;
-    void invXYWH (Single & x, Single & y, Single & w, Single & h) const;
-    void transform (const Matrix & matrix);
-    void scale (float sx, float sy);
-    void translate (Single x, Single y);
-    // void rotate (float phi); // add this when needed
-};
-
 template <class T>
 class KMPLAYER_NO_EXPORT Point {
 public:
@@ -132,6 +111,7 @@ public:
     Rect ();
     Rect (T a, T b, T w, T h);
     Rect (T a, T b, const Size<T> &s);
+    Rect (const Point<T> &point, const Size<T> &s);
     T x () const;
     T y () const;
     T width () const;
@@ -154,6 +134,27 @@ typedef Point<int> IPoint;
 typedef Rect<int> IRect;
 template <> Rect<int> Rect<int>::intersect (const Rect<int> &r) const;
 
+
+/**                                   a  b  0
+ * Matrix for coordinate transforms   c  d  0
+ *                                    tx ty 1     */
+class KMPLAYER_NO_EXPORT Matrix {
+    friend class SizeEvent;
+    float a, b, c, d;
+    Single tx, ty;
+public:
+    Matrix ();
+    Matrix (const Matrix & matrix);
+    Matrix (Single xoff, Single yoff, float xscale, float yscale);
+    void getXY (Single & x, Single & y) const;
+    void getWH (Single & w, Single & h) const;
+    IRect toScreen (const SRect &rect) const;
+    SRect toUser (const IRect &rect) const;
+    void transform (const Matrix & matrix);
+    void scale (float sx, float sy);
+    void translate (Single x, Single y);
+    // void rotate (float phi); // add this when needed
+};
 
 //-----------------------------------------------------------------------------
 
@@ -339,6 +340,9 @@ template <class T> inline  Rect<T>::Rect (T a, T b, T w, T h)
 
 template <class T> inline Rect<T>::Rect (T a, T b, const Size<T> &s)
  : point (a, b), size (s) {}
+
+template <class T> inline Rect<T>::Rect (const Point<T> &pnt, const Size<T> &s)
+ : point (pnt), size (s) {}
 
 template <class T> inline T Rect<T>::x () const { return point.x; }
 

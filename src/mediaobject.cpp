@@ -136,7 +136,7 @@ MediaManager::~MediaManager () {
     global_media->unref ();
 }
 
-MediaObject *MediaManager::createAVMedia (Node *node, const QByteArray &ba) {
+MediaObject *MediaManager::createAVMedia (Node *node, const QByteArray &) {
     RecordDocument *rec = id_node_record_document == node->id
         ? convertNode <RecordDocument> (node)
         : NULL;
@@ -379,7 +379,7 @@ static bool isPlayListMime (const QString & mime) {
 }
 
 MediaInfo::MediaInfo (Node *n, MediaManager::MediaType t)
- : node (n), media (NULL), type (t), job (NULL), preserve_wait (false) {
+ : media (NULL), type (t), node (n), job (NULL), preserve_wait (false) {
 }
 
 MediaInfo::~MediaInfo () {
@@ -974,7 +974,7 @@ KDE_NO_EXPORT void ImageMedia::setupImage (const QString &url) {
     }
 }
 
-KDE_NO_EXPORT void ImageMedia::render (int width, int height) {
+KDE_NO_EXPORT void ImageMedia::render (const ISize &sz) {
     if (svg_renderer && update_render) {
         delete svg_renderer;
         svg_renderer = NULL;
@@ -991,12 +991,12 @@ KDE_NO_EXPORT void ImageMedia::render (int width, int height) {
         update_render = false;
     }
     if (svg_renderer &&
-            (cached_img->width != width || cached_img->height != height)) {
-        QImage *img = new QImage (width, height,
+           (cached_img->width != sz.width || cached_img->height != sz.height)) {
+        QImage *img = new QImage (sz.width, sz.height,
                 QImage::Format_ARGB32_Premultiplied);
         img->fill (0x0);
         QPainter paint (img);
-        paint.setViewport (QRect (0, 0, width, height));
+        paint.setViewport (QRect (0, 0, sz.width, sz.height));
         svg_renderer->render (&paint);
         cached_img->setImage (img);
     }

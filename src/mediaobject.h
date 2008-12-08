@@ -349,7 +349,7 @@ public:
 
     bool wget (const QString &url);
     bool isEmpty () const;
-    void render (int width, int height);
+    void render (const ISize &size);
     void sizes (Single &width, Single &height);
     void updateRender ();
 

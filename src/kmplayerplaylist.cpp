@@ -130,20 +130,24 @@ void Matrix::getWH (Single &w, Single &h) const {
     h *= d;
 }
 
-void Matrix::getXYWH (Single & x, Single & y, Single & w, Single & h) const {
-    getXY (x, y);
-    w *= a;
-    h *= d;
+IRect Matrix::toScreen (const SRect &rect) const {
+    return IRect (
+            (int) (Single (rect.x () * a) + tx),
+            (int) (Single (rect.y () * d) + ty),
+            (int) (rect.width () * a),
+            (int) (rect.height () * d));
 }
 
-void Matrix::invXYWH (Single & x, Single & y, Single & w, Single & h) const {
+SRect Matrix::toUser (const IRect &rect) const {
     if (a > 0.00001 && d > 0.00001) {
-        w /= a;
-        h /= d;
-        x = Single ((x - tx) / a);
-        y = Single ((y - ty) / d);
+        return SRect (
+                Single ((Single (rect.x ()) - tx) / a),
+                Single ((Single (rect.y ()) - ty) / d),
+                rect.width () / a,
+                rect.height () / d);
     } else {
         kWarning () << "Not invering " << a << ", " << d << " scale";
+        return SRect ();
     }
 }
 

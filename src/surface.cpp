@@ -112,7 +112,7 @@ Surface *Surface::createSurface (NodePtr owner, const SRect & rect) {
     return surface;
 }
 
-KDE_NO_EXPORT IRect Surface::toScreen (Single x, Single y, Single w, Single h) {
+KDE_NO_EXPORT IRect Surface::toScreen (const SSize &size) {
     //FIXME: handle scroll
     Matrix matrix (0, 0, xscale, yscale);
     matrix.translate (bounds.x (), bounds.y ());
@@ -120,8 +120,7 @@ KDE_NO_EXPORT IRect Surface::toScreen (Single x, Single y, Single w, Single h) {
         matrix.transform(Matrix (0, 0, s->xscale, s->yscale));
         matrix.translate (s->bounds.x (), s->bounds.y ());
     }
-    matrix.getXYWH (x, y, w, h);
-    return IRect (x, y, w, h);
+    return matrix.toScreen (SRect (0, 0, size));
 }
 
 static void clipToScreen (Surface *s, Matrix &m, IRect &clip) {
@@ -132,10 +131,8 @@ static void clipToScreen (Surface *s, Matrix &m, IRect &clip) {
         m = Matrix (s->bounds.x (), s->bounds.y (), s->xscale, s->yscale);
     } else {
         clipToScreen (ps, m, clip);
-        SRect r = s->bounds;
-        Single x = r.x (), y = r.y (), w = r.width (), h = r.height ();
-        m.getXYWH (x, y, w, h);
-        clip = clip.intersect (IRect (x, y, w, h));
+        IRect scr = m.toScreen (s->bounds);
+        clip = clip.intersect (scr);
         Matrix m1 = m;
         m = Matrix (s->bounds.x (), s->bounds.y (), s->xscale, s->yscale);
         m.transform (m1);
@@ -145,13 +142,12 @@ static void clipToScreen (Surface *s, Matrix &m, IRect &clip) {
 }
 
 
-KDE_NO_EXPORT void Surface::repaint (const SRect &r) {
+KDE_NO_EXPORT void Surface::repaint (const SRect &rect) {
     Matrix matrix;
     IRect clip;
     clipToScreen (this, matrix, clip);
-    Single x = r.x (), y = r.y (), w = r.width (), h = r.height ();
-    matrix.getXYWH (x, y, w, h);
-    clip = clip.intersect (IRect (x, y, w, h));
+    IRect scr = matrix.toScreen (rect);
+    clip = clip.intersect (scr);
     if (!clip.isEmpty ())
         view_widget->scheduleRepaint (clip);
 }

@@ -185,7 +185,7 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
 
     void traverseRegion (Node *reg, Surface *s);
     void updateExternal (SMIL::MediaType *av, SurfacePtr s);
-    void paint(SMIL::MediaType *, Surface *, int x, int y, const IRect &);
+    void paint(SMIL::MediaType *, Surface *, const IPoint &p, const IRect &);
     void video (Mrl *mt, Surface *s);
 public:
     cairo_t * cr;
@@ -283,12 +283,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *layout) {
             //cairo_save (cr);
             Matrix m = matrix;
 
-            SRect rect = s->bounds;
-            Single x, y, w = rect.width(), h = rect.height();
-            matrix.getXYWH (x, y, w, h);
+            IRect scr = matrix.toScreen (SRect (0, 0, s->bounds.size));
 
             IRect clip_save = clip;
-            clip = clip.intersect (IRect (x, y, w, h));
+            clip = clip.intersect (scr);
 
             if (s->background_color & 0xff000000) {
                 CAIRO_SET_SOURCE_RGB (cr, s->background_color);
@@ -320,15 +318,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
     if (s) {
         SRect rect = s->bounds;
 
-        Single x = rect.x(), y = rect.y(), w = rect.width(), h = rect.height();
-        matrix.getXYWH (x, y, w, h);
-        if (clip.intersect (IRect (x, y, w, h)).isEmpty ())
+        IRect scr = matrix.toScreen (rect);
+        if (clip.intersect (scr).isEmpty ())
             return;
         Matrix m = matrix;
         matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
         matrix.transform (m);
         IRect clip_save = clip;
-        clip = clip.intersect (IRect (x, y, w, h));
+        clip = clip.intersect (scr);
         cairo_save (cr);
 
         Surface *cs = s->firstChild ().ptr ();
@@ -350,10 +347,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                 cairo_fill (cr);
             }
             if (bg_img) {
-                Single x1, y1;
                 Single w = bg_img->width;
                 Single h = bg_img->height;
-                matrix.getXYWH (x1, y1, w, h);
+                matrix.getWH (w, h);
                 if (!s->surface)
                     bg_img->copyImage (s, w, h, cairo_surface);
                 if (bg_img->has_alpha)
@@ -361,7 +357,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                 cairo_pattern_t *pat = cairo_pattern_create_for_surface (s->surface);
                 cairo_pattern_set_extend (pat, CAIRO_EXTEND_REPEAT);
                 cairo_matrix_t mat;
-                cairo_matrix_init_translate (&mat, (int) -x, (int) -y);
+                cairo_matrix_init_translate (&mat, -scr.x (), -scr.y ());
                 cairo_pattern_set_matrix (pat, &mat);
                 cairo_set_source (cr, pat);
                 cairo_rectangle (cr,
@@ -387,13 +383,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                 const int vy = s->virtual_size.height;
                 const int vw = s->virtual_size.width;
                 int sbw = REGION_SCROLLBAR_WIDTH;
-                int sbx = x + w - sbw;
-                int sby = y;
-                int sbh = h - REGION_SCROLLBAR_WIDTH;
+                int sbx = scr.x () + scr.width () - sbw;
+                int sby = scr.y ();
+                int sbh = scr.height () - REGION_SCROLLBAR_WIDTH;
                 IRect sb_clip = clip.intersect (IRect (sbx, sby, sbw, sbh));
                 if (!sb_clip.isEmpty ()) {
-                    int knob_h = sbh * (int) h / vy;
-                    int knob_y = (int) y + s->y_scroll * sbh / vy;
+                    int knob_h = sbh * scr.height () / vy;
+                    int knob_y = scr.y () + s->y_scroll * sbh / vy;
                     IRect knob (sbx, knob_y, sbw, knob_h);
                     cairo_save (cr);
                     cairo_rectangle (cr, sb_clip.x (), sb_clip.y (),
@@ -418,13 +414,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                     cairo_restore (cr);
                 }
                 sbh = REGION_SCROLLBAR_WIDTH;
-                sbx = x;
-                sby = y + h - sbh;
-                sbw = w - REGION_SCROLLBAR_WIDTH;
+                sbx = scr.x ();
+                sby = scr.y () + scr.height () - sbh;
+                sbw = scr.width () - REGION_SCROLLBAR_WIDTH;
                 sb_clip = clip.intersect (IRect (sbx, sby, sbw, sbh));
                 if (!sb_clip.isEmpty ()) {
-                    int knob_w = sbw * (int) w / vw;
-                    int knob_x = (int) x + s->x_scroll * sbw / vw;
+                    int knob_w = sbw * scr.width () / vw;
+                    int knob_x = scr.x () + s->x_scroll * sbw / vw;
                     IRect knob (knob_x, sby, knob_w, sbh);
                     cairo_save (cr);
                     cairo_rectangle (cr, sb_clip.x (), sb_clip.y (),
@@ -627,8 +623,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::video (Mrl *m, Surface *s) {
                     avm->process->state () > IProcess::Ready &&
                     strcmp (m->nodeName (), "audio")) {
                 s->xscale = s->yscale = 1; // either scale width/heigt or use bounds
-                avm->viewer->setGeometry (s->toScreen (
-                            0, 0, s->bounds.width(), s->bounds.height ()));
+                avm->viewer->setGeometry (s->toScreen (s->bounds.size));
             } else {
                 avm->viewer->setGeometry (IRect (-60, -60, 50, 50));
             }
@@ -645,10 +640,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
-        int x, int y, const IRect &rect) {
+        const IPoint &point, const IRect &rect) {
     cairo_save (cr);
     opacity = 1.0;
-    cairo_matrix_init_translate (&cur_mat, -x, -y);
+    cairo_matrix_init_translate (&cur_mat, -point.x, -point.y);
     cur_pat = cairo_pattern_create_for_surface (s->surface);
     if (mt->active_trans) {
         IRect clip_save = clip;
@@ -708,30 +703,25 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
         video (ext_mrl, s.ptr ());
         return;
     }
-    SRect rect = s->bounds;
-    Single x = rect.x ();
-    Single y = rect.y ();
-    Single w = rect.width();
-    Single h = rect.height();
-    matrix.getXYWH (x, y, w, h);
-    IRect clip_rect = clip.intersect (IRect (x, y, w, h));
+    IRect scr = matrix.toScreen (s->bounds);
+    IRect clip_rect = clip.intersect (scr);
     if (clip_rect.isEmpty ())
         return;
     if (!s->surface || s->dirty) {
         Matrix m = matrix;
-        m.translate (-x, -y);
-        IRect r (clip_rect.x() - (int) x - 1, clip_rect.y() - (int) y - 1,
+        m.translate (-scr.x (), -scr.y ());
+        IRect r (clip_rect.x() - scr.x () - 1, clip_rect.y() - scr.y () - 1,
                 clip_rect.width() + 3, clip_rect.height() + 3);
         if (!s->surface) {
             s->surface = cairo_surface_create_similar (cairo_surface,
-                    CAIRO_CONTENT_COLOR_ALPHA, (int) w, (int) h);
-            r = IRect (0, 0, w, h);
+                    CAIRO_CONTENT_COLOR_ALPHA, scr.width (), scr.height ());
+            r = IRect (0, 0, scr.size);
         }
         CairoPaintVisitor visitor (s->surface, m, r);
         ext_mrl->accept (&visitor);
         s->dirty = false;
     }
-    paint (av, s.ptr (), x, y, clip_rect);
+    paint (av, s.ptr (), scr.point, clip_rect);
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
@@ -747,30 +737,25 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     }
     if (!img->media_info->media)
         return;
-    SRect rect = s->bounds;
-    Single x = rect.x ();
-    Single y = rect.y ();
-    Single w = rect.width();
-    Single h = rect.height();
-    matrix.getXYWH (x, y, w, h);
 
-    IRect clip_rect = clip.intersect (IRect (x, y, w, h));
+    IRect scr = matrix.toScreen (s->bounds);
+    IRect clip_rect = clip.intersect (scr);
     if (clip_rect.isEmpty ())
         return;
 
     ImageMedia *im = static_cast <ImageMedia *> (img->media_info->media);
     ImageData *id = im ? im->cached_img.ptr () : NULL;
     if (id && id->flags == ImageData::ImageScalable)
-        im->render (w, h);
+        im->render (scr.size);
     if (!id || im->isEmpty () || img->width <= 0 || img->height <= 0) {
         s->remove();
         return;
     }
     if (!s->surface || s->dirty)
-        id->copyImage (s, w, h, cairo_surface, img->pan_zoom);
+        id->copyImage (s, scr.width (), scr.height (), cairo_surface, img->pan_zoom);
     if (id->has_alpha)
         cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-    paint (img, s, x, y, clip_rect);
+    paint (img, s, scr.point, clip_rect);
     if (id->has_alpha)
         cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
     s->dirty = false;
@@ -810,30 +795,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         txt->width = txt->height = 0;
         s->bounds = txt->calculateBounds ();
     }
-    SRect rect = s->bounds;
-    Single x = rect.x (), y = rect.y(), w = rect.width(), h = rect.height();
-    matrix.getXYWH (x, y, w, h);
+    IRect scr = matrix.toScreen (s->bounds);
     if (!s->surface) {
-        //kDebug() << "new txt surface " << td->text;
-        /* QTextEdit * edit = new QTextEdit;
-        edit->setReadOnly (true);
-        edit->setHScrollBarMode (QScrollView::AlwaysOff);
-        edit->setVScrollBarMode (QScrollView::AlwaysOff);
-        edit->setFrameShape (QFrame::NoFrame);
-        edit->setFrameShadow (QFrame::Plain);
-        edit->setGeometry (0, 0, w, h);
-        if (edit->length () == 0)
-            edit->setText (text);
-        if (w0 > 0)
-            font.setPointSize (int (1.0 * w * font_size / w0));
-        edit->setFont (font);
-        QRect rect = p.clipRegion (QPainter::CoordPainter).boundingRect ();
-        rect = rect.intersect (QRect (xoff, yoff, w, h));
-        QPixmap pix = QPixmap::grabWidget (edit, rect.x () - (int) xoff,
-                rect.y () - (int) yoff, rect.width (), rect.height ());*/
 
+        int w = scr.width ();
         int pxw, pxh;
-        Single ft_size = w * txt->font_size / rect.width ();
+        Single ft_size = w * txt->font_size / (double)s->bounds.width ();
         const QByteArray text = tm->text.toUtf8 ();
 
         PangoFontDescription *desc = pango_font_description_new ();
@@ -862,22 +829,17 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         cairo_destroy (cr_txt);
 
         // update bounds rect
-        Single sx = x, sy = y, sw = pxw, sh = pxh;
-        matrix.invXYWH (sx, sy, sw, sh);
-        txt->width = sw;
-        txt->height = sh;
+        SRect rect = matrix.toUser (IRect (scr.point, ISize (pxw, pxh)));
+        txt->width = rect.width ();
+        txt->height = rect.height ();
         s->bounds = txt->calculateBounds ();
 
         // update coord. for painting below
-        x = s->bounds.x ();
-        y = s->bounds.y();
-        w = s->bounds.width();
-        h = s->bounds.height();
-        matrix.getXYWH (x, y, w, h);
+        scr = matrix.toScreen (s->bounds);
     }
-    IRect clip_rect = clip.intersect (IRect (x, y, w, h));
+    IRect clip_rect = clip.intersect (scr);
     if (!clip_rect.isEmpty ())
-        paint (txt, s, x, y, clip_rect);
+        paint (txt, s, scr.point, clip_rect);
     s->dirty = false;
 }
 
@@ -886,10 +848,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
     Surface *s = brush->surface ();
     if (s) {
         opacity = 1.0;
-        SRect rect = s->bounds;
-        Single x = rect.x(), y = rect.y(), w = rect.width(), h = rect.height();
-        matrix.getXYWH (x, y, w, h);
-        IRect clip_rect = clip.intersect (IRect (x, y, w, h));
+        IRect clip_rect = clip.intersect (matrix.toScreen (s->bounds));
         if (clip_rect.isEmpty ())
             return;
         cairo_save (cr);
@@ -926,12 +885,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
         return;
 
     SRect rect = s->bounds;
-    Single x = rect.x (), y = rect.y(), w = rect.width(), h = rect.height();
-    matrix.getXYWH (x, y, w, h);
+    IRect scr = matrix.toScreen (rect);
 
     if (!s->surface) {
 
-        Single ft_size = w * 11 / rect.width ();
+        int w = scr.width ();
+        Single ft_size = w * 11 / (double)s->bounds.width ();
         int pxw, pxh;
         const QByteArray text = txt->richText ().toUtf8 ();
 
@@ -958,21 +917,15 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
         cairo_destroy (cr_txt);
 
         // update bounds rect
-        Single sx = x, sy = y, sw = w, sh = pxh;
-        matrix.invXYWH (sx, sy, sw, sh);
-        s->bounds = SRect (sx, sy, sw, sh);
+        s->bounds = matrix.toUser (IRect (scr.point, ISize (w, pxh)));
 
         // update coord. for painting below
-        x = s->bounds.x ();
-        y = s->bounds.y ();
-        w = s->bounds.width ();
-        h = s->bounds.height ();
-        matrix.getXYWH (x, y, w, h);
+        scr = matrix.toScreen (s->bounds);
     }
-    IRect clip_rect = clip.intersect (IRect (x, y, w, h));
+    IRect clip_rect = clip.intersect (scr);
     if (!clip_rect.isEmpty ()) {
         cairo_save (cr);
-        cairo_matrix_init_translate (&cur_mat, (int)-x, (int)-y);
+        cairo_matrix_init_translate (&cur_mat, -scr.x (), -scr.y ());
         cairo_pattern_t *pat = cairo_pattern_create_for_surface (s->surface);
         cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
         cairo_pattern_set_matrix (pat, &cur_mat);
@@ -993,14 +946,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
     if (imfl->surface ()) {
         cairo_save (cr);
         Matrix m = matrix;
-        Single x, y;
-        Single w = imfl->rp_surface->bounds.width();
-        Single h = imfl->rp_surface->bounds.height();
-        matrix.getXYWH (x, y, w, h);
-        cairo_rectangle (cr, x, y, w, h);
+        IRect scr = matrix.toScreen (SRect (0, 0, imfl->rp_surface->bounds.size));
+        int w = scr.width ();
+        int h = scr.height ();
+        cairo_rectangle (cr, scr.x (), scr.y (), w, h);
         //cairo_clip (cr);
-        cairo_translate (cr, x, y);
-        cairo_scale (cr, w/imfl->width, h/imfl->height);
+        cairo_translate (cr, scr.x (), scr.y ());
+        cairo_scale (cr, 1.0*w/(double)imfl->width, 1.0*h/(double)imfl->height);
         if (imfl->needs_scene_img)
             cairo_push_group (cr);
         for (NodePtr n = imfl->firstChild (); n; n = n->nextSibling ())
@@ -1300,8 +1252,8 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
     Surface *s = (Surface *) region->message (MsgQueryRoleDisplay);
     if (s) {
         SRect rect = s->bounds;
-        Single rx = rect.x(), ry = rect.y(), rw = rect.width(), rh = rect.height();
-        matrix.getXYWH (rx, ry, rw, rh);
+        IRect scr = matrix.toScreen (rect);
+        int rx = scr.x(), ry = scr.y(), rw = scr.width(), rh = scr.height();
         handled = false;
         bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
         if (!inside && (event == MsgEventClicked || !region->has_mouse))
@@ -1311,28 +1263,28 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
                 x > rx + rw - REGION_SCROLLBAR_WIDTH) {
             const int sbh = rh - REGION_SCROLLBAR_WIDTH;
             const int vy = s->virtual_size.height;
-            const int knob_h = sbh * (int) rh / vy;
-            int knob_y = y - (int) ry - 0.5 * knob_h;
+            const int knob_h = sbh * rh / vy;
+            int knob_y = y - ry - 0.5 * knob_h;
             if (knob_y < 0)
                 knob_y = 0;
             else if (knob_y + knob_h > sbh)
                 knob_y = sbh - knob_h;
             s->y_scroll = vy * knob_y / sbh;
-            view_area->scheduleRepaint (IRect (rx, ry, rw, rh));
+            view_area->scheduleRepaint (scr);
             return;
         }
         if (event == MsgEventClicked && !s->virtual_size.isEmpty () &&
                 y > ry + rh - REGION_SCROLLBAR_WIDTH) {
             const int sbw = rw - REGION_SCROLLBAR_WIDTH;
             const int vw = s->virtual_size.width;
-            const int knob_w = sbw * (int) rw / vw;
-            int knob_x = x - (int) rx - 0.5 * knob_w;
+            const int knob_w = sbw * rw / vw;
+            int knob_x = x - rx - 0.5 * knob_w;
             if (knob_x < 0)
                 knob_x = 0;
             else if (knob_x + knob_w > sbw)
                 knob_x = sbw - knob_w;
             s->x_scroll = vw * knob_x / sbw;
-            view_area->scheduleRepaint (IRect (rx, ry, rw, rh));
+            view_area->scheduleRepaint (scr);
             return;
         }
 
@@ -1431,9 +1383,8 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
     Surface *s = (Surface *) n->message (MsgQueryRoleDisplay);
     if (s) {
         SRect rect = s->bounds;
-        Single x1 = rect.x (), x2 = rect.y ();
-        Single w = rect.width (), h = rect.height ();
-        matrix.getXYWH (x1, x2, w, h);
+        IRect scr = matrix.toScreen (rect);
+        int w = scr.width (), h = scr.height ();
         if (area->nr_coords > 1) {
             Single left = area->coords[0].size (rect.width ());
             Single top = area->coords[1].size (rect.height ());
@@ -1484,8 +1435,8 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
         return;
     }
     SRect rect = s->bounds;
-    Single rx = rect.x(), ry = rect.y(), rw = rect.width(), rh = rect.height();
-    matrix.getXYWH (rx, ry, rw, rh);
+    IRect scr = matrix.toScreen (rect);
+    int rx = scr.x(), ry = scr.y(), rw = scr.width(), rh = scr.height();
     const bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
     if (!inside && (event == MsgEventClicked || inside == mt->has_mouse))
         return;
