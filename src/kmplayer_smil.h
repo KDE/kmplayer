@@ -89,18 +89,18 @@ public:
         fill_default, fill_inherit, fill_remove, fill_freeze,
         fill_hold, fill_transition, fill_auto
     };
-    enum DurationTime { begin_time = 0, duration_time, end_time, durtime_last };
+    enum DurationTime { BeginTime = 0, DurTime, EndTime, DurTimeLast };
     enum Duration {
-        dur_infinite = -1,
-        dur_timer = (int) MsgEventTimer,
-        dur_activated = (int) MsgEventClicked,
-        dur_inbounds = (int) MsgEventPointerInBounds,
-        dur_outbounds = (int) MsgEventPointerOutBounds,
-        dur_start = (int) MsgEventStarted,
-        dur_end = (int) MsgEventStopped,
-        dur_media = (int)MsgMediaFinished,
-        dur_transition,
-        dur_last_dur
+        DurInfinite = -1,
+        DurTimer = (int) MsgEventTimer,
+        DurActivated = (int) MsgEventClicked,
+        DurInBounds = (int) MsgEventPointerInBounds,
+        DurOutBounds = (int) MsgEventPointerOutBounds,
+        DurStart = (int) MsgEventStarted,
+        DurEnd = (int) MsgEventStopped,
+        DurMedia = (int)MsgMediaFinished,
+        DurTransition,
+        DurLastDuration
     };
     Runtime (Element *e);
     ~Runtime ();
@@ -124,11 +124,11 @@ public:
      * Duration items, begin/dur/end, length information or connected element
      */
     struct DurationItem {
-        DurationItem () : durval (dur_timer), offset (0) {}
+        DurationItem () : durval (DurTimer), offset (0) {}
         Duration durval;
         int offset;
         ConnectionPtr connection;
-    } durations [(const int) durtime_last];
+    } durations [(const int) DurTimeLast];
     void setDuration ();
     bool started () const {
         return timingstate == timings_started || timingstate == timings_paused;
@@ -137,9 +137,9 @@ public:
         return timingstate >= timings_started && timingstate != timings_stopped;
     }
     void stopped ();
-    KDE_NO_EXPORT DurationItem & beginTime () { return durations[begin_time]; }
-    KDE_NO_EXPORT DurationItem & durTime () { return durations[duration_time]; }
-    KDE_NO_EXPORT DurationItem & endTime () { return durations [end_time]; }
+    KDE_NO_EXPORT DurationItem & beginTime () { return durations[BeginTime]; }
+    KDE_NO_EXPORT DurationItem & durTime () { return durations[DurTime]; }
+    KDE_NO_EXPORT DurationItem & endTime () { return durations [EndTime]; }
 
     TimingState timingstate;
     TimingState unpaused_state;

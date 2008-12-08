@@ -51,11 +51,11 @@ static const unsigned int trans_out_timer_id = (unsigned int) 7;
 }
 
 /* Intrinsic duration
- *  duration_time   |    end_time    |
+ *  DurTime         |    EndTime     |
  *  =======================================================================
- *    dur_media     |   dur_media    | wait for event
- *        0         |   dur_media    | only wait for child elements
- *    dur_media     |       0        | intrinsic duration finished
+ *    DurMedia      |   DurMedia     | wait for event
+ *        0         |   DurMedia     | only wait for child elements
+ *    DurMedia      |       0        | intrinsic duration finished
  */
 //-----------------------------------------------------------------------------
 
@@ -244,13 +244,13 @@ KDE_NO_EXPORT void Runtime::reset () {
     }
     repeat = repeat_count = 1;
     timingstate = timings_reset;
-    for (int i = 0; i < (int) durtime_last; i++) {
+    for (int i = 0; i < (int) DurTimeLast; i++) {
         if (durations [i].connection)
             durations [i].connection->disconnect ();
-        durations [i].durval = dur_timer;
+        durations [i].durval = DurTimer;
         durations [i].offset = 0;
     }
-    endTime ().durval = dur_media;
+    endTime ().durval = DurMedia;
     start_time = finish_time = 0;
     fill = fill_default;
     fill_def = fill_inherit;
@@ -270,7 +270,7 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
         QString idref;
         const char * p = cval;
         if (parseTime (vl, offset)) {
-            dur = dur_timer;
+            dur = DurTimer;
         } else if (!strncmp (cval, "id(", 3)) {
             p = strchr (cval + 3, ')');
             if (p) {
@@ -283,9 +283,9 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
                     p = q;
             }
         } else if (!strncmp (cval, "indefinite", 10)) {
-            dur = dur_infinite;
+            dur = DurInfinite;
         } else if (!strncmp (cval, "media", 5)) {
-            dur = dur_media;
+            dur = DurMedia;
         }
         if (dur == -2) {
             NodePtr target;
@@ -317,25 +317,25 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
             }
             //kDebug () << "setDuration q:" << q;
             if (parseTime (vl.mid (q-cval), offset)) {
-                dur = dur_start;
+                dur = DurStart;
             } else if (*q && !strncmp (q, "end", 3)) {
-                dur = dur_end;
+                dur = DurEnd;
                 parseTime (vl.mid (q + 3 - cval), offset);
             } else if (*q && !strncmp (q, "begin", 5)) {
-                dur = dur_start;
+                dur = DurStart;
                 parseTime (vl.mid (q + 5 - cval), offset);
             } else if (*q && !strncmp (q, "activateevent", 13)) {
-                dur = dur_activated;
+                dur = DurActivated;
                 parseTime (vl.mid (q + 13 - cval), offset);
             } else if (*q && !strncmp (q, "inboundsevent", 13)) {
-                dur = dur_inbounds;
+                dur = DurInBounds;
                 parseTime (vl.mid (q + 13 - cval), offset);
             } else if (*q && !strncmp (q, "outofboundsevent", 16)) {
-                dur = dur_outbounds;
+                dur = DurOutBounds;
                 parseTime (vl.mid (q + 16 - cval), offset);
             } else
                 kWarning () << "setDuration no match " << cval;
-            if (target && dur != dur_timer) {
+            if (target && dur != DurTimer) {
                 durations [(int) item].connection =
                     target->connectTo (element, (MessageType) dur);
             }
@@ -357,7 +357,7 @@ KDE_NO_EXPORT void Runtime::start () {
 
     int offset = 0;
     bool stop = true;
-    if (beginTime ().durval == dur_start) { // check started/finished
+    if (beginTime ().durval == DurStart) { // check started/finished
         Connection * con = beginTime ().connection.ptr ();
         if (con && con->connectee &&
                 con->connectee->state >= Node::state_began) {
@@ -368,7 +368,7 @@ KDE_NO_EXPORT void Runtime::start () {
             stop = false;
             kWarning() << "start trigger on started element";
         } // else wait for start event
-    } else if (beginTime ().durval == dur_end) { // check finished
+    } else if (beginTime ().durval == DurEnd) { // check finished
         Connection * con = beginTime ().connection.ptr ();
         if (con && con->connectee &&
                 con->connectee->state >= Node::state_finished) {
@@ -379,7 +379,7 @@ KDE_NO_EXPORT void Runtime::start () {
             stop = false;
             kWarning() << "start trigger on finished element";
         } // else wait for end event
-    } else if (beginTime ().durval == dur_timer) {
+    } else if (beginTime ().durval == DurTimer) {
         offset = beginTime ().offset;
         stop = false;
     }
@@ -418,7 +418,7 @@ KDE_NO_EXPORT
 bool Runtime::parseParam (const TrieString & name, const QString & val) {
     //kDebug () << "Runtime::parseParam " << name << "=" << val;
     if (name == StringPool::attr_begin) {
-        setDurationItem (begin_time, val);
+        setDurationItem (BeginTime, val);
         if ((timingstate == timings_began && !begin_timer) ||
                 timingstate >= timings_stopped) {
             if (beginTime ().offset > 0) { // create a timer for start
@@ -426,7 +426,7 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
                     element->document ()->cancelPosting (begin_timer);
                     begin_timer = NULL;
                 }
-                if (beginTime ().durval == dur_timer)
+                if (beginTime ().durval == DurTimer)
                     begin_timer = element->document ()->post (element,
                             new TimerPosting (10 * beginTime ().offset, begin_timer_id));
             } else {                              // start now
@@ -434,14 +434,14 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
             }
         }
     } else if (name == StringPool::attr_dur) {
-        setDurationItem (duration_time, val);
+        setDurationItem (DurTime, val);
     } else if (name == StringPool::attr_end) {
-        setDurationItem (end_time, val);
-        if (endTime ().durval == dur_timer &&
+        setDurationItem (EndTime, val);
+        if (endTime ().durval == DurTimer &&
             endTime ().offset > beginTime ().offset)
             durTime ().offset = endTime ().offset - beginTime ().offset;
-        else if (endTime ().durval != dur_timer)
-            durTime ().durval = dur_media; // event
+        else if (endTime ().durval != DurTimer)
+            durTime ().durval = DurMedia; // event
     } else if (name.startsWith (StringPool::attr_fill)) {
         Fill * f = &fill;
         if (name != StringPool::attr_fill) {
@@ -472,18 +472,18 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
         if (mrl)
             mrl->title = val;
     } else if (name == "endsync") {
-        if ((durTime ().durval == dur_media || durTime ().durval == 0) &&
-                endTime ().durval == dur_media) {
+        if ((durTime ().durval == DurMedia || durTime ().durval == 0) &&
+                endTime ().durval == DurMedia) {
             Node *e = findLocalNodeById (element, val);
             if (e) {
-                durations [(int) end_time].connection =
+                durations [(int) EndTime].connection =
                     e->connectTo (element, MsgEventStopped);
-                durations [(int) end_time].durval = (Duration) MsgEventStopped;
+                durations [(int) EndTime].durval = (Duration) MsgEventStopped;
             }
         }
     } else if (name.startsWith ("repeat")) {
         if (val.indexOf ("indefinite") > -1)
-            repeat = repeat_count = dur_infinite;
+            repeat = repeat_count = DurInfinite;
         else
             repeat = repeat_count = val.toInt ();
     } else
@@ -546,7 +546,7 @@ KDE_NO_EXPORT void *Runtime::message (MessageType msg, void *content) {
         default:
             break;
     }
-    if ((int) msg >= (int) dur_last_dur)
+    if ((int) msg >= (int) DurLastDuration)
         return MsgUnhandled;
     processEvent (msg);
     return NULL;
@@ -574,14 +574,14 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
     if (state() == timings_reset || state() >= timings_stopped)
         return; // nothing to stop
     if (!forced) {
-        if ((durTime ().durval == dur_media ||
-                    durTime ().durval == dur_transition ) &&
-                endTime ().durval == dur_media)
+        if ((durTime ().durval == DurMedia ||
+                    durTime ().durval == DurTransition ) &&
+                endTime ().durval == DurMedia)
             return; // wait for external eof
-        if (endTime ().durval != dur_timer && endTime ().durval != dur_media &&
-                (started () || beginTime().durval == dur_timer))
+        if (endTime ().durval != DurTimer && endTime ().durval != DurMedia &&
+                (started () || beginTime().durval == DurTimer))
             return; // wait for event
-        if (durTime ().durval == dur_infinite)
+        if (durTime ().durval == DurInfinite)
             return; // this may take a while :-)
         if (duration_timer)
             return; // timerEvent will call us with forced=true
@@ -627,7 +627,7 @@ KDE_NO_EXPORT void Runtime::setDuration () {
         element->document ()->cancelPosting (begin_timer);
         begin_timer = NULL;
     }
-    if (durTime ().offset > 0 && durTime ().durval == dur_timer) {
+    if (durTime ().offset > 0 && durTime ().durval == DurTimer) {
         if (duration_timer)
             element->document ()->cancelPosting (duration_timer);
         duration_timer = element->document ()->post (element,
@@ -641,10 +641,10 @@ KDE_NO_EXPORT void Runtime::setDuration () {
  */
 KDE_NO_EXPORT void Runtime::stopped () {
     if (element->active ()) {
-        if (repeat_count == dur_infinite || 0 < --repeat_count) {
+        if (repeat_count == DurInfinite || 0 < --repeat_count) {
             element->message (MsgStateRewind);
             beginTime ().offset  = 0;
-            beginTime ().durval = dur_timer;
+            beginTime ().durval = DurTimer;
             if (begin_timer)
                 element->document ()->cancelPosting (begin_timer);
             propagateStart ();
@@ -1762,9 +1762,9 @@ class KMPLAYER_NO_EXPORT FreezeStateUpdater : public Visitor {
     bool freeze;
 
     void setFreezeState (Runtime *rt) {
-        bool auto_freeze = (Runtime::dur_timer == rt->durTime ().durval &&
+        bool auto_freeze = (Runtime::DurTimer == rt->durTime ().durval &&
                     0 == rt->durTime ().offset &&
-                    Runtime::dur_media == rt->endTime ().durval) &&
+                    Runtime::DurMedia == rt->endTime ().durval) &&
             rt->fill_active != Runtime::fill_remove;
         bool cfg_freeze = rt->fill_active == Runtime::fill_freeze ||
             rt->fill_active == Runtime::fill_hold;
@@ -2783,12 +2783,12 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
             document ()->notify_listener->addRepaintUpdater (this);
             trans_start_time = document ()->last_event_time;
             trans_end_time = trans_start_time + 10 * trans->dur;
-            if (Runtime::dur_timer == runtime->durTime ().durval &&
+            if (Runtime::DurTimer == runtime->durTime ().durval &&
                     0 == runtime->durTime ().offset &&
-                    Runtime::dur_media == runtime->endTime ().durval)
-                runtime->durTime ().durval = Runtime::dur_transition;
+                    Runtime::DurMedia == runtime->endTime ().durval)
+                runtime->durTime ().durval = Runtime::DurTransition;
         }
-        if (Runtime::dur_timer == runtime->durTime().durval &&
+        if (Runtime::DurTimer == runtime->durTime().durval &&
                 runtime->durTime().offset > 0) {
             // FIXME: also account for fill duration
             trans = convertNode <Transition> (trans_out);
@@ -2935,8 +2935,8 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                 if (!trans_out_active)
                     active_trans = NULL;
                 trans_gain = 1.0;
-                if (Runtime::dur_transition == runtime->durTime ().durval) {
-                    runtime->durTime ().durval = Runtime::dur_timer;
+                if (Runtime::DurTransition == runtime->durTime ().durval) {
+                    runtime->durTime ().durval = Runtime::DurTimer;
                     runtime->tryFinish ();
                 }
             }
@@ -3033,8 +3033,8 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
 
         case MsgMediaFinished:
             if (unfinished ()) {
-                if (runtime->durTime ().durval == Runtime::dur_media)
-                    runtime->durTime ().durval = Runtime::dur_timer;
+                if (runtime->durTime ().durval == Runtime::DurMedia)
+                    runtime->durTime ().durval = Runtime::DurTimer;
                 if (media_info) {
                     delete media_info;
                     media_info = NULL;
@@ -3110,7 +3110,7 @@ KDE_NO_EXPORT NodePtr SMIL::RefMediaType::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void SMIL::RefMediaType::clipStart () {
     PlayListNotify *n = document ()->notify_listener;
     if (n && region_node && !external_tree && !src.isEmpty()) {
-        repeat = runtime->repeat_count == Runtime::dur_infinite
+        repeat = runtime->repeat_count == Runtime::DurInfinite
             ? 9998 : runtime->repeat_count;
         runtime->repeat_count = 1;
         document_postponed = document()->connectTo (this, MsgEventPostponed);
@@ -3119,15 +3119,15 @@ KDE_NO_EXPORT void SMIL::RefMediaType::clipStart () {
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::finish () {
-    if (runtime->durTime ().durval == Runtime::dur_media)
-        runtime->durTime ().durval = Runtime::dur_timer;//reset to make this finish
+    if (runtime->durTime ().durval == Runtime::DurMedia)
+        runtime->durTime ().durval = Runtime::DurTimer;//reset to make this finish
     MediaType::finish ();
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::begin () {
     if (0 == runtime->durTime ().offset &&
-            Runtime::dur_media == runtime->endTime ().durval)
-        runtime->durTime ().durval = Runtime::dur_media; // duration of clip
+            Runtime::DurMedia == runtime->endTime ().durval)
+        runtime->durTime ().durval = Runtime::DurMedia; // duration of clip
     MediaType::begin ();
 }
 
@@ -3921,7 +3921,7 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
                  break;
             }
             int interval = 10 * runtime->durTime ().offset / (1 + steps);
-            if (interval <= 0 || runtime->durTime ().durval != Runtime::dur_timer) {
+            if (interval <= 0 || runtime->durTime ().durval != Runtime::DurTimer) {
                  kWarning () << "animate needs a duration time" << endl;
                  break;
             }
