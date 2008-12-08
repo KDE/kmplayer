@@ -99,13 +99,13 @@ KDE_NO_EXPORT bool KMPlayer::parseTime (const QString & vl, int & dur) {
     if (!num.isEmpty ())
         t = sign * num.toDouble (&ok);
     if (ok) {
-        dur = (unsigned int) (10 * t);
+        dur = (int) (100 * t);
         for ( ; *p; p++ ) {
             if (*p == 'm') {
-                dur = (unsigned int) (t * 60);
+                dur = (int) (t * 60);
                 break;
             } else if (*p == 'h') {
-                dur = (unsigned int) (t * 60 * 60);
+                dur = (int) (t * 60 * 60);
                 break;
             } else if (*p != ' ')
                 break;
@@ -364,7 +364,7 @@ KDE_NO_EXPORT void Runtime::start () {
             offset = beginTime ().offset;
             Runtime *rt = (Runtime*)con->connectee->message(MsgQueryRoleTiming);
             if (rt)
-                offset -= element->document()->last_event_time/100 - rt->start_time;
+                offset -= element->document()->last_event_time/10 - rt->start_time;
             stop = false;
             kWarning() << "start trigger on started element";
         } // else wait for start event
@@ -375,7 +375,7 @@ KDE_NO_EXPORT void Runtime::start () {
             int offset = beginTime ().offset;
             Runtime *rt = (Runtime*)con->connectee->message(MsgQueryRoleTiming);
             if (rt)
-                offset -= element->document()->last_event_time/100 - rt->finish_time;
+                offset -= element->document()->last_event_time/10 - rt->finish_time;
             stop = false;
             kWarning() << "start trigger on finished element";
         } // else wait for end event
@@ -387,7 +387,7 @@ KDE_NO_EXPORT void Runtime::start () {
         tryFinish ();
     else if (offset > 0)               // start timer
         begin_timer = element->document ()->post (element,
-                new TimerPosting (100 * offset, begin_timer_id));
+                new TimerPosting (10 * offset, begin_timer_id));
     else                               // start now
         propagateStart ();
 }
@@ -396,7 +396,7 @@ KDE_NO_EXPORT void Runtime::finish () {
     if (started () || timingstate == timings_began) {
         doFinish (); // reschedule through Runtime::stopped
     } else {
-        finish_time = element->document ()->last_event_time/100;
+        finish_time = element->document ()->last_event_time/10;
         repeat_count = repeat;
         NodePtrW guard = element;
         element->Node::finish ();
@@ -428,7 +428,7 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
                 }
                 if (beginTime ().durval == dur_timer)
                     begin_timer = element->document ()->post (element,
-                            new TimerPosting (100 * beginTime ().offset, begin_timer_id));
+                            new TimerPosting (10 * beginTime ().offset, begin_timer_id));
             } else {                              // start now
                 propagateStart ();
             }
@@ -510,7 +510,7 @@ KDE_NO_EXPORT void *Runtime::message (MessageType msg, void *content) {
             Posting *event = static_cast <Posting *> (content);
             if (event->source.ptr () == element) {
                 started_timer = NULL;
-                start_time = element->document ()->last_event_time/100;
+                start_time = element->document ()->last_event_time/10;
                 setDuration ();
                 NodePtrW guard = element;
                 element->deliver (MsgEventStarted, event);
@@ -560,7 +560,7 @@ KDE_NO_EXPORT void Runtime::processEvent (MessageType msg) {
         }
         if (element && beginTime ().offset > 0)
             begin_timer = element->document ()->post (element,
-                  new TimerPosting (100 * beginTime ().offset, begin_timer_id));
+                  new TimerPosting (10 * beginTime ().offset, begin_timer_id));
         else //FIXME neg. offsets
             propagateStart ();
         if (element->state == Node::state_finished)
@@ -631,7 +631,7 @@ KDE_NO_EXPORT void Runtime::setDuration () {
         if (duration_timer)
             element->document ()->cancelPosting (duration_timer);
         duration_timer = element->document ()->post (element,
-                new TimerPosting (100 * durTime ().offset, dur_timer_id));
+                new TimerPosting (10 * durTime ().offset, dur_timer_id));
     }
     // kDebug () << "Runtime::started set dur timer " << durTime ().offset;
 }
@@ -1590,7 +1590,7 @@ SMIL::Transition::TransSubType subTransInfoFromString (const char *s) {
 
 KDE_NO_CDTOR_EXPORT SMIL::Transition::Transition (NodePtr & d)
  : Element (d, id_node_transition),
-   type_info (NULL), direction (dir_forward), dur (10), fade_color (0) {}
+   type_info (NULL), direction (dir_forward), dur (100), fade_color (0) {}
 
 KDE_NO_EXPORT void SMIL::Transition::activate () {
     type = TransTypeNone;
@@ -2155,7 +2155,7 @@ class KMPLAYER_NO_EXPORT ExclPauseVisitor : public Visitor {
             if (pause)
                 paused_by->document ()->pausePosting (event);
             else
-                paused_by->document ()->unpausePosting (event, (cur_time-pause_time)*100);
+                paused_by->document ()->unpausePosting (event, (cur_time-pause_time)*10);
         }
     }
     static Posting *activeEvent (Runtime *r) {
@@ -2269,7 +2269,7 @@ KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
                             (cur_node->parentNode ().ptr ())->peers) {
                         case PriorityClass::PeersPause: {
                             ExclPauseVisitor visitor (
-                                  true, this, document ()->last_event_time/100);
+                                  true, this, document ()->last_event_time/10);
                             n->accept (&visitor);
                             priority_queue.insertBefore (
                                   new NodeRefItem (n), priority_queue.first ());
@@ -2311,7 +2311,7 @@ KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
                     cur_node = ref->data;
                     priority_queue.remove (ref);
                     stopped_connection = cur_node->connectTo (this, MsgEventStopped);
-                    ExclPauseVisitor visitor (false, this, document()->last_event_time/100);
+                    ExclPauseVisitor visitor (false, this, document()->last_event_time/10);
                     cur_node->accept (&visitor);
                     // else TODO
                 }
@@ -2782,7 +2782,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
             trans_gain = 0.0;
             document ()->notify_listener->addRepaintUpdater (this);
             trans_start_time = document ()->last_event_time;
-            trans_end_time = trans_start_time + 100 * trans->dur;
+            trans_end_time = trans_start_time + 10 * trans->dur;
             if (Runtime::dur_timer == runtime->durTime ().durval &&
                     0 == runtime->durTime ().offset &&
                     Runtime::dur_media == runtime->endTime ().durval)
@@ -2795,7 +2795,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
             if (trans && trans->supported () &&
                     (int) trans->dur < runtime->durTime().offset)
                 trans_out_timer = document()->post (this,
-                        new TimerPosting ((runtime->durTime().offset - trans->dur) * 100,
+                        new TimerPosting ((runtime->durTime().offset - trans->dur) * 10,
                         trans_out_timer_id));
         }
     } else {
@@ -2969,7 +2969,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                     trans_gain = 0.0;
                     document ()->notify_listener->addRepaintUpdater (this);
                     trans_start_time = document ()->last_event_time;
-                    trans_end_time = trans_start_time + 100 * trans->dur;
+                    trans_end_time = trans_start_time + 10 * trans->dur;
                     trans_out_active = true;
                     Surface *s = surface ();
                     if (s)
@@ -3906,7 +3906,7 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
                 kWarning () << "animate couldn't determine end value" << endl;
                 break;
             }
-            steps = 20 * runtime->durTime ().offset / 5; // 40 per sec
+            steps = 2 * runtime->durTime ().offset / 5; // 40 per sec
             if (steps > 0) {
                 anim_timer = document ()->post (this,
                         new TimerPosting (25, anim_timer_id)); // 25 ms for now FIXME
@@ -3920,7 +3920,7 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
                  kWarning () << "animate needs at least two values" << endl;
                  break;
             }
-            int interval = 100 * runtime->durTime ().offset / (1 + steps);
+            int interval = 10 * runtime->durTime ().offset / (1 + steps);
             if (interval <= 0 || runtime->durTime ().durval != Runtime::dur_timer) {
                  kWarning () << "animate needs a duration time" << endl;
                  break;
@@ -4280,7 +4280,7 @@ float cubicBezier (SMIL::AnimateMotion::Point2D *table, int a, int b, float x) {
 }
 
 bool SMIL::AnimateMotion::setInterval () {
-    int cs = 10 * runtime->durTime ().offset;
+    int cs = runtime->durTime ().offset;
     if (keytime_count > interval + 1)
         cs = (int) (cs * (keytimes[interval+1] - keytimes[interval]));
     else if (values.size () > 1)

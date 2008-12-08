@@ -178,7 +178,7 @@ public:
 };
 
 /**
- * Translates string to deci-seconds or 'special' high number
+ * Translates string to centi-seconds or 'special' high number
  */
 bool parseTime (const QString & val, int & dur /*,const QString & dateformat*/);
 
@@ -402,7 +402,7 @@ public:
     TransSubType sub_type;
     TransTypeInfo *type_info;
     enum { dir_forward, dir_reverse } direction;
-    int dur; // deci seconds
+    int dur; // centi seconds
     float start_progress, end_progress;
     unsigned int fade_color;
 };
