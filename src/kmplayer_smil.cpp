@@ -1883,6 +1883,8 @@ KDE_NO_EXPORT void SMIL::GroupBase::activate () {
     setState (state_activated);
     if (visitor.ready)
         runtime->start ();
+    else
+        state = state_deferred;
 }
 
 KDE_NO_EXPORT
@@ -1993,9 +1995,11 @@ KDE_NO_EXPORT void *SMIL::Par::message (MessageType msg, void *content) {
         case MsgChildReady:
             if (childrenReady (this)) {
                 const int cur_state = state;
-                if (cur_state == state_activated)
+                if (state == state_deferred) {
+                    state = state_activated;
                     runtime->start ();
-                if (cur_state < state_activated && parentNode ())
+                }
+                if (cur_state == state_init && parentNode ())
                     parentNode ()->message (MsgChildReady, this);
             }
             return NULL;
@@ -2051,9 +2055,11 @@ KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
 
         case MsgChildReady:
             if (firstChild ().ptr () == (Node *) content) {
-                if (state == state_activated)
+                if (state == state_deferred) {
+                    state = state_activated;
                     runtime->start ();
-                if (state < state_activated && parentNode ())
+                }
+                if (state == state_init && parentNode ())
                     parentNode ()->message (MsgChildReady, this);
             } else if (unfinished ()) {
                 FreezeStateUpdater visitor;
