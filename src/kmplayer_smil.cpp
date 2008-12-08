@@ -702,48 +702,15 @@ Single SizeType::size (Single relative_to) const {
 
 //-----------------%<----------------------------------------------------------
 
-SRect SRect::unite (const SRect & r) const {
-    if (size.isEmpty ())
-        return r;
-    if (r.size.isEmpty ())
-        return *this;
-    Single a (_x < r._x ? _x : r._x);
-    Single b (_y < r._y ? _y : r._y);
-    return SRect (a, b,
-            ((_x + size.width < r._x + r.size.width)
-             ? r._x + r.size.width : _x + size.width) - a,
-            ((_y + size.height < r._y + r.size.height)
-             ? r._y + r.size.height : _y + size.height) - b);
-}
-
-SRect SRect::intersect (const SRect & r) const {
-    Single a (_x < r._x ? r._x : _x);
-    Single b (_y < r._y ? r._y : _y);
-    return SRect (a, b,
+template<>
+IRect IRect::intersect (const IRect & r) const {
+    int a (_x < r._x ? r._x : _x);
+    int b (_y < r._y ? r._y : _y);
+    return IRect (a, b,
             ((_x + size.width < r._x + r.size.width)
              ? _x + size.width : r._x + r.size.width) - a,
             ((_y + size.height < r._y + r.size.height)
              ? _y + size.height : r._y + r.size.height) - b);
-}
-
-IRect IRect::unite (const IRect & r) const {
-    if (isEmpty ())
-        return r;
-    if (r.isEmpty ())
-        return *this;
-    int a (x < r.x ? x : r.x);
-    int b (y < r.y ? y : r.y);
-    return IRect (a, b, 
-            ((x + w < r.x + r.w) ? r.x + r.w : x + w) - a,
-            ((y + h < r.y + r.h) ? r.y + r.h : y + h) - b);
-}
-
-IRect IRect::intersect (const IRect & r) const {
-    int a (x < r.x ? r.x : x);
-    int b (y < r.y ? r.y : y);
-    return IRect (a, b,
-            ((x + w < r.x + r.w) ? x + w : r.x + r.w) - a,
-            ((y + h < r.y + r.h) ? y + h : r.y + r.h) - b);
 }
 
 //-----------------------------------------------------------------------------

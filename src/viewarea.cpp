@@ -79,7 +79,7 @@ extern const char * playlist_xpm[];
 static void clearSurface (cairo_t *cr, const IRect &rect) {
     cairo_save (cr);
     cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-    cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
+    cairo_rectangle (cr, rect.x (), rect.y (), rect.width (), rect.height ());
     cairo_fill (cr);
     cairo_restore (cr);
 }
@@ -218,13 +218,12 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
  : clip (rect), cairo_surface (cs), matrix (m), toplevel (top) {
     cr = cairo_create (cs);
     if (toplevel) {
-        cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
         cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
         cairo_set_tolerance (cr, 0.5 );
         //cairo_push_group (cr);
         cairo_set_source_rgb (cr,
            1.0 * c.red () / 255, 1.0 * c.green () / 255, 1.0 * c.blue () / 255);
-        cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
         cairo_fill (cr);
     } else {
         clearSurface (cr, rect);
@@ -293,7 +292,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *layout) {
 
             if (s->background_color & 0xff000000) {
                 CAIRO_SET_SOURCE_RGB (cr, s->background_color);
-                cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
+                cairo_rectangle (cr,
+                        clip.x (), clip.y (), clip.width (), clip.height ());
                 cairo_fill (cr);
             }
 
@@ -345,7 +345,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
             cairo_save (cr);
             if (s->background_color & 0xff000000) {
                 CAIRO_SET_SOURCE_RGB (cr, s->background_color);
-                cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
+                cairo_rectangle (cr,
+                        clip.x (), clip.y (), clip.width (), clip.height ());
                 cairo_fill (cr);
             }
             if (bg_img) {
@@ -363,7 +364,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                 cairo_matrix_init_translate (&mat, (int) -x, (int) -y);
                 cairo_pattern_set_matrix (pat, &mat);
                 cairo_set_source (cr, pat);
-                cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
+                cairo_rectangle (cr,
+                        clip.x (), clip.y (), clip.width (), clip.height ());
                 cairo_fill (cr);
                 cairo_pattern_destroy (pat);
                 if (bg_img->has_alpha)
@@ -394,7 +396,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                     int knob_y = (int) y + s->y_scroll * sbh / vy;
                     IRect knob (sbx, knob_y, sbw, knob_h);
                     cairo_save (cr);
-                    cairo_rectangle (cr, sb_clip.x, sb_clip.y, sb_clip.w, sb_clip.h);
+                    cairo_rectangle (cr, sb_clip.x (), sb_clip.y (),
+                            sb_clip.width (), sb_clip.height ());
                     cairo_clip (cr);
                     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
                     cairo_set_line_width (cr, 2);
@@ -404,14 +407,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                     if (s->y_scroll)
                         cairoDrawRect (cr, 0x80000000,
                                 sbx + 2, sby + 2,
-                                sbw - 4, knob.y - sby - 2);
+                                sbw - 4, knob.y() - sby - 2);
                     cairoDrawRect (cr, 0x80808080,
-                            knob.x + 2, knob.y,
-                            knob.w - 4, knob.h);
-                    if (sby + sbh - knob.y - knob.h - 2 > 0)
+                            knob.x() + 2, knob.y(),
+                            knob.width() - 4, knob.height());
+                    if (sby + sbh - knob.y() - knob.height() - 2 > 0)
                         cairoDrawRect (cr, 0x80000000,
-                                sbx + 2, knob.y + knob.h,
-                                sbw - 4, sby + sbh - knob.y - knob.h - 2);
+                                sbx + 2, knob.y() + knob.height(),
+                                sbw - 4, sby + sbh - knob.y() -knob.height()-2);
                     cairo_restore (cr);
                 }
                 sbh = REGION_SCROLLBAR_WIDTH;
@@ -424,7 +427,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                     int knob_x = (int) x + s->x_scroll * sbw / vw;
                     IRect knob (knob_x, sby, knob_w, sbh);
                     cairo_save (cr);
-                    cairo_rectangle (cr, sb_clip.x, sb_clip.y, sb_clip.w, sb_clip.h);
+                    cairo_rectangle (cr, sb_clip.x (), sb_clip.y (),
+                            sb_clip.width (), sb_clip.height ());
                     cairo_clip (cr);
                     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
                     cairo_set_line_width (cr, 2);
@@ -434,14 +438,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                     if (s->x_scroll)
                         cairoDrawRect (cr, 0x80000000,
                                 sbx + 2, sby + 2,
-                                knob.x - sbx - 2, sbh - 4);
+                                knob.x() - sbx - 2, sbh - 4);
                     cairoDrawRect (cr, 0x80808080,
-                            knob.x, knob.y + 2,
-                            knob.w, knob.h - 4);
-                    if (sbx + sbw - knob.x - knob.w - 2 > 0)
+                            knob.x(), knob.y() + 2,
+                            knob.width(), knob.height() - 4);
+                    if (sbx + sbw - knob.x() - knob.width() - 2 > 0)
                         cairoDrawRect (cr, 0x80000000,
-                                knob.x + knob.w, sby + 2,
-                                sbx + sbw - knob.x - knob.w - 2, sbh - 4);
+                                knob.x() + knob.width(), sby + 2,
+                                sbx + sbw - knob.x() - knob.width()-2, sbh - 4);
                     cairo_restore (cr);
                 }
             }
@@ -467,50 +471,55 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         perc = 1.0 - perc;
     if (SMIL::Transition::Fade == trans->type) {
         CAIRO_SET_PATTERN_COND(cr, cur_pat, cur_mat)
-        cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
+        cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
         opacity = perc;
     } else if (SMIL::Transition::BarWipe == trans->type) {
         IRect rect;
         if (SMIL::Transition::SubTopToBottom == trans->sub_type) {
             if (SMIL::Transition::dir_reverse == trans->direction) {
-                int dy = (int) ((1.0 - perc) * clip.h);
-                rect = IRect (clip.x, clip.y + dy, clip.w, clip.h - dy);
+                int dy = (int) ((1.0 - perc) * clip.height ());
+                rect = IRect (clip.x (), clip.y () + dy,
+                        clip.width (), clip.height () - dy);
             } else {
-                rect = IRect (clip.x, clip.y, clip.w, (int) (perc * clip.h));
+                rect = IRect (clip.x (), clip.y (),
+                        clip.width (), (int) (perc * clip.height ()));
             }
         } else {
             if (SMIL::Transition::dir_reverse == trans->direction) {
-                int dx = (int) ((1.0 - perc) * clip.w);
-                rect = IRect (clip.x + dx, clip.y, clip.w - dx, clip.h);
+                int dx = (int) ((1.0 - perc) * clip.width ());
+                rect = IRect (clip.x () + dx, clip.y (),
+                        clip.width () - dx, clip.height ());
             } else {
-                rect = IRect (clip.x, clip.y, (int) (perc * clip.w), clip.h);
+                rect = IRect (clip.x (), clip.y (),
+                        (int) (perc * clip.width ()), clip.height ());
             }
         }
-        cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
         CAIRO_SET_PATTERN_COND(cr, cur_pat, cur_mat)
     } else if (SMIL::Transition::PushWipe == trans->type) {
         int dx = 0, dy = 0;
         if (SMIL::Transition::SubFromTop == trans->sub_type)
-            dy = -(int) ((1.0 - perc) * clip.h);
+            dy = -(int) ((1.0 - perc) * clip.height ());
         else if (SMIL::Transition::SubFromRight == trans->sub_type)
-            dx = (int) ((1.0 - perc) * clip.w);
+            dx = (int) ((1.0 - perc) * clip.width ());
         else if (SMIL::Transition::SubFromBottom == trans->sub_type)
-            dy = (int) ((1.0 - perc) * clip.h);
+            dy = (int) ((1.0 - perc) * clip.height ());
         else //if (SMIL::Transition::SubFromLeft == trans->sub_type)
-            dx = -(int) ((1.0 - perc) * clip.w);
+            dx = -(int) ((1.0 - perc) * clip.width ());
         cairo_matrix_translate (&cur_mat, -dx, -dy);
-        IRect rect = clip.intersect (IRect (clip.x + dx, clip.y + dy, clip.w, clip.h));
-        cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
+        IRect rect = clip.intersect (IRect (clip.x () + dx, clip.y () + dy,
+                    clip.width (), clip.height ()));
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
         CAIRO_SET_PATTERN_COND(cr, cur_pat, cur_mat)
     } else if (SMIL::Transition::IrisWipe == trans->type) {
         CAIRO_SET_PATTERN_COND(cr, cur_pat, cur_mat)
         if (SMIL::Transition::SubDiamond == trans->sub_type) {
-            cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
+            cairo_rectangle (cr, clip.x(), clip.y(),clip.width(),clip.height());
             cairo_clip (cr);
-            int dx = (int) (perc * clip.w);
-            int dy = (int) (perc * clip.h);
-            int mx = clip.x + clip.w/2;
-            int my = clip.y + clip.h/2;
+            int dx = (int) (perc * clip.width ());
+            int dy = (int) (perc * clip.height ());
+            int mx = clip.x () + clip.width ()/2;
+            int my = clip.y () + clip.height ()/2;
             cairo_new_path (cr);
             cairo_move_to (cr, mx, my - dy);
             cairo_line_to (cr, mx + dx, my);
@@ -518,20 +527,20 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
             cairo_line_to (cr, mx - dx, my);
             cairo_close_path (cr);
         } else { // SubRectangle
-            int dx = (int) (0.5 * (1 - perc) * clip.w);
-            int dy = (int) (0.5 * (1 - perc) * clip.h);
-            cairo_rectangle (cr, clip.x + dx, clip.y + dy,
-                    clip.w - 2 * dx, clip.h -2 * dy);
+            int dx = (int) (0.5 * (1 - perc) * clip.width ());
+            int dy = (int) (0.5 * (1 - perc) * clip.height ());
+            cairo_rectangle (cr, clip.x () + dx, clip.y () + dy,
+                    clip.width () - 2 * dx, clip.height () -2 * dy);
         }
     } else if (SMIL::Transition::ClockWipe == trans->type) {
-        cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
+        cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
         cairo_clip (cr);
-        int mx = clip.x + clip.w/2;
-        int my = clip.y + clip.h/2;
+        int mx = clip.x () + clip.width ()/2;
+        int my = clip.y () + clip.height ()/2;
         cairo_new_path (cr);
         cairo_move_to (cr, mx, my);
-        float hw = 1.0 * clip.w/2;
-        float hh = 1.0 * clip.h/2;
+        float hw = 1.0 * clip.width ()/2;
+        float hh = 1.0 * clip.height ()/2;
         float radius = sqrtf (hw * hw + hh * hh);
         float phi;
         switch (trans->sub_type) {
@@ -555,14 +564,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         cairo_close_path (cr);
         CAIRO_SET_PATTERN_COND(cr, cur_pat, cur_mat)
     } else if (SMIL::Transition::BowTieWipe == trans->type) {
-        cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
+        cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
         cairo_clip (cr);
-        int mx = clip.x + clip.w/2;
-        int my = clip.y + clip.h/2;
+        int mx = clip.x () + clip.width ()/2;
+        int my = clip.y () + clip.height ()/2;
         cairo_new_path (cr);
         cairo_move_to (cr, mx, my);
-        float hw = 1.0 * clip.w/2;
-        float hh = 1.0 * clip.h/2;
+        float hw = 1.0 * clip.width ()/2;
+        float hh = 1.0 * clip.height ()/2;
         float radius = sqrtf (hw * hw + hh * hh);
         float phi;
         switch (trans->sub_type) {
@@ -585,12 +594,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         cairo_close_path (cr);
         CAIRO_SET_PATTERN_COND(cr, cur_pat, cur_mat)
     } else if (SMIL::Transition::EllipseWipe == trans->type) {
-        cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
+        cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
         cairo_clip (cr);
-        int mx = clip.x + clip.w/2;
-        int my = clip.y + clip.h/2;
-        float hw = (double) clip.w/2;
-        float hh = (double) clip.h/2;
+        int mx = clip.x () + clip.width ()/2;
+        int my = clip.y () + clip.height ()/2;
+        float hw = (double) clip.width ()/2;
+        float hh = (double) clip.height ()/2;
         float radius = sqrtf (hw * hw + hh * hh);
         cairo_save (cr);
         cairo_new_path (cr);
@@ -652,7 +661,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
         cairo_pattern_set_matrix (cur_pat, &cur_mat);
         cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
         cairo_set_source (cr, cur_pat);
-        cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
     }
     opacity *= mt->opacity / 100.0;
     if (opacity < 0.99) {
@@ -706,13 +715,13 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
     Single h = rect.height();
     matrix.getXYWH (x, y, w, h);
     IRect clip_rect = clip.intersect (IRect (x, y, w, h));
-    if (!clip_rect.isValid ())
+    if (clip_rect.isEmpty ())
         return;
     if (!s->surface || s->dirty) {
         Matrix m = matrix;
         m.translate (-x, -y);
-        IRect r (clip_rect.x - (int) x - 1, clip_rect.y - (int) y - 1,
-                clip_rect.w + 3, clip_rect.h + 3);
+        IRect r (clip_rect.x() - (int) x - 1, clip_rect.y() - (int) y - 1,
+                clip_rect.width() + 3, clip_rect.height() + 3);
         if (!s->surface) {
             s->surface = cairo_surface_create_similar (cairo_surface,
                     CAIRO_CONTENT_COLOR_ALPHA, (int) w, (int) h);
@@ -889,7 +898,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
             cur_pat = NULL;
             brush->active_trans->accept (this);
         } else {
-            cairo_rectangle (cr, clip_rect.x, clip_rect.y, clip_rect.w, clip_rect.h);
+            cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
+                    clip_rect.width (), clip_rect.height ());
         }
         opacity *= brush->opacity / 100.0;
         if (opacity < 0.99) {
@@ -968,7 +978,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
         cairo_pattern_set_matrix (pat, &cur_mat);
         cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);
         cairo_set_source (cr, pat);
-        cairo_rectangle(cr, clip_rect.x, clip_rect.y, clip_rect.w, clip_rect.h);
+        cairo_rectangle(cr, clip_rect.x (), clip_rect.y (),
+                clip_rect.width (), clip_rect.height ());
         cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
         cairo_fill (cr);
         cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
@@ -1558,10 +1569,10 @@ public:
                     DefaultScreen (QX11Info::display ()))),
             w, h);*/
     }
-    void swapBuffer (int sx, int sy, int sw, int sh, int dx, int dy) {
+    void swapBuffer (const IRect &sr, int dx, int dy) {
         GC gc = XCreateGC (QX11Info::display(), backing_store, 0, NULL);
         XCopyArea (QX11Info::display(), backing_store, m_view_area->winId(),
-                gc, sx, sy, sw, sh, dx, dy);
+                gc, sr.x(), sr.y(), sr.width (), sr.height (), dx, dy);
         XFreeGC (QX11Info::display(), gc);
         XFlush (QX11Info::display());
     }
@@ -1716,14 +1727,14 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
     IRect rect = m_repaint_rect.intersect (IRect (0, 0, width (), height ()));
 #ifdef KMPLAYER_WITH_CAIRO
     if (surface->node) {
-        int ex = rect.x;
+        int ex = rect.x ();
         if (ex > 0)
             ex--;
-        int ey = rect.y;
+        int ey = rect.y ();
         if (ey > 0)
             ey--;
-        int ew = rect.w + 2;
-        int eh = rect.h + 2;
+        int ew = rect.width () + 2;
+        int eh = rect.height () + 2;
         IRect swap_rect;
         cairo_surface_t *merge = NULL;
         cairo_pattern_t *pat = NULL;
@@ -1765,8 +1776,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
             swap_rect = m_update_rect;
             m_update_rect = IRect ();
         }
-        d->swapBuffer (swap_rect.x, swap_rect.y, swap_rect.w, swap_rect.h,
-                swap_rect.x, swap_rect.y);
+        d->swapBuffer (swap_rect, swap_rect.x (), swap_rect.y ());
         if (merge) {
             cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
             cairo_rectangle (cr, ex, ey, ew, eh);
@@ -1778,7 +1788,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
         cairo_surface_flush (surface->surface);
     } else
 #endif
-        repaint (QRect(rect.x, rect.y, rect.w, rect.h), false);
+        repaint (QRect(rect.x(), rect.y(), rect.width(), rect.height()), false);
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
@@ -2256,7 +2266,7 @@ WindowId VideoOutput::clientHandle () {
 }
 
 void VideoOutput::setGeometry (const IRect &rect) {
-    int x = rect.x, y = rect.y, w = rect.w, h = rect.h;
+    int x = rect.x (), y = rect.y (), w = rect.width (), h = rect.height ();
     if (m_view->keepSizeRatio ()) {
         // scale video widget inside region
         int hfw = heightForWidth (w);

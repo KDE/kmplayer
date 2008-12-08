@@ -127,7 +127,8 @@ KDE_NO_EXPORT IRect Surface::toScreen (Single x, Single y, Single w, Single h) {
 static void clipToScreen (Surface *s, Matrix &m, IRect &clip) {
     Surface *ps = s->parentNode ().ptr ();
     if (!ps) {
-        clip = IRect (s->bounds);
+        clip = IRect (s->bounds.x (), s->bounds.y (),
+                s->bounds.width (), s->bounds.height ());
         m = Matrix (s->bounds.x (), s->bounds.y (), s->xscale, s->yscale);
     } else {
         clipToScreen (ps, m, clip);
@@ -160,6 +161,7 @@ KDE_NO_EXPORT void Surface::repaint () {
     if (ps)
         ps->repaint (bounds);
     else
-        view_widget->scheduleRepaint (IRect (bounds));
+        view_widget->scheduleRepaint (IRect (bounds.x (), bounds.y (),
+                bounds.width (), bounds.height ()));
 }
 

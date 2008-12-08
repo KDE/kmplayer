@@ -99,54 +99,47 @@ public:
     // void rotate (float phi); // add this when needed
 };
 
-class KMPLAYER_NO_EXPORT SSize {
+template <class T>
+class KMPLAYER_NO_EXPORT Size {
 public:
-    SSize () {}
-    SSize (Single w, Single h) : width (w), height (h) {}
+    Size ();
+    Size (T w, T h);
 
-    bool isEmpty () const { return width <= 0 || height <= 0; }
-    bool operator == (const SSize &s) const;
-    bool operator != (const SSize &s) const;
+    bool isEmpty () const;
+    bool operator == (const Size<T> &s) const;
+    bool operator != (const Size<T> &s) const;
 
-    Single width, height;
+    T width;
+    T height;
 };
 
-class KMPLAYER_NO_EXPORT SRect {
-    Single _x, _y;
-#ifdef _KDEBUG_H_
-    friend QDebug & operator << (QDebug &dbg, const SRect &r);
-#endif
+template <class T>
+class KMPLAYER_NO_EXPORT Rect {
+    T _x, _y;
 public:
-    SRect () {}
-    SRect (Single a, Single b, Single w, Single h)
-        : _x (a), _y (b), size (w, h) {}
-    SRect (Single a, Single b, const SSize &s) : _x (a), _y (b), size (s) {}
-    Single x () const { return _x; }
-    Single y () const { return _y; }
-    Single width () const { return size.width; }
-    Single height () const { return size.height; }
-    SRect unite (const SRect & r) const;
-    SRect intersect (const SRect & r) const;
-    bool operator == (const SRect & r) const;
-    bool operator != (const SRect & r) const;
+    Rect ();
+    Rect (T a, T b, T w, T h);
+    Rect (T a, T b, const Size<T> &s);
+    T x () const;
+    T y () const;
+    T width () const;
+    T height () const;
+    Rect<T> unite (const Rect<T> &r) const;
+    Rect<T> intersect (const Rect<T> &r) const;
+    bool operator == (const Rect<T> &r) const;
+    bool operator != (const Rect<T> &r) const;
+    bool isEmpty () const;
 
-    SSize size;
+    Size<T> size;
 };
 
-class KMPLAYER_NO_EXPORT IRect {
-public:
-    int x, y, w, h;
-    IRect ()
-        : x (0), y (0), w (0), h (0) {}
-    explicit IRect (const SRect r)
-        : x (r.x ()), y (r.y ()), w (r.width ()), h (r.height ()) {}
-    IRect (int a, int b, int c, int d)
-        : x (a), y (b), w (c), h (d) {}
-    IRect unite (const IRect & r) const;
-    IRect intersect (const IRect & r) const;
-    bool isValid () const { return w >= 0 && h >= 0; }
-    bool isEmpty () const { return w <= 0 || h <= 0; }
-};
+typedef Size<Single> SSize;
+typedef Rect<Single> SRect;
+
+typedef Size<int> ISize;
+typedef Rect<int> IRect;
+template <> Rect<int> Rect<int>::intersect (const Rect<int> &r) const;
+
 
 //-----------------------------------------------------------------------------
 
@@ -156,26 +149,8 @@ inline QDebug & operator << (QDebug & dbg, Single s) {
     dbg << (double) (s);
     return dbg;
 }
-
-inline QDebug & operator << (QDebug & dbg, const SRect &r) {
-    dbg << "SRect(x=" << r._x << " y=" << r._y << " w=" << r.size.width << " h=" << r.size.height << ")";
-    return dbg;
-}
-
-inline QDebug & operator << (QDebug & dbg, const IRect &r) {
-    dbg << "IRect(x=" << r.x << " y=" << r.y << " w=" << r.w << " h=" << r.h << ")";
-    return dbg;
-}
 # else
 inline QDebug & operator << (QDebug & dbg, Single) {
-    return dbg;
-}
-
-inline QDebug & operator << (QDebug & dbg, const SRect &r) {
-    return dbg;
-}
-
-inline QDebug & operator << (QDebug & dbg, const IRect &r) {
     return dbg;
 }
 # endif
@@ -307,19 +282,77 @@ inline Single operator - (const Single s) {
 
 //-----------------------------------------------------------------------------
 
-inline bool SSize::operator == (const SSize &s) const {
+template <class T> inline Size<T>::Size () : width (0), height (0) {}
+
+template <class T> inline Size<T>::Size (T w, T h) : width (w), height (h) {}
+
+template <class T> inline bool Size<T>::isEmpty () const {
+    return width <= 0 || height <= 0;
+}
+
+template <class T>
+inline bool Size<T>::Size::operator == (const Size<T> &s) const {
     return width == s.width && height == s.height;
 }
 
-inline bool SSize::operator != (const SSize &s) const { return !(*this == s); }
+template <class T>
+inline bool Size<T>::Size::operator != (const Size<T> &s) const {
+    return !(*this == s);
+}
 
 //-----------------------------------------------------------------------------
 
-inline bool SRect::operator == (const SRect & r) const {
+template <class T> inline Rect<T>::Rect () : _x (0), _y (0) {}
+
+template <class T> inline  Rect<T>::Rect (T a, T b, T w, T h)
+ : _x (a), _y (b), size (w, h) {}
+
+template <class T> inline Rect<T>::Rect (T a, T b, const Size<T> &s)
+ : _x (a), _y (b), size (s) {}
+
+template <class T> inline T Rect<T>::x () const { return _x; }
+
+template <class T> inline T Rect<T>::y () const { return _y; }
+
+template <class T> inline T Rect<T>::width () const { return size.width; }
+
+template <class T> inline T Rect<T>::height () const { return size.height; }
+
+template <class T> inline bool Rect<T>::operator == (const Rect<T> &r) const {
     return _x == r._x && _y == r._y && size == r.size;
 }
 
-inline bool SRect::operator != (const SRect & r) const { return !(*this == r); }
+template <class T> inline bool Rect<T>::operator != (const Rect<T> &r) const {
+    return !(*this == r);
+}
+
+template <class T> inline bool Rect<T>::isEmpty () const {
+    return size.isEmpty ();
+}
+
+template <class T> inline Rect<T> Rect<T>::unite (const Rect<T> &r) const {
+    if (size.isEmpty ())
+        return r;
+    if (r.size.isEmpty ())
+        return *this;
+    T a (_x < r._x ? _x : r._x);
+    T b (_y < r._y ? _y : r._y);
+    return Rect<T> (a, b,
+            ((_x + size.width < r._x + r.size.width)
+             ? r._x + r.size.width : _x + size.width) - a,
+            ((_y + size.height < r._y + r.size.height)
+             ? r._y + r.size.height : _y + size.height) - b);
+}
+
+template <class T> inline Rect<T> Rect<T>::intersect (const Rect<T> &r) const {
+    T a (_x < r._x ? r._x : _x);
+    T b (_y < r._y ? r._y : _y);
+    return Rect<T> (a, b,
+            ((_x + size.width < r._x + r.size.width)
+             ? _x + size.width : r._x + r.size.width) - a,
+            ((_y + size.height < r._y + r.size.height)
+             ? _y + size.height : r._y + r.size.height) - b);
+}
 
 }  // KMPlayer namespace
 
