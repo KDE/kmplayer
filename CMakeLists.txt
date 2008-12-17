@@ -47,6 +47,9 @@ if(NOT WIN32)
 
 endif(NOT WIN32)
 
+
+check_include_files(stdint.h HAVE_STDINT_H)
+
 configure_file (config-kmplayer.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kmplayer.h )
 
 add_subdirectory(src)
