@@ -40,17 +40,12 @@ class KAboutData;
 class KActionCollection;
 class KBookmarkMenu;
 class KBookmarkManager;
-class QTextStream;
 class Q3ListViewItem;
 class KMenu;
-class KJob;
 class KSharedConfig;
 template<class T> class KSharedPtr;
 typedef KSharedPtr<KSharedConfig> KSharedConfigPtr;
 
-namespace KIO {
-    class Job;
-}
 
 namespace KMPlayer {
 

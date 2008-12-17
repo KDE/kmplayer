@@ -31,7 +31,6 @@
 namespace KMPlayer {
 
 class PartBase;
-class MediaManager;
 
 
 /**
