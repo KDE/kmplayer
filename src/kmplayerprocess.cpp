@@ -2495,7 +2495,7 @@ KDE_NO_EXPORT bool NpPlayer::ready () {
         return true;
     initProcess ();
     kDebug() << "NpPlayer::ready";
-    QString cmd ("knpplayer4");
+    QString cmd ("knpplayer");
     cmd += QString (" -cb ");
     cmd += service;
     cmd += path;
