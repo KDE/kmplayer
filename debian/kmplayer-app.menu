@@ -1,2 +1,0 @@
-?package(kmplayer):needs=X11 section=Apps/Sound\
-  title="kmplayer" command="/usr/bin/kmplayer"
