@@ -553,6 +553,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
 KDE_NO_EXPORT void KMPlayerApp::initActions () {
     KActionCollection * ac = actionCollection ();
     fileNewWindow = ac->addAction ("new_window");
+    fileNewWindow->setText( i18n( "New window" ) );
     //fileNewWindow->setIcon (KIcon ("window-new"));
     connect (fileNewWindow, SIGNAL (triggered (bool)), this, SLOT (slotFileNewWindow ()));
     fileOpen = KStandardAction::open (this, SLOT (slotFileOpen()), ac);
@@ -1885,7 +1886,7 @@ KDE_NO_EXPORT void *Disks::message (KMPlayer::MessageType msg, void *data) {
     return KMPlayer::Document::message (msg, data);
 }
 
-KDE_NO_CDTOR_EXPORT Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url, const QString &pn) 
+KDE_NO_CDTOR_EXPORT Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url, const QString &pn)
   : KMPlayer::Mrl (doc, id_node_disk_node), app (a) {
     src = url;
     title = pn;
