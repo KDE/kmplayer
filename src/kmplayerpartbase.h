@@ -88,7 +88,7 @@ class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
 public:
     PartBase (QWidget *parent, QObject *objParent, KSharedConfigPtr);
     ~PartBase ();
-    void init (KActionCollection * = 0L);
+    void init (KActionCollection *ac, const QString &objname);
     virtual KMediaPlayer::View* view ();
     View* viewWidget () const { return m_view; }
     static KAboutData* createAboutData ();
@@ -119,10 +119,6 @@ public:
     void updatePlayerMenu (ControlPanel *, const QString &backend=QString ());
     void updateInfo (const QString & msg);
     void updateStatus (const QString & msg);
-#ifdef KMPLAYER_WITH_DBUS
-    void setServiceName (const QString & srv) { m_service = srv; }
-    QString serviceName () const { return m_service; }
-#endif
 
     // these are called from Process
     void changeURL (const QString & url);
@@ -161,6 +157,10 @@ public:
     virtual void seek (qlonglong);
     void toggleFullScreen ();
     bool isPlaying ();
+
+    virtual QString doEvaluate (const QString &script);
+    void showControls (bool show);
+    QString getStatus ();
 signals:
     void sourceChanged (KMPlayer::Source * old, KMPlayer::Source * nw);
     void sourceDimensionChanged ();
@@ -209,9 +209,6 @@ protected:
     KBookmarkManager * m_bookmark_manager;
     BookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;
-#ifdef KMPLAYER_WITH_DBUS
-    QString m_service;
-#endif
     int m_update_tree_timer;
     bool m_noresize : 1;
     bool m_auto_controls : 1;

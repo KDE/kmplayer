@@ -47,7 +47,6 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
 #include "viewarea.h"
-#include "pluginadaptor.h"
 
 #include <stdlib.h>
 #include <unistd.h> // unlink, getpid
@@ -205,7 +204,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
     else
         kmplayerpart_static->ref ();
     setComponentData (KMPlayerFactory::componentData ());
-    init (actionCollection ());
+    init (actionCollection (),
+            QString ("/KMPlayerPart%1").arg(kmplayerpart_static->counter++));
     createBookmarkMenu (m_view->controlPanel ()->bookmarkMenu, actionCollection ());
     m_view->controlPanel ()->bookmarkAction->setVisible (true);
     ///*KAction *playact =*/ new KAction(i18n("P&lay"), QString ("player_play"), KShortcut (), this, SLOT(play ()), actionCollection (), "play");
@@ -415,11 +415,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
     } else
         m_group.truncate (0);
     kmplayerpart_static->partlist.push_back (this);
-
-    (void) new PluginAdaptor (this);
-    QDBusConnection::sessionBus().registerObject (
-            QString ("/KMPlayerPlugin%1").arg(kmplayerpart_static->counter++),
-            this);
 
     QWidget *pwidget = view ()->parentWidget ();
     if (pwidget) {
@@ -846,22 +841,6 @@ KDE_NO_EXPORT void KMPlayerPart::statusPosition (int pos, int length) {
 KDE_NO_EXPORT QString KMPlayerPart::doEvaluate (const QString &script) {
     return m_liveconnectextension->evaluate (
             QString ("this.__kmplayer__res=" ) + script);
-}
-
-KDE_NO_EXPORT void KMPlayerPart::showControls (bool show) {
-    viewWidget ()->setControlPanelMode (
-            show ? KMPlayer::View::CP_Show : KMPlayer::View::CP_Hide);
-}
-
-KDE_NO_EXPORT QString KMPlayerPart::getStatus () {
-    QString rval = "Waiting";
-    if (source() && source()->document()) {
-        if (source()->document()->unfinished ())
-            rval = "Playable";
-        else if (source()->document()->state >= KMPlayer::Node::state_deactivated)
-            rval = "Complete";
-    }
-    return rval;
 }
 
 //---------------------------------------------------------------------

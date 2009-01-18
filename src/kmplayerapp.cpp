@@ -515,10 +515,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
     //connect (m_broadcastconfig, SIGNAL (broadcastStarted()), this, SLOT (broadcastStarted()));
     //connect (m_broadcastconfig, SIGNAL (broadcastStopped()), this, SLOT (broadcastStopped()));
     initStatusBar();
-#ifdef KMPLAYER_WITH_DBUS
-    m_player->setServiceName (QString ("org.kde.kmplayer-%1").arg (getpid ()));
-#endif
-    m_player->init (actionCollection ());
+    m_player->init (actionCollection (), "/KMPlayerPart");
     m_view->initDock (m_view->viewArea ());
     //m_player->mediaManager ()->processInfos () ["xvideo"] =
     //    new XvProcessInfo (m_player->mediaManager ());

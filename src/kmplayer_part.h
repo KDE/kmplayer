@@ -138,9 +138,7 @@ public:
     bool openNewURL (const KUrl & url); // for JS interface
     bool startUrl (const KUrl &url, const QString &pic=QString ());//clickToPlay
 
-    QString doEvaluate (const QString &script);
-    void showControls (bool show);
-    QString getStatus ();
+    virtual QString doEvaluate (const QString &script);
 
 public slots:
     virtual bool openUrl (const KUrl & url);

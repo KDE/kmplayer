@@ -45,6 +45,9 @@ qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.master.xml
 qt4_add_dbus_adaptor(libkmplayercommon_SRCS
     org.kde.kmplayer.streammaster.xml
     ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::MasterProcess)
+qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.part.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerpartbase.h KMPlayer::PartBase)
+
 if (KMPLAYER_WITH_NPP)
     qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.callback.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::NpPlayer)
@@ -78,9 +81,6 @@ install(TARGETS kmplayercommon ${INSTALL_TARGETS_DEFAULT_ARGS} )
 ########### next target ###############
 
 set(kmplayerpart_SRCS kmplayer_part.cpp)
-
-qt4_add_dbus_adaptor(kmplayerpart_SRCS org.kde.kmplayer.plugin.xml
-    ${CMAKE_CURRENT_SOURCE_DIR}/kmplayer_part.h KMPlayerPart)
 
 kde4_add_plugin(kmplayerpart WITH_PREFIX ${kmplayerpart_SRCS})
 

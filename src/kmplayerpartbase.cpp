@@ -62,6 +62,7 @@
 #include "kmplayerconfig.h"
 #include "kmplayer_smil.h"
 #include "mediaobject.h"
+#include "partadaptor.h"
 
 namespace KMPlayer {
 
@@ -147,7 +148,7 @@ KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url
     m_bookmark_manager->emitChanged (b);
 }
 
-void PartBase::init (KActionCollection * action_collection) {
+void PartBase::init (KActionCollection * action_collection, const QString &objname) {
     KParts::Part::setWidget (m_view);
     m_view->init (action_collection);
     connect(m_settings, SIGNAL(configChanged()), this, SLOT(settingsChanged()));
@@ -156,6 +157,9 @@ void PartBase::init (KActionCollection * action_collection) {
     connect (m_view, SIGNAL (urlDropped (const KUrl::List &)), this, SLOT (openUrl (const KUrl::List &)));
     connectPlaylist (m_view->playList ());
     connectInfoPanel (m_view->infoPanel ());
+
+    (void) new PartAdaptor (this);
+    QDBusConnection::sessionBus().registerObject (objname, this);
     //new KAction (i18n ("Edit playlist &item"), 0, 0, m_view->playList (), SLOT (editCurrent ()), action_collection, "edit_playlist_item");
 }
 
@@ -234,6 +238,26 @@ PartBase::~PartBase () {
     delete m_sources ["urlsource"];
     //delete m_bookmark_manager;
     delete m_bookmark_owner;
+}
+
+KDE_NO_EXPORT void PartBase::showControls (bool show) {
+    viewWidget ()->setControlPanelMode (
+            show ? View::CP_Show : View::CP_Hide);
+}
+
+KDE_NO_EXPORT QString PartBase::getStatus () {
+    QString rval = "Waiting";
+    if (source() && source()->document()) {
+        if (source()->document()->unfinished ())
+            rval = "Playable";
+        else if (source()->document()->state >= Node::state_deactivated)
+            rval = "Complete";
+    }
+    return rval;
+}
+
+KDE_NO_EXPORT QString PartBase::doEvaluate (const QString &) {
+    return "undefined";
 }
 
 void PartBase::settingsChanged () {
