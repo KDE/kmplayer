@@ -146,6 +146,7 @@ GrabDocument::GrabDocument (KMPlayerPart *part, const QString &url,
    m_grab_file (file),
    m_part (part) {
      id = id_node_grab_document;
+     resolved = true;
 }
 
 void GrabDocument::activate () {
@@ -166,11 +167,14 @@ void GrabDocument::begin () {
     av->grabPicture (m_grab_file, 0);
 }
 
-void GrabDocument::endOfFile () {
-    kDebug() << "";
-    state = state_finished;
-    m_part->startUrl (KUrl (), m_grab_file);
-    // deleted here by Source::reset
+void *GrabDocument::message (MessageType msg, void *content) {
+    if (MsgMediaFinished == msg) {
+        state = state_finished;
+        m_part->startUrl (KUrl (), m_grab_file);
+        // deleted here by Source::reset
+    } else {
+        SourceDocument::message (msg, content);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -538,8 +542,9 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
                 }
     }
     if (!m_href_url.isEmpty () &&
-            !KAuthorized::authorizeUrlAction("redirect", url, KUrl(m_href_url)))
-        m_href_url.truncate (0);
+            !KAuthorized::authorizeUrlAction (
+                "redirect", url, KUrl (m_docbase, m_href_url)))
+           m_href_url.truncate (0);
     if (m_href_url.isEmpty ())
         setUrl (url.url ());
     if (url.isEmpty ()) {
@@ -604,7 +609,7 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
             .arg (counter++);
         Node *n = new GrabDocument (this, url.url (), m_grab_file, src);
         src->setUrl (url.url ());
-        m_src_url = KUrl (m_docbase, m_href_url).url ();
+        m_src_url = m_href_url;
         src->setDocument (n, n);
         setSource (src);
         return true;
@@ -653,7 +658,9 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
           "</a>"
           "<video id='video1' region='reg2' fit='meet'/>"
           "</body></smil>"
-          ).arg (m_href_url.isEmpty () ? QString ("#video1") : m_href_url)
+          ).arg (m_target.isEmpty ()
+              ? QString ("#video1")
+              : m_href_url.isEmpty () ? m_src_url : m_href_url)
            .arg (m_target.isEmpty ()
                    ? QString ()
                    : QString (" target='%1'").arg (m_target))
