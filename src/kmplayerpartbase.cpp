@@ -738,6 +738,7 @@ void PartBase::stop () {
         setLoaded (100);
         updateStatus (i18n ("Ready"));
     }
+    playingStopped ();
 }
 
 void PartBase::seek (qlonglong msec) {
