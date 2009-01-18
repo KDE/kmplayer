@@ -54,4 +54,4 @@ configure_file (config-kmplayer.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kmpla
 
 add_subdirectory(src)
 add_subdirectory(icons)
-#add_subdirectory(mimetypes)
+add_subdirectory(mimetypes)

@@ -316,7 +316,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                     SET_FEAT_ON (Feat_InfoPanel)
                 else
                     SET_FEAT_OFF (Feat_InfoPanel)
-            } else if (name == QString::fromLatin1("showcontrols")) {
+            } else if (name == QString::fromLatin1("showcontrols") ||
+                    name == QString::fromLatin1("controller")) {
                 if (getBoolValue (value))
                     SET_FEAT_ON (Feat_Viewer | Feat_Controls)
                 else
@@ -878,7 +879,8 @@ enum JSCommand {
     length, width, height, playstate, position, source, setsource, protocol,
     gotourl, nextentry, jsc_pause, play, preventry, start, stop,
     volume, setvolume,
-    prop_error, prop_source, prop_volume
+    prop_error, prop_source, prop_volume,
+    prop_qt_status, prop_qt_rate
 };
 
 struct KMPLAYER_NO_EXPORT JSCommandEntry {
@@ -919,6 +921,7 @@ static const JSCommandEntry JSCommandList [] = {
     { "GetControls", notsupported, "buttons", KParts::LiveConnectExtension::TypeString },
     { "GetCopyright", notsupported, "(c) whoever", KParts::LiveConnectExtension::TypeString },
     { "GetCurrentEntry", notsupported, "1", KParts::LiveConnectExtension::TypeNumber },
+    { "GetDuration", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
     { "GetDRMInfo", notsupported, "RNBA", KParts::LiveConnectExtension::TypeString },
     { "GetDoubleSize", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "GetEntryAbstract", notsupported, "abstract", KParts::LiveConnectExtension::TypeString },
@@ -950,8 +953,10 @@ static const JSCommandEntry JSCommandList [] = {
     { "GetPacketsReceived", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
     { "GetPacketsTotal", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
     { "GetPlayState", playstate, 0L, KParts::LiveConnectExtension::TypeNumber },
+    { "GetPluginStatus", prop_qt_status, NULL, KParts::LiveConnectExtension::TypeString },
     { "GetPosition", position, 0L, KParts::LiveConnectExtension::TypeNumber },
     { "GetPreFetch", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetRate", prop_qt_rate, NULL, KParts::LiveConnectExtension::TypeNumber },
     { "GetShowAbout", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "GetShowPreferences", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "GetShowStatistics", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
@@ -1186,6 +1191,23 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
         case prop_error:
             type = KParts::LiveConnectExtension::TypeNumber;
             rval = QString::number (0);
+            break;
+        case prop_qt_status:
+            rval = "Waiting";
+            if (player->source() && player->source()->document()) {
+                if (player->source()->document()->unfinished ())
+                    rval = "Playable";
+                else if (player->source()->document()->state >= KMPlayer::Node::state_deactivated)
+                    rval = "Complete";
+            }
+            break;
+        case prop_qt_rate:
+            rval = QString::number (0.0);
+            if (player->source() && player->source()->document() &&
+                    player->source()->document()->state !=
+                        KMPlayer::Node::state_deferred &&
+                    player->source()->document()->unfinished ())
+                rval = QString::number (1.0);
             break;
         default:
             lastJSCommandEntry = entry;
