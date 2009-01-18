@@ -445,7 +445,7 @@ bool PartBase::openUrl (const KUrl::List & urls) {
         NodePtr d = m_source->document ();
         if (d)
             for (unsigned int i = 0; i < urls.size (); i++)
-                d->appendChild (new GenericURL (d, KUrl::decode_string (urls [i].url ())));
+                d->appendChild (new GenericURL (d, QUrl::fromPercentEncoding (urls [i].url ().toUtf8 ())));
     }
     return true;
 }
@@ -697,13 +697,19 @@ void PartBase::play () {
         }
         if (!lvi)
             lvi = static_cast<PlayListItem*>(m_view->playList()->firstChild());
-        if (lvi)
+        if (lvi) {
+            Mrl *mrl = NULL;
             for (NodePtr n = lvi->node; n; n = n->parentNode ()) {
                 if (n->isPlayable ()) {
-                    m_source->play (n->mrl ());
+                    mrl = n->mrl ();
                     break;
                 }
+                if (!mrl && n->mrl () && !n->mrl ()->src.isEmpty ())
+                    mrl = n->mrl ();
             }
+            if (mrl)
+                m_source->play (mrl);
+        }
     } else {
         m_source->play (NULL);
     }
@@ -1107,17 +1113,18 @@ void Source::insertURL (NodePtr node, const QString & mrl, const QString & title
         return;
     QString cur_url = node->mrl ()->absolutePath ();
     KUrl url (cur_url, mrl);
-    kDebug() << "Source::insertURL " << KUrl (cur_url) << " " << url;
+    QString urlstr = QUrl::fromPercentEncoding (url.url ().toUtf8 ());
+    kDebug() << cur_url << " " << urlstr;
     if (!url.isValid ())
         kError () << "try to append non-valid url" << endl;
-    else if (KUrl (cur_url) == url)
+    else if (QUrl::fromPercentEncoding (cur_url.toUtf8 ()) == urlstr)
         kError () << "try to append url to itself" << endl;
     else {
         int depth = 0; // cache this?
         for (NodePtr e = node; e->parentNode (); e = e->parentNode ())
             ++depth;
         if (depth < 40) {
-            node->appendChild (new GenericURL (m_document, KUrl::decode_string (url.url ()), title.isEmpty() ? KUrl::decode_string (mrl) : title));
+            node->appendChild (new GenericURL (m_document, urlstr, title.isEmpty() ? QUrl::fromPercentEncoding (mrl.toUtf8 ()) : title));
             m_player->updateTree ();
         } else
             kError () << "insertURL exceeds depth limit" << endl;
