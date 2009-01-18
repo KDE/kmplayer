@@ -653,7 +653,7 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
           "</a>"
           "<video id='video1' region='reg2' fit='meet'/>"
           "</body></smil>"
-          ).arg (m_href_url.isEmpty () ? QString ("#video1") : m_src_url)
+          ).arg (m_href_url.isEmpty () ? QString ("#video1") : m_href_url)
            .arg (m_target.isEmpty ()
                    ? QString ()
                    : QString (" target='%1'").arg (m_target))
