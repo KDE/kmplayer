@@ -65,6 +65,7 @@
 #include "kmplayersource.h"
 #include "playlistview.h"
 #include "viewarea.h"
+#include <solid/powermanagement.h>
 
 extern const char * normal_window_xpm[];
 extern const char * playlist_xpm[];
@@ -133,6 +134,7 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
     m_statusbar_mode (SB_Hide),
     controlbar_timer (0),
     infopanel_timer (0),
+    m_powerManagerStopSleep( -1 ),
     m_keepsizeratio (false),
     m_playing (false),
     m_mixer_init (false),
@@ -594,6 +596,7 @@ bool View::isFullScreen () const {
 void View::fullScreen () {
     if (!m_view_area->isFullScreen()) {
         m_sreensaver_disabled = false;
+        m_powerManagerStopSleep = Solid::PowerManagement::beginSuppressingSleep("KMplayer: watching a film");
         /*QByteArray data, replydata;
         QCString replyType;
         if (kapp->dcopClient ()->call ("kdesktop", "KScreensaverIface",
@@ -612,6 +615,7 @@ void View::fullScreen () {
         //if (m_viewer->isVisible ())
         //    m_viewer->setFocus ();
     } else {
+        Solid::PowerManagement::stopSuppressingSleep(m_powerManagerStopSleep);
        // if (m_sreensaver_disabled)
        //     m_sreensaver_disabled = !kapp->dcopClient()->send
        //         ("kdesktop", "KScreensaverIface", "enable(bool)", "true");
