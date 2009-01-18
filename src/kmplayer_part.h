@@ -34,7 +34,7 @@ namespace KMPlayer {
 /*
  * Document to get first frame for streams starting with a picture
  */
-class KMPLAYER_NO_EXPORT GrabDocument : public KMPlayer::Document {
+class KMPLAYER_NO_EXPORT GrabDocument : public KMPlayer::SourceDocument {
 public:
     GrabDocument (KMPlayerPart *part, const QString &url, const QString &file,
             KMPlayer::PlayListNotify *);

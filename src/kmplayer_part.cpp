@@ -142,7 +142,7 @@ KAboutData *KMPlayerFactory::aboutData () {
 
 GrabDocument::GrabDocument (KMPlayerPart *part, const QString &url,
         const QString &file, PlayListNotify * n)
- : Document (url, n),
+ : SourceDocument (part->sources () ["urlsource"], url),
    m_grab_file (file),
    m_part (part) {
      id = id_node_grab_document;
