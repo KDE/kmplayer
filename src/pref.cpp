@@ -368,8 +368,10 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     QWidget * wbox = new QWidget (cbox);
     QGridLayout * bitratelayout = new QGridLayout (wbox, 2, 3, 5);
     prefBitRate = new QLineEdit (wbox);
+    prefBitRate->setValidator( new QIntValidator( prefBitRate ) );
     QWhatsThis::add (prefBitRate, i18n("Sometimes it is possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you would prefer to allocate to video."));
     maxBitRate = new QLineEdit (wbox);
+    maxBitRate->setValidator( new QIntValidator( maxBitRate ) );
     QWhatsThis::add (maxBitRate, i18n("Sometimes it is possible to choose between various streams given a particular bitrate.\nThis option sets the maximum bandwidth you have available for video."));
     bitratelayout->addWidget(new QLabel(i18n("Preferred bitrate:"), wbox), 0, 0);
     bitratelayout->addWidget (prefBitRate, 0, 1);
