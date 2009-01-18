@@ -1008,17 +1008,17 @@ KDE_NO_EXPORT void ImageMedia::updateRender () {
         m_node->document()->post(m_node, new Posting (m_node, MsgMediaUpdated));
 }
 
-KDE_NO_EXPORT void ImageMedia::sizes (Single &width, Single &height) {
+KDE_NO_EXPORT void ImageMedia::sizes (SSize &size) {
     if (svg_renderer) {
         QSize s = svg_renderer->defaultSize ();
-        width = s.width ();
-        height = s.height ();
+        size.width = s.width ();
+        size.height = s.height ();
     } else if (cached_img) {
-        width = cached_img->width;
-        height = cached_img->height;
+        size.width = cached_img->width;
+        size.height = cached_img->height;
     } else {
-        width = 0;
-        height = 0;
+        size.width = 0;
+        size.height = 0;
     }
 }
 

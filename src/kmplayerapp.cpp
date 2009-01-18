@@ -1052,7 +1052,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
     if (m_document && m_document->firstChild ()) {
         KMPlayer::Mrl * mrl = m_document->firstChild ()->mrl ();
         if (mrl) {
-            Source::setDimensions (m_document->firstChild (), mrl->width, mrl->height);
+            Source::setDimensions (m_document->firstChild (), mrl->size.width, mrl->size.height);
             m_player->updateTree ();
             m_current->activate ();
             emit startPlaying ();
@@ -1419,7 +1419,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
     if (m_document && m_document->firstChild ()) {
         KMPlayer::Mrl * mrl = m_document->firstChild ()->mrl ();
         if (mrl) {
-            setDimensions (m_document->firstChild (), mrl->width, mrl->height);
+            setDimensions (m_document->firstChild (), mrl->size.width, mrl->size.height);
             m_player->updateTree ();
             m_current->activate ();
             emit startPlaying ();

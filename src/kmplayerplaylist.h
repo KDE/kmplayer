@@ -604,8 +604,7 @@ public:
     MediaInfo *media_info;
     QString src;
     QString mimetype;
-    Single width;
-    Single height;
+    SSize size;
     float aspect;
     int repeat;
     unsigned char view_mode;
@@ -619,8 +618,6 @@ public:
  */
 class KMPLAYER_EXPORT PlayListNotify {
 public:
-    virtual ~PlayListNotify () {}
-
     /**
      * Element has activated or deactivated notification
      */

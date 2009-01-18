@@ -84,9 +84,11 @@ static void clearSurface (cairo_t *cr, const IRect &rect) {
     cairo_restore (cr);
 }
 
-void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar, CalculatedSizer *zoom) {
+void ImageData::copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar, CalculatedSizer *zoom) {
     cairo_surface_t *src_sf;
     bool clear = false;
+    int w = sz.width;
+    int h = sz.height;
 
     if (surface) {
         src_sf = surface;
@@ -351,7 +353,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                 Single h = bg_img->height;
                 matrix.getWH (w, h);
                 if (!s->surface)
-                    bg_img->copyImage (s, w, h, cairo_surface);
+                    bg_img->copyImage (s, SSize (w, h), cairo_surface);
                 if (bg_img->has_alpha)
                     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
                 cairo_pattern_t *pat = cairo_pattern_create_for_surface (s->surface);
@@ -747,12 +749,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     ImageData *id = im ? im->cached_img.ptr () : NULL;
     if (id && id->flags == ImageData::ImageScalable)
         im->render (scr.size);
-    if (!id || im->isEmpty () || img->width <= 0 || img->height <= 0) {
+    if (!id || im->isEmpty () || img->size.isEmpty ()) {
         s->remove();
         return;
     }
     if (!s->surface || s->dirty)
-        id->copyImage (s, scr.width (), scr.height (), cairo_surface, img->pan_zoom);
+        id->copyImage (s, SSize (scr.width (), scr.height ()), cairo_surface, img->pan_zoom);
     if (id->has_alpha)
         cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
     paint (img, s, scr.point, clip_rect);
@@ -792,7 +794,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     if (!s)
         return;
     if (!s->surface) {
-        txt->width = txt->height = 0;
+        txt->size = SSize ();
         s->bounds = txt->calculateBounds ();
     }
     IRect scr = matrix.toScreen (s->bounds);
@@ -830,8 +832,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 
         // update bounds rect
         SRect rect = matrix.toUser (IRect (scr.point, ISize (pxw, pxh)));
-        txt->width = rect.width ();
-        txt->height = rect.height ();
+        txt->size = rect.size;
         s->bounds = txt->calculateBounds ();
 
         // update coord. for painting below
@@ -952,7 +953,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
         cairo_rectangle (cr, scr.x (), scr.y (), w, h);
         //cairo_clip (cr);
         cairo_translate (cr, scr.x (), scr.y ());
-        cairo_scale (cr, 1.0*w/(double)imfl->width, 1.0*h/(double)imfl->height);
+        cairo_scale (cr, 1.0*w/(double)imfl->size.width, 1.0*h/(double)imfl->size.height);
         if (imfl->needs_scene_img)
             cairo_push_group (cr);
         for (NodePtr n = imfl->firstChild (); n; n = n->nextSibling ())
@@ -962,9 +963,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
                 switch (n->id) {
                     case RP::id_node_viewchange:
                         if (!(int)tb->srcw)
-                            tb->srcw = imfl->width;
+                            tb->srcw = imfl->size.width;
                         if (!(int)tb->srch)
-                            tb->srch = imfl->height;
+                            tb->srch = imfl->size.height;
                         // fall through
                     case RP::id_node_crossfade:
                     case RP::id_node_fadein:
@@ -972,9 +973,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
                     case RP::id_node_fill:
                     case RP::id_node_wipe:
                         if (!(int)tb->w)
-                            tb->w = imfl->width;
+                            tb->w = imfl->size.width;
                         if (!(int)tb->h)
-                            tb->h = imfl->height;
+                            tb->h = imfl->size.height;
                         n->accept (this);
                         break;
                 }
@@ -1009,13 +1010,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
         if (im && img->surface ()) {
             Single sx = fi->srcx, sy = fi->srcy, sw = fi->srcw, sh = fi->srch;
             if (!(int)sw)
-                sw = img->width;
+                sw = img->size.width;
             if (!(int)sh)
-                sh = img->height;
+                sh = img->size.height;
             if ((int)fi->w && (int)fi->h && (int)sw && (int)sh) {
                 if (!img->img_surface->surface)
                     im->cached_img->copyImage (img->img_surface,
-                            img->width, img->height, cairo_surface);
+                            img->size, cairo_surface);
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
                 float scalex = 1.0 * sw / fi->w;
@@ -1062,13 +1063,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
         if (im && img->surface ()) {
             Single sx = cf->srcx, sy = cf->srcy, sw = cf->srcw, sh = cf->srch;
             if (!(int)sw)
-                sw = img->width;
+                sw = img->size.width;
             if (!(int)sh)
-                sh = img->height;
+                sh = img->size.height;
             if ((int)cf->w && (int)cf->h && (int)sw && (int)sh) {
                 if (!img->img_surface->surface)
                     im->cached_img->copyImage (img->img_surface,
-                            img->width, img->height, cairo_surface);
+                            img->size, cairo_surface);
                 cairo_save (cr);
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
@@ -1104,9 +1105,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
             Single w = wipe->w, h = wipe->h;
             Single sx = wipe->srcx, sy = wipe->srcy, sw = wipe->srcw, sh = wipe->srch;
             if (!(int)sw)
-                sw = img->width;
+                sw = img->size.width;
             if (!(int)sh)
-                sh = img->height;
+                sh = img->size.height;
             if (wipe->direction == RP::Wipe::dir_right) {
                 Single dx = w * 1.0 * wipe->progress / 100;
                 tx = x -w + dx;
@@ -1130,7 +1131,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
             if ((int)w && (int)h) {
                 if (!img->img_surface->surface)
                     im->cached_img->copyImage (img->img_surface,
-                            img->width, img->height, cairo_surface);
+                            img->size, cairo_surface);
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
                 float scalex = 1.0 * sw / wipe->w;
@@ -1785,10 +1786,9 @@ KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
     w = nw;
     h = nh;
     if (m_view->keepSizeRatio () &&
-            w > 0 && h > 0 &&
-            mrl && mrl->width > 0 && mrl->height > 0) {
+            w > 0 && h > 0 && mrl && !mrl->size.isEmpty ()) {
         double wasp = (double) w / h;
-        double masp = (double) mrl->width / mrl->height;
+        double masp = (double) mrl->size.width / mrl->size.height;
         if (wasp > masp) {
             Single tmp = w;
             w = masp * h;
@@ -1798,8 +1798,8 @@ KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
             h = Single (w / masp);
             y += (tmp - h) / 2;
         }
-        surface->xscale = 1.0 * w / mrl->width;
-        surface->yscale = 1.0 * h / mrl->height;
+        surface->xscale = 1.0 * w / mrl->size.width;
+        surface->yscale = 1.0 * h / mrl->size.height;
     } else {
         surface->xscale = 1.0;
         surface->yscale = 1.0;

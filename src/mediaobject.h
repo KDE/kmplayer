@@ -308,7 +308,7 @@ struct KMPLAYER_NO_EXPORT ImageData {
     ~ImageData();
     void setImage (QImage *img);
 #ifdef KMPLAYER_WITH_CAIRO
-    void copyImage (Surface *s, int w, int h, cairo_surface_t *similar, CalculatedSizer *zoom=NULL);
+    void copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar, CalculatedSizer *zoom=NULL);
 #endif
     bool isEmpty () const {
         return !image
@@ -350,7 +350,7 @@ public:
     bool wget (const QString &url);
     bool isEmpty () const;
     void render (const ISize &size);
-    void sizes (Single &width, Single &height);
+    void sizes (SSize &size);
     void updateRender ();
 
     ImageDataPtr cached_img;

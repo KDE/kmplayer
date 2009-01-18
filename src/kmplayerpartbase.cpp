@@ -894,8 +894,7 @@ void Source::setDimensions (NodePtr node, int w, int h) {
     Mrl *mrl = node ? node->mrl () : 0L;
     if (mrl) {
         float a = h > 0 ? 1.0 * w / h : 0.0;
-        mrl->width = w;
-        mrl->height = h;
+        mrl->size = SSize (w, h);
         mrl->aspect = a;
         bool ev = (w > 0 && h > 0) ||
             (h == 0 && m_height > 0) ||
@@ -1019,8 +1018,8 @@ void Source::play (Mrl *mrl) {
     for (NodePtr p = mrl->parentNode(); p; p = p->parentNode())
         p->state = Element::state_activated;
     mrl->activate ();
-    m_width = mrl->width;
-    m_height = mrl->height;
+    m_width = mrl->size.width;
+    m_height = mrl->size.height;
     m_aspect = mrl->aspect;
     //kDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ());
     m_player->updateTree ();

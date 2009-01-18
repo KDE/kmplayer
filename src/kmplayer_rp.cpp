@@ -46,9 +46,9 @@ KDE_NO_EXPORT void RP::Imfl::closed () {
             AttributePtr a = convertNode <Element> (n)->attributes ()->first ();
             for (; a; a = a->nextSibling ()) {
                 if (StringPool::attr_width == a->name ()) {
-                    width = a->value ().toInt ();
+                    size.width = a->value ().toInt ();
                 } else if (StringPool::attr_height == a->name ()) {
-                    height = a->value ().toInt ();
+                    size.height = a->value ().toInt ();
                 } else if (a->name () == "duration") {
                     int dur;
                     parseTime (a->value ().lower (), dur);
@@ -158,12 +158,8 @@ KDE_NO_EXPORT void RP::Imfl::accept (Visitor * v) {
 KDE_NO_EXPORT Surface *RP::Imfl::surface () {
     if (!rp_surface) {
         rp_surface = (Surface *) Mrl::message (MsgQueryRoleChildDisplay, this);
-        if (rp_surface) {
-            if (width <= 0 || width > 32000)
-                width = rp_surface->bounds.width ();
-            if (height <= 0 || height > 32000)
-                height = rp_surface->bounds.height ();
-        }
+        if (rp_surface && size.isEmpty ())
+            size = rp_surface->bounds.size;
     }
     return rp_surface.ptr ();
 }
@@ -192,9 +188,9 @@ KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void RP::Imfl::repaint () {
     if (!active ()) {
         kWarning () << "Spurious Imfl repaint";
-    } else if (surface () && width > 0 && height > 0) {
+    } else if (surface () && !size.isEmpty ()) {
         rp_surface->markDirty ();
-        rp_surface->repaint (SRect (0, 0, width, height));
+        rp_surface->repaint (SRect (0, 0, size));
     }
 }
 
@@ -249,8 +245,8 @@ KDE_NO_EXPORT void RP::Image::dataArrived () {
     kDebug () << "RP::Image::remoteReady";
     ImageMedia *im = media_info->media ? (ImageMedia *)media_info->media : NULL;
     if (!im->isEmpty ()) {
-        width = im->cached_img->width;
-        height = im->cached_img->height;
+        size.width = im->cached_img->width;
+        size.height = im->cached_img->height;
     }
     postpone_lock = 0L;
 }
@@ -270,7 +266,7 @@ KDE_NO_EXPORT Surface *RP::Image::surface () {
             Surface *ps = static_cast <RP::Imfl *> (p)->surface ();
             if (ps)
                 img_surface = ps->createSurface (this,
-                        SRect (0, 0, width, height));
+                        SRect (0, 0, size));
         }
     }
     return img_surface;

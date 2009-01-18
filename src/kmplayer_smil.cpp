@@ -1385,8 +1385,8 @@ KDE_NO_EXPORT void SMIL::RootLayout::closed () {
     if (!width.isEmpty () && !height.isEmpty ()) {
         Smil *s = Smil::findSmilNode (this);
         if (s) {
-            s->width = width.toDouble ();
-            s->height = height.toDouble();
+            s->size.width = width.toDouble ();
+            s->size.height = height.toDouble();
         }
     }
     Element::closed ();
@@ -1435,8 +1435,7 @@ void *SMIL::RootLayout::message (MessageType msg, void *content) {
                     surface->size.height = h;
                     if (!auxiliaryNode ()) {
                         SMIL::Smil *s = Smil::findSmilNode (this);
-                        s->width = w;
-                        s->height = h;
+                        s->size = surface->size;
                     }
                     if (content)
                         surface->resize (surface->bounds, true);
@@ -2596,10 +2595,8 @@ static NodePtr findExternalTree (Mrl *mrl) {
 KDE_NO_EXPORT void SMIL::MediaType::closed () {
     external_tree = findExternalTree (this);
     Mrl *mrl = external_tree ? external_tree->mrl () : NULL;
-    if (mrl) {
-        width = mrl->width;
-        height = mrl->height;
-    }
+    if (mrl)
+        size = mrl->size;
     title = getAttribute (StringPool::attr_title);
     Mrl::closed ();
 }
@@ -2821,7 +2818,7 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
     SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (region_node);
     if (rb && rb->message (MsgQueryRoleDisplay)) {
         SRect rr = rb->region_surface->bounds;
-        Single x, y, w = width, h = height;
+        Single x, y, w = size.width, h = size.height;
         sizes.calcSizes (this, rr.width(), rr.height(), x, y, w, h);
         Fit ft = fit_default == fit ? rb->fit : fit;
         ImageMedia *im;
@@ -2841,30 +2838,30 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
                 break;
         }
 
-        if (width > 0 && height > 0 && w > 0 && h > 0)
+        if (!size.isEmpty () && w > 0 && h > 0)
             switch (ft) {
                 case fit_meet: {
-                    float iasp = 1.0 * width / height;
+                    float iasp = 1.0 * size.width / size.height;
                     float rasp = 1.0 * w / h;
                     if (iasp > rasp)
-                        h = height * w / width;
+                        h = size.height * w / size.width;
                     else
-                        w = width * h / height;
+                        w = size.width * h / size.height;
                     break;
                 }
                 case fit_scroll:
                 case fit_default:
                 case fit_hidden:
-                     w = width;
-                     h = height;
+                     w = size.width;
+                     h = size.height;
                      break;
                 case fit_slice: {
-                    float iasp = 1.0 * width / height;
+                    float iasp = 1.0 * size.width / size.height;
                     float rasp = 1.0 * w / h;
                     if (iasp > rasp)
-                        w = width * h / height;
+                        w = size.width * h / size.height;
                     else
-                        h = height * w / width;
+                        h = size.height * w / size.width;
                     break;
                 }
                 default: {} // fit_fill
@@ -2922,9 +2919,9 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
         case MsgSurfaceBoundsUpdate:
             if (sub_surface) {
                 SRect rect = calculateBounds ();
-                if (width > 0 && height > 0) {
-                    sub_surface->xscale = 1.0 * rect.width () / width;
-                    sub_surface->yscale = 1.0 * rect.height () / height;
+                if (!size.isEmpty ()) {
+                    sub_surface->xscale = 1.0 * rect.width () / size.width;
+                    sub_surface->yscale = 1.0 * rect.height () / size.height;
                 }
                 sub_surface->resize (rect, !!content);
             }
@@ -2990,8 +2987,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             resolved = true;
             Mrl *mrl = external_tree ? external_tree->mrl () : NULL;
             if (mrl) {
-                width = mrl->width;
-                height = mrl->height;
+                size = mrl->size;
                 message (MsgSurfaceBoundsUpdate);
             }
             postpone_lock = 0L;
@@ -3027,8 +3023,7 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
             Surface *s = NULL;
             Mrl *mrl = (Mrl *) content;
             if (mrl) {
-                width = mrl->width;
-                height = mrl->height;
+                size = mrl->size;
                 message (MsgSurfaceBoundsUpdate);
                 s = surface ();
                 if (s)
@@ -3253,7 +3248,7 @@ void *SMIL::ImageMediaType::message (MessageType msg, void *content) {
                 if (media_info) {
                     ImageMedia *im = static_cast <ImageMedia *> (media_info->media);
                     if (im && !im->isEmpty ())
-                        im->sizes (width, height);
+                        im->sizes (size);
                 }
                 break;
 
@@ -3324,7 +3319,7 @@ SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
         return;
     }
     if (sub_surface) {
-        width = height = 0;
+        size = SSize ();
         sub_surface->resize (calculateBounds (), true);
     }
 }
