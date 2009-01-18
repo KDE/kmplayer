@@ -86,6 +86,7 @@ public:
     }
 
     void enableFinishEvent (bool b = true) { m_enablefinish = b; }
+    QString evaluate (const QString & script);
 signals:
     void partEvent (const unsigned long, const QString &,
                     const KParts::LiveConnectExtension::ArgList &);
@@ -97,7 +98,6 @@ public slots:
     void finished ();
     void evaluate (const QString & script, bool store, QString & result);
 private:
-    QString evaluate (const QString & script);
     KMPlayerPart * player;
     QString script_result;
     const JSCommandEntry * lastJSCommandEntry;
@@ -137,6 +137,11 @@ public:
     virtual void setLoaded (int percentage);
     bool openNewURL (const KUrl & url); // for JS interface
     bool startUrl (const KUrl &url, const QString &pic=QString ());//clickToPlay
+
+    QString doEvaluate (const QString &script);
+    void showControls (bool show);
+    QString getStatus ();
+
 public slots:
     virtual bool openUrl (const KUrl & url);
     virtual void openUrl (const KUrl &, const QString &t, const QString &srv);

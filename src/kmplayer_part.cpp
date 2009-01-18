@@ -47,6 +47,7 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
 #include "viewarea.h"
+#include "pluginadaptor.h"
 
 #include <stdlib.h>
 #include <unistd.h> // unlink, getpid
@@ -60,12 +61,13 @@ public:
     KMPlayerPartStatic (KMPlayerPartStatic **);
     ~KMPlayerPartStatic ();
     KMPlayerPartList partlist;
+    int counter;
 };
 
 static KMPlayerPartStatic * kmplayerpart_static = 0L;
 
 KDE_NO_CDTOR_EXPORT
-KMPlayerPartStatic::KMPlayerPartStatic (KMPlayerPartStatic **glob) : GlobalShared<KMPlayerPartStatic> (glob) {
+KMPlayerPartStatic::KMPlayerPartStatic (KMPlayerPartStatic **glob) : GlobalShared<KMPlayerPartStatic> (glob), counter (0) {
     StringPool::init ();
 }
 
@@ -409,6 +411,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
     } else
         m_group.truncate (0);
     kmplayerpart_static->partlist.push_back (this);
+
+    (void) new PluginAdaptor (this);
+    QDBusConnection::sessionBus().registerObject (
+            QString ("/KMPlayerPlugin%1").arg(kmplayerpart_static->counter++),
+            this);
 
     QWidget *pwidget = view ()->parentWidget ();
     if (pwidget) {
@@ -829,6 +836,27 @@ KDE_NO_EXPORT void KMPlayerPart::statusPosition (int pos, int length) {
     }
 }
 
+KDE_NO_EXPORT QString KMPlayerPart::doEvaluate (const QString &script) {
+    return m_liveconnectextension->evaluate (
+            QString ("this.__kmplayer__res=" ) + script);
+}
+
+KDE_NO_EXPORT void KMPlayerPart::showControls (bool show) {
+    viewWidget ()->setControlPanelMode (
+            show ? KMPlayer::View::CP_Show : KMPlayer::View::CP_Hide);
+}
+
+KDE_NO_EXPORT QString KMPlayerPart::getStatus () {
+    QString rval = "Waiting";
+    if (source() && source()->document()) {
+        if (source()->document()->unfinished ())
+            rval = "Playable";
+        else if (source()->document()->state >= KMPlayer::Node::state_deactivated)
+            rval = "Complete";
+    }
+    return rval;
+}
+
 //---------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerBrowserExtension::KMPlayerBrowserExtension (KMPlayerPart * parent)
@@ -1193,13 +1221,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
             rval = QString::number (0);
             break;
         case prop_qt_status:
-            rval = "Waiting";
-            if (player->source() && player->source()->document()) {
-                if (player->source()->document()->unfinished ())
-                    rval = "Playable";
-                else if (player->source()->document()->state >= KMPlayer::Node::state_deactivated)
-                    rval = "Complete";
-            }
+            rval = player->getStatus ();
             break;
         case prop_qt_rate:
             rval = QString::number (0.0);

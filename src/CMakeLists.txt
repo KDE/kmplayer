@@ -78,6 +78,9 @@ install(TARGETS kmplayercommon ${INSTALL_TARGETS_DEFAULT_ARGS} )
 
 set(kmplayerpart_SRCS kmplayer_part.cpp)
 
+qt4_add_dbus_adaptor(kmplayerpart_SRCS org.kde.kmplayer.plugin.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/kmplayer_part.h KMPlayerPart)
+
 kde4_add_plugin(kmplayerpart WITH_PREFIX ${kmplayerpart_SRCS})
 
 target_link_libraries(kmplayerpart

@@ -30,7 +30,8 @@
 
 #include <kmediaplayer/player.h>
 #include <kurl.h>
-#include <kurl.h>
+#include <ksharedconfig.h>
+#include <kconfiggroup.h>
 
 #include "kmplayerview.h"
 #include "kmplayersource.h"
@@ -42,9 +43,6 @@ class KBookmarkMenu;
 class KBookmarkManager;
 class Q3ListViewItem;
 class KMenu;
-class KSharedConfig;
-template<class T> class KSharedPtr;
-typedef KSharedPtr<KSharedConfig> KSharedConfigPtr;
 
 
 namespace KMPlayer {

@@ -1,0 +1,17 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.kde.kmplayer.plugin">
+    <method name="getStatus">
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="showControls">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+      <arg name="show" type="b" direction="in"/>
+    </method>
+    <method name="doEvaluate">
+      <arg type="s" direction="out"/>
+      <arg name="script" type="s" direction="in"/>
+    </method>
+  </interface>
+</node>
