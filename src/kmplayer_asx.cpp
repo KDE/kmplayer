@@ -113,18 +113,10 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
         } else if (e->id == id_node_duration) {
             QString s = convertNode <Element> (e)->getAttribute (
                     StringPool::attr_value);
-            int multiply[] = { 1, 60, 60 * 60, 24 * 60 * 60, 0 };
-            int mpos = 0;
-            double d = 0;
-            while (!s.isEmpty () && multiply[mpos]) {
-                int p = s.lastIndexOf (QChar (':'));
-                QString t = p >= 0 ? s.mid (p + 1) : s;
-                d += multiply[mpos++] * t.toDouble();
-                s = p >= 0 ? s.left (p) : QString ();
-            }
-            if (d > 0.00001)
+            int pos = parseTimeString( s );
+            if (pos > 0)
                 duration_timer = document()->post (
-                        this, new TimerPosting (int (d * 1000)));
+                        this, new TimerPosting (pos * 10));
         }
     Mrl::activate ();
 }

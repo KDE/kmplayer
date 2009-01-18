@@ -832,8 +832,8 @@ unsigned int Mrl::parseTimeString (const QString &ts) {
         d += multiply[mpos++] * t.toDouble();
         s = p >= 0 ? s.left (p) : QString ();
     }
-    if (d > 0.1)
-        return (unsigned int) (d * 10);
+    if (d > 0.01)
+        return (unsigned int) (d * 100);
     return 0;
 }
 

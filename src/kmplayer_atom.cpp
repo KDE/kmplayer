@@ -219,7 +219,7 @@ void ATOM::MediaGroup::addSummary (Node *rating_node) {
                 QString t = e->getAttribute (TrieString ("time"));
                 if (!t.isEmpty ())
                     images += QString (" dur=\"") +
-                        QString::number (Mrl::parseTimeString (t) / 10) +
+                        QString::number (Mrl::parseTimeString (t) / 100.0) +
                         QChar ('"');
                 images += QString (" transIn=\"fade\" transOut=\"ellipsewipe\" fit=\"meet\"/>");
                 img_count++;
