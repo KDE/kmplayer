@@ -418,7 +418,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     zoomMenu = new KMPlayerPopupMenu (this, i18n ("&Zoom"));
     zoomAction = popupMenu->addMenu (zoomMenu);
     zoomAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("zoom-best-fit"), KIconLoader::Small, 0, false));
+                QString ("zoom-fit-best"), KIconLoader::Small, 0, false));
     zoom50Action = zoomMenu->addAction (i18n ("50%"));
     zoom100Action = zoomMenu->addAction (i18n ("100%"));
     zoom150Action = zoomMenu->addAction (i18n ("150%"));
