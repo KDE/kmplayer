@@ -351,7 +351,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
     }
     if (turned_off_features) {
         if (m_features == Feat_Unknown)
-            m_features = (Feat_All & ~(Feat_PlayList | Feat_ImageWindow));
+            m_features = (Feat_All & ~(Feat_PlayList | Feat_ImageWindow | Feat_StatusBar));
         m_features &= ~turned_off_features;
     }
     //KParts::Part::setWidget (m_view);
