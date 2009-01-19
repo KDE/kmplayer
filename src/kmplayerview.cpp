@@ -216,9 +216,7 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     QSize sbsize = m_status_bar->sizeHint ();
     m_status_bar->hide ();
     m_status_bar->setMaximumSize (2500, sbsize.height ());
-#if KDE_IS_VERSION(3,1,90)
     setVideoWidget (m_view_area);
-#endif
 
     m_multiedit = new TextEdit (m_view_area, this);
     QFont fnt = KGlobalSettings::fixedFont ();

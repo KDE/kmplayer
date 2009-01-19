@@ -618,10 +618,6 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
     new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
-#if KDE_IS_VERSION(3,1,90)
-#else
-    viewFullscreen = new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), ac, "view_fullscreen");
-#endif
     fileNewWindow->setStatusText(i18n("Opens a new application window"));
     fileOpen->setStatusText(i18n("Opens an existing file"));
     fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
@@ -1355,11 +1351,7 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool by_user) {
         if (by_user)
             connect (m_view->controlPanel ()->button (KMPlayer::ControlPanel::button_playlist), SIGNAL (clicked ()), this, SLOT (slotMinimalMode ()));
         if (by_user)
-#if KDE_IS_VERSION(3, 1, 90)
             winfo.setWindowType (NET::Utility);
-#else
-            winfo.setWindowType (NET::Menu);
-#endif
     }
     m_view->viewArea ()->minimalMode ();
     if (by_user) {
@@ -1616,9 +1608,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotStatusMsg (const QString &text) {
 KDE_NO_EXPORT void KMPlayerApp::fullScreen () {
     if (qobject_cast <KAction *> (sender ()))
         m_view->fullScreen();
-#if KDE_IS_VERSION(3,1,90)
     viewFullscreen->setChecked (m_view->isFullScreen ());
-#endif
     if (m_view->isFullScreen())
         hide ();
     else {

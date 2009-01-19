@@ -522,13 +522,8 @@ KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
         kDebug() << "Source resetted" << endl;
         m_player->settings ()->recordfile = url->lineEdit()->text();
         m_player->settings ()->replaytime = replaytime->text ().toInt ();
-#if KDE_IS_VERSION(3,1,90)
         int id = recorder->selectedId ();
         int replayid = replay->selectedId ();
-#else
-        int id = recorder->id (recorder->selected ());
-        int replayid = replay->id (replay->selectedId ());
-#endif
         m_player->settings ()->recorder = Settings::Recorder (id);
         m_player->settings ()->replayoption = Settings::ReplayOption (replayid);
         for (RecorderPage * p = m_recorders; p; p = p->next)
@@ -581,11 +576,7 @@ KDE_NO_EXPORT void PrefMEncoderPage::formatClicked (int id) {
 }
 
 KDE_NO_EXPORT void PrefMEncoderPage::startRecording () {
-#if KDE_IS_VERSION(3,1,90)
     m_player->settings ()->recordcopy = !format->selectedId ();
-#else
-    m_player->settings ()->recordcopy = !format->id (format->selected ());
-#endif
     m_player->settings ()->mencoderarguments = arguments->text ();
 }
 

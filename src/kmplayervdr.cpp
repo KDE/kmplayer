@@ -53,9 +53,7 @@
 #include <kiconloader.h>
 #include <klistview.h>
 #include <kdeversion.h>
-#if KDE_IS_VERSION(3, 1, 90)
 #include <kinputdialog.h>
-#endif
 
 #include "kmplayer_backend_stub.h"
 #include "kmplayer_callback.h"
@@ -247,9 +245,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
     DEF_ACT (act_green, i18n ("VDR Key Green"), "green", , SLOT (keyGreen ()), "vdr_key_green");
     DEF_ACT (act_yellow, i18n ("VDR Key Yellow"), "yellow", , SLOT (keyYellow ()), "vdr_key_yellow");
     DEF_ACT (act_blue, i18n ("VDR Key Blue"), "blue", , SLOT (keyBlue ()), "vdr_key_blue");
-#if KDE_IS_VERSION(3, 1, 90)
     DEF_ACT (act_custom, "VDR Custom Command", "system-run", , SLOT (customCmd ()), "vdr_key_custom");
-#endif
     m_app->initMenu (); // update menu and toolbar
     DEF_ACT (act_0, i18n ("VDR Key 0"), "0", Qt::Key_0, SLOT (key0 ()), "vdr_key_0");
     DEF_ACT (act_1, i18n ("VDR Key 1"), "1", Qt::Key_1, SLOT (key1 ()), "vdr_key_1");
@@ -488,11 +484,9 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sendCommand () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::customCmd () {
-#if KDE_IS_VERSION(3, 1, 90)
     QString cmd = KInputDialog::getText (i18n ("Custom VDR command"), i18n ("You can pass commands to VDR.\nEnter 'HELP' to see a list of available commands.\nYou can see VDR response in the console window.\n\nVDR Command:"), QString(), 0, m_player->view ());
     if (!cmd.isEmpty ())
         queueCommand (QString (cmd + QChar ('\n')).local8Bit ());
-#endif
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::timerEvent (QTimerEvent * e) {
