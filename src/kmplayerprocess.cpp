@@ -1720,15 +1720,7 @@ bool CallbackProcess::quit () {
             m_backend->quit ();
         else if (viewer ())
             viewer ()->sendKeyEvent ('q');
-#if KDE_IS_VERSION(3, 1, 90)
         m_process->wait(1);
-#else
-        QTime t;
-        t.start ();
-        do {
-            K3ProcessController::instance ()->waitForProcessExit (2);
-        } while (t.elapsed () < 1000 && m_process->isRunning ());
-#endif
     }
     return Process::quit ();
 }
