@@ -1,3 +1,12 @@
+Changes since version 0.11.0
+- Implement NPNPostUrl, fixes some not working flash cases
+- Set correct version in about dialog
+- Delay completed signal with npp until first stream is finished
+- Disable powermanager when we watch a film
+- Add dbus interface for part, inluding org.kdeKMediaPlayer
+- Fix for eof doesn't exit fullscreen
+- Fix pressing play button doing nothing when there are child links
+- Fix MPlayer often inserting the same link
 Changes since version 0.11.0-rc4
 - Extend Atom feed for Youtube queries
 - Fix crash with npp if we get a javascript call before the plugin is loaded
