@@ -542,7 +542,7 @@ public:
         BecauseDone = 0, BecauseError = 1, BecauseStopped = 2
     };
 
-    NpStream (NpPlayer *parent, uint32_t stream_id, const QString &url);
+    NpStream (NpPlayer *parent, uint32_t stream_id, const QString &url, const QByteArray &post);
     ~NpStream ();
 
     void open () KMPLAYER_NO_MBR_EXPORT;
@@ -551,6 +551,7 @@ public:
     void destroy () KMPLAYER_NO_MBR_EXPORT;
 
     QString url;
+    QByteArray post;
     QByteArray pending_buf;
     KIO::TransferJob *job;
     timeval data_arrival;
@@ -593,7 +594,7 @@ public:
     using Process::running;
     void running (const QString &srv) KMPLAYER_NO_MBR_EXPORT;
     void plugged () KMPLAYER_NO_MBR_EXPORT;
-    void request_stream (const QString &path, const QString &url, const QString &target) KMPLAYER_NO_MBR_EXPORT;
+    void request_stream (const QString &path, const QString &url, const QString &target, const QString &post) KMPLAYER_NO_MBR_EXPORT;
     QString evaluate (const QString &script, bool store) KMPLAYER_NO_MBR_EXPORT;
     void dimension (int w, int h) KMPLAYER_NO_MBR_EXPORT;
 

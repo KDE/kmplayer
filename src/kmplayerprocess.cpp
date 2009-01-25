@@ -2292,9 +2292,10 @@ IProcess *NppProcessInfo::create (PartBase *p, AudioVideoMedia *media) {
 
 #ifdef KMPLAYER_WITH_NPP
 
-KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString &u)
+KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString &u, const QByteArray &ps)
  : QObject (p),
    url (u),
+   post (ps),
    job (0L), bytes (0),
    stream_id (sid),
    content_length (0),
@@ -2326,7 +2327,47 @@ KDE_NO_EXPORT void NpStream::open () {
         finish_reason = BecauseDone;
         emit stateChanged ();
     } else {
-        job = KIO::get (KUrl (url), KIO::NoReload, KIO::HideProgressInfo);
+        if (!post.size ()) {
+            job = KIO::get (KUrl (url), KIO::NoReload, KIO::HideProgressInfo);
+        } else {
+            QStringList name;
+            QStringList value;
+            QString buf;
+            bool nl = false;
+            int data_pos = -1;
+            for (int i = 0; i < post.size () && data_pos < 0; ++i) {
+                char c = post.at (i);
+                switch (c) {
+                case ':':
+                    if (name.size () == value.size()) {
+                        name << buf;
+                        buf.truncate (0);
+                    } else
+                        buf += QChar (':');
+                    break;
+                case '\r':
+                    break;
+                case '\n':
+                    if (name.size () == value.size()) {
+                        if (buf.isEmpty ()) {
+                            data_pos = i + 1;
+                        } else {
+                            name << buf;
+                            value << QString ("");
+                        }
+                    } else {
+                        value << buf;
+                    }
+                    buf.truncate (0);
+                    break;
+                default:
+                    buf += QChar (c);
+                }
+            }
+            job = KIO::http_post (KUrl (url), post.mid (data_pos), KIO::HideProgressInfo);
+            for (int i = 0; i < name.size(); ++i)
+                job->addMetaData (name[i].trimmed (), value[i].trimmed ());
+        }
         job->addMetaData ("errorPage", "false");
         connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
                 this, SLOT (slotData (KIO::Job *, const QByteArray &)));
@@ -2524,9 +2565,9 @@ static int getStreamId (const QString &path) {
     return sid;
 }
 
-KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString &url, const QString &target) {
+KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString &url, const QString &target, const QString &post) {
     QString uri (url);
-    kDebug () << "NpPlayer::request " << path << " '" << url << "' " << " tg:" << target;
+    kDebug () << "NpPlayer::request " << path << " '" << url << "' " << " tg:" << target << "post" << post.length ();
     bool js = url.startsWith ("javascript:");
     if (!js) {
         QString base = process_info->manager->player ()->docBase ().url ();
@@ -2550,7 +2591,7 @@ KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString 
                 process_info->manager->player ()->openUrl (kurl, target, QString ());
             sendFinish (sid, 0, NpStream::BecauseDone);
         } else {
-            NpStream * ns = new NpStream (this, sid, uri);
+            NpStream * ns = new NpStream (this, sid, uri, post.toUtf8 ());
             connect (ns, SIGNAL (stateChanged ()), this, SLOT (streamStateChanged ()));
             streams[sid] = ns;
             if (url != uri)

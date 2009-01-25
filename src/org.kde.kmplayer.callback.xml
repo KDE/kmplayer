@@ -19,6 +19,7 @@
       <arg name="path" type="s" direction="in"/>
       <arg name="url" type="s" direction="in"/>
       <arg name="target" type="s" direction="in"/>
+      <arg name="post" type="s" direction="in"/>
     </method>
     <method name="evaluate">
       <arg type="s" direction="out"/>

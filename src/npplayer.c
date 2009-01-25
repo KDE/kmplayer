@@ -87,9 +87,11 @@ typedef struct _StreamInfo {
     unsigned int stream_pos;
     unsigned int total;
     unsigned int reason;
+    unsigned int post_len;
     char *url;
     char *mimetype;
     char *target;
+    char *post;
     bool notify;
     bool called_plugin;
     bool destroyed;
@@ -159,6 +161,8 @@ static void freeStream (StreamInfo *si) {
         g_free (si->mimetype);
     if (si->target)
         g_free (si->target);
+    if (si->post)
+        nsMemFree (si->post);
     nsMemFree (si);
 }
 
@@ -167,6 +171,7 @@ static gboolean requestStream (void * p) {
     if (si) {
         char *path = (char *)nsAlloc (64);
         char *target = si->target ? si->target : g_strdup ("");
+        char *post = si->post ? g_strndup (si->post, si->post_len) : g_strdup ("");
         if (!callback_service)
             current_stream_id = p;
         if (!stdin_read_watch)
@@ -175,10 +180,12 @@ static gboolean requestStream (void * p) {
         callFunction (-1, "request_stream",
                 DBUS_TYPE_STRING, &path,
                 DBUS_TYPE_STRING, &si->url,
-                DBUS_TYPE_STRING, &target, DBUS_TYPE_INVALID);
+                DBUS_TYPE_STRING, &target,
+                DBUS_TYPE_STRING, &post, DBUS_TYPE_INVALID);
         nsMemFree (path);
         if (!si->target)
             g_free (target);
+        g_free (post);
     } else {
         print ("requestStream %d not found", (long) p);
     }
@@ -259,7 +266,7 @@ static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
     return sz;
 }
 
-static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify_data, bool notify) {
+static StreamInfo *addStream (const char *url, const char *mime, const char *target, int len, const char *post, void *notify_data, bool notify) {
     StreamInfo *si = (StreamInfo *) nsAlloc (sizeof (StreamInfo));
     char stream_name[64];
 
@@ -270,6 +277,11 @@ static StreamInfo *addStream (const char *url, const char *mime, const char *tar
         si->mimetype = g_strdup (mime);
     if (target)
         si->target = g_strdup (target);
+    if (len && post) {
+        si->post_len = len;
+        si->post = (char *) nsAlloc (len);
+        memcpy (si->post, post, len);
+    }
     si->np_stream.notifyData = notify_data;
     si->notify = notify;
     si->np_stream.ndata = (void *) (long) (stream_id_counter++);
@@ -380,15 +392,15 @@ static void nsReleaseObject (NPObject *obj) {
 static NPError nsGetURL (NPP instance, const char* url, const char* target) {
     (void)instance;
     print ("nsGetURL %s %s\n", url, target ? target : "");
-    addStream (url, 0L, target, 0L, false);
+    addStream (url, 0L, target, 0, NULL, 0L, false);
     return NPERR_NO_ERROR;
 }
 
 static NPError nsPostURL (NPP instance, const char *url,
         const char *target, uint32 len, const char *buf, NPBool file) {
-    (void)instance; (void)len; (void)buf; (void)file;
+    (void)instance; (void)file;
     print ("nsPostURL %s %s\n", url, target ? target : "");
-    addStream (url, 0L, target, 0L, false);
+    addStream (url, 0L, target, len, buf, 0L, false);
     return NPERR_NO_ERROR;
 }
 
@@ -460,14 +472,14 @@ static jref nsGetJavaPeer (NPP instance) {
 static NPError nsGetURLNotify (NPP instance, const char* url, const char* target, void *notify) {
     (void)instance;
     print ("NPN_GetURLNotify %s %s\n", url, target ? target : "");
-    addStream (url, 0L, target, notify, true);
+    addStream (url, 0L, target, 0, NULL, notify, true);
     return NPERR_NO_ERROR;
 }
 
 static NPError nsPostURLNotify (NPP instance, const char* url, const char* target, uint32 len, const char* buf, NPBool file, void *notify) {
-    (void)instance; (void)len; (void)buf; (void)file;
+    (void)instance; (void)file;
     print ("NPN_PostURLNotify\n");
-    addStream (url, 0L, target, notify, true);
+    addStream (url, 0L, target, len, buf, notify, true);
     return NPERR_NO_ERROR;
 }
 
@@ -1249,7 +1261,7 @@ static gpointer startPlugin (const char *url, const char *mime,
     StreamInfo *si;
     if (!npp && (initPlugin (plugin) || newPlugin (mimetype, argc, argn, argv)))
         return 0L;
-    si = addStream (url, mime, 0L, 0L, false);
+    si = addStream (url, mime, 0L, 0, NULL, 0L, false);
     return si;
 }
 
