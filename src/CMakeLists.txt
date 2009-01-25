@@ -13,7 +13,7 @@ IF (KMPLAYER_WITH_CAIRO)
     MESSAGE("have cairo cflags:${optionalCFlags} ldflags:${optionalLinkFlags}")
 endif (KMPLAYER_WITH_CAIRO)
 
-add_definitions(-DQT3_SUPPORT -DKDE3_SUPPORT)
+add_definitions(-DQT3_SUPPORT -DKDE3_SUPPORT -DKMPLAYER_VERSION_STRING=\\"${KMPLAYER_VERSION_STRING}\\")
 
 ADD_DEFINITIONS(${CAIROCFlags})
 

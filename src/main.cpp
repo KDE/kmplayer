@@ -33,10 +33,10 @@ extern "C" KDE_EXPORT int kdemain (int argc, char *argv[]) {
     setsid ();
 
     KAboutData aboutData ("kmplayer", 0, ki18n("KMPlayer"),
-            KDE_VERSION_STRING,
+            KMPLAYER_VERSION_STRING,
             ki18n ("Media player."),
             KAboutData::License_GPL,
-            ki18n ("(c) 2002-2007, Koos Vriezen"),
+            ki18n ("(c) 2002-2009, Koos Vriezen"),
             KLocalizedString(),
             I18N_NOOP ("http://kmplayer.kde.org"));
     aboutData.addAuthor(ki18n("Koos Vriezen"), ki18n("Maintainer"),"koos.vriezen@gmail.com");
