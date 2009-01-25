@@ -155,6 +155,7 @@ protected slots:
     void viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *);
     void waitForImageWindowTimeOut ();
     void statusPosition (int pos, int length);
+    void nppLoaded ();
 #ifndef KMPLAYER_WITH_CAIRO
     void pictureClicked ();
 #endif
@@ -174,6 +175,7 @@ private:
     int m_features;
     int last_time_left;
     bool m_started_emited : 1;
+    bool m_wait_npp_loaded : 1;
     //bool m_noresize : 1;
 };
 

@@ -196,7 +196,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
    m_expected_view_width (0),
    m_expected_view_height (0),
    m_features (Feat_Unknown),
-   m_started_emited (false) {
+   m_started_emited (false),
+   m_wait_npp_loaded (true) {
     kDebug () << "KMPlayerPart(" << this << ")::KMPlayerPart ()";
     bool show_fullscreen = false;
     if (!kmplayerpart_static)
@@ -240,6 +241,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                 m_expected_view_height = value.toInt ();
             } else if (name == QString::fromLatin1("type")) {
                 source->document ()->mrl ()->mimetype = value;
+                if (value == "application/x-shockwave-flash" ||
+                        value == "application/futuresplash")
+                    m_wait_npp_loaded = true;
             } else if (name == QString::fromLatin1("controls")) {
                 //http://service.real.com/help/library/guides/production8/realpgd.htm?src=noref,rnhmpg_080301,rnhmtn,nosrc
                 //http://service.real.com/help/library/guides/production8/htmfiles/control.htm
@@ -452,6 +456,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
 KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
 #ifdef KMPLAYER_WITH_NPP
     if (!strcmp (p->name (), "npp")) {
+        if (m_wait_npp_loaded)
+            connect (p, SIGNAL (loaded ()), this, SLOT (nppLoaded ()));
         connect (p, SIGNAL (evaluate (const QString &, bool, QString &)),
                 m_liveconnectextension,
                 SLOT (evaluate (const QString &, bool, QString &)));
@@ -783,7 +789,7 @@ KDE_NO_EXPORT void KMPlayerPart::playingStarted () {
     if (m_settings->sizeratio && !m_noresize && m_source->width() > 0 && m_source->height() > 0)
         m_liveconnectextension->setSize (m_source->width(), m_source->height());
     m_browserextension->setLoadingProgress (100);
-    if (m_started_emited) {
+    if (m_started_emited && !m_wait_npp_loaded) {
         emit completed ();
         m_started_emited = false;
     }
@@ -793,7 +799,7 @@ KDE_NO_EXPORT void KMPlayerPart::playingStarted () {
 
 KDE_NO_EXPORT void KMPlayerPart::playingStopped () {
     KMPlayer::PartBase::playingStopped ();
-    if (m_started_emited) {
+    if (m_started_emited && !m_wait_npp_loaded) {
         m_started_emited = false;
         m_browserextension->setLoadingProgress (100);
         emit completed ();
@@ -802,6 +808,14 @@ KDE_NO_EXPORT void KMPlayerPart::playingStopped () {
     m_browserextension->infoMessage (i18n ("KMPlayer: Stop Playing"));
     if (m_view)
         m_view->controlPanel ()->setPlaying (false);
+}
+
+KDE_NO_EXPORT void KMPlayerPart::nppLoaded () {
+    if (m_started_emited && m_wait_npp_loaded) {
+        m_started_emited = false;
+        m_browserextension->setLoadingProgress (100);
+        emit completed ();
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerPart::setMenuZoom (int /*id*/) {

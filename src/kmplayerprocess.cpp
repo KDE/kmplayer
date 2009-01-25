@@ -2581,6 +2581,8 @@ KDE_NO_EXPORT void NpPlayer::destroyStream (uint32_t sid) {
     } else {
         kWarning () << "Object " << sid << " not found";
     }
+    if (!sid)
+        emit loaded ();
 }
 
 KDE_NO_EXPORT
@@ -2595,6 +2597,8 @@ void NpPlayer::sendFinish (Q_UINT32 sid, Q_UINT32 bytes, NpStream::Reason becaus
         msg.setDelayedReply (false);
         QDBusConnection::sessionBus().send (msg);
     }
+    if (!sid)
+        emit loaded ();
 }
 
 KDE_NO_EXPORT void NpPlayer::terminateJobs () {

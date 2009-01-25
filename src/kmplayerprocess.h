@@ -604,6 +604,7 @@ public:
     KDE_NO_EXPORT QString objectPath () const { return path; }
 signals:
     void evaluate (const QString & scr, bool store, QString & result);
+    void loaded ();
 public slots:
     void requestGet (const uint32_t, const QString &, QString *);
     void requestCall (const uint32_t, const QString &, const QStringList &, QString *);
