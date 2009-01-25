@@ -171,21 +171,41 @@ static gboolean requestStream (void * p) {
     if (si) {
         char *path = (char *)nsAlloc (64);
         char *target = si->target ? si->target : g_strdup ("");
-        char *post = si->post ? g_strndup (si->post, si->post_len) : g_strdup ("");
         if (!callback_service)
             current_stream_id = p;
         if (!stdin_read_watch)
             stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
         createPath ((int)(long)p, path, 64);
-        callFunction (-1, "request_stream",
-                DBUS_TYPE_STRING, &path,
-                DBUS_TYPE_STRING, &si->url,
-                DBUS_TYPE_STRING, &target,
-                DBUS_TYPE_STRING, &post, DBUS_TYPE_INVALID);
+
+        char cb_path[64];
+        createPath (-1, cb_path, sizeof (cb_path));
+        print ("call %s.%s()\n", cb_path, "request_stream");
+        if (callback_service) {
+            int i;
+            DBusMessageIter it, ait;
+            DBusMessage *msg = dbus_message_new_method_call (
+                    callback_service,
+                    cb_path,
+                    "org.kde.kmplayer.callback",
+                    "request_stream");
+            dbus_message_iter_init_append (msg, &it);
+            dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &path);
+            dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &si->url);
+            dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &target);
+            dbus_message_iter_open_container (&it, DBUS_TYPE_ARRAY, "y", &ait);
+            if (si->post_len)
+                dbus_message_iter_append_fixed_array (&ait,
+                        DBUS_TYPE_BYTE, &si->post, si->post_len);
+            dbus_message_iter_close_container(&it, &ait);
+            dbus_message_set_no_reply (msg, TRUE);
+            dbus_connection_send (dbus_connection, msg, NULL);
+            dbus_message_unref (msg);
+            dbus_connection_flush (dbus_connection);
+        }
+
         nsMemFree (path);
         if (!si->target)
             g_free (target);
-        g_free (post);
     } else {
         print ("requestStream %d not found", (long) p);
     }

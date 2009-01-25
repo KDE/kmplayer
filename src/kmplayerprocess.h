@@ -594,7 +594,7 @@ public:
     using Process::running;
     void running (const QString &srv) KMPLAYER_NO_MBR_EXPORT;
     void plugged () KMPLAYER_NO_MBR_EXPORT;
-    void request_stream (const QString &path, const QString &url, const QString &target, const QString &post) KMPLAYER_NO_MBR_EXPORT;
+    void request_stream (const QString &path, const QString &url, const QString &target, const QByteArray &post) KMPLAYER_NO_MBR_EXPORT;
     QString evaluate (const QString &script, bool store) KMPLAYER_NO_MBR_EXPORT;
     void dimension (int w, int h) KMPLAYER_NO_MBR_EXPORT;
 

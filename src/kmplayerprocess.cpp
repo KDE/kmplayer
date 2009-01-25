@@ -2565,9 +2565,9 @@ static int getStreamId (const QString &path) {
     return sid;
 }
 
-KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString &url, const QString &target, const QString &post) {
+KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString &url, const QString &target, const QByteArray &post) {
     QString uri (url);
-    kDebug () << "NpPlayer::request " << path << " '" << url << "' " << " tg:" << target << "post" << post.length ();
+    kDebug () << "NpPlayer::request " << path << " '" << url << "' " << " tg:" << target << "post" << post.size ();
     bool js = url.startsWith ("javascript:");
     if (!js) {
         QString base = process_info->manager->player ()->docBase ().url ();
@@ -2591,7 +2591,7 @@ KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString 
                 process_info->manager->player ()->openUrl (kurl, target, QString ());
             sendFinish (sid, 0, NpStream::BecauseDone);
         } else {
-            NpStream * ns = new NpStream (this, sid, uri, post.toUtf8 ());
+            NpStream * ns = new NpStream (this, sid, uri, post);
             connect (ns, SIGNAL (stateChanged ()), this, SLOT (streamStateChanged ()));
             streams[sid] = ns;
             if (url != uri)
