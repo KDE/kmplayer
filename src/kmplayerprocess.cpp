@@ -2829,7 +2829,7 @@ KDE_NO_EXPORT void NpPlayer::wroteStdin (K3Process *) {
 
 #else
 
-KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString &u)
+KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString &u, const QByteArray &/*ps*/)
     : QObject (p) {}
 
 KDE_NO_CDTOR_EXPORT NpStream::~NpStream () {}
