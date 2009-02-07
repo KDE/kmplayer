@@ -129,6 +129,8 @@ void Stream::init () {
         m_media->setCurrentSource (Phonon::Vcd);
     else if (m_url.startsWith ("cdda:"))
         m_media->setCurrentSource (Phonon::Cd);
+    else if (m_url.startsWith ("/"))
+        m_media->setCurrentSource (m_url);
     else
         m_media->setCurrentSource (QUrl (m_url));
     play ();
