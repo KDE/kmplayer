@@ -429,7 +429,7 @@ protected:
 struct KMPLAYER_NO_EXPORT ConfigDocument : public Document {
     ConfigDocument ();
     ~ConfigDocument ();
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
 };
 
 /*
@@ -438,7 +438,7 @@ struct KMPLAYER_NO_EXPORT ConfigDocument : public Document {
 struct KMPLAYER_NO_EXPORT ConfigNode : public DarkNode {
     ConfigNode (NodePtr & d, const QString & tag);
     KDE_NO_CDTOR_EXPORT ~ConfigNode () {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     QWidget * w;
 };
 
@@ -448,7 +448,7 @@ struct KMPLAYER_NO_EXPORT ConfigNode : public DarkNode {
 struct KMPLAYER_NO_EXPORT TypeNode : public ConfigNode {
     TypeNode (NodePtr & d, const QString & t);
     KDE_NO_CDTOR_EXPORT ~TypeNode () {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     void changedXML (QTextStream & out);
     QWidget * createWidget (QWidget * parent);
     const char * nodeName () const { return tag.toAscii (); }

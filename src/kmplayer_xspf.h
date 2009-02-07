@@ -52,7 +52,7 @@ const short id_node_link = 518;
 class KMPLAYER_NO_EXPORT Playlist : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Playlist (NodePtr & d) : Mrl (d, id_node_playlist) {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
     bool expose () const { return !title.isEmpty (); }
     void closed ();
@@ -61,7 +61,7 @@ public:
 class KMPLAYER_NO_EXPORT Tracklist : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Tracklist (NodePtr & d) : Element (d, id_node_tracklist) {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "tracklist"; }
     bool expose () const { return false; }
 };
@@ -74,7 +74,7 @@ public:
     PlayType playType ();
     Mrl * linkNode ();
     KDE_NO_EXPORT const char * nodeName () const { return "track"; }
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     NodePtrW location;
 };
 

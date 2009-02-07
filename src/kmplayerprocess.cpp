@@ -662,10 +662,10 @@ bool MPlayer::run (const char * args, const char * pipe) {
         fprintf (stderr, " -sid %d", sid);
         *m_process << " -sid " << QString::number (sid);
     }
-    for (NodePtr n = mrl (); n; n = n->parentNode ()) {
+    for (Node *n = mrl (); n; n = n->parentNode ()) {
         if (n->id != id_node_group_node && n->id != id_node_playlist_item)
             break;
-        QString plops = convertNode <Element> (n)->getAttribute ("mplayeropts");
+        QString plops = static_cast<Element *>(n)->getAttribute ("mplayeropts");
         if (!plops.isNull ()) {
             QStringList sl = QStringList::split (QChar (' '), plops);
             for (int i = 0; i < sl.size (); ++i) {
@@ -1842,31 +1842,31 @@ namespace KMPlayer {
         KDE_NO_CDTOR_EXPORT SomeNode (NodePtr & d, const QString & t)
             : ConfigNode (d, t) {}
         KDE_NO_CDTOR_EXPORT ~SomeNode () {}
-        NodePtr childFromTag (const QString & t);
+        Node *childFromTag (const QString & t);
     };
 } // namespace
 
 KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (NodePtr & d, const QString & t)
     : DarkNode (d, t.toUtf8 ()), w (0L) {}
 
-NodePtr ConfigDocument::childFromTag (const QString & tag) {
+Node *ConfigDocument::childFromTag (const QString & tag) {
     if (tag.lower () == QString ("document"))
         return new ConfigNode (m_doc, tag);
     return 0L;
 }
 
-NodePtr ConfigNode::childFromTag (const QString & t) {
+Node *ConfigNode::childFromTag (const QString & t) {
     return new TypeNode (m_doc, t);
 }
 
 KDE_NO_CDTOR_EXPORT TypeNode::TypeNode (NodePtr & d, const QString & t)
  : ConfigNode (d, t), tag (t) {}
 
-NodePtr TypeNode::childFromTag (const QString & tag) {
+Node *TypeNode::childFromTag (const QString & tag) {
     return new SomeNode (m_doc, tag);
 }
 
-NodePtr SomeNode::childFromTag (const QString & t) {
+Node *SomeNode::childFromTag (const QString & t) {
     return new SomeNode (m_doc, t);
 }
 
@@ -1886,9 +1886,9 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
         w = checkbox;
     } else if (!strcmp (ctype, "enum")) {
         QComboBox * combo = new QComboBox (parent);
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+        for (Node *e = firstChild (); e; e = e->nextSibling ())
             if (e->isElementNode () && !strcmp (e->nodeName (), "item"))
-                combo->insertItem (convertNode <Element> (e)->getAttribute (StringPool::attr_value));
+                combo->insertItem (static_cast <Element *> (e)->getAttribute (StringPool::attr_value));
         combo->setCurrentItem (value.toInt ());
         w = combo;
     } else if (!strcmp (ctype, "tree")) {
@@ -2483,13 +2483,13 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
         Element *elm = node;
         if (elm->id == id_node_html_object) {
             // this sucks to have to do this here ..
-            for (NodePtr n = elm->firstChild (); n; n = n->nextSibling ())
+            for (Node *n = elm->firstChild (); n; n = n->nextSibling ())
                 if (n->id == KMPlayer::id_node_html_embed) {
-                    elm = convertNode <Element> (n);
+                    elm = static_cast <Element *> (n);
                     break;
                 }
         }
-        for (NodePtr n = mrl (); n; n = n->parentNode ()) {
+        for (Node *n = mrl (); n; n = n->parentNode ()) {
             Mrl *mrl = n->mrl ();
             if (mrl && !mrl->mimetype.isEmpty ()) {
                 plugin = m_source->plugin (mrl->mimetype);

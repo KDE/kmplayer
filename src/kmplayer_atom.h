@@ -50,7 +50,7 @@ const short id_node_ignored = 313;
 class KMPLAYER_NO_EXPORT Feed : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Feed (NodePtr & d) : Mrl (d, id_node_feed) {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "feed"; }
     void closed ();
     bool expose () const { return !title.isEmpty (); }
@@ -59,7 +59,7 @@ public:
 class KMPLAYER_NO_EXPORT Entry : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Mrl (d, id_node_entry) {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "entry"; }
     PlayType playType () { return play_type_none; }
     void closed ();
@@ -86,7 +86,7 @@ public:
 class KMPLAYER_NO_EXPORT MediaGroup : public Element {
 public:
     MediaGroup (NodePtr &d) : Element (d, id_node_media_group) {}
-    NodePtr childFromTag (const QString &tag);
+    Node *childFromTag (const QString &tag);
     void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char *nodeName () const { return "media:group"; }
     bool expose () const { return false; }

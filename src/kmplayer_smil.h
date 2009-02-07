@@ -230,7 +230,7 @@ const short id_node_last = 200; // reserve 100 ids
 class Smil : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Smil (NodePtr & d) : Mrl (d, id_node_smil) {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
     PlayType playType () { return play_type_video; }
     void activate ();
@@ -252,7 +252,7 @@ public:
 class KMPLAYER_NO_EXPORT Head : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Head (NodePtr & d) : Element (d, id_node_head) {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "head"; }
     void closed ();
     void *message (MessageType msg, void *content=NULL);
@@ -265,7 +265,7 @@ public:
 class KMPLAYER_NO_EXPORT Layout : public Element {
 public:
     Layout (NodePtr & d);
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
     void closed ();
     void *message (MessageType msg, void *content=NULL);
@@ -338,7 +338,7 @@ public:
     ~Region ();
     void deactivate ();
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     void *message (MessageType msg, void *content=NULL);
 private:
     MouseListeners mouse_listeners;
@@ -413,7 +413,7 @@ public:
 class KMPLAYER_NO_EXPORT GroupBase : public Element {
 public:
     ~GroupBase ();
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     PlayType playType () { return play_type_none; }
     void parseParam (const TrieString &name, const QString &value);
     void init ();
@@ -476,7 +476,7 @@ class KMPLAYER_NO_EXPORT Excl : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Excl (NodePtr & d) : GroupBase (d, id_node_excl) {}
     KDE_NO_EXPORT const char * nodeName () const { return "excl"; }
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     void begin ();
     void deactivate ();
     void *message (MessageType msg, void *content=NULL);
@@ -497,7 +497,7 @@ public:
     KDE_NO_CDTOR_EXPORT PriorityClass (NodePtr &d)
         : Element (d, id_node_priorityclass) {}
     KDE_NO_EXPORT const char * nodeName () const { return "priorityClass"; }
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     void init ();
     void parseParam (const TrieString &, const QString &);
     void *message (MessageType msg, void *content=NULL);
@@ -550,7 +550,7 @@ public:
     void activate ();
     void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char * nodeName () const { return "a"; }
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
 };
 
@@ -577,7 +577,7 @@ public:
     MediaType (NodePtr & d, const QString & t, short id);
     ~MediaType ();
 
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     virtual void closed ();
     virtual void init ();
@@ -636,7 +636,7 @@ protected:
 class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
     RefMediaType (NodePtr &doc, const QString &tag);
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     virtual void begin ();
     virtual void finish ();
     virtual void accept (Visitor *);
@@ -648,7 +648,7 @@ public:
 class KMPLAYER_NO_EXPORT ImageMediaType : public MediaType {
 public:
     ImageMediaType (NodePtr & d);
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     PlayType playType () { return play_type_image; }
     virtual void activate ();
     virtual void accept (Visitor *);
@@ -692,7 +692,7 @@ public:
     virtual void reset ();
     virtual bool expose () const { return false; }
     KDE_NO_EXPORT const char *nodeName () const { return "smilText"; }
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     virtual void parseParam (const TrieString &name, const QString &value);
     virtual void *message (MessageType msg, void *content=NULL);
     virtual void accept (Visitor *v) { v->visit (this); }
@@ -717,7 +717,7 @@ public:
     virtual void activate ();
     virtual bool expose () const { return false; }
     KDE_NO_EXPORT const char *nodeName () const { return tag.data (); }
-    NodePtr childFromTag (const QString &tag);
+    Node *childFromTag (const QString &tag);
     virtual void parseParam (const TrieString &name, const QString &value);
     virtual void accept (Visitor *v) { v->visit (this); }
 

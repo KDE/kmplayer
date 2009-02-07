@@ -117,11 +117,11 @@ KDE_NO_EXPORT bool KMPlayer::parseTime (const QString & vl, int & dur) {
     return true;
 }
 
-static SMIL::Region * findRegion2 (NodePtr p, const QString &id) {
+static SMIL::Region *findRegion2 (Node *p, const QString &id) {
     TrieString regionname_attr ("regionName");
-    for (NodePtr c = p->firstChild (); c; c = c->nextSibling ()) {
+    for (Node *c = p->firstChild (); c; c = c->nextSibling ()) {
         if (c->id == SMIL::id_node_region) {
-            SMIL::Region * r = convertNode <SMIL::Region> (c);
+            SMIL::Region *r = static_cast <SMIL::Region *> (c);
             QString a = r->getAttribute (regionname_attr);
             if (a.isEmpty ())
                 a = r->getAttribute (StringPool::attr_id);
@@ -149,14 +149,14 @@ static SMIL::RegionBase *findRegion (Node *n, const QString &id) {
     return region;
 }
 
-static SMIL::Transition * findTransition (NodePtr n, const QString & id) {
-    SMIL::Smil * s = SMIL::Smil::findSmilNode (n);
+static SMIL::Transition *findTransition (Node *n, const QString & id) {
+    SMIL::Smil *s = SMIL::Smil::findSmilNode (n);
     if (s) {
-        Node * head = s->firstChild ().ptr ();
+        Node *head = s->firstChild ();
         while (head && head->id != SMIL::id_node_head)
-            head = head->nextSibling ().ptr ();
+            head = head->nextSibling ();
         if (head)
-            for (Node * c = head->firstChild (); c; c = c->nextSibling().ptr ())
+            for (Node *c = head->firstChild (); c; c = c->nextSibling())
                 if (c->id == SMIL::id_node_transition &&
                         id == static_cast <Element *> (c)->
                             getAttribute (StringPool::attr_id))
@@ -586,7 +586,7 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
         if (duration_timer)
             return; // timerEvent will call us with forced=true
         // bail out if a child still running
-        for (NodePtr c = element->firstChild (); c; c = c->nextSibling ())
+        for (Node *c = element->firstChild (); c; c = c->nextSibling ())
             if (c->unfinished ())
                 return; // a child still running
     }
@@ -771,13 +771,13 @@ bool CalculatedSizer::applyRegPoints (Node * node, Single w, Single h,
         node = static_cast <SMIL::Smil *> (node)->layout_node.ptr ();
         if (!node)
             return false;
-        NodePtr c = node->firstChild ();
+        Node *c = node->firstChild ();
         for (; c; c = c->nextSibling ())
             if (c->id == SMIL::id_node_regpoint &&
-                    convertNode<Element>(c)->getAttribute (StringPool::attr_id)
+                    static_cast<Element*>(c)->getAttribute (StringPool::attr_id)
                         == reg_point) {
                 Single i1, i2; // dummies
-                SMIL::RegPoint *rp_elm = static_cast<SMIL::RegPoint*>(c.ptr());
+                SMIL::RegPoint *rp_elm = static_cast <SMIL::RegPoint *> (c);
                 rp_elm->sizes.calcSizes (0L, 100, 100, rpx, rpy, i1, i2);
                 QString ra = rp_elm->getAttribute ("regAlign");
                 if (!ra.isEmpty () && reg_align.isEmpty ())
@@ -984,13 +984,13 @@ static Element *fromTextFlowGroup (NodePtr &d, const QString &tag) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT NodePtr SMIL::Smil::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *SMIL::Smil::childFromTag (const QString & tag) {
     const char * ctag = tag.ascii ();
     if (!strcmp (ctag, "body"))
         return new SMIL::Body (m_doc);
     else if (!strcmp (ctag, "head"))
         return new SMIL::Head (m_doc);
-    return NodePtr ();
+    return NULL;
 }
 
 KDE_NO_EXPORT void SMIL::Smil::activate () {
@@ -1038,27 +1038,26 @@ KDE_NO_EXPORT void *SMIL::Smil::message (MessageType msg, void *content) {
 }
 
 KDE_NO_EXPORT void SMIL::Smil::closed () {
-    NodePtr head;
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+    Node *head = NULL;
+    for (Node *e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_head) {
             head = e;
             break;
         }
     if (!head) {
-        SMIL::Head * h = new SMIL::Head (m_doc);
-        insertBefore (h, firstChild ());
-        h->setAuxiliaryNode (true);
-        h->closed ();
-        head = h;
+        head = new SMIL::Head (m_doc);
+        insertBefore (head, firstChild ());
+        head->setAuxiliaryNode (true);
+        head->closed ();
     }
-    for (NodePtr e = head->firstChild (); e; e = e->nextSibling ()) {
+    for (Node *e = head->firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_layout) {
             layout_node = e;
         } else if (e->id == id_node_title) {
             QString str = e->innerText ();
             title = str.left (str.indexOf (QChar ('\n')));
         } else if (e->id == id_node_meta) {
-            Element * elm = convertNode <Element> (e);
+            Element *elm = static_cast <Element *> (e);
             const QString name = elm->getAttribute (StringPool::attr_name);
             if (name == QString::fromLatin1 ("title"))
                 title = elm->getAttribute ("content");
@@ -1075,16 +1074,16 @@ KDE_NO_EXPORT bool SMIL::Smil::expose () const {
 }
 
 void SMIL::Smil::jump (const QString & id) {
-    NodePtr n = document ()->getElementById (this, id, false);
+    Node *n = document ()->getElementById (this, id, false);
     if (n) {
         if (n->unfinished ())
             kDebug() << "Smil::jump node is unfinished " << id;
         else {
-            for (NodePtr p = n; p; p = p->parentNode ()) {
+            for (Node *p = n; p; p = p->parentNode ()) {
                 if (p->unfinished () &&
                         p->id >= id_node_first_group &&
                         p->id <= id_node_last_group) {
-                    convertNode <GroupBase> (p)->setJumpNode (n);
+                    static_cast <GroupBase *> (p)->setJumpNode (n);
                     break;
                 }
                 if (n->id == id_node_body || n->id == id_node_smil) {
@@ -1097,7 +1096,7 @@ void SMIL::Smil::jump (const QString & id) {
 }
 
 SMIL::Smil * SMIL::Smil::findSmilNode (Node * node) {
-    for (Node * e = node; e; e = e->parentNode ().ptr ())
+    for (Node * e = node; e; e = e->parentNode ())
         if (e->id == SMIL::id_node_smil)
             return static_cast <SMIL::Smil *> (e);
     return 0L;
@@ -1114,7 +1113,7 @@ static void headChildDone (Node *node, Node *child) {
     }
 }
 
-KDE_NO_EXPORT NodePtr SMIL::Head::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *SMIL::Head::childFromTag (const QString & tag) {
     const char * ctag = tag.ascii ();
     if (!strcmp (ctag, "layout"))
         return new SMIL::Layout (m_doc);
@@ -1124,7 +1123,7 @@ KDE_NO_EXPORT NodePtr SMIL::Head::childFromTag (const QString & tag) {
         return new DarkNode (m_doc, ctag, id_node_meta);
     else if (!strcmp (ctag, "transition"))
         return new SMIL::Transition (m_doc);
-    return NodePtr ();
+    return NULL;
 }
 
 KDE_NO_EXPORT bool SMIL::Head::expose () const {
@@ -1132,7 +1131,7 @@ KDE_NO_EXPORT bool SMIL::Head::expose () const {
 }
 
 KDE_NO_EXPORT void SMIL::Head::closed () {
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+    for (Node *e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_layout)
             return;
     SMIL::Layout * layout = new SMIL::Layout (m_doc);
@@ -1155,17 +1154,17 @@ KDE_NO_EXPORT void *SMIL::Head::message (MessageType msg, void *content) {
 KDE_NO_CDTOR_EXPORT SMIL::Layout::Layout (NodePtr & d)
  : Element (d, id_node_layout) {}
 
-KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *SMIL::Layout::childFromTag (const QString & tag) {
     const char * ctag = tag.ascii ();
     if (!strcmp (ctag, "root-layout")) {
-        NodePtr e = new SMIL::RootLayout (m_doc);
+        Node *e = new SMIL::RootLayout (m_doc);
         root_layout = e;
         return e;
     } else if (!strcmp (ctag, "region"))
         return new SMIL::Region (m_doc);
     else if (!strcmp (ctag, "regPoint"))
         return new SMIL::RegPoint (m_doc);
-    return NodePtr ();
+    return NULL;
 }
 
 KDE_NO_EXPORT void SMIL::Layout::closed () {
@@ -1174,7 +1173,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         root_layout->setAuxiliaryNode (true);
         insertBefore (root_layout, firstChild ());
         root_layout->closed ();
-    } else if (root_layout != firstChild ()) {
+    } else if (root_layout.ptr () != firstChild ()) {
         NodePtr rl = root_layout;
         removeChild (root_layout);
         insertBefore (root_layout, firstChild ());
@@ -1212,7 +1211,7 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
     show_background = ShowAlways;
     fit = fit_default;
-    Node *n = parentNode ().ptr ();
+    Node *n = parentNode ();
     if (n && SMIL::id_node_layout == n->id)
         n = n->firstChild ();
     state = state_deferred;
@@ -1255,11 +1254,11 @@ KDE_NO_EXPORT void SMIL::RegionBase::repaint (const SRect & rect) {
 
 static void updateSurfaceSort (SMIL::RegionBase *rb) {
     Surface *rs = rb->region_surface.ptr ();
-    Surface *prs = rs->parentNode ().ptr ();
+    Surface *prs = rs->parentNode ();
     Surface *next = NULL;
     if (!prs)
         return;
-    for (Surface *s = prs->firstChild ().ptr(); s; s = s->nextSibling ().ptr ())
+    for (Surface *s = prs->firstChild (); s; s = s->nextSibling ())
         if (s != rs && s->node) {
             if (SMIL::id_node_region == s->node->id) {
                 SMIL::Region *r = static_cast <SMIL::Region *> (s->node.ptr ());
@@ -1269,14 +1268,14 @@ static void updateSurfaceSort (SMIL::RegionBase *rb) {
                 } else if (r->z_order == rb->z_order) {
                     next = s;
                     // now take region order into account
-                    Node *n = rb->previousSibling().ptr ();
-                    for (; n; n = n->previousSibling().ptr ())
+                    Node *n = rb->previousSibling();
+                    for (; n; n = n->previousSibling())
                         if (n->id == SMIL::id_node_region) {
                             r = static_cast <SMIL::Region *> (n);
                             if (r->z_order == rb->z_order) {
-                                next = r->region_surface->nextSibling ().ptr ();
+                                next = r->region_surface->nextSibling ();
                                 if (rs == next)
-                                    next = next->nextSibling ().ptr ();
+                                    next = next->nextSibling ();
                                 break;
                             }
                         }
@@ -1291,7 +1290,7 @@ static void updateSurfaceSort (SMIL::RegionBase *rb) {
                 }
             }
         }
-    if (rs->nextSibling ().ptr () == next) {
+    if (rs->nextSibling () == next) {
         return;
     }
     SurfacePtr protect (rs);
@@ -1467,10 +1466,10 @@ KDE_NO_EXPORT void SMIL::Region::deactivate () {
     RegionBase::deactivate ();
 }
 
-KDE_NO_EXPORT NodePtr SMIL::Region::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *SMIL::Region::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "region"))
         return new SMIL::Region (m_doc);
-    return NodePtr ();
+    return NULL;
 }
 
 void *SMIL::Region::message (MessageType msg, void *content) {
@@ -1478,7 +1477,7 @@ void *SMIL::Region::message (MessageType msg, void *content) {
 
     case MsgSurfaceBoundsUpdate:
         if (region_surface && state == state_finished) {
-            Surface *ps = region_surface->parentNode ().ptr ();
+            Surface *ps = region_surface->parentNode ();
             if (ps) {
                 SSize dim = ps->dimension ();
                 Single x, y, w, h;
@@ -1490,7 +1489,7 @@ void *SMIL::Region::message (MessageType msg, void *content) {
 
     case MsgQueryRoleDisplay:
         if (!region_surface && active ()) {
-            Node *n = parentNode ().ptr ();
+            Node *n = parentNode ();
             if (n && SMIL::id_node_layout == n->id)
                 n = n->firstChild ();
             Surface *s = (Surface *) n->message (MsgQueryRoleDisplay);
@@ -1642,7 +1641,7 @@ KDE_NO_CDTOR_EXPORT SMIL::GroupBase::~GroupBase () {
     delete runtime;
 }
 
-KDE_NO_EXPORT NodePtr SMIL::GroupBase::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *SMIL::GroupBase::childFromTag (const QString & tag) {
     Element * elm = fromScheduleGroup (m_doc, tag);
     if (!elm) elm = fromMediaContentGroup (m_doc, tag);
     if (!elm) elm = fromContentControlGroup (m_doc, tag);
@@ -1910,11 +1909,11 @@ KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
             if (c->active ())
                 c->reset ();
-        for (NodePtr c = n->parentNode (); c; c = c->parentNode ()) {
-            if (c.ptr () == this || c->id == id_node_body)
+        for (Node *c = n->parentNode (); c; c = c->parentNode ()) {
+            if (c == this || c->id == id_node_body)
                 break;
             if (c->id >= id_node_first_group && c->id <= id_node_last_group)
-                convertNode <GroupBase> (c)->jump_node = child;
+                static_cast <SMIL::GroupBase *> (c)->jump_node = child;
             child = c;
         }
     }
@@ -2020,7 +2019,7 @@ KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
                     firstChild ()->message (MsgQueryReady));
 
         case MsgChildReady:
-            if (firstChild ().ptr () == (Node *) content) {
+            if (firstChild () == (Node *) content) {
                 if (state == state_deferred) {
                     state = state_activated;
                     runtime->start ();
@@ -2038,7 +2037,7 @@ KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
                 Posting *post = (Posting *) content;
                 if (state != state_deferred) {
                     Node *next = post->source
-                        ? post->source->nextSibling ().ptr()
+                        ? post->source->nextSibling ()
                         : NULL;
                     if (next) {
                         if (next->nextSibling()) {
@@ -2077,7 +2076,7 @@ KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT NodePtr SMIL::Excl::childFromTag (const QString &tag) {
+KDE_NO_EXPORT Node *SMIL::Excl::childFromTag (const QString &tag) {
     if (tag == "priorityClass")
         return new PriorityClass (m_doc);
     return GroupBase::childFromTag (tag);
@@ -2093,7 +2092,7 @@ public:
     using Visitor::visit;
 
     void visit (Node *n) {
-        Node *s = n->nextSibling ().ptr ();
+        Node *s = n->nextSibling ();
         if (s)
             s->accept (this);
     }
@@ -2110,7 +2109,7 @@ public:
     void visit (SMIL::PriorityClass *pc) {
         pc->init ();
         pc->state = Node::state_activated;
-        Node *n = pc->firstChild ().ptr ();
+        Node *n = pc->firstChild ();
         if (n)
             n->accept (this);
         visit (static_cast <Node *> (pc));
@@ -2212,7 +2211,7 @@ public:
 
 KDE_NO_EXPORT void SMIL::Excl::begin () {
     //kDebug () << "SMIL::Excl::begin";
-    Node *n = firstChild ().ptr ();
+    Node *n = firstChild ();
     if (n) {
         ExclActivateVisitor visitor (this);
         n->accept (&visitor);
@@ -2238,7 +2237,7 @@ KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
             if (n) {
                 if (SMIL::id_node_priorityclass == cur_node->parentNode ()->id) {
                     switch (static_cast <SMIL::PriorityClass *>
-                            (cur_node->parentNode ().ptr ())->peers) {
+                            (cur_node->parentNode ())->peers) {
                         case PriorityClass::PeersPause: {
                             ExclPauseVisitor visitor (
                                   true, this, document ()->last_event_time/10);
@@ -2298,7 +2297,7 @@ KDE_NO_EXPORT void *SMIL::Excl::message (MessageType msg, void *content) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT NodePtr SMIL::PriorityClass::childFromTag (const QString &tag) {
+KDE_NO_EXPORT Node *SMIL::PriorityClass::childFromTag (const QString &tag) {
     Element * elm = fromScheduleGroup (m_doc, tag);
     if (!elm) elm = fromMediaContentGroup (m_doc, tag);
     if (!elm) elm = fromContentControlGroup (m_doc, tag);
@@ -2364,10 +2363,10 @@ KDE_NO_EXPORT Node *SMIL::Switch::chosenOne () {
         if (n)
             n->bitRates (pref, max);
         if (firstChild ()) {
-            NodePtr fallback;
-            for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+            Node *fallback = NULL;
+            for (Node *e = firstChild (); e; e = e->nextSibling ())
                 if (e->isElementNode ()) {
-                    Element *elm = convertNode <Element> (e);
+                    Element *elm = static_cast <Element *> (e);
                     QString lang = elm->getAttribute ("systemLanguage");
                     if (!lang.isEmpty ()) {
                         lang = lang.replace (QChar ('-'), QChar ('_'));
@@ -2382,7 +2381,7 @@ KDE_NO_EXPORT Node *SMIL::Switch::chosenOne () {
                         }
                     }
                     if (e->id == id_node_ref) {
-                        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (e);
+                        SMIL::MediaType * mt = static_cast<SMIL::MediaType*>(e);
                         if (!chosen_one) {
                             chosen_one = e;
                             currate = mt->bitrate;
@@ -2414,7 +2413,7 @@ KDE_NO_EXPORT void SMIL::Switch::begin () {
 
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {
     Element::deactivate ();
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+    for (Node *e = firstChild (); e; e = e->nextSibling ())
         if (e->active ()) {
             e->deactivate ();
             break; // deactivate only the one running
@@ -2467,7 +2466,7 @@ KDE_NO_CDTOR_EXPORT SMIL::Anchor::Anchor (NodePtr & d)
 
 KDE_NO_EXPORT void SMIL::Anchor::activate () {
     init ();
-    for (NodePtr c = firstChild(); c; c = c->nextSibling ())
+    for (Node *c = firstChild(); c; c = c->nextSibling ())
         if (nodeMessageReceivers (c, MsgEventClicked)) {
             mediatype_activated = c->connectTo (this, MsgEventClicked);
             if (nodeMessageReceivers (c, MsgSurfaceAttach))
@@ -2504,7 +2503,7 @@ KDE_NO_EXPORT void *SMIL::Anchor::message (MessageType msg, void *content) {
     return LinkingBase::message (msg, content);
 }
 
-NodePtr SMIL::Anchor::childFromTag (const QString & tag) {
+Node *SMIL::Anchor::childFromTag (const QString & tag) {
     return fromMediaContentGroup (m_doc, tag);
 }
 
@@ -2572,7 +2571,7 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::~MediaType () {
     delete pan_zoom;
 }
 
-KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *SMIL::MediaType::childFromTag (const QString & tag) {
     Element * elm = fromContentControlGroup (m_doc, tag);
     if (!elm) elm = fromParamGroup (m_doc, tag);
     if (!elm) elm = fromAnimateGroup (m_doc, tag);
@@ -2582,7 +2581,7 @@ KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
 }
 
 static NodePtr findExternalTree (Mrl *mrl) {
-    for (NodePtr c = mrl->firstChild (); c; c = c->nextSibling ()) {
+    for (Node *c = mrl->firstChild (); c; c = c->nextSibling ()) {
         Mrl * m = c->mrl ();
         if (m && (m->opener.ptr () == mrl ||
                     m->id == SMIL::id_node_smil ||
@@ -3071,7 +3070,7 @@ KDE_NO_CDTOR_EXPORT
 SMIL::RefMediaType::RefMediaType (NodePtr &d, const QString &t)
  : SMIL::MediaType (d, t, id_node_ref) {}
 
-KDE_NO_EXPORT NodePtr SMIL::RefMediaType::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *SMIL::RefMediaType::childFromTag (const QString & tag) {
     return fromXMLDocumentTag (m_doc, tag);
 }
 
@@ -3152,7 +3151,7 @@ namespace {
             }
         }
 
-        NodePtr childFromTag (const QString & tag) {
+        Node *childFromTag (const QString & tag) {
             return new SvgElement (m_doc, image.ptr (), tag);
         }
 
@@ -3166,7 +3165,7 @@ namespace {
     };
 }
 
-KDE_NO_EXPORT NodePtr SMIL::ImageMediaType::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *SMIL::ImageMediaType::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "imfl"))
         return new RP::Imfl (m_doc);
     else if (!strcmp (tag.latin1 (), "svg"))
@@ -3474,7 +3473,7 @@ void SMIL::SmilText::reset () {
     Element::reset ();
 }
 
-NodePtr SMIL::SmilText::childFromTag (const QString &tag) {
+Node *SMIL::SmilText::childFromTag (const QString &tag) {
     const char *ctag = tag.ascii ();
     if (!strcmp (ctag, "tev"))
     {}//return new SMIL::TextTev (m_doc);
@@ -3585,7 +3584,7 @@ void SMIL::TextFlow::activate () {
     Element::activate ();
 }
 
-NodePtr SMIL::TextFlow::childFromTag (const QString &tag) {
+Node *SMIL::TextFlow::childFromTag (const QString &tag) {
     return fromTextFlowGroup (m_doc, tag);
 }
 
@@ -3737,7 +3736,7 @@ KDE_NO_EXPORT void SMIL::AnimateGroup::restoreModification () {
 
 KDE_NO_EXPORT NodePtr SMIL::AnimateGroup::targetElement () {
     if (target_id.isEmpty ()) {
-        for (Node *p = parentNode().ptr(); p; p =p->parentNode().ptr())
+        for (Node *p = parentNode(); p; p =p->parentNode())
             if (SMIL::id_node_first_mediatype <= p->id &&
                     SMIL::id_node_last_mediatype >= p->id) {
                 target_element = p;
@@ -4392,7 +4391,7 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::timerTick (unsigned int cur_time) {
 KDE_NO_EXPORT void SMIL::Param::activate () {
     setState (state_activated);
     QString name = getAttribute (StringPool::attr_name);
-    Node * parent = parentNode ().ptr ();
+    Node * parent = parentNode ();
     if (!name.isEmpty () && parent && parent->isElementNode ())
         static_cast<Element*>(parent)->setParam (name,
                 getAttribute (StringPool::attr_value));

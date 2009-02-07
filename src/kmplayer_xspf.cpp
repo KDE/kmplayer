@@ -25,7 +25,7 @@
 using namespace KMPlayer;
 
 
-KDE_NO_EXPORT NodePtr XSPF::Playlist::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *XSPF::Playlist::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "tracklist"))
         return new Tracklist (m_doc);
@@ -59,7 +59,7 @@ KDE_NO_EXPORT NodePtr XSPF::Playlist::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void XSPF::Playlist::closed () {
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
+    for (Node *e = firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_title)
             title = e->innerText ().simplifyWhiteSpace ();
         else if (e->id == id_node_location)
@@ -70,7 +70,7 @@ KDE_NO_EXPORT void XSPF::Playlist::closed () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT NodePtr XSPF::Tracklist::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *XSPF::Tracklist::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "track"))
         return new XSPF::Track (m_doc);
@@ -79,7 +79,7 @@ KDE_NO_EXPORT NodePtr XSPF::Tracklist::childFromTag (const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT NodePtr XSPF::Track::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *XSPF::Track::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "location"))
         return new Location (m_doc);
@@ -111,7 +111,7 @@ KDE_NO_EXPORT NodePtr XSPF::Track::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void XSPF::Track::closed () {
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
+    for (Node *e = firstChild (); e; e = e->nextSibling ()) {
         switch (e->id) {
             case id_node_title:
                 title = e->innerText ();
@@ -126,7 +126,7 @@ KDE_NO_EXPORT void XSPF::Track::closed () {
 }
 
 KDE_NO_EXPORT void XSPF::Track::activate () {
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+    for (Node *e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_annotation) {
             QString inf = e->innerText ().stripWhiteSpace ();
             document ()->message (MsgInfoString, &inf);

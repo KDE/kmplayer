@@ -615,7 +615,7 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
             if (!src.isEmpty ()) {
                 PlayListItem * pi = static_cast <PlayListItem*>(item->parent());
                 if (pi) {
-                    for (NodePtr e = pi->node; e; e = e->parentNode ()) {
+                    for (Node *e = pi->node.ptr (); e; e = e->parentNode ()) {
                         Mrl * mrl = e->mrl ();
                         if (mrl)
                             src = KUrl (mrl->absolutePath (), src).url ();
@@ -723,7 +723,7 @@ void PartBase::play () {
             lvi = static_cast<PlayListItem*>(m_view->playList()->firstChild());
         if (lvi) {
             Mrl *mrl = NULL;
-            for (NodePtr n = lvi->node; n; n = n->parentNode ()) {
+            for (Node * n = lvi->node.ptr (); n; n = n->parentNode ()) {
                 if (n->isPlayable ()) {
                     mrl = n->mrl ();
                     break;
@@ -1046,7 +1046,7 @@ void Source::play (Mrl *mrl) {
         return;
     m_width = m_height = 0;
     m_player->changeURL (mrl->src);
-    for (NodePtr p = mrl->parentNode(); p; p = p->parentNode())
+    for (Node *p = mrl->parentNode(); p; p = p->parentNode())
         p->state = Element::state_activated;
     mrl->activate ();
     m_width = mrl->size.width;
@@ -1145,7 +1145,7 @@ void Source::insertURL (NodePtr node, const QString & mrl, const QString & title
         kError () << "try to append url to itself" << endl;
     else {
         int depth = 0; // cache this?
-        for (NodePtr e = node; e->parentNode (); e = e->parentNode ())
+        for (Node *e = node; e->parentNode (); e = e->parentNode ())
             ++depth;
         if (depth < 40) {
             node->appendChild (new GenericURL (m_document, urlstr, title.isEmpty() ? QUrl::fromPercentEncoding (mrl.toUtf8 ()) : title));
@@ -1158,16 +1158,16 @@ void Source::insertURL (NodePtr node, const QString & mrl, const QString & title
 void Source::backward () {
     Node *back = m_current ? m_current.ptr () : m_document.ptr ();
     while (back && back != m_document.ptr ()) {
-        if (back->previousSibling ().ptr ()) {
-            back = back->previousSibling ().ptr ();
+        if (back->previousSibling ()) {
+            back = back->previousSibling ();
             while (!back->isPlayable () && back->lastChild ())
-                back = back->lastChild ().ptr ();
+                back = back->lastChild ();
             if (back->isPlayable () && !back->active ()) {
                 play (back->mrl ());
                 break;
             }
         } else {
-            back = back->parentNode().ptr ();
+            back = back->parentNode();
         }
     }
 }

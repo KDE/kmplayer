@@ -101,7 +101,7 @@ public:
     TVInput (KMPlayer::NodePtr & d, const QString & n, int id);
     TVInput (KMPlayer::NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~TVInput () {}
-    KMPlayer::NodePtr childFromTag (const QString &);
+    KMPlayer::Node *childFromTag (const QString &);
     void setNodeName (const QString &);
     void closed ();
 };
@@ -114,7 +114,7 @@ public:
     TVDevice (KMPlayer::NodePtr & d, const QString & s);
     TVDevice (KMPlayer::NodePtr & d);
     ~TVDevice ();
-    KMPlayer::NodePtr childFromTag (const QString &);
+    KMPlayer::Node *childFromTag (const QString &);
     void closed ();
     void *message (KMPlayer::MessageType msg, void *content=NULL);
     void setNodeName (const QString &);
@@ -129,7 +129,7 @@ class KMPLAYER_NO_EXPORT TVDocument : public FileDocument {
     KMPlayerTVSource * m_source;
 public:
     TVDocument (KMPlayerTVSource *);
-    KMPlayer::NodePtr childFromTag (const QString &);
+    KMPlayer::Node *childFromTag (const QString &);
     void defer ();
     KDE_NO_EXPORT const char * nodeName () const { return "tvdevices"; }
     void *message (KMPlayer::MessageType msg, void *content=NULL);

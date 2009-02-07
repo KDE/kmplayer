@@ -330,7 +330,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         clip = clip.intersect (scr);
         cairo_save (cr);
 
-        Surface *cs = s->firstChild ().ptr ();
+        Surface *cs = s->firstChild ();
         if (!s->virtual_size.isEmpty ())
             matrix.translate (-s->x_scroll, -s->y_scroll);
 
@@ -372,8 +372,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
             cairo_restore (cr);
         }
         traverseRegion (reg, s);
-        cs = s->firstChild ().ptr ();
-        if (cs && (s->scroll || cs->scroll) && cs == s->lastChild ().ptr ()) {
+        cs = s->firstChild ();
+        if (cs && (s->scroll || cs->scroll) && cs == s->lastChild ()) {
             SRect r = cs->bounds;
             if (r.width () > rect.width () || r.height () > rect.height ()) {
                 if (s->virtual_size.isEmpty ())
@@ -686,7 +686,7 @@ static Mrl *findActiveMrl (Node *n, bool *rp_or_smil) {
                  MediaManager::AudioVideo == mrl->media_info->type))
             return mrl;
     }
-    for (Node *c = n->firstChild ().ptr (); c; c = c->nextSibling ())
+    for (Node *c = n->firstChild (); c; c = c->nextSibling ())
         if (c->active ()) {
             Mrl *m = findActiveMrl (c, rp_or_smil);
             if (m)

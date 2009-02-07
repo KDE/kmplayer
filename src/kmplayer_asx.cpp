@@ -25,13 +25,13 @@
 using namespace KMPlayer;
 
 static QString getAsxAttribute (Element * e, const QString & attr) {
-    for (AttributePtr a = e->attributes ()->first (); a; a = a->nextSibling ())
+    for (Attribute *a = e->attributes ()->first (); a; a = a->nextSibling ())
         if (attr == a->name ().toString ().lower ())
             return a->value ();
     return QString ();
 }
 
-KDE_NO_EXPORT NodePtr ASX::Asx::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *ASX::Asx::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "entry"))
         return new ASX::Entry (m_doc);
@@ -48,18 +48,18 @@ KDE_NO_EXPORT NodePtr ASX::Asx::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT Node::PlayType ASX::Asx::playType () {
     if (cached_ismrl_version != document ()->m_tree_version)
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
+        for (Node *e = firstChild (); e; e = e->nextSibling ()) {
             if (e->id == id_node_title)
                 title = e->innerText ().simplifyWhiteSpace ();
             else if (e->id == id_node_base)
-                src = getAsxAttribute (convertNode <Element> (e), "href");
+                src = getAsxAttribute (static_cast <Element *> (e), "href");
         }
     return Mrl::playType ();
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT NodePtr ASX::Entry::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *ASX::Entry::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "ref"))
         return new ASX::Ref (m_doc);
@@ -79,14 +79,14 @@ KDE_NO_EXPORT NodePtr ASX::Entry::childFromTag (const QString & tag) {
 KDE_NO_EXPORT Node::PlayType ASX::Entry::playType () {
     if (cached_ismrl_version != document ()->m_tree_version) {
         ref_child_count = 0;
-        NodePtr ref;
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
+        Node *ref = NULL;
+        for (Node *e = firstChild (); e; e = e->nextSibling ()) {
             switch (e->id) {
             case id_node_title:
                 title = e->innerText (); // already normalized (hopefully)
                 break;
             case id_node_base:
-                src = getAsxAttribute (convertNode <Element> (e), "href");
+                src = getAsxAttribute (static_cast <Element *> (e), "href");
                 break;
             case id_node_ref:
                 ref = e;
@@ -94,7 +94,7 @@ KDE_NO_EXPORT Node::PlayType ASX::Entry::playType () {
             }
         }
         if (ref_child_count == 1 && !title.isEmpty ())
-            convertNode <ASX::Ref> (ref)->title = title;
+            static_cast <ASX::Ref *> (ref)->title = title;
         cached_ismrl_version = document()->m_tree_version;
     }
     return play_type_none;
@@ -102,16 +102,16 @@ KDE_NO_EXPORT Node::PlayType ASX::Entry::playType () {
 
 KDE_NO_EXPORT void ASX::Entry::activate () {
     resolved = true;
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+    for (Node *e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_param) {
-            Element * elm = convertNode <Element> (e);
+            Element * elm = static_cast <Element *> (e);
             if (getAsxAttribute(elm,"name").lower() == QString("clipsummary")) {
                 QString inf = KURL::decode_string (
                                 getAsxAttribute (elm, "value"));
                 document ()->message (MsgInfoString, &inf);
             }
         } else if (e->id == id_node_duration) {
-            QString s = convertNode <Element> (e)->getAttribute (
+            QString s = static_cast <Element *> (e)->getAttribute (
                     StringPool::attr_value);
             int pos = parseTimeString( s );
             if (pos > 0)

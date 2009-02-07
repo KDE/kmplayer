@@ -72,6 +72,10 @@ typedef Item<Surface>::SharedType SurfacePtr;
 typedef Item<Surface>::WeakType SurfacePtrW;
 ITEM_AS_POINTER(KMPlayer::Surface)
 
+template <> void TreeNode<Surface>::appendChild (Surface *c);
+template <> void TreeNode<Surface>::insertBefore (Surface *c, Surface *b);
+template <> void TreeNode<Surface>::removeChild (SurfacePtr c);
+
 } // namespace
 
 #endif

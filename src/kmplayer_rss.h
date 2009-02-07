@@ -44,7 +44,7 @@ const short id_node_ignored = 207;
 class KMPLAYER_NO_EXPORT Rss : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Mrl (d, id_node_rss) {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "rss"; }
     bool expose () const { return false; }
 };
@@ -52,7 +52,7 @@ public:
 class KMPLAYER_NO_EXPORT Channel : public Title {
 public:
     KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Title (d, id_node_channel) {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
     PlayType playType () { return play_type_none; }
     void closed ();
@@ -63,7 +63,7 @@ class KMPLAYER_NO_EXPORT Item : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Item (NodePtr & d)
         : Mrl (d, id_node_item), timer (NULL) {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "item"; }
     PlayType playType () { return cached_play_type; }
     Mrl * linkNode ();

@@ -22,13 +22,13 @@
 
 using namespace KMPlayer;
 
-KDE_NO_EXPORT NodePtr RSS::Rss::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *RSS::Rss::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "channel"))
         return new RSS::Channel (m_doc);
     return 0L;
 }
 
-KDE_NO_EXPORT NodePtr RSS::Channel::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *RSS::Channel::childFromTag (const QString & tag) {
     const char *ctag = tag.ascii ();
     if (!strcmp (ctag, "item"))
         return new RSS::Item (m_doc);
@@ -41,7 +41,7 @@ KDE_NO_EXPORT NodePtr RSS::Channel::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void RSS::Channel::closed () {
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+    for (Node *c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
             title = c->innerText ().simplifyWhiteSpace ();
             break;
@@ -54,7 +54,7 @@ KDE_NO_EXPORT bool RSS::Channel::expose () const {
         previousSibling () || nextSibling ();
 }
 
-KDE_NO_EXPORT NodePtr RSS::Item::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *RSS::Item::childFromTag (const QString & tag) {
     const char *ctag = tag.ascii ();
     if (!strcmp (ctag, "enclosure"))
         return new RSS::Enclosure (m_doc);
@@ -73,7 +73,7 @@ KDE_NO_EXPORT NodePtr RSS::Item::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void RSS::Item::closed () {
     cached_play_type = play_type_none;
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
+    for (Node *c = firstChild (); c; c = c->nextSibling ()) {
         switch (c->id) {
             case id_node_title:
                 title = c->innerText ().simplifyWhiteSpace ();
@@ -99,7 +99,7 @@ KDE_NO_EXPORT Mrl * RSS::Item::linkNode () {
 }
 
 KDE_NO_EXPORT void RSS::Item::activate () {
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+    for (Node *c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_description) {
             QString s = c->innerText ();
             document ()->message (MsgInfoString, &s);

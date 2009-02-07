@@ -177,10 +177,10 @@ int PlayListView::addTree (NodePtr root, const QString & source, const QString &
 }
 
 KDE_NO_EXPORT PlayListItem * PlayListView::populate
-(NodePtr e, NodePtr focus, RootPlayListItem *root, PlayListItem * pitem, PlayListItem ** curitem) {
+(Node *e, Node *focus, RootPlayListItem *root, PlayListItem * pitem, PlayListItem ** curitem) {
     root->have_dark_nodes |= !e->expose ();
     if (pitem && !root->show_all_nodes && !e->expose ()) {
-        for (NodePtr c = e->lastChild (); c; c = c->previousSibling ())
+        for (Node *c = e->lastChild (); c; c = c->previousSibling ())
             populate (c, focus, root, pitem, curitem);
         return pitem;
     }
@@ -201,10 +201,10 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
         *curitem = item;
     if (e->active ())
         ensureItemVisible (item);
-    for (NodePtr c = e->lastChild (); c; c = c->previousSibling ())
+    for (Node *c = e->lastChild (); c; c = c->previousSibling ())
         populate (c, focus, root, item, curitem);
     if (e->isElementNode ()) {
-        AttributePtr a = convertNode<Element> (e)->attributes ()->first ();
+        Attribute *a = static_cast <Element *> (e)->attributes ()->first ();
         if (a) {
             root->have_dark_nodes = true;
             if (root->show_all_nodes) {
@@ -636,7 +636,7 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
         regexp = QRegExp (str);
     bool cs = (opt & KFind::CaseSensitive);
     bool found = false;
-    NodePtr node, n = m_current_find_elm;
+    Node *node = NULL, *n = m_current_find_elm.ptr ();
     RootPlayListItem * ri = rootItem (current_find_tree_id);
     while (!found && n) {
         if (ri->show_all_nodes || n->expose ()) {
@@ -661,7 +661,7 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
                 m_current_find_attr = 0L;
                 found = true;
             } else if (elm && ri->show_all_nodes) {
-                for (AttributePtr a = convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ()) {
+                for (Attribute *a = static_cast <Element *> (n)->attributes ()->first (); a; a = a->nextSibling ()) {
                     QString attr = a->name ().toString ();
                     if (((opt & KFind::RegularExpression) &&
                                 (attr.find (regexp, 0) || a->value ().find (regexp, 0) > -1)) ||

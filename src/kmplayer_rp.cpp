@@ -41,9 +41,9 @@ KDE_NO_CDTOR_EXPORT RP::Imfl::~Imfl () {
 }
 
 KDE_NO_EXPORT void RP::Imfl::closed () {
-    for (NodePtr n = firstChild (); n; n = n->nextSibling ())
+    for (Node *n = firstChild (); n; n = n->nextSibling ())
         if (RP::id_node_head == n->id) {
-            AttributePtr a = convertNode <Element> (n)->attributes ()->first ();
+            Attribute *a = static_cast <Element *> (n)->attributes ()->first ();
             for (; a; a = a->nextSibling ()) {
                 if (StringPool::attr_width == a->name ()) {
                     size.width = a->value ().toInt ();
@@ -62,7 +62,7 @@ KDE_NO_EXPORT void RP::Imfl::closed () {
 KDE_NO_EXPORT void RP::Imfl::defer () {
     kDebug () << "RP::Imfl::defer ";
     setState (state_deferred);
-    for (Node * n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
+    for (Node *n = firstChild (); n; n = n->nextSibling ())
         if (n->id == RP::id_node_image && !n->active ())
             n->activate ();
 }
@@ -72,7 +72,7 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
     resolved = true;
     setState (state_activated);
     int timings_count = 0;
-    for (NodePtr n = firstChild (); n; n = n->nextSibling ())
+    for (Node *n = firstChild (); n; n = n->nextSibling ())
         switch (n->id) {
             case RP::id_node_crossfade:
             case RP::id_node_fadein:
@@ -133,7 +133,7 @@ KDE_NO_EXPORT void *RP::Imfl::message (MessageType msg, void *content) {
             return NULL;
         case MsgChildFinished:
             if (unfinished () && !duration_timer) {
-                for (NodePtr n = firstChild (); n; n = n->nextSibling ())
+                for (Node *n = firstChild (); n; n = n->nextSibling ())
                     switch (n->id) {
                         case RP::id_node_crossfade:
                         case RP::id_node_fadein:
@@ -164,7 +164,7 @@ KDE_NO_EXPORT Surface *RP::Imfl::surface () {
     return rp_surface.ptr ();
 }
 
-KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
+KDE_NO_EXPORT Node *RP::Imfl::childFromTag (const QString & tag) {
     const char * ctag = tag.latin1 ();
     if (!strcmp (ctag, "head"))
         return new DarkNode (m_doc, "head", RP::id_node_head);
@@ -261,7 +261,7 @@ KDE_NO_EXPORT Surface *RP::Image::surface () {
     ImageMedia *im = media_info && media_info->media
         ? (ImageMedia *)media_info->media : NULL;
     if (im && !img_surface && !im->isEmpty ()) {
-        Node * p = parentNode ().ptr ();
+        Node * p = parentNode ();
         if (p && p->id == RP::id_node_imfl) {
             Surface *ps = static_cast <RP::Imfl *> (p)->surface ();
             if (ps)
@@ -280,10 +280,10 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
     setState (state_activated);
     x = y = w = h = 0;
     srcx = srcy = srcw = srch = 0;
-    for (Attribute * a= attributes ()->first ().ptr (); a; a = a->nextSibling ().ptr ()) {
+    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
         if (a->name () == StringPool::attr_target) {
-            for (NodePtr n = parentNode()->firstChild(); n; n= n->nextSibling())
-                if (convertNode <Element> (n)->
+            for (Node *n = parentNode()->firstChild(); n; n= n->nextSibling())
+                if (static_cast <Element *> (n)->
                         getAttribute ("handle") == a->value ())
                     target = n;
         } else if (a->name () == "start") {
@@ -370,7 +370,7 @@ KDE_NO_EXPORT void RP::TimingsBase::begin () {
 
 KDE_NO_EXPORT void RP::TimingsBase::update (int percentage) {
     progress = percentage;
-    Node * p = parentNode ().ptr ();
+    Node *p = parentNode ();
     if (p->id == RP::id_node_imfl)
         static_cast <RP::Imfl *> (p)->repaint ();
 }
@@ -502,14 +502,14 @@ KDE_NO_EXPORT void RP::ViewChange::activate () {
 KDE_NO_EXPORT void RP::ViewChange::begin () {
     kDebug () << "RP::ViewChange::begin";
     setState (state_began);
-    Node * p = parentNode ().ptr ();
+    Node *p = parentNode ();
     if (p->id == RP::id_node_imfl)
         static_cast <RP::Imfl *> (p)->needs_scene_img++;
     update (0);
 }
 
 KDE_NO_EXPORT void RP::ViewChange::finish () {
-    Node * p = parentNode ().ptr ();
+    Node *p = parentNode ();
     if (p && p->id == RP::id_node_imfl)
         static_cast <RP::Imfl *> (p)->needs_scene_img--;
     TimingsBase::finish ();

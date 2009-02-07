@@ -108,7 +108,7 @@ public:
     void defer ();
     void activate ();
     void *message (KMPlayer::MessageType msg, void *content=NULL);
-    KMPlayer::NodePtr childFromTag (const QString & tag);
+    KMPlayer::Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
     KMPlayerApp * app;
 };
@@ -125,7 +125,7 @@ public:
 class KMPLAYER_NO_EXPORT Group : public KMPlayer::Title {
 public:
     Group (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn=QString());
-    KMPlayer::NodePtr childFromTag (const QString & tag);
+    KMPlayer::Node *childFromTag (const QString & tag);
     void defer () {} // TODO lazy loading of largish sub trees
     void closed ();
     KDE_NO_EXPORT const char * nodeName () const { return "group"; }
@@ -138,7 +138,7 @@ public:
     void *message (KMPlayer::MessageType msg, void *content=NULL);
     void defer ();
     void activate ();
-    KMPlayer::NodePtr childFromTag (const QString & tag);
+    KMPlayer::Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
     KMPlayerApp * app;
     bool playmode;
@@ -166,7 +166,7 @@ class KMPLAYER_NO_EXPORT PlaylistGroup : public KMPlayer::Title {
 public:
     PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn);
     PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool plmode=false);
-    KMPlayer::NodePtr childFromTag (const QString & tag);
+    KMPlayer::Node *childFromTag (const QString & tag);
     void closed ();
     void setNodeName (const QString &);
     KDE_NO_EXPORT const char * nodeName () const { return "group"; }
@@ -179,7 +179,7 @@ public:
     HtmlObject (KMPlayer::NodePtr & doc, KMPlayerApp *a, bool playmode);
     void activate ();
     void closed ();
-    KMPlayer::NodePtr childFromTag (const QString & tag);
+    KMPlayer::Node *childFromTag (const QString & tag);
     const char * nodeName () const KDE_NO_EXPORT { return "object"; }
 };
 
@@ -199,7 +199,7 @@ KDE_NO_CDTOR_EXPORT FileDocument::FileDocument (short i, const QString &s, KMPla
     id = i;
 }
 
-KDE_NO_EXPORT KMPlayer::NodePtr FileDocument::childFromTag(const QString &tag) {
+KDE_NO_EXPORT KMPlayer::Node *FileDocument::childFromTag(const QString &tag) {
     if (tag == QString::fromLatin1 (nodeName ()))
         return this;
     return 0L;
@@ -242,7 +242,7 @@ KDE_NO_EXPORT void Recents::defer () {
     }
 }
 
-KDE_NO_EXPORT KMPlayer::NodePtr Recents::childFromTag (const QString & tag) {
+KDE_NO_EXPORT KMPlayer::Node *Recents::childFromTag (const QString & tag) {
     // kDebug () << nodeName () << " childFromTag " << tag;
     if (tag == QString::fromLatin1 ("item"))
         return new Recent (m_doc, app);
@@ -283,7 +283,7 @@ Group::Group (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn)
         setAttribute (KMPlayer::StringPool::attr_title, pn);
 }
 
-KDE_NO_EXPORT KMPlayer::NodePtr Group::childFromTag (const QString & tag) {
+KDE_NO_EXPORT KMPlayer::Node *Group::childFromTag (const QString & tag) {
     if (tag == QString::fromLatin1 ("item"))
         return new Recent (m_doc, app);
     else if (tag == QString::fromLatin1 ("group"))
@@ -319,7 +319,7 @@ KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::Source *s, boo
     title = i18n ("Persistent Playlists");
 }
 
-KDE_NO_EXPORT KMPlayer::NodePtr Playlist::childFromTag (const QString & tag) {
+KDE_NO_EXPORT KMPlayer::Node *Playlist::childFromTag (const QString & tag) {
     // kDebug () << nodeName () << " childFromTag " << tag;
     const char * name = tag.ascii ();
     if (!strcmp (name, "item"))
@@ -366,11 +366,11 @@ KDE_NO_EXPORT void PlaylistItemBase::activate () {
         QTextStream inxml (&data, QIODevice::ReadOnly);
         KMPlayer::readXML (pl, inxml, QString (), false);
         pl->normalize ();
-        KMPlayer::NodePtr cur = pl->firstChild ();
+        KMPlayer::Node *cur = pl->firstChild ();
         pl->mrl ()->resolved = !!cur;
         if (parentNode ()->id == KMPlayer::id_node_group_node && cur) {
-            KMPlayer::NodePtr sister = parentNode ()->firstChild ();
-            while (sister && cur && sister.ptr () != this) {
+            KMPlayer::Node *sister = parentNode ()->firstChild ();
+            while (sister && cur && sister != this) {
                 sister = sister->nextSibling ();
                 cur = cur->nextSibling ();
             }
@@ -430,7 +430,7 @@ PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool lm)
   : KMPlayer::Title (doc, KMPlayer::id_node_group_node), app (a), playmode (lm) {
 }
 
-KDE_NO_EXPORT KMPlayer::NodePtr PlaylistGroup::childFromTag (const QString &tag) {
+KDE_NO_EXPORT KMPlayer::Node *PlaylistGroup::childFromTag (const QString &tag) {
     const char * name = tag.ascii ();
     if (!strcmp (name, "item"))
         return new PlaylistItem (m_doc, app, playmode);
@@ -463,7 +463,7 @@ KDE_NO_EXPORT void HtmlObject::activate () {
 }
 
 KDE_NO_EXPORT void HtmlObject::closed () {
-    for (Node *n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ()) {
+    for (Node *n = firstChild (); n; n = n->nextSibling ()) {
         if (n->id == KMPlayer::id_node_param) {
             KMPlayer::Element *e = static_cast <KMPlayer::Element *> (n);
             QString name = e->getAttribute (KMPlayer::StringPool::attr_name);
@@ -484,7 +484,7 @@ KDE_NO_EXPORT void HtmlObject::closed () {
     PlaylistItemBase::closed ();
 }
 
-KDE_NO_EXPORT KMPlayer::NodePtr HtmlObject::childFromTag (const QString & tag) {
+KDE_NO_EXPORT KMPlayer::Node *HtmlObject::childFromTag (const QString & tag) {
     const char *name = tag.ascii ();
     if (!strcasecmp (name, "param"))
         return new KMPlayer::DarkNode (m_doc, name, KMPlayer::id_node_param);
@@ -773,13 +773,13 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
         recentFiles ()->addUrl (url);
         recents->defer (); // make sure it's loaded
         recents->insertBefore (new Recent (recents, this, url.url ()), recents->firstChild ());
-        KMPlayer::NodePtr c = recents->firstChild ()->nextSibling ();
+        KMPlayer::Node *c = recents->firstChild ()->nextSibling ();
         int count = 1;
-        KMPlayer::NodePtr more;
+        KMPlayer::Node *more = NULL;
         while (c) {
             if (c->id == id_node_recent_node &&
                     c->mrl ()->src == url.url ()) {
-                KMPlayer::NodePtr tmp = c->nextSibling ();
+                KMPlayer::Node *tmp = c->nextSibling ();
                 recents->removeChild (c);
                 c = tmp;
             } else {
@@ -794,9 +794,9 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
             recents->appendChild (more);
         }
         if (more) {
-            KMPlayer::NodePtr item;
+            KMPlayer::Node *item;
             if (count > 10) {
-                KMPlayer::NodePtr item = more->previousSibling ();
+                KMPlayer::Node *item = more->previousSibling ();
                 recents->removeChild (item);
                 more->insertBefore (item, more->firstChild ());
             }
@@ -806,7 +806,7 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
             while (c) {
                 if (c->id == id_node_recent_node &&
                          c->mrl ()->src == url.url ()) {
-                    KMPlayer::NodePtr tmp = c->nextSibling ();
+                    KMPlayer::Node *tmp = c->nextSibling ();
                     more->removeChild (c);
                     c = tmp;
                 } else {
@@ -1721,7 +1721,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuCopyDrop () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuDeleteNode () {
-    KMPlayer::NodePtr n;
+    KMPlayer::Node *n = NULL;
     if (manip_node && manip_node->parentNode ()) {
         n = manip_node->previousSibling() ? manip_node->previousSibling() : manip_node->parentNode ();
         manip_node->parentNode ()->removeChild (manip_node);
@@ -1730,9 +1730,9 @@ KDE_NO_EXPORT void KMPlayerApp::menuDeleteNode () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuMoveUpNode () {
-    KMPlayer::NodePtr n = manip_node;
+    KMPlayer::Node *n = manip_node.ptr ();
     if (n && n->parentNode () && n->previousSibling ()) {
-        KMPlayer::NodePtr prev = n->previousSibling ();
+        KMPlayer::Node *prev = n->previousSibling ();
         n->parentNode ()->removeChild (n);
         prev->parentNode ()->insertBefore (n, prev);
     }
@@ -1740,9 +1740,9 @@ KDE_NO_EXPORT void KMPlayerApp::menuMoveUpNode () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuMoveDownNode () {
-    KMPlayer::NodePtr n = manip_node;
+    KMPlayer::Node *n = manip_node.ptr ();
     if (n && n->parentNode () && n->nextSibling ()) {
-        KMPlayer::NodePtr next = n->nextSibling ();
+        KMPlayer::Node *next = n->nextSibling ();
         n->parentNode ()->removeChild (n);
         next->parentNode ()->insertBefore (n, next->nextSibling ());
     }
@@ -1754,7 +1754,7 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
     KMPlayer::RootPlayListItem * ri = m_view->playList ()->rootItem (si);
     kDebug() << "playListItemMoved " << (ri->id == playlist_id) << !! si->node;
     if (ri->id == playlist_id && si->node) {
-        KMPlayer::NodePtr p = si->node->parentNode ();
+        KMPlayer::Node *p = si->node->parentNode ();
         if (p) {
             p->removeChild (si->node);
             m_view->playList()->updateTree(playlist_id,playlist,0L,false,false);

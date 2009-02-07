@@ -123,7 +123,7 @@ private slots:
     void slotFindNext ();
 private:
     void updateTree (RootPlayListItem * ritem, NodePtr active, bool select);
-    PlayListItem * populate (NodePtr e, NodePtr focus, RootPlayListItem *root, PlayListItem * item, PlayListItem ** curitem);
+    PlayListItem * populate (Node *e, Node *focus, RootPlayListItem *root, PlayListItem * item, PlayListItem ** curitem);
     struct KMPLAYER_NO_EXPORT TreeUpdate {
         KDE_NO_CDTOR_EXPORT TreeUpdate (RootPlayListItem *ri, NodePtr n, bool s, bool o, SharedPtr <TreeUpdate> &nx) : root_item (ri), node (n), select (s), open (o), next (nx) {}
         KDE_NO_CDTOR_EXPORT ~TreeUpdate () {}

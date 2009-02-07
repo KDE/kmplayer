@@ -84,8 +84,6 @@ public:
     typedef SharedPtr <T> SharedType;
     typedef WeakPtr <T> WeakType;
 
-    virtual ~Item () {}
-
     SharedType self () const { return m_self; }
 protected:
     Item ();
@@ -147,14 +145,15 @@ public:
         : m_first (f), m_last (l) {}
     ~List () { clear (); }
 
-    typename Item<T>::SharedType first () const { return m_first; }
-    typename Item<T>::SharedType last () const { return m_last; }
-    void append (typename Item<T>::SharedType c);
-    void insertBefore(typename Item<T>::SharedType c, typename Item<T>::SharedType b);
-    void remove (typename Item<T>::SharedType c);
+    T* first () const { return m_first.ptr (); }
+    T* last () const { return m_last.ptr (); }
+    void append (T *c);
+    void insertBefore (T *c, T *b);
+    void remove (T *c);
     void clear ();
     unsigned int length () const;
-    typename Item<T>::SharedType item (int i) const;
+    T* item (int i) const;
+
 protected:
     typename Item<T>::SharedType m_first;
     typename Item<T>::WeakType m_last;
@@ -168,10 +167,8 @@ template <class T>
 class KMPLAYER_EXPORT ListNodeBase : public Item <T> {
     friend class List<T>;
 public:
-    virtual ~ListNodeBase () {}
-
-    typename Item<T>::SharedType nextSibling () const { return m_next; }
-    typename Item<T>::SharedType previousSibling () const { return m_prev; }
+    T* nextSibling () const { return m_next.ptr (); }
+    T* previousSibling () const { return m_prev.ptr (); }
 protected:
     ListNodeBase () {}
     typename Item<T>::SharedType m_next;
@@ -195,19 +192,20 @@ public:
 template <class T>
 class KMPLAYER_EXPORT TreeNode : public ListNodeBase <T> {
 public:
-    virtual ~TreeNode () {}
-
-    virtual void insertBefore (typename Item<T>::SharedType c, typename Item<T>::SharedType b);
-    virtual void appendChild (typename Item<T>::SharedType c);
-    virtual void removeChild (typename Item<T>::SharedType c);
+    void insertBefore (T *c, T *b);
+    void appendChild (T *c);
+    void removeChild (typename Item<T>::SharedType c);
 
     bool hasChildNodes () const { return m_first_child != 0L; }
-    typename Item<T>::SharedType parentNode () const { return m_parent; }
-    typename Item<T>::SharedType firstChild () const { return m_first_child; }
-    typename Item<T>::SharedType lastChild () const { return m_last_child; }
+    T* parentNode () const { return m_parent.ptr (); }
+    T* firstChild () const { return m_first_child.ptr (); }
+    T* lastChild () const { return m_last_child.ptr (); }
 
 protected:
     TreeNode () {}
+    void insertBeforeImpl (T *c, T *b);
+    void appendChildImpl (T *c);
+    void removeChildImpl (typename Item<T>::SharedType c);
     typename Item<T>::WeakType m_parent;
     typename Item<T>::SharedType m_first_child;
     typename Item<T>::WeakType m_last_child;
@@ -311,6 +309,10 @@ typedef Item<NodeRefList>::SharedType NodeRefListPtr;
 typedef Item<NodeRefList>::WeakType NodeRefListPtrW;
 ITEM_AS_POINTER(KMPlayer::NodeRefList)
 
+template <> void TreeNode<Node>::appendChild (Node *c);
+template <> void TreeNode<Node>::insertBefore (Node *c, Node *b);
+template <> void TreeNode<Node>::removeChild (NodePtr c);
+
 /*
  * Weak ref of the receivers list from signaler and the listener node
  */
@@ -366,7 +368,7 @@ public:
     virtual ~Node ();
     Document * document ();
     virtual Mrl * mrl ();
-    virtual NodePtr childFromTag (const QString & tag);
+    virtual Node *childFromTag (const QString & tag);
     void characterData (const QString & s);
     QString innerText () const;
     QString innerXML () const;
@@ -380,7 +382,7 @@ public:
      */
     virtual PlayType playType ();
     bool isPlayable () { return playType () > play_type_none; }
-    virtual bool isElementNode () { return false; }
+    virtual bool isElementNode () const { return false; }
     /**
      * If this node should be visible to the user
      */
@@ -460,9 +462,6 @@ public:
     virtual void reset ();
     virtual void clear ();
     void clearChildren ();
-    void appendChild (NodePtr c);
-    void insertBefore (NodePtr c, NodePtr b);
-    void removeChild (NodePtr c);
     void replaceChild (NodePtr _new, NodePtr old);
     /*
      * Get rid of whitespace only text nodes
@@ -516,18 +515,18 @@ public:
     void setAttributes (AttributeListPtr attrs);
     void setAttribute (const TrieString & name, const QString & value);
     QString getAttribute (const TrieString & name);
-    KDE_NO_EXPORT AttributeListPtr attributes () const { return m_attributes; }
+    KDE_NO_EXPORT AttributeList *attributes () const { return m_attributes.ptr (); }
     virtual void init ();
     virtual void reset ();
     virtual void clear ();
-    virtual bool isElementNode () { return true; }
+    virtual bool isElementNode () const { return true; }
     virtual void accept (Visitor * v);
     /**
      * Params are like attributes, but meant to be set dynamically. Caller may
      * pass a modification id, that it can use to restore the old value.
      * Param will be auto removed on deactivate
      */
-    void setParam (const TrieString &para, const QString &val, int * mod_id=0L);
+    void setParam (const TrieString &para, const QString &val, int *mod_id=0L);
     QString param (const TrieString & para);
     void resetParam (const TrieString & para, int mod_id);
     /**
@@ -548,7 +547,7 @@ inline KDE_NO_EXPORT T * convertNode (NodePtr e) {
 
 KMPLAYER_NO_EXPORT
 inline Node *findChildWithId (const Node *p, const short id) {
-    for (Node *c = p->firstChild ().ptr (); c; c = c->nextSibling ().ptr ())
+    for (Node *c = p->firstChild (); c; c = c->nextSibling ())
         if (id == c->id)
             return c;
     return NULL;
@@ -571,10 +570,11 @@ public:
 class KMPLAYER_EXPORT Mrl : public Title {
 protected:
     Mrl (NodePtr & d, short id=0);
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     void parseParam (const TrieString &, const QString &);
     unsigned int cached_ismrl_version;
     PlayType cached_play_type;
+
 public:
     enum { SingleMode = 0, WindowMode };
 
@@ -621,7 +621,7 @@ public:
     /**
      * Element has activated or deactivated notification
      */
-    virtual void stateElementChanged (Node * element, Node::State old_state, Node::State new_state) = 0;
+    virtual void stateElementChanged(Node *n, Node::State os, Node::State ns)=0;
     /**
      * Ask for connection bitrates settings
      */
@@ -722,7 +722,7 @@ public:
      * so explicitly dispose it (calls clear and set m_doc to 0L)
      * */
     void dispose ();
-    virtual NodePtr childFromTag (const QString & tag);
+    virtual Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "document"; }
     virtual void activate ();
     virtual void defer ();
@@ -870,7 +870,7 @@ public:
     DarkNode (NodePtr & d, const QByteArray &n, short id=0);
     KDE_NO_CDTOR_EXPORT ~DarkNode () {}
     const char * nodeName () const { return name.data (); }
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     virtual bool expose () const;
 protected:
     QByteArray name;
@@ -908,48 +908,51 @@ KMPLAYER_EXPORT Node * fromXMLDocumentTag (NodePtr & d, const QString & tag);
 template <class T>
 inline Item<T>::Item () : m_self (static_cast <T*> (this), true) {}
 
-template <class T> inline void List<T>::append(typename Item<T>::SharedType c) {
+template <class T> inline void List<T>::append (T *c) {
     if (!m_first) {
-        m_first = m_last = c;
+        m_first = c->m_self;
+        m_last = c->m_self;
     } else {
-        m_last->m_next = c;
+        m_last->m_next = c->m_self;
         c->m_prev = m_last;
-        m_last = c;
+        m_last = c->m_self;
     }
 }
 
-template <class T> inline void List<T>::insertBefore(typename Item<T>::SharedType c, typename Item<T>::SharedType b) {
+template <class T> inline void List<T>::insertBefore (T *c, T *b) {
     if (!b) {
         append (c);
     } else {
+        c->m_next = b->m_self;
         if (b->m_prev) {
-            b->m_prev->m_next = c;
+            b->m_prev->m_next = c->m_self;
             c->m_prev = b->m_prev;
         } else {
             c->m_prev = 0L;
-            m_first = c;
+            m_first = c->m_self;
         }
-        b->m_prev = c;
-        c->m_next = b;
+        b->m_prev = c->m_self;
     }
 }
 
-template <class T> inline void List<T>::remove(typename Item<T>::SharedType c) {
-    if (c->m_prev) {
+template <class T> inline void List<T>::remove (T *c) {
+    typename Item<T>::SharedType s = c->m_self;
+    if (c->m_prev)
         c->m_prev->m_next = c->m_next;
-    } else
+    else
         m_first = c->m_next;
     if (c->m_next) {
         c->m_next->m_prev = c->m_prev;
         c->m_next = 0L;
-    } else
+    } else {
         m_last = c->m_prev;
+    }
     c->m_prev = 0L;
 }
 
 template <class T> inline unsigned int List<T>::length () const {
     unsigned int count = 0;
-    for (typename Item<T>::SharedType t = m_first; t; t = t->nextSibling ())
+    for (T *t = m_first.ptr (); t; t = t->nextSibling ())
         count++;
     return count;
 }
@@ -959,46 +962,46 @@ template <class T> inline void List<T>::clear () {
 }
 
 template <class T>
-inline typename Item<T>::SharedType List<T>::item (int i) const {
-    for (typename Item<T>::SharedType t = m_first; t; t = t->nextSibling(), --i)
+inline T* List<T>::item (int i) const {
+    for (T *t = m_first.ptr (); t; t = t->nextSibling(), --i)
         if (i == 0)
             return t;
-    return typename Item<T>::SharedType ();
+    return NULL;
 }
 
 template <class T>
-inline void TreeNode<T>::appendChild (typename Item<T>::SharedType c) {
+inline void TreeNode<T>::appendChildImpl (T *c) {
     if (!m_first_child) {
-        m_first_child = m_last_child = c;
+        m_first_child = c->m_self;
+        m_last_child = c->m_self;
     } else {
-        m_last_child->m_next = c;
+        m_last_child->m_next = c->m_self;
         c->m_prev = m_last_child;
-        m_last_child = c;
+        m_last_child = c->m_self;
     }
     c->m_parent = Item<T>::m_self;
 }
 
 template <class T>
-inline void TreeNode<T>::insertBefore (
-        typename Item<T>::SharedType c, typename Item<T>::SharedType b) {
+inline void TreeNode<T>::insertBeforeImpl (T *c, T *b) {
     if (!b) {
         appendChild (c);
     } else {
+        c->m_next = b->m_self;
         if (b->m_prev) {
-            b->m_prev->m_next = c;
+            b->m_prev->m_next = c->m_self;
             c->m_prev = b->m_prev;
         } else {
             c->m_prev = 0L;
-            m_first_child = c;
+            m_first_child = c->m_self;
         }
-        b->m_prev = c;
-        c->m_next = b;
+        b->m_prev = c->m_self;
         c->m_parent = Item<T>::m_self;
     }
 }
 
 template <class T>
-inline void TreeNode<T>::removeChild (typename Item<T>::SharedType c) {
+inline void TreeNode<T>::removeChildImpl (typename Item<T>::SharedType c) {
     if (c->m_prev) {
         c->m_prev->m_next = c->m_next;
     } else

@@ -53,13 +53,25 @@ Surface::~Surface() {
 #endif
 }
 
+template <> void TreeNode<Surface>::appendChild (Surface *c) {
+    appendChildImpl (c);
+}
+
+template <> void TreeNode<Surface>::insertBefore (Surface *c, Surface *b) {
+    insertBeforeImpl (c, b);
+}
+
+template <> void TreeNode<Surface>::removeChild (SurfacePtr c) {
+    removeChildImpl (c);
+}
+
 void Surface::clear () {
     m_first_child = 0L;
     background_color = view_widget->palette().color (view_widget->backgroundRole()).rgb();
 }
 
 void Surface::remove () {
-    Surface *sp = parentNode ().ptr ();
+    Surface *sp = parentNode ();
     if (sp) {
         sp->markDirty ();
         sp->removeChild (this);
@@ -92,12 +104,12 @@ void Surface::resize (const SRect &rect, bool parent_resized) {
 }
 
 void Surface::markDirty () {
-    for (Surface *s = this; s && !s->dirty; s = s->parentNode ().ptr ())
+    for (Surface *s = this; s && !s->dirty; s = s->parentNode ())
         s->dirty = true;
 }
 
 void Surface::updateChildren (bool parent_resized) {
-    for (SurfacePtr c = firstChild (); c; c = c->nextSibling ())
+    for (Surface *c = firstChild (); c; c = c->nextSibling ())
         if (c->node)
             c->node->message (MsgSurfaceBoundsUpdate, (void *) parent_resized);
         else
@@ -116,7 +128,7 @@ KDE_NO_EXPORT IRect Surface::toScreen (const SSize &size) {
     //FIXME: handle scroll
     Matrix matrix (0, 0, xscale, yscale);
     matrix.translate (bounds.x (), bounds.y ());
-    for (SurfacePtr s = parentNode(); s; s = s->parentNode()) {
+    for (Surface *s = parentNode(); s; s = s->parentNode()) {
         matrix.transform(Matrix (0, 0, s->xscale, s->yscale));
         matrix.translate (s->bounds.x (), s->bounds.y ());
     }
@@ -124,7 +136,7 @@ KDE_NO_EXPORT IRect Surface::toScreen (const SSize &size) {
 }
 
 static void clipToScreen (Surface *s, Matrix &m, IRect &clip) {
-    Surface *ps = s->parentNode ().ptr ();
+    Surface *ps = s->parentNode ();
     if (!ps) {
         clip = IRect (s->bounds.x (), s->bounds.y (),
                 s->bounds.width (), s->bounds.height ());
@@ -153,7 +165,7 @@ KDE_NO_EXPORT void Surface::repaint (const SRect &rect) {
 }
 
 KDE_NO_EXPORT void Surface::repaint () {
-    Surface *ps = parentNode ().ptr ();
+    Surface *ps = parentNode ();
     if (ps)
         ps->repaint (bounds);
     else

@@ -307,21 +307,24 @@ void Node::clearChildren () {
     m_first_child = m_last_child = 0L;
 }
 
-void Node::appendChild (NodePtr c) {
-    document()->m_tree_version++;
+template <>
+void TreeNode<Node>::appendChild (Node *c) {
+    static_cast <Node *> (this)->document()->m_tree_version++;
     ASSERT (!c->parentNode ());
-    TreeNode<Node>::appendChild (c);
+    appendChildImpl (c);
 }
 
-void Node::insertBefore (NodePtr c, NodePtr b) {
+template <>
+KDE_NO_EXPORT void TreeNode<Node>::insertBefore (Node *c, Node *b) {
     ASSERT (!c->parentNode ());
-    document()->m_tree_version++;
-    TreeNode<Node>::insertBefore (c, b);
+    static_cast <Node *> (this)->document()->m_tree_version++;
+    insertBeforeImpl (c, b);
 }
 
-void Node::removeChild (NodePtr c) {
-    document()->m_tree_version++;
-    TreeNode <Node>::removeChild (c);
+template <>
+void TreeNode<Node>::removeChild (NodePtr c) {
+    static_cast <Node *> (this)->document()->m_tree_version++;
+    removeChildImpl (c);
 }
 
 KDE_NO_EXPORT void Node::replaceChild (NodePtr _new, NodePtr old) {
@@ -346,8 +349,8 @@ KDE_NO_EXPORT void Node::replaceChild (NodePtr _new, NodePtr old) {
     old->m_parent = 0L;
 }
 
-NodePtr Node::childFromTag (const QString &) {
-    return NodePtr ();
+Node *Node::childFromTag (const QString &) {
+    return NULL;
 }
 
 KDE_NO_EXPORT void Node::characterData (const QString & s) {
@@ -359,23 +362,23 @@ KDE_NO_EXPORT void Node::characterData (const QString & s) {
 }
 
 void Node::normalize () {
-    NodePtr e = firstChild ();
+    Node *e = firstChild ();
     while (e) {
-        NodePtr tmp = e->nextSibling ();
+        Node *tmp = e->nextSibling ();
         if (!e->isElementNode () && e->id == id_node_text) {
             QString val = e->nodeValue ().simplifyWhiteSpace ();
             if (val.isEmpty ())
                 removeChild (e);
             else
-                convertNode <TextNode> (e)->setText (val);
+                static_cast <TextNode *> (e)->setText (val);
         } else
             e->normalize ();
         e = tmp;
     }
 }
 
-static void getInnerText (const NodePtr p, QTextOStream & out) {
-    for (NodePtr e = p->firstChild (); e; e = e->nextSibling ()) {
+static void getInnerText (const Node *p, QTextOStream & out) {
+    for (Node *e = p->firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_text || e->id == id_node_cdata)
             out << e->nodeValue ();
         else
@@ -386,26 +389,26 @@ static void getInnerText (const NodePtr p, QTextOStream & out) {
 QString Node::innerText () const {
     QString buf;
     QTextOStream out (&buf);
-    getInnerText (m_self, out);
+    getInnerText (this, out);
     return buf;
 }
 
-static void getOuterXML (const NodePtr p, QTextOStream & out, int depth) {
+static void getOuterXML (const Node *p, QTextOStream & out, int depth) {
     if (!p->isElementNode ()) { // #text or #cdata
         if (p->id == id_node_cdata)
             out << "<![CDATA[" << p->nodeValue () << "]]>" << QChar ('\n');
         else
             out << XMLStringlet (p->nodeValue ()) << QChar ('\n');
     } else {
-        Element * e = convertNode <Element> (p);
+        const Element *e = static_cast <const Element *> (p);
         QString indent (QString ().fill (QChar (' '), depth));
         out << indent << QChar ('<') << XMLStringlet (e->nodeName ());
-        for (AttributePtr a = e->attributes()->first(); a; a = a->nextSibling())
+        for (Attribute *a = e->attributes()->first(); a; a = a->nextSibling())
             out << " " << XMLStringlet (a->name ().toString ()) <<
                 "=\"" << XMLStringlet (a->value ()) << "\"";
         if (e->hasChildNodes ()) {
             out << QChar ('>') << QChar ('\n');
-            for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
+            for (Node *c = e->firstChild (); c; c = c->nextSibling ())
                 getOuterXML (c, out, depth + 1);
             out << indent << QString("</") << XMLStringlet (e->nodeName()) <<
                 QChar ('>') << QChar ('\n');
@@ -417,7 +420,7 @@ static void getOuterXML (const NodePtr p, QTextOStream & out, int depth) {
 QString Node::innerXML () const {
     QString buf;
     QTextOStream out (&buf);
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+    for (Node *e = firstChild (); e; e = e->nextSibling ())
         getOuterXML (e, out, 0);
     return buf;
 }
@@ -425,7 +428,7 @@ QString Node::innerXML () const {
 QString Node::outerXML () const {
     QString buf;
     QTextOStream out (&buf);
-    getOuterXML (m_self, out, 0);
+    getOuterXML (this, out, 0);
     return buf;
 }
 
@@ -588,7 +591,7 @@ void Element::resetParam (const TrieString &name, int mid) {
 }
 
 void Element::setAttribute (const TrieString & name, const QString & value) {
-    for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
+    for (Attribute *a = m_attributes->first (); a; a = a->nextSibling ())
         if (name == a->name ()) {
             if (value.isNull ())
                 m_attributes->remove (a);
@@ -601,7 +604,7 @@ void Element::setAttribute (const TrieString & name, const QString & value) {
 }
 
 QString Element::getAttribute (const TrieString & name) {
-    for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
+    for (Attribute *a = m_attributes->first (); a; a = a->nextSibling ())
         if (name == a->name ())
             return a->value ();
     return QString ();
@@ -609,7 +612,7 @@ QString Element::getAttribute (const TrieString & name) {
 
 void Element::init () {
     d->clear();
-    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ())
+    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ())
         parseParam (a->name (), a->value ());
 }
 
@@ -657,7 +660,7 @@ void Title::setCaption (const QString &) {
 //-----------------------------------------------------------------------------
 
 static bool hasMrlChildren (const NodePtr & e) {
-    for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
+    for (Node *c = e->firstChild (); c; c = c->nextSibling ())
         if (c->isPlayable () || hasMrlChildren (c))
             return true;
     return false;
@@ -687,7 +690,7 @@ Node::PlayType Mrl::playType () {
 QString Mrl::absolutePath () {
     QString path = src;
     if (!path.isEmpty() && !path.startsWith ("tv:/")) {
-        for (NodePtr e = parentNode (); e; e = e->parentNode ()) {
+        for (Node *e = parentNode (); e; e = e->parentNode ()) {
             Mrl * mrl = e->mrl ();
             if (mrl && !mrl->src.isEmpty () && mrl->src != src) {
                 path = KURL (mrl->absolutePath (), src).url ();
@@ -698,11 +701,11 @@ QString Mrl::absolutePath () {
     return path;
 }
 
-NodePtr Mrl::childFromTag (const QString & tag) {
+Node *Mrl::childFromTag (const QString & tag) {
     Node * elm = fromXMLDocumentTag (m_doc, tag);
     if (elm)
         return elm;
-    return NodePtr ();
+    return NULL;
 }
 
 Mrl * Mrl::linkNode () {
@@ -737,7 +740,7 @@ void *Mrl::message (MessageType msg, void *content) {
         return NULL;
 
     case MsgQueryRoleChildDisplay:
-        for (NodePtr p = parentNode (); p; p = p->parentNode ())
+        for (Node *p = parentNode (); p; p = p->parentNode ())
             if (p->mrl ())
                 return p->message (msg, content);
         return NULL;
@@ -886,7 +889,7 @@ static Node *getElementByIdImpl (Node *n, const QString & id, bool inter) {
     Element *e = static_cast <Element *> (n);
     if (e->getAttribute (StringPool::attr_id) == id)
         return n;
-    for (Node *c = e->firstChild ().ptr (); c; c = c->nextSibling ().ptr ()) {
+    for (Node *c = e->firstChild (); c; c = c->nextSibling ()) {
         if (!inter && c->mrl () && c->mrl ()->opener.ptr () == n)
             continue;
         if ((elm = getElementByIdImpl (c, id, inter)))
@@ -903,7 +906,7 @@ Node *Document::getElementById (Node *n, const QString & id, bool inter) {
     return getElementByIdImpl (n, id, inter);
 }
 
-NodePtr Document::childFromTag (const QString & tag) {
+Node *Document::childFromTag (const QString & tag) {
     Node * elm = fromXMLDocumentTag (m_doc, tag);
     if (elm)
         return elm;
@@ -1258,7 +1261,7 @@ DarkNode::DarkNode (NodePtr & d, const QByteArray &n, short id)
  : Element (d, id), name (n) {
 }
 
-NodePtr DarkNode::childFromTag (const QString & tag) {
+Node *DarkNode::childFromTag (const QString & tag) {
     return new DarkNode (m_doc, tag.toUtf8 ());
 }
 

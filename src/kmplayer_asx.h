@@ -45,7 +45,7 @@ const short id_node_duration = 408;
 class KMPLAYER_NO_EXPORT Asx : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d, id_node_asx) {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
     bool expose () const { return !title.isEmpty (); }
     PlayType playType ();
@@ -58,7 +58,7 @@ class KMPLAYER_NO_EXPORT Entry : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Entry (NodePtr & d)
         : Mrl (d, id_node_entry), duration_timer (NULL), ref_child_count (0) {}
-    NodePtr childFromTag (const QString & tag);
+    Node *childFromTag (const QString & tag);
     void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
     /**
@@ -79,7 +79,7 @@ public:
 class KMPLAYER_NO_EXPORT Ref : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Ref (NodePtr & d) : Mrl (d, id_node_ref) {}
-    //NodePtr childFromTag (const QString & tag);
+    //Node *childFromTag (const QString & tag);
     void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
     bool expose () const;
@@ -91,7 +91,7 @@ public:
 class KMPLAYER_NO_EXPORT EntryRef : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT EntryRef (NodePtr & d) : Mrl (d, id_node_entryref) {}
-    //NodePtr childFromTag (const QString & tag);
+    //Node *childFromTag (const QString & tag);
     void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "EntryRef"; }
 };

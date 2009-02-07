@@ -23,7 +23,7 @@
 
 using namespace KMPlayer;
 
-NodePtr ATOM::Feed::childFromTag (const QString & tag) {
+Node *ATOM::Feed::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "entry"))
         return new ATOM::Entry (m_doc);
     else if (!strcmp (tag.latin1 (), "link"))
@@ -34,7 +34,7 @@ NodePtr ATOM::Feed::childFromTag (const QString & tag) {
 }
 
 void ATOM::Feed::closed () {
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+    for (Node *c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
             title = c->innerText ().simplifyWhiteSpace ();
             break;
@@ -42,7 +42,7 @@ void ATOM::Feed::closed () {
     Mrl::closed ();
 }
 
-NodePtr ATOM::Entry::childFromTag (const QString &tag) {
+Node *ATOM::Entry::childFromTag (const QString &tag) {
     const char *cstr = tag.latin1 ();
     if (!strcmp (cstr, "link"))
         return new ATOM::Link (m_doc);
@@ -69,7 +69,7 @@ NodePtr ATOM::Entry::childFromTag (const QString &tag) {
 void ATOM::Entry::closed () {
     MediaGroup *group = NULL;
     Node *rating = NULL;
-    for (Node *c = firstChild ().ptr (); c; c = c->nextSibling ().ptr ())
+    for (Node *c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
             title = c->innerText ().simplifyWhiteSpace ();
         } else if (c->id == id_node_gd_rating) {
@@ -89,7 +89,7 @@ Node::PlayType ATOM::Link::playType () {
 void ATOM::Link::closed () {
     QString href;
     QString rel;
-    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ()) {
+    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
         if (a->name () == StringPool::attr_href)
             href = a->value ();
         else if (a->name () == StringPool::attr_title)
@@ -105,7 +105,7 @@ void ATOM::Link::closed () {
 }
 
 void ATOM::Content::closed () {
-    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ()) {
+    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
         if (a->name () == StringPool::attr_src)
             src = a->value ();
         else if (a->name () == StringPool::attr_type) {
@@ -129,7 +129,7 @@ Node::PlayType ATOM::Content::playType () {
     return play_type_none;
 }
 
-NodePtr ATOM::MediaGroup::childFromTag (const QString &tag) {
+Node *ATOM::MediaGroup::childFromTag (const QString &tag) {
     const char *cstr = tag.latin1 ();
     if (!strcmp (cstr, "media:content"))
         return new ATOM::MediaContent (m_doc);
@@ -193,7 +193,7 @@ void ATOM::MediaGroup::addSummary (Node *rating_node) {
             ratings += "</svg></img>";
         }
     }
-    for (Node *c = firstChild ().ptr (); c; c = c->nextSibling ().ptr ()) {
+    for (Node *c = firstChild (); c; c = c->nextSibling ()) {
         switch (c->id) {
         case id_node_media_title:
             title = c->innerText ();
@@ -274,7 +274,7 @@ void ATOM::MediaGroup::addSummary (Node *rating_node) {
 }
 
 void ATOM::MediaContent::closed () {
-    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ()) {
+    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
         if (a->name () == StringPool::attr_url)
             src = a->value();
         else if (a->name () == StringPool::attr_type)

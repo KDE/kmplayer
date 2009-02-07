@@ -180,7 +180,7 @@ private:
 class KMPLAYER_NO_EXPORT FileDocument : public KMPlayer::SourceDocument {
 public:
     FileDocument (short id, const QString &, KMPlayer::Source *source = 0L);
-    KMPlayer::NodePtr childFromTag (const QString & tag);
+    KMPlayer::Node *childFromTag (const QString & tag);
     void readFromFile (const QString & file);
     void writeToFile (const QString & file);
 };
