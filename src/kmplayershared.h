@@ -45,6 +45,8 @@ struct SharedData {
 #ifdef SHAREDPTR_DEBUG
     ~SharedData () { std::cerr << "SharedData::~SharedData" << " total:" << --shared_data_count << std::endl; }
 #endif
+    void *operator new (size_t);
+    void operator delete (void *);
     void addRef ();
     void addWeakRef ();
     void release ();
@@ -54,6 +56,14 @@ struct SharedData {
     int weak_count;
     T * ptr;
 };
+
+template <class T> inline void *SharedData<T>::operator new (size_t s) {
+    return malloc (s);
+}
+
+template <class T> inline void SharedData<T>::operator delete (void *p) {
+    free (p);
+}
 
 template <class T> inline void SharedData<T>::addRef () {
     use_count++;

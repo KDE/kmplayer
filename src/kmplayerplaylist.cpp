@@ -1527,8 +1527,78 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
 
 namespace {
 
+struct MemoryPool {
+    void **used;
+    void **unused;
+    size_t size;
+    int used_count;
+    int unused_count;
+    int used_size;
+    int unused_size;
+    void *alloc ();
+    void dealloc (void *p);
+    MemoryPool (size_t s)
+        : used (NULL), unused (NULL), size (s),
+          used_count (0), unused_count (0),
+          used_size (0), unused_size (0) {}
+};
+
+
+} // namespace
+
+void *MemoryPool::alloc () {
+    if (used_size == used_count) {
+        void **tmp = (void **) malloc (++used_size * sizeof (void *));
+        if (used_count) {
+            memcpy (tmp, used, used_count * sizeof (void *));
+            free (used);
+        }
+        used = tmp;
+    }
+    void *p;
+    if (unused_count)
+        p = unused[--unused_count];
+    else
+        p = malloc (size);
+    used[used_count++] = p;
+    return p;
+}
+
+void MemoryPool::dealloc (void *p) {
+    for (int i = 0; i < used_count; ++i)
+        if (p == used[i]) {
+            if (unused_size == unused_count) {
+                void **tmp = (void **) malloc (++unused_size * sizeof (void*));
+                if (unused_count) {
+                    memcpy (tmp, unused, unused_count * sizeof (void *));
+                    free (unused);
+                }
+                unused = tmp;
+            }
+            unused[unused_count++] = p;
+            if (i < --used_count)
+                used[i] = used[used_count];
+            break;
+        }
+}
+
+namespace {
+
 class KMPLAYER_NO_EXPORT SimpleSAXParser {
+    enum Token { tok_empty, tok_text, tok_white_space, tok_angle_open,
+        tok_equal, tok_double_quote, tok_single_quote, tok_angle_close,
+        tok_slash, tok_exclamation, tok_amp, tok_hash, tok_semi_colon,
+        tok_question_mark, tok_cdata_start };
 public:
+    struct TokenInfo {
+        TokenInfo () : token (tok_empty) {}
+        void *operator new (size_t);
+        void operator delete (void *);
+        Token token;
+        QString string;
+        SharedPtr <TokenInfo> next;
+    };
+    typedef SharedPtr <TokenInfo> TokenInfoPtr;
     SimpleSAXParser (DocumentBuilder & b) : builder (b), position (0), m_attributes (new AttributeList), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false), no_entitity_look_ahead (false), have_next_char (false) {}
     virtual ~SimpleSAXParser () {};
     bool parse (QTextStream & d);
@@ -1537,20 +1607,9 @@ private:
     DocumentBuilder & builder;
     int position;
     QChar next_char;
-    enum Token { tok_empty, tok_text, tok_white_space, tok_angle_open,
-        tok_equal, tok_double_quote, tok_single_quote, tok_angle_close,
-        tok_slash, tok_exclamation, tok_amp, tok_hash, tok_semi_colon,
-        tok_question_mark, tok_cdata_start };
     enum State {
         InTag, InStartTag, InPITag, InDTDTag, InEndTag, InAttributes, InContent, InCDATA, InComment
     };
-    struct TokenInfo {
-        TokenInfo () : token (tok_empty) {}
-        Token token;
-        QString string;
-        SharedPtr <TokenInfo> next;
-    };
-    typedef SharedPtr <TokenInfo> TokenInfoPtr;
     struct StateInfo {
         StateInfo (State s, SharedPtr <StateInfo> n) : state (s), next (n) {}
         State state;
@@ -1582,6 +1641,31 @@ private:
     void push ();
     void push_attribute ();
 };
+
+} // namespace
+
+static MemoryPool token_pool (sizeof (SimpleSAXParser::TokenInfo));
+static MemoryPool shared_token_pool (sizeof (SharedData <SimpleSAXParser::TokenInfo>));
+
+inline void *SimpleSAXParser::TokenInfo::operator new (size_t s) {
+    return token_pool.alloc ();
+}
+
+inline void SimpleSAXParser::TokenInfo::operator delete (void *p) {
+    token_pool.dealloc (p);
+}
+
+namespace KMPlayer {
+
+template <> inline
+void *SharedData<SimpleSAXParser::TokenInfo>::operator new (size_t s) {
+    return shared_token_pool.alloc ();
+}
+
+template <> inline
+void SharedData<SimpleSAXParser::TokenInfo>::operator delete (void *p) {
+    shared_token_pool.dealloc (p);
+}
 
 } // namespace
 
