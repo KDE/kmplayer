@@ -794,9 +794,8 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
             recents->appendChild (more);
         }
         if (more) {
-            KMPlayer::Node *item;
             if (count > 10) {
-                KMPlayer::Node *item = more->previousSibling ();
+                KMPlayer::NodePtr item = more->previousSibling ();
                 recents->removeChild (item);
                 more->insertBefore (item, more->firstChild ());
             }
