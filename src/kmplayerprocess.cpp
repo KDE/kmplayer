@@ -496,7 +496,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     } else {
         Mrl *m = mrl ();
         if (m && m->repeat > 0)
-            args += QString (" -loop " + QString::number (m->repeat + 1));
+            args += QString (" -loop " + QString::number (m->repeat));
         else if (m_settings->loop)
             args += QString (" -loop 0");
         if (m_settings->mplayerpost090)
