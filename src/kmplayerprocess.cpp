@@ -2333,7 +2333,6 @@ KDE_NO_EXPORT void NpStream::open () {
             QStringList name;
             QStringList value;
             QString buf;
-            bool nl = false;
             int data_pos = -1;
             for (int i = 0; i < post.size () && data_pos < 0; ++i) {
                 char c = post.at (i);
