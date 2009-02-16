@@ -618,6 +618,7 @@ public:
  */
 class KMPLAYER_EXPORT PlayListNotify {
 public:
+    virtual ~PlayListNotify() { }
     /**
      * Element has activated or deactivated notification
      */
