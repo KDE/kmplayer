@@ -1218,10 +1218,10 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
         else if (!strcasecmp (argn[i], "height"))
             height = strtol (argv[i], 0L, 10);
     }
-    if (width > 0 && height > 0)
+    /*if (width > 0 && height > 0)
         callFunction (-1, "dimension",
                 DBUS_TYPE_INT32, &width, DBUS_TYPE_INT32, &height,
-                DBUS_TYPE_INVALID);
+                DBUS_TYPE_INVALID);*/
 
     npp = (NPP_t*)nsAlloc (sizeof (NPP_t));
     memset (npp, 0, sizeof (NPP_t));
