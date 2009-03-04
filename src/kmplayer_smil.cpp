@@ -605,14 +605,12 @@ KDE_NO_EXPORT void *Runtime::message (MessageType msg, void *content) {
     }
     if ((int) msg >= (int) DurLastDuration)
         return MsgUnhandled;
-    processEvent (msg);
-    return NULL;
-}
 
-KDE_NO_EXPORT void Runtime::processEvent (MessageType msg) {
     if (!started ()) {
+        Posting *event = static_cast <Posting *> (content);
         for (DurationItem *dur = beginTime ().next; dur; dur = dur->next)
-            if (dur->durval == (Duration) msg) {
+            if (dur->durval == (Duration) msg &&
+                    dur->connection->connectee == event->source) {
                 if (begin_timer) {
                     element->document ()->cancelPosting (begin_timer);
                     begin_timer = NULL;
@@ -624,15 +622,18 @@ KDE_NO_EXPORT void Runtime::processEvent (MessageType msg) {
                     propagateStart ();
                 if (element->state == Node::state_finished)
                     element->state = Node::state_activated;//rewind to activated
-                return;
+                break;
             }
     } else if (started ()) {
+        Posting *event = static_cast <Posting *> (content);
         for (DurationItem *dur = endTime ().next; dur; dur = dur->next)
-            if (dur->durval == (Duration) msg) {
+            if (dur->durval == (Duration) msg &&
+                    dur->connection->connectee == event->source) {
                 doFinish ();
-                return;
+                break;
             }
     }
+    return NULL;
 }
 
 KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
@@ -652,7 +653,7 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
             return; // timerEvent will call us with forced=true
         // bail out if a child still running
         for (Node *c = element->firstChild (); c; c = c->nextSibling ())
-            if (c->unfinished ())
+            if (c->unfinished () || Node::state_deferred == c->state)
                 return; // a child still running
     }
     bool was_started (started ());
@@ -2053,6 +2054,8 @@ KDE_NO_EXPORT void *SMIL::Par::message (MessageType msg, void *content) {
 KDE_NO_EXPORT void SMIL::Seq::begin () {
     setState (state_began);
     if (jump_node) {
+        starting_connection = NULL;
+        trans_connection = NULL;
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
             if (c == jump_node) {
                 jump_node = 0L;
@@ -2091,6 +2094,9 @@ KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
                 }
                 if (state == state_init && parentNode ())
                     parentNode ()->message (MsgChildReady, this);
+            } else if (unfinished ()) {
+                FreezeStateUpdater visitor;
+                accept (&visitor);
             }
             return NULL;
 

@@ -1189,7 +1189,7 @@ namespace KMPlayer {
 class KMPLAYER_NO_EXPORT MouseVisitor : public Visitor {
     ViewArea *view_area;
     Matrix matrix;
-    NodePtr node;
+    NodePtrW source;
     MessageType event;
     int x, y;
     bool handled;
@@ -1235,15 +1235,15 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {
         matrix = Matrix (rect.x(), rect.y(), s->xscale, s->yscale);
         matrix.transform (m);
 
-        NodePtr node_save = node;
-        node = layout;
+        NodePtr node_save = source;
+        source = layout;
         for (NodePtr r = layout->firstChild (); r; r = r->nextSibling ()) {
             if (r->id == SMIL::id_node_region)
                 r->accept (this);
-            if (!node->active ())
+            if (!source || !source->active ())
                 break;
         }
-        node = node_save;
+        source = node_save;
 
         matrix = m;
     }
@@ -1301,14 +1301,14 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
             for (NodePtr r = region->firstChild (); r; r = r->nextSibling ()) {
                 r->accept (this);
                 child_handled |= handled;
-                if (!node->active ())
+                if (!source || !source->active ())
                     break;
             }
         child_handled &= !bubble_up;
         bubble_up = false;
 
         MessageType saved_event = event;
-        if (node->active ()) {
+        if (source && source->active ()) {
             bool notify_receivers = !child_handled;
             bool pass_event = !child_handled;
             if (event == MsgEventPointerMoved) {
@@ -1333,7 +1333,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
                     for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
                         if (c->data)
                             c->data->accept (this);
-                        if (!node->active ())
+                        if (!source || !source->active ())
                             break;
                     }
                 }
@@ -1408,7 +1408,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
                 for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
                     if (c->data)
                         c->data->accept (this);
-                    if (!node->active ())
+                    if (!source || !source->active ())
                         return;
                 }
             if (event == MsgEventClicked && !area->href.isEmpty ())
@@ -1419,8 +1419,10 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
 
 KDE_NO_EXPORT void MouseVisitor::visit (Element *elm) {
     Runtime *rt = (Runtime *) elm->message (MsgQueryRoleTiming);
-    if (rt)
-        rt->processEvent (event);
+    if (rt) {
+        Posting mouse_event (source, event);
+        rt->message (event, &mouse_event);
+    }
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
@@ -1445,13 +1447,20 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
 
     NodeRefList *nl = nodeMessageReceivers (mt,
             event == MsgEventPointerMoved ? MsgSurfaceAttach : event);
-    if (nl)
+    if (nl) {
+        NodePtr node_save = source;
+        source = mt;
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
             if (c->data && c->data.ptr () != mt)
                 c->data->accept (this);
-            if (!node->active ())
-                return;
+            if (!source || !source->active ())
+                break;
         }
+        source = node_save;
+        if (!source || !source->active ())
+            return;
+    }
+
     if (event != MsgEventPointerMoved)
         visit (static_cast <Element *> (mt));
     if (event != MsgEventPointerInBounds && event != MsgEventPointerOutBounds) {
@@ -1470,7 +1479,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::SmilText *st) {
             for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
                 if (c->data && c->data.ptr () != st)
                     c->data->accept (this);
-                if (!node->active ())
+                if (!source || !source->active ())
                     return;
             }
     }

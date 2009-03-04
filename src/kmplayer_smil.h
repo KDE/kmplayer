@@ -120,7 +120,6 @@ public:
     bool parseParam (const TrieString & name, const QString & value);
     TimingState state () const { return timingstate; }
     void *message (MessageType msg, void *content=NULL);
-    void processEvent (MessageType msg);
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
