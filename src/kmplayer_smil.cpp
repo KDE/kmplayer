@@ -266,6 +266,7 @@ KDE_NO_EXPORT void Runtime::initialize () {
         duration_timer = NULL;
     }
     repeat = repeat_count = 1;
+    trans_in_dur = 0;
     timingstate = TimingsInit;
     for (int i = 0; i < (int) DurTimeLast; i++)
         durations [i].clear ();
@@ -672,7 +673,7 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
 }
 
 KDE_NO_EXPORT void Runtime::propagateStart () {
-    timingstate = timings_started;
+    timingstate = trans_in_dur ? TimingsTransIn : timings_started;
     element->deliver (MsgEventStarting, element);
     if (begin_timer) {
         element->document ()->cancelPosting (begin_timer);
@@ -1794,7 +1795,8 @@ class KMPLAYER_NO_EXPORT FreezeStateUpdater : public Visitor {
                     Runtime::DurMedia == rt->endTime ().durval) &&
             rt->fill_active != Runtime::fill_remove;
         bool cfg_freeze = rt->fill_active == Runtime::fill_freeze ||
-            rt->fill_active == Runtime::fill_hold;
+            rt->fill_active == Runtime::fill_hold ||
+            rt->fill_active == Runtime::fill_transition;
 
         bool do_freeze = freeze && (auto_freeze || cfg_freeze);
         if (do_freeze && rt->timingstate == Runtime::timings_stopped) {
@@ -1838,7 +1840,9 @@ public:
                 Runtime *rt = (Runtime *) n->message (MsgQueryRoleTiming);
                 if (rt) {
                     bool prev_freeze = prev && freeze &&
-                        prev->fill_active == Runtime::fill_hold;
+                        (prev->fill_active == Runtime::fill_hold ||
+                         (prev->fill_active == Runtime::fill_transition &&
+                          Runtime::TimingsTransIn == rt->state ()));
                     if (rt->timingstate < Runtime::timings_started) {
                         break;
                     } else if (rt->timingstate < Runtime::timings_stopped) {
@@ -2068,7 +2072,7 @@ KDE_NO_EXPORT void SMIL::Seq::begin () {
             GroupBaseInitVisitor visitor;
             firstChild ()->nextSibling ()->accept (&visitor);
         }
-        starting_connection = firstChild ()->connectTo (this, MsgEventStarting);
+        starting_connection = firstChild ()->connectTo (this, MsgEventStarted);
         firstChild ()->activate ();
     }
 }
@@ -2087,9 +2091,6 @@ KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
                 }
                 if (state == state_init && parentNode ())
                     parentNode ()->message (MsgChildReady, this);
-            } else if (unfinished ()) {
-                FreezeStateUpdater visitor;
-                accept (&visitor);
             }
             return NULL;
 
@@ -2106,10 +2107,13 @@ KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
                             next->nextSibling ()->accept (&visitor);
                         }
                         starting_connection = next->connectTo (
-                                this, MsgEventStarting);
+                                this, MsgEventStarted);
+                        trans_connection = next->connectTo (
+                                this, MsgChildTransformedIn);
                         next->activate ();
                     } else {
                         starting_connection = NULL;
+                        trans_connection = NULL;
                         runtime->tryFinish ();
                     }
                     FreezeStateUpdater visitor;
@@ -2121,14 +2125,27 @@ KDE_NO_EXPORT void *SMIL::Seq::message (MessageType msg, void *content) {
             return NULL;
         }
 
-        case MsgEventStarting: {
+        case MsgEventStarted: {
+            Posting *event = static_cast <Posting *> (content);
+            Node *source = event->source;
+            if (source != this && source->previousSibling ()) {
+                FreezeStateUpdater visitor;
+                starting_connection = NULL;
+                accept (&visitor);
+            }
+            break;
+        }
+ 
+        case MsgChildTransformedIn: {
             Node *source = (Node *) content;
             if (source != this && source->previousSibling ()) {
                 FreezeStateUpdater visitor;
                 starting_connection = NULL;
                 accept (&visitor);
             }
-        } // fall through
+            break;
+        }
+ 
         default:
             break;
     }
@@ -2621,7 +2638,8 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
    sensitivity (sens_opaque),
    trans_out_active (false),
    has_mouse (false),
-   m_MediaAttached (new NodeRefList) {
+   m_MediaAttached (new NodeRefList),
+   m_TransformedIn (new NodeRefList) {
     view_mode = Mrl::WindowMode;
 }
 
@@ -2682,9 +2700,13 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
     } else if (para == "system-bitrate") {
         bitrate = val.toInt ();
     } else if (para == "transIn") {
-        trans_in = findTransition (this, val);
-        if (!trans_in)
+        Transition *t = findTransition (this, val);
+        if (t) {
+            trans_in = t;
+            runtime->trans_in_dur = t->dur;
+        } else {
             kWarning() << "Transition " << val << " not found in head";
+        }
     } else if (para == "transOut") {
         trans_out = findTransition (this, val);
         if (!trans_out)
@@ -2715,6 +2737,9 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
         fit = fit_default;
         opacity = 100;
         Mrl::init (); // sets all attributes
+        for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+            if (c != external_tree)
+                c->activate (); // activate param/set/animate.. children
         runtime->timingstate = Runtime::TimingsInitialized;
     }
 }
@@ -2792,9 +2817,6 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         document ()->cancelPosting (trans_out_timer);
         trans_out_timer = NULL;
     }
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-        if (c != external_tree)
-            c->activate (); // activate param/set/animate.. children
     if (r) {
         region_node = r;
         region_mouse_enter = r->connectTo (this, MsgEventPointerInBounds);
@@ -2806,6 +2828,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         Transition * trans = convertNode <Transition> (trans_in);
         if (trans && trans->supported ()) {
             active_trans = trans_in;
+            runtime->timingstate = Runtime::TimingsTransIn;
             trans_gain = 0.0;
             document ()->notify_listener->addRepaintUpdater (this);
             trans_start_time = document ()->last_event_time;
@@ -2958,6 +2981,10 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                                (trans_end_time - trans_start_time);
             if (trans_gain > 0.9999) {
                 document ()->notify_listener->removeRepaintUpdater (this);
+                if (active_trans == trans_in) {
+                    runtime->timingstate = Runtime::timings_started;
+                    deliver (MsgChildTransformedIn, this);
+                }
                 if (!trans_out_active)
                     active_trans = NULL;
                 trans_gain = 1.0;
@@ -3095,6 +3122,8 @@ void *SMIL::MediaType::message (MessageType msg, void *content) {
                 return l;
             if (MsgSurfaceAttach == m)
                 return m_MediaAttached.ptr ();
+            if (MsgChildTransformedIn == m)
+                return m_TransformedIn.ptr ();
         } // fall through
 
         default:

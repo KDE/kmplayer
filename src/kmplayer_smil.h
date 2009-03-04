@@ -82,8 +82,9 @@ public:
 class KMPLAYER_NO_EXPORT Runtime {
 public:
     enum TimingState {
-        TimingsInit = 0, TimingsInitialized, timings_began,
-        timings_started, timings_paused, timings_stopped, timings_freezed
+        TimingsInit = 0, TimingsInitialized,
+        timings_began, timings_started, TimingsTransIn, timings_paused,
+        timings_stopped, timings_freezed
     };
     enum Fill {
         fill_default, fill_inherit, fill_remove, fill_freeze,
@@ -162,6 +163,7 @@ public:
     Fill fill_def;
     Fill fill_active;
     Element *element;
+    int trans_in_dur;
 private:
     void propagateStop (bool forced);
     void propagateStart ();
@@ -456,6 +458,7 @@ public:
     void *message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     ConnectionPtr starting_connection;
+    ConnectionPtr trans_connection;
 protected:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d, short id) : GroupBase(d, id) {}
 };
@@ -624,6 +627,7 @@ protected:
 
     MouseListeners mouse_listeners;
     NodeRefListPtr m_MediaAttached;        // mouse entered
+    NodeRefListPtr m_TransformedIn;        // transIn ready
     ConnectionPtr region_paint;            // attached region needs painting
     ConnectionPtr region_mouse_enter;      // attached region has mouse entered
     ConnectionPtr region_mouse_leave;      // attached region has mouse left

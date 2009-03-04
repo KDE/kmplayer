@@ -263,6 +263,7 @@ enum MessageType
     MsgStateFreeze,
     MsgStateRewind,
     MsgChildReady,
+    MsgChildTransformedIn,
     MsgChildFinished,
 
     MsgStartQueryMessage,
