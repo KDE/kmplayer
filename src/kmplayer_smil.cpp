@@ -237,9 +237,7 @@ static Runtime::Fill getDefaultFill (NodePtr n) {
 }
 
 KDE_NO_CDTOR_EXPORT Runtime::Runtime (Element *e)
- : timingstate (timings_reset),
-   repeat_count (1),
-   m_StartListeners (new NodeRefList),
+ : //m_StartListeners (new NodeRefList),
    m_StartedListeners (new NodeRefList),
    m_StoppedListeners (new NodeRefList),
    begin_timer (NULL),
@@ -247,16 +245,18 @@ KDE_NO_CDTOR_EXPORT Runtime::Runtime (Element *e)
    started_timer (NULL),
    stopped_timer (NULL),
    fill_active (fill_auto),
-   element (e),
-   repeat (1) {}
+   element (e) {
+    initialize();
+    m_StartListeners = new NodeRefList;
+}
 
 
 KDE_NO_CDTOR_EXPORT Runtime::~Runtime () {
     m_StartListeners = NULL;
-    reset ();
+    initialize ();
 }
 
-KDE_NO_EXPORT void Runtime::reset () {
+KDE_NO_EXPORT void Runtime::initialize () {
     if (begin_timer) {
         element->document ()->cancelPosting (begin_timer);
         begin_timer = NULL;
@@ -266,7 +266,7 @@ KDE_NO_EXPORT void Runtime::reset () {
         duration_timer = NULL;
     }
     repeat = repeat_count = 1;
-    timingstate = timings_reset;
+    timingstate = TimingsInit;
     for (int i = 0; i < (int) DurTimeLast; i++)
         durations [i].clear ();
     endTime ().durval = DurMedia;
@@ -635,7 +635,7 @@ KDE_NO_EXPORT void Runtime::processEvent (MessageType msg) {
 }
 
 KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
-    if (state() == timings_reset || state() >= timings_stopped)
+    if (state() == TimingsInit || state() >= timings_stopped)
         return; // nothing to stop
     if (!forced) {
         if ((durTime ().durval == DurMedia ||
@@ -1698,8 +1698,7 @@ KDE_NO_EXPORT bool SMIL::Transition::supported () {
 
 KDE_NO_CDTOR_EXPORT SMIL::GroupBase::GroupBase (NodePtr & d, short id)
  : Element (d, id),
-   runtime (new Runtime (this)),
-   inited (false) {}
+   runtime (new Runtime (this)) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::GroupBase::~GroupBase () {
     delete runtime;
@@ -1716,10 +1715,9 @@ KDE_NO_EXPORT Node *SMIL::GroupBase::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::init () {
-    if (!inited) {
-        runtime->reset ();
+    if (Runtime::TimingsInitialized > runtime->timingstate) {
         Element::init ();
-        inited = true;
+        runtime->timingstate = Runtime::TimingsInitialized;
     }
 }
 
@@ -1956,14 +1954,13 @@ KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
             e->deactivate ();
     if (unfinished ())
         finish ();
-    runtime->reset ();
+    runtime->initialize ();
     Element::deactivate ();
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::reset () {
     Element::reset ();
-    inited = false;
-    runtime->reset ();
+    runtime->initialize ();
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
@@ -2403,7 +2400,6 @@ SMIL::PriorityClass::parseParam (const TrieString &name, const QString &val) {
 }
 
 KDE_NO_EXPORT void SMIL::PriorityClass::init () {
-    //if (!inited) {
     peers = PeersStop;
     higher = HigherPause;
     lower = LowerDefer;
@@ -2625,8 +2621,7 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
    sensitivity (sens_opaque),
    trans_out_active (false),
    has_mouse (false),
-   m_MediaAttached (new NodeRefList),
-   inited (false) {
+   m_MediaAttached (new NodeRefList) {
     view_mode = Mrl::WindowMode;
 }
 
@@ -2714,14 +2709,13 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::init () {
-    if (!inited) {
+    if (Runtime::TimingsInitialized > runtime->timingstate) {
         trans_out_active = false;
         trans_start_time = 0;
         fit = fit_default;
         opacity = 100;
-        runtime->reset ();
         Mrl::init (); // sets all attributes
-        inited = true;
+        runtime->timingstate = Runtime::TimingsInitialized;
     }
 }
 
@@ -2752,7 +2746,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     }
     if (unfinished ())
         finish ();
-    runtime->reset ();
+    runtime->initialize ();
     Mrl::deactivate ();
     (void) surface ();
     region_node = 0L;
@@ -2873,8 +2867,7 @@ KDE_NO_EXPORT void SMIL::MediaType::finish () {
 
 KDE_NO_EXPORT void SMIL::MediaType::reset () {
     Mrl::reset ();
-    inited = false;
-    runtime->reset ();
+    runtime->initialize ();
 }
 
 KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
@@ -3328,7 +3321,7 @@ KDE_NO_CDTOR_EXPORT SMIL::TextMediaType::TextMediaType (NodePtr & d)
     : SMIL::MediaType (d, "text", id_node_text) {}
 
 KDE_NO_EXPORT void SMIL::TextMediaType::init () {
-    if (!inited) {
+    if (Runtime::TimingsInitialized > runtime->timingstate) {
         if (!media_info)
             media_info = new MediaInfo (this, MediaManager::Text);
         font_size = TextMedia::defaultFontSize ();
@@ -3482,18 +3475,16 @@ public:
 
 KDE_NO_CDTOR_EXPORT SMIL::SmilText::SmilText (NodePtr &d)
  : Element (d, id_node_smil_text),
-   runtime (new Runtime (this)),
-   inited (false) {}
+   runtime (new Runtime (this)) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::SmilText::~SmilText () {
     delete runtime;
 }
 
 void SMIL::SmilText::init () {
-    if (!inited) {
-        runtime->reset ();
+    if (Runtime::TimingsInitialized > runtime->timingstate) {
         Element::init ();
-        inited = true;
+        runtime->timingstate = Runtime::TimingsInitialized;
     }
 }
 
@@ -3527,13 +3518,12 @@ void SMIL::SmilText::deactivate () {
         text_surface->remove ();
         text_surface = NULL;
     }
-    runtime->reset ();
+    runtime->initialize ();
     Element::deactivate ();
 }
 
 void SMIL::SmilText::reset () {
-    runtime->reset ();
-    inited = false;
+    runtime->initialize ();
     Element::reset ();
 }
 
@@ -3708,8 +3698,7 @@ void SMIL::TextFlow::parseParam(const TrieString &name, const QString &val) {
 KDE_NO_CDTOR_EXPORT SMIL::AnimateGroup::AnimateGroup (NodePtr &d, short _id)
  : Element (d, _id),
    runtime (new Runtime (this)),
-   modification_id (-1),
-   inited (false) {}
+   modification_id (-1) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::AnimateGroup::~AnimateGroup () {
     delete runtime;
@@ -3728,10 +3717,9 @@ void SMIL::AnimateGroup::parseParam (const TrieString &name, const QString &val)
 }
 
 KDE_NO_EXPORT void SMIL::AnimateGroup::init () {
-    if (!inited) {
-        runtime->reset ();
+    if (Runtime::TimingsInitialized > runtime->timingstate) {
         Element::init ();
-        inited = true;
+        runtime->timingstate = Runtime::TimingsInitialized;
     }
 }
 
@@ -3751,16 +3739,15 @@ KDE_NO_EXPORT void SMIL::AnimateGroup::finish () {
 
 KDE_NO_EXPORT void SMIL::AnimateGroup::reset () {
     Element::reset ();
-    inited = false;
     target_id.truncate (0);
-    runtime->reset ();
+    runtime->initialize ();
 }
 
 KDE_NO_EXPORT void SMIL::AnimateGroup::deactivate () {
     restoreModification ();
     if (unfinished ())
         finish ();
-    runtime->reset ();
+    runtime->initialize ();
     Element::deactivate ();
 }
 
@@ -3869,7 +3856,7 @@ KDE_NO_CDTOR_EXPORT SMIL::Animate::Animate (NodePtr &d)
    steps (0) {}
 
 KDE_NO_EXPORT void SMIL::Animate::init () {
-    if (!inited) {
+    if (Runtime::TimingsInitialized > runtime->timingstate) {
         if (anim_timer) {
             document ()->cancelPosting (anim_timer);
             anim_timer = NULL;
@@ -4063,7 +4050,7 @@ KDE_NO_CDTOR_EXPORT SMIL::AnimateMotion::~AnimateMotion () {
 }
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
-    if (!inited) {
+    if (Runtime::TimingsInitialized > runtime->timingstate) {
         if (anim_timer) {
             document ()->cancelPosting (anim_timer);
             anim_timer = NULL;

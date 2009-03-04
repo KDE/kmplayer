@@ -82,7 +82,7 @@ public:
 class KMPLAYER_NO_EXPORT Runtime {
 public:
     enum TimingState {
-        timings_reset = 0, timings_began,
+        TimingsInit = 0, TimingsInitialized, timings_began,
         timings_started, timings_paused, timings_stopped, timings_freezed
     };
     enum Fill {
@@ -115,7 +115,7 @@ public:
     /**
      * Reset all data, called from end() and init()
      */
-    void reset ();
+    void initialize ();
     bool parseParam (const TrieString & name, const QString & value);
     TimingState state () const { return timingstate; }
     void *message (MessageType msg, void *content=NULL);
@@ -430,7 +430,6 @@ public:
 protected:
     GroupBase (NodePtr & d, short id);
     NodePtrW jump_node;
-    bool inited;
 };
 
 /**
@@ -632,7 +631,6 @@ protected:
     ConnectionPtr region_attach;           // attached to region
     ConnectionPtr document_postponed;      // pause audio/video accordantly
     PostponePtr postpone_lock;
-    bool inited;
 };
 
 class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
@@ -707,7 +705,6 @@ public:
     ConnectionPtr region_attach;
     MouseListeners mouse_listeners;
     Runtime *runtime;
-    bool inited;
 };
 
 class KMPLAYER_NO_EXPORT TextFlow : public Element {
@@ -763,7 +760,6 @@ protected:
     QString target_id;
     QString change_to;
     int modification_id;
-    bool inited;
 };
 
 class KMPLAYER_NO_EXPORT Set : public AnimateGroup {
