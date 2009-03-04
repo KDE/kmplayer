@@ -198,6 +198,30 @@ PostponedEvent::PostponedEvent (bool postponed)
 
 //-----------------------------------------------------------------------------
 
+Runtime::DurationItem::DurationItem ()
+    : durval (DurTimer), offset (0), next (NULL) {}
+
+Runtime::DurationItem &
+Runtime::DurationItem::operator = (const Runtime::DurationItem &d) {
+    durval = d.durval;
+    offset = d.offset;
+    connection = d.connection;
+    return *this;
+}
+
+void Runtime::DurationItem::clear() {
+    durval = DurTimer;
+    offset = 0;
+    if (connection)
+        connection->disconnect ();
+    connection = NULL;
+    if (next) {
+        next->clear ();
+        delete next;
+        next = NULL;
+    }
+}
+
 static Runtime::Fill getDefaultFill (NodePtr n) {
     for (NodePtr p = n->parentNode (); p; p = p->parentNode ()) {
         Runtime *rt = static_cast <Runtime *> (p->message (MsgQueryRoleTiming));
@@ -229,8 +253,7 @@ KDE_NO_CDTOR_EXPORT Runtime::Runtime (Element *e)
 
 KDE_NO_CDTOR_EXPORT Runtime::~Runtime () {
     m_StartListeners = NULL;
-    if (begin_timer || duration_timer) // ugh
-        reset ();
+    reset ();
 }
 
 KDE_NO_EXPORT void Runtime::reset () {
@@ -244,12 +267,8 @@ KDE_NO_EXPORT void Runtime::reset () {
     }
     repeat = repeat_count = 1;
     timingstate = timings_reset;
-    for (int i = 0; i < (int) DurTimeLast; i++) {
-        if (durations [i].connection)
-            durations [i].connection->disconnect ();
-        durations [i].durval = DurTimer;
-        durations [i].offset = 0;
-    }
+    for (int i = 0; i < (int) DurTimeLast; i++)
+        durations [i].clear ();
     endTime ().durval = DurMedia;
     start_time = finish_time = 0;
     fill = fill_default;
@@ -258,8 +277,8 @@ KDE_NO_EXPORT void Runtime::reset () {
         fill_active = getDefaultFill (element);
 }
 
-KDE_NO_EXPORT
-void Runtime::setDurationItem (DurationTime item, const QString & val) {
+static
+void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
     int dur = -2; // also 0 for 'media' duration, so it will not update then
     QString vs = val.stripWhiteSpace ();
     QString vl = vs.lower ();
@@ -270,7 +289,7 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
         QString idref;
         const char * p = cval;
         if (parseTime (vl, offset)) {
-            dur = DurTimer;
+            dur = Runtime::DurTimer;
         } else if (!strncmp (cval, "id(", 3)) {
             p = strchr (cval + 3, ')');
             if (p) {
@@ -283,9 +302,10 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
                     p = q;
             }
         } else if (!strncmp (cval, "indefinite", 10)) {
-            dur = DurInfinite;
+            offset = -1;
+            dur = Runtime::DurIndefinite;
         } else if (!strncmp (cval, "media", 5)) {
-            dur = DurMedia;
+            dur = Runtime::DurMedia;
         }
         if (dur == -2) {
             NodePtr target;
@@ -311,39 +331,66 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
             }
             ++q;
             if (!idref.isEmpty ()) {
-                target = findLocalNodeById (element, idref);
+                target = findLocalNodeById (n, idref);
                 if (!target)
                     kWarning () << "Element not found " << idref;
             }
             //kDebug () << "setDuration q:" << q;
             if (parseTime (vl.mid (q-cval), offset)) {
-                dur = DurStart;
+                dur = Runtime::DurStart;
             } else if (*q && !strncmp (q, "end", 3)) {
-                dur = DurEnd;
+                dur = Runtime::DurEnd;
                 parseTime (vl.mid (q + 3 - cval), offset);
             } else if (*q && !strncmp (q, "begin", 5)) {
-                dur = DurStart;
+                dur = Runtime::DurStart;
                 parseTime (vl.mid (q + 5 - cval), offset);
             } else if (*q && !strncmp (q, "activateevent", 13)) {
-                dur = DurActivated;
+                dur = Runtime::DurActivated;
                 parseTime (vl.mid (q + 13 - cval), offset);
             } else if (*q && !strncmp (q, "inboundsevent", 13)) {
-                dur = DurInBounds;
+                dur = Runtime::DurInBounds;
                 parseTime (vl.mid (q + 13 - cval), offset);
             } else if (*q && !strncmp (q, "outofboundsevent", 16)) {
-                dur = DurOutBounds;
+                dur = Runtime::DurOutBounds;
                 parseTime (vl.mid (q + 16 - cval), offset);
             } else
                 kWarning () << "setDuration no match " << cval;
-            if (target && dur != DurTimer) {
-                durations [(int) item].connection =
-                    target->connectTo (element, (MessageType) dur);
+            if (target && dur != Runtime::DurTimer) {
+                itm->connection = target->connectTo (n, (MessageType)dur);
             }
         }
         //kDebug () << "setDuration " << dur << " id:'" << idref << "' off:" << offset;
     }
-    durations [(int) item].durval = (Duration) dur;
-    durations [(int) item].offset = offset;
+    itm->durval = (Runtime::Duration) dur;
+    itm->offset = offset;
+}
+
+static
+void setDurationItems (Node *n, const QString &s, Runtime::DurationItem *item) {
+    item->clear ();
+    Runtime::DurationItem *last = item;
+    QStringList list = s.split (QChar (';'));
+    bool timer_set = false;
+    for (int i = 0; i < list.count(); ++i) {
+        QString val = list[i].trimmed();
+        if (!val.isEmpty ()) {
+            Runtime::DurationItem di;
+            setDurationItem (n, val, &di);
+            switch (di.durval) {
+            case Runtime::DurTimer:
+            case Runtime::DurIndefinite:
+            case Runtime::DurMedia:
+                *item = di;
+                timer_set = true;
+                break;
+            default:
+                last = last->next = new Runtime::DurationItem;
+                *last = di;
+            }
+        }
+    }
+    if (item->next && !timer_set)
+        item->durval = Runtime::DurIndefinite;
 }
 
 /**
@@ -357,33 +404,42 @@ KDE_NO_EXPORT void Runtime::start () {
 
     int offset = 0;
     bool stop = true;
-    if (beginTime ().durval == DurStart) { // check started/finished
-        Connection * con = beginTime ().connection.ptr ();
-        if (con && con->connectee &&
-                con->connectee->state >= Node::state_began) {
-            offset = beginTime ().offset;
-            Runtime *rt = (Runtime*)con->connectee->message(MsgQueryRoleTiming);
-            if (rt)
-                offset -= element->document()->last_event_time/10 - rt->start_time;
+    for (DurationItem *dur = durations + (int)BeginTime; dur; dur = dur->next)
+        switch (dur->durval) {
+        case DurStart: { // check started/finished
+            Connection * con = dur->connection.ptr ();
+            if (con && con->connectee &&
+                    con->connectee->state >= Node::state_began) {
+                offset = dur->offset;
+                Runtime *rt = (Runtime*)con->connectee->message(MsgQueryRoleTiming);
+                if (rt)
+                    offset -= element->document()->last_event_time/10 - rt->start_time;
+                stop = false;
+                kWarning() << "start trigger on started element";
+            } // else wait for start event
+            break;
+        }
+        case DurEnd: { // check finished
+            Connection * con = dur->connection.ptr ();
+            if (con && con->connectee &&
+                    con->connectee->state >= Node::state_finished) {
+                int offset = dur->offset;
+                Runtime *rt = (Runtime*)con->connectee->message(MsgQueryRoleTiming);
+                if (rt)
+                    offset -= element->document()->last_event_time/10 - rt->finish_time;
+                stop = false;
+                kWarning() << "start trigger on finished element";
+            } // else wait for end event
+            break;
+        }
+        case DurTimer:
+            offset = dur->offset;
             stop = false;
-            kWarning() << "start trigger on started element";
-        } // else wait for start event
-    } else if (beginTime ().durval == DurEnd) { // check finished
-        Connection * con = beginTime ().connection.ptr ();
-        if (con && con->connectee &&
-                con->connectee->state >= Node::state_finished) {
-            int offset = beginTime ().offset;
-            Runtime *rt = (Runtime*)con->connectee->message(MsgQueryRoleTiming);
-            if (rt)
-                offset -= element->document()->last_event_time/10 - rt->finish_time;
-            stop = false;
-            kWarning() << "start trigger on finished element";
-        } // else wait for end event
-    } else if (beginTime ().durval == DurTimer) {
-        offset = beginTime ().offset;
-        stop = false;
+            break;
+        default:
+            break;
     }
-    if (stop)                          // wait for event
+    if (stop)   // wait for event
         tryFinish ();
     else if (offset > 0)               // start timer
         begin_timer = element->document ()->post (element,
@@ -418,7 +474,7 @@ KDE_NO_EXPORT
 bool Runtime::parseParam (const TrieString & name, const QString & val) {
     //kDebug () << "Runtime::parseParam " << name << "=" << val;
     if (name == StringPool::attr_begin) {
-        setDurationItem (BeginTime, val);
+        setDurationItems (element, val, durations + (int) BeginTime);
         if ((timingstate == timings_began && !begin_timer) ||
                 timingstate >= timings_stopped) {
             if (beginTime ().offset > 0) { // create a timer for start
@@ -434,9 +490,9 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
             }
         }
     } else if (name == StringPool::attr_dur) {
-        setDurationItem (DurTime, val);
+        setDurationItems (element, val, durations + (int) DurTime);
     } else if (name == StringPool::attr_end) {
-        setDurationItem (EndTime, val);
+        setDurationItems (element, val, durations + (int) EndTime);
         if (endTime ().durval == DurTimer &&
             endTime ().offset > beginTime ().offset)
             durTime ().offset = endTime ().offset - beginTime ().offset;
@@ -483,7 +539,7 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
         }
     } else if (name.startsWith ("repeat")) {
         if (val.indexOf ("indefinite") > -1)
-            repeat = repeat_count = DurInfinite;
+            repeat = repeat_count = DurIndefinite;
         else
             repeat = repeat_count = val.toInt ();
     } else
@@ -553,20 +609,28 @@ KDE_NO_EXPORT void *Runtime::message (MessageType msg, void *content) {
 }
 
 KDE_NO_EXPORT void Runtime::processEvent (MessageType msg) {
-    if (!started () && beginTime ().durval == (Duration) msg) {
-        if (begin_timer) {
-            element->document ()->cancelPosting (begin_timer);
-            begin_timer = NULL;
-        }
-        if (element && beginTime ().offset > 0)
-            begin_timer = element->document ()->post (element,
-                  new TimerPosting (10 * beginTime ().offset, begin_timer_id));
-        else //FIXME neg. offsets
-            propagateStart ();
-        if (element->state == Node::state_finished)
-            element->state = Node::state_activated; // rewind to activated
-    } else if (started () && endTime ().durval == (Duration) msg) {
-        doFinish ();
+    if (!started ()) {
+        for (DurationItem *dur = beginTime ().next; dur; dur = dur->next)
+            if (dur->durval == (Duration) msg) {
+                if (begin_timer) {
+                    element->document ()->cancelPosting (begin_timer);
+                    begin_timer = NULL;
+                }
+                if (element && dur->offset > 0)
+                    begin_timer = element->document ()->post (element,
+                            new TimerPosting(10 * dur->offset, begin_timer_id));
+                else //FIXME neg. offsets
+                    propagateStart ();
+                if (element->state == Node::state_finished)
+                    element->state = Node::state_activated;//rewind to activated
+                return;
+            }
+    } else if (started ()) {
+        for (DurationItem *dur = endTime ().next; dur; dur = dur->next)
+            if (dur->durval == (Duration) msg) {
+                doFinish ();
+                return;
+            }
     }
 }
 
@@ -581,7 +645,7 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
         if (endTime ().durval != DurTimer && endTime ().durval != DurMedia &&
                 (started () || beginTime().durval == DurTimer))
             return; // wait for event
-        if (durTime ().durval == DurInfinite)
+        if (durTime ().durval == DurIndefinite)
             return; // this may take a while :-)
         if (duration_timer)
             return; // timerEvent will call us with forced=true
@@ -627,7 +691,7 @@ KDE_NO_EXPORT void Runtime::setDuration () {
         element->document ()->cancelPosting (begin_timer);
         begin_timer = NULL;
     }
-    if (durTime ().offset > 0 && durTime ().durval == DurTimer) {
+    if (durTime ().durval == DurTimer && durTime ().offset > 0) {
         if (duration_timer)
             element->document ()->cancelPosting (duration_timer);
         duration_timer = element->document ()->post (element,
@@ -641,7 +705,7 @@ KDE_NO_EXPORT void Runtime::setDuration () {
  */
 KDE_NO_EXPORT void Runtime::stopped () {
     if (element->active ()) {
-        if (repeat_count == DurInfinite || 0 < --repeat_count) {
+        if (repeat_count == DurIndefinite || 0 < --repeat_count) {
             element->message (MsgStateRewind);
             beginTime ().offset  = 0;
             beginTime ().durval = DurTimer;
@@ -3077,7 +3141,7 @@ KDE_NO_EXPORT Node *SMIL::RefMediaType::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void SMIL::RefMediaType::clipStart () {
     PlayListNotify *n = document ()->notify_listener;
     if (n && region_node && !external_tree && !src.isEmpty()) {
-        repeat = runtime->repeat_count == Runtime::DurInfinite
+        repeat = runtime->repeat_count == Runtime::DurIndefinite
             ? 9998 : runtime->repeat_count;
         runtime->repeat_count = 1;
         document_postponed = document()->connectTo (this, MsgEventPostponed);

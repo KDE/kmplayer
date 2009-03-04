@@ -91,7 +91,7 @@ public:
     };
     enum DurationTime { BeginTime = 0, DurTime, EndTime, DurTimeLast };
     enum Duration {
-        DurInfinite = -1,
+        DurIndefinite = -1,
         DurTimer = (int) MsgEventTimer,
         DurActivated = (int) MsgEventClicked,
         DurInBounds = (int) MsgEventPointerInBounds,
@@ -124,10 +124,13 @@ public:
      * Duration items, begin/dur/end, length information or connected element
      */
     struct DurationItem {
-        DurationItem () : durval (DurTimer), offset (0) {}
+        DurationItem ();
+        DurationItem &operator = (const DurationItem &other);
+        void clear();
         Duration durval;
         int offset;
         ConnectionPtr connection;
+        DurationItem *next;
     } durations [(const int) DurTimeLast];
     void setDuration ();
     bool started () const {
@@ -160,7 +163,6 @@ public:
     Fill fill_active;
     Element *element;
 private:
-    void setDurationItem (DurationTime item, const QString & val);
     void propagateStop (bool forced);
     void propagateStart ();
     int repeat;

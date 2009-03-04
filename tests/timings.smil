@@ -9,7 +9,8 @@
               background-color="gray">
         <region id="but_rec" width="30%" />
         <region id="but_dep" left="30%" width="30%" />
-        <region id="but_rep_seq" left="60%" width="30%" />
+        <region id="but_rep_seq" left="60%" width="20%" />
+        <region id="but_multi_trigger" left="80%" width="20%" />
       </region>
     </layout>
   </head>
@@ -23,6 +24,9 @@
       </a>
       <a href="#rep_seq">
         <text id="rep_seq_txt" src="data:,Repeat" region="but_rep_seq"/>
+      </a>
+      <a href="#multi_trigger">
+        <text id="multi_trigger_txt" src="data:,Multi" region="but_multi_trigger"/>
       </a>
       <seq>
         <par id="rec">
@@ -42,10 +46,10 @@
                fill="freeze"/>
         </par>
         <par id="dep">
-          <text id="dtext1" src="data:,id=dtext1%20begin=2%20dur=2"
+          <text id="deptext1" src="data:,id=deptext1%20begin=2%20dur=2"
                 region="reg1" begin="2" dur="2"/>
-          <text src="data:,id(dtext1)(1)" region="reg2"
-                begin="id(dtext1)(1)" dur="2"/>
+          <text src="data:,id(deptext1)(1)" region="reg2"
+                begin="id(deptext1)(1)" dur="2"/>
           <set target="dep_txt" attribute="background-color" to="green"
                fill="freeze"/>
           <set target="reg1" attribute="background-color" to="red"
@@ -54,7 +58,7 @@
                fill="freeze"/>
         </par>
         <par id="rep_seq">
-          <text id="dtext1" src="data:,%3Cseq%20repeat=3%3E"
+          <text src="data:,%3Cseq%20repeat=3%3E"
                 region="reg1"/>
           <set target="rep_seq_txt" attribute="background-color" to="green"/>
           <set target="reg2" attribute="background-color" to="white"/>
@@ -63,6 +67,18 @@
             <set target="reg2" attribute="background-color" to="red" dur=".5"/>
             <set target="reg3" attribute="background-color" to="blue" dur=".5"/>
            </seq>
+        </par>
+        <par id="multi_trigger" dur="20">
+          <text id="multi_text" src="data:,begin=%224;start_text.activateEvent%22%2Cend=%228;end_text.activateEvent%22"
+                region="reg1"/>
+          <text id="start_text" src="data:,Start" background-color="green"
+                region="reg2"/>
+          <text id="end_text" src="data:,Stop" background-color="IndianRed"
+                region="reg3"/>
+          <set target="multi_trigger_txt" attribute="background-color" to="green"/>
+          <set target="multi_text" attribute="background-color" to="yellow"
+               begin="4;start_text.activateEvent"
+               end="8;end_text.activateEvent"/>
         </par>
       </seq>
     </par>
