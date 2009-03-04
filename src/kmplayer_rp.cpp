@@ -90,7 +90,7 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
         }
     if (duration > 0)
         duration_timer = document ()->post (this,
-                new TimerPosting (duration * 100));
+                new TimerPosting (duration * 10));
     else if (!timings_count)
         finish ();
 }
@@ -312,7 +312,7 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
             srch = a->value ().toInt ();
         }
     }
-    start_timer = document ()->post (this, new TimerPosting (start *100));
+    start_timer = document ()->post (this, new TimerPosting (start *10));
 }
 
 KDE_NO_EXPORT void RP::TimingsBase::deactivate () {
@@ -328,12 +328,12 @@ KDE_NO_EXPORT void *RP::TimingsBase::message (MessageType msg, void *content) {
         case MsgEventTimer: {
             TimerPosting *te = static_cast <TimerPosting *> (content);
             if (te == update_timer && duration > 0) {
-                update (100 * ++curr_step / duration);
+                update (100 * 10 * ++curr_step / duration);
                 te->interval = true;
             } else if (te == start_timer) {
                 start_timer = 0;
                 duration_timer = document()->post (this,
-                        new TimerPosting (duration * 100));
+                        new TimerPosting (duration * 10));
                 begin ();
             } else if (te == duration_timer) {
                 duration_timer = 0;
@@ -362,7 +362,7 @@ KDE_NO_EXPORT void RP::TimingsBase::begin () {
     if (target)
         target->begin ();
     if (duration > 0) {
-        steps = duration; // 10/s updates
+        steps = duration / 10; // 10/s updates
         update_timer = document ()->post (this, new TimerPosting (100)); // 50ms
         curr_step = 1;
     }
