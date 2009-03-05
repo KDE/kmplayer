@@ -614,7 +614,7 @@ KDE_NO_EXPORT bool MediaInfo::downloading () const {
 void MediaInfo::create () {
     MediaManager *mgr = (MediaManager *)node->document()->message(
             MsgQueryMediaManager);
-    if (!media) {
+    if (!media && mgr) {
         switch (type) {
         case MediaManager::Audio:
         case MediaManager::AudioVideo:
