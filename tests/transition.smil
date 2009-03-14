@@ -128,15 +128,23 @@
         </seq>
       </par>
       <par>
-        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
-             transIn="fade1" transOut="fade1"/>
         <seq>
-          <text src="data:,fade" region="region2" dur="1.5"
-                transIn="fade2" transOut="barwipe3">
+          <img src="../icons/hi64-app-kmplayer.png" dur="1" region="region1"
+               transIn="fade2" panZoom="0,0,50%,50%" fill="transition"/>
+          <img src="../icons/hi64-app-kmplayer.png" dur="1" region="region1"
+               transIn="fade2" panZoom="0,50%,50%,50%" fill="transition"/>
+          <img src="../icons/hi64-app-kmplayer.png" dur="1" region="region1"
+               transIn="fade2" panZoom="50%,50%,50%,50%" fill="transition"/>
+          <img src="../icons/hi64-app-kmplayer.png" dur="1" region="region1"
+               transIn="fade2" panZoom="50%,0,50%,50%" transOut="fade2"/>
+        </seq>
+        <seq>
+          <text src="data:,fade%20fill=%22transition%22" region="region2"
+                dur="3" transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
             <param name="fontPtSize" value="10"/>
           </text>
-          <text src="data:,fade" region="region2" dur="1.5"
+          <text src="data:,fade" region="region2" dur="1"
                 transIn="fade2" transOut="fade2">
             <param name="fontColor" value="blue"/>
             <param name="fontPtSize" value="10"/>
