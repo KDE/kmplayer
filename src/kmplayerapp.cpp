@@ -1265,7 +1265,6 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
     if (m_player->settings ()->remembersize)
         general.writeEntry ("Geometry", size());
     general.writeEntry ("Show Toolbar", viewToolBar->isChecked());
-    //general.writeEntry ("ToolBarPos", (int) toolBar("mainToolBar")->barPos());
     general.writeEntry ("Show Statusbar", viewStatusBar->isChecked ());
     general.writeEntry ("Show Menubar", viewMenuBar->isChecked ());
     if (!m_player->sources () ["pipesource"]->pipeCmd ().isEmpty ()) {
@@ -1276,6 +1275,8 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
     KConfigGroup dock_cfg (KGlobal::config(), "Window Layout");
     dock_cfg.writeEntry ("Layout", m_view->dockArea ()->saveState ());
     dock_cfg.writeEntry ("Show playlist", m_view->dockPlaylist ()->isVisible ());
+    KConfigGroup toolbar_cfg (KGlobal::config(), "Main Toolbar");
+    toolBar("mainToolBar")->saveSettings (toolbar_cfg);
     Recents * rc = static_cast <Recents *> (recents.ptr ());
     if (rc && rc->resolved) {
         fileOpenRecent->saveEntries (KConfigGroup (config, "Recent Files"));
@@ -1291,11 +1292,6 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     KSharedConfigPtr config = KGlobal::config ();
 
     KConfigGroup gen_cfg (config, "General Options");
-
-    // bar position settings
-    //KToolBar::BarPosition toolBarPos;
-    //toolBarPos=(KToolBar::BarPosition) gen_cfg.readNumEntry("ToolBarPos", KToolBar::Top);
-    //toolBar("mainToolBar")->setBarPos(toolBarPos);
 
     // bar status settings
     viewToolBar->setChecked (gen_cfg.readEntry("Show Toolbar", true));
@@ -1314,6 +1310,8 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     else if (m_player->settings ()->remembersize)
         resize (QSize (640, 480));
 
+    KConfigGroup toolbar_cfg (KGlobal::config(), "Main Toolbar");
+    toolBar("mainToolBar")->applySettings (toolbar_cfg);
     KConfigGroup pipe_cfg (config, "Pipe Command");
     static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (
             pipe_cfg.readEntry ("Command1", QString ()));
