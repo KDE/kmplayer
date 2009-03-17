@@ -106,7 +106,7 @@ hold 60 items of which the last 50 are under the <guilabel>More ..</guilabel>
 branch.
 </para>
 <section>
-<title>Persisent Playlists category</title>
+<title>Persistent Playlists category</title>
 <para>
 It's possible to store your favorite links in the <guilabel>Bookmark</guilabel>
 menu, but those are single items. If you want to create a list of items that 
@@ -175,7 +175,7 @@ The current, <guilabel>Television</guilabel> and
 by editing their <acronym>XML</acronym> storage. Of course one can do that
 when &kmplayer; is not running and editing the various files in
 <filename>~/.kde/share/apps/kmplayer/</filename>, but also in the application
-itself. Simply click on a catergory label, then choose <guimenu>View</guimenu>
+itself. Simply click on a category label, then choose <guimenu>View</guimenu>
 and next <guimenu>Edit mode</guimenu>. You can also click on a child branch
 and will then see only the <acronym>XML</acronym> contents of the branch.
 </para>
@@ -386,7 +386,7 @@ See the VDR section for more information about using <acronym>XVideo</acronym>.
 To configure your VDR settings in kmplayer, see the Configure panel->Source->VDR->XVideo port panel. There should be ports detected, from which you should select one. You have to figure out what encoding you should use (eg. for western europe, that is PAL) and likely the correct one has a name with <quote>dvb</quote> in it.
 </para>
 <para>
- For instance, I have a TV card, a DVB-S card and a webcam pluged into my system. With these, my settings are that there are three Ports. The first one has a long list of NTSC(-JP)/PAL(-M)/SECAM entries all saying something about television/composite/svideo (my TV card). The second one has NTSC-dvb/PAL-dvb/SECAM-dvb (my DVB-S card). And finally the third has only ntsc/pal (probably my webcam). I should therefore configure (just select it) the second port and second entry (PAL-dvb). 
+ For instance, I have a TV card, a DVB-S card and a webcam plugged into my system. With these, my settings are that there are three Ports. The first one has a long list of NTSC(-JP)/PAL(-M)/SECAM entries all saying something about television/composite/svideo (my TV card). The second one has NTSC-dvb/PAL-dvb/SECAM-dvb (my DVB-S card). And finally the third has only ntsc/pal (probably my webcam). I should therefore configure (just select it) the second port and second entry (PAL-dvb). 
 </para>
 <para>
     Because VDR support from kmplayer can only use <acronym>XVideo</acronym>, of course <acronym>XVideo</acronym> should work (and I believe for video devices, this way of viewing only works on linux). Also this only works on your first display (:0.0). So make sure <quote>videoforlinux</quote> extension works with the X server. For the XFree86 server, therefor in its configuration (<filename>/etc/X11/XF86Config</filename>) it should have
