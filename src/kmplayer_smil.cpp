@@ -2800,7 +2800,7 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
         pan_zoom->width = coords[2];
         pan_zoom->height = coords[3];
     } else if (para == "backgroundColor" || para == "background-color") {
-        background_color = val.isEmpty () ? 0xffffffff : QColor (val).rgb ();
+        background_color = val.isEmpty () ? 0xffffffff : QColor (val).rgba ();
         background_color = setRGBA (background_color, bg_opacity);
     } else if (para == "mediaOpacity" || para == "rn:mediaOpacity") {
         opacity = (int) SizeType (val, true).size (100);
