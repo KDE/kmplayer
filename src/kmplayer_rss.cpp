@@ -124,13 +124,13 @@ KDE_NO_EXPORT void RSS::Item::deactivate () {
     Mrl::deactivate ();
 }
 
-KDE_NO_EXPORT void *RSS::Item::message (MessageType msg, void *content) {
+KDE_NO_EXPORT void RSS::Item::message (MessageType msg, void *content) {
     if (msg == MsgEventTimer) {
         timer = 0L;
         finish ();
-        return NULL;
+    } else {
+        Mrl::message (msg, content);
     }
-    return Mrl::message (msg, content);
 }
 
 KDE_NO_EXPORT void RSS::Enclosure::closed () {

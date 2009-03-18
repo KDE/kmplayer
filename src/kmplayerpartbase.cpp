@@ -868,30 +868,40 @@ KAboutData* PartBase::createAboutData () {
 SourceDocument::SourceDocument (Source *s, const QString &url)
     : Document (url, s), m_source (s) {}
 
-void *SourceDocument::message (MessageType msg, void *data) {
+void SourceDocument::message (MessageType msg, void *data) {
     switch (msg) {
 
-    case MsgQueryMediaManager:
+    case MsgInfoString: {
+        QString info (data ? *((QString *) data) : QString ());
+        m_source->player ()->updateInfo (info);
+        return;
+    }
+
+    default:
+        break;
+    }
+    Document::message (msg, data);
+}
+
+void *SourceDocument::role (RoleType msg, void *data) {
+    switch (msg) {
+
+    case RoleMediaManager:
         return m_source->player ()->mediaManager ();
 
-    case MsgQueryRoleChildDisplay: {
+    case RoleChildDisplay: {
         PartBase *p = m_source->player ();
         if (p->view ())
             return p->viewWidget ()->viewArea ()->getSurface ((Mrl *) data);
         return NULL;
     }
 
-    case MsgInfoString: {
-        QString info (data ? *((QString *) data) : QString ());
-        m_source->player ()->updateInfo (info);
-        return NULL;
-    }
-
     default:
         break;
     }
-    return Document::message (msg, data);
+    return Document::role (msg, data);
 }
+
 
 Source::Source (const QString & name, PartBase * player, const char * n)
  : QObject (player, n),

@@ -121,16 +121,16 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         if (n->active ())
             n->deactivate ();
-    rp_surface = (Surface *) message (MsgQueryRoleChildDisplay, NULL);
+    rp_surface = (Surface *) role (RoleChildDisplay, NULL);
 }
 
-KDE_NO_EXPORT void *RP::Imfl::message (MessageType msg, void *content) {
+KDE_NO_EXPORT void RP::Imfl::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgEventTimer:
             duration_timer = 0;
             if (unfinished ())
                 finish ();
-            return NULL;
+            return;
         case MsgChildFinished:
             if (unfinished () && !duration_timer) {
                 for (Node *n = firstChild (); n; n = n->nextSibling ())
@@ -140,15 +140,15 @@ KDE_NO_EXPORT void *RP::Imfl::message (MessageType msg, void *content) {
                         case RP::id_node_fadeout:
                         case RP::id_node_fill:
                             if (n->unfinished ())
-                                return NULL;
+                                return;
                     }
                 finish ();
             }
-            return NULL;
+            return;
         default:
             break;
     }
-    return Mrl::message (msg, content);
+    Mrl::message (msg, content);
 }
 
 KDE_NO_EXPORT void RP::Imfl::accept (Visitor * v) {
@@ -157,7 +157,7 @@ KDE_NO_EXPORT void RP::Imfl::accept (Visitor * v) {
 
 KDE_NO_EXPORT Surface *RP::Imfl::surface () {
     if (!rp_surface) {
-        rp_surface = (Surface *) Mrl::message (MsgQueryRoleChildDisplay, this);
+        rp_surface = (Surface *) Mrl::role (RoleChildDisplay, this);
         if (rp_surface && size.isEmpty ())
             size = rp_surface->bounds.size;
     }
@@ -233,12 +233,13 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
     }
 }
 
-KDE_NO_EXPORT void *RP::Image::message (MessageType msg, void *content) {
-    if (msg != MsgMediaReady)
-        return Mrl::message (msg, content);
-    if (media_info)
-        dataArrived ();
-    return NULL;
+KDE_NO_EXPORT void RP::Image::message (MessageType msg, void *content) {
+    if (msg == MsgMediaReady) {
+        if (media_info)
+            dataArrived ();
+    } else {
+        Mrl::message (msg, content);
+    }
 }
 
 KDE_NO_EXPORT void RP::Image::dataArrived () {
@@ -323,7 +324,7 @@ KDE_NO_EXPORT void RP::TimingsBase::deactivate () {
     setState (state_deactivated);
 }
 
-KDE_NO_EXPORT void *RP::TimingsBase::message (MessageType msg, void *content) {
+KDE_NO_EXPORT void RP::TimingsBase::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgEventTimer: {
             TimerPosting *te = static_cast <TimerPosting *> (content);
@@ -351,9 +352,8 @@ KDE_NO_EXPORT void *RP::TimingsBase::message (MessageType msg, void *content) {
             break;
         }
         default:
-            return Element::message (msg, content);
+            Element::message (msg, content);
     }
-    return NULL;
 }
 
 KDE_NO_EXPORT void RP::TimingsBase::begin () {

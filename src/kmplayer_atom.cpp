@@ -149,11 +149,11 @@ Node *ATOM::MediaGroup::childFromTag (const QString &tag) {
     return NULL;
 }
 
-void *ATOM::MediaGroup::message (MessageType msg, void *content) {
+void ATOM::MediaGroup::message (MessageType msg, void *content) {
     if (MsgChildFinished == msg &&
             ((Posting *) content)->source->isPlayable ())
         finish (); // only play one
-    return Element::message (msg, content);
+    Element::message (msg, content);
 }
 
 static QString makeStar (int x, bool fill) {

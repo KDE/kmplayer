@@ -121,13 +121,13 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
     Mrl::activate ();
 }
 
-KDE_NO_EXPORT void *ASX::Entry::message (MessageType msg, void *content) {
+KDE_NO_EXPORT void ASX::Entry::message (MessageType msg, void *content) {
     if (msg == MsgEventTimer) {
         duration_timer = NULL;
         deactivate ();
-        return NULL;
+        return;
     }
-    return Mrl::message (msg, content);
+    Mrl::message (msg, content);
 }
 
 KDE_NO_EXPORT void ASX::Entry::deactivate () {

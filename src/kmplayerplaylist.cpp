@@ -444,29 +444,35 @@ void Node::closed () {
     open = false;
 }
 
-void *Node::message (MessageType msg, void *content) {
+void Node::message (MessageType msg, void *content) {
     switch (msg) {
-        case MsgQueryReady:
-            return MsgBool (true);
 
-        case MsgChildFinished: {
-            Posting *post = (Posting *) content;
-            if (unfinished ()) {
-                if (post->source->state == state_finished)
-                    post->source->deactivate ();
-                if (post->source && post->source->nextSibling ())
-                    post->source->nextSibling ()->activate ();
-                else
-                    finish (); // we're done
-            }
-            return NULL;
+    case MsgChildFinished: {
+        Posting *post = (Posting *) content;
+        if (unfinished ()) {
+            if (post->source->state == state_finished)
+                post->source->deactivate ();
+            if (post->source && post->source->nextSibling ())
+                post->source->nextSibling ()->activate ();
+            else
+                finish (); // we're done
         }
-
-        default:
-            if (MsgStartQueryMessage < msg && MsgEndQueryMessage > msg)
-                return NULL;
+        break;
     }
-    return MsgUnhandled;
+
+    default:
+        break;
+    }
+}
+
+void *Node::role (RoleType msg, void *content) {
+    switch (msg) {
+    case RoleReady:
+        return MsgBool (true);
+    default:
+        break;
+    }
+    return NULL;
 }
 
 KDE_NO_EXPORT void Node::deliver (MessageType msg, void *content) {
@@ -716,7 +722,7 @@ Mrl * Mrl::mrl () {
     return this;
 }
 
-void *Mrl::message (MessageType msg, void *content) {
+void Mrl::message (MessageType msg, void *content) {
     switch (msg) {
     case MsgMediaReady:
         linkNode ()->resolved = true;
@@ -737,18 +743,27 @@ void *Mrl::message (MessageType msg, void *content) {
             firstChild ()->activate ();
         } else
             finish ();
-        return NULL;
+        break;
 
-    case MsgQueryRoleChildDisplay:
+    default:
+        break;
+    }
+    Node::message (msg, content);
+}
+
+void *Mrl::role (RoleType msg, void *content) {
+    switch (msg) {
+
+    case RoleChildDisplay:
         for (Node *p = parentNode (); p; p = p->parentNode ())
             if (p->mrl ())
-                return p->message (msg, content);
+                return p->role (msg, content);
         return NULL;
 
     default:
         break;
     }
-    return Node::message (msg, content);
+    return Node::role (msg, content);
 }
 
 void Mrl::activate () {
@@ -1224,13 +1239,13 @@ void Document::proceed (const struct timeval &postponed_time) {
     deliver (MsgEventPostponed, &event);
 }
 
-void *Document::message (MessageType msg, void *content) {
-    if (MsgQueryReceivers == msg) {
+void *Document::role (RoleType msg, void *content) {
+    if (RoleReceivers == msg) {
         MessageType m = (MessageType) (long) content;
         if (MsgEventPostponed == m)
             return m_PostponedListeners.ptr ();
     }
-    return Mrl::message (msg, content);
+    return Mrl::role (msg, content);
 }
 
 //-----------------------------------------------------------------------------

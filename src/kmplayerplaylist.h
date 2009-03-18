@@ -266,17 +266,18 @@ enum MessageType
     MsgChildTransformedIn,
     MsgChildFinished,
 
-    MsgStartQueryMessage,
-    MsgQueryReady,
-    MsgQueryMediaManager,
-    MsgQueryRoleTiming,
-    MsgQueryRoleDisplay,
-    MsgQueryRoleChildDisplay,    // Mrl*
-    MsgQueryRoleSizer,
-    MsgQueryReceivers,
-    MsgEndQueryMessage,
-
     MsgInfoString                // QString*
+};
+
+enum RoleType
+{
+    RoleReady,
+    RoleMediaManager,
+    RoleTiming,
+    RoleDisplay,
+    RoleChildDisplay,    // Mrl*
+    RoleSizer,
+    RoleReceivers,
 };
 
 #define MsgUnhandled ((void *) 357L)
@@ -285,7 +286,7 @@ enum MessageType
     (void*)(long)(x)
 
 #define nodeMessageReceivers(node, msg)                                     \
-    (NodeRefList*)(node)->message (MsgQueryReceivers, (void*)(long)(msg))
+    (NodeRefList*)(node)->role (RoleReceivers, (void*)(long)(msg))
 
 // convenient types
 typedef void Role;
@@ -407,9 +408,13 @@ public:
      */
     ConnectionPtr connectTo (Node *node, MessageType msg);
     /*
-     * Event send to this node, return true if handled
+     * Message send to this node
      */
-    virtual void *message (MessageType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=NULL);
+    /*
+     * Query a role this Node may fulfill
+     */
+    virtual void *role (RoleType msg, void *content=NULL);
     /*
      * Dispatch Event to all connectorss of MessageType
      */
@@ -593,7 +598,8 @@ public:
     virtual void defer ();
     virtual void undefer ();
     virtual void deactivate ();
-    virtual void *message (MessageType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=NULL);
+    virtual void *role (RoleType msg, void *content=NULL);
 
     static unsigned int parseTimeString (const QString &s);
 
@@ -747,7 +753,7 @@ public:
     /**
      * Document has list of postponed receivers, eg. for running (gif)movies
      */
-    virtual void *message (MessageType msg, void *content=NULL);
+    virtual void *role (RoleType msg, void *content=NULL);
 
     PlayListNotify *notify_listener;
     unsigned int m_tree_version;

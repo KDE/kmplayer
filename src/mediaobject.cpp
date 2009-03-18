@@ -612,8 +612,7 @@ KDE_NO_EXPORT bool MediaInfo::downloading () const {
 }
 
 void MediaInfo::create () {
-    MediaManager *mgr = (MediaManager *)node->document()->message(
-            MsgQueryMediaManager);
+    MediaManager *mgr = (MediaManager*)node->document()->role(RoleMediaManager);
     if (!media && mgr) {
         switch (type) {
         case MediaManager::Audio:
@@ -887,7 +886,7 @@ ImageMedia::ImageMedia (MediaManager *manager, Node *node,
 }
 
 ImageMedia::ImageMedia (Node *node, ImageDataPtr id)
- : MediaObject ((MediaManager *)node->document()->message(MsgQueryMediaManager),
+ : MediaObject ((MediaManager *)node->document()->role (RoleMediaManager),
          node),
    buffer (NULL),
    img_movie (NULL),

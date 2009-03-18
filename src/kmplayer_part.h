@@ -42,7 +42,7 @@ public:
     virtual void activate ();
     virtual void undefer ();
     virtual void begin ();
-    virtual void *message (KMPlayer::MessageType msg, void *content);
+    virtual void message (KMPlayer::MessageType msg, void *content);
 
     QString m_grab_file;
     KMPlayerPart *m_part;

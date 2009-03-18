@@ -107,7 +107,7 @@ public:
     Recents (KMPlayerApp *a);
     void defer ();
     void activate ();
-    void *message (KMPlayer::MessageType msg, void *content=NULL);
+    void message (KMPlayer::MessageType msg, void *content=NULL);
     KMPlayer::Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
     KMPlayerApp * app;
@@ -135,7 +135,7 @@ public:
 class KMPLAYER_NO_EXPORT Playlist : public FileDocument {
 public:
     Playlist (KMPlayerApp *a, KMPlayer::Source *s, bool plmod = false);
-    void *message (KMPlayer::MessageType msg, void *content=NULL);
+    void message (KMPlayer::MessageType msg, void *content=NULL);
     void defer ();
     void activate ();
     KMPlayer::Node *childFromTag (const QString & tag);
@@ -251,12 +251,11 @@ KDE_NO_EXPORT KMPlayer::Node *Recents::childFromTag (const QString & tag) {
     return FileDocument::childFromTag (tag);
 }
 
-KDE_NO_EXPORT void *Recents::message (KMPlayer::MessageType msg, void *data) {
-    if (KMPlayer::MsgChildFinished) {
+KDE_NO_EXPORT void Recents::message (KMPlayer::MessageType msg, void *data) {
+    if (KMPlayer::MsgChildFinished)
         finish ();
-        return NULL;
-    }
-    return FileDocument::message (msg, data);
+    else
+        FileDocument::message (msg, data);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -331,12 +330,11 @@ KDE_NO_EXPORT KMPlayer::Node *Playlist::childFromTag (const QString & tag) {
     return FileDocument::childFromTag (tag);
 }
 
-KDE_NO_EXPORT void *Playlist::message (KMPlayer::MessageType msg, void *data) {
-    if (KMPlayer::MsgChildFinished && !playmode) {
+KDE_NO_EXPORT void Playlist::message (KMPlayer::MessageType msg, void *data) {
+    if (KMPlayer::MsgChildFinished && !playmode)
         finish ();
-        return NULL;
-    }
-    return FileDocument::message (msg, data);
+    else
+        FileDocument::message (msg, data);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -1845,7 +1843,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidge
 class KMPLAYER_NO_EXPORT Disks : public KMPlayer::Document {
 public:
     Disks (KMPlayerApp * a);
-    void *message (KMPlayer::MessageType msg, void *data);
+    void message (KMPlayer::MessageType msg, void *data);
     KMPlayerApp * app;
 };
 
@@ -1862,12 +1860,11 @@ KDE_NO_CDTOR_EXPORT Disks::Disks (KMPlayerApp * a)
     title = i18n ("Optical Disks");
 }
 
-KDE_NO_EXPORT void *Disks::message (KMPlayer::MessageType msg, void *data) {
-    if (KMPlayer::MsgChildFinished) {
+KDE_NO_EXPORT void Disks::message (KMPlayer::MessageType msg, void *data) {
+    if (KMPlayer::MsgChildFinished)
         finish ();
-        return NULL;
-    }
-    return KMPlayer::Document::message (msg, data);
+    else
+        return KMPlayer::Document::message (msg, data);
 }
 
 KDE_NO_CDTOR_EXPORT Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url, const QString &pn)

@@ -264,12 +264,11 @@ KDE_NO_EXPORT void TVDevice::closed () {
     Mrl::closed ();
 }
 
-KDE_NO_EXPORT void *TVDevice::message (KMPlayer::MessageType msg, void *data) {
-    if (KMPlayer::MsgChildFinished == msg) {
+KDE_NO_EXPORT void TVDevice::message (KMPlayer::MessageType msg, void *data) {
+    if (KMPlayer::MsgChildFinished == msg)
         finish ();
-        return NULL;
-    }
-    return TVNode::message (msg, data);
+    else
+        TVNode::message (msg, data);
 }
 
 KDE_NO_EXPORT void TVDevice::setNodeName (const QString & name) {
@@ -335,12 +334,11 @@ KDE_NO_EXPORT KMPlayer::Node *TVDocument::childFromTag (const QString & tag) {
     return FileDocument::childFromTag (tag);
 }
 
-KDE_NO_EXPORT void *TVDocument::message (KMPlayer::MessageType msg, void *data) {
-    if (KMPlayer::MsgChildFinished == msg) {
+KDE_NO_EXPORT void TVDocument::message (KMPlayer::MessageType msg, void *data) {
+    if (KMPlayer::MsgChildFinished == msg)
         finish ();
-        return NULL;
-    }
-    return FileDocument::message (msg, data);
+    else
+        FileDocument::message (msg, data);
 }
 
 KDE_NO_EXPORT void TVDocument::defer () {

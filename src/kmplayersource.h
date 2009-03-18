@@ -165,7 +165,8 @@ class KMPLAYER_EXPORT SourceDocument : public Document {
 public:
     SourceDocument (Source *s, const QString &url);
 
-    void *message (MessageType msg, void *data=NULL);
+    void message (MessageType msg, void *data=NULL);
+    void *role (RoleType msg, void *data=NULL);
 };
 
 } // namespace

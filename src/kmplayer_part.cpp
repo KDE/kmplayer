@@ -166,7 +166,7 @@ void GrabDocument::begin () {
     av->grabPicture (m_grab_file, 0);
 }
 
-void *GrabDocument::message (MessageType msg, void *content) {
+void GrabDocument::message (MessageType msg, void *content) {
     if (MsgMediaFinished == msg) {
         state = state_finished;
         m_part->startUrl (KUrl (), m_grab_file);

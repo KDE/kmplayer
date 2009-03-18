@@ -316,8 +316,7 @@ void RecordDocument::endOfFile () {
 
 void RecordDocument::deactivate () {
     state = state_deactivated;
-    ((MediaManager *) message (MsgQueryMediaManager))->
-        player ()->stopRecording ();
+    ((MediaManager *) role (RoleMediaManager))->player ()->stopRecording ();
     Document::deactivate ();
 }
 

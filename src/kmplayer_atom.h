@@ -87,7 +87,7 @@ class KMPLAYER_NO_EXPORT MediaGroup : public Element {
 public:
     MediaGroup (NodePtr &d) : Element (d, id_node_media_group) {}
     Node *childFromTag (const QString &tag);
-    void *message (MessageType msg, void *content=NULL);
+    void message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char *nodeName () const { return "media:group"; }
     bool expose () const { return false; }
     void addSummary (Node *ratings);
