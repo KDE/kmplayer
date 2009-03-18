@@ -735,7 +735,8 @@ KDE_NO_CDTOR_EXPORT SizeType::SizeType () {
     reset ();
 }
 
-KDE_NO_CDTOR_EXPORT SizeType::SizeType (const QString & s) {
+KDE_NO_CDTOR_EXPORT SizeType::SizeType (const QString & s, bool perc)
+ : perc_size (perc ? -100 : 0) {
     *this = s;
 }
 
@@ -748,11 +749,17 @@ void SizeType::reset () {
 SizeType & SizeType::operator = (const QString & s) {
     QString strval (s);
     int p = strval.indexOf (QChar ('%'));
-    if (p > -1) {
+    if (p > -1)
         strval.truncate (p);
-        perc_size = strval.toDouble (&isset);
-    } else
-        abs_size = strval.toDouble (&isset);
+    double d = strval.toDouble (&isset);
+    if (isset) {
+        if (p > -1)
+            perc_size = d;
+        else if (perc_size < 0)
+            perc_size = 100 * d;
+        else
+            abs_size = d;
+    }
     return *this;
 }
 
@@ -1266,7 +1273,7 @@ KDE_NO_EXPORT void SMIL::Layout::message (MessageType msg, void *content) {
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id),
    media_info (NULL),
-   z_order (0), background_color (0),
+   z_order (0), background_color (0), bg_opacity (100),
    has_mouse (false)
 {}
 
@@ -1279,6 +1286,7 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
     show_background = ShowAlways;
+    bg_opacity = 100;
     fit = fit_default;
     Node *n = parentNode ();
     if (n && SMIL::id_node_layout == n->id)
@@ -1367,6 +1375,11 @@ static void updateSurfaceSort (SMIL::RegionBase *rb) {
     prs->insertBefore (rs, next);
 }
 
+static unsigned int setRGBA (unsigned int color, int opacity) {
+    int a = ((color >> 24) & 0xff) * opacity / 100;
+    return a << 24 | color & 0xffffff;
+}
+
 KDE_NO_EXPORT
 void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
     //kDebug () << "RegionBase::parseParam " << getAttribute ("id") << " " << name << "=" << val << " active:" << active();
@@ -1380,11 +1393,10 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
         if (val.isEmpty ())
             background_color = 0;
         else
-            background_color = 0xff000000 | QColor (val).rgb ();
-        if (region_surface) {
-            region_surface->background_color = background_color;
-            need_repaint = true;
-        }
+            background_color = setRGBA (QColor (val).rgba (), bg_opacity);
+    } else if (name == "backgroundOpacity") {
+        bg_opacity = SizeType (val, true).size (100);
+        background_color = setRGBA (background_color, bg_opacity);
     } else if (name == "z-index") {
         z_order = val.toInt ();
         if (region_surface)
@@ -1416,6 +1428,10 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
     }
     if (active ()) {
         Surface *s = (Surface *) role (RoleDisplay);
+        if (s && s->background_color != background_color){
+            s->background_color = background_color;
+            need_repaint = true;
+        }
         if (need_repaint && s)
             s->repaint ();
     }
@@ -2783,8 +2799,14 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
         pan_zoom->top = coords[1];
         pan_zoom->width = coords[2];
         pan_zoom->height = coords[3];
-    } else if (para == "rn:mediaOpacity") {
-        opacity = (int) SizeType (val).size (100);
+    } else if (para == "backgroundColor" || para == "background-color") {
+        background_color = val.isEmpty () ? 0xffffffff : QColor (val).rgb ();
+        background_color = setRGBA (background_color, bg_opacity);
+    } else if (para == "mediaOpacity" || para == "rn:mediaOpacity") {
+        opacity = (int) SizeType (val, true).size (100);
+    } else if (para == "mediaBackgroundOpacity" || para == "backgroundOpacity"){
+        bg_opacity = (int) SizeType (val, true).size (100);
+        background_color = setRGBA (background_color, bg_opacity);
     } else if (para == "system-bitrate") {
         bitrate = val.toInt ();
     } else if (para == "transIn") {
@@ -2823,11 +2845,13 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
         trans_out_active = false;
         trans_start_time = 0;
         fit = fit_default;
+        background_color = 0xffffffff;
         opacity = 100;
+        bg_opacity = 100;
         Mrl::init (); // sets all attributes
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-            if (c != external_tree)
-                c->activate (); // activate param/set/animate.. children
+            if (SMIL::id_node_param == c->id)
+                c->activate (); // activate param children
         runtime->timingstate = Runtime::TimingsInitialized;
     }
 }
@@ -2905,6 +2929,9 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         document ()->cancelPosting (trans_out_timer);
         trans_out_timer = NULL;
     }
+    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+        if (SMIL::id_node_param != c->id && c != external_tree)
+            c->activate (); // activate set/animate.. children
     if (r) {
         region_node = r;
         region_mouse_enter.connect (r, MsgEventPointerInBounds, this);
@@ -3456,8 +3483,6 @@ KDE_NO_EXPORT void SMIL::TextMediaType::init () {
             media_info = new MediaInfo (this, MediaManager::Text);
         font_size = TextMedia::defaultFontSize ();
         font_color = 0;
-        background_color = 0xffffff;
-        bg_opacity = 100;
         halign = align_left;
 
         MediaType::init ();
@@ -3477,9 +3502,7 @@ SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
             media_info->clearData ();
         return;
     }
-    if (name == "backgroundColor" || name == "background-color") {
-        background_color = val.isEmpty () ? 0xffffff : QColor (val).rgb ();
-    } else if (name == "fontColor") {
+    if (name == "fontColor") {
         font_color = val.isEmpty () ? 0 : QColor (val).rgb ();
     } else if (name == "fontFace") {
         ; //FIXME
@@ -3487,8 +3510,6 @@ SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
         font_size = val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
     } else if (name == "fontSize") {
         font_size += val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
-    } else if (name == "backgroundOpacity") {
-        bg_opacity = (int) SizeType (val).size (100);
     } else if (name == "hAlign") {
         const char * cval = val.ascii ();
         if (!cval)

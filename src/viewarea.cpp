@@ -338,15 +338,23 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
             ? (ImageMedia *) reg->media_info->media
             : NULL;
         ImageData *bg_img = im && !im->isEmpty() ? im->cached_img.ptr () : NULL;
+        unsigned int bg_alpha = s->background_color & 0xff000000;
         if ((SMIL::RegionBase::ShowAlways == reg->show_background ||
                     reg->m_AttachedMediaTypes.first ()) &&
-                (s->background_color & 0xff000000 || bg_img)) {
+                (bg_alpha || bg_img)) {
             cairo_save (cr);
-            if (s->background_color & 0xff000000) {
-                CAIRO_SET_SOURCE_RGB (cr, s->background_color);
+            if (bg_alpha) {
                 cairo_rectangle (cr,
                         clip.x (), clip.y (), clip.width (), clip.height ());
-                cairo_fill (cr);
+                if (bg_alpha < 0xff000000) {
+                    CAIRO_SET_SOURCE_ARGB (cr, s->background_color);
+                    cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+                    cairo_fill (cr);
+                    cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+                } else {
+                    CAIRO_SET_SOURCE_RGB (cr, s->background_color);
+                    cairo_fill (cr);
+                }
             }
             if (bg_img) {
                 Single w = bg_img->width;
@@ -661,15 +669,21 @@ KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
         cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
     }
     opacity *= mt->opacity / 100.0;
-    if (opacity < 0.99) {
-        cairo_operator_t op = cairo_get_operator (cr);
+    bool over = opacity < 0.99 ||
+                CAIRO_CONTENT_COLOR != cairo_surface_get_content (s->surface);
+    cairo_operator_t op;
+    if (over) {
+        op = cairo_get_operator (cr);
         cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+    }
+    if (opacity < 0.99) {
         cairo_clip (cr);
         cairo_paint_with_alpha (cr, opacity);
-        cairo_set_operator (cr, op);
     } else {
         cairo_fill (cr);
     }
+    if (over)
+        cairo_set_operator (cr, op);
     cairo_pattern_destroy (cur_pat);
     cairo_restore (cr);
 }
@@ -755,11 +769,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     }
     if (!s->surface || s->dirty)
         id->copyImage (s, SSize (scr.width (), scr.height ()), cairo_surface, img->pan_zoom);
-    if (id->has_alpha)
-        cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
     paint (img, s, scr.point, clip_rect);
-    if (id->has_alpha)
-        cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
     s->dirty = false;
 }
 
@@ -810,12 +820,21 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         pango_font_description_set_absolute_size (desc, PANGO_SCALE * ft_size);
 
         calculateTextDimensions (desc, text.data (), w, 2 * ft_size, &pxw, &pxh, false);
+        unsigned int bg_alpha = txt->background_color & 0xff000000;
         s->surface = cairo_surface_create_similar (cairo_surface,
-                CAIRO_CONTENT_COLOR, pxw, pxh);
+                bg_alpha < 0xff000000
+                    ? CAIRO_CONTENT_COLOR_ALPHA
+                    : CAIRO_CONTENT_COLOR,
+                pxw, pxh);
         cairo_t *cr_txt = cairo_create (s->surface);
 
-        CAIRO_SET_SOURCE_RGB (cr_txt, txt->background_color);
-        cairo_paint (cr_txt);
+        if (bg_alpha) {
+            if (bg_alpha < 0xff000000)
+                CAIRO_SET_SOURCE_ARGB (cr_txt, txt->background_color);
+            else
+                CAIRO_SET_SOURCE_RGB (cr_txt, txt->background_color);
+            cairo_paint (cr_txt);
+        }
 
         CAIRO_SET_SOURCE_RGB (cr_txt, txt->font_color);
         PangoLayout *layout = pango_cairo_create_layout (cr_txt);

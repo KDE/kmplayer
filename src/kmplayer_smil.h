@@ -40,7 +40,7 @@ class ImageMedia;
 class KMPLAYER_NO_EXPORT SizeType {
 public:
     SizeType ();
-    SizeType (const QString & s);
+    SizeType (const QString & s, bool force_perc=false);
     void reset ();
     SizeType & operator = (const QString & s);
     SizeType & operator += (const SizeType & s);
@@ -306,6 +306,7 @@ public:
 
     int z_order;
     unsigned int background_color;
+    int bg_opacity;
     QString background_image;
     ShowBackground show_background;
     Fit fit;
@@ -623,7 +624,9 @@ public:
     CalculatedSizer sizes;
     CalculatedSizer *pan_zoom;
     Fit fit;
+    unsigned int background_color;
     int opacity;
+    int bg_opacity;
     unsigned int bitrate;
     unsigned int trans_start_time;
     unsigned int trans_end_time;
@@ -683,8 +686,6 @@ public:
     QString font_name;
     int font_size;
     unsigned int font_color;
-    unsigned int background_color;
-    int bg_opacity;
     enum { align_left, align_center, align_right } halign;
 };
 
