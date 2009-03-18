@@ -254,11 +254,11 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Smil *s) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (Node *node, Surface *s) {
-    NodeRefListPtr nl = nodeMessageReceivers (node, MsgSurfaceAttach);
+    ConnectionList *nl = nodeMessageReceivers (node, MsgSurfaceAttach);
     if (nl) {
-        for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
-            if (c->data)
-                c->data->accept (this);
+        for (Connection *c = nl->first(); c; c = nl->next ())
+            if (c->connecter)
+                c->connecter->accept (this);
     }
     /*for (SurfacePtr c = s->lastChild (); c; c = c->previousSibling ()) {
         if (c->node && c->node->id != SMIL::id_node_region &&
@@ -339,7 +339,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
             : NULL;
         ImageData *bg_img = im && !im->isEmpty() ? im->cached_img.ptr () : NULL;
         if ((SMIL::RegionBase::ShowAlways == reg->show_background ||
-                    reg->m_AttachedMediaTypes->first ()) &&
+                    reg->m_AttachedMediaTypes.first ()) &&
                 (s->background_color & 0xff000000 || bg_img)) {
             cairo_save (cr);
             if (s->background_color & 0xff000000) {
@@ -1328,11 +1328,11 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
                 region->deliver (event, &mouse_event);
             }
             if (pass_event) {
-                NodeRefList *nl = nodeMessageReceivers (region, MsgSurfaceAttach);
+                ConnectionList *nl = nodeMessageReceivers (region, MsgSurfaceAttach);
                 if (nl) {
-                    for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
-                        if (c->data)
-                            c->data->accept (this);
+                    for (Connection *c = nl->first(); c; c = nl->next ()) {
+                        if (c->connecter)
+                            c->connecter->accept (this);
                         if (!source || !source->active ())
                             break;
                     }
@@ -1403,11 +1403,11 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
         if (event == MsgEventPointerMoved)
             cursor.setShape (Qt::PointingHandCursor);
         else {
-            NodeRefList *nl = nodeMessageReceivers (area, event);
+            ConnectionList *nl = nodeMessageReceivers (area, event);
             if (nl)
-                for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
-                    if (c->data)
-                        c->data->accept (this);
+                for (Connection *c = nl->first(); c; c = nl->next ()) {
+                    if (c->connecter)
+                        c->connecter->accept (this);
                     if (!source || !source->active ())
                         return;
                 }
@@ -1445,14 +1445,14 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
         return;
     mt->has_mouse = inside;
 
-    NodeRefList *nl = nodeMessageReceivers (mt,
+    ConnectionList *nl = nodeMessageReceivers (mt,
             event == MsgEventPointerMoved ? MsgSurfaceAttach : event);
     if (nl) {
         NodePtr node_save = source;
         source = mt;
-        for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
-            if (c->data && c->data.ptr () != mt)
-                c->data->accept (this);
+        for (Connection *c = nl->first(); c; c = nl->next ()) {
+            if (c->connecter && c->connecter.ptr () != mt)
+                c->connecter->accept (this);
             if (!source || !source->active ())
                 break;
         }
@@ -1474,11 +1474,11 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::SmilText *st) {
     if (MsgEventClicked == event) {
-        NodeRefList *nl = nodeMessageReceivers (st, event);
+        ConnectionList *nl = nodeMessageReceivers (st, event);
         if (nl)
-            for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
-                if (c->data && c->data.ptr () != st)
-                    c->data->accept (this);
+            for (Connection *c = nl->first(); c; c = nl->next ()) {
+                if (c->connecter && c->connecter.ptr () != st)
+                    c->connecter->accept (this);
                 if (!source || !source->active ())
                     return;
             }

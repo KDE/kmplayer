@@ -93,7 +93,7 @@ protected:
     Posting *start_timer;
     Posting *duration_timer;
     Posting *update_timer;
-    ConnectionPtr document_postponed;
+    ConnectionLink document_postponed;
 };
 
 class KMPLAYER_NO_EXPORT Crossfade : public TimingsBase {

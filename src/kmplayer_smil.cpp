@@ -205,16 +205,14 @@ Runtime::DurationItem &
 Runtime::DurationItem::operator = (const Runtime::DurationItem &d) {
     durval = d.durval;
     offset = d.offset;
-    connection = d.connection;
+    connection.assign (&d.connection);
     return *this;
 }
 
 void Runtime::DurationItem::clear() {
     durval = DurTimer;
     offset = 0;
-    if (connection)
-        connection->disconnect ();
-    connection = NULL;
+    connection.disconnect ();
     if (next) {
         next->clear ();
         delete next;
@@ -237,31 +235,32 @@ static Runtime::Fill getDefaultFill (NodePtr n) {
 }
 
 KDE_NO_CDTOR_EXPORT Runtime::Runtime (Element *e)
- : //m_StartListeners (new NodeRefList),
-   m_StartedListeners (new NodeRefList),
-   m_StoppedListeners (new NodeRefList),
-   begin_timer (NULL),
+ : begin_timer (NULL),
    duration_timer (NULL),
    started_timer (NULL),
    stopped_timer (NULL),
    fill_active (fill_auto),
-   element (e) {
+   element (NULL) {
     initialize();
-    m_StartListeners = new NodeRefList;
+    element = e;
 }
 
 
 KDE_NO_CDTOR_EXPORT Runtime::~Runtime () {
-    m_StartListeners = NULL;
+    if (begin_timer)
+        element->document ()->cancelPosting (begin_timer);
+    if (duration_timer)
+        element->document ()->cancelPosting (duration_timer);
+    element = NULL;
     initialize ();
 }
 
 KDE_NO_EXPORT void Runtime::initialize () {
-    if (begin_timer) {
+    if (element && begin_timer) {
         element->document ()->cancelPosting (begin_timer);
         begin_timer = NULL;
     }
-    if (duration_timer) {
+    if (element && duration_timer) {
         element->document ()->cancelPosting (duration_timer);
         duration_timer = NULL;
     }
@@ -274,7 +273,7 @@ KDE_NO_EXPORT void Runtime::initialize () {
     start_time = finish_time = 0;
     fill = fill_default;
     fill_def = fill_inherit;
-    if (m_StartListeners)
+    if (element)
         fill_active = getDefaultFill (element);
 }
 
@@ -357,7 +356,7 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
             } else
                 kWarning () << "setDuration no match " << cval;
             if (target && dur != Runtime::DurTimer) {
-                itm->connection = target->connectTo (n, (MessageType)dur);
+                itm->connection.connect (target, (MessageType)dur, n);
             }
         }
         //kDebug () << "setDuration " << dur << " id:'" << idref << "' off:" << offset;
@@ -408,11 +407,10 @@ KDE_NO_EXPORT void Runtime::start () {
     for (DurationItem *dur = durations + (int)BeginTime; dur; dur = dur->next)
         switch (dur->durval) {
         case DurStart: { // check started/finished
-            Connection * con = dur->connection.ptr ();
-            if (con && con->connectee &&
-                    con->connectee->state >= Node::state_began) {
+            Node *sender = dur->connection.signaler ();
+            if (sender && sender->state >= Node::state_began) {
                 offset = dur->offset;
-                Runtime *rt = (Runtime*)con->connectee->role (RoleTiming);
+                Runtime *rt = (Runtime*)sender->role (RoleTiming);
                 if (rt)
                     offset -= element->document()->last_event_time/10 - rt->start_time;
                 stop = false;
@@ -421,11 +419,10 @@ KDE_NO_EXPORT void Runtime::start () {
             break;
         }
         case DurEnd: { // check finished
-            Connection * con = dur->connection.ptr ();
-            if (con && con->connectee &&
-                    con->connectee->state >= Node::state_finished) {
+            Node *sender = dur->connection.signaler ();
+            if (sender && sender->state >= Node::state_finished) {
                 int offset = dur->offset;
-                Runtime *rt = (Runtime*)con->connectee->role (RoleTiming);
+                Runtime *rt = (Runtime*)sender->role (RoleTiming);
                 if (rt)
                     offset -= element->document()->last_event_time/10 - rt->finish_time;
                 stop = false;
@@ -533,8 +530,8 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
                 endTime ().durval == DurMedia) {
             Node *e = findLocalNodeById (element, val);
             if (e) {
-                durations [(int) EndTime].connection =
-                    e->connectTo (element, MsgEventStopped);
+                durations [(int) EndTime].connection.connect (
+                    e, MsgEventStopped, element);
                 durations [(int) EndTime].durval = (Duration) MsgEventStopped;
             }
         }
@@ -599,7 +596,7 @@ KDE_NO_EXPORT void Runtime::message (MessageType msg, void *content) {
         Posting *event = static_cast <Posting *> (content);
         for (DurationItem *dur = beginTime ().next; dur; dur = dur->next)
             if (dur->durval == (Duration) msg &&
-                    dur->connection->connectee == event->source) {
+                    dur->connection.signaler () == event->source.ptr ()) {
                 if (begin_timer) {
                     element->document ()->cancelPosting (begin_timer);
                     begin_timer = NULL;
@@ -617,7 +614,7 @@ KDE_NO_EXPORT void Runtime::message (MessageType msg, void *content) {
         Posting *event = static_cast <Posting *> (content);
         for (DurationItem *dur = endTime ().next; dur; dur = dur->next)
             if (dur->durval == (Duration) msg &&
-                    dur->connection->connectee == event->source) {
+                    dur->connection.signaler () == event->source.ptr ()) {
                 doFinish ();
                 break;
             }
@@ -629,11 +626,11 @@ KDE_NO_EXPORT void *Runtime::role (RoleType msg, void *content) {
     case RoleReceivers: {
         switch ((MessageType) (long) content) {
         case MsgEventStopped:
-            return m_StoppedListeners.ptr ();
+            return &m_StoppedListeners;
         case MsgEventStarted:
-            return m_StartedListeners.ptr ();
+            return &m_StartedListeners;
         case MsgEventStarting:
-            return m_StartListeners.ptr ();
+            return &m_StartListeners;
         case MsgChildTransformedIn:
             break;
         default:
@@ -970,19 +967,16 @@ CalculatedSizer::move (const SizeType &x, const SizeType &y) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT MouseListeners::MouseListeners () :
-   m_ActionListeners (new NodeRefList),
-   m_OutOfBoundsListeners (new NodeRefList),
-   m_InBoundsListeners (new NodeRefList) {}
+KDE_NO_CDTOR_EXPORT MouseListeners::MouseListeners () {}
 
-NodeRefList *MouseListeners::receivers (MessageType eid) {
+ConnectionList *MouseListeners::receivers (MessageType eid) {
     switch (eid) {
         case MsgEventClicked:
-            return m_ActionListeners.ptr ();
+            return &m_ActionListeners;
         case MsgEventPointerInBounds:
-            return m_InBoundsListeners.ptr ();
+            return &m_InBoundsListeners;
         case MsgEventPointerOutBounds:
-            return m_OutOfBoundsListeners.ptr ();
+            return &m_OutOfBoundsListeners;
         default:
             break;
     }
@@ -1273,7 +1267,6 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id),
    media_info (NULL),
    z_order (0), background_color (0),
-   m_AttachedMediaTypes (new NodeRefList),
    has_mouse (false)
 {}
 
@@ -1452,7 +1445,7 @@ void *SMIL::RegionBase::role (RoleType msg, void *content) {
 
     case RoleReceivers:
         if (MsgSurfaceAttach == (MessageType) (long) content)
-            return m_AttachedMediaTypes.ptr ();
+            return &m_AttachedMediaTypes;
         // fall through
 
     default:
@@ -1606,7 +1599,7 @@ void *SMIL::Region::role (RoleType msg, void *content) {
         return region_surface.ptr ();
 
     default: {
-        NodeRefList *l = mouse_listeners.receivers ((MessageType)(long)content);
+        ConnectionList *l = mouse_listeners.receivers ((MessageType)(long)content);
         if (l)
             return l;
     }
@@ -2114,8 +2107,8 @@ KDE_NO_EXPORT void *SMIL::Par::role (RoleType msg, void *content) {
 KDE_NO_EXPORT void SMIL::Seq::begin () {
     setState (state_began);
     if (jump_node) {
-        starting_connection = NULL;
-        trans_connection = NULL;
+        starting_connection.disconnect ();
+        trans_connection.disconnect ();
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
             if (c == jump_node) {
                 jump_node = 0L;
@@ -2135,7 +2128,7 @@ KDE_NO_EXPORT void SMIL::Seq::begin () {
             GroupBaseInitVisitor visitor;
             firstChild ()->nextSibling ()->accept (&visitor);
         }
-        starting_connection = firstChild ()->connectTo (this, MsgEventStarted);
+        starting_connection.connect (firstChild (), MsgEventStarted, this);
         firstChild ()->activate ();
     }
 }
@@ -2169,14 +2162,13 @@ KDE_NO_EXPORT void SMIL::Seq::message (MessageType msg, void *content) {
                             GroupBaseInitVisitor visitor;
                             next->nextSibling ()->accept (&visitor);
                         }
-                        starting_connection = next->connectTo (
-                                this, MsgEventStarted);
-                        trans_connection = next->connectTo (
-                                this, MsgChildTransformedIn);
+                        starting_connection.connect(next, MsgEventStarted,this);
+                        trans_connection.connect (
+                                next, MsgChildTransformedIn, this);
                         next->activate ();
                     } else {
-                        starting_connection = NULL;
-                        trans_connection = NULL;
+                        starting_connection.disconnect ();
+                        trans_connection.disconnect ();
                         runtime->tryFinish ();
                     }
                     FreezeStateUpdater visitor;
@@ -2193,7 +2185,7 @@ KDE_NO_EXPORT void SMIL::Seq::message (MessageType msg, void *content) {
             Node *source = event->source;
             if (source != this && source->previousSibling ()) {
                 FreezeStateUpdater visitor;
-                starting_connection = NULL;
+                starting_connection.disconnect ();
                 accept (&visitor);
             }
             break;
@@ -2203,7 +2195,7 @@ KDE_NO_EXPORT void SMIL::Seq::message (MessageType msg, void *content) {
             Node *source = (Node *) content;
             if (source != this && source->previousSibling ()) {
                 FreezeStateUpdater visitor;
-                starting_connection = NULL;
+                starting_connection.disconnect ();
                 accept (&visitor);
             }
             break;
@@ -2251,9 +2243,9 @@ public:
     void visit (Element *elm) {
         if (elm->role (RoleTiming)) {
             // make aboutToStart connection with Timing
-            ConnectionPtr c = elm->connectTo (excl, MsgEventStarting);
-            excl->started_event_list.append (
-                    new SMIL::Excl::ConnectionStoreItem (c));
+            excl->started_event_list =
+                new SMIL::Excl::ConnectionItem (excl->started_event_list);
+            excl->started_event_list->link.connect (elm, MsgEventStarting, excl);
             elm->activate ();
         }
         visit (static_cast <Node *> (elm));
@@ -2361,6 +2353,23 @@ public:
 
 }
 
+static void clearList (SMIL::Excl::ConnectionItem **pitem) {
+    SMIL::Excl::ConnectionItem *item = *pitem;
+    while (item) {
+        SMIL::Excl::ConnectionItem *tmp = item;
+        item = item->next;
+        delete tmp;
+    }
+    *pitem = NULL;
+}
+
+KDE_NO_CDTOR_EXPORT SMIL::Excl::Excl (NodePtr & d)
+    : GroupBase (d, id_node_excl), started_event_list (NULL) {}
+
+KDE_NO_CDTOR_EXPORT SMIL::Excl::~Excl () {
+    clearList (&started_event_list);
+}
+
 KDE_NO_EXPORT void SMIL::Excl::begin () {
     //kDebug () << "SMIL::Excl::begin";
     Node *n = firstChild ();
@@ -2371,9 +2380,9 @@ KDE_NO_EXPORT void SMIL::Excl::begin () {
 }
 
 KDE_NO_EXPORT void SMIL::Excl::deactivate () {
-    started_event_list.clear (); // auto disconnect on destruction of data items
+    clearList (&started_event_list);
     priority_queue.clear ();
-    stopped_connection = NULL;
+    stopped_connection.disconnect ();
     GroupBase::deactivate ();
 }
 
@@ -2385,7 +2394,7 @@ KDE_NO_EXPORT void SMIL::Excl::message (MessageType msg, void *content) {
             if (source == n.ptr ())
                 return; // eg. repeating
             cur_node = source;
-            stopped_connection = cur_node->connectTo (this, MsgEventStopped);
+            stopped_connection.connect (cur_node, MsgEventStopped, this);
             if (n) {
                 if (SMIL::id_node_priorityclass == cur_node->parentNode ()->id) {
                     switch (static_cast <SMIL::PriorityClass *>
@@ -2414,7 +2423,7 @@ KDE_NO_EXPORT void SMIL::Excl::message (MessageType msg, void *content) {
                 Runtime* rt = (Runtime*)cur_node->role (RoleTiming);
                 if (rt && rt->timingstate == Runtime::timings_stopped) {
                     cur_node = NULL;
-                    stopped_connection = NULL;
+                    stopped_connection.disconnect ();
                 }
                 runtime->tryFinish ();
             }
@@ -2433,7 +2442,7 @@ KDE_NO_EXPORT void SMIL::Excl::message (MessageType msg, void *content) {
                 if (ref) {
                     cur_node = ref->data;
                     priority_queue.remove (ref);
-                    stopped_connection = cur_node->connectTo (this, MsgEventStopped);
+                    stopped_connection.connect (cur_node, MsgEventStopped, this);
                     ExclPauseVisitor visitor (false, this, document()->last_event_time/10);
                     cur_node->accept (&visitor);
                     // else TODO
@@ -2596,8 +2605,8 @@ KDE_NO_CDTOR_EXPORT SMIL::LinkingBase::LinkingBase (NodePtr & d, short id)
  : Element(d, id), show (show_replace) {}
 
 KDE_NO_EXPORT void SMIL::LinkingBase::deactivate () {
-    mediatype_activated = 0L;
-    mediatype_attach = 0L;
+    mediatype_activated.disconnect ();
+    mediatype_attach.disconnect ();
     Element::deactivate ();
 }
 
@@ -2619,9 +2628,8 @@ KDE_NO_EXPORT void SMIL::Anchor::activate () {
     init ();
     for (Node *c = firstChild(); c; c = c->nextSibling ())
         if (nodeMessageReceivers (c, MsgEventClicked)) {
-            mediatype_activated = c->connectTo (this, MsgEventClicked);
-            if (nodeMessageReceivers (c, MsgSurfaceAttach))
-                mediatype_attach = c->connectTo (this, MsgSurfaceAttach);
+            mediatype_activated.connect (c, MsgEventClicked, this);
+            mediatype_attach.connect (c, MsgSurfaceAttach, this);
             break;
         }
     Element::activate ();
@@ -2681,8 +2689,8 @@ KDE_NO_EXPORT void SMIL::Area::activate () {
     if (parentNode () &&
             parentNode ()->id >= id_node_first_mediatype &&
             parentNode ()->id <= id_node_last_mediatype) {
-        mediatype_activated = parentNode ()->connectTo (this, MsgEventClicked);
-        mediatype_attach = parentNode ()->connectTo (this, MsgSurfaceAttach);
+        mediatype_activated.connect (parentNode (), MsgEventClicked, this);
+        mediatype_attach.connect (parentNode (), MsgSurfaceAttach, this);
     }
     Element::activate ();
 }
@@ -2701,7 +2709,7 @@ void SMIL::Area::parseParam (const TrieString & para, const QString & val) {
 }
 
 KDE_NO_EXPORT void *SMIL::Area::role (RoleType msg, void *content) {
-    NodeRefList *l = mouse_listeners.receivers ((MessageType) (long) content);
+    ConnectionList *l = mouse_listeners.receivers ((MessageType) (long) content);
     if (l)
         return l;
     return Element::role (msg, content);
@@ -2719,9 +2727,7 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
    trans_out_timer (NULL),
    sensitivity (sens_opaque),
    trans_out_active (false),
-   has_mouse (false),
-   m_MediaAttached (new NodeRefList),
-   m_TransformedIn (new NodeRefList) {
+   has_mouse (false) {
     view_mode = Mrl::WindowMode;
 }
 
@@ -2839,11 +2845,11 @@ KDE_NO_EXPORT void SMIL::MediaType::activate () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
-    region_paint = 0L;
-    region_mouse_enter = 0L;
-    region_mouse_leave = 0L;
-    region_mouse_click = 0L;
-    region_attach = 0L;
+    region_paint.disconnect ();
+    region_mouse_enter.disconnect ();
+    region_mouse_leave.disconnect ();
+    region_mouse_click.disconnect ();
+    region_attach.disconnect ();
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
     document ()->notify_listener->removeRepaintUpdater (this);
@@ -2901,10 +2907,10 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
     }
     if (r) {
         region_node = r;
-        region_mouse_enter = r->connectTo (this, MsgEventPointerInBounds);
-        region_mouse_leave = r->connectTo (this, MsgEventPointerOutBounds);
-        region_mouse_click = r->connectTo (this, MsgEventClicked);
-        region_attach = r->connectTo (this, MsgSurfaceAttach);
+        region_mouse_enter.connect (r, MsgEventPointerInBounds, this);
+        region_mouse_leave.connect (r, MsgEventPointerOutBounds, this);
+        region_mouse_click.connect (r, MsgEventClicked, this);
+        region_attach.connect (r, MsgSurfaceAttach, this);
         r->repaint ();
         clipStart ();
         Transition * trans = convertNode <Transition> (trans_in);
@@ -2948,7 +2954,7 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStart () {
 
 KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
     if (runtime->timingstate == Runtime::timings_stopped) {
-        region_attach = NULL;
+        region_attach.disconnect ();
         if (media_info && media_info->media)
             media_info->media->stop ();
         if (external_tree && external_tree->active ())
@@ -2956,7 +2962,7 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
     }
     if (sub_surface)
         sub_surface->repaint ();
-    document_postponed = 0L;
+    document_postponed.disconnect ();
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::finish () {
@@ -3211,13 +3217,13 @@ void *SMIL::MediaType::role (RoleType msg, void *content) {
 
     case RoleReceivers: {
         MessageType m = (MessageType) (long) content;
-        NodeRefList *l = mouse_listeners.receivers (m);
+        ConnectionList *l = mouse_listeners.receivers (m);
         if (l)
             return l;
         if (MsgSurfaceAttach == m)
-            return m_MediaAttached.ptr ();
+            return &m_MediaAttached;
         if (MsgChildTransformedIn == m)
-            return m_TransformedIn.ptr ();
+            return &m_TransformedIn;
     } // fall through
 
     default:
@@ -3261,7 +3267,7 @@ KDE_NO_EXPORT void SMIL::RefMediaType::clipStart () {
         repeat = runtime->repeat_count == Runtime::DurIndefinite
             ? 9998 : runtime->repeat_count;
         runtime->repeat_count = 1;
-        document_postponed = document()->connectTo (this, MsgEventPostponed);
+        document_postponed.connect (document(), MsgEventPostponed, this);
     }
     MediaType::clipStart ();
 }
@@ -3624,7 +3630,7 @@ void SMIL::SmilText::begin () {
     SMIL::RegionBase *r = findRegion (this, param (StringPool::attr_region));
     if (r) {
         region_node = r;
-        region_attach = r->connectTo (this, MsgSurfaceAttach);
+        region_attach.connect (r, MsgSurfaceAttach, this);
         r->repaint ();
     }
     Element::begin ();
@@ -3636,7 +3642,7 @@ void SMIL::SmilText::finish () {
 }
 
 void SMIL::SmilText::deactivate () {
-    region_attach = NULL;
+    region_attach.disconnect ();
     if (text_surface) {
         text_surface->repaint ();
         text_surface->remove ();
@@ -3702,7 +3708,7 @@ void *SMIL::SmilText::role (RoleType msg, void *content) {
         return surface ();
 
     case RoleReceivers: {
-        NodeRefList *l = mouse_listeners.receivers ((MessageType)(long)content);
+        ConnectionList *l = mouse_listeners.receivers ((MessageType)(long)content);
         if (l)
             return l;
     } // fall through

@@ -85,21 +85,82 @@ QTextStream &KMPlayer::operator << (QTextStream &out, const XMLStringlet &txt) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT
-Connection::Connection (NodeRefList *ls, Node *node, Node *inv)
- : connectee (inv), listeners (ls) {
-    if (listeners) {
-        NodeRefItemPtr nci = new NodeRefItem (node);
-        ls->append (nci);
-        listen_item = nci;
+Connection::Connection (Node *invoker, Node *receiver)
+ : connectee (invoker), connecter (receiver) {
+#ifdef KMPLAYER_TEST_CONNECTION
+    connection_counter++;
+#endif
+}
+
+ConnectionLink::ConnectionLink () : connection (NULL) {}
+
+ConnectionLink::~ConnectionLink () {
+    disconnect ();
+}
+
+bool ConnectionLink::connect (Node *send, MessageType msg, Node *rec) {
+    disconnect ();
+    ConnectionList *list = nodeMessageReceivers (send, msg);
+    if (list) {
+        connection = new Connection (send, rec);
+        connection->list = list;
+        connection->link = &connection;
+        connection->prev = list->link_last;
+        connection->next = NULL;
+        if (list->link_last)
+            list->link_last->next = connection;
+        else
+            list->link_first = connection;
+        list->link_last = connection;
     }
 }
 
-KDE_NO_EXPORT void Connection::disconnect () {
-    if (listen_item && listeners)
-        listeners->remove (listen_item);
-    listen_item = 0L;
-    listeners = 0L;
+void ConnectionLink::disconnect () const {
+    if (connection) {
+        Connection *tmp = connection;
+        if (tmp->prev)
+            tmp->prev->next = tmp->next;
+        else
+            tmp->list->link_first = tmp->next;
+        if (tmp->next)
+            tmp->next->prev = tmp->prev;
+        else
+            tmp->list->link_last = tmp->prev;
+        *tmp->link = NULL;
+        if (tmp->list->link_next == tmp)
+            tmp->list->link_next = tmp->next;
+        delete tmp;
+    }
+    ASSERT (!connection);
+}
+
+void ConnectionLink::assign (const ConnectionLink *link) const {
+    disconnect ();
+    connection = link->connection;
+    link->connection = NULL;
+    if (connection)
+        connection->link = &connection;
+}
+
+Node *ConnectionLink::signaler () const {
+    return connection ? connection->connectee.ptr () : NULL;
+}
+
+ConnectionList::ConnectionList ()
+    : link_first (NULL), link_last (NULL), link_next (NULL) {}
+
+ConnectionList::~ConnectionList () {
+    clear ();
+}
+
+void ConnectionList::clear () {
+    while (link_first) {
+        Connection *tmp = link_first;
+        link_first = tmp->next;
+        *tmp->link = NULL;
+        delete tmp;
+    }
+    link_last = link_next = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -476,23 +537,15 @@ void *Node::role (RoleType msg, void *content) {
 }
 
 KDE_NO_EXPORT void Node::deliver (MessageType msg, void *content) {
-    NodeRefList *nl = nodeMessageReceivers (this, msg);
+    ConnectionList *nl = nodeMessageReceivers (this, msg);
     if (nl)
-        for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
-            if (c->data)
-                c->data->message (msg, content);
+        for (Connection *c = nl->first(); c; c = nl->next ())
+            if (c->connecter)
+                c->connecter->message (msg, content);
 }
 
 void Node::accept (Visitor * v) {
     v->visit (this);
-}
-
-KDE_NO_EXPORT
-ConnectionPtr Node::connectTo (Node *node, MessageType msg) {
-    NodeRefList *nl = nodeMessageReceivers (this, msg);
-    if (nl)
-        return ConnectionPtr (new Connection (nl, node, this));
-    return ConnectionPtr ();
 }
 
 QString Node::nodeValue () const {
@@ -883,7 +936,6 @@ Document::Document (const QString & s, PlayListNotify * n)
  : Mrl (dummy_element, id_node_document),
    notify_listener (n),
    m_tree_version (0),
-   m_PostponedListeners (new NodeRefList),
    event_queue (NULL),
    paused_queue (NULL),
    cur_event (NULL),
@@ -1243,7 +1295,7 @@ void *Document::role (RoleType msg, void *content) {
     if (RoleReceivers == msg) {
         MessageType m = (MessageType) (long) content;
         if (MsgEventPostponed == m)
-            return m_PostponedListeners.ptr ();
+            return &m_PostponedListeners;
     }
     return Mrl::role (msg, content);
 }

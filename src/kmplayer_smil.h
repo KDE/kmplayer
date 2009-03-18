@@ -130,7 +130,7 @@ public:
         void clear();
         Duration durval;
         int offset;
-        ConnectionPtr connection;
+        ConnectionLink connection;
         DurationItem *next;
     } durations [(const int) DurTimeLast];
     void setDuration ();
@@ -148,9 +148,9 @@ public:
     TimingState timingstate;
     TimingState unpaused_state;
     int repeat_count;
-    NodeRefListPtr m_StartListeners;        // Element about to be started
-    NodeRefListPtr m_StartedListeners;      // Element is started
-    NodeRefListPtr m_StoppedListeners;      // Element stopped
+    ConnectionList m_StartListeners;        // Element about to be started
+    ConnectionList m_StartedListeners;      // Element is started
+    ConnectionList m_StoppedListeners;      // Element stopped
     Posting *begin_timer;
     Posting *duration_timer;
     Posting *started_timer;
@@ -174,11 +174,11 @@ class KMPLAYER_NO_EXPORT MouseListeners {
 public:
     MouseListeners();
 
-    NodeRefList *receivers (MessageType msg);
+    ConnectionList *receivers (MessageType msg);
 
-    NodeRefListPtr m_ActionListeners;      // mouse clicked
-    NodeRefListPtr m_OutOfBoundsListeners; // mouse left
-    NodeRefListPtr m_InBoundsListeners;    // mouse entered
+    ConnectionList m_ActionListeners;      // mouse clicked
+    ConnectionList m_OutOfBoundsListeners; // mouse left
+    ConnectionList m_InBoundsListeners;    // mouse entered
 };
 
 /**
@@ -309,7 +309,7 @@ public:
     QString background_image;
     ShowBackground show_background;
     Fit fit;
-    NodeRefListPtr m_AttachedMediaTypes;   // active attached mediatypes
+    ConnectionList m_AttachedMediaTypes;   // active attached mediatypes
     /**
      * boolean for check if pointerEntered/pointerLeft should be called by View
      */
@@ -463,8 +463,8 @@ public:
     void message (MessageType msg, void *content=NULL);
     void *role (RoleType msg, void *content=NULL);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
-    ConnectionPtr starting_connection;
-    ConnectionPtr trans_connection;
+    ConnectionLink starting_connection;
+    ConnectionLink trans_connection;
 protected:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d, short id) : GroupBase(d, id) {}
 };
@@ -484,7 +484,8 @@ public:
  */
 class KMPLAYER_NO_EXPORT Excl : public GroupBase {
 public:
-    KDE_NO_CDTOR_EXPORT Excl (NodePtr & d) : GroupBase (d, id_node_excl) {}
+    Excl (NodePtr & d);
+    ~Excl ();
     KDE_NO_EXPORT const char * nodeName () const { return "excl"; }
     Node *childFromTag (const QString & tag);
     void begin ();
@@ -492,9 +493,12 @@ public:
     void message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
 
-    typedef ListNode <ConnectionPtr> ConnectionStoreItem;
-    List <ConnectionStoreItem> started_event_list;
-    ConnectionPtr stopped_connection;
+    struct ConnectionItem {
+        ConnectionItem (ConnectionItem *n) : next (n) {}
+        ConnectionLink link;
+        ConnectionItem *next;
+    } *started_event_list;
+    ConnectionLink stopped_connection;
     NodeRefList priority_queue;
     NodePtrW cur_node;
 };
@@ -544,8 +548,8 @@ public:
     void deactivate ();
     KDE_NO_EXPORT bool expose () const { return false; }
     void parseParam (const TrieString & name, const QString & value);
-    ConnectionPtr mediatype_activated;
-    ConnectionPtr mediatype_attach;
+    ConnectionLink mediatype_activated;
+    ConnectionLink mediatype_attach;
     QString href;
     QString target;
     enum { show_new, show_replace } show;
@@ -634,14 +638,14 @@ protected:
     virtual void clipStop ();
 
     MouseListeners mouse_listeners;
-    NodeRefListPtr m_MediaAttached;        // mouse entered
-    NodeRefListPtr m_TransformedIn;        // transIn ready
-    ConnectionPtr region_paint;            // attached region needs painting
-    ConnectionPtr region_mouse_enter;      // attached region has mouse entered
-    ConnectionPtr region_mouse_leave;      // attached region has mouse left
-    ConnectionPtr region_mouse_click;      // attached region is clicked
-    ConnectionPtr region_attach;           // attached to region
-    ConnectionPtr document_postponed;      // pause audio/video accordantly
+    ConnectionList m_MediaAttached;        // mouse entered
+    ConnectionList m_TransformedIn;        // transIn ready
+    ConnectionLink region_paint;           // attached region needs painting
+    ConnectionLink region_mouse_enter;     // attached region has mouse entered
+    ConnectionLink region_mouse_leave;     // attached region has mouse left
+    ConnectionLink region_mouse_click;     // attached region is clicked
+    ConnectionLink region_attach;          // attached to region
+    ConnectionLink document_postponed;     // pause audio/video accordantly
     PostponePtr postpone_lock;
 };
 
@@ -715,7 +719,7 @@ public:
 
     SurfacePtrW text_surface;
     NodePtrW region_node;
-    ConnectionPtr region_attach;
+    ConnectionLink region_attach;
     MouseListeners mouse_listeners;
     Runtime *runtime;
 };

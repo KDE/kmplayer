@@ -346,7 +346,7 @@ KDE_NO_EXPORT void RP::TimingsBase::message (MessageType msg, void *content) {
         case MsgEventPostponed: {
             PostponedEvent *pe = static_cast <PostponedEvent *> (content);
             if (!pe->is_postponed) {
-                document_postponed = 0L; // disconnect
+                document_postponed.disconnect ();
                 update (duration > 0 ? 0 : 100);
             }
             break;
@@ -378,7 +378,7 @@ KDE_NO_EXPORT void RP::TimingsBase::update (int percentage) {
 KDE_NO_EXPORT void RP::TimingsBase::finish () {
     progress = 100;
     cancelTimers ();
-    document_postponed = 0L; // disconnect
+    document_postponed.disconnect ();
     Element::finish ();
 }
 
@@ -406,7 +406,7 @@ KDE_NO_EXPORT void RP::Crossfade::begin () {
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
         if (!img->isReady (true))
-            document_postponed = document()->connectTo(this, MsgEventPostponed);
+            document_postponed.connect (document(), MsgEventPostponed, this);
         else
             update (duration > 0 ? 0 : 100);
     }
@@ -428,7 +428,7 @@ KDE_NO_EXPORT void RP::Fadein::begin () {
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
         if (!img->isReady (true))
-            document_postponed = document()->connectTo(this, MsgEventPostponed);
+            document_postponed.connect (document(), MsgEventPostponed, this);
         else
             update (duration > 0 ? 0 : 100);
     }
@@ -485,7 +485,7 @@ KDE_NO_EXPORT void RP::Wipe::begin () {
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
         if (!img->isReady (true))
-            document_postponed = document()->connectTo(this, MsgEventPostponed);
+            document_postponed.connect (document(), MsgEventPostponed, this);
         else
             update (duration > 0 ? 0 : 100);
     }

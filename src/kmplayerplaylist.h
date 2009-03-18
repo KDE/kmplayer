@@ -286,7 +286,7 @@ enum RoleType
     (void*)(long)(x)
 
 #define nodeMessageReceivers(node, msg)                                     \
-    (NodeRefList*)(node)->role (RoleReceivers, (void*)(long)(msg))
+    (ConnectionList*)(node)->role (RoleReceivers, (void*)(long)(msg))
 
 // convenient types
 typedef void Role;
@@ -307,30 +307,77 @@ ITEM_AS_POINTER(KMPlayer::NodeRefItem)
 typedef NodeRefItem::SharedType NodeRefItemPtr;
 typedef NodeRefItem::WeakType NodeRefItemPtrW;
 typedef List<NodeRefItem> NodeRefList;       // ref nodes, eg. event receivers
-typedef Item<NodeRefList>::SharedType NodeRefListPtr;
-typedef Item<NodeRefList>::WeakType NodeRefListPtrW;
-ITEM_AS_POINTER(KMPlayer::NodeRefList)
 
 template <> void TreeNode<Node>::appendChild (Node *c);
 template <> void TreeNode<Node>::insertBefore (Node *c, Node *b);
 template <> void TreeNode<Node>::removeChild (NodePtr c);
 
 /*
- * Weak ref of the receivers list from signaler and the listener node
+ * Message connection between signaler and the listener node
  */
-class KMPLAYER_EXPORT Connection {
-    friend class Node;
-public:
-    KDE_NO_CDTOR_EXPORT ~Connection () { disconnect (); }
-    void disconnect ();
+
+class ConnectionList;
+
+#ifdef KMPLAYER_TEST_CONNECTION
+extern int connection_counter;
+#endif
+
+struct Connection {
     NodePtrW connectee; // the one that will, when ever, trigger the event
-private:
-    Connection (NodeRefList *ls, Node *node, Node *invoker);
-    NodeRefListPtrW listeners;
-    NodeRefItemPtrW listen_item;
+    NodePtrW connecter; // the one that will, when ever, receive the event
+    Connection (Node *invoker, Node*receiver);
+#ifdef KMPLAYER_TEST_CONNECTION
+    ~Connection () { connection_counter--; }
+#endif
+    ConnectionList *list;
+    Connection **link;
+    Connection *prev;
+    Connection *next;
 };
 
-typedef SharedPtr <Connection> ConnectionPtr;
+class ConnectionLink {
+#ifdef KMPLAYER_TEST_CONNECTION
+public:
+#endif
+    mutable Connection *connection;
+public:
+    ConnectionLink ();
+    ~ConnectionLink ();
+
+    bool connect (Node *signaler, MessageType msg, Node *receiver);
+    void disconnect () const;
+    void assign (const ConnectionLink *link) const;
+
+    Node *signaler () const;
+private:
+    ConnectionLink (const ConnectionLink &);
+    ConnectionLink &operator = (const ConnectionLink &);
+};
+
+class ConnectionList {
+#ifdef KMPLAYER_TEST_CONNECTION
+public:
+#endif
+    friend class ConnectionLink;
+    Connection *link_first;
+    Connection *link_last;
+    Connection *link_next;
+public:
+    ConnectionList ();
+    ~ConnectionList ();
+
+    Connection *first () {
+        link_next = link_first ? link_first->next : NULL;
+        return link_first;
+    }
+    Connection *next () {
+        Connection *tmp = link_next;
+        link_next = link_next ? link_next->next : NULL;
+        return tmp;
+    }
+    void clear ();
+};
+
 
 struct XMLStringlet {
     const QString str;
@@ -401,12 +448,6 @@ public:
      */
     bool auxiliaryNode () const { return auxiliary_node; }
     void setAuxiliaryNode (bool b) { auxiliary_node = b; }
-    /**
-     * Add node as listener for a certain event_id.
-     * Return a NULL ptr if event_id is not supported.
-     * \sa: Connection::disconnect()
-     */
-    ConnectionPtr connectTo (Node *node, MessageType msg);
     /*
      * Message send to this node
      */
@@ -416,7 +457,7 @@ public:
      */
     virtual void *role (RoleType msg, void *content=NULL);
     /*
-     * Dispatch Event to all connectorss of MessageType
+     * Dispatch Event to all connectors of MessageType
      */
     void deliver (MessageType msg, void *content);
     /**
@@ -765,7 +806,7 @@ private:
 
     PostponePtrW postpone_ref;
     PostponePtr postpone_lock;
-    NodeRefListPtr m_PostponedListeners;
+    ConnectionList m_PostponedListeners;
     EventData *event_queue;
     EventData *paused_queue;
     EventData *cur_event;
