@@ -2,10 +2,13 @@
 <smil>
   <head>
     <layout>
-      <root-layout width="400" height="300" background-color="green"/>
+      <root-layout width="400" height="300" background-color="SeaGreen"/>
+      <region top="48.5%" bottom="48.5%" background-color="white"/>
+      <region left="48.5%" right="48.5%" background-color="white"/>
       <region id="region1" left="5%" top="10%" right="5%" bottom="10%"/>
       <region id="region2" left="5%" top="10%" width="20%" height="20%"
-              background-color="yellow" showBackground="whenActive"/>
+              background-color="yellow" backgroundOpacity="70"
+              showBackground="whenActive"/>
       <region id="regimg1"/>
     </layout>
     <transition id="fade1" dur="1" type="fade"/>
@@ -40,43 +43,50 @@
     <seq>
     <par>
       <text id="text1" src="data:,8,8%20animateMotion%20by%2032x32%20and%20back"
-            region="region1" left="8" top="8" dur="5"/>
+            region="region1" left="8" top="8" dur="5"
+            mediaBackgroundOpacity="70%"/>
       <animateMotion target="text1" begin="1" dur=".5" by="32,32"/>
       <animateMotion target="text1" begin="3" dur=".5" by="-32,-32"/>
     </par>
     <par>
       <text id="text2" src="data:,20%25,75%25%0AanimateMotion%0Ato%2040%25,20%25%0Aback%20to%20150,20"
-            region="region1" left="20%" top="75%" dur="5"/>
+            region="region1" left="20%" top="75%" dur="5"
+            mediaBackgroundOpacity="70%"/>
       <animateMotion target="text2" begin="1" dur=".5" to="40%,20%"/>
       <animateMotion target="text2" begin="3" dur=".5" to="150,20"/>
     </par>
     <par>
       <text id="text3" src="data:,8,8%0AanimateMotion%0Afrom%2040%25,20%25%0Aby%2040%25,-20%25"
-            region="region1" left="8" top="8" dur="3"/>
+            region="region1" left="8" top="8" dur="3"
+            mediaBackgroundOpacity="70%"/>
       <animateMotion target="text3" begin="1" dur=".5"
                      from="20%,75%" by="40%,-20%"/>
     </par>
     <par>
       <text id="text4" src="data:,8,8%0AanimateMotion%0Afrom%2010,150%0Ato%20150,10"
-            region="region1" left="8" top="8" dur="3"/>
+            region="region1" left="8" top="8" dur="3"
+            mediaBackgroundOpacity="70%"/>
       <animateMotion target="text4" begin="1" dur=".5"
                      from="10,150" to="150,10"/>
     </par>
     <par>
       <text id="text6" src="data:,lineair%20animateMotion%0Avalues%2020,20;150,5;160,160"
-            region="region1" left="8" top="8" dur="5"/>
+            region="region1" left="8" top="8" dur="5"
+            mediaBackgroundOpacity="70%"/>
       <animateMotion target="text6" begin="2" dur="2"
                      values="20,20;150,5;160,170"/>
     </par>
     <par>
       <text id="text7" src="data:,lineair%20animateMotion%0Avalues%2020,20;160,35;140,160%0AkeyTimes0;0.8;1"
-            region="region1" left="8" top="8" dur="5"/>
+            region="region1" left="8" top="8" dur="5"
+            mediaBackgroundOpacity="70%"/>
       <animateMotion target="text7" begin="2" dur="2"
                      values="20,20;160,35;140,160" keyTimes="0;0.8;1"/>
     </par>
     <par>
       <text id="text8" src="data:,spline%20animateMotion%0Avalues%2020,20;160,35;140,160%0AkeyTimes0;0.5;1%0AkeySplines%20.5%200%20.5%201;0%20.75%20.25%201"
-            region="region1" left="8" top="8" dur="5"/>
+            region="region1" left="8" top="8" dur="5"
+            mediaBackgroundOpacity="70%"/>
       <animateMotion target="text8" begin="1" dur="3" calcMode="spline"
                      values="20,20;160,35;140,160"
                      keyTimes="0;0.5;1"
@@ -84,7 +94,8 @@
     </par>
     <par>
       <text id="text9" src="data:,discrete%20animateMotion%0Avalues%2020,20;160,35;140,160%0AkeyTimes0;0.5;1"
-            region="region1" left="8" top="8" dur="5"/>
+            region="region1" left="8" top="8" dur="5"
+            mediaBackgroundOpacity="70%"/>
       <animateMotion target="text9" begin="1" dur="3" calcMode="discrete"
                      values="20,20;160,35;140,160"
                      keyTimes="0;0.5;1"/>
@@ -98,7 +109,7 @@
                        from="25%,0%" to="25%, 25%" keySplines="0 .75 .25 1"/>
         <animateMotion begin="6.7" dur=".3" calcMode="spline"
                        from="25%,25%" to="0%, 25%" keySplines="0 .75 .25 1"/>
-        <animateMotion begin="8.6" dur=".4" calcMode="spline"
+        <animateMotion begin="8.0" dur=".4" calcMode="spline"
                        from="0%,25%" to="0%, 0%" keySplines="0 .75 .25 1"/>
       </text>
       <animateMotion target="region2" begin="1" dur="1.7" calcMode="spline"
