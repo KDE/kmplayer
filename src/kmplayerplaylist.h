@@ -277,7 +277,7 @@ enum RoleType
     RoleDisplay,
     RoleChildDisplay,    // Mrl*
     RoleSizer,
-    RoleReceivers,
+    RoleReceivers
 };
 
 #define MsgUnhandled ((void *) 357L)
