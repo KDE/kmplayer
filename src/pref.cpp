@@ -211,11 +211,11 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     QWidget * bbox = new QWidget (wbox);
     QGridLayout * gridlayout = new QGridLayout (bbox, 2, 2);
     keepSizeRatio = new QCheckBox (i18n ("Keep size ratio"), bbox, 0);
-    QWhatsThis::add(keepSizeRatio, i18n("When checked, movie will keep its aspect ratio\nwhen window is resized"));
+    QWhatsThis::add(keepSizeRatio, i18n("When checked, the movie will keep its aspect ratio\nwhen the window is resized."));
     dockSysTray = new QCheckBox (i18n ("Dock in system tray"), bbox, 0);
-    QWhatsThis::add (dockSysTray, i18n ("When checked, an icon of KMPlayer will be added to the system tray.\nWhen clicked it will hide KMPlayer's main window and removing KMPlayer's taskbar button."));
+    QWhatsThis::add (dockSysTray, i18n ("When checked, an icon for KMPlayer will be added to the system tray.\nWhen clicked, it will hide KMPlayer's main window and remove KMPlayer's task bar button."));
     autoResize = new QCheckBox (i18n ("Auto resize to video sizes"), bbox);
-    QWhatsThis::add (autoResize, i18n("When checked, KMPlayer will resize to movie sizes\nwhen video starts"));
+    QWhatsThis::add (autoResize, i18n("When checked, KMPlayer will resize to movie sizes\nwhen video starts."));
     gridlayout->addWidget (keepSizeRatio, 0, 0);
     gridlayout->addWidget (dockSysTray, 1, 0);
     gridlayout->addWidget (autoResize, 0, 1);
@@ -229,7 +229,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     Q3GroupBox *playbox =new Q3GroupBox(4, Qt::Vertical,i18n("Playing"),this);
     loop = new QCheckBox (i18n("Loop"), playbox);
     QWhatsThis::add(loop, i18n("Makes current movie loop"));
-    framedrop = new QCheckBox (i18n ("Allow framedrops"), playbox);
+    framedrop = new QCheckBox (i18n ("Allow frame drops"), playbox);
     QWhatsThis::add (framedrop, i18n ("Allow dropping frames for better audio and video synchronization"));
     adjustvolume = new QCheckBox(i18n("Auto set volume on start"), playbox);
     QWhatsThis::add (adjustvolume, i18n ("When a new source is selected, the volume will be set according the volume control"));

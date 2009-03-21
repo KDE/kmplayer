@@ -621,8 +621,8 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
     fileClose->setStatusText(i18n("Closes the actual source"));
     fileQuit->setStatusText(i18n("Quits the application"));*/
-    viewStatusBar->setStatusTip (i18n ("Enables/disables the statusbar"));
-    viewMenuBar->setStatusTip (i18n ("Enables/disables the menubar"));
+    viewStatusBar->setStatusTip (i18n ("Enables/disables the status bar"));
+    viewMenuBar->setStatusTip (i18n ("Enables/disables the menu bar"));
     viewToolBar->setStatusTip (i18n ("Enables/disables the toolbar"));
 }
 
@@ -1585,7 +1585,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotViewMenuBar() {
         slotStatusMsg(i18n("Ready"));
     } else {
         menuBar()->hide();
-        slotStatusMsg (i18n ("Show Menubar with %1",
+        slotStatusMsg (i18n ("Show Menu Bar with %1",
                     viewMenuBar->shortcut ().toString ()));
         if (!m_showStatusbar) {
             statusBar()->show();
