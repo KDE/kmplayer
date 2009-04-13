@@ -1,10 +1,8 @@
-# KDE Config File
 [Desktop Entry]
-Encoding=UTF-8
 Type=Application
-Exec=kmplayer -caption "%c" %i %m %U
-Icon=kmplayer.png
-DocPath=kmplayer/index.html
+Exec=kmplayer -caption "%c" %i %U
+Icon=kmplayer
+X-DocPath=kmplayer/index.html
 Comment=KDE interface for MPlayer
 Comment[be]=KDE інтэрфейс да MPlayer
 Comment[bg]=KDE интерфейс за MPlayer
