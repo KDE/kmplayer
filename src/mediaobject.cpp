@@ -162,7 +162,6 @@ MediaObject *MediaManager::createAVMedia (Node *node, const QByteArray &) {
     if (av->process->state () <= IProcess::Ready)
         av->process->ready ();
     return av;
-    return NULL;
 }
 
 static const QString statemap [] = {
