@@ -49,7 +49,6 @@ class PartBase;
 class Process;
 class ProcessInfo;
 class MediaManager;
-class Viewer;
 class AudioVideoMedia;
 class PreferencesPage;
 class MediaObject;
