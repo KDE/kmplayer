@@ -147,10 +147,8 @@ Process::Process (QObject *parent, ProcessInfo *pinfo, Settings *settings, const
 Process::~Process () {
     quit ();
     delete m_process;
-    if (media_object)
-        media_object->process = NULL;
-    if (process_info) // FIXME: remove
-        process_info->manager->processDestroyed (this);
+    if (user)
+        user->processDestroyed (this);
     kDebug() << "~Process " << name () << endl;
 }
 
@@ -163,14 +161,14 @@ void Process::initProcess () {
 }
 
 WId Process::widget () {
-    return view () && media_object && media_object->viewer
-        ? media_object->viewer->windowHandle ()
+    return view () && user && user->viewer ()
+        ? user->viewer ()->windowHandle ()
         : 0;
 }
 
 Mrl *Process::mrl () const {
-    if (media_object)
-        return media_object->mrl ();
+    if (user)
+        return user->getMrl ();
     return NULL;
 }
 
@@ -235,8 +233,8 @@ void Process::setState (IProcess::State newstate) {
 KDE_NO_EXPORT void Process::rescheduledStateChanged () {
     IProcess::State old_state = m_old_state;
     m_old_state = m_state;
-    if (media_object) {
-        process_info->manager->stateChange (media_object, old_state, m_state);
+    if (user) {
+        user->stateChange (this, old_state, m_state);
     } else {
         if (m_state > IProcess::Ready)
             kError() << "Process running, mrl disappeared" << endl;
@@ -255,8 +253,8 @@ bool Process::play () {
     QString url = nonstdurl ? m->src : m->absolutePath ();
     bool changed = m_url != url;
     m_url = url;
-    if (media_object) // FIXME: remove check
-        media_object->request = AudioVideoMedia::ask_nothing;
+    if (user) // FIXME: remove check
+        user->starting (this);
     if (!changed || KUrl (m_url).isLocalFile () || nonstdurl)
         return deMediafiedPlay ();
     m_job = KIO::stat (m_url, KIO::HideProgressInfo);
@@ -320,8 +318,8 @@ void RecordDocument::deactivate () {
     Document::deactivate ();
 }
 
-static RecordDocument *recordDocument (AudioVideoMedia *media_object) {
-    Mrl *mrl = media_object ? media_object->mrl () : NULL;
+static RecordDocument *recordDocument (ProcessUser *user) {
+    Mrl *mrl = user ? user->getMrl () : NULL;
     return mrl && id_node_record_document == mrl->id
         ? static_cast <RecordDocument *> (mrl) : NULL;
 }
@@ -418,10 +416,10 @@ MPlayerProcessInfo::MPlayerProcessInfo (MediaManager *mgr)
  : ProcessInfo ("mplayer", i18n ("&MPlayer"), mplayer_supports,
          mgr, new MPlayerPreferencesPage ()) {}
 
-IProcess *MPlayerProcessInfo::create (PartBase *part, AudioVideoMedia *media) {
+IProcess *MPlayerProcessInfo::create (PartBase *part, ProcessUser *usr) {
     MPlayer *m = new MPlayer (part, this, part->settings ());
     m->setSource (part->source ());
-    m->media_object = media;
+    m->user = usr;
     part->processCreated (m);
     return m;
 }
@@ -444,8 +442,8 @@ KDE_NO_EXPORT void MPlayer::init () {
 
 KDE_NO_EXPORT bool MPlayer::ready () {
     Process::ready ();
-    if (media_object && media_object->viewer)
-        media_object->viewer->useIndirectWidget (true);
+    if (user && user->viewer ())
+        user->viewer ()->useIndirectWidget (true);
     return false;
 }
 
@@ -1093,10 +1091,10 @@ MEncoderProcessInfo::MEncoderProcessInfo (MediaManager *mgr)
  : ProcessInfo ("mencoder", i18n ("M&Encoder"), mencoder_supports,
          mgr, NULL) {}
 
-IProcess *MEncoderProcessInfo::create (PartBase *part, AudioVideoMedia *media) {
+IProcess *MEncoderProcessInfo::create (PartBase *part, ProcessUser *usr) {
     MEncoder *m = new MEncoder (part, this, part->settings ());
     m->setSource (part->source ());
-    m->media_object = media;
+    m->user = usr;
     part->processCreated (m);
     return m;
 }
@@ -1114,7 +1112,7 @@ KDE_NO_EXPORT void MEncoder::init () {
 bool MEncoder::deMediafiedPlay () {
     bool success = false;
     stop ();
-    RecordDocument *rd = recordDocument (media_object);
+    RecordDocument *rd = recordDocument (user);
     if (!rd)
         return false;
     initProcess ();
@@ -1175,10 +1173,10 @@ MPlayerDumpProcessInfo::MPlayerDumpProcessInfo (MediaManager *mgr)
  : ProcessInfo ("mplayerdumpstream", i18n ("&MPlayerDumpstream"),
          mplayerdump_supports, mgr, NULL) {}
 
-IProcess *MPlayerDumpProcessInfo::create (PartBase *p, AudioVideoMedia *media) {
+IProcess *MPlayerDumpProcessInfo::create (PartBase *p, ProcessUser *usr) {
     MPlayerDumpstream *m = new MPlayerDumpstream (p, this, p->settings ());
     m->setSource (p->source ());
-    m->media_object = media;
+    m->user = usr;
     p->processCreated (m);
     return m;
 }
@@ -1196,7 +1194,7 @@ KDE_NO_EXPORT void MPlayerDumpstream::init () {
 bool MPlayerDumpstream::deMediafiedPlay () {
     bool success = false;
     stop ();
-    RecordDocument *rd = recordDocument (media_object);
+    RecordDocument *rd = recordDocument (user);
     if (!rd)
         return false;
     initProcess ();
@@ -1323,7 +1321,7 @@ void MasterProcess::init () {
 }
 
 bool MasterProcess::deMediafiedPlay () {
-    WindowId wid = media_object->viewer->windowHandle ();
+    WindowId wid = user->viewer ()->windowHandle ();
     m_slave_path = QString ("/stream_%1").arg (wid);
     MasterProcessInfo *mpi = static_cast <MasterProcessInfo *>(process_info);
     kDebug() << "MasterProcess::deMediafiedPlay " << m_url << " " << wid;
@@ -1447,12 +1445,12 @@ PhononProcessInfo::PhononProcessInfo (MediaManager *mgr)
   : MasterProcessInfo ("phonon", i18n ("&Phonon"), phonon_supports, mgr, NULL)
 {}
 
-IProcess *PhononProcessInfo::create (PartBase *part, AudioVideoMedia *media) {
+IProcess *PhononProcessInfo::create (PartBase *part, ProcessUser *usr) {
     if (!m_slave || !m_slave->isRunning ())
         startSlave ();
     Phonon *p = new Phonon (part, this, part->settings ());
     p->setSource (part->source ());
-    p->media_object = media;
+    p->user = usr;
     part->processCreated (p);
     return p;
 }
@@ -1473,8 +1471,8 @@ Phonon::Phonon (QObject *parent, ProcessInfo *pinfo, Settings *settings)
  : MasterProcess (parent, pinfo, settings, "phonon") {}
 
 bool Phonon::ready () {
-    if (media_object && media_object->viewer)
-        media_object->viewer->useIndirectWidget (false);
+    if (user && user->viewer ())
+        user->viewer ()->useIndirectWidget (false);
     kDebug() << "Phonon::ready " << state () << endl;
     PhononProcessInfo *ppi = static_cast <PhononProcessInfo *>(process_info);
     if (running ()) {
@@ -2179,10 +2177,10 @@ static const char * ffmpeg_supports [] = {
 FFMpegProcessInfo::FFMpegProcessInfo (MediaManager *mgr)
  : ProcessInfo ("ffmpeg", i18n ("&FFMpeg"), ffmpeg_supports, mgr, NULL) {}
 
-IProcess *FFMpegProcessInfo::create (PartBase *p, AudioVideoMedia *media) {
+IProcess *FFMpegProcessInfo::create (PartBase *p, ProcessUser *usr) {
     FFMpeg *m = new FFMpeg (p, this, p->settings ());
     m->setSource (p->source ());
-    m->media_object = media;
+    m->user = usr;
     p->processCreated (m);
     return m;
 }
@@ -2198,7 +2196,7 @@ KDE_NO_EXPORT void FFMpeg::init () {
 }
 
 bool FFMpeg::deMediafiedPlay () {
-    RecordDocument *rd = recordDocument (media_object);
+    RecordDocument *rd = recordDocument (user);
     if (!rd)
         return false;
     initProcess ();
@@ -2281,10 +2279,10 @@ static const char *npp_supports [] = { "urlsource", 0L };
 NppProcessInfo::NppProcessInfo (MediaManager *mgr)
  : ProcessInfo ("npp", i18n ("&Ice Ape"), npp_supports, mgr, NULL) {}
 
-IProcess *NppProcessInfo::create (PartBase *p, AudioVideoMedia *media) {
+IProcess *NppProcessInfo::create (PartBase *p, ProcessUser *usr) {
     NpPlayer *n = new NpPlayer (p, this, p->settings());
     n->setSource (p->source ());
-    n->media_object = media;
+    n->user = usr;
     p->processCreated (n);
     return n;
 }
@@ -2472,9 +2470,9 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     Mrl *node = mrl ();
     if (!view ())
         return false;
-    if (media_object && media_object->viewer) {
-        media_object->viewer->useIndirectWidget (false);
-        media_object->viewer->setMonitoring (IViewer::MonitorNothing);
+    if (user && user->viewer ()) {
+        user->viewer ()->useIndirectWidget (false);
+        user->viewer ()->setMonitoring (IViewer::MonitorNothing);
     }
     if (node && !m_url.isEmpty ()) {
         QString mime = "text/plain";
@@ -2518,10 +2516,10 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
 }
 
 KDE_NO_EXPORT bool NpPlayer::ready () {
-    if (!media_object || !media_object->viewer)
+    if (!user || !user->viewer ())
         return false;
     // FIXME wait for callback
-    media_object->viewer->useIndirectWidget (false);
+    user->viewer ()->useIndirectWidget (false);
     if (state () == IProcess::Ready)
         return true;
     initProcess ();
@@ -2531,7 +2529,7 @@ KDE_NO_EXPORT bool NpPlayer::ready () {
     cmd += service;
     cmd += path;
     cmd += QString (" -wid ");
-    cmd += QString::number (media_object->viewer->windowHandle ());
+    cmd += QString::number (user->viewer ()->windowHandle ());
     fprintf (stderr, "%s\n", cmd.local8Bit ().constData ());
     *m_process << cmd;
     m_process->start (K3Process::NotifyOnExit, K3Process::All);

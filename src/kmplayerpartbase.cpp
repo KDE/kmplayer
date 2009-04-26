@@ -960,7 +960,7 @@ void Source::setAspect (NodePtr node, float a) {
             mrl->media_info &&
             mrl->media_info->media &&
             MediaManager::AudioVideo == mrl->media_info->type) {
-        static_cast <AudioVideoMedia*>(mrl->media_info->media)->viewer->setAspect(a);
+        static_cast <AudioVideoMedia*>(mrl->media_info->media)->viewer ()->setAspect(a);
         if (mrl->view_mode == Mrl::WindowMode)
             changed |= (fabs (mrl->aspect - a) > 0.001);
         mrl->aspect = a;

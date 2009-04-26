@@ -154,10 +154,10 @@ MediaObject *MediaManager::createAVMedia (Node *node, const QByteArray &) {
                 av->mrl ())]->create (m_player, av);
         m_processes.push_back (av->process);
     }
-    av->process->media_object = av;
-    av->viewer = !rec || rec->has_video
+    av->process->user = av;
+    av->setViewer (!rec || rec->has_video
         ? m_player->viewWidget ()->viewArea ()->createVideoWidget ()
-        : NULL;
+        : NULL);
 
     if (av->process->state () <= IProcess::Ready)
         av->process->ready ();
@@ -204,8 +204,8 @@ void MediaManager::stateChange (AudioVideoMedia *media,
         }
         if (has_video) {
             if (m_player->view ()) {
-                if (media->viewer)
-                    media->viewer->map ();
+                if (media->viewer ())
+                    media->viewer ()->map ();
                 if (Mrl::SingleMode == mrl->view_mode)
                     m_player->viewWidget ()->viewArea ()->resizeEvent (NULL);
             }
@@ -275,9 +275,6 @@ void MediaManager::processDestroyed (IProcess *process) {
     kDebug() << "processDestroyed " << process << endl;
     m_processes.remove (process);
     m_recorders.remove (process);
-    if (process->media_object &&
-            AudioVideoMedia::ask_delete == process->media_object->request)
-        delete process->media_object;
 }
 
 //------------------------%<----------------------------------------------------
@@ -291,12 +288,12 @@ MediaObject::~MediaObject () {
     m_manager->medias ().remove (this);
 }
 
-Mrl *MediaObject::mrl () {
-    return m_node ? m_node->mrl () : NULL;
-}
-
 KDE_NO_EXPORT void MediaObject::destroy () {
     delete this;
+}
+
+Mrl *MediaObject::mrl () {
+    return m_node ? m_node->mrl () : NULL;
 }
 
 //------------------------%<----------------------------------------------------
@@ -719,14 +716,14 @@ KDE_NO_EXPORT void MediaInfo::slotMimetype (KIO::Job *, const QString & m) {
 //------------------------%<----------------------------------------------------
 
 IProcess::IProcess (ProcessInfo *pinfo) :
-    media_object (NULL),
+    user (NULL),
     process_info (pinfo),
     m_state (NotRunning) {}
 
 AudioVideoMedia::AudioVideoMedia (MediaManager *manager, Node *node)
  : MediaObject (manager, node),
    process (NULL),
-   viewer (NULL),
+   m_viewer (NULL),
    request (ask_nothing),
    ignore_pause (false) {
     kDebug() << "AudioVideoMedia::AudioVideoMedia" << endl;
@@ -735,13 +732,13 @@ AudioVideoMedia::AudioVideoMedia (MediaManager *manager, Node *node)
 AudioVideoMedia::~AudioVideoMedia () {
     stop ();
     // delete m_process;
-    if (viewer) { //nicer with QObject destroy signal, but preventing unmap on destruction
+    if (m_viewer) { //nicer with QObject destroy signal, but preventing unmap on destruction
         View *view = m_manager->player ()->viewWidget ();
         if (view)
-            view->viewArea ()->destroyVideoWidget (viewer);
+            view->viewArea ()->destroyVideoWidget (m_viewer);
     }
     if (process) {
-        process->media_object = NULL;
+        request = ask_nothing;
         delete process;
     }
     kDebug() << "AudioVideoMedia::~AudioVideoMedia";
@@ -785,8 +782,8 @@ void AudioVideoMedia::stop () {
         request = ask_stop;
     if (process)
         process->stop ();
-    if (m_manager->player ()->view () && viewer)
-        viewer->unmap ();
+    if (m_manager->player ()->view () && m_viewer)
+        m_viewer->unmap ();
 }
 
 void AudioVideoMedia::pause () {
@@ -813,14 +810,38 @@ void AudioVideoMedia::unpause () {
 }
 
 void AudioVideoMedia::destroy () {
-    if (m_manager->player ()->view () && viewer)
-        viewer->unmap ();
+    if (m_manager->player ()->view () && m_viewer)
+        m_viewer->unmap ();
     if (!process || IProcess::Ready >= process->state ()) {
         delete this;
     } else {
         stop ();
         request = ask_delete;
     }
+}
+
+void AudioVideoMedia::starting (IProcess*) {
+    request = AudioVideoMedia::ask_nothing;
+}
+
+void AudioVideoMedia::stateChange (IProcess *p,
+                                   IProcess::State os, IProcess::State ns) {
+    m_manager->stateChange (this, os, ns);
+}
+
+void AudioVideoMedia::processDestroyed (IProcess *p) {
+    m_manager->processDestroyed (p);
+    process = NULL;
+    if (ask_delete == request)
+        delete this;
+}
+
+IViewer *AudioVideoMedia::viewer () {
+    return m_viewer;
+}
+
+Mrl *AudioVideoMedia::getMrl () {
+    return mrl ();
 }
 
 //------------------------%<----------------------------------------------------

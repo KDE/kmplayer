@@ -627,15 +627,15 @@ KDE_NO_EXPORT void CairoPaintVisitor::video (Mrl *m, Surface *s) {
             m->media_info->media &&
             MediaManager::AudioVideo == m->media_info->type) {
         AudioVideoMedia *avm = static_cast<AudioVideoMedia *> (m->media_info->media);
-        if (avm->viewer) {
+        if (avm->viewer ()) {
             if (s &&
                     avm->process &&
                     avm->process->state () > IProcess::Ready &&
                     strcmp (m->nodeName (), "audio")) {
                 s->xscale = s->yscale = 1; // either scale width/heigt or use bounds
-                avm->viewer->setGeometry (s->toScreen (s->bounds.size));
+                avm->viewer ()->setGeometry (s->toScreen (s->bounds.size));
             } else {
-                avm->viewer->setGeometry (IRect (-60, -60, 50, 50));
+                avm->viewer ()->setGeometry (IRect (-60, -60, 50, 50));
             }
         }
     }

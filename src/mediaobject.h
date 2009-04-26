@@ -46,7 +46,7 @@ namespace KMPlayer {
 
 class IViewer;
 class PartBase;
-class Process;
+class ProcessUser;
 class ProcessInfo;
 class MediaManager;
 class AudioVideoMedia;
@@ -81,7 +81,7 @@ public:
     virtual bool running () const = 0;
 
     State state () const { return m_state; }
-    AudioVideoMedia *media_object;
+    ProcessUser *user;
     ProcessInfo *process_info;
 
 protected:
@@ -93,6 +93,17 @@ private:
     IProcess (const IViewer &);
 };
 
+class KMPLAYER_EXPORT ProcessUser {
+public:
+    virtual ~ProcessUser () {}
+
+    virtual void starting (IProcess *) = 0;
+    virtual void stateChange (IProcess *, IProcess::State, IProcess::State) = 0;
+    virtual void processDestroyed (IProcess*) = 0;
+    virtual IViewer *viewer () = 0;
+    virtual Mrl *getMrl () = 0;
+};
+
 class KMPLAYER_EXPORT ProcessInfo {
 public:
     ProcessInfo (const char *nm, const QString &lbl, const char **supported,
@@ -100,7 +111,7 @@ public:
     virtual ~ProcessInfo ();
 
     bool supports (const char *source) const;
-    virtual IProcess *create (PartBase*, AudioVideoMedia*) = 0;
+    virtual IProcess *create (PartBase*, ProcessUser*) = 0;
     virtual void quitProcesses () {};
 
     const char *name;
@@ -263,7 +274,7 @@ private:
     IViewer (const IViewer &);
 };
 
-class KMPLAYER_NO_EXPORT AudioVideoMedia : public MediaObject {
+class KMPLAYER_NO_EXPORT AudioVideoMedia : public MediaObject, ProcessUser {
     friend class MediaManager;
 public:
     enum Request {
@@ -281,8 +292,15 @@ public:
     virtual void unpause ();
     virtual void destroy ();
 
+    virtual void starting (IProcess *);
+    virtual void stateChange (IProcess *, IProcess::State, IProcess::State);
+    virtual void processDestroyed (IProcess *p);
+    virtual IViewer *viewer ();
+    virtual Mrl *getMrl ();
+
+    void setViewer (IViewer *v) { m_viewer = v; }
+
     IProcess *process;
-    IViewer *viewer;
     QString m_grab_file;
     int m_frame;
     Request request;
@@ -290,6 +308,8 @@ public:
 
 protected:
     ~AudioVideoMedia ();
+
+    IViewer *m_viewer;
 };
 
 

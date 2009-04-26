@@ -48,6 +48,7 @@
 #include "kmplayerconfig.h"
 #include "kmplayertvsource.h"
 #include "playlistview.h"
+#include "viewarea.h"
 #include "kmplayer.h"
 #include "kmplayercontrolpanel.h"
 
@@ -635,7 +636,11 @@ KDE_NO_EXPORT void KMPlayerTVSource::slotDeviceDeleted (TVDevicePage *devpage) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT TVDeviceScannerSource::TVDeviceScannerSource (KMPlayerTVSource * src)
- : KMPlayer::Source (i18n ("TVScanner"), src->player (), "tvscanner"), m_tvsource (src), m_tvdevice (0L) {
+ : KMPlayer::Source (i18n ("TVScanner"), src->player (), "tvscanner"),
+   m_tvsource (src),
+   m_tvdevice (0L),
+   m_process (NULL),
+   m_viewer (NULL) {
 }
 
 KDE_NO_EXPORT void TVDeviceScannerSource::init () {
@@ -708,6 +713,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::deactivate () {
         if (m_tvdevice->parentNode ())
             m_tvdevice->parentNode ()->removeChild (m_tvdevice);
         m_tvdevice = 0L;
+        delete m_process;
         emit scanFinished (m_tvdevice);
     }
 }
@@ -715,30 +721,49 @@ KDE_NO_EXPORT void TVDeviceScannerSource::deactivate () {
 KDE_NO_EXPORT void TVDeviceScannerSource::play () {
     if (!m_tvdevice)
         return;
-    QString args;
-    args.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->src.ascii ());
+    m_options.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->src.ascii ());
     m_tvsource->player ()->stop ();
-    //m_tvsource->player ()->process ()->initProcess ();
-    //KMPlayer::Process *proc = m_tvsource->player ()->players () ["mplayer"];
-    //proc->setSource (this);
-    //if (!static_cast <KMPlayer::MPlayer *> (proc)->run (args.ascii()))
-    //    deactivate ();
+    KMPlayer::Node *n = new KMPlayer::SourceDocument (this, QString ());
+    setDocument (n, n);
+    m_process = m_player->mediaManager()->processInfos()["mplayer"]->create (m_player, this);
+    m_viewer = m_player->viewWidget ()->viewArea ()->createVideoWidget ();
+    m_process->play ();
 }
-/*
-KDE_NO_EXPORT void TVDeviceScannerSource::stateChange (KMPlayer::Process * p, KMPlayer::Process::State os, KMPlayer::Process::State ns) {
-    if (m_tvdevice &&  // can be deactivated
-            ns == KMPlayer::Process::Ready && os > KMPlayer::Process::Ready) {
-        TVDevice * dev = 0L;
-        kDebug () << "scanning done " << m_tvdevice->hasChildNodes ();
-        if (!m_tvdevice->hasChildNodes ())
-            m_tvsource->document ()->removeChild (m_tvdevice);
-        else
-            dev = m_tvdevice;
-        m_tvdevice = 0L;
-        m_player->setSource (m_old_source);
-        emit scanFinished (dev);
-    }
-    //KMPlayer::Source::stateChange (p, os, ns);
-}*/
+
+KDE_NO_EXPORT void TVDeviceScannerSource::scanningFinished () {
+    TVDevice * dev = 0L;
+    delete m_process;
+    kDebug () << "scanning done " << m_tvdevice->hasChildNodes ();
+    if (!m_tvdevice->hasChildNodes ())
+        m_tvsource->document ()->removeChild (m_tvdevice);
+    else
+        dev = m_tvdevice;
+    m_tvdevice = 0L;
+    m_player->setSource (m_old_source);
+    emit scanFinished (dev);
+}
+
+void TVDeviceScannerSource::stateChange (KMPlayer::IProcess *,
+                   KMPlayer::IProcess::State os, KMPlayer::IProcess::State ns) {
+    if (KMPlayer::IProcess::Ready == ns && os > KMPlayer::IProcess::Ready)
+        QTimer::singleShot (0, this, SLOT (scanningFinished()));
+}
+
+void TVDeviceScannerSource::processDestroyed (KMPlayer::IProcess *) {
+    m_process = NULL;
+    KMPlayer::View *view = m_player->viewWidget ();
+    if (view)
+        view->viewArea ()->destroyVideoWidget (m_viewer);
+    m_viewer = NULL;
+}
+
+KMPlayer::IViewer *TVDeviceScannerSource::viewer () {
+    return m_viewer;
+}
+
+KMPlayer::Mrl *TVDeviceScannerSource::getMrl () {
+    return document ()->mrl ();
+}
+
 
 #include "kmplayertvsource.moc"

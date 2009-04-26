@@ -26,6 +26,7 @@
 
 #include "kmplayerappsource.h"
 #include "kmplayerconfig.h"
+#include "mediaobject.h"
 #include "kmplayer.h"
 
 const short id_node_tv_document = 40;
@@ -139,7 +140,8 @@ public:
 /*
  * Source form scanning TV devices
  */
-class KMPLAYER_NO_EXPORT TVDeviceScannerSource : public KMPlayer::Source {
+class KMPLAYER_NO_EXPORT TVDeviceScannerSource
+                             : public KMPlayer::Source, KMPlayer::ProcessUser {
     Q_OBJECT
 public:
     TVDeviceScannerSource (KMPlayerTVSource * src);
@@ -150,15 +152,25 @@ public:
     virtual bool hasLength ();
     virtual bool isSeekable ();
     virtual bool scan (const QString & device, const QString & driver);
+
+    virtual void starting (KMPlayer::IProcess *) {}
+    virtual void stateChange (KMPlayer::IProcess *, KMPlayer::IProcess::State, KMPlayer::IProcess::State);
+    virtual void processDestroyed (KMPlayer::IProcess *p);
+    virtual KMPlayer::IViewer *viewer ();
+    virtual KMPlayer::Mrl *getMrl ();
+
 public slots:
     virtual void activate ();
     virtual void deactivate ();
     virtual void play ();
+    void scanningFinished ();
 signals:
     void scanFinished (TVDevice * tvdevice);
 private:
     KMPlayerTVSource * m_tvsource;
     TVDevice * m_tvdevice;
+    KMPlayer::IProcess *m_process;
+    KMPlayer::IViewer *m_viewer;
     KMPlayer::Source * m_old_source;
     QString m_driver;
     QRegExp m_nameRegExp;

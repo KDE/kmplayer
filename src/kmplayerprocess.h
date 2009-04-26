@@ -48,7 +48,6 @@ namespace KMPlayer {
 class Settings;
 class View;
 class MediaManager;
-class AudioVideoMedia;
 class Source;
 class Callback;
 class Backend_stub;
@@ -143,7 +142,7 @@ private slots:
 class KMPLAYER_NO_EXPORT MPlayerProcessInfo : public ProcessInfo {
 public:
     MPlayerProcessInfo (MediaManager *);
-    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+    virtual IProcess *create (PartBase*, ProcessUser*);
 };
 
 class KDE_EXPORT MPlayer : public MPlayerBase {
@@ -245,7 +244,7 @@ public:
 class KMPLAYER_NO_EXPORT MEncoderProcessInfo : public ProcessInfo {
 public:
     MEncoderProcessInfo (MediaManager *);
-    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+    virtual IProcess *create (PartBase*, ProcessUser*);
 };
 
 class MEncoder : public MPlayerBase {
@@ -265,7 +264,7 @@ public slots:
 class KMPLAYER_NO_EXPORT MPlayerDumpProcessInfo : public ProcessInfo {
 public:
     MPlayerDumpProcessInfo (MediaManager *);
-    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+    virtual IProcess *create (PartBase*, ProcessUser*);
 };
 
 class KMPLAYER_NO_EXPORT MPlayerDumpstream : public MPlayerBase {
@@ -336,7 +335,7 @@ class KMPLAYER_NO_EXPORT PhononProcessInfo : public MasterProcessInfo {
 public:
     PhononProcessInfo (MediaManager *);
 
-    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+    virtual IProcess *create (PartBase*, ProcessUser*);
 
     virtual bool startSlave ();
 };
@@ -513,7 +512,7 @@ public slots:
 class KMPLAYER_NO_EXPORT FFMpegProcessInfo : public ProcessInfo {
 public:
     FFMpegProcessInfo (MediaManager *);
-    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+    virtual IProcess *create (PartBase*, ProcessUser*);
 };
 
 class KMPLAYER_EXPORT FFMpeg : public Process {
@@ -574,7 +573,7 @@ private slots:
 class KMPLAYER_NO_EXPORT NppProcessInfo : public ProcessInfo {
 public:
     NppProcessInfo (MediaManager *);
-    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+    virtual IProcess *create (PartBase*, ProcessUser*);
 };
 
 class KMPLAYER_NO_EXPORT NpPlayer : public Process {
@@ -585,7 +584,7 @@ public:
 
     static const char *name;
     static const char *supports [];
-    static IProcess *create (PartBase *, AudioVideoMedia *);
+    static IProcess *create (PartBase *, ProcessUser *);
 
     virtual void init ();
     virtual bool deMediafiedPlay ();
