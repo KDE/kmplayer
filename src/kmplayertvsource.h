@@ -27,7 +27,7 @@
 #include "kmplayerappsource.h"
 #include "kmplayerconfig.h"
 #include "mediaobject.h"
-#include "kmplayer.h"
+#include "kmplayer_lists.h"
 
 const short id_node_tv_document = 40;
 const short id_node_tv_device = 41;

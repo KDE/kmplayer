@@ -100,6 +100,7 @@ install( FILES kmplayer_part.desktop  DESTINATION  ${SERVICES_INSTALL_DIR} )
 
 set(kmplayer_SRCS
   kmplayerapp.cpp
+  kmplayer_lists.cpp
   kmplayertvsource.cpp
 )
 
