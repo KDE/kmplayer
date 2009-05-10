@@ -90,14 +90,13 @@ public:
     void message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char *nodeName () const { return "media:group"; }
     bool expose () const { return false; }
-    void addSummary (Node *ratings);
+    void addSummary (Node *parent, Node *ratings);
 };
 
 class KMPLAYER_NO_EXPORT MediaContent : public Mrl {
 public:
     MediaContent (NodePtr &d) : Mrl (d, id_node_media_content) {}
     KDE_NO_EXPORT const char *nodeName () const { return "media:content"; }
-    PlayType playType ();
     void closed ();
 };
 

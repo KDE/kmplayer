@@ -78,7 +78,7 @@ void ATOM::Entry::closed () {
             group = static_cast <MediaGroup *> (c);
         }
     if (group)
-        group->addSummary (rating);
+        group->addSummary (this, rating);
     Mrl::closed ();
 }
 
@@ -142,7 +142,8 @@ Node *ATOM::MediaGroup::childFromTag (const QString &tag) {
     else if (!strcmp (cstr, "media:player"))
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_media_player);
     else if (!strcmp (cstr, "media:category") ||
-            !strcmp (cstr, "media:keywords"))
+            !strcmp (cstr, "media:keywords") ||
+            !strcmp (cstr, "media:credit"))
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_ignored);
     else if (!strcmp (cstr, "smil"))
         return new SMIL::Smil (m_doc);
@@ -151,7 +152,7 @@ Node *ATOM::MediaGroup::childFromTag (const QString &tag) {
 
 void ATOM::MediaGroup::message (MessageType msg, void *content) {
     if (MsgChildFinished == msg &&
-            ((Posting *) content)->source->isPlayable ())
+            id_node_media_content == ((Posting *) content)->source->id)
         finish (); // only play one
     Element::message (msg, content);
 }
@@ -174,7 +175,7 @@ static QString makeStar (int x, bool fill) {
 }
 
 //http://code.google.com/apis/youtube/2.0/developers_guide_protocol.html
-void ATOM::MediaGroup::addSummary (Node *rating_node) {
+void ATOM::MediaGroup::addSummary (Node *p, Node *rating_node) {
     QString images;
     QString desc;
     QString title;
@@ -216,12 +217,7 @@ void ATOM::MediaGroup::addSummary (Node *rating_node) {
                 QString h = e->getAttribute (StringPool::attr_height);
                 if (!h.isEmpty ())
                     images += QString (" height=\"") + h + QChar ('"');
-                QString t = e->getAttribute (TrieString ("time"));
-                if (!t.isEmpty ())
-                    images += QString (" dur=\"") +
-                        QString::number (Mrl::parseTimeString (t) / 100.0) +
-                        QChar ('"');
-                images += QString (" transIn=\"fade\" transOut=\"ellipsewipe\" fit=\"meet\"/>");
+                images += QString (" dur=\"20\" transIn=\"fade\" fill=\"transition\" fit=\"meet\"/>");
                 img_count++;
             }
             break;
@@ -243,7 +239,6 @@ void ATOM::MediaGroup::addSummary (Node *rating_node) {
         out << "<region id=\"text\" left=\"140\" top=\"40\" bottom=\"10\" right=\"10\" fit=\"scroll\"/>"
             "</layout>"
             "<transition id=\"fade\" dur=\"0.3\" type=\"fade\"/>"
-            "<transition id=\"ellipsewipe\" dur=\"0.5\" type=\"ellipseWipe\"/>"
             "</head><body>"
             "<par><seq repeatCount=\"indefinite\">";
         out << images;
@@ -269,20 +264,35 @@ void ATOM::MediaGroup::addSummary (Node *rating_node) {
         n->normalize ();
         n->auxiliary_node = true;
         removeChild (n);
-        insertBefore (n, firstChild ());
+        p->insertBefore (n, p->firstChild ());
     }
 }
 
 void ATOM::MediaContent::closed () {
+    unsigned fsize = 0;
+    TrieString fs ("fileSize");
     for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
         if (a->name () == StringPool::attr_url)
             src = a->value();
         else if (a->name () == StringPool::attr_type)
             mimetype = a->value ();
+        else if (a->name () == StringPool::attr_height)
+            size.height = a->value ().toInt ();
+        else if (a->name () == StringPool::attr_width)
+            size.width = a->value ().toInt ();
+        else if (a->name () == StringPool::attr_width)
+            size.width = a->value ().toInt ();
+        else if (a->name () == fs)
+            fsize = a->value ().toInt ();
+    }
+    if (!mimetype.isEmpty ()) {
+        title = mimetype;
+        if (fsize > 0) {
+            if (fsize > 1024 * 1024)
+                title += QString (" (%1 Mb)").arg (fsize / (1024 * 1024));
+            else
+                title += QString (" (%1 kb)").arg (fsize / 1024);
+        }
     }
     Mrl::closed ();
-}
-
-Node::PlayType ATOM::MediaContent::playType () {
-    return src.isEmpty () ? play_type_none : play_type_unknown;
 }

@@ -59,20 +59,14 @@ public:
     bool expose () const;
 };
 
-class KMPLAYER_NO_EXPORT Item : public Mrl {
+class KMPLAYER_NO_EXPORT Item : public Title {
 public:
-    KDE_NO_CDTOR_EXPORT Item (NodePtr & d)
-        : Mrl (d, id_node_item), timer (NULL) {}
+    KDE_NO_CDTOR_EXPORT Item (NodePtr &d)
+        : Title (d, id_node_item), summary_added (false) {}
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "item"; }
-    PlayType playType () { return cached_play_type; }
-    Mrl * linkNode ();
     void closed ();
-    void activate ();
-    void deactivate ();
-    void message (MessageType msg, void *content=NULL);
-    NodePtrW enclosure;
-    Posting *timer;
+    bool summary_added;
 };
 
 class KMPLAYER_NO_EXPORT Enclosure : public Mrl {
@@ -80,7 +74,9 @@ public:
     KDE_NO_CDTOR_EXPORT Enclosure(NodePtr &d) : Mrl(d, id_node_enclosure) {}
     KDE_NO_EXPORT const char * nodeName () const { return "enclosure"; }
     void closed ();
-    bool expose () const { return false; }
+    void activate ();
+    void deactivate ();
+    QString description;
 };
 
 } //namespace RSS

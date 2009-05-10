@@ -19,6 +19,7 @@
 #include "config-kmplayer.h"
 #include <kdebug.h>
 #include "kmplayer_rss.h"
+#include "kmplayer_atom.h"
 
 using namespace KMPlayer;
 
@@ -64,73 +65,58 @@ KDE_NO_EXPORT Node *RSS::Item::childFromTag (const QString & tag) {
         return new DarkNode (m_doc, ctag, id_node_description);
     else if (!strcmp (ctag, "category"))
         return new DarkNode (m_doc, ctag, id_node_category);
+    else if (!strcmp (ctag, "media:group"))
+        return new ATOM::MediaGroup (m_doc);
     else if (!strncmp (ctag, "itunes", 6) ||
             !strncmp (ctag, "feedburner", 10) ||
+            !strcmp (ctag, "link") ||
+            !strcmp (ctag, "pubDate") ||
+            !strcmp (ctag, "guid") ||
             !strncmp (ctag, "media", 5))
         return new DarkNode (m_doc, ctag, id_node_ignored);
     return 0L;
 }
 
 KDE_NO_EXPORT void RSS::Item::closed () {
-    cached_play_type = play_type_none;
-    for (Node *c = firstChild (); c; c = c->nextSibling ()) {
-        switch (c->id) {
-            case id_node_title:
-                title = c->innerText ().simplifyWhiteSpace ();
-                break;
-            case id_node_enclosure:
-                enclosure = c;
-                src = c->mrl ()->src;
-                break;
-            case id_node_description:
-                cached_play_type = play_type_info;
-                break;
-        }
-    }
-    if (enclosure && !enclosure->mrl ()->src.isEmpty ())
-        cached_play_type = play_type_audio;
-    Mrl::closed ();
-}
-
-KDE_NO_EXPORT Mrl * RSS::Item::linkNode () {
-    if (enclosure)
-        return enclosure->mrl ();
-    return Mrl::linkNode ();
-}
-
-KDE_NO_EXPORT void RSS::Item::activate () {
-    for (Node *c = firstChild (); c; c = c->nextSibling ())
-        if (c->id == id_node_description) {
-            QString s = c->innerText ();
-            document ()->message (MsgInfoString, &s);
-            if (!enclosure && !s.isEmpty ()) {
-                setState (state_activated);
-                begin ();
-                timer = document ()->post (this,
-                        new TimerPosting (5000+s.length()*200));
-                return;
+    if (!summary_added) {
+        ATOM::MediaGroup *group = NULL;
+        Enclosure *enclosure = NULL;
+        QString description;
+        for (Node *c = firstChild (); c; c = c->nextSibling ()) {
+            switch (c->id) {
+                case id_node_title:
+                    title = c->innerText ().simplifyWhiteSpace ();
+                    break;
+                case id_node_enclosure:
+                    enclosure = static_cast <Enclosure *> (c);
+                    break;
+                case id_node_description:
+                    description = c->innerText ();
+                    break;
+                case ATOM::id_node_media_group:
+                    group = static_cast <ATOM::MediaGroup *> (c);
+                    break;
             }
-            break;
         }
+        if (group)
+            group->addSummary (this, NULL);
+        if (enclosure) {
+            enclosure->setCaption (title);
+            enclosure->description = description;
+        }
+        summary_added = true;
+    }
+    Title::closed ();
+}
+
+KDE_NO_EXPORT void RSS::Enclosure::activate () {
+    document ()->message (MsgInfoString, &description);
     Mrl::activate ();
 }
 
-KDE_NO_EXPORT void RSS::Item::deactivate () {
-    if (timer) {
-        document ()->cancelPosting (timer);
-        timer = 0L;
-    }
+KDE_NO_EXPORT void RSS::Enclosure::deactivate () {
     document ()->message (MsgInfoString, NULL);
     Mrl::deactivate ();
-}
-
-KDE_NO_EXPORT void RSS::Item::message (MessageType msg, void *content) {
-    if (msg == MsgEventTimer) {
-        timer = 0L;
-        finish ();
-    } else {
-        Mrl::message (msg, content);
-    }
 }
 
 KDE_NO_EXPORT void RSS::Enclosure::closed () {
