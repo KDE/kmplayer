@@ -1,4 +1,8 @@
 Changes since version 0.11.0a
+- Merged generators from Maemo port
+- Enable clear history
+- Also a summary if RSS has media tags
+- Implement still missing tvscanner using it (FWIW)
 - Support SMIL region backgroundOpacity and media type mediaBackgroundOpacity
 - Save toolbar settings
 - Don't set aspects for NPP
