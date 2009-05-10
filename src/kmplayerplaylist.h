@@ -303,7 +303,8 @@ typedef Item<AttributeList>::SharedType AttributeListPtr;
 ITEM_AS_POINTER(KMPlayer::AttributeList)
 typedef ListNode<NodePtrW> NodeRefItem;      // Node for ref Nodes
 ITEM_AS_POINTER(KMPlayer::NodeRefItem)
-//typedef ListNode<NodePtr> NodeStoreItem;   // list stores Nodes
+typedef ListNode<NodePtr> NodeStoreItem;   // list stores Nodes
+typedef List<NodeStoreItem> NodeStoreList;
 typedef NodeRefItem::SharedType NodeRefItemPtr;
 typedef NodeRefItem::WeakType NodeRefItemPtrW;
 typedef List<NodeRefItem> NodeRefList;       // ref nodes, eg. event receivers

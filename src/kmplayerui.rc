@@ -6,9 +6,11 @@
     <Action name="open"/>
     <Action name="new_window"/>
     <Action name="open_recent"/>
+    <Action name="generators"/>
     <Action name="save_as"/>
+    <Separator />
     <Action name="clear_history"/>
-    <Separator/>
+    <Separator />
     <!--Action name="source_pipe"/>
     <Menu name="vdr"><text>VD&amp;R</text>
       <Action name="vdr_connect"/>

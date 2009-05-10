@@ -1,0 +1,51 @@
+<generator name="YouTube query">
+  <input>
+    <uri>
+      <literal>
+        http://gdata.youtube.com/feeds/api/videos
+      </literal>
+      <http-get>
+        <key-value>
+          <key>
+            vq
+          </key>
+          <value>
+            <ask key="youtube-keywords">
+              <title>
+                Search terms
+              </title>
+              <description>
+                Please enter search terms
+              </description>
+            </ask>
+        </value>
+        </key-value>
+      </http-get>
+    </uri>
+  </input>
+  <process>
+    <program>
+      xsltproc
+    </program>
+    <argument>
+      --novalid
+    </argument>
+    <argument>
+      --nonet
+    </argument>
+    <argument>
+      --nodtdattr
+    </argument>
+    <argument>
+      <uri>
+        <predefined key="sysdata"/>
+        <literal>
+          /youtube.xsl
+        </literal>
+      </uri>
+    </argument>
+    <argument>
+      -
+    </argument>
+  </process>
+</generator>

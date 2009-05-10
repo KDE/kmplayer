@@ -778,10 +778,12 @@ KDE_NO_EXPORT void MPlayer::processOutput (K3Process *, char * str, int slen) {
             }
         } else if (m_refURLRegExp.search(out) > -1) {
             kDebug () << "Reference mrl " << m_refURLRegExp.cap (1);
-            if (!m_tmpURL.isEmpty () && m_url != m_tmpURL)
+            if (!m_tmpURL.isEmpty () &&
+                    (m_url.endsWith (m_tmpURL) || m_tmpURL.endsWith (m_url)))
                 m_source->insertURL (mrl (), m_tmpURL);;
             m_tmpURL = KUrl (m_refURLRegExp.cap (1)).url ();
-            if (m_source->url () == m_tmpURL || m_url == m_tmpURL)
+            if (m_source->url () == m_tmpURL ||
+                    m_url.endsWith (m_tmpURL) || m_tmpURL.endsWith (m_url))
                 m_tmpURL.truncate (0);
         } else if (m_refRegExp.search (out) > -1) {
             kDebug () << "Reference File ";

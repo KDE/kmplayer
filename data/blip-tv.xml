@@ -1,0 +1,59 @@
+<generator name="Blip TV search">
+  <input>
+    <uri>
+      <literal>
+        http://www.blip.tv/search/view/
+      </literal>
+      <http-get>
+        <key-value>
+          <key>
+            search
+          </key>
+          <value>
+            <ask key="blip-tv-terms">
+              <title>
+                Search terms
+              </title>
+              <description>
+                Please enter search terms
+              </description>
+            </ask>
+          </value>
+        </key-value>
+        <key-value>
+          <key>
+            skin
+          </key>
+          <value>
+            api
+          </value>
+        </key-value>
+      </http-get>
+    </uri>
+  </input>
+  <process>
+    <program>
+      xsltproc
+    </program>
+    <argument>
+      --novalid
+    </argument>
+    <argument>
+      --nonet
+    </argument>
+    <argument>
+      --nodtdattr
+    </argument>
+    <argument>
+      <uri>
+        <predefined key="sysdata"/>
+        <literal>
+          /blip-api.xsl
+        </literal>
+      </uri>
+    </argument>
+    <argument>
+      -
+    </argument>
+  </process>
+</generator>

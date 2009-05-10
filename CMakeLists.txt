@@ -61,3 +61,8 @@ configure_file (config-kmplayer.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kmpla
 
 add_subdirectory(src)
 add_subdirectory(icons)
+#add_subdirectory(doc)
+add_subdirectory(data)
+
+#include(MacroOptionalAddSubdirectory)
+#macro_optional_add_subdirectory(po)

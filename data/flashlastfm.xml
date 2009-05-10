@@ -1,0 +1,25 @@
+<generator name="LastFM Flash Player">
+  <process>
+    <program>
+      sh
+    </program>
+    <argument>
+      <uri>
+        <predefined key="sysdata"/>
+        <literal>
+          /flashlastfm.sh
+        </literal>
+      </uri>
+    </argument>
+    <argument encoding="percent">
+      <ask key="flashlastfm-artist" default="Frank Sinatra">
+        <title>
+          As Artist
+        </title>
+        <description>
+          Please enter an artist
+        </description>
+      </ask>
+    </argument>
+  </process>
+</generator>

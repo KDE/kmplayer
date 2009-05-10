@@ -22,6 +22,8 @@
 
 #include <config-kmplayer.h>
 
+#include <qprocess.h>
+
 #include "kmplayer_def.h"
 #include "kmplayerplaylist.h"
 #include "kmplayersource.h"
@@ -31,7 +33,23 @@ static const short id_node_recent_document = 31;
 static const short id_node_recent_node = 32;
 static const short id_node_disk_document = 33;
 static const short id_node_disk_node = 34;
+static const short id_node_gen_generator = 36;
+static const short id_node_gen_input = 37;
+static const short id_node_gen_uri = 38;
+static const short id_node_gen_literal = 39;
+static const short id_node_gen_ask = 40;
+static const short id_node_gen_title = 41;
+static const short id_node_gen_description = 42;
+static const short id_node_gen_process = 43;
+static const short id_node_gen_program = 44;
+static const short id_node_gen_argument = 45;
+static const short id_node_gen_predefined = 46;
+static const short id_node_gen_document = 47;
+static const short id_node_gen_http_get = 48;
+static const short id_node_gen_http_key_value = 49;
+static const short id_node_gen_sequence = 50;
 
+class QTextStream;
 class KMPlayerApp;
 
 class KMPLAYER_NO_EXPORT ListsSource : public KMPlayer::URLSource {
@@ -130,6 +148,48 @@ public:
     void closed ();
     KMPlayer::Node *childFromTag (const QString &tag);
     const char *nodeName () const KDE_NO_EXPORT { return "object"; }
+};
+
+class KMPLAYER_NO_EXPORT Generator : public QObject, public FileDocument {
+    Q_OBJECT
+public:
+    Generator (KMPlayerApp *a);
+    void activate ();
+    void begin ();
+    void deactivate ();
+    void message (KMPlayer::MessageType msg, void *content=NULL);
+    KMPlayer::Node *childFromTag (const QString &tag);
+    KDE_NO_EXPORT const char *nodeName () const { return "generator"; }
+
+private slots:
+    void started ();
+    void error (QProcess::ProcessError err);
+    void readyRead ();
+    void finished ();
+
+private:
+    QString genReadProcess (KMPlayer::Node *n);
+    QString genReadInput (KMPlayer::Node *n);
+    QString genReadString (KMPlayer::Node *n);
+    QString genReadUriGet (KMPlayer::Node *n);
+    QString genReadAsk (KMPlayer::Node *n);
+
+    KMPlayerApp *app;
+    QProcess *qprocess;
+    QTextStream *data;
+    QString process;
+    QString buffer;
+    bool canceled;
+    bool quote;
+};
+
+class KMPLAYER_NO_EXPORT GeneratorElement : public KMPlayer::Element {
+public:
+    GeneratorElement (KMPlayer::NodePtr &doc, const QString &t, short id)
+        : KMPlayer::Element (doc, id), tag (t.toUtf8 ()) {}
+    KMPlayer::Node *childFromTag (const QString &tag);
+    KDE_NO_EXPORT const char *nodeName () const { return tag.constData (); }
+    QByteArray tag;
 };
 
 #endif

@@ -1449,7 +1449,7 @@ bool DocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
         m_ignore_depth++;
         //kDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth;
     } else {
-        NodePtr n = m_node->childFromTag (tag);
+        NodePtr n = m_node ? m_node->childFromTag (tag) : NULL;
         if (!n) {
             kDebug () << "Warning: unknown tag " << tag.latin1 ();
             NodePtr doc = m_root->document ();

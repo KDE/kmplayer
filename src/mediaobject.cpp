@@ -434,7 +434,7 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
     if (kurl.isLocalFile ()) {
         QFile file (kurl.path ());
         if (file.exists ()) {
-            if (mime.isEmpty ()) {
+            if (MediaManager::Data != type && mime.isEmpty ()) {
                 KMimeType::Ptr mimeptr = KMimeType::findByUrl (kurl);
                 if (mrl && mimeptr) {
                     mrl->mimetype = mime = mimeptr->name ();
@@ -467,7 +467,8 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
         return true;
     }
     QString protocol = kurl.protocol ();
-    if (memory_cache->get (str, mime, data) ||
+    if (MediaManager::Data != type &&
+            memory_cache->get (str, mime, data) ||
             protocol == "mms" || protocol == "rtsp" || protocol == "rtp" ||
             (only_playlist && !maybe_playlist && !mime.isEmpty () )) {
         ready ();
@@ -643,16 +644,21 @@ void MediaInfo::create () {
 }
 
 KDE_NO_EXPORT void MediaInfo::ready () {
-    create ();
-    node->document()->post (node, new Posting (node, MsgMediaReady));
+    if (MediaManager::Data != type) {
+        create ();
+        node->document()->post (node, new Posting (node, MsgMediaReady));
+    } else {
+        node->message (MsgMediaReady);
+    }
 }
 
 KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
-    if (!kjob->error ()) {
+    if (MediaManager::Data != type && !kjob->error ()) {
         memory_cache->add (url, mime, data);
     } else {
         memory_cache->unpreserve (url);
-        data.resize (0);
+        if (MediaManager::Data != type)
+            data.resize (0);
     }
     job = 0L; // signal KIO::Job::result deletes itself
     ready ();
@@ -1084,7 +1090,15 @@ TextMedia::TextMedia (MediaManager *manager, Node *node, const QByteArray &ba)
         if (codec)
             ts.setCodec (codec);
     }
-    text  = ts.read ();
+    if (node->mrl() && node->mrl()->mimetype == "text/html") {
+        Document *doc = new Document (QString ());
+        NodePtr store = doc;
+        readXML (doc, ts, QString ());
+        text = doc->innerText ();
+        doc->dispose ();
+    } else {
+        text = ts.read ();
+    }
 }
 
 TextMedia::~TextMedia () {

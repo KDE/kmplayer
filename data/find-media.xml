@@ -1,0 +1,16 @@
+<generator name="Directory Media Scanner">
+  <process>
+    <program>
+      sh
+    </program>
+    <argument>
+      <predefined key="sysdata"/>
+      <literal>
+        /find-media.sh
+      </literal>
+    </argument>
+    <argument>
+      <ask type="dir" key="find-media"/>
+    </argument>
+  </process>
+</generator>

@@ -126,6 +126,8 @@ private slots:
     void menuMoveUpNode ();
     void menuMoveDownNode ();
     void preparePlaylistMenu (KMPlayer::PlayListItem *, QMenu *);
+    void slotGeneratorMenu ();
+    void slotGenerator ();
 
 private:
     void menuItemClicked (QMenu * menu, int id);
@@ -136,6 +138,8 @@ private:
     KMPlayer::NodePtr recents;
     KMPlayer::NodePtr playlist;
     KMPlayer::NodePtrW manip_node;
+    KMPlayer::NodePtrW current_generator;
+    KMPlayer::NodeStoreList generators;
 
     QAction * fileNewWindow;
     QAction * fileOpen;
@@ -159,6 +163,7 @@ private:
     QMenu * m_audiocdmenu;
     QMenu * m_tvmenu;
     QMenu * m_dropmenu;
+    QMenu * m_generatormenu;
     KMPlayerFFServerConfig * m_ffserverconfig;
     KMPlayerBroadcastConfig * m_broadcastconfig;
     KUrl::List m_drop_list;

@@ -18,8 +18,13 @@
 **/
 
 #include <qfile.h>
+#include <qurl.h>
+#include <qtextstream.h>
+#include <qbytearray.h>
 
 #include <kstandarddirs.h>
+#include <kinputdialog.h>
+#include <kfiledialog.h>
 #include <klocale.h>
 #include <kdebug.h>
 
@@ -192,7 +197,9 @@ KDE_NO_EXPORT void PlaylistItemBase::activate () {
         Mrl::activate ();
     } else {
         ListsSource * source = static_cast <ListsSource *> (app->player ()->sources () ["listssource"]);
-        KMPlayer::NodePtr pl = new Playlist (app, source, true);
+        Playlist *pl = new Playlist (app, source, true);
+        KMPlayer::NodePtr n = pl;
+        pl->src.clear ();
         QString data;
         QString pn;
         if (parentNode ()->id == KMPlayer::id_node_group_node) {
@@ -335,3 +342,337 @@ KDE_NO_EXPORT KMPlayer::Node *HtmlObject::childFromTag (const QString & tag) {
         return new KMPlayer::DarkNode(m_doc, name,KMPlayer::id_node_html_embed);
     return NULL;
 }
+
+Generator::Generator (KMPlayerApp *a)
+ : FileDocument (id_node_gen_document, QString (),
+            a->player ()->sources () ["listssource"]),
+   app (a), qprocess (NULL), data (NULL)
+{}
+
+KMPlayer::Node *Generator::childFromTag (const QString &tag) {
+    QByteArray ba = tag.toUtf8();
+    const char *ctag = ba.constData ();
+    if (!strcmp (ctag, "generator"))
+        return new GeneratorElement (m_doc, tag, id_node_gen_generator);
+    return NULL;
+}
+
+QString Generator::genReadAsk (KMPlayer::Node *n) {
+    QString title;
+    QString desc;
+    QString type = static_cast <Element *> (n)->getAttribute (
+            KMPlayer::StringPool::attr_type);
+    QString key = static_cast<Element*>(n)->getAttribute ("key");
+    QString def = static_cast<Element*>(n)->getAttribute ("default");
+    QString input;
+    KConfigGroup cfg (KGlobal::config(), "Generator Defaults");
+    if (!key.isEmpty ())
+        def = cfg.readEntry (key, def);
+    if (type == "file") {
+        input = KFileDialog::getOpenFileName (KUrl (def), QString(), app);
+    } else if (type == "dir") {
+        input = KFileDialog::getExistingDirectoryUrl (KUrl (def), app).toLocalFile ();
+        if (!input.isEmpty ())
+            input += QChar ('/');
+    } else {
+        for (KMPlayer::Node *c = n->firstChild (); c; c = c->nextSibling ())
+            switch (c->id) {
+                case id_node_gen_title:
+                    title = c->innerText ().simplifyWhiteSpace ();
+                    break;
+                case id_node_gen_description:
+                    desc = c->innerText ().simplifyWhiteSpace ();
+                    break;
+            }
+        input = KInputDialog::getText (title, desc, def);
+    }
+    if (input.isNull ())
+        canceled = true;
+    else if (!key.isEmpty ())
+        cfg.writeEntry (key, input);
+    return input;
+}
+
+QString Generator::genReadUriGet (KMPlayer::Node *n) {
+    QString str;
+    bool first = true;
+    for (KMPlayer::Node *c = n->firstChild (); c && !canceled; c = c->nextSibling ()) {
+        QString key;
+        QString val;
+        switch (c->id) {
+        case id_node_gen_http_key_value: {
+            KMPlayer::Node *q = c->firstChild ();
+            if (q) {
+                key = genReadString (q);
+                q = q->nextSibling ();
+                if (q && !canceled)
+                    val = genReadString (q);
+            }
+            break;
+        }
+        default:
+            key = genReadString (c);
+            break;
+        }
+        if (!key.isEmpty ()) {
+            if (first) {
+                str += QChar ('?');
+                first = false;
+            } else {
+                str += QChar ('&');
+            }
+            str += QUrl::toPercentEncoding (key);
+            if (!val.isEmpty ())
+                str += QChar ('=') + QString (QUrl::toPercentEncoding (val));
+        }
+    }
+    return str;
+}
+
+QString Generator::genReadString (KMPlayer::Node *n) {
+    QString str;
+    bool need_quote = quote;
+    bool find_resource = false;
+    quote = false;
+    for (KMPlayer::Node *c = n->firstChild (); c && !canceled; c = c->nextSibling ())
+        switch (c->id) {
+        case id_node_gen_uri:
+        case id_node_gen_sequence:
+            str += genReadString (c);
+            break;
+        case id_node_gen_literal:
+            str += c->innerText ().simplifyWhiteSpace ();
+            break;
+        case id_node_gen_predefined: {
+            QString val = static_cast <Element *>(c)->getAttribute ("key");
+            if (val == "data" || val == "sysdata") {
+                str += "kmplayer";
+                find_resource = true;
+            }
+            break;
+        }
+        case id_node_gen_http_get:
+            str += genReadUriGet (c);
+            break;
+        case id_node_gen_ask:
+            str += genReadAsk (c);
+            break;
+        case KMPlayer::id_node_text:
+             str += c->nodeValue ().simplifyWhiteSpace ();
+        }
+    if (find_resource)
+        str = KStandardDirs().findResource ("data", str);
+    if (!static_cast <Element *>(n)->getAttribute ("encoding").isEmpty ())
+        str = QUrl::toPercentEncoding (str);
+    if (need_quote) {
+        //from QProcess' parseCombinedArgString
+        str.replace (QChar ('"'), QString ("\"\"\""));
+        str = QChar ('"') + str + QChar ('"');
+        quote = true;
+    }
+    return str;
+}
+
+QString Generator::genReadInput (KMPlayer::Node *n) {
+    quote = false;
+    return genReadString (n);
+}
+
+QString Generator::genReadProcess (KMPlayer::Node *n) {
+    QString process;
+    QString str;
+    quote = true;
+    for (KMPlayer::Node *c = n->firstChild (); c && !canceled; c = c->nextSibling ())
+        switch (c->id) {
+        case id_node_gen_program:
+            process = QString (genReadString (c));
+            break;
+        case id_node_gen_argument:
+            process += QChar (' ') + genReadString (c);
+            break;
+        }
+    return process;
+}
+
+void Generator::activate () {
+    QString input;
+    canceled = false;
+    KMPlayer::Node *n = firstChild ();
+    if (n && n->id == id_node_gen_generator) {
+        title = static_cast<Element *>(n)->getAttribute (
+                KMPlayer::StringPool::attr_name);
+        for (KMPlayer::Node *c = n->firstChild (); c && !canceled; c = c->nextSibling ())
+            switch (c->id) {
+            case id_node_gen_input:
+                input = genReadInput (c);
+                break;
+            case id_node_gen_process:
+                process = genReadProcess (c);
+            }
+    }
+    if (canceled)
+        return;
+    if (!input.isEmpty () && process.isEmpty ()) {
+        message (KMPlayer::MsgInfoString, &input);
+        //openFile (m_control->m_app, input);
+    } else if (!process.isEmpty ()) {
+        data = new QTextStream (&buffer);
+        if (input.isEmpty ()) {
+            message (KMPlayer::MsgInfoString, &process);
+            begin ();
+        } else {
+            QString cmdline (input + " | " + process);
+            message (KMPlayer::MsgInfoString, &cmdline);
+            if (!media_info)
+                media_info = new KMPlayer::MediaInfo (
+                        this, KMPlayer::MediaManager::Data);
+            state = state_activated;
+            media_info->wget (input);
+        }
+    }
+}
+
+void Generator::begin () {
+    if (!qprocess) {
+        qprocess = new QProcess (app);
+        connect (qprocess, SIGNAL (started ()),
+                 this, SLOT (started ()));
+        connect (qprocess, SIGNAL (error (QProcess::ProcessError)),
+                 this, SLOT (error (QProcess::ProcessError)));
+        connect (qprocess, SIGNAL (finished (int, QProcess::ExitStatus)),
+                 this, SLOT (finished ()));
+        connect (qprocess, SIGNAL (readyReadStandardOutput ()),
+                 this, SLOT (readyRead ()));
+    }
+    QString info;
+    if (media_info)
+        info = QString ("Input data ") +
+            QString::number (media_info->rawData ().size () / 1024.0) + "kb | ";
+    info += process;
+    message (KMPlayer::MsgInfoString, &info);
+    kDebug() << process;
+    qprocess->start (process);
+    state = state_began;
+}
+
+void Generator::deactivate () {
+    if (qprocess) {
+        disconnect (qprocess, SIGNAL (started ()),
+                    this, SLOT (started ()));
+        disconnect (qprocess, SIGNAL (error (QProcess::ProcessError)),
+                    this, SLOT (error (QProcess::ProcessError)));
+        disconnect (qprocess, SIGNAL (finished (int, QProcess::ExitStatus)),
+                    this, SLOT (finished ()));
+        disconnect (qprocess, SIGNAL (readyReadStandardOutput ()),
+                    this, SLOT (readyRead ()));
+        qprocess->kill ();
+        qprocess->deleteLater ();
+    }
+    qprocess = NULL;
+    delete data;
+    data = NULL;
+    buffer.clear ();
+    FileDocument::deactivate ();
+}
+
+void Generator::message (KMPlayer::MessageType msg, void *content) {
+    if (KMPlayer::MsgMediaReady == msg) {
+        if (!media_info->rawData ().size ()) {
+            QString err ("No input data received");
+            message (KMPlayer::MsgInfoString, &err);
+            deactivate ();
+        } else {
+            begin ();
+        }
+    } else {
+        FileDocument::message (msg, content);
+    }
+}
+
+void Generator::readyRead () {
+    if (qprocess->bytesAvailable ())
+        *data << qprocess->readAll();
+    if (qprocess->state () == QProcess::NotRunning) {
+        if (!buffer.isEmpty ()) {
+            Playlist *pl = new Playlist (app, m_source, true);
+            KMPlayer::NodePtr n = pl;
+            pl->src.clear ();
+            QTextStream stream (&buffer, QIODevice::ReadOnly);
+            KMPlayer::readXML (pl, stream, QString (), false);
+            pl->title = title;
+            pl->normalize ();
+            message (KMPlayer::MsgInfoString, NULL);
+            bool reset_only = m_source == app->player ()->source ();
+            if (reset_only)
+                app->player ()->stop ();
+            m_source->setDocument (pl, pl);
+            if (reset_only) {
+                m_source->activate ();
+                app->setCaption (getAttribute(KMPlayer::StringPool::attr_name));
+            } else {
+                app->player ()->setSource (m_source);
+            }
+        } else {
+            QString err ("No data received");
+            message (KMPlayer::MsgInfoString, &err);
+        }
+        deactivate ();
+    }
+}
+
+void Generator::started () {
+    if (media_info) {
+        QByteArray &ba = media_info->rawData ();
+        // TODO validate utf8
+        if (ba.size ())
+            qprocess->write (ba);
+        qprocess->closeWriteChannel ();
+        return;
+    }
+    message (KMPlayer::MsgInfoString, &process);
+}
+
+void Generator::error (QProcess::ProcessError err) {
+    kDebug () << (int)err;
+    QString msg ("Couldn't start process");
+    message (KMPlayer::MsgInfoString, &msg);
+    deactivate ();
+}
+
+void Generator::finished () {
+    if (active () && state_deferred != state)
+        readyRead ();
+}
+
+struct GeneratorTag {
+    const char *tag;
+    short id;
+} gen_tags[] = {
+    { "input", id_node_gen_input },
+    { "process", id_node_gen_process },
+    { "uri", id_node_gen_uri },
+    { "literal", id_node_gen_literal },
+    { "ask", id_node_gen_ask },
+    { "title", id_node_gen_title },
+    { "description", id_node_gen_description },
+    { "process", id_node_gen_process },
+    { "program", id_node_gen_program },
+    { "argument", id_node_gen_argument },
+    { "predefined", id_node_gen_predefined },
+    { "http-get", id_node_gen_http_get },
+    { "key-value", id_node_gen_http_key_value },
+    { "key", id_node_gen_sequence },
+    { "value", id_node_gen_sequence },
+    { "sequence", id_node_gen_sequence },
+    { NULL, -1 }
+};
+
+KMPlayer::Node *GeneratorElement::childFromTag (const QString &tag) {
+    QByteArray ba = tag.toUtf8();
+    const char *ctag = ba.constData ();
+    for (GeneratorTag *t = gen_tags; t->tag; ++t)
+        if (!strcmp (ctag, t->tag))
+            return new GeneratorElement (m_doc, tag, t->id);
+    return NULL;
+}
+

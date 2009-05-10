@@ -1,0 +1,51 @@
+<generator name="Shoutcast">
+  <input>
+    <uri>
+      <literal>
+        http://www.shoutcast.com/sbin/newxml.phtml
+      </literal>
+      <http-get>
+        <key-value>
+          <key>
+            genre
+          </key>
+          <value>
+            <ask key="shoutcast-genre" default="Top500">
+              <title>
+                Genre
+              </title>
+              <description>
+                Please enter a genre
+              </description>
+            </ask>
+        </value>
+        </key-value>
+      </http-get>
+    </uri>
+  </input>
+  <process>
+    <program>
+      xsltproc
+    </program>
+    <argument>
+      --novalid
+    </argument>
+    <argument>
+      --nonet
+    </argument>
+    <argument>
+      --nodtdattr
+    </argument>
+    <argument>
+      <uri>
+        <predefined key="sysdata"/>
+        <literal>
+          /shoutcast.xsl
+        </literal>
+      </uri>
+    </argument>
+    <argument>
+      -
+    </argument>
+  </process>
+</generator>

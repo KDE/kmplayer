@@ -140,6 +140,15 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
         recents->document ()->dispose ();
     if (playlist)
         playlist->document ()->dispose ();
+
+    if (current_generator && current_generator->active ()) {
+        current_generator->deactivate ();
+        current_generator = NULL;
+    }
+    while (generators.first ()) {
+        generators.first ()->data->document ()->dispose ();
+        generators.remove (generators.first ());
+    }
 }
 
 
@@ -197,6 +206,15 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     QAction *act = ac->addAction ("clear_history");
     act->setText (i18n ("Clear &History"));
     connect (act, SIGNAL (triggered (bool)), this, SLOT (slotClearHistory ()));
+#if defined(KMPLAYER_WITH_NPP) && defined(KMPLAYER_WITH_CAIRO)
+    act = ac->addAction ("generators");
+    act->setText (i18n ("&Generators"));
+    m_generatormenu = new QMenu (this);
+    connect (m_generatormenu, SIGNAL (aboutToShow ()),
+             this, SLOT (slotGeneratorMenu ()));
+    act->setMenu (m_generatormenu);
+#endif
+
 
     /*fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
     new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
@@ -1114,6 +1132,54 @@ KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
         recents->clear ();
         m_view->playList ()->updateTree (recents_id, recents, 0, false, false);
     }
+}
+
+KDE_NO_EXPORT void KMPlayerApp::slotGeneratorMenu () {
+    if (!generators.first ()) {
+        QStringList files = KStandardDirs().findAllResources ("data",
+                "kmplayer/generators/*.xml");
+        for (int i = 0; i < files.length(); ++i) {
+            qDebug( "gendir %s", files[i].toAscii().data());
+            Generator *gen = new Generator (this);
+            KMPlayer::NodePtr doc = gen;
+            gen->readFromFile (files[i]);
+            KMPlayer::Node *n = gen->firstChild ();
+            if (n && n->isElementNode ()) {
+                QString name = static_cast<KMPlayer::Element*>(n)->getAttribute(
+                        KMPlayer::StringPool::attr_name);
+                if (name.isEmpty ())
+                    name = QFile (files[i]).fileName ();
+                generators.append (new KMPlayer::NodeStoreItem (doc));
+                m_generatormenu->addAction (name, this, SLOT(slotGenerator ()));
+            } else {
+                gen->dispose ();
+            }
+        }
+    }
+}
+
+KDE_NO_EXPORT void KMPlayerApp::slotGenerator () {
+    const QAction *act = qobject_cast <QAction *> (sender ());
+    KMPlayer::NodeStoreItem *store = generators.first ();
+    QObjectList chlds = m_generatormenu->children ();
+
+    if (current_generator && current_generator->active ()) {
+        current_generator->deactivate ();
+        current_generator = NULL;
+    }
+
+    for (int i = 0; store && i < chlds.length (); ++i) {
+        const QAction *ca = qobject_cast <QAction *> (chlds[i]);
+        if (ca && !ca->text ().isEmpty ()) {
+            if (ca == act) {
+                current_generator = store->data;
+                break;
+            }
+            store = store->nextSibling ();
+        }
+    }
+    if (current_generator)
+        current_generator->activate ();
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotFileClose()

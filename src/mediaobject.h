@@ -126,7 +126,7 @@ public:
  */
 class KMPLAYER_EXPORT MediaManager {
 public:
-    enum MediaType { Any, Audio, AudioVideo, Image, Text };
+    enum MediaType { Any, Audio, AudioVideo, Image, Text, Data };
     typedef QMap <QString, ProcessInfo *> ProcessInfoMap;
     typedef QList <IProcess *> ProcessList;
     typedef QList <MediaObject *> MediaList;

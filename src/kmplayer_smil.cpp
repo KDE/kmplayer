@@ -3609,6 +3609,9 @@ public:
         if (SMIL::id_node_p == flow->id) {
             closure ="\n\n";
             rich_text += closure;
+        } else if (SMIL::id_node_div == flow->id) {
+            closure = "\n";
+            rich_text += closure;
         }
         if (flow->firstChild ()) {
             rich_text += span (flow);

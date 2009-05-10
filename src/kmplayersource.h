@@ -161,12 +161,13 @@ private:
 };
 
 class KMPLAYER_EXPORT SourceDocument : public Document {
-    Source *m_source;
 public:
     SourceDocument (Source *s, const QString &url);
 
     void message (MessageType msg, void *data=NULL);
     void *role (RoleType msg, void *data=NULL);
+protected:
+    Source *m_source;
 };
 
 } // namespace
