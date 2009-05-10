@@ -69,8 +69,8 @@ public:
 protected:
     void saveOptions ();
     void readOptions ();
-    void saveProperties ();
-    void readProperties ();
+    void saveProperties (KConfigGroup&);
+    void readProperties (const KConfigGroup&);
     void initActions ();
     void initStatusBar ();
     void initView ();

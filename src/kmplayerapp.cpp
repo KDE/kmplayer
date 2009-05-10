@@ -725,14 +725,12 @@ KDE_NO_EXPORT void KMPlayerApp::addUrl (const KUrl& url) {
         d->appendChild (new KMPlayer::GenericURL (d, url.url ()));
 }
 
-KDE_NO_EXPORT void KMPlayerApp::saveProperties () {
-    KConfigGroup def_cfg (KGlobal::config(), "<default>");
+KDE_NO_EXPORT void KMPlayerApp::saveProperties (KConfigGroup &def_cfg) {
     def_cfg.writeEntry ("URL", m_player->source ()->url ().url ());
     def_cfg.writeEntry ("Visible", isVisible ());
 }
 
-KDE_NO_EXPORT void KMPlayerApp::readProperties () {
-    KConfigGroup def_cfg (KGlobal::config(), "<default>");
+KDE_NO_EXPORT void KMPlayerApp::readProperties (const KConfigGroup &def_cfg) {
     KUrl url (def_cfg.readEntry ("URL", QString ()));
     openDocumentFile (url);
     if (!def_cfg.readEntry ("Visible", true) && m_systray)
