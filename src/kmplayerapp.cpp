@@ -194,9 +194,11 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
             this,SLOT (slotViewStatusBar ()),ac);
     viewMenuBar = KStandardAction::create (KStandardAction::ShowMenubar,
             this, SLOT (slotViewMenuBar ()), ac);
+    QAction *act = ac->addAction ("clear_history");
+    act->setText (i18n ("Clear &History"));
+    connect (act, SIGNAL (triggered (bool)), this, SLOT (slotClearHistory ()));
 
     /*fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
-    new KAction (i18n ("Clear &History"), 0, 0, this, SLOT (slotClearHistory ()), ac, "clear_history");
     new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
     new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
     new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
