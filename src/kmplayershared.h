@@ -30,7 +30,22 @@ extern int shared_data_count;
 #include <iostream>
 #endif
 
+#include "kmplayer_def.h"
+
 namespace KMPlayer {
+
+class KMPLAYER_EXPORT CacheAllocator {
+    void **pool;
+    size_t size;
+    int count;
+public:
+    CacheAllocator (size_t s);
+
+    void *alloc ();
+    void dealloc (void *p);
+};
+
+extern CacheAllocator *shared_data_cache_allocator;
 
 /**
  *  Shared data for SharedPtr and WeakPtr objects.
@@ -45,8 +60,8 @@ struct SharedData {
 #ifdef SHAREDPTR_DEBUG
     ~SharedData () { std::cerr << "SharedData::~SharedData" << " total:" << --shared_data_count << std::endl; }
 #endif
-    void *operator new (size_t);
-    void operator delete (void *);
+    static void *operator new (size_t);
+    static void operator delete (void *);
     void addRef ();
     void addWeakRef ();
     void release ();
@@ -58,11 +73,13 @@ struct SharedData {
 };
 
 template <class T> inline void *SharedData<T>::operator new (size_t s) {
-    return malloc (s);
+    if (!shared_data_cache_allocator)
+        shared_data_cache_allocator = new CacheAllocator (s);
+    return shared_data_cache_allocator->alloc ();
 }
 
 template <class T> inline void SharedData<T>::operator delete (void *p) {
-    free (p);
+    shared_data_cache_allocator->dealloc (p);
 }
 
 template <class T> inline void SharedData<T>::addRef () {

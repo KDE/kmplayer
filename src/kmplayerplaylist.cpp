@@ -1392,6 +1392,24 @@ void Visitor::visit (TextNode *text) {
 
 //-----------------------------------------------------------------------------
 
+CacheAllocator::CacheAllocator (size_t s)
+    : pool ((void**) malloc (10 * sizeof (void *))), size (s), count (0) {}
+
+void *CacheAllocator::alloc () {
+    return count ? pool[--count] : malloc (size);
+}
+
+void CacheAllocator::dealloc (void *p) {
+    if (count < 10)
+        pool[count++] = p;
+    else
+        free (p);
+}
+
+KMPLAYER_EXPORT CacheAllocator *KMPlayer::shared_data_cache_allocator = NULL;
+
+//-----------------------------------------------------------------------------
+
 namespace KMPlayer {
 
 class KMPLAYER_NO_EXPORT DocumentBuilder {
@@ -1594,63 +1612,6 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
 
 namespace {
 
-struct MemoryPool {
-    void **used;
-    void **unused;
-    size_t size;
-    int used_count;
-    int unused_count;
-    int used_size;
-    int unused_size;
-    void *alloc ();
-    void dealloc (void *p);
-    MemoryPool (size_t s)
-        : used (NULL), unused (NULL), size (s),
-          used_count (0), unused_count (0),
-          used_size (0), unused_size (0) {}
-};
-
-
-} // namespace
-
-void *MemoryPool::alloc () {
-    if (used_size == used_count) {
-        void **tmp = (void **) malloc (++used_size * sizeof (void *));
-        if (used_count) {
-            memcpy (tmp, used, used_count * sizeof (void *));
-            free (used);
-        }
-        used = tmp;
-    }
-    void *p;
-    if (unused_count)
-        p = unused[--unused_count];
-    else
-        p = malloc (size);
-    used[used_count++] = p;
-    return p;
-}
-
-void MemoryPool::dealloc (void *p) {
-    for (int i = 0; i < used_count; ++i)
-        if (p == used[i]) {
-            if (unused_size == unused_count) {
-                void **tmp = (void **) malloc (++unused_size * sizeof (void*));
-                if (unused_count) {
-                    memcpy (tmp, unused, unused_count * sizeof (void *));
-                    free (unused);
-                }
-                unused = tmp;
-            }
-            unused[unused_count++] = p;
-            if (i < --used_count)
-                used[i] = used[used_count];
-            break;
-        }
-}
-
-namespace {
-
 class KMPLAYER_NO_EXPORT SimpleSAXParser {
     enum Token { tok_empty, tok_text, tok_white_space, tok_angle_open,
         tok_equal, tok_double_quote, tok_single_quote, tok_angle_close,
@@ -1711,30 +1672,15 @@ private:
 
 } // namespace
 
-static MemoryPool token_pool (sizeof (SimpleSAXParser::TokenInfo));
-static MemoryPool shared_token_pool (sizeof (SharedData <SimpleSAXParser::TokenInfo>));
+static CacheAllocator token_pool (sizeof (SimpleSAXParser::TokenInfo));
 
-inline void *SimpleSAXParser::TokenInfo::operator new (size_t s) {
+inline void *SimpleSAXParser::TokenInfo::operator new (size_t) {
     return token_pool.alloc ();
 }
 
 inline void SimpleSAXParser::TokenInfo::operator delete (void *p) {
     token_pool.dealloc (p);
 }
-
-namespace KMPlayer {
-
-template <> inline
-void *SharedData<SimpleSAXParser::TokenInfo>::operator new (size_t s) {
-    return shared_token_pool.alloc ();
-}
-
-template <> inline
-void SharedData<SimpleSAXParser::TokenInfo>::operator delete (void *p) {
-    shared_token_pool.dealloc (p);
-}
-
-} // namespace
 
 KMPLAYER_EXPORT
 void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
