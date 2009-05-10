@@ -1510,7 +1510,7 @@ bool DocumentBuilder::endTag (const QString & tag) {
 }
 
 bool DocumentBuilder::characterData (const QString & data) {
-    if (!m_ignore_depth) {
+    if (!m_ignore_depth && m_node) {
 #ifdef KMPLAYER_WITH_EXPAT
         if (in_cdata)
             cdata += data;
