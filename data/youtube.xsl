@@ -63,7 +63,7 @@
             </seq>
             <a href="{$item_url}" target="top">
               <smilText region="title">
-                <div textFontWeight="bold" textColor="blue">
+                <div textFontWeight="bold" textColor="blue" textFontSize="14">
                   <xsl:value-of select="$item_title"/>
                 </div>
               </smilText>
