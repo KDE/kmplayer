@@ -23,9 +23,9 @@
                     <div textFontWeight="bold" textColor="#101010">
 Notice for movie links to Blip TV
                     </div>
-                    <div textColor="DarkGreen">
+                    <p textColor="DarkGreen">
 These links are best viewed when saved first.
-                    </div>
+                    </p>
                   </smilText>
                   <xsl:variable name="text">
                     <xsl:value-of select="description"/>

@@ -3560,6 +3560,9 @@ KDE_NO_EXPORT void SMIL::Brush::parseParam (const TrieString &param, const QStri
 namespace {
 
 class RichTextVisitor : public Visitor {
+    bool terminate_line;
+    int newline_count;
+
     QString span (SMIL::TextFlow *flow) {
         QString s = "<span";
         if (flow->font_size > 0)
@@ -3596,28 +3599,41 @@ class RichTextVisitor : public Visitor {
         s += ">";
         return s;
     }
+    void addRichText (const QString &txt) {
+        if (terminate_line &&
+                !rich_text.isEmpty () && !rich_text.endsWith ("\n"))
+            rich_text += QChar ('\n');
+        for (int i = 0; i < newline_count; ++i)
+            rich_text += QChar ('\n');
+        rich_text += txt;
+        terminate_line = false;
+        newline_count = 0;
+    }
 public:
+    RichTextVisitor () : terminate_line (false), newline_count (0) {
+    }
+
     using Visitor::visit;
 
     void visit (TextNode *text) {
-        rich_text += text->nodeValue ();
+        addRichText (text->nodeValue ());
         if (text->nextSibling ())
             text->nextSibling ()->accept (this);
     }
     void visit (SMIL::TextFlow *flow) {
-        QString closure;
+        int end_newline = 0;
         if (SMIL::id_node_p == flow->id) {
-            closure ="\n\n";
-            rich_text += closure;
+            terminate_line = true;
+            newline_count++;
+            end_newline = 1;
         } else if (SMIL::id_node_div == flow->id) {
-            closure = "\n";
-            rich_text += closure;
+            terminate_line = true;
         }
         if (flow->firstChild ()) {
-            rich_text += span (flow);
+            addRichText (span (flow));
             flow->firstChild ()->accept (this);
-            rich_text += "</span>";
-            rich_text += closure;
+            addRichText ("</span>");
+            newline_count += end_newline;
         }
         if (flow->nextSibling ())
             flow->nextSibling ()->accept (this);
