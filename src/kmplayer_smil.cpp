@@ -3779,12 +3779,15 @@ Surface *SMIL::SmilText::surface () {
             text_surface->remove ();
             text_surface = NULL;
         }
-    } else if (!text_surface && region_node) {
+    } else if (region_node) {
         Surface *rs = (Surface *) region_node->role (RoleDisplay);
         if (rs) {
             SRect b = rs->bounds;
-            text_surface = rs->createSurface (this,
-                    SRect (0, 0, b.width (), b.height ()));
+            if (!text_surface)
+                text_surface = rs->createSurface (this,
+                        SRect (0, 0, b.width (), b.height ()));
+            else if (!text_surface->surface)
+                text_surface->bounds = SRect (0, 0, b.width (), b.height ());
         }
     }
     return text_surface.ptr ();
