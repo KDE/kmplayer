@@ -358,6 +358,7 @@ static bool isPlayListMime (const QString & mime) {
             //!strcmp (mimestr, "video/x-ms-wvx") ||
             //!strcmp (mimestr, "video/x-msvideo") ||
             !strcmp (mimestr, "audio/x-scpls") ||
+            !strcmp (mimestr, "audio/x-shoutcast-stream") ||
             !strcmp (mimestr, "audio/x-pn-realaudio") ||
             !strcmp (mimestr, "audio/vnd.rn-realaudio") ||
             !strcmp (mimestr, "audio/m3u") ||
@@ -504,8 +505,12 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
     if (!line.isNull ()) {
         if (cur_elm->isPlayable ())
             cur_elm = cur_elm->mrl ()->linkNode ();
-        if (cur_elm->mrl ()->mimetype == QString ("audio/x-scpls")) {
-            bool groupfound = false;
+        bool pls_groupfound =
+            line.startsWith ("[") && line.endsWith ("]") &&
+            line.mid (1, line.length () - 2).stripWhiteSpace () == "playlist";
+        if ((pls_groupfound &&
+                    cur_elm->mrl ()->mimetype.startsWith ("audio/")) ||
+                cur_elm->mrl ()->mimetype == QString ("audio/x-scpls")) {
             int nr = -1;
             struct Entry {
                 QString url, title;
@@ -513,13 +518,13 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
             do {
                 line = line.stripWhiteSpace ();
                 if (!line.isEmpty ()) {
-                    if (line.startsWith (QString ("[")) && line.endsWith (QString ("]"))) {
-                        if (!groupfound && line.mid (1, line.length () - 2).stripWhiteSpace () == QString ("playlist"))
-                            groupfound = true;
+                    if (line.startsWith ("[") && line.endsWith ("]")) {
+                        if (line.mid (1, line.length () - 2).stripWhiteSpace () == "playlist")
+                            pls_groupfound = true;
                         else
                             break;
                         kDebug () << "Group found: " << line;
-                    } else if (groupfound) {
+                    } else if (pls_groupfound) {
                         int eq_pos = line.indexOf (QChar ('='));
                         if (eq_pos > 0) {
                             if (line.lower ().startsWith (QString ("numberofentries"))) {
