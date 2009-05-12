@@ -715,7 +715,7 @@ public:
     virtual void *role (RoleType msg, void *content=NULL);
     virtual void accept (Visitor *v) { v->visit (this); }
 
-    QString richText ();
+    QString richText (float scale, float *max_ftsize);
     Surface *surface ();
 
     SurfacePtrW text_surface;
@@ -753,6 +753,7 @@ public:
     enum { Wrap, NoWrap, WrapInherit } text_wrap;
     enum { SpaceDefault, SpacePreserve } space;
     enum { WritingLrTb, WritingRlTb, WritingTbLr, WritingTbRl } text_writing;
+    //enum { align_inherit, align_left, align_center, align_right } text_align;
 
     QByteArray tag;
 };

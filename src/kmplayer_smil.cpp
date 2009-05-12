@@ -3562,11 +3562,17 @@ namespace {
 class RichTextVisitor : public Visitor {
     bool terminate_line;
     int newline_count;
+    float scale;
+    float *max_ftsize;
 
     QString span (SMIL::TextFlow *flow) {
         QString s = "<span";
-        if (flow->font_size > 0)
-            s += " size='" + QString::number (1024 * flow->font_size) + "'";
+        if (flow->font_size > 0) {
+            float sz = flow->font_size;
+            if (sz > *max_ftsize)
+                *max_ftsize = sz;
+            s += " size='" + QString::number ((int)(1024 * scale * sz)) + "'";
+        }
         if (flow->font_color > -1)
             s += QString().sprintf (" foreground='#%06x'", flow->font_color);
         if (flow->background_color > -1)
@@ -3610,13 +3616,17 @@ class RichTextVisitor : public Visitor {
         newline_count = 0;
     }
 public:
-    RichTextVisitor () : terminate_line (false), newline_count (0) {
+    RichTextVisitor (float s, float *f)
+     : terminate_line (false), newline_count (0), scale (s), max_ftsize (f) {
     }
 
     using Visitor::visit;
 
     void visit (TextNode *text) {
-        addRichText (text->nodeValue ());
+        QString buffer;
+        QTextStream out (&buffer);
+        out << XMLStringlet (text->nodeValue ());
+        addRichText (buffer);
         if (text->nextSibling ())
             text->nextSibling ()->accept (this);
     }
@@ -3763,11 +3773,14 @@ void *SMIL::SmilText::role (RoleType msg, void *content) {
 }
 
 
-QString SMIL::SmilText::richText () {
+QString SMIL::SmilText::richText (float scale, float *max_ftsize) {
     if (firstChild ()) {
-        RichTextVisitor visitor;
+        *max_ftsize = 0;
+        RichTextVisitor visitor (scale, max_ftsize);
         firstChild ()->accept (&visitor);
         //kDebug () << visitor.rich_text;
+        if (*max_ftsize < 1.0)
+            *max_ftsize = TextMedia::defaultFontSize ();
         return visitor.rich_text;
     }
     return QString ();
@@ -3815,6 +3828,7 @@ void SMIL::TextFlow::init () {
     text_wrap = WrapInherit;
     space = SpaceDefault;
     text_writing = WritingLrTb;
+    //text_align = align_inherit;
     Element::init ();
 }
 
@@ -3833,6 +3847,15 @@ void SMIL::TextFlow::parseParam(const TrieString &name, const QString &val) {
     } else if (name == "xml:space") {
         // { SpaceDefault, SpacePreserve } space;
     } else if (name == "textAlign") {
+        /*if (val == "left")
+            text_align = align_left;
+        else if (val == "center")
+            text_align = align_center;
+        else if (val == "right")
+            text_align = align_right;
+        // start, end
+        else
+            text_align = align_inherit;*/
     } else if (name == "textBackgroundColor") {
         background_color = 0xffffff & QColor (val).rgb ();
     } else if (name == "textColor") {

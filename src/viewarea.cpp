@@ -910,9 +910,11 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
     if (!s->surface) {
 
         int w = scr.width ();
-        Single ft_size = w * 11 / (double)s->bounds.width ();
+        float scale = 1.0 * w / (double)s->bounds.width ();
+        float ft_size = 0;
         int pxw, pxh;
-        const QByteArray text = txt->richText ().toUtf8 ();
+        const QByteArray text = txt->richText (scale, &ft_size).toUtf8 ();
+        ft_size *= scale;
 
         PangoFontDescription *desc = pango_font_description_new ();
         pango_font_description_set_family (desc, "Sans");
