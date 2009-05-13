@@ -3689,8 +3689,10 @@ Surface *SMIL::SmilText::surface () {
             if (!text_surface)
                 text_surface = rs->createSurface (this,
                         SRect (0, 0, b.width (), b.height ()));
+#ifdef KMPLAYER_WITH_CAIRO
             else if (!text_surface->surface)
                 text_surface->bounds = SRect (0, 0, b.width (), b.height ());
+#endif
         }
     }
     return text_surface.ptr ();
