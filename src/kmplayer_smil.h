@@ -715,7 +715,6 @@ public:
     virtual void *role (RoleType msg, void *content=NULL);
     virtual void accept (Visitor *v) { v->visit (this); }
 
-    QString richText (float scale, float *max_ftsize);
     Surface *surface ();
 
     SurfacePtrW text_surface;

@@ -3557,102 +3557,6 @@ KDE_NO_EXPORT void SMIL::Brush::parseParam (const TrieString &param, const QStri
 
 //-----------------------------------------------------------------------------
 
-namespace {
-
-class RichTextVisitor : public Visitor {
-    bool terminate_line;
-    int newline_count;
-    float scale;
-    float *max_ftsize;
-
-    QString span (SMIL::TextFlow *flow) {
-        QString s = "<span";
-        if (flow->font_size > 0) {
-            float sz = flow->font_size;
-            if (sz > *max_ftsize)
-                *max_ftsize = sz;
-            s += " size='" + QString::number ((int)(1024 * scale * sz)) + "'";
-        }
-        if (flow->font_color > -1)
-            s += QString().sprintf (" foreground='#%06x'", flow->font_color);
-        if (flow->background_color > -1)
-            s += QString().sprintf (" background='#%06x'", flow->background_color);
-        if (SMIL::TextFlow::StyleInherit != flow->font_style) {
-            s += " style='";
-            switch (flow->font_style) {
-                case SMIL::TextFlow::StyleOblique:
-                    s += "oblique'";
-                    break;
-                case SMIL::TextFlow::StyleItalic:
-                    s += "italic'";
-                    break;
-                default:
-                    s += "normal'";
-                    break;
-            }
-        }
-        if (SMIL::TextFlow::WeightInherit != flow->font_weight) {
-            s += " weight='";
-            switch (flow->font_weight) {
-                case SMIL::TextFlow::WeightBold:
-                    s += "bold'";
-                    break;
-                default:
-                    s += "normal'";
-                    break;
-            }
-        }
-        s += ">";
-        return s;
-    }
-    void addRichText (const QString &txt) {
-        if (terminate_line &&
-                !rich_text.isEmpty () && !rich_text.endsWith ("\n"))
-            rich_text += QChar ('\n');
-        for (int i = 0; i < newline_count; ++i)
-            rich_text += QChar ('\n');
-        rich_text += txt;
-        terminate_line = false;
-        newline_count = 0;
-    }
-public:
-    RichTextVisitor (float s, float *f)
-     : terminate_line (false), newline_count (0), scale (s), max_ftsize (f) {
-    }
-
-    using Visitor::visit;
-
-    void visit (TextNode *text) {
-        QString buffer;
-        QTextStream out (&buffer);
-        out << XMLStringlet (text->nodeValue ());
-        addRichText (buffer);
-        if (text->nextSibling ())
-            text->nextSibling ()->accept (this);
-    }
-    void visit (SMIL::TextFlow *flow) {
-        int end_newline = 0;
-        if (SMIL::id_node_p == flow->id) {
-            terminate_line = true;
-            newline_count++;
-            end_newline = 1;
-        } else if (SMIL::id_node_div == flow->id) {
-            terminate_line = true;
-        }
-        if (flow->firstChild ()) {
-            addRichText (span (flow));
-            flow->firstChild ()->accept (this);
-            addRichText ("</span>");
-            newline_count += end_newline;
-        }
-        if (flow->nextSibling ())
-            flow->nextSibling ()->accept (this);
-    }
-    QString rich_text;
-};
-
-}
-
 KDE_NO_CDTOR_EXPORT SMIL::SmilText::SmilText (NodePtr &d)
  : Element (d, id_node_smil_text),
    runtime (new Runtime (this)) {}
@@ -3770,20 +3674,6 @@ void *SMIL::SmilText::role (RoleType msg, void *content) {
     if (response == MsgUnhandled)
         return Element::role (msg, content);
     return response;
-}
-
-
-QString SMIL::SmilText::richText (float scale, float *max_ftsize) {
-    if (firstChild ()) {
-        *max_ftsize = 0;
-        RichTextVisitor visitor (scale, max_ftsize);
-        firstChild ()->accept (&visitor);
-        //kDebug () << visitor.rich_text;
-        if (*max_ftsize < 1.0)
-            *max_ftsize = TextMedia::defaultFontSize ();
-        return visitor.rich_text;
-    }
-    return QString ();
 }
 
 Surface *SMIL::SmilText::surface () {

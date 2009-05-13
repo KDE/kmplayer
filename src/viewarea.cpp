@@ -183,18 +183,26 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     cairo_matrix_t cur_mat;
     float opacity;
     bool toplevel;
+    bool terminate_line; // smilText
+    int newline_count;   // smilText
+    float scale;         // smilText
+    float font_size;    // smilText
+    QString rich_text;   // smilText
 
     void traverseRegion (Node *reg, Surface *s);
     void updateExternal (SMIL::MediaType *av, SurfacePtr s);
     void paint(SMIL::MediaType *, Surface *, const IPoint &p, const IRect &);
     void video (Mrl *mt, Surface *s);
+    QString span (SMIL::TextFlow *flow);
+    void addRichText (const QString &txt);
 public:
     cairo_t * cr;
     CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
             const IRect & rect, QColor c=QColor(), bool toplevel=false);
     ~CairoPaintVisitor ();
     using Visitor::visit;
-    void visit (Node * n);
+    void visit (Node *);
+    void visit (TextNode *);
     void visit (SMIL::Smil *);
     void visit (SMIL::Layout *);
     void visit (SMIL::RegionBase *);
@@ -203,6 +211,7 @@ public:
     void visit (SMIL::TextMediaType *);
     void visit (SMIL::Brush *);
     void visit (SMIL::SmilText *);
+    void visit (SMIL::TextFlow *);
     void visit (SMIL::RefMediaType *);
     void visit (RP::Imfl *);
     void visit (RP::Fill *);
@@ -898,6 +907,86 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
     }
 }
 
+QString CairoPaintVisitor::span (SMIL::TextFlow *flow) {
+    QString s = "<span";
+    if (flow->font_size > 0) {
+        float sz = flow->font_size;
+        if (sz > font_size)
+            font_size = sz;
+        s += " size='" + QString::number ((int)(1024 * scale * sz)) + "'";
+    }
+    if (flow->font_color > -1)
+        s += QString().sprintf (" foreground='#%06x'", flow->font_color);
+    if (flow->background_color > -1)
+        s += QString().sprintf (" background='#%06x'", flow->background_color);
+    if (SMIL::TextFlow::StyleInherit != flow->font_style) {
+        s += " style='";
+        switch (flow->font_style) {
+            case SMIL::TextFlow::StyleOblique:
+                s += "oblique'";
+                break;
+            case SMIL::TextFlow::StyleItalic:
+                s += "italic'";
+                break;
+            default:
+                s += "normal'";
+                break;
+        }
+    }
+    if (SMIL::TextFlow::WeightInherit != flow->font_weight) {
+        s += " weight='";
+        switch (flow->font_weight) {
+            case SMIL::TextFlow::WeightBold:
+                s += "bold'";
+                break;
+            default:
+                s += "normal'";
+                break;
+        }
+    }
+    s += ">";
+    return s;
+}
+
+void CairoPaintVisitor::addRichText (const QString &txt) {
+    if (terminate_line &&
+            !rich_text.isEmpty () && !rich_text.endsWith ("\n"))
+        rich_text += QChar ('\n');
+    for (int i = 0; i < newline_count; ++i)
+        rich_text += QChar ('\n');
+    rich_text += txt;
+    terminate_line = false;
+    newline_count = 0;
+}
+
+void CairoPaintVisitor::visit (TextNode *text) {
+    QString buffer;
+    QTextStream out (&buffer);
+    out << XMLStringlet (text->nodeValue ());
+    addRichText (buffer);
+    if (text->nextSibling ())
+        text->nextSibling ()->accept (this);
+}
+
+void CairoPaintVisitor::visit (SMIL::TextFlow *flow) {
+    int end_newline = 0;
+    if (SMIL::id_node_p == flow->id) {
+        terminate_line = true;
+        newline_count++;
+        end_newline = 1;
+    } else if (SMIL::id_node_div == flow->id) {
+        terminate_line = true;
+    }
+    if (flow->firstChild ()) {
+        addRichText (span (flow));
+        flow->firstChild ()->accept (this);
+        addRichText ("</span>");
+        newline_count += end_newline;
+    }
+    if (flow->nextSibling ())
+        flow->nextSibling ()->accept (this);
+}
+
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
     Surface *s = txt->surface ();
     if (!s)
@@ -909,16 +998,25 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
     if (!s->surface) {
 
         int w = scr.width ();
-        float scale = 1.0 * w / (double)s->bounds.width ();
-        float ft_size = 0;
         int pxw, pxh;
-        const QByteArray text = txt->richText (scale, &ft_size).toUtf8 ();
-        ft_size *= scale;
+
+        scale = 1.0 * w / (double)s->bounds.width ();
+        font_size = 0;
+        newline_count = 0;
+        terminate_line = false;
+
+        if (txt->firstChild ())
+            txt->firstChild ()->accept (this);
+
+        if (font_size < 1.0)
+            font_size = TextMedia::defaultFontSize ();
+        const QByteArray text = rich_text.toUtf8 ();
+        font_size *= scale;
 
         PangoFontDescription *desc = pango_font_description_new ();
         pango_font_description_set_family (desc, "Sans");
-        pango_font_description_set_absolute_size (desc, PANGO_SCALE * ft_size);
-        calculateTextDimensions (desc, text.data (), w, 2 * ft_size, &pxw, &pxh, true);
+        pango_font_description_set_absolute_size (desc, PANGO_SCALE * font_size);
+        calculateTextDimensions (desc, text.data (), w, 2 * font_size, &pxw, &pxh, true);
 
         s->surface = cairo_surface_create_similar (cairo_surface,
                 CAIRO_CONTENT_COLOR_ALPHA, (int) w, pxh);
@@ -933,6 +1031,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
 
         pango_cairo_show_layout (cr_txt, layout);
 
+        rich_text.clear ();
         pango_font_description_free (desc);
         g_object_unref (layout);
         cairo_destroy (cr_txt);
