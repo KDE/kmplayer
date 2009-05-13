@@ -144,8 +144,7 @@ void ImageData::copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar
     if (clear)
         clearSurface (cr, IRect (0, 0, w, h));
     cairo_set_source (cr, img_pat);
-    if (!has_alpha)
-        cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+    cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
     cairo_paint (cr);
     cairo_destroy (cr);
 
