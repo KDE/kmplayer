@@ -38,12 +38,12 @@
           <text src="data:,bowTieWipe%20vertical" region="region2"
                 dur="1.5" transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
           <text src="data:,bowTieWipe%20horizontal"
                 region="region2" dur="1.5" transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
         </seq>
       </par>
@@ -54,12 +54,12 @@
           <text src="data:,clockWipe%20clockwiseTwelve" region="region2"
                 dur="1.5" transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
           <text src="data:,clockWipe%20clockwiseThree%20reversed"
                 region="region2" dur="1.5" transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
         </seq>
       </par>
@@ -70,12 +70,12 @@
           <text src="data:,pushWipe%20fromTop" region="region2" dur="1.5"
                 transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
           <text src="data:,pushWipe%20fromBottom" region="region2" dur="1.5"
                 transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
         </seq>
       </par>
@@ -86,12 +86,12 @@
           <text src="data:,irishWipe%20rectangle" region="region2" dur="1.5"
                 transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
           <text src="data:,irishWipe%20diamond" region="region2" dur="1.5"
                 transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
         </seq>
       </par>
@@ -102,12 +102,12 @@
           <text src="data:,barWipe%20leftToRight" region="region2" dur="1.5"
                 transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
           <text src="data:,irishWipe%20leftToRight%20reversed"
                 region="region2" dur="1.5" transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
         </seq>
       </par>
@@ -118,12 +118,12 @@
           <text src="data:,barWipe%20leftToRight%2040-60" region="region2"
                 dur="1.5" transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
           <text src="data:,irishWipe%20leftToRight%200-50%20reversed"
                 region="region2" dur="1.5" transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
         </seq>
       </par>
@@ -142,12 +142,12 @@
           <text src="data:,fade%20fill=%22transition%22" region="region2"
                 dur="3" transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
           <text src="data:,fade" region="region2" dur="1"
                 transIn="fade2" transOut="fade2">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
         </seq>
       </par>
@@ -158,12 +158,12 @@
           <text src="data:,ellipseWipe%20vertical" region="region2"
                 dur="1.5" transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
           <text src="data:,ellipseWipe%20vertical"
                 region="region2" dur="1.5" transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
         </seq>
       </par>
@@ -174,12 +174,12 @@
           <text src="data:,nested rp.smil%20clockWipe" region="region2"
                 dur="3" transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
           <text src="data:,ellipseWipe%20circle"
                 region="region2" dur="3" transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
-            <param name="fontPtSize" value="10"/>
+            <param name="fontPtSize" value="8"/>
           </text>
         </seq>
       </par>

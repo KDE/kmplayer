@@ -186,6 +186,30 @@ public:
  */
 bool parseTime (const QString & val, int & dur /*,const QString & dateformat*/);
 
+class KMPLAYER_NO_EXPORT SmilTextProperties {
+public:
+    void init ();
+    bool parseParam (const TrieString &name, const QString &value);
+    void mask (const SmilTextProperties &props);
+
+    QString font_family;
+    int font_color;
+    int background_color;
+    enum { DirLtr, DirRtl, DirLtro, DirRtlo, DirInherit } text_direction;
+    int font_size;
+    enum Style {
+        StyleNormal, StyleItalic, StyleOblique, StyleRevOblique, StyleInherit
+    } font_style;
+    enum { WeightNormal, WeightBold, WeightInherit } font_weight;
+    enum { ModeAppend, ModeReplace, ModeInherit } text_mode;
+    enum { PlaceStart, PlaceCenter, PlaceEnd, PlaceInherit } text_place;
+    QString text_style;
+    enum { Wrap, NoWrap, WrapInherit } text_wrap;
+    enum { SpaceDefault, SpacePreserve } space;
+    enum { WritingLrTb, WritingRlTb, WritingTbLr, WritingTbRl } text_writing;
+    enum Align { AlignInherit, AlignLeft, AlignCenter, AlignRight } text_align;
+};
+
 //-----------------------------------------------------------------------------
 
 namespace SMIL {
@@ -717,6 +741,7 @@ public:
 
     Surface *surface ();
 
+    SmilTextProperties props;
     SurfacePtrW text_surface;
     NodePtrW region_node;
     ConnectionLink region_attach;
@@ -737,23 +762,7 @@ public:
     virtual void parseParam (const TrieString &name, const QString &value);
     virtual void accept (Visitor *v) { v->visit (this); }
 
-    int font_color;
-    int background_color;
-    enum { DirLtr, DirRtl, DirLtro, DirRtlo, DirInherit } text_direction;
-    QString font_family;
-    int font_size;
-    enum {
-        StyleNormal, StyleItalic, StyleOblique, StyleRevOblique, StyleInherit
-    } font_style;
-    enum { WeightNormal, WeightBold, WeightInherit } font_weight;
-    enum { ModeAppend, ModeReplace, ModeInherit } text_mode;
-    enum { PlaceStart, PlaceCenter, PlaceEnd, PlaceInherit } text_place;
-    QString text_style;
-    enum { Wrap, NoWrap, WrapInherit } text_wrap;
-    enum { SpaceDefault, SpacePreserve } space;
-    enum { WritingLrTb, WritingRlTb, WritingTbLr, WritingTbRl } text_writing;
-    //enum { align_inherit, align_left, align_center, align_right } text_align;
-
+    SmilTextProperties props;
     QByteArray tag;
 };
 

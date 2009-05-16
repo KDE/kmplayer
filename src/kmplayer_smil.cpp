@@ -3483,6 +3483,7 @@ KDE_NO_EXPORT void SMIL::TextMediaType::init () {
             media_info = new MediaInfo (this, MediaManager::Text);
         font_size = TextMedia::defaultFontSize ();
         font_color = 0;
+        font_name = "sans";
         halign = align_left;
 
         MediaType::init ();
@@ -3505,7 +3506,8 @@ SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
     if (name == "fontColor") {
         font_color = val.isEmpty () ? 0 : QColor (val).rgb ();
     } else if (name == "fontFace") {
-        ; //FIXME
+        if (val.lower ().indexOf ("sans" ) < 0)
+            font_name = "serif";
     } else if (name == "fontPtSize") {
         font_size = val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
     } else if (name == "fontSize") {
@@ -3567,6 +3569,7 @@ KDE_NO_CDTOR_EXPORT SMIL::SmilText::~SmilText () {
 
 void SMIL::SmilText::init () {
     if (Runtime::TimingsInitialized > runtime->timingstate) {
+        props.init ();
         Element::init ();
         runtime->timingstate = Runtime::TimingsInitialized;
     }
@@ -3619,7 +3622,8 @@ Node *SMIL::SmilText::childFromTag (const QString &tag) {
 }
 
 void SMIL::SmilText::parseParam (const TrieString &name, const QString &value) {
-    if (!runtime->parseParam (name, value)) {
+    if (!props.parseParam (name, value) &&
+            !runtime->parseParam (name, value)) {
         Element::parseParam (name, value);
     }
 }
@@ -3700,13 +3704,7 @@ Surface *SMIL::SmilText::surface () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT
-SMIL::TextFlow::TextFlow (NodePtr &doc, short id, const QByteArray &t)
- : Element (doc, id), tag (t) {}
-
-KDE_NO_CDTOR_EXPORT SMIL::TextFlow::~TextFlow () {}
-
-void SMIL::TextFlow::init () {
+void SmilTextProperties::init () {
     font_color = -1;
     background_color = -1;
     text_direction = DirInherit;
@@ -3720,34 +3718,24 @@ void SMIL::TextFlow::init () {
     text_wrap = WrapInherit;
     space = SpaceDefault;
     text_writing = WritingLrTb;
-    //text_align = align_inherit;
-    Element::init ();
-}
+    text_align = AlignInherit;
+};
 
-void SMIL::TextFlow::activate () {
-    init ();
-    Element::activate ();
-}
-
-Node *SMIL::TextFlow::childFromTag (const QString &tag) {
-    return fromTextFlowGroup (m_doc, tag);
-}
-
-void SMIL::TextFlow::parseParam(const TrieString &name, const QString &val) {
+bool SmilTextProperties::parseParam(const TrieString &name, const QString &val) {
     if (name == "textWrap") {
         // { Wrap, NoWrap, WrapInherit } text_wrap;
     } else if (name == "xml:space") {
         // { SpaceDefault, SpacePreserve } space;
     } else if (name == "textAlign") {
-        /*if (val == "left")
-            text_align = align_left;
+        if (val == "left")
+            text_align = AlignLeft;
         else if (val == "center")
-            text_align = align_center;
+            text_align = AlignCenter;
         else if (val == "right")
-            text_align = align_right;
+            text_align = AlignRight;
         // start, end
         else
-            text_align = align_inherit;*/
+            text_align = AlignInherit;
     } else if (name == "textBackgroundColor") {
         background_color = 0xffffff & QColor (val).rgb ();
     } else if (name == "textColor") {
@@ -3790,7 +3778,51 @@ void SMIL::TextFlow::parseParam(const TrieString &name, const QString &val) {
         text_style = val;
     } else if (name == "textWritingMode") {
         // { WritingLrTb, WritingRlTb, WritingTbLr, WritingTbRl } text_writing;
+    } else {
+        return false;
     }
+    return true;
+}
+
+void SmilTextProperties::mask (const SmilTextProperties &props) {
+    if (props.font_size > 0)
+        font_size = props.font_size;
+    if (props.font_color > -1)
+        font_color = props.font_color;
+    if (props.background_color > -1)
+        background_color = props.background_color;
+    if (StyleInherit != props.font_style)
+        font_style = props.font_style;
+    if (WeightInherit != props.font_weight)
+        font_weight = props.font_weight;
+    if (AlignInherit != props.text_align)
+        text_align = props.text_align;
+    font_family = props.font_family;
+}
+
+KDE_NO_CDTOR_EXPORT
+SMIL::TextFlow::TextFlow (NodePtr &doc, short id, const QByteArray &t)
+ : Element (doc, id), tag (t) {}
+
+KDE_NO_CDTOR_EXPORT SMIL::TextFlow::~TextFlow () {}
+
+void SMIL::TextFlow::init () {
+    props.init ();
+    Element::init ();
+}
+
+void SMIL::TextFlow::activate () {
+    init ();
+    Element::activate ();
+}
+
+Node *SMIL::TextFlow::childFromTag (const QString &tag) {
+    return fromTextFlowGroup (m_doc, tag);
+}
+
+void SMIL::TextFlow::parseParam(const TrieString &name, const QString &val) {
+    if (!props.parseParam (name, val))
+        Element::parseParam (name, val);
 }
 
 //-----------------------------------------------------------------------------

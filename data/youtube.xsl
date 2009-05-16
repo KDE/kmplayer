@@ -48,7 +48,7 @@
       <smil>
         <head>
           <layout>
-            <root-layout width="400" height="300" background-color="#FFFFF0"/>
+            <root-layout width="400" height="300" background-color="#F5F5DC"/>
             <region id="title" left="20" top="10" height="18" right="10"/>
             <region id="image" left="5" top="40" width="130" bottom="30"/>
             <region id="rating" left="15" width="100" height="20" bottom="5"/>
@@ -62,14 +62,12 @@
               <xsl:apply-templates select="media:thumbnail"/>
             </seq>
             <a href="{$item_url}" target="top">
-              <smilText region="title">
-                <div textFontWeight="bold" textColor="blue" textFontSize="12">
-                  <xsl:value-of select="$item_title"/>
-                </div>
+              <smilText region="title" textFontWeight="bold" textColor="blue" textFontSize="11">
+                <xsl:value-of select="$item_title"/>
               </smilText>
             </a>
             <xsl:copy-of select="$ratings"/>
-            <smilText region="text">
+            <smilText region="text" textFontFamily="serif" textFontSize="11">
               <xsl:value-of select="media:description"/>
             </smilText>
           </par>

@@ -230,7 +230,7 @@ void ATOM::MediaGroup::addSummary (Node *p, Node *rating_node) {
         out << "<smil><head>";
         if (!title.isEmpty ())
             out << "<title>" << title << "</title>";
-        out << "<layout><root-layout width=\"400\" height=\"300\" background-color=\"#FFFFF0\"/>";
+        out << "<layout><root-layout width=\"400\" height=\"300\" background-color=\"#F5F5DC\"/>";
         if (!title.isEmpty ())
             out << "<region id=\"title\" left=\"20\" top=\"10\" height=\"18\" right=\"10\"/>";
         out << "<region id=\"image\" left=\"5\" top=\"40\" width=\"130\" bottom=\"30\"/>";
@@ -246,16 +246,16 @@ void ATOM::MediaGroup::addSummary (Node *p, Node *rating_node) {
         if (!title.isEmpty ()) {
             if (!player.isEmpty ())
                 out << "<a href=\"" << XMLStringlet(player) << "\" target=\"top\">";
-            out << "<smilText region=\"title\"><div textFontWeight=\"bold\"";
+            out << "<smilText region=\"title\" textFontWeight=\"bold\" textFontSize=\"11\"";
             if (!player.isEmpty ())
                 out << " textColor=\"blue\"";
-            out << ">" << XMLStringlet (title) << "</div></smilText>";
+            out << ">" << XMLStringlet (title) << "</smilText>";
             if (!player.isEmpty ())
                 out << "</a>";
         }
         if (!ratings.isEmpty ())
             out << ratings;
-        out << "<smilText region=\"text\">";
+        out << "<smilText region=\"text\" textFontFamily=\"serif\" textFontSize=\"11\">";
         out << XMLStringlet (desc);
         out << QString ("</smilText></par></body></smil>");
         QTextStream inxml (&buf, QIODevice::ReadOnly);

@@ -12,18 +12,18 @@
             <smil>
               <head>
                 <layout>
-                  <root-layout width="400" height="300" background-color="#FFFFF0"/>
-                  <region id="notice" left="30" top="10" bottom="210" right="10" background-color="#FFFFC0"/>
-                  <region id="desc" left="10" top="110" bottom="10" right="10" fit="scroll"/>
+                  <root-layout width="400" height="300" background-color="#F5F5DC"/>
+                  <region id="notice" left="180" top="30" bottom="190" right="10" background-color="#101023"/>
+                  <region id="desc" left="10" top="120" bottom="10" right="10" fit="scroll"/>
                 </layout>
               </head>
               <body>
                 <par dur="indefinite">
-                  <smilText region="notice">
-                    <div textFontWeight="bold" textColor="#101010">
-Notice for movie links to Blip TV
-                    </div>
-                    <p textColor="DarkGreen">
+                  <smilText region="notice" textColor="#F5F5DC">
+                    <p textFontWeight="bold" textAlign="center" textFontSize="10">
+Notice for links to Blip TV
+                    </p>
+                    <p textFontSize="9" textFontStyle="italic">
 These links are best viewed when saved first.
                     </p>
                   </smilText>
@@ -33,7 +33,7 @@ These links are best viewed when saved first.
                   <xsl:variable name="text64">
                     <xsl:value-of select="str:encode-uri($text,true())"/>
                   </xsl:variable>
-                  <text region="desc" src="data:text/html,{$text64}" fontPtSize="15"/>
+                  <text region="desc" src="data:text/html,{$text64}" fontPtSize="11" mediaBackgroundOpacity="0" fontFace="serif"/>
                 </par>
               </body>
             </smil>

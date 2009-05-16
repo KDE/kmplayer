@@ -1,7 +1,7 @@
 <smil>
   <head>
     <layout>
-      <root-layout width="320" height="240"/>
+      <root-layout width="400" height="300"/>
       <region id="reg1" left="5%" right="5%" top="5%" height="10%"/>
       <region id="reg2" left="5%" right="5%" top="25%" height="10%"/>
       <region id="reg3" left="5%" right="5%" top="45%" height="10%"/>
