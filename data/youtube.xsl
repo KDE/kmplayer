@@ -49,7 +49,7 @@
         <head>
           <layout>
             <root-layout width="400" height="300" background-color="#F5F5DC"/>
-            <region id="title" left="20" top="10" height="18" right="10"/>
+            <region id="title" left="10" top="10" height="18" right="10"/>
             <region id="image" left="5" top="40" width="130" bottom="30"/>
             <region id="rating" left="15" width="100" height="20" bottom="5"/>
             <region id="text" left="140" top="40" bottom="10" right="10" fit="scroll"/>
@@ -62,7 +62,7 @@
               <xsl:apply-templates select="media:thumbnail"/>
             </seq>
             <a href="{$item_url}" target="top">
-              <smilText region="title" textFontWeight="bold" textColor="blue" textFontSize="11">
+              <smilText region="title" textFontWeight="bold" textColor="blue" textFontSize="11" textAlign="center">
                 <xsl:value-of select="$item_title"/>
               </smilText>
             </a>

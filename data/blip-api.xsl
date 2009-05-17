@@ -23,7 +23,7 @@
               </head>
               <body>
                 <par dur="indefinite">
-                  <smilText region="title" textFontWeight="bold" textColor="#101023" textFontSize="11">
+                  <smilText region="title" textFontWeight="bold" textColor="#101023" textFontSize="11" textAlign="center">
                     <xsl:value-of select="$item_title"/>
                   </smilText>
                   <smilText region="notice" textColor="#F5F5DC">
