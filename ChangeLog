@@ -1,3 +1,8 @@
+Changes since version 0.11.1
+- Add title to blip.tv information page
+- Enable more text attributes for smilText
+- Fix resizing generators information page making text area smaller
+- Fix title on youtube information page started with a newline
 Changes since version 0.11.0a
 - Merged generators from Maemo port
 - Enable clear history
