@@ -810,7 +810,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         s->bounds = txt->calculateBounds ();
     }
     IRect scr = matrix.toScreen (s->bounds);
-    if (!s->surface) {
+    if (!s->surface || s->dirty) {
 
         int w = scr.width ();
         int pxw, pxh;
@@ -823,11 +823,16 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 
         calculateTextDimensions (desc, text.data (), w, 2 * ft_size, &pxw, &pxh, false);
         unsigned int bg_alpha = txt->background_color & 0xff000000;
-        s->surface = cairo_surface_create_similar (cairo_surface,
-                bg_alpha < 0xff000000
+        bool clear = s->surface;
+        if (!s->surface)
+            s->surface = cairo_surface_create_similar (cairo_surface,
+                    bg_alpha < 0xff000000
                     ? CAIRO_CONTENT_COLOR_ALPHA
                     : CAIRO_CONTENT_COLOR,
-                pxw, pxh);
+                    pxw, pxh);
+        if (clear)
+            clearSurface (cr, IRect (0, 0, pxw, pxh));
+        cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
         cairo_t *cr_txt = cairo_create (s->surface);
 
         if (bg_alpha) {
