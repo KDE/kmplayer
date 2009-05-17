@@ -7,25 +7,32 @@
   <xsl:template match="/">
     <playlist>
       <xsl:for-each select="response/payload/asset">
-        <group title="{normalize-space(title)}">
-          <item title="{normalize-space(title)}">
+        <xsl:variable name="item_title">
+          <xsl:value-of select="normalize-space(title)"/>
+        </xsl:variable>
+        <group title="{$item_title}">
+          <item title="{$item_title}">
             <smil>
               <head>
                 <layout>
                   <root-layout width="400" height="300" background-color="#F5F5DC"/>
-                  <region id="notice" left="180" top="30" bottom="190" right="10" background-color="#101023"/>
+                  <region id="title" left="10" top="10" height="18" right="10"/>
+                  <region id="notice" left="180" top="40" bottom="190" right="10" background-color="#101023"/>
                   <region id="desc" left="10" top="120" bottom="10" right="10" fit="scroll"/>
                 </layout>
               </head>
               <body>
                 <par dur="indefinite">
+                  <smilText region="title" textFontWeight="bold" textColor="#101023" textFontSize="11">
+                    <xsl:value-of select="$item_title"/>
+                  </smilText>
                   <smilText region="notice" textColor="#F5F5DC">
                     <p textFontWeight="bold" textAlign="center" textFontSize="10">
 Notice for links to Blip TV
                     </p>
-                    <p textFontSize="9" textFontStyle="italic">
+                    <div textFontSize="9" textFontStyle="italic" textAlign="right">
 These links are best viewed when saved first.
-                    </p>
+                    </div>
                   </smilText>
                   <xsl:variable name="text">
                     <xsl:value-of select="description"/>
