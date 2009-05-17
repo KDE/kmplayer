@@ -816,24 +816,29 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         int pxw, pxh;
         Single ft_size = w * txt->font_size / (double)s->bounds.width ();
         const QByteArray text = tm->text.toUtf8 ();
+        bool clear = s->surface;
 
         PangoFontDescription *desc = pango_font_description_new ();
         pango_font_description_set_family(desc, txt->font_name.toUtf8().data());
         pango_font_description_set_size (desc, PANGO_SCALE * ft_size);
-
-        calculateTextDimensions (desc, text.data (), w, 2 * ft_size, &pxw, &pxh, false);
+        if (clear) {
+            pxw = scr.width ();
+            pxh = scr.height ();
+        } else {
+            calculateTextDimensions (desc, text.data (),
+                    w, 2 * ft_size, &pxw, &pxh, false);
+        }
         unsigned int bg_alpha = txt->background_color & 0xff000000;
-        bool clear = s->surface;
         if (!s->surface)
             s->surface = cairo_surface_create_similar (cairo_surface,
                     bg_alpha < 0xff000000
                     ? CAIRO_CONTENT_COLOR_ALPHA
                     : CAIRO_CONTENT_COLOR,
                     pxw, pxh);
-        if (clear)
-            clearSurface (cr, IRect (0, 0, pxw, pxh));
-        cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
         cairo_t *cr_txt = cairo_create (s->surface);
+        if (clear)
+            clearSurface (cr_txt, IRect (0, 0, pxw, pxh));
+        cairo_set_operator (cr_txt, CAIRO_OPERATOR_SOURCE);
 
         if (bg_alpha) {
             if (bg_alpha < 0xff000000)
@@ -1113,6 +1118,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
             s->surface = cairo_surface_create_similar (cairo_surface,
                     CAIRO_CONTENT_COLOR_ALPHA, (int) w, info.voffset);
             cairo_t *cr_txt = cairo_create (s->surface);
+            cairo_set_operator (cr_txt, CAIRO_OPERATOR_SOURCE);
 
             CAIRO_SET_SOURCE_RGB (cr_txt, 0);
             SmilTextBlock *b = info.first;
