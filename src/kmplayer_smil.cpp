@@ -3719,7 +3719,7 @@ void SmilTextProperties::init () {
     space = SpaceDefault;
     text_writing = WritingLrTb;
     text_align = AlignInherit;
-};
+}
 
 bool SmilTextProperties::parseParam(const TrieString &name, const QString &val) {
     if (name == "textWrap") {
