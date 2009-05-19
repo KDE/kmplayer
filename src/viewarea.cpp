@@ -2082,7 +2082,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     m_view->console ()->setGeometry (0, 0, w, h);
     m_view->picture ()->setGeometry (0, 0, w, h);
     if (!surface->node && video_widgets.size () == 1)
-        video_widgets.first ()->setGeometry (IRect (x, y, w, h));
+        video_widgets.first ()->setGeometry (IRect (x, y, ws, hs));
 }
 
 KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
