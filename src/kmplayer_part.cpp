@@ -1365,7 +1365,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             rval = player->viewWidget ()->isFullScreen () ? "true" : "false";
             break;
         case length:
-            rval.setNum (player->source ()->size ());
+            rval.setNum (player->source ()->length ());
             break;
         case width:
             rval.setNum (player->source ()->width ());
