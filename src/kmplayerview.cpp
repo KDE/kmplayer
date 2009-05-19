@@ -515,7 +515,7 @@ void View::addText (const QString & str, bool eol) {
         tmplog += QChar ('\n');
     tmplog += str;
     m_tmplog_needs_eol = eol;
-    if (!m_multiedit->isVisible () && tmplog.length () < 7500)
+    if (!m_multiedit->isVisible () && tmplog.size () < 7500)
         return;
     if (eol) {
         if (m_multiedit->document ()->isEmpty ())

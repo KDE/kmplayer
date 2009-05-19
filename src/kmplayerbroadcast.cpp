@@ -333,7 +333,7 @@ KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::slotIndexChanged (int index)
 }
 
 KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::slotTextChanged (const QString & txt) {
-    save->setEnabled (txt.length ());
+    save->setEnabled (txt.size ());
 }
 
 KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::slotItemHighlighted (int index) {
@@ -509,7 +509,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::startServer () {
     QString configdata;
     QString buf;
     configdata.sprintf (ffserverconf, m_ffserverconfig->ffserverport, m_ffserverconfig->bindaddress.ascii (), m_ffserverconfig->maxclients, m_ffserverconfig->maxbandwidth, m_ffserverconfig->feedfile.ascii (), m_ffserverconfig->feedfilesize, ffs.format.ascii (), acl.ascii (), ffs.ffconfig (buf).ascii (), noaudio);
-    qfile.writeBlock (configdata.ascii (), configdata.length ());
+    qfile.writeBlock (configdata.ascii (), configdata.size ());
     qfile.close ();
     kdDebug () << configdata << endl;
     kdDebug () << "ffserver -f " << conffile << endl;

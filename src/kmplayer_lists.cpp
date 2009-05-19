@@ -71,7 +71,7 @@ void FileDocument::writeToFile (const QString & fn) {
     kDebug () << "writeToFile " << fn;
     file.open (IO_WriteOnly);
     QByteArray utf = outerXML ().toUtf8 ();
-    file.writeBlock (utf, utf.length ());
+    file.writeBlock (utf, utf.size ());
 }
 
 KDE_NO_CDTOR_EXPORT Recents::Recents (KMPlayerApp *a)

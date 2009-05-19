@@ -1291,7 +1291,7 @@ QString Source::filterOptions () {
             }
         }
         if (PPargs.endsWith("/"))
-            PPargs.truncate(PPargs.length()-1);
+            PPargs.truncate(PPargs.size ()-1);
     }
     return PPargs;
 }
@@ -1388,17 +1388,17 @@ void URLSource::deactivate () {
 QString URLSource::prettyName () {
     if (m_url.isEmpty ())
         return i18n ("URL");
-    if (m_url.url ().length () > 50) {
+    if (m_url.url ().size () > 50) {
         QString newurl = m_url.protocol () + QString ("://");
         if (m_url.hasHost ())
             newurl += m_url.host ();
         if (m_url.port ())
             newurl += QString (":%1").arg (m_url.port ());
         QString file = m_url.fileName ();
-        int len = newurl.length () + file.length ();
+        int len = newurl.size () + file.size ();
         KUrl path = KUrl (m_url.directory ());
         bool modified = false;
-        while (path.url ().length () + len > 50 && path != path.upUrl ()) {
+        while (path.url ().size () + len > 50 && path != path.upUrl ()) {
             path = path.upUrl ();
             modified = true;
         }

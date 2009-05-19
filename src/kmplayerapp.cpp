@@ -877,7 +877,7 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
     KSharedConfigPtr config = KGlobal::config ();
     KConfigGroup general (config, "General Options");
     if (m_player->settings ()->remembersize)
-        general.writeEntry ("Geometry", size());
+        general.writeEntry ("Geometry", size ());
     general.writeEntry ("Show Toolbar", viewToolBar->isChecked());
     general.writeEntry ("Show Statusbar", viewStatusBar->isChecked ());
     general.writeEntry ("Show Menubar", viewMenuBar->isChecked ());
@@ -1138,7 +1138,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotGeneratorMenu () {
     if (!generators.first ()) {
         QStringList files = KStandardDirs().findAllResources ("data",
                 "kmplayer/generators/*.xml");
-        for (int i = 0; i < files.length(); ++i) {
+        for (int i = 0; i < files.size (); ++i) {
             qDebug( "gendir %s", files[i].toAscii().data());
             Generator *gen = new Generator (this);
             KMPlayer::NodePtr doc = gen;
@@ -1168,7 +1168,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotGenerator () {
         current_generator = NULL;
     }
 
-    for (int i = 0; store && i < chlds.length (); ++i) {
+    for (int i = 0; store && i < chlds.size (); ++i) {
         const QAction *ca = qobject_cast <QAction *> (chlds[i]);
         if (ca && !ca->text ().isEmpty ()) {
             if (ca == act) {
@@ -1700,7 +1700,7 @@ KDE_NO_EXPORT void KMPlayerDVDSource::setCurrent (KMPlayer::Mrl *cur) {
         for (unsigned i = 0; i < m_dvdlanguagemenu->count (); i++)
             if (m_dvdlanguagemenu->isItemChecked (m_dvdlanguagemenu->idAt (i)))
                 m_options += " -aid " + QString::number(m_dvdlanguagemenu->idAt(i));
-        if (m_player->settings ()->dvddevice.length () > 0)
+        if (m_player->settings ()->dvddevice.size () > 0)
             m_options += QString(" -dvd-device ") + m_player->settings()->dvddevice;
     }
     m_recordcmd = m_options + QString (" -vf scale -zoom");
@@ -1917,7 +1917,7 @@ KDE_NO_EXPORT void KMPlayerVCDSource::setCurrent (KMPlayer::Mrl *cur) {
     if (m_current && m_current != m_document)
         url += m_current->mrl ()->src;
     m_options.truncate (0);
-    if (m_player->settings ()->vcddevice.length () > 0)
+    if (m_player->settings ()->vcddevice.size () > 0)
         m_options+=QString(" -cdrom-device ") + m_player->settings()->vcddevice;
     m_recordcmd = m_options;
 }
@@ -2019,7 +2019,7 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::setCurrent (KMPlayer::Mrl *cur) {
     if (m_current && m_current != m_document)
         url += m_current->mrl ()->src;
     m_options = "-cdda speed=3";
-    if (m_player->settings ()->vcddevice.length () > 0)
+    if (m_player->settings ()->vcddevice.size () > 0)
         m_options+=QString(" -cdrom-device ") + m_player->settings()->vcddevice;
     m_recordcmd = m_options;
 }

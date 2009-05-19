@@ -507,7 +507,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
             cur_elm = cur_elm->mrl ()->linkNode ();
         bool pls_groupfound =
             line.startsWith ("[") && line.endsWith ("]") &&
-            line.mid (1, line.length () - 2).stripWhiteSpace () == "playlist";
+            line.mid (1, line.size () - 2).stripWhiteSpace () == "playlist";
         if ((pls_groupfound &&
                     cur_elm->mrl ()->mimetype.startsWith ("audio/")) ||
                 cur_elm->mrl ()->mimetype == QString ("audio/x-scpls")) {
@@ -519,7 +519,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                 line = line.stripWhiteSpace ();
                 if (!line.isEmpty ()) {
                     if (line.startsWith ("[") && line.endsWith ("]")) {
-                        if (line.mid (1, line.length () - 2).stripWhiteSpace () == "playlist")
+                        if (line.mid (1, line.size () - 2).stripWhiteSpace () == "playlist")
                             pls_groupfound = true;
                         else
                             break;

@@ -67,7 +67,7 @@ Node *KMPlayer::fromXMLDocumentTag (NodePtr & d, const QString & tag) {
 //-----------------------------------------------------------------------------
 
 QTextStream &KMPlayer::operator << (QTextStream &out, const XMLStringlet &txt) {
-    int len = int (txt.str.length ());
+    int len = int (txt.str.size ());
     for (int i = 0; i < len; ++i) {
         if (txt.str [i] == QChar ('<')) {
             out <<  "&lt;";
@@ -1703,7 +1703,7 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
 }
 
 void SimpleSAXParser::push () {
-    if (next_token->string.length ()) {
+    if (next_token->string.size ()) {
         prev_token = token;
         token = next_token;
         if (prev_token)
@@ -1844,7 +1844,7 @@ bool SimpleSAXParser::nextToken () {
         if (token && token->next) {
             prev_token = token;
             token = token->next;
-        } else if (next_token->string.length ()) {
+        } else if (next_token->string.size ()) {
             push (); // last token
         } else
             return false;
@@ -1982,7 +1982,7 @@ bool SimpleSAXParser::readCDATA () {
     while (!data->atEnd ()) {
         *data >> next_char;
         if (next_char == QChar ('>') && cdata.endsWith (QString ("]]"))) {
-            cdata.truncate (cdata.length () - 2);
+            cdata.truncate (cdata.size () - 2);
             m_state = m_state->next;
             if (m_state->state == InContent)
                 have_error = builder.cdataData (cdata);

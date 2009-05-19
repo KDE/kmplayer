@@ -95,7 +95,7 @@ static QString getPath (const KUrl & url) {
     if (p.startsWith (QString ("file:/"))) {
         int i = 0;
         p = p.mid (5);
-        for (; i < p.length () && p[i] == QChar ('/'); ++i)
+        for (; i < p.size () && p[i] == QChar ('/'); ++i)
             ;
         //kDebug () << "getPath " << p.mid (i-1);
         if (i > 0)
@@ -361,7 +361,7 @@ KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
         fprintf (stderr, "eval %s", commands.last ().latin1 ());
         if (commands.size () < 2)
             m_process->writeStdin (QFile::encodeName(commands.last ()),
-                    commands.last ().length ());
+                    commands.last ().size ());
         return true;
     }
     return false;
@@ -397,7 +397,7 @@ KDE_NO_EXPORT void MPlayerBase::dataWritten (K3Process *) {
     commands.pop_back ();
     if (commands.size ())
         m_process->writeStdin (QFile::encodeName(commands.last ()),
-                             commands.last ().length ());
+                             commands.last ().size ());
 }
 
 KDE_NO_EXPORT void MPlayerBase::processStopped (K3Process *) {
@@ -1981,11 +1981,11 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
         ts << "<document>";
         for (NodePtr e = elm->firstChild (); e; e = e->nextSibling ())
             convertNode <TypeNode> (e)->changedXML (ts);
-        if (str.length () > 10) {
+        if (str.size () > 10) {
             ts << "</document>";
             QByteArray changeddata = QCString (str.ascii ());
-            kDebug () << str <<  " " << changeddata.size () << str.length ();
-            changeddata.resize (str.length ());
+            kDebug () << str <<  " " << changeddata.size () << str.size ();
+            changeddata.resize (str.size ());
             m_process->setChangedData (changeddata);
         }
     } else {
@@ -2337,7 +2337,7 @@ KDE_NO_EXPORT void NpStream::open () {
                 char c = post.at (i);
                 switch (c) {
                 case ':':
-                    if (name.size () == value.size()) {
+                    if (name.size () == value.size ()) {
                         name << buf;
                         buf.truncate (0);
                     } else
@@ -2346,7 +2346,7 @@ KDE_NO_EXPORT void NpStream::open () {
                 case '\r':
                     break;
                 case '\n':
-                    if (name.size () == value.size()) {
+                    if (name.size () == value.size ()) {
                         if (buf.isEmpty ()) {
                             data_pos = i + 1;
                         } else {
@@ -2363,7 +2363,7 @@ KDE_NO_EXPORT void NpStream::open () {
                 }
             }
             job = KIO::http_post (KUrl (url), post.mid (data_pos), KIO::HideProgressInfo);
-            for (int i = 0; i < name.size(); ++i)
+            for (int i = 0; i < name.size (); ++i)
                 job->addMetaData (name[i].trimmed (), value[i].trimmed ());
         }
         job->addMetaData ("errorPage", "false");
@@ -2408,12 +2408,12 @@ KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
     } else {
         pending_buf = qb;
     }
-    if (sz + qb.size() > 64000 &&
+    if (sz + qb.size () > 64000 &&
             !job->isSuspended () && !job->suspend ())
         kError () << "suspend not supported" << endl;
     if (!sz)
         gettimeofday (&data_arrival, 0L);
-    if (sz + qb.size())
+    if (sz + qb.size ())
         emit stateChanged ();
 }
 
@@ -2749,7 +2749,7 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
     }
     in_process_stream = true;
 
-    //kDebug() << "NpPlayer::processStreams " << streams.size();
+    //kDebug() << "NpPlayer::processStreams " << streams.size ();
     for (StreamMap::iterator i = streams.begin (); i != e;) {
         NpStream *ns = i.data ();
         if (ns->job) {
@@ -2798,7 +2798,7 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
             QDBusConnection::sessionBus().send (msg);
         }
         const int header_len = 2 * sizeof (Q_UINT32);
-        Q_UINT32 chunk = stream->pending_buf.size();
+        Q_UINT32 chunk = stream->pending_buf.size ();
         send_buf.resize (chunk + header_len);
         memcpy (send_buf.data (), &stream_id, sizeof (Q_UINT32));
         memcpy (send_buf.data() + sizeof (Q_UINT32), &chunk, sizeof (Q_UINT32));

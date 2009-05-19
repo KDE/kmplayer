@@ -223,11 +223,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
         int equalPos = (*it).find("=");
         if (equalPos > 0) {
             QString name = (*it).left (equalPos).lower ();
-            QString value = (*it).right ((*it).length () - equalPos - 1);
+            QString value = (*it).right ((*it).size () - equalPos - 1);
             if (value.at(0)=='\"')
-                value = value.right (value.length () - 1);
-            if (value.at (value.length () - 1) == '\"')
-                value.truncate (value.length () - 1);
+                value = value.right (value.size () - 1);
+            if (value.at (value.size () - 1) == '\"')
+                value.truncate (value.size () - 1);
             kDebug () << "name=" << name << " value=" << value;
             if (name == "href") {
                 m_href_url = value;
@@ -778,7 +778,7 @@ KDE_NO_EXPORT void KMPlayerPart::playingStarted () {
     KMPlayerPartList::iterator i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group));
     if (i != e && *i != this && m_view && (*i)->source()) {
         m_view->controlPanel ()->setPlaying (true);
-        m_view->controlPanel ()->showPositionSlider(!!(*i)->source()->length());
+        m_view->controlPanel ()->showPositionSlider(!!(*i)->source()->length ());
         m_view->controlPanel()->enableSeekButtons((*i)->source()->isSeekable());
         emit loading (100);
     } else if (m_source)
@@ -1161,7 +1161,7 @@ bool str2LC (const QString s, KParts::LiveConnectExtension::Type &type, QString 
         type = KParts::LiveConnectExtension::TypeFunction;
     } else if (s.startsWith (QChar ('\'')) && s.endsWith (QChar ('\''))) {
         type = KParts::LiveConnectExtension::TypeString;
-        rval = s.mid (1, s.length () - 2);
+        rval = s.mid (1, s.size () - 2);
     } else if (s == "true" || s == "false") {
         type = KParts::LiveConnectExtension::TypeBool;
         rval = s;
@@ -1365,7 +1365,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             rval = player->viewWidget ()->isFullScreen () ? "true" : "false";
             break;
         case length:
-            rval.setNum (player->source ()->length ());
+            rval.setNum (player->source ()->size ());
             break;
         case width:
             rval.setNum (player->source ()->width ());
