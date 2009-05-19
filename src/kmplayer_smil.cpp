@@ -1511,7 +1511,7 @@ void SMIL::RootLayout::message (MessageType msg, void *content) {
                 sizes.width = QString::number ((int) w);
                 sizes.height = QString::number ((int) h);
             } else {
-                w = sizes.width.size();
+                w = sizes.width.size ();
                 h = sizes.height.size ();
             }
             if (content || surface->dimension () != SSize (w, h)) {
@@ -4513,9 +4513,9 @@ bool SMIL::AnimateMotion::setInterval () {
             break;
     }
     //kDebug() << "setInterval " << steps << " " <<
-    //    cur_x.size() << "," << cur_y.size() << "=>"
-    //    << end_x.size() << "," << end_y.size() << " d:" << 
-    //    delta_x.size() << "," << delta_y.size() << endl;
+    //    cur_x.size () << "," << cur_y.size () << "=>"
+    //    << end_x.size () << "," << end_y.size () << " d:" << 
+    //    delta_x.size () << "," << delta_y.size () << endl;
     return true;
 }
 

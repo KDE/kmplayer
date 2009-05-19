@@ -480,7 +480,7 @@ void Backend::setConfig (QByteArray /*data*/) {
     int line, column;
     QDomDocument dom;
     if (dom.setContent (data, false, &err, &line, &column)) {
-        if (dom.childNodes().length() == 1) {
+        if (dom.childNodes().length () == 1) {
             for (QDomNode node = dom.firstChild().firstChild();
                     !node.isNull ();
                     node = node.nextSibling ()) {
