@@ -329,11 +329,15 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
                 else
                     idref = vs.mid (p - cval, q - p);
             }
-            ++q;
-            if (!idref.isEmpty ()) {
-                target = findLocalNodeById (n, idref);
-                if (!target)
-                    kWarning () << "Element not found " << idref;
+            if (*q) {
+                ++q;
+                if (!idref.isEmpty ()) {
+                    target = findLocalNodeById (n, idref);
+                    if (!target)
+                        q = p;
+                }
+            } else {
+                q = p;
             }
             //kDebug () << "setDuration q:" << q;
             if (parseTime (vl.mid (q-cval), offset)) {
@@ -355,9 +359,11 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
                 parseTime (vl.mid (q + 16 - cval), offset);
             } else
                 kWarning () << "setDuration no match " << cval;
-            if (target && dur != Runtime::DurTimer) {
+            if (!target &&
+                   dur >= Runtime::DurActivated && dur <= Runtime::DurOutBounds)
+                target = n;
+            if (target && dur != Runtime::DurTimer)
                 itm->connection.connect (target, (MessageType)dur, n);
-            }
         }
         //kDebug () << "setDuration " << dur << " id:'" << idref << "' off:" << offset;
     }
@@ -597,15 +603,14 @@ KDE_NO_EXPORT void Runtime::message (MessageType msg, void *content) {
         for (DurationItem *dur = beginTime ().next; dur; dur = dur->next)
             if (dur->durval == (Duration) msg &&
                     dur->connection.signaler () == event->source.ptr ()) {
-                if (begin_timer) {
-                    element->document ()->cancelPosting (begin_timer);
-                    begin_timer = NULL;
-                }
-                if (element && dur->offset > 0)
+                if (element && dur->offset > 0) {
+                    if (begin_timer)
+                        element->document ()->cancelPosting (begin_timer);
                     begin_timer = element->document ()->post (element,
                             new TimerPosting(10 * dur->offset, begin_timer_id));
-                else //FIXME neg. offsets
+                } else { //FIXME neg. offsets
                     propagateStart ();
+                }
                 if (element->state == Node::state_finished)
                     element->state = Node::state_activated;//rewind to activated
                 break;
@@ -615,7 +620,14 @@ KDE_NO_EXPORT void Runtime::message (MessageType msg, void *content) {
         for (DurationItem *dur = endTime ().next; dur; dur = dur->next)
             if (dur->durval == (Duration) msg &&
                     dur->connection.signaler () == event->source.ptr ()) {
-                doFinish ();
+                if (element && dur->offset > 0) {
+                    if (duration_timer)
+                        element->document ()->cancelPosting (duration_timer);
+                    duration_timer = element->document ()->post (element,
+                            new TimerPosting (10 * dur->offset, dur_timer_id));
+                } else {
+                    doFinish ();
+                }
                 break;
             }
     }
@@ -2621,7 +2633,6 @@ KDE_NO_CDTOR_EXPORT SMIL::LinkingBase::LinkingBase (NodePtr & d, short id)
  : Element(d, id), show (show_replace) {}
 
 KDE_NO_EXPORT void SMIL::LinkingBase::deactivate () {
-    mediatype_activated.disconnect ();
     mediatype_attach.disconnect ();
     Element::deactivate ();
 }
@@ -2644,7 +2655,6 @@ KDE_NO_EXPORT void SMIL::Anchor::activate () {
     init ();
     for (Node *c = firstChild(); c; c = c->nextSibling ())
         if (nodeMessageReceivers (c, MsgEventClicked)) {
-            mediatype_activated.connect (c, MsgEventClicked, this);
             mediatype_attach.connect (c, MsgSurfaceAttach, this);
             break;
         }
@@ -2705,7 +2715,6 @@ KDE_NO_EXPORT void SMIL::Area::activate () {
     if (parentNode () &&
             parentNode ()->id >= id_node_first_mediatype &&
             parentNode ()->id <= id_node_last_mediatype) {
-        mediatype_activated.connect (parentNode (), MsgEventClicked, this);
         mediatype_attach.connect (parentNode (), MsgSurfaceAttach, this);
     }
     Element::activate ();
@@ -2870,9 +2879,6 @@ KDE_NO_EXPORT void SMIL::MediaType::activate () {
 
 KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     region_paint.disconnect ();
-    region_mouse_enter.disconnect ();
-    region_mouse_leave.disconnect ();
-    region_mouse_click.disconnect ();
     region_attach.disconnect ();
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
@@ -2934,9 +2940,6 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
             c->activate (); // activate set/animate.. children
     if (r) {
         region_node = r;
-        region_mouse_enter.connect (r, MsgEventPointerInBounds, this);
-        region_mouse_leave.connect (r, MsgEventPointerOutBounds, this);
-        region_mouse_click.connect (r, MsgEventClicked, this);
         region_attach.connect (r, MsgSurfaceAttach, this);
         r->repaint ();
         clipStart ();

@@ -2,7 +2,7 @@
   <head>
     <layout>
       <root-layout width="320" height="260"/>
-      <region id="nested_smil" left="0" top="0" right="0" height="240"/>
+      <region id="nested_smil" left="100" top="20" right="0" height="240"/>
       <region id="nested_but1" left="0" top="240" width="160" height="20" background-color="LightGray"/>
       <region id="nested_but2" left="160" top="240" width="160" height="20" background-color="Orange"/>
     </layout>

@@ -573,7 +573,6 @@ public:
     void deactivate ();
     KDE_NO_EXPORT bool expose () const { return false; }
     void parseParam (const TrieString & name, const QString & value);
-    ConnectionLink mediatype_activated;
     ConnectionLink mediatype_attach;
     QString href;
     QString target;
@@ -668,9 +667,6 @@ protected:
     ConnectionList m_MediaAttached;        // mouse entered
     ConnectionList m_TransformedIn;        // transIn ready
     ConnectionLink region_paint;           // attached region needs painting
-    ConnectionLink region_mouse_enter;     // attached region has mouse entered
-    ConnectionLink region_mouse_leave;     // attached region has mouse left
-    ConnectionLink region_mouse_click;     // attached region is clicked
     ConnectionLink region_attach;          // attached to region
     ConnectionLink document_postponed;     // pause audio/video accordantly
     PostponePtr postpone_lock;

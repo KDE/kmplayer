@@ -1419,10 +1419,12 @@ class KMPLAYER_NO_EXPORT MouseVisitor : public Visitor {
     ViewArea *view_area;
     Matrix matrix;
     NodePtrW source;
-    MessageType event;
+    const MessageType event;
     int x, y;
     bool handled;
     bool bubble_up;
+
+    void dispatchSurfaceAttach (Node *n);
 public:
     MouseVisitor (ViewArea *v, MessageType evt, int x, int y);
     KDE_NO_CDTOR_EXPORT ~MouseVisitor () {}
@@ -1445,6 +1447,22 @@ KDE_NO_CDTOR_EXPORT
 MouseVisitor::MouseVisitor (ViewArea *v, MessageType evt, int a, int b)
   : view_area (v), event (evt), x (a), y (b),
     handled (false), bubble_up (false) {
+}
+
+void MouseVisitor::dispatchSurfaceAttach (Node *n) {
+    ConnectionList *nl = nodeMessageReceivers (n, MsgSurfaceAttach);
+    if (nl) {
+        NodePtr node_save = source;
+        source = n;
+
+        for (Connection *c = nl->first(); c; c = nl->next ()) {
+            if (c->connecter)
+                c->connecter->accept (this);
+            if (!source || !source->active ())
+                break;
+        }
+        source = node_save;
+    }
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (Node * n) {
@@ -1526,7 +1544,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
         bubble_up = false;
 
         bool child_handled = false;
-        if (inside)
+        if (inside || region->has_mouse)
             for (NodePtr r = region->firstChild (); r; r = r->nextSibling ()) {
                 r->accept (this);
                 child_handled |= handled;
@@ -1536,39 +1554,29 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
         child_handled &= !bubble_up;
         bubble_up = false;
 
-        MessageType saved_event = event;
+        MessageType user_event = event;
         if (source && source->active ()) {
             bool notify_receivers = !child_handled;
             bool pass_event = !child_handled;
             if (event == MsgEventPointerMoved) {
                 pass_event = true; // always pass move events
-                if (region->has_mouse && (!inside || child_handled)) {
+                if (region->has_mouse && !inside) {
                     notify_receivers = true;
                     region->has_mouse = false;
-                    event = MsgEventPointerOutBounds;
-                } else if (inside && !child_handled && !region->has_mouse) {
+                    user_event = MsgEventPointerOutBounds;
+                } else if (inside && !region->has_mouse) {
                     notify_receivers = true;
                     region->has_mouse = true;
-                    event = MsgEventPointerInBounds;
+                    user_event = MsgEventPointerInBounds;
                 }
             }// else // MsgEventClicked
             if (notify_receivers) {
-                Posting mouse_event (region, event);
-                region->deliver (event, &mouse_event);
+                Posting mouse_event (region, user_event);
+                region->deliver (user_event, &mouse_event);
             }
-            if (pass_event) {
-                ConnectionList *nl = nodeMessageReceivers (region, MsgSurfaceAttach);
-                if (nl) {
-                    for (Connection *c = nl->first(); c; c = nl->next ()) {
-                        if (c->connecter)
-                            c->connecter->accept (this);
-                        if (!source || !source->active ())
-                            break;
-                    }
-                }
-            }
+            if (pass_event && source && source->active ())
+                dispatchSurfaceAttach (region);
         }
-        event = saved_event;
         handled = inside;
         matrix = m;
     }
@@ -1670,35 +1678,35 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
     IRect scr = matrix.toScreen (rect);
     int rx = scr.x(), ry = scr.y(), rw = scr.width(), rh = scr.height();
     const bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
-    if (!inside && (event == MsgEventClicked || inside == mt->has_mouse))
-        return;
-    mt->has_mouse = inside;
-
-    ConnectionList *nl = nodeMessageReceivers (mt,
-            event == MsgEventPointerMoved ? MsgSurfaceAttach : event);
-    if (nl) {
-        NodePtr node_save = source;
-        source = mt;
-        for (Connection *c = nl->first(); c; c = nl->next ()) {
-            if (c->connecter && c->connecter.ptr () != mt)
-                c->connecter->accept (this);
-            if (!source || !source->active ())
-                break;
-        }
-        source = node_save;
-        if (!source || !source->active ())
+    MessageType user_event = event;
+    if (event == MsgEventPointerMoved) {
+        if (inside && !mt->has_mouse)
+            user_event = MsgEventPointerInBounds;
+        else if (!inside && mt->has_mouse)
+            user_event = MsgEventPointerOutBounds;
+        else if (!inside)
             return;
     }
+    mt->has_mouse = inside;
 
-    if (event != MsgEventPointerMoved)
-        visit (static_cast <Element *> (mt));
-    if (event != MsgEventPointerInBounds && event != MsgEventPointerOutBounds) {
-      SMIL::RegionBase *r=convertNode<SMIL::RegionBase>(mt->region_node);
-      if (r && r->role (RoleDisplay) &&
-              r->id != SMIL::id_node_smil &&
-              r->region_surface->node && r != r->region_surface->node.ptr ())
-          return r->region_surface->node->accept (this);
+    NodePtrW node_save = mt;
+
+    if (inside || event == MsgEventPointerMoved)
+        dispatchSurfaceAttach (mt);
+    if (!node_save || !mt->active ())
+        return;
+    if (MsgEventPointerMoved != user_event) {
+        Posting mouse_event (mt, user_event);
+        mt->deliver (user_event, &mouse_event);
     }
+    if (!node_save || !mt->active ())
+        return;
+
+    SMIL::RegionBase *r=convertNode<SMIL::RegionBase>(mt->region_node);
+    if (r && r->role (RoleDisplay) &&
+            r->id != SMIL::id_node_smil &&
+            r->region_surface->node && r != r->region_surface->node.ptr ())
+        return r->region_surface->node->accept (this);
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::SmilText *st) {
