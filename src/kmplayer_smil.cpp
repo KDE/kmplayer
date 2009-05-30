@@ -1289,8 +1289,7 @@ KDE_NO_EXPORT void SMIL::Layout::message (MessageType msg, void *content) {
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id),
    media_info (NULL),
-   z_order (0), background_color (0), bg_opacity (100),
-   has_mouse (false)
+   z_order (0), background_color (0), bg_opacity (100)
 {}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
@@ -2755,8 +2754,7 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
    trans_start_time (0),
    trans_out_timer (NULL),
    sensitivity (sens_opaque),
-   trans_out_active (false),
-   has_mouse (false) {
+   trans_out_active (false) {
     view_mode = Mrl::WindowMode;
 }
 
@@ -3673,9 +3671,12 @@ void *SMIL::SmilText::role (RoleType msg, void *content) {
         return surface ();
 
     case RoleReceivers: {
-        ConnectionList *l = mouse_listeners.receivers ((MessageType)(long)content);
+        MessageType msgt = (MessageType) (long) content;
+        ConnectionList *l = mouse_listeners.receivers (msgt);
         if (l)
             return l;
+        if (MsgSurfaceAttach == msgt)
+            return &media_attached;
     } // fall through
 
     default:

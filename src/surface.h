@@ -62,6 +62,7 @@ public:
 #endif
     bool dirty;                    // a decendant is removed
     bool scroll;
+    bool has_mouse;
 
 private:
     NodePtrW current_video;

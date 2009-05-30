@@ -333,10 +333,6 @@ public:
     ShowBackground show_background;
     Fit fit;
     ConnectionList m_AttachedMediaTypes;   // active attached mediatypes
-    /**
-     * boolean for check if pointerEntered/pointerLeft should be called by View
-     */
-    bool has_mouse;
 protected:
     RegionBase (NodePtr & d, short id);
     PostponePtr postpone_lock;               // pause while loading bg image
@@ -655,14 +651,13 @@ public:
     Posting *trans_out_timer;
     enum { sens_opaque, sens_transparent, sens_percentage } sensitivity;
     bool trans_out_active;
-    bool has_mouse;
 
 protected:
     virtual void clipStart ();
     virtual void clipStop ();
 
     MouseListeners mouse_listeners;
-    ConnectionList m_MediaAttached;        // mouse entered
+    ConnectionList m_MediaAttached;
     ConnectionList m_TransformedIn;        // transIn ready
     ConnectionLink region_paint;           // attached region needs painting
     ConnectionLink region_attach;          // attached to region
@@ -739,6 +734,7 @@ public:
     SurfacePtrW text_surface;
     NodePtrW region_node;
     ConnectionLink region_attach;
+    ConnectionList media_attached;
     MouseListeners mouse_listeners;
     Runtime *runtime;
 };
