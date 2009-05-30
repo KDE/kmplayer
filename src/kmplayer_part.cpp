@@ -1066,7 +1066,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (
     object_counter (0),
     m_started (false),
     m_enablefinish (false),
-    m_evaluating (false) {
+    m_evaluating (false),
+    m_allow_once (false),
+    m_skip_put (false) {
       connect (parent, SIGNAL (started (KIO::Job *)), this, SLOT (started ()));
 }
 
@@ -1194,12 +1196,69 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
         rval = "Access denied";
         return true;
     }
+    if (name.startsWith ("__kmplayer_func")) {
+        rid = id;
+        type = KParts::LiveConnectExtension::TypeFunction;
+        return true;
+    }
+    if (name.startsWith ("__kmplayer_util_") ||
+            redir_funcs.find (name) != redir_funcs.end ())
+        return false;
+    if (name == "__kmplayer_unique_name") {
+        rval = QString ("__kmplayer__obj_%1").arg (object_counter);
+        type = KParts::LiveConnectExtension::TypeString;
+        rid = id;
+        object_counter++;
+        m_allow_once = true;
+        return true;
+    }
     rid = id;
     QString req_result;
     emit requestGet (id, name, &req_result);
     if (!req_result.isEmpty ()) {
-        if (str2LC (req_result, type, rval))
-            return true;
+        if (str2LC (req_result, type, rval)) {
+            if (KParts::LiveConnectExtension::TypeFunction == type) {
+                m_skip_put = true;
+                if (!redir_funcs.size ())
+                    evaluate (
+                            "this.__kmplayer_util_make_arg = function(arg) {"
+                            "  var t = typeof arg;"
+                            "  if (t == 'number')"
+                            "    return 'n:' + arg;"
+                            "  if (t == 'object') {"
+                            "    var s = this.__kmplayer_unique_name;"
+                            "    this[s] = arg;"
+                            "    return 'o:this.' + s;"
+                            "  }"
+                            "  if (t == 'function') {"
+                            "    var s = this.__kmplayer_unique_name;"
+                            "    this[s] = arg;"
+                            "    return 'o:this.' + s;"
+                            "  }"
+                            "  if (t == 'boolean')"
+                            "    return 'b:' + arg;"
+                            "  if (t == 'undefined' || t == null)"
+                            "    return 'u:' + arg;"
+                            "  var s = '' + arg;"
+                            "  s = s.replace('\\\\', '\\\\\\\\');"
+                            "  s = s.replace('\\n', '\\\\n');"
+                            "  return 's:' + s;"
+                            "}");
+                evaluate (QString (
+                            "this.%1=function(){"
+                            "  var args=[];"
+                            "  for (var i=0;i<arguments.length;++i)"
+                            "      args.push (this.__kmplayer_util_make_arg("
+                            "                                   arguments[i]));"
+                            "  return this.__kmplayer_func('%2',args.join('\\n'));"
+                            "}")
+                        .arg (name)
+                        .arg (name));
+                redir_funcs.push_back (name);
+                m_skip_put = false;
+            }
+            return false;
+        }
     }
     kDebug () << "[01;35mget[00m " << name;
     const char * str = name.ascii ();
@@ -1240,12 +1299,18 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
 
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
   (const unsigned long, const QString & name, const QString & val) {
+    if (m_skip_put)
+        return false;
     if (name == "__kmplayer__res") {
         script_result = val;
         return true;
     }
     if (name.startsWith ("__kmplayer__obj_")) {
         script_result = val;
+        if (m_allow_once) {
+            m_allow_once = false;
+            return false;
+        }
         return !m_evaluating;
     }
 
@@ -1271,35 +1336,81 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
     return true;
 }
 
+static QString unescapeArg (const QString &arg) {
+    QString s;
+    bool last_escape = false;
+    for (int i = 0; i < arg.length (); ++i)
+        switch (arg[i].unicode ()) {
+        case '\\':
+            if (last_escape) {
+                s += QChar ('\\');
+                last_escape = false;
+            } else {
+                last_escape = true;
+            }
+            break;
+        case 'n':
+            if (last_escape) {
+                s += QChar ('\n');
+                last_escape = false;
+                break;
+            } // else fall through
+        default:
+            if (last_escape) {
+                kError() << "unescape error " << arg;
+                last_escape = false;
+            }
+            s += arg[i];
+        }
+    return s;
+}
+
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
   (const unsigned long id, const QString & name,
    const QStringList & args, KParts::LiveConnectExtension::Type & type,
    unsigned long & rid, QString & rval) {
+    QString func = name;
     QString req_result;
     QStringList arglst;
-    for (QList<QString>::const_iterator i = args.begin (); i != args.end (); ++i) {
-        bool ok;
-        int iv = (*i).toInt (&ok);
-        if (ok) {
-            arglst << QString ("n:%1").arg (iv);
+    int oid = id;
+    QList<QString>::const_iterator it = args.begin ();
+    if (func == "__kmplayer_func") {
+        if ( it != args.end ()) {
+            func = *it;
+            oid = 0;
+            if ( ++it != args.end ()) {
+                QStringList a = (*it).split ("\n");
+                for (QStringList::iterator i = a.begin(); i != a.end (); ++i)
+                    arglst << ((*i).startsWith ("s:") ? unescapeArg (*i) : *i);
+            }
         } else {
-            double dv = (*i).toDouble (&ok);
+            return false;
+        }
+    } else {
+        for (; it != args.end (); ++it) {
+            bool ok;
+            int iv = (*it).toInt (&ok);
             if (ok) {
-                arglst << QString ("n:%1").arg (dv);
+                arglst << QString ("n:%1").arg (iv);
             } else {
-                arglst << QString ("s:%1").arg (*i);
+                double dv = (*it).toDouble (&ok);
+                if (ok) {
+                    arglst << QString ("n:%1").arg (dv);
+                } else {
+                    arglst << QString ("s:%1").arg (*it);
+                }
             }
         }
     }
-    rid = id;
-    emit requestCall (id, name, arglst, &req_result);
+    rid = oid;
+    emit requestCall (oid, func, arglst, &req_result);
     if (!req_result.isEmpty ()) {
         if (str2LC (req_result, type, rval))
             return true;
     }
-    kDebug () << "[01;35mentry[00m " << name;
+    kDebug () << "[01;35mentry[00m " << func;
     const JSCommandEntry * entry = lastJSCommandEntry;
-    const char * str = name.ascii ();
+    const char * str = func.ascii ();
     if (!entry || strcmp (entry->name, str))
         entry = getJSCommandEntry (str);
     if (!entry)
