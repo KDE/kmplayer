@@ -1013,10 +1013,10 @@ void SmilTextVisitor::push () {
         float fs = info.props.font_size;
         if (fs < 0)
             fs = TextMedia::defaultFontSize ();
-        fs *= scale;
         float maxfs = max_font_size;
         if (maxfs < 1.0)
-            maxfs = info.props.font_size;
+            maxfs = fs;
+        fs *= scale;
         maxfs *= scale;
 
         int align = -1;
