@@ -1424,7 +1424,7 @@ class KMPLAYER_NO_EXPORT MouseVisitor : public Visitor {
     bool handled;
     bool bubble_up;
 
-    void dispatchSurfaceAttach (Node *n);
+    bool deliverAndForward (Node *n, Surface *s, bool inside, bool deliver);
     bool surfaceEvent (Node *mt, Surface *s);
 public:
     MouseVisitor (ViewArea *v, MessageType evt, int x, int y);
@@ -1448,22 +1448,6 @@ KDE_NO_CDTOR_EXPORT
 MouseVisitor::MouseVisitor (ViewArea *v, MessageType evt, int a, int b)
   : view_area (v), event (evt), x (a), y (b),
     handled (false), bubble_up (false) {
-}
-
-void MouseVisitor::dispatchSurfaceAttach (Node *n) {
-    ConnectionList *nl = nodeMessageReceivers (n, MsgSurfaceAttach);
-    if (nl) {
-        NodePtr node_save = source;
-        source = n;
-
-        for (Connection *c = nl->first(); c; c = nl->next ()) {
-            if (c->connecter)
-                c->connecter->accept (this);
-            if (!source || !source->active ())
-                break;
-        }
-        source = node_save;
-    }
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (Node * n) {
@@ -1554,30 +1538,9 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
             }
         child_handled &= !bubble_up;
         bubble_up = false;
+        if (source && source->active ())
+            deliverAndForward (region, s, inside, !child_handled);
 
-        MessageType user_event = event;
-        if (source && source->active ()) {
-            bool notify_receivers = !child_handled;
-            bool pass_event = !child_handled;
-            if (event == MsgEventPointerMoved) {
-                pass_event = true; // always pass move events
-                if (s->has_mouse && !inside) {
-                    notify_receivers = true;
-                    s->has_mouse = false;
-                    user_event = MsgEventPointerOutBounds;
-                } else if (inside && !s->has_mouse) {
-                    notify_receivers = true;
-                    s->has_mouse = true;
-                    user_event = MsgEventPointerInBounds;
-                }
-            }// else // MsgEventClicked
-            if (notify_receivers) {
-                Posting mouse_event (region, user_event);
-                region->deliver (user_event, &mouse_event);
-            }
-            if (pass_event && source && source->active ())
-                dispatchSurfaceAttach (region);
-        }
         handled = inside;
         matrix = m;
     }
@@ -1663,6 +1626,53 @@ KDE_NO_EXPORT void MouseVisitor::visit (Element *elm) {
     }
 }
 
+bool MouseVisitor::deliverAndForward (Node *node, Surface *s, bool inside, bool deliver) {
+    bool forward = deliver;
+    MessageType user_event = event;
+    if (event == MsgEventPointerMoved) {
+        forward = true; // always pass move events
+        if (inside && !s->has_mouse) {
+            deliver = true;
+            user_event = MsgEventPointerInBounds;
+        } else if (!inside && s->has_mouse) {
+            deliver = true;
+            user_event = MsgEventPointerOutBounds;
+        } else if (!inside) {
+            return false;
+        } else {
+            deliver = false;
+        }
+    }
+    s->has_mouse = inside;
+
+    NodePtrW node_save = node;
+
+    if (forward) {
+        ConnectionList *nl = nodeMessageReceivers (node, MsgSurfaceAttach);
+        if (nl) {
+            NodePtr node_save = source;
+            source = node;
+
+            for (Connection *c = nl->first(); c; c = nl->next ()) {
+                if (c->connecter)
+                    c->connecter->accept (this);
+                if (!source || !source->active ())
+                    break;
+            }
+            source = node_save;
+        }
+    }
+    if (!node_save || !node->active ())
+        return false;
+    if (deliver) {
+        Posting mouse_event (node, user_event);
+        node->deliver (user_event, &mouse_event);
+    }
+    if (!node_save || !node->active ())
+        return false;
+    return true;
+}
+
 bool MouseVisitor::surfaceEvent (Node *node, Surface *s) {
     if (!s)
         return false;
@@ -1674,30 +1684,7 @@ bool MouseVisitor::surfaceEvent (Node *node, Surface *s) {
     IRect scr = matrix.toScreen (rect);
     int rx = scr.x(), ry = scr.y(), rw = scr.width(), rh = scr.height();
     const bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
-    MessageType user_event = event;
-    if (event == MsgEventPointerMoved) {
-        if (inside && !s->has_mouse)
-            user_event = MsgEventPointerInBounds;
-        else if (!inside && s->has_mouse)
-            user_event = MsgEventPointerOutBounds;
-        else if (!inside)
-            return false;
-    }
-    s->has_mouse = inside;
-
-    NodePtrW node_save = node;
-
-    if (inside || event == MsgEventPointerMoved)
-        dispatchSurfaceAttach (node);
-    if (!node_save || !node->active ())
-        return false;
-    if (MsgEventPointerMoved != user_event) {
-        Posting mouse_event (node, user_event);
-        node->deliver (user_event, &mouse_event);
-    }
-    if (!node_save || !node->active ())
-        return false;
-    return true;
+    return deliverAndForward (node, s, inside, true);
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
