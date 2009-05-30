@@ -722,6 +722,10 @@ KDE_NO_EXPORT void Runtime::setDuration () {
     // kDebug () << "Runtime::started set dur timer " << durTime ().offset;
 }
 
+bool Runtime::started () const {
+    return timingstate >= timings_started && timingstate < timings_stopped;
+}
+
 /**
  * duration_timer timer expired or no duration set after started
  */

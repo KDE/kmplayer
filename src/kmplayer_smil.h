@@ -134,9 +134,7 @@ public:
         DurationItem *next;
     } durations [(const int) DurTimeLast];
     void setDuration ();
-    bool started () const {
-        return timingstate == timings_started || timingstate == timings_paused;
-    }
+    bool started () const;
     bool active () const {
         return timingstate >= timings_started && timingstate != timings_stopped;
     }
