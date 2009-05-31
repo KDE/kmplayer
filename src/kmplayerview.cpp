@@ -143,7 +143,10 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
     m_revert_fullscreen (false),
     m_no_info (false),
     m_edit_mode (false)
-{}
+{
+    setAttribute (Qt::WA_NoSystemBackground, true);
+    setAutoFillBackground (false);
+}
 
 KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
     KUrl::List uris = KUrl::List::fromMimeData( de->mimeData() );
@@ -195,13 +198,11 @@ void View::initDock (QWidget *central) {
     m_view_area->resizeEvent (0L);
 }
 
-KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
-    setAutoFillBackground (false); // prevents flashing
-    QPalette pal (QColor (64, 64,64), QColor (32, 32, 32));
+KDE_NO_EXPORT void View::init (KActionCollection *action_collection, bool transparent) {
     QVBoxLayout * viewbox = new QVBoxLayout;
     viewbox->setContentsMargins (0, 0, 0, 0);
     setLayout (viewbox);
-    m_view_area = new ViewArea (NULL, this);
+    m_view_area = new ViewArea (NULL, this, !transparent);
     m_playlist = new PlayListView (NULL, this, action_collection);
 
     m_picture = new PictureWidget (m_view_area, this);

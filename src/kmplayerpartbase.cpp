@@ -148,9 +148,9 @@ KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url
     m_bookmark_manager->emitChanged (b);
 }
 
-void PartBase::init (KActionCollection * action_collection, const QString &objname) {
+void PartBase::init (KActionCollection * action_collection, const QString &objname, bool transparent) {
     KParts::Part::setWidget (m_view);
-    m_view->init (action_collection);
+    m_view->init (action_collection, transparent);
     connect(m_settings, SIGNAL(configChanged()), this, SLOT(settingsChanged()));
     m_settings->readConfig ();
     m_settings->applyColorSetting (false);

@@ -206,7 +206,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
         kmplayerpart_static->ref ();
     setComponentData (KMPlayerFactory::componentData ());
     init (actionCollection (),
-            QString ("/KMPlayerPart%1").arg(kmplayerpart_static->counter++));
+         QString ("/KMPlayerPart%1").arg(kmplayerpart_static->counter++), true);
     createBookmarkMenu (m_view->controlPanel ()->bookmarkMenu, actionCollection ());
     m_view->controlPanel ()->bookmarkAction->setVisible (true);
     ///*KAction *playact =*/ new KAction(i18n("P&lay"), QString ("player_play"), KShortcut (), this, SLOT(play ()), actionCollection (), "play");
@@ -419,15 +419,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
     } else
         m_group.truncate (0);
     kmplayerpart_static->partlist.push_back (this);
-
-    QWidget *pwidget = view ()->parentWidget ();
-    if (pwidget) {
-        QPalette palette = m_view->viewArea()->palette ();
-        palette.setColor (m_view->viewArea()->backgroundRole(),
-                pwidget->palette ().color (pwidget->backgroundRole ()));
-        m_view->viewArea()->setPalette (palette);
-     // m_view->viewer()->setBackgroundColor(pwidget->paletteBackgroundColor());
-    }
 
     if (m_view->isFullScreen () != show_fullscreen)
         m_view->fullScreen ();

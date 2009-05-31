@@ -102,7 +102,7 @@ public:
     ~View();
 
     void addText (const QString &, bool eol=false);
-    void init (KActionCollection * ac);
+    void init (KActionCollection * ac, bool transparent);
     void initDock (QWidget *central);
     void reset ();
     //void print(QPrinter *pPrinter);

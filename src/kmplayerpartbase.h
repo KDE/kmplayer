@@ -88,7 +88,7 @@ class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
 public:
     PartBase (QWidget *parent, QObject *objParent, KSharedConfigPtr);
     ~PartBase ();
-    void init (KActionCollection *ac, const QString &objname);
+    void init (KActionCollection *ac, const QString &objname, bool transparent);
     virtual KMediaPlayer::View* view ();
     View* viewWidget () const { return m_view; }
     static KAboutData* createAboutData ();

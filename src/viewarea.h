@@ -43,7 +43,7 @@ class RepaintUpdater;
 class KMPLAYER_EXPORT ViewArea : public QWidget {
     Q_OBJECT
 public:
-    ViewArea (QWidget * parent, View * view);
+    ViewArea (QWidget *parent, View *view, bool paint_bg);
     ~ViewArea ();
     KDE_NO_EXPORT bool isFullScreen () const { return m_fullscreen; }
     KDE_NO_EXPORT bool isMinimalMode () const { return m_minimal; }
@@ -100,6 +100,7 @@ private:
     bool m_fullscreen;
     bool m_minimal;
     bool m_updaters_enabled;
+    bool m_paint_background;
 };
 
 /*

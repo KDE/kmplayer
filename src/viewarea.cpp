@@ -1783,7 +1783,7 @@ public:
 
 }
 
-KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view)
+KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view, bool paint_bg)
 // : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
  : //QWidget (parent),
    d (new ViewerAreaPrivate (this)),
@@ -1795,11 +1795,10 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view)
    m_repaint_timer (0),
    m_fullscreen (false),
    m_minimal (false),
-   m_updaters_enabled (true) {
-#ifdef KMPLAYER_WITH_CAIRO
-    setAttribute (Qt::WA_OpaquePaintEvent, true);
-    setAttribute (Qt::WA_PaintOnScreen, true);
-#endif
+   m_updaters_enabled (true),
+   m_paint_background (paint_bg) {
+    if (!paint_bg)
+        setAttribute (Qt::WA_NoSystemBackground, true);
     QPalette palette;
     palette.setColor (backgroundRole(), QColor (0, 0, 0));
     setPalette (palette);
@@ -1980,6 +1979,7 @@ KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
         scheduleRepaint (IRect (pe->rect ().x (), pe->rect ().y (), pe->rect ().width (), pe->rect ().height ()));
     else
 #endif
+        if (m_fullscreen || m_paint_background)
     {
         QPainter p (this);
         p.fillRect (pe->rect (), QBrush (palette ().color (backgroundRole ())));
@@ -2085,15 +2085,22 @@ KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
     //m_view->viewer()->resetBackgroundColor ();
     if (mrl) {
         updateSurfaceBounds ();
-        return surface.ptr ();
-    }
 #ifdef KMPLAYER_WITH_CAIRO
-    else if (surface->surface) {
-        cairo_surface_destroy (surface->surface);
-        surface->surface = 0L;
-        d->destroyBackingStore ();
-    }
+        setAttribute (Qt::WA_OpaquePaintEvent, true);
+        setAttribute (Qt::WA_PaintOnScreen, true);
 #endif
+        return surface.ptr ();
+    } else {
+#ifdef KMPLAYER_WITH_CAIRO
+        setAttribute (Qt::WA_OpaquePaintEvent, false);
+        setAttribute (Qt::WA_PaintOnScreen, false);
+        if (surface->surface) {
+            cairo_surface_destroy (surface->surface);
+            surface->surface = 0L;
+            d->destroyBackingStore ();
+        }
+#endif
+    }
     scheduleRepaint (IRect (0, 0, width (), height ()));
     return 0L;
 }
@@ -2376,6 +2383,7 @@ KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
              this, SLOT (fullScreenChanged ()));
     kDebug() << "VideoOutput::VideoOutput" << endl;
     setMonitoring (MonitorAll);
+    setAttribute (Qt::WA_NoSystemBackground, true);
     //setProtocol (QXEmbed::XPLAIN);
 }
 
