@@ -19,13 +19,13 @@ mime=video/quicktime:mov,qt:QuickTime;
 name=QuickTime Plug-in
 
 [3]
-description=Shockwave Flash 9.0 r115
+description=Shockwave Flash 10.0 r22
 file=libkmplayerpart.so
 mime=application/x-shockwave-flash:swf:Shockwave Flash;
 name=Shockwave Flash
 
 [4]
-description=FutureSplash Player 9.0 r115
+description=FutureSplash Player 10.0 r22
 file=libkmplayerpart.so
 mime=application/futuresplash:spl:FutureSplash Player;
 name=FutureSplash Player
