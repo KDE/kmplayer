@@ -128,7 +128,7 @@ static void killProcess (K3Process *process, QWidget *widget, bool group) {
     process->kill (SIGKILL);
     if (process->isRunning ())
         process->wait(1);
-    if (process->isRunning ())
+    if (process->isRunning () && widget)
         KMessageBox::error (widget,
                 i18n ("Failed to end player process."), i18n ("Error"));
 }
