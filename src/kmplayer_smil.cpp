@@ -1034,6 +1034,8 @@ static Element * fromAnimateGroup (NodePtr & d, const QString & tag) {
         return new SMIL::Set (d);
     else if (!strcmp (ctag, "animate"))
         return new SMIL::Animate (d);
+    else if (!strcmp (ctag, "animateColor"))
+        return new SMIL::AnimateColor (d);
     else if (!strcmp (ctag, "animateMotion"))
         return new SMIL::AnimateMotion (d);
     return NULL;
@@ -2371,7 +2373,7 @@ public:
         updatePauseStateEvent(an->anim_timer, an->runtime->paused_time);
         visit (static_cast <Element *> (an));
     }
-    void visit (SMIL::AnimateMotion *an) {
+    void visit (SMIL::AnimateBase *an) {
         updatePauseStateEvent(an->anim_timer, an->runtime->paused_time);
         visit (static_cast <Element *> (an));
     }
@@ -4188,21 +4190,21 @@ KDE_NO_EXPORT bool SMIL::Animate::timerTick () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT SMIL::AnimateMotion::AnimateMotion (NodePtr &d)
- : AnimateGroup (d, id_node_animate),
-  anim_timer (NULL),
+KDE_NO_CDTOR_EXPORT SMIL::AnimateBase::AnimateBase (NodePtr &d, short id)
+ : AnimateGroup (d, id),
+   anim_timer (NULL),
    keytimes (NULL),
    spline_table (NULL),
    keytime_count (0) {}
 
-KDE_NO_CDTOR_EXPORT SMIL::AnimateMotion::~AnimateMotion () {
+KDE_NO_CDTOR_EXPORT SMIL::AnimateBase::~AnimateBase () {
     if (keytimes)
         free (keytimes);
     if (spline_table)
         free (spline_table);
 }
 
-KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
+KDE_NO_EXPORT void SMIL::AnimateBase::init () {
     if (Runtime::TimingsInitialized > runtime->timingstate) {
         if (anim_timer) {
             document ()->cancelPosting (anim_timer);
@@ -4222,61 +4224,12 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
             free (spline_table);
         spline_table = NULL;
         splines.clear ();
-        cur_x = cur_y = delta_x = delta_y = SizeType();
         AnimateGroup::init ();
     }
 }
 
-KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
-    //kDebug () << "AnimateMotion::started " << durTime ().durval << endl;
-    Element *target = convertNode <Element> (targetElement ());
-    if (!checkTarget (target))
-        return;
-    if (anim_timer) {
-        document ()->cancelPosting (anim_timer);
-        anim_timer = NULL;
-    }
+KDE_NO_EXPORT void SMIL::AnimateBase::begin () {
     interval = 0;
-    if (change_from.isEmpty ()) {
-        if (values.size () > 1) {
-            getCoordinates (values[0], begin_x, begin_y);
-            getCoordinates (values[1], end_x, end_y);
-        } else {
-            CalculatedSizer sizes;
-            if (SMIL::id_node_region == target->id)
-                sizes = static_cast<SMIL::Region*>(target)->sizes;
-            else if (SMIL::id_node_first_mediatype <= target->id &&
-                    SMIL::id_node_last_mediatype >= target->id)
-                sizes = static_cast<SMIL::MediaType*>(target)->sizes;
-            if (sizes.left.isSet ()) {
-                begin_x = sizes.left;
-            } else if (sizes.right.isSet() && sizes.width.isSet ()) {
-                begin_x = sizes.right;
-                begin_x -= sizes.width;
-            } else {
-                begin_x = "0";
-            }
-            if (sizes.top.isSet ()) {
-                begin_y = sizes.top;
-            } else if (sizes.bottom.isSet() && sizes.height.isSet ()) {
-                begin_y = sizes.bottom;
-                begin_y -= sizes.height;
-            } else {
-                begin_y = "0";
-            }
-        }
-    } else {
-        getCoordinates (change_from, begin_x, begin_y);
-    }
-    if (!change_by.isEmpty ()) {
-        getCoordinates (change_by, delta_x, delta_y);
-        end_x = begin_x;
-        end_y = begin_y;
-        end_x += delta_x;
-        end_y += delta_y;
-    } else if (!change_to.isEmpty ()) {
-        getCoordinates (change_to, end_x, end_y);
-    }
     if (!setInterval ())
         return;
     applyStep ();
@@ -4285,23 +4238,16 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
     AnimateGroup::begin ();
 }
 
-KDE_NO_EXPORT void SMIL::AnimateMotion::finish () {
+KDE_NO_EXPORT void SMIL::AnimateBase::finish () {
     if (anim_timer) { // make sure timers are stopped
         document ()->cancelPosting (anim_timer);
         anim_timer = NULL;
     }
     change_updater.disconnect ();
-    if (active ()) {
-        if (cur_x.size () != end_x.size () || cur_y.size () != end_y.size ()) {
-            cur_x = end_x;
-            cur_y = end_y;
-            applyStep (); // we lost some steps ..
-        }
-    }
     AnimateGroup::finish ();
 }
 
-KDE_NO_EXPORT void SMIL::AnimateMotion::deactivate () {
+KDE_NO_EXPORT void SMIL::AnimateBase::deactivate () {
     if (anim_timer) {
         document ()->cancelPosting (anim_timer);
         anim_timer = NULL;
@@ -4314,7 +4260,7 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::deactivate () {
     AnimateGroup::deactivate ();
 }
 
-KDE_NO_EXPORT void SMIL::AnimateMotion::message (MessageType msg, void *data) {
+KDE_NO_EXPORT void SMIL::AnimateBase::message (MessageType msg, void *data) {
     switch (msg) {
         case MsgEventTimer: {
             TimerPosting *te = static_cast <TimerPosting *> (data);
@@ -4347,7 +4293,7 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::message (MessageType msg, void *data) {
     AnimateGroup::message (msg, data);
 }
 
-void SMIL::AnimateMotion::parseParam (const TrieString &name, const QString &val) {
+void SMIL::AnimateBase::parseParam (const TrieString &name, const QString &val) {
     //kDebug () << "AnimateMotion::parseParam " << name << "=" << val << endl;
     if (name == "from") {
         change_from = val;
@@ -4393,13 +4339,13 @@ void SMIL::AnimateMotion::parseParam (const TrieString &name, const QString &val
         AnimateGroup::parseParam (name, val);
 }
 
-bool SMIL::AnimateMotion::checkTarget (Node *n) {
+bool SMIL::AnimateBase::checkTarget (Node *n) {
     if (!n ||
             (SMIL::id_node_region != n->id &&
                 !(SMIL::id_node_first_mediatype <= n->id &&
                     SMIL::id_node_last_mediatype >= n->id))) {
-        kWarning () << "animateMotion target element not " <<
-            (n ? "supported" : "found") << endl;
+        kWarning () << nodeName() << "target element not " <<
+            (n ? "supported" : "found");
         if (anim_timer) {
             document ()->cancelPosting (anim_timer);
             anim_timer = NULL;
@@ -4410,22 +4356,10 @@ bool SMIL::AnimateMotion::checkTarget (Node *n) {
     return true;
 }
 
-bool SMIL::AnimateMotion::getCoordinates (const QString &coord, SizeType &x, SizeType &y) {
-    int p = coord.indexOf (QChar (','));
-    if (p < 0)
-        p = coord.indexOf (QChar (' '));
-    if (p > 0) {
-        x = coord.left (p).stripWhiteSpace ();
-        y = coord.mid (p + 1).stripWhiteSpace ();
-        return true;
-    }
-    return false;
-}
-
-static SMIL::AnimateMotion::Point2D cubicBezier (float ax, float bx, float cx,
+static SMIL::AnimateBase::Point2D cubicBezier (float ax, float bx, float cx,
         float ay, float by, float cy, float t) {
     float   tSquared, tCubed;
-    SMIL::AnimateMotion::Point2D result;
+    SMIL::AnimateBase::Point2D result;
 
     /* calculate the curve point at parameter value t */
 
@@ -4439,7 +4373,7 @@ static SMIL::AnimateMotion::Point2D cubicBezier (float ax, float bx, float cx,
 }
 
 static
-float cubicBezier (SMIL::AnimateMotion::Point2D *table, int a, int b, float x) {
+float cubicBezier (SMIL::AnimateBase::Point2D *table, int a, int b, float x) {
     if (b > a + 1) {
         int mid = (a + b) / 2;
         if (table[mid].x > x)
@@ -4450,7 +4384,8 @@ float cubicBezier (SMIL::AnimateMotion::Point2D *table, int a, int b, float x) {
     return table[a].y + (x - table[a].x) / (table[b].x - table[a].x) * (table[b].y - table[a].y);
 }
 
-bool SMIL::AnimateMotion::setInterval () {
+
+bool SMIL::AnimateBase::setInterval () {
     int cs = runtime->durTime ().offset;
     if (keytime_count > interval + 1)
         cs = (int) (cs * (keytimes[interval+1] - keytimes[interval]));
@@ -4462,12 +4397,6 @@ bool SMIL::AnimateMotion::setInterval () {
         runtime->doFinish ();
         return false;
     }
-    cur_x = begin_x;
-    cur_y = begin_y;
-    delta_x = end_x;
-    delta_x -= begin_x;
-    delta_y = end_y;
-    delta_y -= begin_y;
     interval_start_time = document ()->last_event_time;
     interval_end_time = interval_start_time + 10 * cs;
     switch (calcMode) {
@@ -4527,6 +4456,93 @@ bool SMIL::AnimateMotion::setInterval () {
     return true;
 }
 
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
+    cur_x = cur_y = delta_x = delta_y = SizeType();
+    AnimateBase::init ();
+}
+
+KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
+    //kDebug () << "AnimateMotion::started " << durTime ().durval << endl;
+    Element *target = convertNode <Element> (targetElement ());
+    if (!checkTarget (target))
+        return;
+    if (anim_timer) {
+        document ()->cancelPosting (anim_timer);
+        anim_timer = NULL;
+    }
+    if (change_from.isEmpty ()) {
+        if (values.size () > 1) {
+            getCoordinates (values[0], begin_x, begin_y);
+            getCoordinates (values[1], end_x, end_y);
+        } else {
+            CalculatedSizer sizes;
+            if (SMIL::id_node_region == target->id)
+                sizes = static_cast<SMIL::Region*>(target)->sizes;
+            else if (SMIL::id_node_first_mediatype <= target->id &&
+                    SMIL::id_node_last_mediatype >= target->id)
+                sizes = static_cast<SMIL::MediaType*>(target)->sizes;
+            if (sizes.left.isSet ()) {
+                begin_x = sizes.left;
+            } else if (sizes.right.isSet() && sizes.width.isSet ()) {
+                begin_x = sizes.right;
+                begin_x -= sizes.width;
+            } else {
+                begin_x = "0";
+            }
+            if (sizes.top.isSet ()) {
+                begin_y = sizes.top;
+            } else if (sizes.bottom.isSet() && sizes.height.isSet ()) {
+                begin_y = sizes.bottom;
+                begin_y -= sizes.height;
+            } else {
+                begin_y = "0";
+            }
+        }
+    } else {
+        getCoordinates (change_from, begin_x, begin_y);
+    }
+    if (!change_by.isEmpty ()) {
+        getCoordinates (change_by, delta_x, delta_y);
+        end_x = begin_x;
+        end_y = begin_y;
+        end_x += delta_x;
+        end_y += delta_y;
+    } else if (!change_to.isEmpty ()) {
+        getCoordinates (change_to, end_x, end_y);
+    }
+    cur_x = begin_x;
+    cur_y = begin_y;
+    delta_x = end_x;
+    delta_x -= begin_x;
+    delta_y = end_y;
+    delta_y -= begin_y;
+    AnimateBase::begin ();
+}
+
+KDE_NO_EXPORT void SMIL::AnimateMotion::finish () {
+    if (active ()) {
+        if (cur_x.size () != end_x.size () || cur_y.size () != end_y.size ()) {
+            cur_x = end_x;
+            cur_y = end_y;
+            applyStep (); // we lost some steps ..
+        }
+    }
+    AnimateBase::finish ();
+}
+
+bool SMIL::AnimateMotion::getCoordinates (const QString &coord, SizeType &x, SizeType &y) {
+    int p = coord.indexOf (QChar (','));
+    if (p < 0)
+        p = coord.indexOf (QChar (' '));
+    if (p > 0) {
+        x = coord.left (p).stripWhiteSpace ();
+        y = coord.mid (p + 1).stripWhiteSpace ();
+        return true;
+    }
+    return false;
+}
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::applyStep () {
     Node *target = target_element.ptr ();
@@ -4582,6 +4598,178 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::timerTick (unsigned int cur_time) {
     } else if (values.size () > ++interval + 1) {
         getCoordinates (values[interval], begin_x, begin_y);
         getCoordinates (values[interval+1], end_x, end_y);
+        cur_x = begin_x;
+        cur_y = begin_y;
+        delta_x = end_x;
+        delta_x -= begin_x;
+        delta_y = end_y;
+        delta_y -= begin_y;
+        if (setInterval ()) {
+            applyStep ();
+            return true;
+        }
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
+static bool getAnimateColor (unsigned int val, SMIL::AnimateColor::Channels &c) {
+    c.alpha = val >> 24;
+    c.red = (val >> 16) & 0xff;
+    c.green = (val >> 8) & 0xff;
+    c.blue = val & 0xff;
+    return true;
+}
+
+static bool getAnimateColor (const QString &val, SMIL::AnimateColor::Channels &c) {
+    QColor color (val);
+    return getAnimateColor (color.rgba (), c);
+}
+
+static short colorNormalise (int c) {
+    if (c > 255)
+        return 255;
+    if (c < -255)
+        return -255;
+    return c;
+}
+
+SMIL::AnimateColor::Channels &SMIL::AnimateColor::Channels::operator *= (const float f) {
+    alpha = colorNormalise ((int) (f * alpha));
+    red = colorNormalise ((int) (f * red));
+    green = colorNormalise ((int) (f * green));
+    blue = colorNormalise ((int) (f * blue));
+    return *this;
+}
+
+SMIL::AnimateColor::Channels &SMIL::AnimateColor::Channels::operator += (const Channels &c) {
+    alpha = colorNormalise ((int) alpha + c.alpha);
+    red = colorNormalise ((int) red + c.red);
+    green = colorNormalise ((int) green + c.green);
+    blue = colorNormalise ((int) blue + c.blue);
+    return *this;
+}
+
+SMIL::AnimateColor::Channels &SMIL::AnimateColor::Channels::operator -= (const Channels &c) {
+    alpha = colorNormalise ((int) alpha - c.alpha);
+    red = colorNormalise ((int) red - c.red);
+    green = colorNormalise ((int) green - c.green);
+    blue = colorNormalise ((int) blue - c.blue);
+    return *this;
+}
+
+unsigned int SMIL::AnimateColor::Channels::argb () {
+    unsigned int v =
+        (0xff000000 & ((unsigned)(alpha < 0 ? 0 : alpha) << 24)) |
+        (0x00ff0000 & ((unsigned)(red < 0 ? 0 : red) << 16)) |
+        (0x0000ff00 & ((unsigned)(green < 0 ? 0 : green) << 8)) |
+        (0x000000ff & (blue < 0 ? 0 : blue));
+    return v;
+}
+
+void SMIL::AnimateColor::Channels::clear () {
+    alpha = red = blue = green = 0;
+}
+
+KDE_NO_EXPORT void SMIL::AnimateColor::init () {
+    cur_c.clear ();
+    delta_c.clear ();
+    AnimateBase::init ();
+}
+
+KDE_NO_EXPORT void SMIL::AnimateColor::begin () {
+    Element *target = convertNode <Element> (targetElement ());
+    if (!checkTarget (target))
+        return;
+    if (anim_timer) {
+        document ()->cancelPosting (anim_timer);
+        anim_timer = NULL;
+    }
+    if (change_from.isEmpty ()) {
+        if (values.size () > 1) {
+            getAnimateColor (values[0], begin_c);
+            getAnimateColor (values[1], end_c);
+        } else {
+            if (SMIL::id_node_region == target->id)
+                getAnimateColor (
+                        static_cast<SMIL::Region*>(target)->background_color,
+                        begin_c);
+            else if (SMIL::id_node_first_mediatype <= target->id &&
+                    SMIL::id_node_last_mediatype >= target->id)
+                getAnimateColor (
+                        static_cast<SMIL::MediaType*>(target)->background_color,
+                        begin_c);
+        }
+    } else {
+        getAnimateColor (change_from, begin_c);
+    }
+    if (!change_by.isEmpty ()) {
+        getAnimateColor (change_by, delta_c);
+        end_c = begin_c;
+        end_c += delta_c;
+    } else if (!change_to.isEmpty ()) {
+        getAnimateColor (change_to, end_c);
+    }
+    cur_c = begin_c;
+    delta_c = end_c;
+    delta_c -= begin_c;
+    AnimateBase::begin ();
+}
+
+KDE_NO_EXPORT void SMIL::AnimateColor::finish () {
+    if (active ()) {
+        if (cur_c.argb () != end_c.argb ()) {
+            cur_c = end_c;
+            applyStep (); // we lost some steps ..
+        }
+    }
+    AnimateBase::finish ();
+}
+
+KDE_NO_EXPORT void SMIL::AnimateColor::applyStep () {
+    Node *target = target_element.ptr ();
+    if (!checkTarget (target))
+        return;
+    QString val; // TODO make more efficient
+    val.sprintf ("#%06x", 0xffffff & cur_c.argb ());
+    static_cast <Element *> (target)->setParam ("background-color", val);
+}
+
+KDE_NO_EXPORT bool SMIL::AnimateColor::timerTick (unsigned int cur_time) {
+    if (cur_time && cur_time <= interval_end_time) {
+        float gain = 1.0 * (cur_time - interval_start_time) /
+                           (interval_end_time - interval_start_time);
+        if (gain > 1.0) {
+            change_updater.disconnect ();
+            gain = 1.0;
+        }
+        switch (calcMode) {
+            case calc_paced: // FIXME
+            case calc_linear:
+                cur_c = delta_c;
+                cur_c *= gain;
+                cur_c += begin_c;
+                break;
+            case calc_spline:
+                if (spline_table) {
+                    float y = cubicBezier (spline_table, 0, 99, gain);
+                    cur_c = delta_c;
+                    cur_c *= y;
+                    cur_c += begin_c;
+                }
+                break;
+            case calc_discrete:
+                return true; // very sub-optimal timer
+        }
+        applyStep ();
+        return true;
+    } else if (values.size () > ++interval + 1) {
+        getAnimateColor (values[interval], begin_c);
+        getAnimateColor (values[interval+1], end_c);
+        cur_c = begin_c;
+        delta_c = end_c;
+        delta_c -= begin_c;
         if (setInterval ()) {
             applyStep ();
             return true;
@@ -4636,7 +4824,7 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::Animate * n) {
     visit (static_cast <SMIL::AnimateGroup *> (n));
 }
 
-KDE_NO_EXPORT void Visitor::visit (SMIL::AnimateMotion * n) {
+KDE_NO_EXPORT void Visitor::visit (SMIL::AnimateBase * n) {
     visit (static_cast <SMIL::AnimateGroup *> (n));
 }
 

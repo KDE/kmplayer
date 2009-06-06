@@ -232,6 +232,8 @@ const short id_node_smil_text = 125;
 const short id_node_text_styling = 126;
 const short id_node_set = 132;
 const short id_node_animate = 133;
+const short id_node_animate_color = 134;
+const short id_node_animate_motion = 135;
 const short id_node_title = 140;
 const short id_node_param = 141;
 const short id_node_meta = 142;
@@ -243,7 +245,7 @@ const short id_node_anchor = 150;
 const short id_node_area = 151;
 const short id_node_first = id_node_smil;
 const short id_node_first_timed_mrl = id_node_body;
-const short id_node_last_timed_mrl = id_node_animate;
+const short id_node_last_timed_mrl = id_node_animate_motion;
 const short id_node_first_mediatype = id_node_img;
 const short id_node_last_mediatype = id_node_brush;
 const short id_node_first_group = id_node_body;
@@ -818,14 +820,15 @@ private:
     QString change_from_unit;
 };
 
-class KMPLAYER_NO_EXPORT AnimateMotion : public AnimateGroup {
+class KMPLAYER_NO_EXPORT AnimateBase : public AnimateGroup {
 public:
     struct Point2D {
         float x;
         float y;
     };
-    AnimateMotion (NodePtr & d);
-    ~AnimateMotion ();
+    AnimateBase (NodePtr &d, short id);
+    ~AnimateBase ();
+
     virtual void init ();
     virtual void begin ();
     virtual void finish ();
@@ -833,16 +836,16 @@ public:
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual void message (MessageType msg, void *content=NULL);
     virtual void accept (Visitor *v) { v->visit (this); }
-    KDE_NO_EXPORT const char * nodeName () const { return "animateMotion"; }
     PlayType playType () { return play_type_none; }
 
     Posting *anim_timer;
-private:
-    bool timerTick (unsigned int cur_time);
+protected:
+    virtual bool timerTick (unsigned int cur_time) = 0;
+    virtual void applyStep () = 0;
+
     bool checkTarget (Node *n);
     bool setInterval ();
-    void applyStep ();
-    bool getCoordinates (const QString &coord, SizeType &x, SizeType &y);
+
     enum { acc_none, acc_sum } accumulate;
     enum { add_replace, add_sum } additive;
     enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
@@ -859,13 +862,61 @@ private:
     unsigned int interval;
     unsigned int interval_start_time;
     unsigned int interval_end_time;
+};
+
+class KMPLAYER_NO_EXPORT AnimateMotion : public AnimateBase {
+public:
+    AnimateMotion (NodePtr &d) : AnimateBase (d, id_node_animate_motion) {}
+
+    virtual void init ();
+    virtual void begin ();
+    virtual void finish ();
+    //virtual void accept (Visitor *v) { v->visit (this); }
+    KDE_NO_EXPORT const char * nodeName () const { return "animateMotion"; }
+
+private:
+    virtual bool timerTick (unsigned int cur_time);
+    virtual void applyStep ();
+    bool getCoordinates (const QString &coord, SizeType &x, SizeType &y);
     SizeType begin_x, begin_y;
     SizeType cur_x, cur_y;
     SizeType delta_x, delta_y;
     SizeType end_x, end_y;
 };
 
-// TODO animateColor transitionFilter
+class KMPLAYER_NO_EXPORT AnimateColor : public AnimateBase {
+public:
+    struct Channels {
+        short blue;
+        short green;
+        short red;
+        short alpha;
+        unsigned int argb ();
+        void clear ();
+        Channels &operator *= (const float f);
+        Channels &operator += (const Channels &c);
+        Channels &operator -= (const Channels &c);
+    };
+
+    AnimateColor (NodePtr &d) : AnimateBase (d, id_node_animate_color) {}
+
+    virtual void init ();
+    virtual void begin ();
+    virtual void finish ();
+    //virtual void accept (Visitor *v) { v->visit (this); }
+    KDE_NO_EXPORT const char * nodeName () const { return "animateColor"; }
+
+private:
+    virtual bool timerTick (unsigned int cur_time);
+    virtual void applyStep ();
+
+    Channels begin_c;
+    Channels cur_c;
+    Channels delta_c;
+    Channels end_c;
+};
+
+// TODO transitionFilter
 
 class KMPLAYER_NO_EXPORT Param : public Element {
 public:
