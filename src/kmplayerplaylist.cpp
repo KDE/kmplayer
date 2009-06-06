@@ -113,6 +113,7 @@ bool ConnectionLink::connect (Node *send, MessageType msg, Node *rec) {
             list->link_first = connection;
         list->link_last = connection;
     }
+    return list;
 }
 
 void ConnectionLink::disconnect () const {

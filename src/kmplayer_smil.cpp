@@ -2884,7 +2884,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     region_attach.disconnect ();
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
-    document ()->notify_listener->removeRepaintUpdater (this);
+    transition_updater.disconnect ();
     if (trans_out_timer) {
         document ()->cancelPosting (trans_out_timer);
         trans_out_timer = NULL;
@@ -2950,7 +2950,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
             active_trans = trans_in;
             runtime->timingstate = Runtime::TimingsTransIn;
             trans_gain = 0.0;
-            document ()->notify_listener->addRepaintUpdater (this);
+            transition_updater.connect (m_doc, MsgSurfaceUpdate, this);
             trans_start_time = document ()->last_event_time;
             trans_end_time = trans_start_time + 10 * trans->dur;
             if (Runtime::DurTimer == runtime->durTime ().durval &&
@@ -2998,7 +2998,7 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::finish () {
-    document ()->notify_listener->removeRepaintUpdater (this);
+    transition_updater.disconnect ();
     if (media_info && media_info->media)
         media_info->media->pause ();
 
@@ -3100,7 +3100,7 @@ void SMIL::MediaType::message (MessageType msg, void *content) {
             trans_gain = 1.0 * (ue->cur_event_time - trans_start_time) /
                                (trans_end_time - trans_start_time);
             if (trans_gain > 0.9999) {
-                document ()->notify_listener->removeRepaintUpdater (this);
+                transition_updater.disconnect ();
                 if (active_trans == trans_in) {
                     runtime->timingstate = Runtime::timings_started;
                     deliver (MsgChildTransformedIn, this);
@@ -3134,13 +3134,13 @@ void SMIL::MediaType::message (MessageType msg, void *content) {
             TimerPosting *te = static_cast <TimerPosting *> (content);
             if (te->event_id == trans_out_timer_id) {
                 if (active_trans)
-                    document ()->notify_listener->removeRepaintUpdater (this);
+                    transition_updater.disconnect ();
                 trans_out_timer = NULL;
                 active_trans = trans_out;
                 Transition * trans = convertNode <Transition> (trans_out);
                 if (trans) {
                     trans_gain = 0.0;
-                    document ()->notify_listener->addRepaintUpdater (this);
+                    transition_updater.connect (m_doc, MsgSurfaceUpdate, this);
                     trans_start_time = document ()->last_event_time;
                     trans_end_time = trans_start_time + 10 * trans->dur;
                     trans_out_active = true;
@@ -4281,7 +4281,7 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
         return;
     applyStep ();
     if (calc_discrete != calcMode)
-        document ()->notify_listener->addRepaintUpdater (this);
+        change_updater.connect (m_doc, MsgSurfaceUpdate, this);
     AnimateGroup::begin ();
 }
 
@@ -4290,7 +4290,7 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::finish () {
         document ()->cancelPosting (anim_timer);
         anim_timer = NULL;
     }
-    document ()->notify_listener->removeRepaintUpdater (this);
+    change_updater.disconnect ();
     if (active ()) {
         if (cur_x.size () != end_x.size () || cur_y.size () != end_y.size ()) {
             cur_x = end_x;
@@ -4306,7 +4306,7 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::deactivate () {
         document ()->cancelPosting (anim_timer);
         anim_timer = NULL;
     } else {
-        document ()->notify_listener->removeRepaintUpdater (this);
+        change_updater.disconnect ();
     }
     if (spline_table)
         free (spline_table);
@@ -4338,7 +4338,7 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::message (MessageType msg, void *data) {
                 document ()->cancelPosting (anim_timer);
                 anim_timer = NULL;
             } else {
-                document ()->notify_listener->removeRepaintUpdater (this);
+                change_updater.disconnect ();
             }
             break;
         default:
@@ -4550,7 +4550,7 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::timerTick (unsigned int cur_time) {
         float gain = 1.0 * (cur_time - interval_start_time) /
                            (interval_end_time - interval_start_time);
         if (gain > 1.0) {
-            document ()->notify_listener->removeRepaintUpdater (this);
+            change_updater.disconnect ();
             gain = 1.0;
         }
         switch (calcMode) {

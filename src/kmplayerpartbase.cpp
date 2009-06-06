@@ -896,6 +896,14 @@ void *SourceDocument::role (RoleType msg, void *data) {
         return NULL;
     }
 
+    case RoleReceivers:
+        if (MsgSurfaceUpdate == (MessageType) (long) data) {
+            PartBase *p = m_source->player ();
+            if (p->view ())
+                return p->viewWidget ()->viewArea ()->updaters ();
+        }
+        // fall through
+
     default:
         break;
     }
@@ -1125,16 +1133,6 @@ void Source::bitRates (int & preferred, int & maximal) {
 
 void Source::openUrl (const KUrl &url, const QString &t, const QString &srv) {
     m_player->openUrl (url, t, srv);
-}
-
-void Source::addRepaintUpdater (Node *node) {
-    if (m_player->view ())
-        m_player->viewWidget ()->viewArea()->addUpdater (node);
-}
-
-void Source::removeRepaintUpdater (Node *node) {
-    if (m_player->view ())
-        m_player->viewWidget ()->viewArea()->removeUpdater (node);
 }
 
 void Source::enableRepaintUpdaters (bool enable, unsigned int off_time) {

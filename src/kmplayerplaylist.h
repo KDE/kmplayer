@@ -685,10 +685,8 @@ public:
      */
     virtual void openUrl (const KUrl &, const QString &t, const QString &srv)=0;
     /**
-     * Change repaint updaters
+     * Dis/Enable repaint updaters
      */
-    virtual void addRepaintUpdater (Node *node)=0;
-    virtual void removeRepaintUpdater (Node *node)=0;
     virtual void enableRepaintUpdaters (bool enable, unsigned int off_time)=0;
 };
 

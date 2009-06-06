@@ -1787,7 +1787,6 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view, bool paint_bg)
 // : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
  : //QWidget (parent),
    d (new ViewerAreaPrivate (this)),
-   m_updaters (NULL),
    m_view (view),
    m_collection (new KActionCollection (this)),
    surface (new Surface (this)),
@@ -1809,11 +1808,6 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view, bool paint_bg)
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
-    while (m_updaters) {
-        RepaintUpdater *tmp = m_updaters;
-        m_updaters = m_updaters->next;
-        delete tmp;
-    }
     delete d;
 }
 
@@ -1970,7 +1964,10 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
         cairo_surface_flush (surface->surface);
     } else
 #endif
+    {
+        m_update_rect = IRect ();
         repaint (QRect(rect.x(), rect.y(), rect.width(), rect.height()), false);
+    }
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
@@ -2139,60 +2136,21 @@ KDE_NO_EXPORT void ViewArea::scheduleRepaint (const IRect &rect) {
     }
 }
 
-KDE_NO_EXPORT void ViewArea::addUpdater (Node *node) {
-    m_updaters = new RepaintUpdater (node, m_updaters);
+KDE_NO_EXPORT ConnectionList *ViewArea::updaters () {
     if (!m_repaint_timer)
         m_repaint_timer = startTimer (25);
-}
-
-KDE_NO_EXPORT void ViewArea::removeUpdater (Node *node) {
-    RepaintUpdater *prev = NULL;
-    for (RepaintUpdater *r = m_updaters; r; r = r->next) {
-        if (r->node.ptr () == node) {
-            if (prev)
-                prev->next = r->next;
-            else
-                m_updaters = r->next;
-            delete r;
-            break;
-        }
-        prev = r;
-    }
-    if (m_repaint_timer &&
-            (!m_updaters_enabled || !m_updaters) &&
-            m_repaint_rect.isEmpty () &&
-            m_update_rect.isEmpty ()) {
-        killTimer (m_repaint_timer);
-        m_repaint_timer = 0;
-    }
-}
-
-static RepaintUpdater *getFirstUpdater (RepaintUpdater *updaters) {
-    for (RepaintUpdater *r = updaters; r; r = updaters) {
-        if (updaters->node)
-            return updaters;
-        updaters = r->next;
-        delete r;
-    }
-    return NULL;
-}
-
-static void propagateUpdatersEvent (RepaintUpdater *updaters, void *event) {
-    for (RepaintUpdater *r = updaters; r; ) {
-        RepaintUpdater *next = r->next;
-        if (r->node)
-            r->node->message (MsgSurfaceUpdate, event); // may call removeUpdater()
-        r = next;
-    }
+    return &m_updaters;
 }
 
 KDE_NO_EXPORT
 void ViewArea::enableUpdaters (bool enable, unsigned int skip) {
     m_updaters_enabled = enable;
-    m_updaters = getFirstUpdater (m_updaters);
-    if (enable && m_updaters) {
-        UpdateEvent event (m_updaters->node->document (), skip);
-        propagateUpdatersEvent (m_updaters, &event);
+    Connection *connect = m_updaters.first ();
+    if (enable && connect) {
+        UpdateEvent event (connect->connecter->document (), skip);
+        for (; connect; connect = m_updaters.next ())
+            if (connect->connecter)
+                connect->connecter->message (MsgSurfaceUpdate, &event);
         if (!m_repaint_timer)
             m_repaint_timer = startTimer (25);
     } else if (!enable && m_repaint_timer &&
@@ -2209,17 +2167,21 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
         if (m_fullscreen)
             setCursor (QCursor (Qt::BlankCursor));
     } else if (e->timerId () == m_repaint_timer) {
-        m_updaters = getFirstUpdater (m_updaters);
-        if (m_updaters_enabled && m_updaters) {
-            UpdateEvent event (m_updaters->node->document (), 0);
-            propagateUpdatersEvent (m_updaters, &event);
+        Connection *connect = m_updaters.first ();
+        int count = 0;
+        if (m_updaters_enabled && connect) {
+            UpdateEvent event (connect->connecter->document (), 0);
+            for (; connect; count++, connect = m_updaters.next ())
+                if (connect->connecter)
+                    connect->connecter->message (MsgSurfaceUpdate, &event);
         }
         //repaint (m_repaint_rect, false);
         if (!m_repaint_rect.isEmpty () || !m_update_rect.isEmpty ()) {
             syncVisual ();
             m_repaint_rect = IRect ();
         }
-        if (m_update_rect.isEmpty () && (!m_updaters_enabled || !m_updaters)) {
+        if (m_update_rect.isEmpty () &&
+                (!m_updaters_enabled || !m_updaters.first ())) {
             killTimer (m_repaint_timer);
             m_repaint_timer = 0;
         }

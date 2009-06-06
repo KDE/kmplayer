@@ -128,8 +128,6 @@ protected:
     void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);
     void openUrl (const KUrl &url, const QString &target, const QString &srv);
-    void addRepaintUpdater (Node *node);
-    void removeRepaintUpdater (Node *node);
     void enableRepaintUpdaters (bool enable, unsigned int off_time);
 
     NodePtr m_document;

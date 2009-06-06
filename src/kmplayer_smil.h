@@ -662,6 +662,7 @@ protected:
     ConnectionLink region_paint;           // attached region needs painting
     ConnectionLink region_attach;          // attached to region
     ConnectionLink document_postponed;     // pause audio/video accordantly
+    ConnectionLink transition_updater;
     PostponePtr postpone_lock;
 };
 
@@ -848,6 +849,7 @@ private:
     QString change_from;
     QString change_by;
     QStringList values;
+    ConnectionLink change_updater;
     float *keytimes;
     Point2D *spline_table;
     int keytime_count;
