@@ -273,8 +273,8 @@ void MediaManager::grabPicture (AudioVideoMedia *media) {
 
 void MediaManager::processDestroyed (IProcess *process) {
     kDebug() << "processDestroyed " << process << endl;
-    m_processes.remove (process);
-    m_recorders.remove (process);
+    m_processes.removeAll (process);
+    m_recorders.removeAll (process);
 }
 
 //------------------------%<----------------------------------------------------
@@ -285,7 +285,7 @@ MediaObject::MediaObject (MediaManager *manager, Node *node)
 }
 
 MediaObject::~MediaObject () {
-    m_manager->medias ().remove (this);
+    m_manager->medias ().removeAll (this);
 }
 
 KDE_NO_EXPORT void MediaObject::destroy () {
