@@ -822,7 +822,6 @@ namespace SMIL {
     class Par;
     class Excl;
     class Transition;
-    class Animate;
     class AnimateBase;
     class MediaType;
     class ImageMediaType;
@@ -861,7 +860,6 @@ public:
     virtual void visit (SMIL::Par *);
     virtual void visit (SMIL::Excl *);
     virtual void visit (SMIL::Transition *);
-    virtual void visit (SMIL::Animate *);
     virtual void visit (SMIL::AnimateBase *);
     virtual void visit (SMIL::PriorityClass *);
     virtual void visit (SMIL::MediaType *);

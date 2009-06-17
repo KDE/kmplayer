@@ -93,12 +93,19 @@
                      keySplines=".5 0 .5 1;0 .75 .25 1"/>
     </par>
     <par>
-      <text id="text9" src="data:,discrete%20animateMotion%0Avalues%2020,20;160,35;140,160%0AkeyTimes0;0.5;1"
-            region="region1" left="8" top="8" dur="5"
+      <text id="text9" src="data:,discrete%20animateMotion%0Avalues%2020,20;160,35;140,160"
+            region="region1" left="8" top="8" dur="4"
             mediaBackgroundOpacity="70%"/>
       <animateMotion target="text9" begin="1" dur="3" calcMode="discrete"
+                     values="20,20;160,35;140,160"/>
+    </par>
+    <par>
+      <text id="text10" src="data:,discrete%20animateMotion%0Avalues%2020,20;160,35;140,160%0AkeyTimes0;0.5;.7"
+            region="region1" left="8" top="8" dur="4"
+            mediaBackgroundOpacity="70%"/>
+      <animateMotion target="text10" begin="1" dur="3" calcMode="discrete"
                      values="20,20;160,35;140,160"
-                     keyTimes="0;0.5;1"/>
+                     keyTimes="0;0.5;.7"/>
     </par>
     <par>
       <text left="0" id="text5" src="data:,animateMotion%20on%20region"

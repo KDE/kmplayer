@@ -643,7 +643,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
             "<img region='rat' begin='1.2' dur='.7'>" <<
             svg_rat <<
             "</img>"
-            "<animateMotion target='spot' begin='1' dur='.6' "
+            "<animateMotion target='spot' begin='1' dur='.9' "
             "calcMode='discrete' values='200,40;10,120;120,80'/>"
             "<animate target='light' begin='1' dur='.9' calcMode='discrete'"
             "attribute='fill' values='#A04040;#40A040;#4040A0'/>"

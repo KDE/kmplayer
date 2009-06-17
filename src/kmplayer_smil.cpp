@@ -760,13 +760,16 @@ void SizeType::reset () {
     perc_size = 0;
     abs_size = 0;
     isset = false;
+    has_percentage = false;
 }
 
 SizeType & SizeType::operator = (const QString & s) {
     QString strval (s);
     int p = strval.indexOf (QChar ('%'));
-    if (p > -1)
+    if (p > -1) {
         strval.truncate (p);
+        has_percentage = true;
+    }
     double d = strval.toDouble (&isset);
     if (isset) {
         if (p > -1)
@@ -795,6 +798,15 @@ Single SizeType::size (Single relative_to) const {
     Single s = abs_size;
     s += perc_size * relative_to / 100;
     return s;
+}
+
+QString SizeType::toString () const {
+    if (isset) {
+        if (has_percentage)
+            return QString ("%1%").arg ((int) size (100));
+        return QString::number ((double) size (100));
+    }
+    return QString ();
 }
 
 //-----------------%<----------------------------------------------------------
@@ -1394,7 +1406,7 @@ static void updateSurfaceSort (SMIL::RegionBase *rb) {
 
 static unsigned int setRGBA (unsigned int color, int opacity) {
     int a = ((color >> 24) & 0xff) * opacity / 100;
-    return a << 24 | color & 0xffffff;
+    return (a << 24) | (color & 0xffffff);
 }
 
 KDE_NO_EXPORT
@@ -1475,6 +1487,9 @@ void SMIL::RegionBase::message (MessageType msg, void *content) {
 
 void *SMIL::RegionBase::role (RoleType msg, void *content) {
     switch (msg) {
+
+    case RoleSizer:
+        return &sizes;
 
     case RoleReceivers:
         if (MsgSurfaceAttach == (MessageType) (long) content)
@@ -2369,10 +2384,6 @@ public:
 
         visit (static_cast <Element *> (mt));
     }
-    void visit (SMIL::Animate *an) {
-        updatePauseStateEvent(an->anim_timer, an->runtime->paused_time);
-        visit (static_cast <Element *> (an));
-    }
     void visit (SMIL::AnimateBase *an) {
         updatePauseStateEvent(an->anim_timer, an->runtime->paused_time);
         visit (static_cast <Element *> (an));
@@ -3236,6 +3247,9 @@ void *SMIL::MediaType::role (RoleType msg, void *content) {
     case RoleDisplay:
         return surface ();
 
+    case RoleSizer:
+        return &sizes;
+
     case RoleChildDisplay: {
         Surface *s = NULL;
         Mrl *mrl = (Mrl *) content;
@@ -3940,7 +3954,7 @@ KDE_NO_EXPORT void SMIL::AnimateGroup::restoreModification () {
     modification_id = -1;
 }
 
-KDE_NO_EXPORT NodePtr SMIL::AnimateGroup::targetElement () {
+KDE_NO_EXPORT Node *SMIL::AnimateGroup::targetElement () {
     if (target_id.isEmpty ()) {
         for (Node *p = parentNode(); p; p =p->parentNode())
             if (SMIL::id_node_first_mediatype <= p->id &&
@@ -3951,20 +3965,18 @@ KDE_NO_EXPORT NodePtr SMIL::AnimateGroup::targetElement () {
     } else {
         target_element = findLocalNodeById (this, target_id);
     }
-    return target_element;
+    return target_element.ptr ();
 }
 
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void SMIL::Set::begin () {
     restoreModification ();
-    if (targetElement ()) {
-        convertNode <Element> (target_element)->setParam (
-                changed_attribute, change_to, &modification_id);
-        //kDebug () << "Set(" << this << ")::started " << target_element->nodeName () << "." << changed_attribute << " ->" << change_to << " modid:" << modification_id << endl;
-    } else {
+    Element *target = static_cast <Element *> (targetElement ());
+    if (target)
+        target->setParam (changed_attribute, change_to, &modification_id);
+    else
         kWarning () << "target element not found" << endl;
-    }
     AnimateGroup::begin ();
 }
 
@@ -4003,192 +4015,6 @@ static Point2D PointOnCubicBezier (Point2D *cp, float t) {
     return result;
 }
 */
-
-KDE_NO_CDTOR_EXPORT SMIL::Animate::Animate (NodePtr &d)
- : AnimateGroup (d, id_node_animate),
-   anim_timer (NULL),
-   change_by (0),
-   steps (0) {}
-
-KDE_NO_EXPORT void SMIL::Animate::init () {
-    if (Runtime::TimingsInitialized > runtime->timingstate) {
-        if (anim_timer) {
-            document ()->cancelPosting (anim_timer);
-            anim_timer = NULL;
-        }
-        accumulate = acc_none;
-        additive = add_replace;
-        change_by = 0;
-        calcMode = calc_linear;
-        change_from.truncate (0);
-        change_values.clear ();
-        steps = 0;
-        change_delta = change_to_val = change_from_val = 0.0;
-        change_from_unit.truncate (0);
-        AnimateGroup::init ();
-    }
-}
-
-KDE_NO_EXPORT void SMIL::Animate::deactivate () {
-    if (anim_timer) {
-        document ()->cancelPosting (anim_timer);
-        anim_timer = NULL;
-    }
-    AnimateGroup::deactivate ();
-}
-
-KDE_NO_EXPORT void SMIL::Animate::begin () {
-    bool success = false;
-    //kDebug () << "Animate::started " << rt->durTime ().durval << endl;
-    restoreModification ();
-    if (anim_timer) { // FIXME: repeating doesn't reinit
-        document ()->cancelPosting (anim_timer);
-        anim_timer = NULL;
-    }
-    do {
-        NodePtr protect = target_element;
-        Element *target = convertNode <Element> (targetElement ());
-        if (!target) {
-            kWarning () << "target element not found" << endl;
-            break;
-        }
-        if (calcMode == calc_linear) {
-            QRegExp reg ("^\\s*(-?[0-9\\.]+)(\\s*[%a-z]*)?");
-            if (change_from.isEmpty ()) {
-                if (change_values.size () > 0) // check 'values' attribute
-                     change_from = change_values.first ();
-                else // take current
-                    change_from = target->param (changed_attribute);
-            }
-            if (!change_from.isEmpty ()) {
-                target->setParam (changed_attribute, change_from,
-                        &modification_id);
-                if (reg.search (change_from) > -1) {
-                    change_from_val = reg.cap (1).toDouble ();
-                    change_from_unit = reg.cap (2);
-                }
-            } else {
-                kWarning() << "animate couldn't determine start value" << endl;
-                break;
-            }
-            if (change_to.isEmpty () && change_values.size () > 1)
-                change_to = change_values.last (); // check 'values' attribute
-            if (!change_to.isEmpty () && reg.search (change_to) > -1) {
-                change_to_val = reg.cap (1).toDouble ();
-            } else {
-                kWarning () << "animate couldn't determine end value" << endl;
-                break;
-            }
-            steps = 2 * runtime->durTime ().offset / 5; // 40 per sec
-            if (steps > 0) {
-                anim_timer = document ()->post (this,
-                        new TimerPosting (25, anim_timer_id)); // 25 ms for now FIXME
-                change_delta = (change_to_val - change_from_val) / steps;
-                //kDebug () << "Animate::started " << target_element->nodeName () << "." << changed_attribute << " " << change_from_val << "->" << change_to_val << " in " << steps << " using:" << change_delta << " inc" << endl;
-                success = true;
-            }
-        } else if (calcMode == calc_discrete) {
-            steps = change_values.size () - 1; // we do already the first step
-            if (steps < 1) {
-                 kWarning () << "animate needs at least two values" << endl;
-                 break;
-            }
-            int interval = 10 * runtime->durTime ().offset / (1 + steps);
-            if (interval <= 0 || runtime->durTime ().durval != Runtime::DurTimer) {
-                 kWarning () << "animate needs a duration time" << endl;
-                 break;
-            }
-            //kDebug () << "Animate::started " << target_element->nodeName () << "." << changed_attribute << " " << change_values.first () << "->" << change_values.last () << " in " << steps << " interval:" << interval << endl;
-            anim_timer = document ()->post (this,
-                    new TimerPosting (interval, anim_timer_id));// 50 /s for now FIXME
-            target->setParam (changed_attribute, change_values.first (),
-                    &modification_id);
-            success = true;
-        }
-    } while (false);
-    if (success)
-        AnimateGroup::begin ();
-    else
-        runtime->doFinish ();
-}
-
-KDE_NO_EXPORT void SMIL::Animate::finish () {
-    if (anim_timer) { // make sure timers are stopped
-        document ()->cancelPosting (anim_timer);
-        anim_timer = NULL;
-    }
-    if (steps > 0 && active ()) {
-        steps = 0;
-        if (calcMode == calc_linear)
-            change_from_val = change_to_val;
-        applyStep (); // we lost some steps ..
-    }
-    AnimateGroup::finish ();
-}
-
-void SMIL::Animate::parseParam (const TrieString &name, const QString &val) {
-    //kDebug () << "Animate::parseParam " << name << "=" << val << endl;
-    if (name == "change_by") {
-        change_by = val.toInt ();
-    } else if (name == "from") {
-        change_from = val;
-    } else if (name == "values") {
-        change_values = QStringList::split (QString (";"), val);
-    } else if (name == "calcMode") {
-        if (val == QString::fromLatin1 ("discrete"))
-            calcMode = calc_discrete;
-        else if (val == QString::fromLatin1 ("linear"))
-            calcMode = calc_linear;
-        else if (val == QString::fromLatin1 ("paced"))
-            calcMode = calc_paced;
-    } else {
-        AnimateGroup::parseParam (name, val);
-    }
-}
-
-KDE_NO_EXPORT void SMIL::Animate::message (MessageType msg, void *content) {
-    if (MsgEventTimer == msg) {
-        TimerPosting * te = static_cast <TimerPosting *> (content);
-        if (te->event_id == anim_timer_id) {
-            if (timerTick ())
-                te->interval = true;
-            else
-                anim_timer = NULL;
-            return;
-        }
-    }
-    AnimateGroup::message (msg, content);
-}
-
-KDE_NO_EXPORT void SMIL::Animate::applyStep () {
-    Element *target = convertNode <Element> (target_element);
-    if (target && calcMode == calc_linear)
-        target->setParam (changed_attribute, QString ("%1%2").arg (
-                    change_from_val).arg(change_from_unit),
-                &modification_id);
-    else if (target && calcMode == calc_discrete)
-        target->setParam (changed_attribute,
-                change_values[change_values.size () - steps -1],
-                &modification_id);
-}
-
-KDE_NO_EXPORT bool SMIL::Animate::timerTick () {
-    if (!anim_timer) {
-        kError () << "spurious anim timer tick" << endl;
-    } else if (steps-- > 0) {
-        if (calcMode == calc_linear)
-            change_from_val += change_delta;
-        applyStep ();
-        return true;
-    } else {
-        document ()->cancelPosting (anim_timer);
-        anim_timer = NULL;
-        runtime->doFinish (); // not sure, actually
-    }
-    return false;
-}
-
-//-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT SMIL::AnimateBase::AnimateBase (NodePtr &d, short id)
  : AnimateGroup (d, id),
@@ -4294,10 +4120,9 @@ KDE_NO_EXPORT void SMIL::AnimateBase::message (MessageType msg, void *data) {
 }
 
 void SMIL::AnimateBase::parseParam (const TrieString &name, const QString &val) {
-    //kDebug () << "AnimateMotion::parseParam " << name << "=" << val << endl;
     if (name == "from") {
         change_from = val;
-    } else if (name == "by") {
+    } else if (name == "by" || name == "change_by") {
         change_by = val;
     } else if (name == "values") {
         values = QStringList::split (QString (";"), val);
@@ -4311,7 +4136,7 @@ void SMIL::AnimateBase::parseParam (const TrieString &name, const QString &val) 
             return;
         }
         keytimes = (float *) malloc (sizeof (float) * keytime_count);
-        for (int i = 0; i < keytime_count; i++) {
+        for (unsigned int i = 0; i < keytime_count; i++) {
             keytimes[i] = kts[i].stripWhiteSpace().toDouble();
             if (keytimes[i] < 0.0 || keytimes[i] > 1.0)
                 kWarning() << "animateMotion wrong keyTimes values" << endl;
@@ -4337,23 +4162,6 @@ void SMIL::AnimateBase::parseParam (const TrieString &name, const QString &val) 
             calcMode = calc_spline;
     } else
         AnimateGroup::parseParam (name, val);
-}
-
-bool SMIL::AnimateBase::checkTarget (Node *n) {
-    if (!n ||
-            (SMIL::id_node_region != n->id &&
-                !(SMIL::id_node_first_mediatype <= n->id &&
-                    SMIL::id_node_last_mediatype >= n->id))) {
-        kWarning () << nodeName() << "target element not " <<
-            (n ? "supported" : "found");
-        if (anim_timer) {
-            document ()->cancelPosting (anim_timer);
-            anim_timer = NULL;
-        }
-        runtime->doFinish ();
-        return false;
-    }
-    return true;
 }
 
 static SMIL::AnimateBase::Point2D cubicBezier (float ax, float bx, float cx,
@@ -4389,6 +4197,10 @@ bool SMIL::AnimateBase::setInterval () {
     int cs = runtime->durTime ().offset;
     if (keytime_count > interval + 1)
         cs = (int) (cs * (keytimes[interval+1] - keytimes[interval]));
+    else if (keytime_count > interval && calc_discrete == calcMode)
+        cs = (int) (cs * (1.0 - keytimes[interval]));
+    else if (values.size () > 0 && calc_discrete == calcMode)
+        cs /= values.size ();
     else if (values.size () > 1)
         cs /= values.size () - 1;
     if (cs < 0) {
@@ -4404,7 +4216,7 @@ bool SMIL::AnimateBase::setInterval () {
         case calc_linear:
             break;
         case calc_spline:
-            if (splines.size () > interval) {
+            if (splines.size () > (int)interval) {
                 QStringList kss = QStringList::split (
                         QString (" "), splines[interval]);
                 control_point[0] = control_point[1] = 0;
@@ -4458,6 +4270,130 @@ bool SMIL::AnimateBase::setInterval () {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_EXPORT void SMIL::Animate::init () {
+    if (Runtime::TimingsInitialized > runtime->timingstate) {
+        cur = delta = SizeType();
+        AnimateBase::init ();
+    }
+}
+
+KDE_NO_EXPORT void SMIL::Animate::begin () {
+    restoreModification ();
+    if (anim_timer) { // FIXME: repeating doesn't reinit
+        document ()->cancelPosting (anim_timer);
+        anim_timer = NULL;
+    }
+    NodePtr protect = target_element;
+    Element *target = static_cast <Element *> (targetElement ());
+    if (!target) {
+        kWarning () << "target element not found";
+        runtime->doFinish ();
+        return;
+    }
+    if (values.size () < 2) {
+        values.push_front (change_from.isEmpty ()
+                ? target->param (changed_attribute)
+                : change_from);
+        if (!change_to.isEmpty ()) {
+            values.push_back (change_to);
+        } else if (!change_by.isEmpty ()) {
+            SizeType b (values[0]);
+            b += SizeType (change_by);
+            values.push_back (b.toString ());
+        }
+    }
+    if (values.size () < 2) {
+        kWarning () << "could not determine change values";
+        runtime->doFinish ();
+        return;
+    }
+    if (calcMode != calc_discrete) {
+        begin_ = values[0];
+        end = values[1];
+        cur = begin_;
+        delta = end;
+        delta -= begin_;
+    }
+    AnimateBase::begin ();
+}
+
+KDE_NO_EXPORT void SMIL::Animate::finish () {
+    if (active () && cur.size () != end.size ()) {
+        cur = end;
+        applyStep (); // we lost some steps ..
+    }
+    AnimateBase::finish ();
+}
+
+KDE_NO_EXPORT void SMIL::Animate::applyStep () {
+    Element *target = convertNode <Element> (target_element);
+    if (target) {
+        if (calcMode != calc_discrete)
+            target->setParam (changed_attribute,
+                    cur.toString (), &modification_id);
+        else if ((int)interval < values.size ())
+            target->setParam (changed_attribute,
+                    values[interval], &modification_id);
+    }
+}
+
+KDE_NO_EXPORT bool SMIL::Animate::timerTick (unsigned int cur_time) {
+    if (cur_time && cur_time <= interval_end_time) {
+        float gain = 1.0 * (cur_time - interval_start_time) /
+                           (interval_end_time - interval_start_time);
+        if (gain > 1.0) {
+            change_updater.disconnect ();
+            gain = 1.0;
+        }
+        switch (calcMode) {
+            case calc_paced: // FIXME
+            case calc_linear:
+                break;
+            case calc_spline:
+                if (spline_table)
+                    gain = cubicBezier (spline_table, 0, 99, gain);
+                break;
+            case calc_discrete:
+                return false; // should come here
+        }
+        cur = delta;
+        cur *= gain;
+        cur += begin_;
+        applyStep ();
+        return true;
+    } else if (values.size () > (int) ++interval) {
+        if (calc_discrete != calcMode) {
+            if (values.size () <= (int) interval + 1)
+                return false;
+            begin_ = values[(int) interval];
+            end = values[interval+1];
+            cur = begin_;
+            delta = end;
+            delta -= begin_;
+        }
+        if (setInterval ()) {
+            applyStep ();
+            return true;
+        }
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
+static
+bool getMotionCoordinates (const QString &coord, SizeType &x, SizeType &y) {
+    int p = coord.indexOf (QChar (','));
+    if (p < 0)
+        p = coord.indexOf (QChar (' '));
+    if (p > 0) {
+        x = coord.left (p).stripWhiteSpace ();
+        y = coord.mid (p + 1).stripWhiteSpace ();
+        return true;
+    }
+    return false;
+}
+
 KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
     cur_x = cur_y = delta_x = delta_y = SizeType();
     AnimateBase::init ();
@@ -4465,8 +4401,9 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
     //kDebug () << "AnimateMotion::started " << durTime ().durval << endl;
-    Element *target = convertNode <Element> (targetElement ());
-    if (!checkTarget (target))
+    Node *t = targetElement ();
+    CalculatedSizer *sizes = t ? (CalculatedSizer *) t->role (RoleSizer) : NULL;
+    if (!sizes)
         return;
     if (anim_timer) {
         document ()->cancelPosting (anim_timer);
@@ -4474,43 +4411,37 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
     }
     if (change_from.isEmpty ()) {
         if (values.size () > 1) {
-            getCoordinates (values[0], begin_x, begin_y);
-            getCoordinates (values[1], end_x, end_y);
+            getMotionCoordinates (values[0], begin_x, begin_y);
+            getMotionCoordinates (values[1], end_x, end_y);
         } else {
-            CalculatedSizer sizes;
-            if (SMIL::id_node_region == target->id)
-                sizes = static_cast<SMIL::Region*>(target)->sizes;
-            else if (SMIL::id_node_first_mediatype <= target->id &&
-                    SMIL::id_node_last_mediatype >= target->id)
-                sizes = static_cast<SMIL::MediaType*>(target)->sizes;
-            if (sizes.left.isSet ()) {
-                begin_x = sizes.left;
-            } else if (sizes.right.isSet() && sizes.width.isSet ()) {
-                begin_x = sizes.right;
-                begin_x -= sizes.width;
+            if (sizes->left.isSet ()) {
+                begin_x = sizes->left;
+            } else if (sizes->right.isSet() && sizes->width.isSet ()) {
+                begin_x = sizes->right;
+                begin_x -= sizes->width;
             } else {
                 begin_x = "0";
             }
-            if (sizes.top.isSet ()) {
-                begin_y = sizes.top;
-            } else if (sizes.bottom.isSet() && sizes.height.isSet ()) {
-                begin_y = sizes.bottom;
-                begin_y -= sizes.height;
+            if (sizes->top.isSet ()) {
+                begin_y = sizes->top;
+            } else if (sizes->bottom.isSet() && sizes->height.isSet ()) {
+                begin_y = sizes->bottom;
+                begin_y -= sizes->height;
             } else {
                 begin_y = "0";
             }
         }
     } else {
-        getCoordinates (change_from, begin_x, begin_y);
+        getMotionCoordinates (change_from, begin_x, begin_y);
     }
     if (!change_by.isEmpty ()) {
-        getCoordinates (change_by, delta_x, delta_y);
+        getMotionCoordinates (change_by, delta_x, delta_y);
         end_x = begin_x;
         end_y = begin_y;
         end_x += delta_x;
         end_y += delta_y;
     } else if (!change_to.isEmpty ()) {
-        getCoordinates (change_to, end_x, end_y);
+        getMotionCoordinates (change_to, end_x, end_y);
     }
     cur_x = begin_x;
     cur_y = begin_y;
@@ -4532,32 +4463,12 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::finish () {
     AnimateBase::finish ();
 }
 
-bool SMIL::AnimateMotion::getCoordinates (const QString &coord, SizeType &x, SizeType &y) {
-    int p = coord.indexOf (QChar (','));
-    if (p < 0)
-        p = coord.indexOf (QChar (' '));
-    if (p > 0) {
-        x = coord.left (p).stripWhiteSpace ();
-        y = coord.mid (p + 1).stripWhiteSpace ();
-        return true;
-    }
-    return false;
-}
-
 KDE_NO_EXPORT void SMIL::AnimateMotion::applyStep () {
-    Node *target = target_element.ptr ();
-    if (!checkTarget (target))
-        return;
-    if (SMIL::id_node_region == target->id) {
-        SMIL::Region *r = static_cast <SMIL::Region*> (target);
-        r->sizes.move (cur_x, cur_y);
-        target->message (MsgSurfaceBoundsUpdate);
-    } else {
-        SMIL::MediaType *mt = static_cast <SMIL::MediaType *> (target);
-        if (mt->role (RoleDisplay)) {
-            mt->sizes.move (cur_x, cur_y);
-            mt->message (MsgSurfaceBoundsUpdate);
-        }
+    Node *n = target_element.ptr ();
+    CalculatedSizer *sizes = n ? (CalculatedSizer *) n->role (RoleSizer) : NULL;
+    if (n->role (RoleDisplay)) {
+        sizes->move (cur_x, cur_y);
+        n->message (MsgSurfaceBoundsUpdate);
     }
 }
 
@@ -4572,38 +4483,33 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::timerTick (unsigned int cur_time) {
         switch (calcMode) {
             case calc_paced: // FIXME
             case calc_linear:
-                cur_x = delta_x;
-                cur_y = delta_y;
-                cur_x *= gain;
-                cur_y *= gain;
-                cur_x += begin_x;
-                cur_y += begin_y;
                 break;
             case calc_spline:
-                if (spline_table) {
-                    float y = cubicBezier (spline_table, 0, 99, gain);
-                    cur_x = delta_x;
-                    cur_y = delta_y;
-                    cur_x *= y;
-                    cur_y *= y;
-                    cur_x += begin_x;
-                    cur_y += begin_y;
-                }
+                if (spline_table)
+                    gain = cubicBezier (spline_table, 0, 99, gain);
                 break;
             case calc_discrete:
-                return true; // very sub-optimal timer
+                return false; // should come here
         }
+        cur_x = delta_x;
+        cur_y = delta_y;
+        cur_x *= gain;
+        cur_y *= gain;
+        cur_x += begin_x;
+        cur_y += begin_y;
         applyStep ();
         return true;
-    } else if (values.size () > ++interval + 1) {
-        getCoordinates (values[interval], begin_x, begin_y);
-        getCoordinates (values[interval+1], end_x, end_y);
+    } else if (values.size () > (int) ++interval) {
+        getMotionCoordinates (values[interval], begin_x, begin_y);
         cur_x = begin_x;
         cur_y = begin_y;
-        delta_x = end_x;
-        delta_x -= begin_x;
-        delta_y = end_y;
-        delta_y -= begin_y;
+        if (calcMode != calc_discrete && values.size () > (int) interval + 1) {
+            getMotionCoordinates (values[interval+1], end_x, end_y);
+            delta_x = end_x;
+            delta_x -= begin_x;
+            delta_y = end_y;
+            delta_y -= begin_y;
+        }
         if (setInterval ()) {
             applyStep ();
             return true;
@@ -4675,12 +4581,13 @@ void SMIL::AnimateColor::Channels::clear () {
 KDE_NO_EXPORT void SMIL::AnimateColor::init () {
     cur_c.clear ();
     delta_c.clear ();
+    changed_attribute = "background-color";
     AnimateBase::init ();
 }
 
 KDE_NO_EXPORT void SMIL::AnimateColor::begin () {
-    Element *target = convertNode <Element> (targetElement ());
-    if (!checkTarget (target))
+    Element *target = static_cast <Element *> (targetElement ());
+    if (!target)
         return;
     if (anim_timer) {
         document ()->cancelPosting (anim_timer);
@@ -4691,15 +4598,7 @@ KDE_NO_EXPORT void SMIL::AnimateColor::begin () {
             getAnimateColor (values[0], begin_c);
             getAnimateColor (values[1], end_c);
         } else {
-            if (SMIL::id_node_region == target->id)
-                getAnimateColor (
-                        static_cast<SMIL::Region*>(target)->background_color,
-                        begin_c);
-            else if (SMIL::id_node_first_mediatype <= target->id &&
-                    SMIL::id_node_last_mediatype >= target->id)
-                getAnimateColor (
-                        static_cast<SMIL::MediaType*>(target)->background_color,
-                        begin_c);
+            getAnimateColor (target->param (changed_attribute), begin_c);
         }
     } else {
         getAnimateColor (change_from, begin_c);
@@ -4729,11 +4628,11 @@ KDE_NO_EXPORT void SMIL::AnimateColor::finish () {
 
 KDE_NO_EXPORT void SMIL::AnimateColor::applyStep () {
     Node *target = target_element.ptr ();
-    if (!checkTarget (target))
-        return;
-    QString val; // TODO make more efficient
-    val.sprintf ("#%06x", 0xffffff & cur_c.argb ());
-    static_cast <Element *> (target)->setParam ("background-color", val);
+    if (target) {
+        QString val; // TODO make more efficient
+        val.sprintf ("#%06x", 0xffffff & cur_c.argb ());
+        static_cast <Element *> (target)->setParam (changed_attribute, val);
+    }
 }
 
 KDE_NO_EXPORT bool SMIL::AnimateColor::timerTick (unsigned int cur_time) {
@@ -4747,29 +4646,27 @@ KDE_NO_EXPORT bool SMIL::AnimateColor::timerTick (unsigned int cur_time) {
         switch (calcMode) {
             case calc_paced: // FIXME
             case calc_linear:
-                cur_c = delta_c;
-                cur_c *= gain;
-                cur_c += begin_c;
                 break;
             case calc_spline:
-                if (spline_table) {
-                    float y = cubicBezier (spline_table, 0, 99, gain);
-                    cur_c = delta_c;
-                    cur_c *= y;
-                    cur_c += begin_c;
-                }
+                if (spline_table)
+                    gain = cubicBezier (spline_table, 0, 99, gain);
                 break;
             case calc_discrete:
                 return true; // very sub-optimal timer
         }
+        cur_c = delta_c;
+        cur_c *= gain;
+        cur_c += begin_c;
         applyStep ();
         return true;
-    } else if (values.size () > ++interval + 1) {
+    } else if (values.size () > (int) ++interval) {
         getAnimateColor (values[interval], begin_c);
-        getAnimateColor (values[interval+1], end_c);
         cur_c = begin_c;
-        delta_c = end_c;
-        delta_c -= begin_c;
+        if (calcMode != calc_discrete && values.size () > (int) interval + 1) {
+            getAnimateColor (values[interval+1], end_c);
+            delta_c = end_c;
+            delta_c -= begin_c;
+        }
         if (setInterval ()) {
             applyStep ();
             return true;
@@ -4818,10 +4715,6 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::Excl *n) {
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::Transition * n) {
     visit (static_cast <Element *> (n));
-}
-
-KDE_NO_EXPORT void Visitor::visit (SMIL::Animate * n) {
-    visit (static_cast <SMIL::AnimateGroup *> (n));
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::AnimateBase * n) {

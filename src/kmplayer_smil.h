@@ -51,10 +51,12 @@ public:
         { perc_size *= f; abs_size *= f; return *this; }
     Single size (Single relative_to = 100) const;
     bool isSet () const { return isset; }
+    QString toString () const;
 private:
     Single perc_size;
     Single abs_size;
     bool isset;
+    bool has_percentage;
 };
 
 /**
@@ -774,7 +776,7 @@ public:
     Runtime *runtime;
 protected:
     void restoreModification ();
-    NodePtr targetElement ();
+    Node *targetElement ();
     AnimateGroup (NodePtr &d, short _id);
     NodePtrW target_element;
     TrieString changed_attribute;
@@ -789,35 +791,6 @@ public:
     virtual void begin ();
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     PlayType playType () { return play_type_none; }
-};
-
-class KMPLAYER_NO_EXPORT Animate : public AnimateGroup {
-public:
-    Animate(NodePtr &doc);
-    virtual void init ();
-    virtual void begin ();
-    virtual void finish ();
-    virtual void deactivate ();
-    virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void message (MessageType msg, void *content=NULL);
-    virtual void accept (Visitor *v) { v->visit (this); }
-    KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
-    PlayType playType () { return play_type_none; }
-
-    Posting *anim_timer;
-private:
-    void applyStep ();
-    bool timerTick();
-
-    enum { acc_none, acc_sum } accumulate;
-    enum { add_replace, add_sum } additive;
-    int change_by;
-    enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
-    QString change_from;
-    QStringList change_values;
-    int steps;
-    float change_delta, change_to_val, change_from_val;
-    QString change_from_unit;
 };
 
 class KMPLAYER_NO_EXPORT AnimateBase : public AnimateGroup {
@@ -843,7 +816,6 @@ protected:
     virtual bool timerTick (unsigned int cur_time) = 0;
     virtual void applyStep () = 0;
 
-    bool checkTarget (Node *n);
     bool setInterval ();
 
     enum { acc_none, acc_sum } accumulate;
@@ -855,13 +827,33 @@ protected:
     ConnectionLink change_updater;
     float *keytimes;
     Point2D *spline_table;
-    int keytime_count;
     QStringList splines;
     float control_point[4];
+    unsigned int keytime_count;
     unsigned int keytime_steps;
     unsigned int interval;
     unsigned int interval_start_time;
     unsigned int interval_end_time;
+};
+
+class KMPLAYER_NO_EXPORT Animate : public AnimateBase {
+public:
+    Animate (NodePtr &doc) : AnimateBase (doc, id_node_animate) {}
+
+    virtual void init ();
+    virtual void begin ();
+    virtual void finish ();
+    //virtual void accept (Visitor *v) { v->visit (this); }
+    KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
+
+private:
+    virtual bool timerTick (unsigned int cur_time);
+    virtual void applyStep ();
+
+    SizeType begin_;
+    SizeType cur;
+    SizeType delta;
+    SizeType end;
 };
 
 class KMPLAYER_NO_EXPORT AnimateMotion : public AnimateBase {
@@ -877,7 +869,7 @@ public:
 private:
     virtual bool timerTick (unsigned int cur_time);
     virtual void applyStep ();
-    bool getCoordinates (const QString &coord, SizeType &x, SizeType &y);
+
     SizeType begin_x, begin_y;
     SizeType cur_x, cur_y;
     SizeType delta_x, delta_y;
