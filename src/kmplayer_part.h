@@ -100,13 +100,13 @@ public slots:
 private:
     KMPlayerPart * player;
     QString script_result;
+    QString m_allow;
     QStringList redir_funcs;
     const JSCommandEntry * lastJSCommandEntry;
     unsigned int object_counter;
     bool m_started;
     bool m_enablefinish;
     bool m_evaluating;
-    bool m_allow_once;
     bool m_skip_put;
 };
 

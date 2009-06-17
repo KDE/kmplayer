@@ -1058,7 +1058,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (
     m_started (false),
     m_enablefinish (false),
     m_evaluating (false),
-    m_allow_once (false),
     m_skip_put (false) {
       connect (parent, SIGNAL (started (KIO::Job *)), this, SLOT (started ()));
 }
@@ -1200,7 +1199,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
         type = KParts::LiveConnectExtension::TypeString;
         rid = id;
         object_counter++;
-        m_allow_once = true;
+        m_allow = rval;
         return true;
     }
     rid = id;
@@ -1298,8 +1297,8 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
     }
     if (name.startsWith ("__kmplayer__obj_")) {
         script_result = val;
-        if (m_allow_once) {
-            m_allow_once = false;
+        if (name == m_allow) {
+            m_allow.clear ();
             return false;
         }
         return !m_evaluating;
