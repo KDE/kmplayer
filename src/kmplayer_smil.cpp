@@ -1446,17 +1446,26 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
             show_background = ShowAlways;
         need_repaint = true;
     } else if (name == "backgroundImage") {
-        background_image = val;
-        Smil * s = SMIL::Smil::findSmilNode (this);
-        if (s) {
-            if (!media_info) {
-                media_info = new MediaInfo (this, MediaManager::Image);
+        if (val == "none") {
+            if (!background_image.isEmpty ()) {
+                need_repaint = true;
+                background_image.clear ();
+                if (media_info) {
+                    delete media_info;
+                    media_info = NULL;
+                    postpone_lock = NULL;
+                }
+            }
+        } else if (background_image != val) {
+            background_image = val;
+            Smil *s = SMIL::Smil::findSmilNode (this);
+            if (s) {
+                if (!media_info)
+                    media_info = new MediaInfo (this, MediaManager::Image);
                 Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : NULL;
                 QString url = mrl ? KURL (mrl->absolutePath(), val).url() : val;
                 postpone_lock = document ()->postpone ();
                 media_info->wget (url);
-            } else {
-                need_repaint = true;
             }
         }
     }
