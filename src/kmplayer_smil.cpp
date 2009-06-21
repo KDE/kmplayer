@@ -2826,7 +2826,7 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
     } else if (para == "backgroundColor" || para == "background-color") {
         background_color = val.isEmpty () ? 0xffffffff : QColor (val).rgba ();
         background_color = setRGBA (background_color, bg_opacity);
-    } else if (para == "mediaOpacity" || para == "rn:mediaOpacity") {
+    } else if (para == "mediaOpacity") {
         opacity = (int) SizeType (val, true).size (100);
     } else if (para == "mediaBackgroundOpacity" || para == "backgroundOpacity"){
         bg_opacity = (int) SizeType (val, true).size (100);
@@ -3748,7 +3748,7 @@ void SmilTextProperties::init () {
 bool SmilTextProperties::parseParam(const TrieString &name, const QString &val) {
     if (name == "textWrap") {
         // { Wrap, NoWrap, WrapInherit } text_wrap;
-    } else if (name == "xml:space") {
+    } else if (name == "space" /*xml:space*/) {
         // { SpaceDefault, SpacePreserve } space;
     } else if (name == "textAlign") {
         if (val == "left")

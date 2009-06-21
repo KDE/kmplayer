@@ -217,13 +217,15 @@ protected:
 class KMPLAYER_EXPORT Attribute : public ListNodeBase <Attribute> {
 public:
     KDE_NO_CDTOR_EXPORT Attribute () {}
-    Attribute (const TrieString & n, const QString & v);
+    Attribute (const TrieString &ns, const TrieString &n, const QString &v);
     KDE_NO_CDTOR_EXPORT ~Attribute () {}
+    TrieString ns () const { return m_namespace; }
     TrieString name () const { return m_name; }
     QString value () const { return m_value; }
     void setName (const TrieString &);
     void setValue (const QString &);
 protected:
+    TrieString m_namespace;
     TrieString m_name;
     QString m_value;
 };

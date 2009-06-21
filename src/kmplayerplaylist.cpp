@@ -660,7 +660,7 @@ void Element::setAttribute (const TrieString & name, const QString & value) {
             return;
         }
     if (!value.isNull ())
-        m_attributes->append (new Attribute (name, value));
+        m_attributes->append (new Attribute (TrieString (), name, value));
 }
 
 QString Element::getAttribute (const TrieString & name) {
@@ -697,8 +697,8 @@ void Element::accept (Visitor * v) {
 
 //-----------------------------------------------------------------------------
 
-Attribute::Attribute (const TrieString & n, const QString & v)
-  : m_name (n), m_value (v) {}
+Attribute::Attribute (const TrieString &ns, const TrieString &n, const QString &v)
+  : m_namespace (ns), m_name (n), m_value (v) {}
 
 void Attribute::setName (const TrieString & n) {
     m_name = n;
@@ -1550,7 +1550,10 @@ static void startTag (void *data, const char * tag, const char **attr) {
     AttributeListPtr attributes = new AttributeList;
     if (attr && attr [0]) {
         for (int i = 0; attr[i]; i += 2)
-            attributes->append (new Attribute (QString::fromUtf8 (attr [i]), QString::fromUtf8 (attr [i+1])));
+            attributes->append (new Attribute (
+                        TrieString(),
+                        QString::fromUtf8 (attr [i]),
+                        QString::fromUtf8 (attr [i+1])));
     }
     builder->startTag (QString::fromUtf8 (tag), attributes);
 }
@@ -1616,8 +1619,8 @@ namespace {
 class KMPLAYER_NO_EXPORT SimpleSAXParser {
     enum Token { tok_empty, tok_text, tok_white_space, tok_angle_open,
         tok_equal, tok_double_quote, tok_single_quote, tok_angle_close,
-        tok_slash, tok_exclamation, tok_amp, tok_hash, tok_semi_colon,
-        tok_question_mark, tok_cdata_start };
+        tok_slash, tok_exclamation, tok_amp, tok_hash, tok_colon,
+        tok_semi_colon, tok_question_mark, tok_cdata_start };
 public:
     struct TokenInfo {
         TokenInfo () : token (tok_empty) {}
@@ -1650,7 +1653,7 @@ private:
     // for element reading
     QString tagname;
     AttributeListPtr m_attributes;
-    QString attr_name, attr_value;
+    QString attr_namespace, attr_name, attr_value;
     QString cdata;
     bool equal_seen;
     bool in_dbl_quote;
@@ -1716,7 +1719,8 @@ void SimpleSAXParser::push () {
 
 void SimpleSAXParser::push_attribute () {
     //kDebug () << "attribute " << attr_name.latin1 () << "=" << attr_value.latin1 ();
-    m_attributes->append (new Attribute (attr_name, attr_value));
+    m_attributes->append(new Attribute (attr_namespace, attr_name, attr_value));
+    attr_namespace.clear ();
     attr_name.truncate (0);
     attr_value.truncate (0);
     equal_seen = in_sngl_quote = in_dbl_quote = false;
@@ -1755,6 +1759,10 @@ bool SimpleSAXParser::nextToken () {
             } else if (next_char == QChar ('>')) {
                 push ();
                 next_token->token = tok_angle_close;
+            } else if (InAttributes == m_state->state &&
+                    next_char == QChar (':')) {
+                push ();
+                next_token->token = tok_colon;
             } else if (next_char == QChar (';')) {
                 push ();
                 next_token->token = tok_semi_colon;
@@ -1881,6 +1889,13 @@ bool SimpleSAXParser::readAttributes () {
                 in_sngl_quote = true;
             else
                 attr_value += token->string;
+        } else if (token->token == tok_colon) {
+            if (equal_seen) {
+                attr_value += token->string;
+            } else {
+                attr_namespace = attr_name;
+                attr_name.clear();
+            }
         } else if (token->token == tok_double_quote) {
             if (!equal_seen)
                 attr_name += token->string; // hmm
