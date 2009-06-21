@@ -4315,10 +4315,10 @@ KDE_NO_EXPORT void SMIL::Animate::cleanUp () {
         document ()->cancelPosting (anim_timer);
         anim_timer = NULL;
     }
-    delete begin_;
-    delete cur;
-    delete delta;
-    delete end;
+    delete [] begin_;
+    delete [] cur;
+    delete [] delta;
+    delete [] end;
     begin_ = cur = delta = end = NULL;
     num_count = 0;
 }
