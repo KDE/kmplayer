@@ -4270,19 +4270,40 @@ bool SMIL::AnimateBase::setInterval () {
 
 //-----------------------------------------------------------------------------
 
+SMIL::Animate::Animate (NodePtr &doc)
+ : AnimateBase (doc, id_node_animate),
+   num_count (0), begin_(NULL), cur (NULL), delta (NULL), end (NULL) {
+}
+
 KDE_NO_EXPORT void SMIL::Animate::init () {
     if (Runtime::TimingsInitialized > runtime->timingstate) {
-        cur = delta = SizeType();
+        cleanUp ();
         AnimateBase::init ();
     }
 }
 
-KDE_NO_EXPORT void SMIL::Animate::begin () {
-    restoreModification ();
-    if (anim_timer) { // FIXME: repeating doesn't reinit
+KDE_NO_EXPORT void SMIL::Animate::cleanUp () {
+    if (anim_timer) {
         document ()->cancelPosting (anim_timer);
         anim_timer = NULL;
     }
+    delete begin_;
+    delete cur;
+    delete delta;
+    delete end;
+    begin_ = cur = delta = end = NULL;
+    num_count = 0;
+}
+
+KDE_NO_EXPORT void SMIL::Animate::deactivate () {
+    cleanUp ();
+    AnimateBase::deactivate ();
+}
+
+KDE_NO_EXPORT void SMIL::Animate::begin () {
+    restoreModification ();
+    cleanUp (); // FIXME: repeating doesn't reinit
+
     NodePtr protect = target_element;
     Element *target = static_cast <Element *> (targetElement ());
     if (!target) {
@@ -4308,32 +4329,52 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
         return;
     }
     if (calcMode != calc_discrete) {
-        begin_ = values[0];
-        end = values[1];
-        cur = begin_;
-        delta = end;
-        delta -= begin_;
+        QStringList bnums = QStringList::split (QString (","), values[0]);
+        QStringList enums = QStringList::split (QString (","), values[1]);
+        num_count = bnums.size ();
+        if (num_count) {
+            begin_ = new SizeType [num_count];
+            end = new SizeType [num_count];
+            cur = new SizeType [num_count];
+            delta = new SizeType [num_count];
+            for (int i = 0; i < num_count; ++i) {
+                begin_[i] = bnums[i];
+                end[i] = i < enums.size () ? enums[i] : bnums[i];
+                cur[i] = begin_[i];
+                delta[i] = end[i];
+                delta[i] -= begin_[i];
+            }
+        }
     }
     AnimateBase::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::Animate::finish () {
-    if (active () && cur.size () != end.size ()) {
-        cur = end;
-        applyStep (); // we lost some steps ..
-    }
+    if (active ())
+        for (int i = 0; i < num_count; ++i)
+            if (cur[i].size () != end[i].size ()) {
+                for (int j = 0; j < num_count; ++j)
+                    cur[j] = end[j];
+                applyStep (); // we lost some steps ..
+                break;
+            }
     AnimateBase::finish ();
 }
 
 KDE_NO_EXPORT void SMIL::Animate::applyStep () {
     Element *target = convertNode <Element> (target_element);
     if (target) {
-        if (calcMode != calc_discrete)
-            target->setParam (changed_attribute,
-                    cur.toString (), &modification_id);
-        else if ((int)interval < values.size ())
+        if (calcMode != calc_discrete) {
+            if (num_count) {
+                QString val (cur[0].toString ());
+                for (int i = 1; i < num_count; ++i)
+                    val += QChar (',') + cur[i].toString ();
+                target->setParam (changed_attribute, val, &modification_id);
+            }
+        } else if ((int)interval < values.size ()) {
             target->setParam (changed_attribute,
                     values[interval], &modification_id);
+        }
     }
 }
 
@@ -4356,20 +4397,26 @@ KDE_NO_EXPORT bool SMIL::Animate::timerTick (unsigned int cur_time) {
             case calc_discrete:
                 return false; // should come here
         }
-        cur = delta;
-        cur *= gain;
-        cur += begin_;
+        for (int i = 0; i < num_count; ++i) {
+            cur[i] = delta[i];
+            cur[i] *= gain;
+            cur[i] += begin_[i];
+        }
         applyStep ();
         return true;
     } else if (values.size () > (int) ++interval) {
         if (calc_discrete != calcMode) {
             if (values.size () <= (int) interval + 1)
                 return false;
-            begin_ = values[(int) interval];
-            end = values[interval+1];
-            cur = begin_;
-            delta = end;
-            delta -= begin_;
+            QStringList enums = QStringList::split (QString (","), values[interval+1]);
+            for (int i = 0; i < num_count; ++i) {
+                begin_[i] = end[i];
+                if (i < enums.size ())
+                    end[i] = enums[i];
+                cur[i] = begin_[i];
+                delta[i] = end[i];
+                delta[i] -= begin_[i];
+            }
         }
         if (setInterval ()) {
             applyStep ();

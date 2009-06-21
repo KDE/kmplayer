@@ -838,11 +838,12 @@ protected:
 
 class KMPLAYER_NO_EXPORT Animate : public AnimateBase {
 public:
-    Animate (NodePtr &doc) : AnimateBase (doc, id_node_animate) {}
+    Animate (NodePtr &doc);
 
     virtual void init ();
     virtual void begin ();
     virtual void finish ();
+    virtual void deactivate ();
     //virtual void accept (Visitor *v) { v->visit (this); }
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
 
@@ -850,10 +851,13 @@ private:
     virtual bool timerTick (unsigned int cur_time);
     virtual void applyStep ();
 
-    SizeType begin_;
-    SizeType cur;
-    SizeType delta;
-    SizeType end;
+    void cleanUp ();
+
+    int num_count;
+    SizeType *begin_;
+    SizeType *cur;
+    SizeType *delta;
+    SizeType *end;
 };
 
 class KMPLAYER_NO_EXPORT AnimateMotion : public AnimateBase {
