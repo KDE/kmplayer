@@ -48,6 +48,7 @@ public:
     void markDirty ();             // mark this and ancestors dirty
     void updateChildren (bool parent_resized=false);
     SSize dimension () const { return size.isEmpty () ? bounds.size : size; }
+    void setBackgroundColor (unsigned int argb);
 
     NodePtrW node;
     SRect bounds;                  // bounds in parent coord.

@@ -1321,6 +1321,7 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
     show_background = ShowAlways;
     bg_opacity = 100;
+    bg_repeat = BgRepeat;
     fit = fit_default;
     Node *n = parentNode ();
     if (n && SMIL::id_node_layout == n->id)
@@ -1445,6 +1446,17 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
         else
             show_background = ShowAlways;
         need_repaint = true;
+    } else if (name == "backgroundRepeat") {
+        if (val == "norepeat")
+            bg_repeat = BgNoRepeat;
+        else if (val == "repeatX")
+            bg_repeat = BgRepeatX;
+        else if (val == "repeatY")
+            bg_repeat = BgRepeatY;
+        else if (val == "inherit")
+            bg_repeat = BgInherit;
+        else
+            bg_repeat = BgRepeat;
     } else if (name == "backgroundImage") {
         if (val == "none") {
             if (!background_image.isEmpty ()) {
@@ -1472,7 +1484,7 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
     if (active ()) {
         Surface *s = (Surface *) role (RoleDisplay);
         if (s && s->background_color != background_color){
-            s->background_color = background_color;
+            s->setBackgroundColor (background_color);
             need_repaint = true;
         }
         if (need_repaint && s)
@@ -2838,7 +2850,7 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
         pan_zoom->width = coords[2];
         pan_zoom->height = coords[3];
     } else if (para == "backgroundColor" || para == "background-color") {
-        background_color = val.isEmpty () ? 0xffffffff : QColor (val).rgba ();
+        background_color = val.isEmpty () ? 0 : QColor (val).rgba ();
         background_color = setRGBA (background_color, bg_opacity);
     } else if (para == "mediaOpacity") {
         opacity = (int) SizeType (val, true).size (100);
@@ -2874,6 +2886,7 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
     }
     if (sub_surface) {
         sub_surface->markDirty ();
+        sub_surface->setBackgroundColor (background_color);
         sub_surface->repaint ();
     }
 }
@@ -2883,7 +2896,7 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
         trans_out_active = false;
         trans_start_time = 0;
         fit = fit_default;
-        background_color = 0xffffffff;
+        background_color = 0;
         opacity = 100;
         bg_opacity = 100;
         Mrl::init (); // sets all attributes
@@ -3307,6 +3320,7 @@ Surface *SMIL::MediaType::surface () {
         Surface *rs = (Surface *) region_node->role (RoleDisplay);
         if (rs) {
             sub_surface = rs->createSurface (this, SRect ());
+            sub_surface->setBackgroundColor (background_color);
             message (MsgSurfaceBoundsUpdate);
         }
     }

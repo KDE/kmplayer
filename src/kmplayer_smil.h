@@ -334,6 +334,9 @@ public:
     unsigned int background_color;
     int bg_opacity;
     QString background_image;
+    enum BackgroundRepeat {
+        BgRepeat, BgRepeatX, BgRepeatY, BgNoRepeat, BgInherit
+    } bg_repeat;
     ShowBackground show_background;
     Fit fit;
     ConnectionList m_AttachedMediaTypes;   // active attached mediatypes

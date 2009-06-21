@@ -136,6 +136,18 @@ KDE_NO_EXPORT IRect Surface::toScreen (const SSize &size) {
     return matrix.toScreen (SRect (0, 0, size));
 }
 
+void Surface::setBackgroundColor (unsigned int argb) {
+#ifdef KMPLAYER_WITH_CAIRO
+    if (surface &&
+            ((background_color & 0xff000000) < 0xff000000) !=
+            ((argb & 0xff000000) < 0xff000000)) {
+        cairo_surface_destroy (surface);
+        surface = NULL;
+    }
+#endif
+    background_color = argb;
+}
+
 static void clipToScreen (Surface *s, Matrix &m, IRect &clip) {
     Surface *ps = s->parentNode ();
     if (!ps) {

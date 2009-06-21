@@ -181,6 +181,7 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     SMIL::MediaType *cur_media;
     cairo_pattern_t * cur_pat;
     cairo_matrix_t cur_mat;
+    SMIL::RegionBase::BackgroundRepeat bg_repeat;
     float opacity;
     bool toplevel;
 
@@ -217,7 +218,7 @@ KDE_NO_CDTOR_EXPORT
 CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
         const IRect & rect, QColor c, bool top)
  : clip (rect), cairo_surface (cs),
-   matrix (m), toplevel (top) {
+   matrix (m), bg_repeat (SMIL::RegionBase::BgRepeat), toplevel (top) {
     cr = cairo_create (cs);
     if (toplevel) {
         cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
@@ -328,6 +329,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         matrix.transform (m);
         IRect clip_save = clip;
         clip = clip.intersect (scr);
+        SMIL::RegionBase::BackgroundRepeat bg_repeat_save = bg_repeat;
+        if (SMIL::RegionBase::BgInherit != reg->bg_repeat)
+            bg_repeat = reg->bg_repeat;
         cairo_save (cr);
 
         Surface *cs = s->firstChild ();
@@ -370,8 +374,27 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
                 cairo_matrix_init_translate (&mat, -scr.x (), -scr.y ());
                 cairo_pattern_set_matrix (pat, &mat);
                 cairo_set_source (cr, pat);
-                cairo_rectangle (cr,
-                        clip.x (), clip.y (), clip.width (), clip.height ());
+                int cw = clip.width ();
+                int ch = clip.height ();
+                switch (bg_repeat) {
+                case SMIL::RegionBase::BgRepeatX:
+                    if (h < ch)
+                        ch = h;
+                    break;
+                case SMIL::RegionBase::BgRepeatY:
+                    if (w < cw)
+                        cw = w;
+                    break;
+                case SMIL::RegionBase::BgNoRepeat:
+                    if (w < cw)
+                        cw = w;
+                    if (h < ch)
+                        ch = h;
+                    break;
+                default:
+                    break;
+                }
+                cairo_rectangle (cr, clip.x (), clip.y (), cw, ch);
                 cairo_fill (cr);
                 cairo_pattern_destroy (pat);
                 if (bg_img->has_alpha)
@@ -458,6 +481,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         }
         cairo_restore (cr);
         matrix = m;
+        bg_repeat = bg_repeat_save;
         clip = clip_save;
         s->dirty = false;
     }
@@ -828,7 +852,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
             calculateTextDimensions (desc, text.data (),
                     w, 2 * ft_size, &pxw, &pxh, false);
         }
-        unsigned int bg_alpha = txt->background_color & 0xff000000;
+        unsigned int bg_alpha = s->background_color & 0xff000000;
         if (!s->surface)
             s->surface = cairo_surface_create_similar (cairo_surface,
                     bg_alpha < 0xff000000
@@ -842,9 +866,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 
         if (bg_alpha) {
             if (bg_alpha < 0xff000000)
-                CAIRO_SET_SOURCE_ARGB (cr_txt, txt->background_color);
+                CAIRO_SET_SOURCE_ARGB (cr_txt, s->background_color);
             else
-                CAIRO_SET_SOURCE_RGB (cr_txt, txt->background_color);
+                CAIRO_SET_SOURCE_RGB (cr_txt, s->background_color);
             cairo_paint (cr_txt);
         }
 

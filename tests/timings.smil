@@ -58,7 +58,7 @@
                fill="freeze"/>
         </par>
         <par id="rep_seq">
-          <text src="data:,%3Cseq%20repeat=3%3E"
+          <text src="data:,%3Cseq%20repeat=3%3E" fontColor="LightGray"
                 region="reg1"/>
           <set target="rep_seq_txt" attribute="background-color" to="green"/>
           <set target="reg2" attribute="background-color" to="white"/>
@@ -70,7 +70,7 @@
         </par>
         <par id="multi_trigger" dur="20">
           <text id="multi_text" src="data:,begin=%224;start_text.activateEvent%22%2Cend=%228;end_text.activateEvent%22"
-                region="reg1"/>
+                fontColor="LightGray" region="reg1"/>
           <text id="start_text" src="data:,Start" background-color="green"
                 region="reg2"/>
           <text id="end_text" src="data:,Stop" background-color="IndianRed"
