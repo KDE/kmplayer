@@ -497,11 +497,6 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
         setDurationItems (element, val, durations + (int) DurTime);
     } else if (name == StringPool::attr_end) {
         setDurationItems (element, val, durations + (int) EndTime);
-        if (endTime ().durval == DurTimer &&
-            endTime ().offset > beginTime ().offset)
-            durTime ().offset = endTime ().offset - beginTime ().offset;
-        else if (endTime ().durval != DurTimer)
-            durTime ().durval = DurMedia; // event
     } else if (name.startsWith (StringPool::attr_fill)) {
         Fill * f = &fill;
         if (name != StringPool::attr_fill) {
@@ -713,12 +708,22 @@ KDE_NO_EXPORT void Runtime::setDuration () {
         element->document ()->cancelPosting (begin_timer);
         begin_timer = NULL;
     }
-    if (durTime ().durval == DurTimer && durTime ().offset > 0) {
-        if (duration_timer)
-            element->document ()->cancelPosting (duration_timer);
-        duration_timer = element->document ()->post (element,
-                new TimerPosting (10 * durTime ().offset, dur_timer_id));
+    if (duration_timer) {
+        element->document ()->cancelPosting (duration_timer);
+        duration_timer = NULL;
     }
+    int duration = 0;
+    if (durTime ().durval == DurTimer) {
+        duration = durTime ().offset;
+        if (endTime ().durval == DurTimer &&
+                (!duration || endTime().offset - beginTime().offset < duration))
+            duration = endTime ().offset - beginTime ().offset;
+    } else if (endTime ().durval == DurTimer) {
+        duration = endTime ().offset;
+    }
+    if (duration > 0)
+        duration_timer = element->document ()->post (element,
+                new TimerPosting (10 * duration, dur_timer_id));
     // kDebug () << "Runtime::started set dur timer " << durTime ().offset;
 }
 
