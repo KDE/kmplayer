@@ -4452,6 +4452,7 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
     CalculatedSizer *sizes = t ? (CalculatedSizer *) t->role (RoleSizer) : NULL;
     if (!sizes)
         return;
+    old_sizes = *sizes;
     if (anim_timer) {
         document ()->cancelPosting (anim_timer);
         anim_timer = NULL;
@@ -4508,6 +4509,15 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::finish () {
         }
     }
     AnimateBase::finish ();
+}
+
+KDE_NO_EXPORT void SMIL::AnimateMotion::restoreModification () {
+    Node *n = target_element.ptr ();
+    CalculatedSizer *sizes = n ? (CalculatedSizer *) n->role (RoleSizer) : NULL;
+    if (sizes) {
+        *sizes = old_sizes;
+        n->message (MsgSurfaceBoundsUpdate);
+    }
 }
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::applyStep () {

@@ -775,7 +775,7 @@ public:
     virtual void *role (RoleType msg, void *content=NULL);
     Runtime *runtime;
 protected:
-    void restoreModification ();
+    virtual void restoreModification ();
     Node *targetElement ();
     AnimateGroup (NodePtr &d, short _id);
     NodePtrW target_element;
@@ -871,9 +871,11 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "animateMotion"; }
 
 private:
+    virtual void restoreModification ();
     virtual bool timerTick (unsigned int cur_time);
     virtual void applyStep ();
 
+    CalculatedSizer old_sizes;
     SizeType begin_x, begin_y;
     SizeType cur_x, cur_y;
     SizeType delta_x, delta_y;

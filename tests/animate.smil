@@ -45,42 +45,42 @@
       <text id="text1" src="data:,8,8%20animateMotion%20by%2032x32%20and%20back"
             region="region1" left="8" top="8" dur="5"
             mediaBackgroundOpacity="70%"/>
-      <animateMotion target="text1" begin="1" dur=".5" by="32,32"/>
-      <animateMotion target="text1" begin="3" dur=".5" by="-32,-32"/>
+      <animateMotion target="text1" begin="1" dur=".5" by="32,32" fill="freeze"/>
+      <animateMotion target="text1" begin="3" dur=".5" by="-32,-32" fill="freeze"/>
     </par>
     <par>
       <text id="text2" src="data:,20%25,75%25%0AanimateMotion%0Ato%2040%25,20%25%0Aback%20to%20150,20"
             region="region1" left="20%" top="75%" dur="5"
             mediaBackgroundOpacity="70%"/>
-      <animateMotion target="text2" begin="1" dur=".5" to="40%,20%"/>
-      <animateMotion target="text2" begin="3" dur=".5" to="150,20"/>
+      <animateMotion target="text2" begin="1" dur=".5" to="40%,20%" fill="freeze"/>
+      <animateMotion target="text2" begin="3" dur=".5" to="150,20" fill="freeze"/>
     </par>
     <par>
       <text id="text3" src="data:,8,8%0AanimateMotion%0Afrom%2040%25,20%25%0Aby%2040%25,-20%25"
             region="region1" left="8" top="8" dur="3"
             mediaBackgroundOpacity="70%"/>
       <animateMotion target="text3" begin="1" dur=".5"
-                     from="20%,75%" by="40%,-20%"/>
+                     from="20%,75%" by="40%,-20%" fill="freeze"/>
     </par>
     <par>
       <text id="text4" src="data:,8,8%0AanimateMotion%0Afrom%2010,150%0Ato%20150,10"
             region="region1" left="8" top="8" dur="3"
             mediaBackgroundOpacity="70%"/>
       <animateMotion target="text4" begin="1" dur=".5"
-                     from="10,150" to="150,10"/>
+                     from="10,150" to="150,10" fill="freeze"/>
     </par>
     <par>
       <text id="text6" src="data:,lineair%20animateMotion%0Avalues%2020,20;150,5;160,160"
             region="region1" left="8" top="8" dur="5"
             mediaBackgroundOpacity="70%"/>
       <animateMotion target="text6" begin="2" dur="2"
-                     values="20,20;150,5;160,170"/>
+                     values="20,20;150,5;160,170" fill="freeze"/>
     </par>
     <par>
       <text id="text7" src="data:,lineair%20animateMotion%0Avalues%2020,20;160,35;140,160%0AkeyTimes0;0.8;1"
             region="region1" left="8" top="8" dur="5"
             mediaBackgroundOpacity="70%"/>
-      <animateMotion target="text7" begin="2" dur="2"
+      <animateMotion target="text7" begin="2" dur="2" fill="freeze"
                      values="20,20;160,35;140,160" keyTimes="0;0.8;1"/>
     </par>
     <par>
@@ -88,7 +88,7 @@
             region="region1" left="8" top="8" dur="5"
             mediaBackgroundOpacity="70%"/>
       <animateMotion target="text8" begin="1" dur="3" calcMode="spline"
-                     values="20,20;160,35;140,160"
+                     values="20,20;160,35;140,160" fill="freeze"
                      keyTimes="0;0.5;1"
                      keySplines=".5 0 .5 1;0 .75 .25 1"/>
     </par>
@@ -97,7 +97,7 @@
             region="region1" left="8" top="8" dur="4"
             mediaBackgroundOpacity="70%"/>
       <animateMotion target="text9" begin="1" dur="3" calcMode="discrete"
-                     values="20,20;160,35;140,160"/>
+                     values="20,20;160,35;140,160" fill="freeze"/>
     </par>
     <par>
       <text id="text10" src="data:,discrete%20animateMotion%0Avalues%2020,20;160,35;140,160%0AkeyTimes0;0.5;.7"
@@ -105,36 +105,36 @@
             mediaBackgroundOpacity="70%"/>
       <animateMotion target="text10" begin="1" dur="3" calcMode="discrete"
                      values="20,20;160,35;140,160"
-                     keyTimes="0;0.5;.7"/>
+                     keyTimes="0;0.5;.7" fill="freeze"/>
     </par>
     <par>
       <text left="0" id="text5" src="data:,animateMotion%20on%20region"
             region="region2" dur="10" fontPtSize="7">
-        <animateMotion begin="2.7" dur=".3" calcMode="spline"
+        <animateMotion begin="2.7" dur=".3" calcMode="spline" fill="freeze"
                        from="0,0" to="25%, 0%" keySplines="0 .75 .25 1"/>
-        <animateMotion begin="4.7" dur=".3" calcMode="spline"
+        <animateMotion begin="4.7" dur=".3" calcMode="spline" fill="freeze"
                        from="25%,0%" to="25%, 25%" keySplines="0 .75 .25 1"/>
-        <animateMotion begin="6.7" dur=".3" calcMode="spline"
+        <animateMotion begin="6.7" dur=".3" calcMode="spline" fill="freeze"
                        from="25%,25%" to="0%, 25%" keySplines="0 .75 .25 1"/>
-        <animateMotion begin="8.0" dur=".4" calcMode="spline"
+        <animateMotion begin="8.0" dur=".4" calcMode="spline" fill="freeze"
                        from="0%,25%" to="0%, 0%" keySplines="0 .75 .25 1"/>
       </text>
-      <animateMotion target="region2" begin="1" dur="1.7" calcMode="spline"
+      <animateMotion target="region2" begin="1" dur="1.7" calcMode="spline" fill="freeze"
                      from="5%,10%" to="55%, 15%" keySplines=".75 0 1 .25"/>
       <animateColor target="region2" begin="2.7" dur=".4" calcMode="spline"
                     keyTimes="0;0.3;1" values="yellow;red;yellow"
                     keySplines=".25 0 .75 1;.25 0 .75 1"/>
       <animateMotion target="region2" begin="3" dur="1.7" calcMode="spline"
-                     to="65%,60%" keySplines=".75 0 1 .25"/>
+                     to="65%,60%" keySplines=".75 0 1 .25" fill="freeze"/>
       <animateColor target="region2" begin="4.7" dur=".4" calcMode="spline"
                     keyTimes="0;0.3;1" values="yellow;red;yellow"
                     keySplines=".25 0 .75 1;.25 0 .75 1"/>
       <animateMotion target="region2" begin="5" dur="1.7" calcMode="spline"
-                     by="-45%,10%" keySplines=".75 0 1 .25"/>
+                     by="-45%,10%" keySplines=".75 0 1 .25" fill="freeze"/>
       <animateColor target="region2" begin="6.7" dur=".4" calcMode="spline"
                     keyTimes="0;0.3;1" values="yellow;red;yellow"
                     keySplines=".25 0 .75 1;.25 0 .75 1"/>
-      <animateMotion target="region2" begin="7" dur="1.8" calcMode="spline"
+      <animateMotion target="region2" begin="7" dur="1.8" calcMode="spline" fill="freeze"
                      from="20%,70%" by="-15%,-60%" keySplines="1 0 0 1"/>
     </par>
     </seq>
