@@ -4350,7 +4350,7 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
 }
 
 KDE_NO_EXPORT void SMIL::Animate::finish () {
-    if (active ())
+    if (active () && calc_discrete != calcMode)
         for (int i = 0; i < num_count; ++i)
             if (cur[i].size () != end[i].size ()) {
                 for (int j = 0; j < num_count; ++j)
@@ -4395,7 +4395,7 @@ KDE_NO_EXPORT bool SMIL::Animate::timerTick (unsigned int cur_time) {
                     gain = cubicBezier (spline_table, 0, 99, gain);
                 break;
             case calc_discrete:
-                return false; // should come here
+                return false; // shouldn't come here
         }
         for (int i = 0; i < num_count; ++i) {
             cur[i] = delta[i];
@@ -4502,7 +4502,9 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::finish () {
     if (active ()) {
-        if (cur_x.size () != end_x.size () || cur_y.size () != end_y.size ()) {
+        if (calcMode != calc_discrete &&
+                (cur_x.size () != end_x.size () ||
+                 cur_y.size () != end_y.size ())) {
             cur_x = end_x;
             cur_y = end_y;
             applyStep (); // we lost some steps ..
@@ -4546,7 +4548,7 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::timerTick (unsigned int cur_time) {
                     gain = cubicBezier (spline_table, 0, 99, gain);
                 break;
             case calc_discrete:
-                return false; // should come here
+                return false; // shouldn't come here
         }
         cur_x = delta_x;
         cur_y = delta_y;
@@ -4675,7 +4677,7 @@ KDE_NO_EXPORT void SMIL::AnimateColor::begin () {
 
 KDE_NO_EXPORT void SMIL::AnimateColor::finish () {
     if (active ()) {
-        if (cur_c.argb () != end_c.argb ()) {
+        if (calcMode != calc_discrete && cur_c.argb () != end_c.argb ()) {
             cur_c = end_c;
             applyStep (); // we lost some steps ..
         }
@@ -4709,7 +4711,7 @@ KDE_NO_EXPORT bool SMIL::AnimateColor::timerTick (unsigned int cur_time) {
                     gain = cubicBezier (spline_table, 0, 99, gain);
                 break;
             case calc_discrete:
-                return true; // very sub-optimal timer
+                return true; // shouldn't come here
         }
         cur_c = delta_c;
         cur_c *= gain;
