@@ -775,6 +775,9 @@ SizeType & SizeType::operator = (const QString & s) {
         strval.truncate (p);
         has_percentage = true;
     }
+    int px = strval.indexOf (QChar ('p')); // strip px
+    if (px > -1)
+        strval.truncate (px);
     double d = strval.toDouble (&isset);
     if (isset) {
         if (p > -1)
