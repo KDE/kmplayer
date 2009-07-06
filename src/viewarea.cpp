@@ -1643,6 +1643,9 @@ bool MouseVisitor::deliverAndForward (Node *node, Surface *s, bool inside, bool 
     }
     s->has_mouse = inside;
 
+    if (event != MsgEventPointerMoved && !inside)
+        return false;
+
     NodePtrW node_save = node;
 
     if (forward) {
@@ -1682,8 +1685,10 @@ void MouseVisitor::surfaceEvent (Node *node, Surface *s) {
     IRect scr = matrix.toScreen (rect);
     int rx = scr.x(), ry = scr.y(), rw = scr.width(), rh = scr.height();
     const bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
+    const bool had_mouse = s->has_mouse;
+    s->has_mouse = inside;
     if (deliverAndForward (node, s, inside, true) &&
-            (inside || s->has_mouse) &&
+            (inside || had_mouse) &&
             s->firstChild () && s->firstChild ()->node) {
         Matrix m = matrix;
         matrix = Matrix (rect.x(), rect.y(), s->xscale, s->yscale);
@@ -1691,7 +1696,6 @@ void MouseVisitor::surfaceEvent (Node *node, Surface *s) {
         s->firstChild ()->node->accept (this);
         matrix = m;
     }
-    s->has_mouse = inside;
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {

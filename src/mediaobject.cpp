@@ -381,8 +381,6 @@ MediaInfo::MediaInfo (Node *n, MediaManager::MediaType t)
 
 MediaInfo::~MediaInfo () {
     clearData ();
-    if (media)
-        media->destroy ();
 }
 
 KDE_NO_EXPORT void MediaInfo::killWGet () {
@@ -604,6 +602,10 @@ KDE_NO_EXPORT QString MediaInfo::mimetype () {
 
 KDE_NO_EXPORT void MediaInfo::clearData () {
     killWGet ();
+    if (media) {
+        media->destroy ();
+        media = NULL;
+    }
     url.truncate (0);
     mime.truncate (0);
     data.resize (0);

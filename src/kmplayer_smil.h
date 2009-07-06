@@ -84,7 +84,7 @@ public:
 class KMPLAYER_NO_EXPORT Runtime {
 public:
     enum TimingState {
-        TimingsInit = 0, TimingsInitialized,
+        TimingsInit = 0, TimingsInitialized, TimingsDisabled,
         timings_began, timings_started, TimingsTransIn, timings_paused,
         timings_stopped, timings_freezed
     };
@@ -102,6 +102,7 @@ public:
         DurStart = (int) MsgEventStarted,
         DurEnd = (int) MsgEventStopped,
         DurMedia = (int)MsgMediaFinished,
+        DurStateChanged = (int)MsgStateChanged,
         DurTransition,
         DurLastDuration
     };
@@ -148,6 +149,7 @@ public:
     TimingState timingstate;
     TimingState unpaused_state;
     int repeat_count;
+    QString expr;
     ConnectionList m_StartListeners;        // Element about to be started
     ConnectionList m_StartedListeners;      // Element is started
     ConnectionList m_StoppedListeners;      // Element stopped
@@ -216,6 +218,7 @@ namespace SMIL {
 
 const short id_node_smil = 100;
 const short id_node_head = 101;
+const short id_node_state = 102;
 const short id_node_layout = 103;
 const short id_node_root_layout = 104;
 const short id_node_region = 105;
@@ -232,6 +235,9 @@ const short id_node_ref = 123;
 const short id_node_brush = 124;
 const short id_node_smil_text = 125;
 const short id_node_text_styling = 126;
+const short id_node_set_value = 127;
+const short id_node_new_value = 128;
+const short id_node_del_value = 129;
 const short id_node_set = 132;
 const short id_node_animate = 133;
 const short id_node_animate_color = 134;
@@ -273,6 +279,7 @@ public:
     static Smil * findSmilNode (Node * node);
 
     NodePtrW layout_node;
+    NodePtrW state_node;
 };
 
 /**
@@ -287,6 +294,24 @@ public:
     void closed ();
     void message (MessageType msg, void *content=NULL);
     bool expose () const;
+};
+
+/**
+ * Defines state, should reside below 'head' element
+ */
+class KMPLAYER_NO_EXPORT State : public Element {
+public:
+    State (NodePtr & d);
+
+    Node *childFromTag (const QString & tag);
+    void *role (RoleType msg, void *content=NULL);
+    KDE_NO_EXPORT const char * nodeName () const { return "state"; }
+    bool expose () const { return false; }
+
+    void newValue (const QString &ref, const QString &value);
+    void setValue (const QString &ref, const QString &value);
+
+    ConnectionList m_StateChangeListeners;        // setValue changed a value
 };
 
 /**
@@ -558,6 +583,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
     // Condition
     void begin ();
+    void init ();
     void deactivate ();
     void reset ();
     void message (MessageType msg, void *content=NULL);
@@ -660,13 +686,13 @@ public:
     bool trans_out_active;
 
 protected:
+    virtual void prefetch ();
     virtual void clipStart ();
     virtual void clipStop ();
 
     MouseListeners mouse_listeners;
     ConnectionList m_MediaAttached;
     ConnectionList m_TransformedIn;        // transIn ready
-    ConnectionLink region_paint;           // attached region needs painting
     ConnectionLink region_attach;          // attached to region
     ConnectionLink document_postponed;     // pause audio/video accordantly
     ConnectionLink transition_updater;
@@ -681,7 +707,7 @@ public:
     virtual void finish ();
     virtual void accept (Visitor *);
     virtual bool expose () const;
-    virtual void parseParam (const TrieString &, const QString &);
+    virtual void prefetch ();
     virtual void clipStart ();
 };
 
@@ -692,8 +718,8 @@ public:
     PlayType playType () { return play_type_image; }
     virtual void activate ();
     virtual void accept (Visitor *);
-    virtual void parseParam (const TrieString &, const QString &);
     virtual void message (MessageType msg, void *content=NULL);
+    virtual void prefetch ();
 };
 
 class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {
@@ -703,6 +729,7 @@ public:
     virtual void init ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
+    virtual void prefetch ();
 
     QString font_name;
     int font_size;
@@ -762,6 +789,53 @@ public:
 
     SmilTextProperties props;
     QByteArray tag;
+};
+
+class KMPLAYER_NO_EXPORT StateValue : public Element {
+public:
+    ~StateValue ();
+
+    virtual void init ();
+    virtual void activate ();
+    virtual void finish ();
+    virtual void deactivate ();
+    virtual void reset ();
+    virtual void parseParam (const TrieString &name, const QString &value);
+    virtual void message (MessageType msg, void *content=NULL);
+    virtual void *role (RoleType msg, void *content=NULL);
+    virtual bool expose () const { return false; }
+protected:
+    StateValue (NodePtr &d, short _id);
+
+    QString name;
+    QString ref;
+    QString where;
+    QString value;
+    Runtime *runtime;
+};
+
+class KMPLAYER_NO_EXPORT NewValue : public StateValue {
+public:
+    NewValue (NodePtr &d) : StateValue (d, id_node_new_value) {}
+
+    virtual void begin ();
+    KDE_NO_EXPORT const char *nodeName () const { return "newvalue"; }
+};
+
+class KMPLAYER_NO_EXPORT SetValue : public StateValue {
+public:
+    SetValue (NodePtr &d) : StateValue (d, id_node_set_value) {}
+
+    virtual void begin ();
+    KDE_NO_EXPORT const char *nodeName () const { return "setvalue"; }
+};
+
+class KMPLAYER_NO_EXPORT DelValue : public StateValue {
+public:
+    DelValue (NodePtr &d) : StateValue (d, id_node_del_value) {}
+
+    virtual void begin ();
+    KDE_NO_EXPORT const char *nodeName () const { return "delvalue"; }
 };
 
 class KMPLAYER_NO_EXPORT AnimateGroup : public Element {

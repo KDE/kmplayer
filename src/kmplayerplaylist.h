@@ -255,7 +255,9 @@ enum MessageType
     MsgEventStarted,
     MsgEventStopped,
     MsgMediaFinished,
+    MsgStateChanged,
     // the above messages are ordered like SMIL timing events
+    MsgMediaPrefetch,
     MsgMediaReady,
     MsgMediaUpdated,
     MsgEventPostponed,
@@ -328,10 +330,11 @@ extern int connection_counter;
 struct Connection {
     NodePtrW connectee; // the one that will, when ever, trigger the event
     NodePtrW connecter; // the one that will, when ever, receive the event
-    Connection (Node *invoker, Node*receiver);
+    Connection (Node *invoker, Node*receiver, const QString &payload);
 #ifdef KMPLAYER_TEST_CONNECTION
     ~Connection () { connection_counter--; }
 #endif
+    QString payload;
     ConnectionList *list;
     Connection **link;
     Connection *prev;
@@ -347,7 +350,8 @@ public:
     ConnectionLink ();
     ~ConnectionLink ();
 
-    bool connect (Node *signaler, MessageType msg, Node *receiver);
+    bool connect (Node *signaler, MessageType msg, Node *receiver,
+            const QString &payload=QString());
     void disconnect () const;
     void assign (const ConnectionLink *link) const;
 
@@ -421,6 +425,7 @@ public:
     Document * document ();
     virtual Mrl * mrl ();
     virtual Node *childFromTag (const QString & tag);
+    Node *childByName (const QString &tag);
     void characterData (const QString & s);
     QString innerText () const;
     QString innerXML () const;

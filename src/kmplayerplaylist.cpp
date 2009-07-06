@@ -85,8 +85,8 @@ QTextStream &KMPlayer::operator << (QTextStream &out, const XMLStringlet &txt) {
 
 //-----------------------------------------------------------------------------
 
-Connection::Connection (Node *invoker, Node *receiver)
- : connectee (invoker), connecter (receiver) {
+Connection::Connection (Node *invoker, Node *receiver, const QString &pl)
+ : connectee (invoker), connecter (receiver), payload (pl) {
 #ifdef KMPLAYER_TEST_CONNECTION
     connection_counter++;
 #endif
@@ -98,11 +98,12 @@ ConnectionLink::~ConnectionLink () {
     disconnect ();
 }
 
-bool ConnectionLink::connect (Node *send, MessageType msg, Node *rec) {
+bool ConnectionLink::connect (Node *send, MessageType msg, Node *rec,
+        const QString &payload) {
     disconnect ();
     ConnectionList *list = nodeMessageReceivers (send, msg);
     if (list) {
-        connection = new Connection (send, rec);
+        connection = new Connection (send, rec, payload);
         connection->list = list;
         connection->link = &connection;
         connection->prev = list->link_last;
@@ -415,6 +416,17 @@ Node *Node::childFromTag (const QString &) {
     return NULL;
 }
 
+Node *Node::childByName (const QString &tag) {
+    for (Node *c = firstChild (); c; c = c->nextSibling ()) {
+        if (tag == c->nodeName ())
+            return c;
+        Node *n = c->childByName (tag);
+        if (n)
+            return n;
+    }
+    return NULL;
+}
+
 KDE_NO_EXPORT void Node::characterData (const QString & s) {
     document()->m_tree_version++;
     if (!m_last_child || m_last_child->id != id_node_text)
@@ -527,7 +539,7 @@ void Node::message (MessageType msg, void *content) {
     }
 }
 
-void *Node::role (RoleType msg, void *content) {
+void *Node::role (RoleType msg, void *) {
     switch (msg) {
     case RoleReady:
         return MsgBool (true);
@@ -550,7 +562,7 @@ void Node::accept (Visitor * v) {
 }
 
 QString Node::nodeValue () const {
-    return QString ();
+    return innerText ().trimmed ();
 }
 
 //-----------------------------------------------------------------------------
@@ -672,8 +684,16 @@ QString Element::getAttribute (const TrieString & name) {
 
 void Element::init () {
     d->clear();
-    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ())
-        parseParam (a->name (), a->value ());
+    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
+        QString v = a->value ();
+        int p = v.indexOf ('{');
+        if (p > -1) {
+            int q = v.indexOf ('}', p + 1);
+            if (q > -1)
+                continue;
+        }
+        parseParam (a->name (), v);
+    }
 }
 
 void Element::reset () {
