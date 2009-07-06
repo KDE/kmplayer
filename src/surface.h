@@ -47,13 +47,11 @@ public:
     void remove ();                // remove from parent, mark ancestors dirty
     void markDirty ();             // mark this and ancestors dirty
     void updateChildren (bool parent_resized=false);
-    SSize dimension () const { return size.isEmpty () ? bounds.size : size; }
     void setBackgroundColor (unsigned int argb);
 
     NodePtrW node;
     SRect bounds;                  // bounds in parent coord.
     SSize virtual_size;            // virtual size in screen coord.
-    SSize size;                    // if set, dimension in Surface coord.
     float xscale, yscale;          // internal scaling
     unsigned int background_color; // rgba background color
     unsigned short x_scroll;       // top of horizontal knob

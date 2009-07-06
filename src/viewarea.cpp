@@ -182,6 +182,7 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     cairo_pattern_t * cur_pat;
     cairo_matrix_t cur_mat;
     SMIL::RegionBase::BackgroundRepeat bg_repeat;
+    ImageData *bg_image;
     float opacity;
     bool toplevel;
 
@@ -218,7 +219,9 @@ KDE_NO_CDTOR_EXPORT
 CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
         const IRect & rect, QColor c, bool top)
  : clip (rect), cairo_surface (cs),
-   matrix (m), bg_repeat (SMIL::RegionBase::BgRepeat), toplevel (top) {
+   matrix (m),
+   bg_repeat (SMIL::RegionBase::BgRepeat), bg_image (NULL),
+   toplevel (top) {
     cr = cairo_create (cs);
     if (toplevel) {
         cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
@@ -279,33 +282,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (Node *node, Surface *s) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *layout) {
-    //kDebug() << "Visit " << layout->nodeName();
-    if (layout->root_layout) {
-        Surface *s = (Surface *)layout->root_layout->role (RoleDisplay);
-        if (s) {
-            //cairo_save (cr);
-            Matrix m = matrix;
-
-            IRect scr = matrix.toScreen (SRect (0, 0, s->bounds.size));
-
-            IRect clip_save = clip;
-            clip = clip.intersect (scr);
-
-            if (s->background_color & 0xff000000) {
-                CAIRO_SET_SOURCE_RGB (cr, s->background_color);
-                cairo_rectangle (cr,
-                        clip.x (), clip.y (), clip.width (), clip.height ());
-                cairo_fill (cr);
-            }
-
-            matrix = Matrix (0, 0, s->xscale, s->yscale);
-            matrix.transform (m);
-            traverseRegion (layout->root_layout, s);
-            //cairo_restore (cr);
-            matrix = m;
-            clip = clip_save;
-        }
-    }
+    if (layout->root_layout)
+        layout->root_layout->accept (this);
 }
 
 
@@ -325,7 +303,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         if (clip.intersect (scr).isEmpty ())
             return;
         Matrix m = matrix;
-        matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
+        matrix = Matrix (rect.x(), rect.y(), s->xscale, s->yscale);
         matrix.transform (m);
         IRect clip_save = clip;
         clip = clip.intersect (scr);
@@ -341,7 +319,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         ImageMedia *im = reg->media_info
             ? (ImageMedia *) reg->media_info->media
             : NULL;
+
+        ImageData *bg_save = bg_image;
         ImageData *bg_img = im && !im->isEmpty() ? im->cached_img.ptr () : NULL;
+        if (reg->background_image == "inherit")
+            bg_img = bg_image;
+        else
+            bg_image = bg_img;
         unsigned int bg_alpha = s->background_color & 0xff000000;
         if ((SMIL::RegionBase::ShowAlways == reg->show_background ||
                     reg->m_AttachedMediaTypes.first ()) &&
@@ -480,6 +464,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
             }
         }
         cairo_restore (cr);
+        bg_image = bg_save;
         matrix = m;
         bg_repeat = bg_repeat_save;
         clip = clip_save;
@@ -750,6 +735,7 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
     if (!s->surface || s->dirty) {
         Matrix m = matrix;
         m.translate (-scr.x (), -scr.y ());
+        m.scale (s->xscale, s->yscale);
         IRect r (clip_rect.x() - scr.x () - 1, clip_rect.y() - scr.y () - 1,
                 clip_rect.width() + 3, clip_rect.height() + 3);
         if (!s->surface) {
@@ -1103,8 +1089,6 @@ void SmilTextVisitor::visit (SMIL::TextFlow *flow) {
             max_font_size = info.props.font_size;
         info.span (scale);
 
-        SmilTextBlock *block = last;
-
         flow->firstChild ()->accept (this);
 
         if (rich_text.isEmpty ())
@@ -1449,9 +1433,9 @@ class KMPLAYER_NO_EXPORT MouseVisitor : public Visitor {
     bool bubble_up;
 
     bool deliverAndForward (Node *n, Surface *s, bool inside, bool deliver);
-    bool surfaceEvent (Node *mt, Surface *s);
+    void surfaceEvent (Node *mt, Surface *s);
 public:
-    MouseVisitor (ViewArea *v, MessageType evt, int x, int y);
+    MouseVisitor (ViewArea *v, MessageType evt, Matrix m, int x, int y);
     KDE_NO_CDTOR_EXPORT ~MouseVisitor () {}
     using Visitor::visit;
     void visit (Node * n);
@@ -1469,8 +1453,8 @@ public:
 } // namespace
 
 KDE_NO_CDTOR_EXPORT
-MouseVisitor::MouseVisitor (ViewArea *v, MessageType evt, int a, int b)
-  : view_area (v), event (evt), x (a), y (b),
+MouseVisitor::MouseVisitor (ViewArea *v, MessageType evt, Matrix m, int a, int b)
+  : view_area (v), matrix (m), event (evt), x (a), y (b),
     handled (false), bubble_up (false) {
 }
 
@@ -1484,25 +1468,8 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Smil *s) {
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {
-    Surface *s = (Surface *) layout->root_layout->role (RoleDisplay);
-    if (s) {
-        Matrix m = matrix;
-        SRect rect = s->bounds;
-        matrix = Matrix (rect.x(), rect.y(), s->xscale, s->yscale);
-        matrix.transform (m);
-
-        NodePtr node_save = source;
-        source = layout;
-        for (NodePtr r = layout->firstChild (); r; r = r->nextSibling ()) {
-            if (r->id == SMIL::id_node_region)
-                r->accept (this);
-            if (!source || !source->active ())
-                break;
-        }
-        source = node_save;
-
-        matrix = m;
-    }
+    if (layout->root_layout)
+        layout->root_layout->accept (this);
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
@@ -1545,6 +1512,8 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
             return;
         }
 
+        NodePtrW src = source;
+        source = region;
         Matrix m = matrix;
         matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
         matrix.transform (m);
@@ -1554,11 +1523,15 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
 
         bool child_handled = false;
         if (inside || s->has_mouse)
-            for (NodePtr r = region->firstChild (); r; r = r->nextSibling ()) {
-                r->accept (this);
-                child_handled |= handled;
-                if (!source || !source->active ())
+            for (SurfacePtr c = s->firstChild (); c; c = c->nextSibling ()) {
+                if (c->node && c->node->id == SMIL::id_node_region) {
+                    c->node->accept (this);
+                    child_handled |= handled;
+                    if (!source || !source->active ())
+                        break;
+                } else {
                     break;
+                }
             }
         child_handled &= !bubble_up;
         bubble_up = false;
@@ -1567,6 +1540,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
 
         handled = inside;
         matrix = m;
+        source = src;
     }
 }
 
@@ -1697,33 +1671,34 @@ bool MouseVisitor::deliverAndForward (Node *node, Surface *s, bool inside, bool 
     return true;
 }
 
-bool MouseVisitor::surfaceEvent (Node *node, Surface *s) {
+void MouseVisitor::surfaceEvent (Node *node, Surface *s) {
     if (!s)
-        return false;
+        return;
     if (s->node && s->node.ptr () != node) {
         s->node->accept (this);
-        return false;
+        return;
     }
     SRect rect = s->bounds;
     IRect scr = matrix.toScreen (rect);
     int rx = scr.x(), ry = scr.y(), rw = scr.width(), rh = scr.height();
     const bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
-    return deliverAndForward (node, s, inside, true);
+    if (deliverAndForward (node, s, inside, true) &&
+            (inside || s->has_mouse) &&
+            s->firstChild () && s->firstChild ()->node) {
+        Matrix m = matrix;
+        matrix = Matrix (rect.x(), rect.y(), s->xscale, s->yscale);
+        matrix.transform (m);
+        s->firstChild ()->node->accept (this);
+        matrix = m;
+    }
+    s->has_mouse = inside;
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
-    if (mt->sensitivity == SMIL::MediaType::sens_transparent) {
+    if (mt->sensitivity == SMIL::MediaType::sens_transparent)
         bubble_up = true;
-        return;
-    }
-    if (!surfaceEvent (mt, mt->surface ()))
-        return;
-
-    SMIL::RegionBase *r=convertNode<SMIL::RegionBase>(mt->region_node);
-    if (r && r->role (RoleDisplay) &&
-            r->id != SMIL::id_node_smil &&
-            r->region_surface->node && r != r->region_surface->node.ptr ())
-        return r->region_surface->node->accept (this);
+    else
+        surfaceEvent (mt, mt->surface ());
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::SmilText *st) {
@@ -1741,17 +1716,21 @@ public:
     ~ViewerAreaPrivate() {
         destroyBackingStore ();
     }
+    void clearSurface (Surface *s) {
+#ifdef KMPLAYER_WITH_CAIRO
+        if (s->surface) {
+            cairo_surface_destroy (s->surface);
+            s->surface = 0L;
+        }
+        destroyBackingStore ();
+#endif
+    }
     void resizeSurface (Surface *s) {
 #ifdef KMPLAYER_WITH_CAIRO
         int w = m_view_area->width ();
         int h = m_view_area->height ();
         if ((w != width || h != height) && s->surface) {
-            Display *d = QX11Info::display();
-            //cairo_xlib_surface_set_size (s->surface, w, h);
-            destroyBackingStore ();
-            backing_store = XCreatePixmap (d, m_view_area->winId (),
-                    w, h, QX11Info::appDepth ());
-            cairo_xlib_surface_set_drawable(s->surface, backing_store, w,h);
+            clearSurface (s);
             width = w;
             height = h;
         }
@@ -1869,13 +1848,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
     m_fullscreen = !m_fullscreen;
     m_view->controlPanel()->fullscreenAction->setChecked (m_fullscreen);
 
-#ifdef KMPLAYER_WITH_CAIRO
-    if (surface->surface) {
-        cairo_surface_destroy (surface->surface);
-        surface->surface = 0L;
-        d->destroyBackingStore ();
-    }
-#endif
+    d->clearSurface (surface.ptr ());
     emit fullScreenChanged ();
 }
 
@@ -1902,7 +1875,10 @@ KDE_NO_EXPORT void ViewArea::accelActivated () {
 
 KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
     if (surface->node) {
-        MouseVisitor visitor (this, MsgEventClicked, e->x(), e->y());
+        MouseVisitor visitor (this, MsgEventClicked,
+                Matrix (surface->bounds.x (), surface->bounds.y (),
+                    surface->xscale, surface->yscale),
+                e->x(), e->y());
         surface->node->accept (&visitor);
     }
 }
@@ -1915,7 +1891,10 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton)
         m_view->mouseMoved (e->x (), e->y ());
     if (surface->node) {
-        MouseVisitor visitor (this, MsgEventPointerMoved, e->x(), e->y());
+        MouseVisitor visitor (this, MsgEventPointerMoved,
+                Matrix (surface->bounds.x (), surface->bounds.y (),
+                    surface->xscale, surface->yscale),
+                e->x(), e->y());
         surface->node->accept (&visitor);
         setCursor (visitor.cursor);
     }
@@ -1943,7 +1922,8 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
             surface->surface = d->createSurface (width (), height ());
             swap_rect = IRect (ex, ey, ew, eh);
             CairoPaintVisitor visitor (surface->surface,
-                    Matrix (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0),
+                    Matrix (surface->bounds.x(), surface->bounds.y(),
+                        surface->xscale, surface->yscale),
                     swap_rect,
                     palette ().color (backgroundRole ()), true);
             surface->node->accept (&visitor);
@@ -1951,10 +1931,11 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
         } else if (!rect.isEmpty ()) {
             merge = cairo_surface_create_similar (surface->surface,
                     CAIRO_CONTENT_COLOR, ew, eh);
-            Matrix m (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0);
-            m.translate (-ex, -ey);
             {
-                CairoPaintVisitor visitor (merge, m, IRect (0, 0, ew, eh),
+                CairoPaintVisitor visitor (merge,
+                        Matrix (surface->bounds.x()-ex, surface->bounds.y()-ey,
+                            surface->xscale, surface->yscale),
+                        IRect (0, 0, ew, eh),
                         palette ().color (backgroundRole ()), true);
                 surface->node->accept (&visitor);
             }
@@ -2029,38 +2010,20 @@ KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
                 ? h
                 : (Single) m_view->controlPanel()->maximumSize ().height ())
         : Single (0);
-    Mrl *mrl = surface->node ? surface->node->mrl () : NULL;
+
     int scale = m_view->controlPanel ()->scale_slider->sliderPosition ();
-    int nw = w * scale / 100;
-    int nh = h * scale / 100;
-    x += (w - nw) / 2;
-    y += (h - nh) / 2;
-    w = nw;
-    h = nh;
-    if (m_view->keepSizeRatio () &&
-            w > 0 && h > 0 && mrl && !mrl->size.isEmpty ()) {
-        double wasp = (double) w / h;
-        double masp = (double) mrl->size.width / mrl->size.height;
-        if (wasp > masp) {
-            Single tmp = w;
-            w = masp * h;
-            x += (tmp - w) / 2;
-        } else {
-            Single tmp = h;
-            h = Single (w / masp);
-            y += (tmp - h) / 2;
-        }
-        surface->xscale = 1.0 * w / mrl->size.width;
-        surface->yscale = 1.0 * h / mrl->size.height;
-    } else {
-        surface->xscale = 1.0;
-        surface->yscale = 1.0;
+    if (scale != 100) {
+        int nw = w * 1.0 * scale / 100;
+        int nh = h * 1.0 * scale / 100;
+        x += (w - nw) / 2;
+        y += (h - nh) / 2;
+        w = nw;
+        h = nh;
     }
     if (surface->node) {
-        surface->bounds = SRect (x, y, w, h);
+        d->resizeSurface (surface.ptr ());
+        surface->resize (SRect (x, y, w, h));
         surface->node->message (MsgSurfaceBoundsUpdate, (void *) true);
-    } else {
-        surface->resize (SRect (x, y, w, h), true);
     }
     scheduleRepaint (IRect (0, 0, width (), height ()));
 }
@@ -2078,10 +2041,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     bool auto_hide = m_view->controlPanelMode () == View::CP_AutoHide;
     h -= Single (auto_hide ? 0 : hcp) - hsb;
     // now scale the regions and check if video region is already sized
-    if (surface->node)
-        d->destroyBackingStore ();
     updateSurfaceBounds ();
-    d->resizeSurface (surface.ptr ());
 
     // finally resize controlpanel and video widget
     if (m_view->controlPanel ()->isVisible ())
@@ -2115,11 +2075,7 @@ KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
 #ifdef KMPLAYER_WITH_CAIRO
         setAttribute (Qt::WA_OpaquePaintEvent, false);
         setAttribute (Qt::WA_PaintOnScreen, false);
-        if (surface->surface) {
-            cairo_surface_destroy (surface->surface);
-            surface->surface = 0L;
-            d->destroyBackingStore ();
-        }
+        d->clearSurface (surface.ptr ());
 #endif
     }
     scheduleRepaint (IRect (0, 0, width (), height ()));
