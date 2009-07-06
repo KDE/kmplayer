@@ -125,10 +125,8 @@ static SMIL::Region *findRegion2 (Node *p, const QString &id) {
             QString a = r->getAttribute (regionname_attr);
             if (a.isEmpty ())
                 a = r->getAttribute (StringPool::attr_id);
-            if ((a.isEmpty () && id.isEmpty ()) || a == id) {
-                //kDebug () << "MediaType region found " << id;
+            if ((a.isEmpty () && id.isEmpty ()) || a == id)
                 return r;
-            }
         }
         SMIL::Region * r = findRegion2 (c, id);
         if (r)
@@ -284,7 +282,6 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
     QString vl = vs.lower ();
     const char * cval = vl.ascii ();
     int offset = 0;
-    //kDebug () << "setDuration1 " << vl;
     if (cval && cval[0]) {
         QString idref;
         const char * p = cval;
@@ -339,7 +336,6 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
             } else {
                 q = p;
             }
-            //kDebug () << "setDuration q:" << q;
             if (parseTime (vl.mid (q-cval), offset)) {
                 dur = Runtime::DurStart;
             } else if (*q && !strncmp (q, "end", 3)) {
@@ -365,7 +361,6 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
             if (target && dur != Runtime::DurTimer)
                 itm->connection.connect (target, (MessageType)dur, n);
         }
-        //kDebug () << "setDuration " << dur << " id:'" << idref << "' off:" << offset;
     }
     itm->durval = (Runtime::Duration) dur;
     itm->offset = offset;
@@ -403,7 +398,6 @@ void setDurationItems (Node *n, const QString &s, Runtime::DurationItem *item) {
  * start, or restart in case of re-use, the durations
  */
 KDE_NO_EXPORT void Runtime::start () {
-    //kDebug () << "Runtime::begin " << element->nodeName();
     if (begin_timer || duration_timer)
         element->init ();
     timingstate = timings_began;
@@ -476,7 +470,6 @@ KDE_NO_EXPORT void Runtime::startAndBeginNode () {
 
 KDE_NO_EXPORT
 bool Runtime::parseParam (const TrieString & name, const QString & val) {
-    //kDebug () << "Runtime::parseParam " << name << "=" << val;
     if (name == StringPool::attr_begin) {
         setDurationItems (element, val, durations + (int) BeginTime);
         if ((timingstate == timings_began && !begin_timer) ||
@@ -703,7 +696,6 @@ KDE_NO_EXPORT void Runtime::propagateStart () {
  * begin_timer timer expired
  */
 KDE_NO_EXPORT void Runtime::setDuration () {
-    //kDebug () << (element ? element->nodeName() : "-");
     if (begin_timer) {
         element->document ()->cancelPosting (begin_timer);
         begin_timer = NULL;
@@ -724,7 +716,6 @@ KDE_NO_EXPORT void Runtime::setDuration () {
     if (duration > 0)
         duration_timer = element->document ()->post (element,
                 new TimerPosting (10 * duration, dur_timer_id));
-    // kDebug () << "Runtime::started set dur timer " << durTime ().offset;
 }
 
 bool Runtime::started () const {
@@ -915,7 +906,6 @@ bool CalculatedSizer::applyRegPoints (Node * node, Single w, Single h,
         xoff = (w * rpx - w1 * rax) / 100;
         yoff = (h * rpy - h1 * ray) / 100;
     }
-    // kDebug () << "calc rp:" << reg_point << " ra:" << reg_align <<  " w:" << (int)w << " h:" << (int)h << " xoff:" << (int)xoff << " yoff:" << (int)yoff << " w1:" << (int)w1 << " h1:" << (int)h1;
     return true; // success getting sizes based on regPoint
 }
 
@@ -1110,7 +1100,6 @@ KDE_NO_EXPORT Node *SMIL::Smil::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::Smil::activate () {
-    //kDebug () << "Smil::activate";
     resolved = true;
     if (layout_node)
         Element::activate ();
@@ -1422,7 +1411,6 @@ static unsigned int setRGBA (unsigned int color, int opacity) {
 
 KDE_NO_EXPORT
 void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
-    //kDebug () << "RegionBase::parseParam " << getAttribute ("id") << " " << name << "=" << val << " active:" << active();
     bool need_repaint = false;
     if (name == StringPool::attr_fit) {
         fit = parseFit (val.ascii ());
@@ -2459,7 +2447,6 @@ KDE_NO_CDTOR_EXPORT SMIL::Excl::~Excl () {
 }
 
 KDE_NO_EXPORT void SMIL::Excl::begin () {
-    //kDebug () << "SMIL::Excl::begin";
     Node *n = firstChild ();
     if (n) {
         ExclActivateVisitor visitor (this);
@@ -3373,7 +3360,6 @@ KDE_NO_EXPORT void SMIL::RefMediaType::begin () {
 
 void
 SMIL::RefMediaType::parseParam (const TrieString &name, const QString &val) {
-    //kDebug () << name.toString() << "=" << val;
     if (name == StringPool::attr_src) {
         if (!media_info)
             media_info = new MediaInfo (this, MediaManager::AudioVideo);
@@ -3467,7 +3453,6 @@ KDE_NO_EXPORT void SMIL::ImageMediaType::accept (Visitor * v) {
 
 void
 SMIL::ImageMediaType::parseParam (const TrieString &name, const QString &val) {
-    //kDebug () << "ImageRuntime::param " << name.toString() << "=" << val;
     if (name == StringPool::attr_src) {
         if (media_info)
             media_info->killWGet ();
@@ -3553,7 +3538,6 @@ void
 SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
     if (!media_info)
         return;
-    //kDebug () << "TextRuntime::parseParam " << name.toString() << "=" << val;
     if (name == StringPool::attr_src) {
         src = val;
         if (!val.isEmpty ())
@@ -3985,7 +3969,6 @@ KDE_NO_EXPORT void *SMIL::AnimateGroup::role (RoleType msg, void *data) {
 KDE_NO_EXPORT void SMIL::AnimateGroup::restoreModification () {
     if (modification_id > -1 && target_element &&
             target_element->state > Node::state_init) {
-        //kDebug () << "AnimateGroup(" << this << ")::restoreModificatio " <<modification_id << endl;
         convertNode <Element> (target_element)->resetParam (
                 changed_attribute, modification_id);
     }
@@ -4485,7 +4468,6 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
 }
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::begin () {
-    //kDebug () << "AnimateMotion::started " << durTime ().durval << endl;
     Node *t = targetElement ();
     CalculatedSizer *sizes = t ? (CalculatedSizer *) t->role (RoleSizer) : NULL;
     if (!sizes)
