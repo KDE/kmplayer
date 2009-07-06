@@ -1,0 +1,136 @@
+<smil xmlns="http://www.w3.org/ns/SMIL" version="3.0" baseProfile="Language">
+  <head>
+    <layout>
+      <root-layout width="400" height="240" backgroundColor="green"/>
+      <region id="hours" top="50" left="25" width="100" height="100"
+              backgroundColor="white"/>
+      <region id="minutes" top="50" left="150" width="100" height="100"
+              backgroundColor="white"/>
+      <region id="seconds" top="50" left="275" width="100" height="100"
+              backgroundColor="white"/>
+      <region id="chours" top="180" left="75" width="50" height="50"
+              backgroundColor="white" showBackground="whenActive" />
+      <region id="cminutes" top="180" left="150" width="50" height="50"
+              backgroundColor="white" showBackground="whenActive" />
+      <region id="show" top="200" left="275" width="100" height="30"
+              backgroundColor="white" showBackground="whenActive"/>
+      <region id="panel" left="25%" top="10%" width="50%" height="80%"
+              backgroundOpacity="70">
+        <region id="ok" top="160" left="150" width="100" height="30"
+                backgroundColor="white" showBackground="whenActive"/>
+      </region>
+    </layout>
+    <state id="mystate" language="http://www.w3.org/TR/1999/REC-xpath-19991116">
+     <data xmlns="">
+      <time>0</time>
+      <hour>0</hour>
+      <minute>0</minute>
+      <second>0</second>
+      <mode>0</mode>
+      <countminutes>0</countminutes>
+      <endtime>0</endtime>
+     </data>
+    </state>
+  </head>
+  <body>
+    <par>
+      <text begin="mystate.stateChange(minute)" fontPtSize="35" region="minutes"
+            src="data:,{minute}" regPoint="center" regAlign="center"/>
+      <text begin="mystate.stateChange(hour)" fontPtSize="35" region="hours"
+            src="data:,{hour}" regPoint="center" regAlign="center"/>
+      <seq repeat="indefinite">
+        <setvalue ref="time" value="current-time()" />
+        <setvalue ref="hour" value="hours-from-time(time)" />
+        <setvalue ref="minute" value="minutes-from-time(time)" />
+        <setvalue ref="second" value="seconds-from-time(time)" />
+        <text region="seconds" fontPtSize="35" src="data:,{second}" dur="1"
+              regPoint="center" regAlign="center"/>
+      </seq>
+      <seq>
+        <seq id="play" dur="indefinite">
+          <setvalue ref="mode" value="1"/>
+          <setvalue ref="endtime" value="hour * 60 + minute + countminutes"/>
+          <par>
+            <a href="#set">
+              <text region="show" src="data:,Set%20Countdown"/>
+            </a>
+            <seq repeat="indefinite">
+              <switch>
+                <seq expr="countminutes &gt; 0">
+                  <setvalue ref="countminutes"
+                            value="endtime - hour * 60 - minute"/>
+                  <par>
+                    <text fontPtSize="18" region="chours"
+                          src="data:,{countminutes div 60}"
+                          regPoint="center" regAlign="center"/>
+                    <text fontPtSize="18" region="cminutes"
+                          src="data:,{countminutes mod 60}"
+                          regPoint="center" regAlign="center" dur="5"/>
+                  </par>
+                </seq>
+                <seq dur="indefinite"/>
+              </switch>
+            </seq>
+          </par>
+        </seq>
+        <seq id="set" dur="indefinite">
+          <setvalue ref="mode" value="0"/>
+          <par>
+            <set target="panel" attribute="background-color" to="black"/>
+            <text region="panel" src="data:,{countminutes}" top="5" left="10"
+                  height="20" fontPtSize="16" fontColor="white"
+                  begin="0;mystate.stateChange(countminutes)"/>
+            <text region="panel" src="data:,1" top="30" left="10" height="20"
+                  id="t1" fontPtSize="18" width="20" fontColor="yellow"/>
+            <text region="panel" src="data:,2" top="30" left="40" height="20"
+                  id="t2" fontPtSize="18" width="20" fontColor="yellow"/>
+            <text region="panel" src="data:,3" top="30" left="70" height="20"
+                  id="t3" fontPtSize="18" width="20" fontColor="yellow"/>
+            <text region="panel" src="data:,4" top="60" left="10" height="20"
+                  id="t4" fontPtSize="18" width="20" fontColor="yellow"/>
+            <text region="panel" src="data:,5" top="60" left="40" height="20"
+                  id="t5" fontPtSize="18" width="20" fontColor="yellow"/>
+            <text region="panel" src="data:,6" top="60" left="70" height="20"
+                  id="t6" fontPtSize="18" width="20" fontColor="yellow"/>
+            <text region="panel" src="data:,7" top="90" left="10" height="20"
+                  id="t7" fontPtSize="18" width="20" fontColor="yellow"/>
+            <text region="panel" src="data:,8" top="90" left="40" height="20"
+                  id="t8" fontPtSize="18" width="20" fontColor="yellow"/>
+            <text region="panel" src="data:,9" top="90" left="70" height="20"
+                  id="t9" fontPtSize="18" width="20" fontColor="yellow"/>
+            <text region="panel" src="data:,0" top="120" left="10" height="20"
+                  id="t0" fontPtSize="18" width="20" fontColor="yellow"/>
+            <text region="panel" src="data:,C" top="120" left="70" height="20"
+                  id="tC" fontPtSize="18" width="20" fontColor="yellow"/>
+            <setvalue ref="countminutes" value="countminutes * 10 + 1"
+                      begin="t1.activateEvent"/>
+            <setvalue ref="countminutes" value="countminutes * 10 + 2"
+                      begin="t2.activateEvent"/>
+            <setvalue ref="countminutes" value="countminutes * 10 + 3"
+                      begin="t3.activateEvent"/>
+            <setvalue ref="countminutes" value="countminutes * 10 + 4"
+                      begin="t4.activateEvent"/>
+            <setvalue ref="countminutes" value="countminutes * 10 + 5"
+                      begin="t5.activateEvent"/>
+            <setvalue ref="countminutes" value="countminutes * 10 + 6"
+                      begin="t6.activateEvent"/>
+            <setvalue ref="countminutes" value="countminutes * 10 + 7"
+                      begin="t7.activateEvent"/>
+            <setvalue ref="countminutes" value="countminutes * 10 + 8"
+                      begin="t8.activateEvent"/>
+            <setvalue ref="countminutes" value="countminutes * 10 + 9"
+                      begin="t9.activateEvent"/>
+            <setvalue ref="countminutes" value="countminutes * 10"
+                      begin="t0.activateEvent"/>
+            <setvalue ref="countminutes" value="0"
+                      begin="tC.activateEvent"/>
+            <a href="#play">
+              <text region="ok" src="data:,Ok"/>
+            </a>
+          </par>
+        </seq>
+      </seq>
+    </par>
+  </body>
+</smil>
+
