@@ -29,12 +29,22 @@ using namespace KMPlayer;
 
 namespace {
 
+struct EvalState {
+    EvalState () : sequence (1), ref_count (0) {}
+
+    void addRef () { ++ref_count; }
+    void removeRef () { if (--ref_count == 0) delete this; }
+
+    int sequence;
+    int ref_count;
+};
+
 struct AST : public ExpressionResult {
     enum Type {
         TUnknown, TInteger, TBool, TFloat, TString
     };
 
-    AST () : first_child (NULL), next_sibling (NULL) {}
+    AST (EvalState *ev);
     virtual ~AST ();
 
     virtual bool toBool (Node *state) const;
@@ -46,28 +56,34 @@ struct AST : public ExpressionResult {
     virtual void dump () const;
 #endif
 
+    mutable int sequence;
+    EvalState *eval_state;
     AST *first_child;
     AST *next_sibling;
 };
 
 struct IntegerBase : public AST {
+    IntegerBase (EvalState *ev) : AST (ev), i (0) {}
+
     virtual float toFloat (Node *state) const;
     virtual Type type (Node *state) const;
+
+    mutable int i;
 };
 
 struct Integer : public IntegerBase {
-    Integer (int i_) : i (i_) {}
+    Integer (EvalState *ev, int i_) : IntegerBase (ev) {
+        i = i_;
+    }
 
     virtual int toInt (Node *state) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
-
-    int i;
 };
 
 struct Float : public AST {
-    Float (float f_) : f (f_) {}
+    Float (EvalState *ev, float f_) : AST (ev), f (f_) {}
 
     bool toBool (Node *) const { return false; }
     int toInt (Node *) const { return (int) f; }
@@ -84,66 +100,82 @@ struct Float : public AST {
 };
 
 struct StringBase : public AST {
+    StringBase (EvalState *ev) : AST (ev) {}
+
     virtual bool toBool (Node *state) const;
     virtual int toInt (Node *state) const;
     virtual float toFloat (Node *state) const;
     virtual Type type (Node *state) const;
+
+    mutable QString string;
 };
 
 struct Identifier : public StringBase {
-    Identifier (const char *s, const char *e)
-       : str (e ? QString (QByteArray (s, e -s)) : QString (s)) {}
+    Identifier (EvalState *ev, const char *s, const char *e)
+     : StringBase (ev) {
+        path = e ? QString (QByteArray (s, e - s)) : QString (s);
+    }
 
     virtual QString toString (Node *state) const;
     virtual Type type (Node *state) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
-        fprintf (stderr, "Identifier %s", str.toAscii ().data ());
+        fprintf (stderr, "Identifier %s", path.toAscii ().data ());
         AST::dump();
     }
 #endif
 
-    QString str;
+    QString path;
 };
 
 struct StringLiteral : public StringBase {
-    StringLiteral (const char *s, const char *e)
-       : str (e ? QString (QByteArray (s, e -s)) : QString (s)) {}
+    StringLiteral (EvalState *ev, const char *s, const char *e)
+     : StringBase (ev) {
+        string = e ? QString (QByteArray (s, e - s)) : QString (s);
+    }
 
     virtual QString toString (Node *state) const;
     virtual Type type (Node *state) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
-        fprintf (stderr, "StringLiteral %s", str.toAscii ().data ());
+        fprintf (stderr, "StringLiteral %s", string.toAscii ().data ());
         AST::dump();
     }
 #endif
-
-    QString str;
 };
 
 struct HoursFromTime : public IntegerBase {
+    HoursFromTime (EvalState *ev) : IntegerBase (ev) {}
+
     virtual int toInt (Node *state) const;
 };
 
 struct MinutesFromTime : public IntegerBase {
+    MinutesFromTime (EvalState *ev) : IntegerBase (ev) {}
+
     virtual int toInt (Node *state) const;
 };
 
 struct SecondsFromTime : public IntegerBase {
+    SecondsFromTime (EvalState *ev) : IntegerBase (ev) {}
+
     virtual int toInt (Node *state) const;
 };
 
 struct CurrentTime : public StringBase {
+    CurrentTime (EvalState *ev) : StringBase (ev) {}
+
     virtual QString toString (Node *state) const;
 };
 
 struct CurrentDate : public StringBase {
+    CurrentDate (EvalState *ev) : StringBase (ev) {}
+
     virtual QString toString (Node *state) const;
 };
 
 struct Multiply : public AST {
-    Multiply (AST *children) {
+    Multiply (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
@@ -156,7 +188,7 @@ struct Multiply : public AST {
 };
 
 struct Divide : public AST {
-    Divide (AST *children) {
+    Divide (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
@@ -169,7 +201,7 @@ struct Divide : public AST {
 };
 
 struct Modulus : public AST {
-    Modulus (AST *children) {
+    Modulus (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
@@ -182,7 +214,7 @@ struct Modulus : public AST {
 };
 
 struct Plus : public AST {
-    Plus (AST *children) {
+    Plus (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
@@ -195,7 +227,7 @@ struct Plus : public AST {
 };
 
 struct Minus : public AST {
-    Minus (AST *children) {
+    Minus (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
@@ -212,7 +244,8 @@ struct Comparison : public AST {
         lt = 1, lteq, eq, noteq, gt, gteq, land, lor
     };
 
-    Comparison (CompType ct, AST *children) : comp_type (ct) {
+    Comparison (EvalState *ev, CompType ct, AST *children)
+     : AST (ev), comp_type (ct) {
         first_child = children;
     }
 
@@ -227,12 +260,18 @@ struct Comparison : public AST {
 
 }
 
+AST::AST (EvalState *ev)
+ : sequence (0), eval_state (ev), first_child (NULL), next_sibling (NULL) {
+    ev->addRef ();
+}
+
 AST::~AST () {
     while (first_child) {
         AST *tmp = first_child;
         first_child = first_child->next_sibling;
         delete tmp;
     }
+    eval_state->removeRef ();
 }
 
 bool AST::toBool (Node *state) const {
@@ -330,12 +369,15 @@ AST::Type StringBase::type (Node *) const {
 }
 
 QString Identifier::toString (Node *state) const {
-    if (state) {
-        Node *n = state->childByName (str);
-        if (n)
-            return n->nodeValue ();
+    if (eval_state->sequence != sequence) {
+        if (state) {
+            Node *n = state->childByName (path);
+            if (n)
+                string = n->nodeValue ();
+        }
+        sequence = eval_state->sequence;
     }
-    return QString ();
+    return string;
 }
 
 AST::Type Identifier::type (Node *state) const {
@@ -354,7 +396,7 @@ AST::Type Identifier::type (Node *state) const {
 }
 
 QString StringLiteral::toString (Node *) const {
-    return str;
+    return string;
 }
 
 AST::Type StringLiteral::type (Node *) const {
@@ -362,60 +404,75 @@ AST::Type StringLiteral::type (Node *) const {
 }
 
 int HoursFromTime::toInt (Node *state) const {
-    if (first_child) {
-        QString s = first_child->toString (state);
-        int p = s.indexOf (':');
-        if (p > -1)
-            return s.left (p).toInt ();
+    if (eval_state->sequence != sequence) {
+        if (first_child) {
+            QString s = first_child->toString (state);
+            int p = s.indexOf (':');
+            if (p > -1)
+                i = s.left (p).toInt ();
+        }
+        sequence = eval_state->sequence;
     }
-    return 0;
+    return i;
 }
 
 int MinutesFromTime::toInt (Node *state) const {
-    if (first_child) {
-        QString s = first_child->toString (state);
-        int p = s.indexOf (':');
-        if (p > -1) {
-            int q = s.indexOf (':', p + 1);
-            if (q > -1)
-                return s.mid (p + 1, q - p - 1).toInt ();
+    if (eval_state->sequence != sequence) {
+        if (first_child) {
+            QString s = first_child->toString (state);
+            int p = s.indexOf (':');
+            if (p > -1) {
+                int q = s.indexOf (':', p + 1);
+                if (q > -1)
+                    i = s.mid (p + 1, q - p - 1).toInt ();
+            }
         }
+        sequence = eval_state->sequence;
     }
-    return 0;
+    return i;
 }
 
 int SecondsFromTime::toInt (Node *state) const {
-    if (first_child) {
-        QString s = first_child->toString (state);
-        int p = s.indexOf (':');
-        if (p > -1) {
-            p = s.indexOf (':', p + 1);
+    if (eval_state->sequence != sequence) {
+        if (first_child) {
+            QString s = first_child->toString (state);
+            int p = s.indexOf (':');
             if (p > -1) {
-                int q = s.indexOf (' ', p + 1);
-                if (q > -1)
-                    return s.mid (p + 1, q - p - 1).toInt ();
+                p = s.indexOf (':', p + 1);
+                if (p > -1) {
+                    int q = s.indexOf (' ', p + 1);
+                    if (q > -1)
+                        i = s.mid (p + 1, q - p - 1).toInt ();
+                }
             }
         }
+        sequence = eval_state->sequence;
     }
-    return 0;
+    return i;
 }
 
 QString CurrentTime::toString (Node *) const {
-    char str[200];
-    time_t t = time(NULL);
-    struct tm *lt = localtime(&t);
-    if (lt && strftime (str, sizeof (str), "%H:%M:%S %z", lt))
-        return str;
-    return QString ();
+    if (eval_state->sequence != sequence) {
+        char buf[200];
+        time_t t = time(NULL);
+        struct tm *lt = localtime(&t);
+        if (lt && strftime (buf, sizeof (buf), "%H:%M:%S %z", lt))
+            string = buf;
+        sequence = eval_state->sequence;
+    }
+    return string;
 }
 
 QString CurrentDate::toString (Node *) const {
-    char str[200];
-    time_t t = time(NULL);
-    struct tm *lt = localtime(&t);
-    if (lt && strftime (str, sizeof (str), "%a, %d %b %Y %z", lt))
-        return str;
-    return QString ();
+    if (eval_state->sequence != sequence) {
+        char buf[200];
+        time_t t = time(NULL);
+        struct tm *lt = localtime(&t);
+        if (lt && strftime (buf, sizeof (buf), "%a, %d %b %Y %z", lt))
+            string = buf;
+        sequence = eval_state->sequence;
+    }
+    return string;
 }
 
 #define BIN_OP_TO_INT(NAME,OP)                                           \
@@ -669,7 +726,7 @@ static bool parseLiteral (const char *str, const char **end, AST *ast) {
     if (*s == '\'' || *s == '"') {
         while (*s && *s != *begin)
             ++s;
-        appendASTChild (ast, new StringLiteral (begin + 1, s));
+        appendASTChild (ast, new StringLiteral (ast->eval_state, begin + 1, s));
         *end = s + 1;
         return true;
     }
@@ -691,8 +748,8 @@ static bool parseLiteral (const char *str, const char **end, AST *ast) {
         memcpy (buf, begin, *end - begin);
         buf[*end - begin] = 0;
         appendASTChild (ast, decimal
-                ? (AST *) new Float (strtof (buf, NULL))
-                : (AST *) new Integer (strtol (buf, NULL, 10)));
+                ? (AST *) new Float (ast->eval_state, strtof (buf, NULL))
+                : (AST *) new Integer (ast->eval_state, strtol (buf, NULL, 10)));
 #ifdef KMPLAYER_EXPR_DEBUG
         qDebug ("%s success end:'%s'\n", __FUNCTION__, *end);
 #endif
@@ -720,7 +777,7 @@ static bool parseIdentifier (const char *str, const char **end, AST *ast) {
     }
     if (*end) {
         ++(*end);
-        appendASTChild (ast, new Identifier (begin, *end));
+        appendASTChild (ast, new Identifier (ast->eval_state, begin, *end));
 #ifdef KMPLAYER_EXPR_DEBUG
         qDebug ("%s success end:'%s'\n", __FUNCTION__, *end);
 #endif
@@ -753,7 +810,7 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
     qDebug ("%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
-    AST fast;
+    AST fast (ast->eval_state);
     if (parseIdentifier (str, end, &fast)) {
         str = *end;
         if (parseSpace (str, end))
@@ -770,16 +827,16 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                 str = *end;
             if (*str && *(str++) == ')') {
                 AST *func = NULL;
-                if (((Identifier*)fast.first_child)->str == "hours-from-time")
-                    func = new HoursFromTime ();
-                else if (((Identifier*)fast.first_child)->str == "minutes-from-time")
-                    func = new MinutesFromTime ();
-                else if (((Identifier*)fast.first_child)->str == "seconds-from-time")
-                    func = new SecondsFromTime ();
-                else if (((Identifier*)fast.first_child)->str == "current-time")
-                    func = new CurrentTime ();
-                else if (((Identifier*)fast.first_child)->str == "current-date")
-                    func = new CurrentDate ();
+                if (((Identifier*)fast.first_child)->path == "hours-from-time")
+                    func = new HoursFromTime (ast->eval_state);
+                else if (((Identifier*)fast.first_child)->path == "minutes-from-time")
+                    func = new MinutesFromTime (ast->eval_state);
+                else if (((Identifier*)fast.first_child)->path == "seconds-from-time")
+                    func = new SecondsFromTime (ast->eval_state);
+                else if (((Identifier*)fast.first_child)->path == "current-time")
+                    func = new CurrentTime (ast->eval_state);
+                else if (((Identifier*)fast.first_child)->path == "current-date")
+                    func = new CurrentDate (ast->eval_state);
                 else
                     return false;
                 appendASTChild (ast, func);
@@ -841,7 +898,7 @@ static bool parseTerm (const char *str, const char **end, AST *ast) {
                 }
             }
             if (op) {
-                AST tmp;
+                AST tmp (ast->eval_state);
                 if (parseFactor (str + 1, end, &tmp)) {
                     AST *chlds = ast->first_child;
                     chlds->next_sibling = tmp.first_child;
@@ -849,10 +906,10 @@ static bool parseTerm (const char *str, const char **end, AST *ast) {
                     ast->first_child = NULL;
                     appendASTChild (ast,
                             op == '*'
-                            ? (AST *) new Multiply (chlds)
+                            ? (AST *) new Multiply (ast->eval_state, chlds)
                             : op == '/'
-                            ? (AST *) new Divide (chlds)
-                            : (AST *) new Modulus (chlds));
+                            ? (AST *) new Divide (ast->eval_state, chlds)
+                            : (AST *) new Modulus (ast->eval_state, chlds));
                     str = *end;
                 }
             } else {
@@ -879,14 +936,15 @@ static bool parseExpression (const char *str, const char **end, AST *ast) {
             str = parseSpace (str, end) ? *end : str;
             op = *str;
             if (op == '+' || op == '-') {
-                AST tmp;
+                AST tmp (ast->eval_state);
                 if (parseTerm (str + 1, end, &tmp)) {
                     AST *chlds = ast->first_child;
                     chlds->next_sibling = tmp.first_child;
                     tmp.first_child = NULL;
                     ast->first_child = NULL;
                     appendASTChild (ast, op == '+'
-                            ? (AST *) new Plus (chlds) : (AST *) new Minus (chlds));
+                            ? (AST *) new Plus (ast->eval_state, chlds)
+                            : (AST *) new Minus (ast->eval_state, chlds));
                     str = *end;
                 }
             } else {
@@ -949,14 +1007,14 @@ static bool parseStatement (const char *str, const char **end, AST *ast) {
         if (err != comparison) {
             if (comparison == lteq || comparison == gteq || comparison == noteq)
                 ++str;
-            AST tmp;
+            AST tmp (ast->eval_state);
             if (parseExpression (str, end, &tmp)) {
                 AST *chlds = ast->first_child;
                 chlds->next_sibling = tmp.first_child;
                 tmp.first_child = NULL;
                 ast->first_child = NULL;
-                appendASTChild (ast,
-                      new Comparison ((Comparison::CompType)comparison, chlds));
+                appendASTChild (ast, new Comparison (ast->eval_state,
+                            (Comparison::CompType)comparison, chlds));
             }
         }
 
@@ -969,7 +1027,8 @@ static bool parseStatement (const char *str, const char **end, AST *ast) {
 }
 
 ExpressionResult *KMPlayer::evaluateExpr (const QString &expr) {
-    AST ast;
+    EvalState *eval_state = new EvalState;
+    AST ast (eval_state);
     const char *end;
     if (parseStatement (expr.toAscii ().data (), &end, &ast)) {
         AST *res = ast.first_child;
