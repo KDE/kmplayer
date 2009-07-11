@@ -305,7 +305,7 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
         } else if (!strncmp (cval, "media", 5)) {
             dur = Runtime::DurMedia;
         }
-        QString payload;
+        VirtualVoid *payload = NULL;
         if (dur == -2) {
             NodePtr target;
             const char * q = p;
@@ -360,7 +360,7 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
                 if (op > -1) {
                     int cp = vl.indexOf (')', op + 1);
                     if (cp > -1) {
-                        payload = vl.mid (op + 1, cp - op - 1);
+                        payload = evaluateExpr (vl.mid (op + 1, cp - op - 1));
                         dur = Runtime::DurStateChanged;
                     }
                 }
@@ -408,7 +408,7 @@ void setDurationItems (Node *n, const QString &s, Runtime::DurationItem *item) {
 static bool disabledByExpr (Runtime *rt) {
     bool b = false;
     if (!rt->expr.isEmpty ()) {
-        ExpressionResult *res = evaluateExpr (rt->expr);
+        Expression *res = evaluateExpr (rt->expr);
         if (res) {
             SMIL::Smil *smil = SMIL::Smil::findSmilNode (rt->element);
             b = !res->toBool (smil ? smil->state_node.ptr() : NULL);
@@ -1252,7 +1252,7 @@ SMIL::Smil * SMIL::Smil::findSmilNode (Node * node) {
 }
 
 static QString exprStringValue (Node *node, const QString &str) {
-    ExpressionResult *res = evaluateExpr (str);
+    Expression *res = evaluateExpr (str);
     if (res) {
         SMIL::Smil *smil = SMIL::Smil::findSmilNode (node);
         QString s = res->toString(smil ? smil->state_node.ptr() : NULL);
@@ -1322,47 +1322,59 @@ SMIL::State::State (NodePtr &d)
  : Element (d, id_node_state) {}
 
 Node *SMIL::State::childFromTag (const QString &tag) {
-    return new DarkNode (m_doc, tag.toUtf8 ());
+    if (tag == "data")
+        return new DarkNode (m_doc, tag.toUtf8 (), SMIL::id_node_state_data);
+    return NULL;
 }
 
-void SMIL::State::setValue (const QString &ref, const QString &value) {
-    Node *c = childByName (ref);
-    if (c) {
-        const QString old = c->nodeValue ();
-        const QString s = exprStringValue (this, value);
-        c->clearChildren ();
-        if (!s.isEmpty ())
-            c->appendChild (new TextNode (m_doc, s));
-        if (s != old) {
-            Connection *connect = m_StateChangeListeners.first ();
-            for (; connect; connect = m_StateChangeListeners.next ()) {
-                if (connect->payload == ref && connect->connecter) {
-                    document()->post (connect->connecter, new Posting (this, MsgStateChanged));
-                }
-            }
-        }
-        return;
+void SMIL::State::closed () {
+    if (!firstChild ()) {
+        appendChild (new DarkNode (m_doc, "data", SMIL::id_node_state_data));
+        firstChild ()->setAuxiliaryNode (true);
     }
-    kWarning () << "name " << ref << " not found";
 }
 
-void SMIL::State::newValue (const QString &ref, const QString &value) {
-    Node *n = firstChild () && !strcmp (firstChild ()->nodeName (), "data")
-        ? firstChild () : this;
-    for (Node *c = n->firstChild (); c; c = c->nextSibling ())
-        if (ref == c->nodeName ()) {
-            kWarning () << "name " << ref << " already exists";
-            return;
+static void stateChanged (SMIL::State *s, Node *ref) {
+    Connection *c = s->m_StateChangeListeners.first ();
+    for (; c; c = s->m_StateChangeListeners.next ()) {
+        if (c->payload && c->connecter) {
+            NodeRefList *lst = ((Expression *) c->payload)->toNodeList (s);
+            for (NodeRefItem *itm = lst->first(); itm; itm = itm->nextSibling())
+                if (itm->data.ptr () == ref)
+                    s->document()->post (c->connecter,
+                                         new Posting (s, MsgStateChanged));
+            delete lst;
         }
-    n->appendChild (new DarkNode (m_doc, ref.toUtf8 ()));
+    }
+}
+
+void SMIL::State::setValue (Node *ref, const QString &value) {
+    const QString old = ref->nodeValue ();
+    const QString s = exprStringValue (this, value);
+    ref->clearChildren ();
+    if (!s.isEmpty ())
+        ref->appendChild (new TextNode (m_doc, s));
+    if (s != old)
+        stateChanged (this, ref);
+}
+
+void SMIL::State::newValue (Node *ref, Where where,
+        const QString &name, const QString &value) {
+    NodePtr n = new DarkNode (m_doc, name.toUtf8 ());
+    switch (where) {
+        case before:
+            ref->parentNode ()->insertBefore (n, ref);
+            break;
+        case after:
+            ref->parentNode ()->insertBefore (n, ref->nextSibling ());
+            break;
+        default:
+            ref->appendChild (n);
+    }
     if (!value.isEmpty ()) {
         const QString s = exprStringValue (this, value);
-        n->lastChild ()->appendChild (new TextNode (m_doc, s));
-        Connection *connect = m_StateChangeListeners.first ();
-        for (; connect; connect = m_StateChangeListeners.next ()) {
-            if (connect->payload == ref && connect->connecter)
-                document()->post (connect->connecter, new Posting (this, MsgStateChanged));
-        }
+        n->appendChild (new TextNode (m_doc, s));
+        stateChanged (this, ref);
     }
 }
 
@@ -3989,16 +4001,19 @@ void SMIL::TextFlow::parseParam(const TrieString &name, const QString &val) {
 //-----------------------------------------------------------------------------
 
 SMIL::StateValue::StateValue (NodePtr &d, short _id)
- : Element (d, _id),
-   runtime (new Runtime (this)) {
+ : Element (d, _id), ref (NULL), runtime (new Runtime (this)) {
 }
 
 SMIL::StateValue::~StateValue () {
     delete runtime;
+    delete ref;
 }
 
 void SMIL::StateValue::init () {
     if (Runtime::TimingsInitialized > runtime->timingstate) {
+        SMIL::Smil *smil = SMIL::Smil::findSmilNode (this);
+        if (smil)
+            state = smil->state_node.ptr ();
         Element::init ();
         runtime->timingstate = Runtime::TimingsInitialized;
     }
@@ -4017,6 +4032,8 @@ void SMIL::StateValue::finish () {
 void SMIL::StateValue::deactivate () {
     if (unfinished ())
         finish ();
+    delete ref;
+    ref = NULL;
     runtime->initialize ();
     Element::deactivate ();
 }
@@ -4027,16 +4044,17 @@ void SMIL::StateValue::reset () {
 }
 
 void SMIL::StateValue::parseParam (const TrieString &para, const QString &val) {
-    if (para == StringPool::attr_name)
-        name = val;
-    else if (para == StringPool::attr_value)
+    if (para == StringPool::attr_value) {
         value = val;
-    else if (para == "ref")
-        ref = val;
-    else if (para == "where")
-        where = val;
-    else if (!runtime->parseParam (para, val))
+    } else if (para == "ref") {
+        delete ref;
+        if (state)
+            ref = evaluateExpr (val);
+        else
+            ref = NULL;
+    } else if (!runtime->parseParam (para, val)) {
         Element::parseParam (para, val);
+    }
 }
 
 void SMIL::StateValue::message (MessageType msg, void *data) {
@@ -4063,54 +4081,65 @@ void *SMIL::StateValue::role (RoleType msg, void *data) {
 
 //-----------------------------------------------------------------------------
 
+void SMIL::NewValue::init () {
+    where = SMIL::State::child;
+    StateValue::init ();
+}
+
 void SMIL::NewValue::begin () {
-    QString tag = name.isEmpty () ? ref : name;
-    if (tag.isEmpty ()) {
-        kWarning () << "name is empty";
+    SMIL::State *st = static_cast <SMIL::State *> (state.ptr ());
+    if (name.isEmpty () || !st) {
+        kWarning () << "name is empty or no state";
     } else {
-        SMIL::Smil *smil = SMIL::Smil::findSmilNode (this);
-        if (smil) {
-            Node *state = smil->state_node.ptr ();
-            if (state)
-                static_cast <SMIL::State *> (state)->newValue (tag, value);
-        }
+        if (!ref)
+            ref = evaluateExpr ("/data");
+        NodeRefList *lst = ref->toNodeList (st);
+        if (lst->first ())
+            st->newValue (lst->first ()->data, where, name, value);
+        delete lst;
+    }
+}
+
+void SMIL::NewValue::parseParam (const TrieString &para, const QString &val) {
+    if (para == StringPool::attr_name)
+        name = val;
+    else if (para == "where") {
+        if (val == "before")
+            where = SMIL::State::before;
+        else if (val == "after")
+            where = SMIL::State::after;
+        else
+            where = SMIL::State::child;
+    } else {
+        StateValue::parseParam (para, val);
     }
 }
 
 //-----------------------------------------------------------------------------
 
 void SMIL::SetValue::begin () {
-    QString tag = name.isEmpty () ? ref : name;
-    if (tag.isEmpty ()) {
-        kWarning () << "name is empty";
+    SMIL::State *st = static_cast <SMIL::State *> (state.ptr ());
+    if (!ref || !st) {
+        kWarning () << "ref is empty or no state";
     } else {
-        SMIL::Smil *smil = SMIL::Smil::findSmilNode (this);
-        if (smil) {
-            Node *state = smil->state_node.ptr ();
-            if (state)
-                static_cast <SMIL::State *> (state)->setValue (tag, value);
-        }
+        NodeRefList *lst = ref->toNodeList (st);
+        if (lst->first ())
+            st->setValue (lst->first ()->data, value);
+        delete lst;
     }
 }
 
 //-----------------------------------------------------------------------------
 
 void SMIL::DelValue::begin () {
-    if (name.isEmpty ()) {
-        kWarning () << "name is empty";
+    SMIL::State *st = static_cast <SMIL::State *> (state.ptr ());
+    if (!ref || !st) {
+        kWarning () << "ref is empty or no state";
     } else {
-        SMIL::Smil *smil = SMIL::Smil::findSmilNode (this);
-        if (smil) {
-            Node *state = smil->state_node.ptr ();
-            if (state) {
-                for (Node *c = state->firstChild (); c; c = c->nextSibling ())
-                    if (name == c->nodeName ()) {
-                        state->removeChild (c);
-                        return;
-                    }
-                kWarning () << "name " << name << " not found";
-            }
-        }
+        NodeRefList *lst = ref->toNodeList (st);
+        for (NodeRefItem *itm = lst->first (); itm; itm = itm->nextSibling ())
+            itm->data->parentNode ()->removeChild (itm->data);
+        delete lst;
     }
 }
 

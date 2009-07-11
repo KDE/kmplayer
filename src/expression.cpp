@@ -30,16 +30,17 @@ using namespace KMPlayer;
 namespace {
 
 struct EvalState {
-    EvalState () : sequence (1), ref_count (0) {}
+    EvalState () : context (NULL), sequence (1), ref_count (0) {}
 
     void addRef () { ++ref_count; }
     void removeRef () { if (--ref_count == 0) delete this; }
 
+    Node *context;
     int sequence;
     int ref_count;
 };
 
-struct AST : public ExpressionResult {
+struct AST : public Expression {
     enum Type {
         TUnknown, TInteger, TBool, TFloat, TString
     };
@@ -51,20 +52,31 @@ struct AST : public ExpressionResult {
     virtual int toInt (Node *state) const;
     virtual float toFloat (Node *state) const;
     virtual QString toString (Node *state) const;
+    virtual NodeRefList *toNodeList (Node *state) const;
     virtual Type type (Node *state) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
 
     mutable int sequence;
-    EvalState *eval_state;
+    mutable EvalState *eval_state;
     AST *first_child;
     AST *next_sibling;
+};
+
+struct BoolBase : public AST {
+    BoolBase (EvalState *ev) : AST (ev), b (false) {}
+
+    virtual QString toString (Node *state) const;
+    virtual Type type (Node *state) const;
+
+    mutable bool b;
 };
 
 struct IntegerBase : public AST {
     IntegerBase (EvalState *ev) : AST (ev), i (0) {}
 
+    virtual bool toBool (Node *node) const;
     virtual float toFloat (Node *state) const;
     virtual Type type (Node *state) const;
 
@@ -101,6 +113,8 @@ struct Float : public AST {
 
 struct StringBase : public AST {
     StringBase (EvalState *ev) : AST (ev) {}
+    StringBase (EvalState *ev, const char *s, const char *e)
+     : AST (ev), string (e ? QString (QByteArray (s, e - s)) : QString (s)) {}
 
     virtual bool toBool (Node *state) const;
     virtual int toInt (Node *state) const;
@@ -110,29 +124,43 @@ struct StringBase : public AST {
     mutable QString string;
 };
 
-struct Identifier : public StringBase {
-    Identifier (EvalState *ev, const char *s, const char *e)
-     : StringBase (ev) {
-        path = e ? QString (QByteArray (s, e - s)) : QString (s);
-    }
+struct Step : public StringBase {
+    Step (EvalState *ev) : StringBase (ev),any_path (true) {}
+    Step (EvalState *ev, const char *s, const char *e)
+     : StringBase (ev, s, e), any_path (false) {}
 
-    virtual QString toString (Node *state) const;
-    virtual Type type (Node *state) const;
+    bool matches (Node *n);
+    bool anyPath () const { return any_path; }
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
-        fprintf (stderr, "Identifier %s", path.toAscii ().data ());
+        fprintf (stderr, "Step %s", string.toAscii ().data ());
         AST::dump();
     }
 #endif
 
-    QString path;
+    bool any_path;
+};
+
+struct Identifier : public StringBase {
+    Identifier (EvalState *ev, AST *steps) : StringBase (ev) {
+        first_child = steps;
+    }
+
+    virtual QString toString (Node *state) const;
+    virtual NodeRefList *toNodeList (Node *state) const;
+    virtual Type type (Node *state) const;
+    bool childByPath (Node *node, Step *path, NodeRefList *lst) const;
+#ifdef KMPLAYER_EXPR_DEBUG
+    virtual void dump () const {
+        fprintf (stderr, "Identifier ");
+        AST::dump();
+    }
+#endif
 };
 
 struct StringLiteral : public StringBase {
     StringLiteral (EvalState *ev, const char *s, const char *e)
-     : StringBase (ev) {
-        string = e ? QString (QByteArray (s, e - s)) : QString (s);
-    }
+     : StringBase (ev, s, e) {}
 
     virtual QString toString (Node *state) const;
     virtual Type type (Node *state) const;
@@ -239,18 +267,17 @@ struct Minus : public AST {
 #endif
 };
 
-struct Comparison : public AST {
+struct Comparison : public BoolBase {
     enum CompType {
         lt = 1, lteq, eq, noteq, gt, gteq, land, lor
     };
 
     Comparison (EvalState *ev, CompType ct, AST *children)
-     : AST (ev), comp_type (ct) {
+     : BoolBase (ev), comp_type (ct) {
         first_child = children;
     }
 
     virtual bool toBool (Node *state) const;
-    virtual Type type (Node *state) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -299,16 +326,24 @@ QString AST::toString (Node *state) const {
     }
 }
 
+NodeRefList *AST::toNodeList (Node *) const {
+    return new NodeRefList;
+}
+
 AST::Type AST::type (Node *) const {
     return TUnknown;
 }
 
 #ifdef KMPLAYER_EXPR_DEBUG
 void AST::dump () const {
-    for (AST *child = first_child; child; child = child->next_sibling) {
-        if (child != first_child)
-            fprintf (stderr, ", ");
-        child->dump();
+    if (first_child) {
+        fprintf (stderr, "[ ");
+        for (AST *child = first_child; child; child = child->next_sibling) {
+            if (child != first_child)
+                fprintf (stderr, ", ");
+            child->dump();
+        }
+        fprintf (stderr, " ]");
     }
 }
 #endif
@@ -324,8 +359,28 @@ static void appendASTChild (AST *p, AST *c) {
             }
 }
 
+QString BoolBase::toString (Node *state) const {
+    return toBool (state) ? "true" : "false";
+}
+
+AST::Type BoolBase::type (Node *) const {
+    return TBool;
+}
+
 float IntegerBase::toFloat (Node *state) const {
     return toInt (state);
+}
+
+bool IntegerBase::toBool (Node *n) const {
+    if (eval_state->context == n->parentNode ()) {
+        int ii = toInt (n) - 1;
+        int count = 0;
+        for (Node *c = eval_state->context->firstChild(); c; c=c->nextSibling())
+            if (!strcmp (c->nodeName (), n->nodeName ()) && ii == count++)
+                return n == c;
+        return false;
+    }
+    return i;
 }
 
 AST::Type IntegerBase::type (Node *) const {
@@ -368,16 +423,49 @@ AST::Type StringBase::type (Node *) const {
     return TString;
 }
 
+bool Step::matches (Node *n) {
+    return string == n->nodeName () && (!first_child || first_child->toBool(n));
+}
+
+bool Identifier::childByPath (Node *node, Step *path, NodeRefList *lst) const {
+    if (!node)
+        return false;
+    if (!path) {
+        lst->append (new NodeRefItem (node));
+        return true;
+    }
+    bool b = false;
+    for (Node *c = node->firstChild (); c; c = b ? NULL : c->nextSibling ()) {
+        if (path->anyPath ()) {
+            b = childByPath (c, (Step *) path->next_sibling, lst);
+            if (!b)
+                b = childByPath (c, path, lst);
+        } else {
+            Node *ctx = eval_state->context;
+            eval_state->context = node;
+            if (path->matches (c))
+                b = childByPath (c, (Step *) path->next_sibling, lst);
+            eval_state->context = ctx;
+        }
+    }
+    return b;
+}
+
 QString Identifier::toString (Node *state) const {
     if (eval_state->sequence != sequence) {
-        if (state) {
-            Node *n = state->childByName (path);
-            if (n)
-                string = n->nodeValue ();
-        }
+        NodeRefList *lst = toNodeList (state);
+        if (lst && lst->first ())
+            string = lst->first ()->data->nodeValue ();
+        delete lst;
         sequence = eval_state->sequence;
     }
     return string;
+}
+
+NodeRefList *Identifier::toNodeList (Node *state) const {
+    NodeRefList *lst = new NodeRefList;
+    childByPath (state, (Step *) first_child, lst);
+    return lst;
 }
 
 AST::Type Identifier::type (Node *state) const {
@@ -651,10 +739,6 @@ bool Comparison::toBool (Node *state) const {
     return false;
 }
 
-AST::Type Comparison::type (Node *) const {
-    return TBool;
-}
-
 #ifdef KMPLAYER_EXPR_DEBUG
 void Comparison::dump () const {
     switch (comp_type) {
@@ -687,12 +771,12 @@ void Comparison::dump () const {
 }
 #endif
 
-static bool parseExpression (const char *str, const char **end, AST *ast);
+static bool parseStatement (const char *str, const char **end, AST *ast);
 
 
 static bool parseSpace (const char *str, const char **end) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    qDebug ("%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
     *end = NULL;
     for (const char *s = str; *s; ++s) {
@@ -716,43 +800,87 @@ static bool parseSpace (const char *str, const char **end) {
 
 static bool parseLiteral (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    qDebug ("%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
-    bool decimal = false;
-    bool sign = false;
-    const char *begin = parseSpace (str, end) ? *end : str;
-    const char *s = begin;
-    *end = NULL;
+    if (parseSpace (str, end))
+        str = *end;
+    const char *s = str;
     if (*s == '\'' || *s == '"') {
-        while (*s && *s != *begin)
+        ++s;
+        while (*s && *s != *str)
             ++s;
-        appendASTChild (ast, new StringLiteral (ast->eval_state, begin + 1, s));
-        *end = s + 1;
-        return true;
-    }
-    for (; *s; ++s) {
-        if (*s == '.') {
-            if (decimal)
-                return false;
-            decimal = true;
-        } else if (s == begin && (*s == '+' || *s == '-')) {
-            sign = true;
-        } else if (!(*s >= '0' && *s <= '9')) {
-            break;
+        if (*s) {
+            appendASTChild (ast, new StringLiteral (ast->eval_state, ++str, s));
+            *end = s + 1;
+            return true;
         }
-        *end = s;
-    }
-    if (*end && (!sign || *end > begin) && *end - begin < 64) {
-        char buf[64];
-        ++(*end);
-        memcpy (buf, begin, *end - begin);
-        buf[*end - begin] = 0;
-        appendASTChild (ast, decimal
-                ? (AST *) new Float (ast->eval_state, strtof (buf, NULL))
-                : (AST *) new Integer (ast->eval_state, strtol (buf, NULL, 10)));
+    } else {
+        bool decimal = false;
+        bool sign = false;
+        *end = NULL;
+        for (; *s; ++s) {
+            if (*s == '.') {
+                if (decimal)
+                    return false;
+                decimal = true;
+            } else if (s == str && (*s == '+' || *s == '-')) {
+                sign = true;
+            } else if (!(*s >= '0' && *s <= '9')) {
+                break;
+            }
+            *end = s;
+        }
+        if (*end && (!sign || *end > str) && *end - str < 64) {
+            char buf[64];
+            ++(*end);
+            memcpy (buf, str, *end - str);
+            buf[*end - str] = 0;
+            appendASTChild (ast, decimal
+               ? (AST *) new Float (ast->eval_state, strtof (buf, NULL))
+               : (AST *) new Integer (ast->eval_state, strtol (buf, NULL, 10)));
 #ifdef KMPLAYER_EXPR_DEBUG
-        qDebug ("%s success end:'%s'\n", __FUNCTION__, *end);
+            fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
 #endif
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool parseStep (const char *str, const char **end, AST *ast) {
+#ifdef KMPLAYER_EXPR_DEBUG
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
+#endif
+    Step *entry = NULL;
+    const char *s = str;
+    if (*s == '/') {
+        entry = new Step (ast->eval_state);
+    } else {
+        for (; *s; ++s)
+            if (!((*s >= 'a' && *s <= 'z') ||
+                        (*s >= 'A' && *s <= 'Z') ||
+                        *s == '_' ||
+                        *s == '*' ||
+                        (s > str && (*s == '-' || (*s >= '0' && *s <= '9')))))
+                break;
+        if (str == s)
+            return false;
+        entry = new Step (ast->eval_state, str, s);
+        AST pred (ast->eval_state);
+        if (*s == '[' && parseStatement (s + 1, end, &pred)) {
+            str = *end;
+            if (parseSpace (str, end))
+                str = *end;
+            if (*str == ']') {
+                entry->first_child = pred.first_child;
+                pred.first_child = NULL;
+                s = ++str;
+            }
+        }
+    }
+    if (entry) {
+        appendASTChild (ast, entry);
+        *end = s;
         return true;
     }
     return false;
@@ -760,26 +888,32 @@ static bool parseLiteral (const char *str, const char **end, AST *ast) {
 
 static bool parseIdentifier (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    qDebug ("%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
-    const char *begin = parseSpace (str, end) ? *end : str;
-    *end = NULL;
-    for (const char *s = begin; *s; ++s) {
-        if (!(*s >= 'a' && *s <= 'z') &&
-                !(*s >= 'A' && *s <= 'Z') &&
-                *s != '_' &&
-                *s != '-' &&
-                *s != '@' &&
-                *s != '/' &&
-                !(s > begin && (*s == '*' || (*s >= '0' && *s <= '9'))))
+    Identifier ident (ast->eval_state, NULL);
+    bool has_any = false;
+
+    if (parseSpace (str, end))
+        str = *end;
+    if (!str)
+        return false;
+    if (*str == '/')
+        ++str;
+    else
+        appendASTChild (&ident, new Step (ast->eval_state, "data", NULL));
+    while (parseStep (str, end, &ident)) {
+        str = *end;
+        has_any = true;
+        if (*str != '/')
             break;
-        *end = s;
+        ++str;
     }
-    if (*end) {
-        ++(*end);
-        appendASTChild (ast, new Identifier (ast->eval_state, begin, *end));
+    *end = str;
+    if (has_any) {
+        appendASTChild (ast, new Identifier (ast->eval_state, ident.first_child));
+        ident.first_child = NULL;
 #ifdef KMPLAYER_EXPR_DEBUG
-        qDebug ("%s success end:'%s'\n", __FUNCTION__, *end);
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
 #endif
         return true;
     }
@@ -788,12 +922,12 @@ static bool parseIdentifier (const char *str, const char **end, AST *ast) {
 
 static bool parseGroup (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    qDebug ("%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
     const char *begin = parseSpace (str, end) ? *end : str;
     if (!*begin || *begin != '(')
         return false;
-    if (!parseExpression (begin + 1, end, ast))
+    if (!parseStatement (begin + 1, end, ast))
         return false;
     str = *end;
     str = parseSpace (str, end) ? *end : str;
@@ -801,47 +935,59 @@ static bool parseGroup (const char *str, const char **end, AST *ast) {
         return false;
     *end = str + 1;
 #ifdef KMPLAYER_EXPR_DEBUG
-    qDebug ("%s success end:'%s'\n", __FUNCTION__, *end);
+    fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
 #endif
     return true;
 }
 
 static bool parseFunction (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    qDebug ("%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
     AST fast (ast->eval_state);
-    if (parseIdentifier (str, end, &fast)) {
+    const char *begin = parseSpace (str, end) ? *end : str;
+    *end = NULL;
+    for (const char *s = begin; *s; ++s) {
+        if (!(*s >= 'a' && *s <= 'z') &&
+                !(*s >= 'A' && *s <= 'Z') &&
+                *s != '_' &&
+                !(s > begin && (*s == '-' || (*s >= '0' && *s <= '9'))))
+            break;
+        *end = s;
+    }
+    if (*end) {
+        ++(*end);
+        QString name (QByteArray (begin, *end - begin));
         str = *end;
         if (parseSpace (str, end))
             str = *end;
         if (*str && *(str++) == '(') {
-            while (parseExpression (str, end, fast.first_child)) {
+            while (parseStatement (str, end, &fast)) {
                 str = *end;
                 if (parseSpace (str, end))
                     str = *end;
-                if (!*str || !*str == ',')
+                if (!*str || *str != ',')
                     break;
             }
             if (parseSpace (str, end))
                 str = *end;
             if (*str && *(str++) == ')') {
                 AST *func = NULL;
-                if (((Identifier*)fast.first_child)->path == "hours-from-time")
+                if (name == "hours-from-time")
                     func = new HoursFromTime (ast->eval_state);
-                else if (((Identifier*)fast.first_child)->path == "minutes-from-time")
+                else if (name == "minutes-from-time")
                     func = new MinutesFromTime (ast->eval_state);
-                else if (((Identifier*)fast.first_child)->path == "seconds-from-time")
+                else if (name == "seconds-from-time")
                     func = new SecondsFromTime (ast->eval_state);
-                else if (((Identifier*)fast.first_child)->path == "current-time")
+                else if (name == "current-time")
                     func = new CurrentTime (ast->eval_state);
-                else if (((Identifier*)fast.first_child)->path == "current-date")
+                else if (name == "current-date")
                     func = new CurrentDate (ast->eval_state);
                 else
                     return false;
                 appendASTChild (ast, func);
-                func->first_child = fast.first_child->first_child;
-                fast.first_child->first_child = NULL;
+                func->first_child = fast.first_child;
+                fast.first_child = NULL;
                 *end = str;
                 return true;
             }
@@ -852,7 +998,7 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
 
 static bool parseFactor (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    qDebug ("%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
     return parseGroup (str, end, ast) ||
             parseFunction (str, end, ast) ||
@@ -877,7 +1023,7 @@ static Keyword *parseKeyword (const char *str, const char **end, Keyword *lst) {
 
 static bool parseTerm (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    qDebug ("%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
     if (parseFactor (str, end, ast)) {
         char op;
@@ -918,7 +1064,7 @@ static bool parseTerm (const char *str, const char **end, AST *ast) {
             }
         }
 #ifdef KMPLAYER_EXPR_DEBUG
-        qDebug ("%s success end:'%s'\n", __FUNCTION__, *end);
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
 #endif
         return true;
     }
@@ -927,7 +1073,7 @@ static bool parseTerm (const char *str, const char **end, AST *ast) {
 
 static bool parseExpression (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    qDebug ("%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
     if (parseTerm (str, end, ast)) {
         char op;
@@ -953,7 +1099,7 @@ static bool parseExpression (const char *str, const char **end, AST *ast) {
             }
         }
 #ifdef KMPLAYER_EXPR_DEBUG
-        qDebug ("%s success end:'%s'\n", __FUNCTION__, *end);
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
 #endif
         return true;
     }
@@ -962,7 +1108,7 @@ static bool parseExpression (const char *str, const char **end, AST *ast) {
 
 static bool parseStatement (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    qDebug ("%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
     if (parseExpression (str, end, ast)) {
         enum EComparison {
@@ -1017,16 +1163,17 @@ static bool parseStatement (const char *str, const char **end, AST *ast) {
                             (Comparison::CompType)comparison, chlds));
             }
         }
+        *end = str;
 
 #ifdef KMPLAYER_EXPR_DEBUG
-        qDebug ("%s success end:'%s'\n", __FUNCTION__, *end);
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
 #endif
         return true;
     }
     return false;
 }
 
-ExpressionResult *KMPlayer::evaluateExpr (const QString &expr) {
+Expression *KMPlayer::evaluateExpr (const QString &expr) {
     EvalState *eval_state = new EvalState;
     AST ast (eval_state);
     const char *end;

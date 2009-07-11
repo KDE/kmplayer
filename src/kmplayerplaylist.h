@@ -327,14 +327,21 @@ class ConnectionList;
 extern int connection_counter;
 #endif
 
+struct VirtualVoid {
+    virtual ~VirtualVoid () {}
+};
+
 struct Connection {
     NodePtrW connectee; // the one that will, when ever, trigger the event
     NodePtrW connecter; // the one that will, when ever, receive the event
-    Connection (Node *invoker, Node*receiver, const QString &payload);
+    Connection (Node *invoker, Node*receiver, VirtualVoid *payload);
+    ~Connection () {
+        delete payload;
 #ifdef KMPLAYER_TEST_CONNECTION
-    ~Connection () { connection_counter--; }
+        connection_counter--;
 #endif
-    QString payload;
+    }
+    VirtualVoid *payload;
     ConnectionList *list;
     Connection **link;
     Connection *prev;
@@ -351,7 +358,7 @@ public:
     ~ConnectionLink ();
 
     bool connect (Node *signaler, MessageType msg, Node *receiver,
-            const QString &payload=QString());
+            VirtualVoid *payload=NULL);
     void disconnect () const;
     void assign (const ConnectionLink *link) const;
 
@@ -425,7 +432,6 @@ public:
     Document * document ();
     virtual Mrl * mrl ();
     virtual Node *childFromTag (const QString & tag);
-    Node *childByName (const QString &tag);
     void characterData (const QString & s);
     QString innerText () const;
     QString innerXML () const;

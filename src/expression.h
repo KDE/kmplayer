@@ -17,20 +17,24 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 **/
 
+#ifndef _KMPLAYER_EXPRESSION_H_
+#define _KMPLAYER_EXPRESSION_H_
+
 #include "kmplayerplaylist.h"
 
 namespace KMPlayer {
 
-class ExpressionResult {
+class Expression : public VirtualVoid {
 public:
-    virtual ~ExpressionResult () {}
-
     virtual bool toBool (Node *state) const = 0;
     virtual int toInt (Node *state) const = 0;
     virtual float toFloat (Node *state) const = 0;
     virtual QString toString (Node *state) const = 0;
+    virtual NodeRefList *toNodeList (Node *root) const = 0;
 };
 
-ExpressionResult *evaluateExpr (const QString &expr);
+Expression *evaluateExpr (const QString &expr);
 
 }
+
+#endif

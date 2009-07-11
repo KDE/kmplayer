@@ -33,6 +33,7 @@ struct TransTypeInfo;
 namespace KMPlayer {
 
 class ImageMedia;
+class Expression;
 
 /*
  * Interpretation of sizes
@@ -251,6 +252,7 @@ const short id_node_span = 145;
 const short id_node_p = 146;
 const short id_node_anchor = 150;
 const short id_node_area = 151;
+const short id_node_state_data = 151;
 const short id_node_first = id_node_smil;
 const short id_node_first_timed_mrl = id_node_body;
 const short id_node_last_timed_mrl = id_node_animate_motion;
@@ -301,15 +303,19 @@ public:
  */
 class KMPLAYER_NO_EXPORT State : public Element {
 public:
+    enum Where { before, after, child };
+
     State (NodePtr & d);
 
     Node *childFromTag (const QString & tag);
+    void closed ();
     void *role (RoleType msg, void *content=NULL);
     KDE_NO_EXPORT const char * nodeName () const { return "state"; }
     bool expose () const { return false; }
 
-    void newValue (const QString &ref, const QString &value);
-    void setValue (const QString &ref, const QString &value);
+    void newValue (Node *ref, Where w, const QString &name, const QString &val);
+    void setValue (Node *ref, const QString &value);
+    void delValue (Node *ref);
 
     ConnectionList m_StateChangeListeners;        // setValue changed a value
 };
@@ -807,10 +813,9 @@ public:
 protected:
     StateValue (NodePtr &d, short _id);
 
-    QString name;
-    QString ref;
-    QString where;
     QString value;
+    NodePtrW state;
+    Expression *ref;
     Runtime *runtime;
 };
 
@@ -818,8 +823,14 @@ class KMPLAYER_NO_EXPORT NewValue : public StateValue {
 public:
     NewValue (NodePtr &d) : StateValue (d, id_node_new_value) {}
 
+    virtual void init ();
     virtual void begin ();
+    virtual void parseParam (const TrieString &name, const QString &value);
     KDE_NO_EXPORT const char *nodeName () const { return "newvalue"; }
+
+private:
+    QString name;
+    SMIL::State::Where where;
 };
 
 class KMPLAYER_NO_EXPORT SetValue : public StateValue {

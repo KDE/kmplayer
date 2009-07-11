@@ -85,7 +85,7 @@ QTextStream &KMPlayer::operator << (QTextStream &out, const XMLStringlet &txt) {
 
 //-----------------------------------------------------------------------------
 
-Connection::Connection (Node *invoker, Node *receiver, const QString &pl)
+Connection::Connection (Node *invoker, Node *receiver, VirtualVoid *pl)
  : connectee (invoker), connecter (receiver), payload (pl) {
 #ifdef KMPLAYER_TEST_CONNECTION
     connection_counter++;
@@ -99,7 +99,7 @@ ConnectionLink::~ConnectionLink () {
 }
 
 bool ConnectionLink::connect (Node *send, MessageType msg, Node *rec,
-        const QString &payload) {
+        VirtualVoid *payload) {
     disconnect ();
     ConnectionList *list = nodeMessageReceivers (send, msg);
     if (list) {
@@ -413,17 +413,6 @@ KDE_NO_EXPORT void Node::replaceChild (NodePtr _new, NodePtr old) {
 }
 
 Node *Node::childFromTag (const QString &) {
-    return NULL;
-}
-
-Node *Node::childByName (const QString &tag) {
-    for (Node *c = firstChild (); c; c = c->nextSibling ()) {
-        if (tag == c->nodeName ())
-            return c;
-        Node *n = c->childByName (tag);
-        if (n)
-            return n;
-    }
     return NULL;
 }
 
