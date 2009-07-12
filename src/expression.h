@@ -26,11 +26,12 @@ namespace KMPlayer {
 
 class Expression : public VirtualVoid {
 public:
-    virtual bool toBool (Node *state) const = 0;
-    virtual int toInt (Node *state) const = 0;
-    virtual float toFloat (Node *state) const = 0;
-    virtual QString toString (Node *state) const = 0;
-    virtual NodeRefList *toNodeList (Node *root) const = 0;
+    virtual bool toBool () const = 0;
+    virtual int toInt () const = 0;
+    virtual float toFloat () const = 0;
+    virtual QString toString () const = 0;
+    virtual NodeRefList *toNodeList () const = 0;
+    virtual void setRoot (Node *root) = 0;
 };
 
 Expression *evaluateExpr (const QString &expr);

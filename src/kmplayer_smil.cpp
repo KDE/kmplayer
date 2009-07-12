@@ -411,7 +411,8 @@ static bool disabledByExpr (Runtime *rt) {
         Expression *res = evaluateExpr (rt->expr);
         if (res) {
             SMIL::Smil *smil = SMIL::Smil::findSmilNode (rt->element);
-            b = !res->toBool (smil ? smil->state_node.ptr() : NULL);
+            res->setRoot (smil ? smil->state_node.ptr() : NULL);
+            b = !res->toBool ();
             delete res;
         }
     }
@@ -1255,7 +1256,8 @@ static QString exprStringValue (Node *node, const QString &str) {
     Expression *res = evaluateExpr (str);
     if (res) {
         SMIL::Smil *smil = SMIL::Smil::findSmilNode (node);
-        QString s = res->toString(smil ? smil->state_node.ptr() : NULL);
+        res->setRoot (smil ? smil->state_node.ptr() : NULL);
+        QString s = res->toString();
         delete res;
         return s;
     }
@@ -1338,7 +1340,9 @@ static void stateChanged (SMIL::State *s, Node *ref) {
     Connection *c = s->m_StateChangeListeners.first ();
     for (; c; c = s->m_StateChangeListeners.next ()) {
         if (c->payload && c->connecter) {
-            NodeRefList *lst = ((Expression *) c->payload)->toNodeList (s);
+            Expression *expr = (Expression *) c->payload;
+            expr->setRoot (s);
+            NodeRefList *lst = expr->toNodeList ();
             for (NodeRefItem *itm = lst->first(); itm; itm = itm->nextSibling())
                 if (itm->data.ptr () == ref)
                     s->document()->post (c->connecter,
@@ -4093,7 +4097,8 @@ void SMIL::NewValue::begin () {
     } else {
         if (!ref)
             ref = evaluateExpr ("/data");
-        NodeRefList *lst = ref->toNodeList (st);
+        ref->setRoot (st);
+        NodeRefList *lst = ref->toNodeList ();
         if (lst->first ())
             st->newValue (lst->first ()->data, where, name, value);
         delete lst;
@@ -4122,7 +4127,8 @@ void SMIL::SetValue::begin () {
     if (!ref || !st) {
         kWarning () << "ref is empty or no state";
     } else {
-        NodeRefList *lst = ref->toNodeList (st);
+        ref->setRoot (st);
+        NodeRefList *lst = ref->toNodeList ();
         if (lst->first ())
             st->setValue (lst->first ()->data, value);
         delete lst;
@@ -4136,7 +4142,8 @@ void SMIL::DelValue::begin () {
     if (!ref || !st) {
         kWarning () << "ref is empty or no state";
     } else {
-        NodeRefList *lst = ref->toNodeList (st);
+        ref->setRoot (st);
+        NodeRefList *lst = ref->toNodeList ();
         for (NodeRefItem *itm = lst->first (); itm; itm = itm->nextSibling ())
             itm->data->parentNode ()->removeChild (itm->data);
         delete lst;
