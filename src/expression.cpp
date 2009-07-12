@@ -31,13 +31,14 @@ namespace {
 
 struct EvalState {
     EvalState (EvalState *p)
-     : root (NULL), context (NULL), parent (p), sequence (1), ref_count (0) {}
+     : root (NULL), process_list (NULL), parent (p),
+       sequence (1), ref_count (0) {}
 
     void addRef () { ++ref_count; }
     void removeRef () { if (--ref_count == 0) delete this; }
 
     Node *root;
-    Node *context;
+    NodeRefList *process_list;
     EvalState *parent;
     int sequence;
     int ref_count;
@@ -139,6 +140,7 @@ struct Step : public StringBase {
      : StringBase (ev, s, e), any_path (false) {}
 
     bool matches (Node *n);
+    bool selected (Node *n);
     bool anyPath () const { return any_path; }
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
@@ -160,6 +162,8 @@ struct Identifier : public StringBase {
     virtual NodeRefList *toNodeList () const;
     virtual Type type () const;
     bool childByPath (Node *node, Step *path, NodeRefList *lst) const;
+    void childByStep (Step *step, bool recurse) const;
+    void childByPath (Step *step, bool recurse) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Identifier ");
@@ -202,6 +206,12 @@ struct SecondsFromTime : public IntegerBase {
 
 struct Last : public IntegerBase {
     Last (EvalState *ev) : IntegerBase (ev) {}
+
+    virtual int toInt () const;
+};
+
+struct Number : public IntegerBase {
+    Number (EvalState *ev) : IntegerBase (ev) {}
 
     virtual int toInt () const;
 };
@@ -397,13 +407,13 @@ AST::Type BoolBase::type () const {
 bool NumberBase::toBool () const {
     int ii = toInt ();
     if (eval_state->parent) {
-        Node *p = eval_state->parent->context;
+        NodeRefList *lst = eval_state->parent->process_list;
         Node *r = eval_state->root;
-        if (p == r->parentNode ()) {
+        if (lst) {
             int count = 0;
-            for (Node *c = p->firstChild (); c; c = c->nextSibling ())
-                if (!strcmp (c->nodeName (), r->nodeName ()) && ii == ++count)
-                    return r == c;
+            for (NodeRefItem *n = lst->first (); n; n = n->nextSibling ())
+                if (ii == ++count)
+                    return r == n->data.ptr ();
         }
         return false;
     }
@@ -455,14 +465,15 @@ AST::Type StringBase::type () const {
 }
 
 bool Step::matches (Node *n) {
-    if (string == n->nodeName ()) {
-        if (first_child) {
-            first_child->setRoot (n);
-            return first_child->toBool ();
-        }
-        return true;
+    return string == n->nodeName ();
+}
+
+bool Step::selected (Node *n) {
+    if (first_child) {
+        first_child->setRoot (n);
+        return first_child->toBool ();
     }
-    return false;
+    return true;
 }
 
 bool Identifier::toBool () const {
@@ -478,34 +489,55 @@ bool Identifier::toBool () const {
     return b;
 }
 
-bool Identifier::childByPath (Node *node, Step *path, NodeRefList *lst) const {
-    if (!node)
-        return false;
-    if (!path) {
-        lst->append (new NodeRefItem (node));
-        return true;
+void Identifier::childByStep (Step *step, bool recurse) const {
+    NodeRefList *lst = eval_state->process_list;
+    NodeRefItem *last = lst->last ();
+    NodeRefList recursive_lst;
+    for (NodeRefItem *itm = lst->first (); itm; ) {
+        NodeRefItem *next = itm == last ? NULL : itm->nextSibling ();
+        for (Node *c = itm->data->firstChild (); c; c = c->nextSibling ()) {
+            if (step->matches (c))
+                lst->append (new NodeRefItem (c));
+            if (recurse)
+                recursive_lst.append (new NodeRefItem (c));
+        }
+        lst->remove (itm);
+        itm = next;
     }
-    bool b = false;
-    Node *ctx = eval_state->context;
-    eval_state->context = node;
-    for (Node *c = node->firstChild (); c; c = b ? NULL : c->nextSibling ()) {
-        if (path->anyPath ()) {
-            b = childByPath (c, (Step *) path->next_sibling, lst);
-            if (!b)
-                b = childByPath (c, path, lst);
-        } else if (path->matches (c)) {
-            b = childByPath (c, (Step *) path->next_sibling, lst);
+    if (recurse && recursive_lst.first ()) {
+        eval_state->process_list = &recursive_lst;
+        childByStep (step, recurse);
+        for (NodeRefItem *r = recursive_lst.first (); r; r = r->nextSibling ())
+            lst->append (new NodeRefItem (r->data));
+        eval_state->process_list = lst;
+    }
+}
+
+void Identifier::childByPath (Step *step, bool recurse) const {
+    if (!step->anyPath ()) {
+        childByStep (step, recurse);
+        NodeRefItem *itm = eval_state->process_list->first ();
+        if (itm && step->first_child) {
+            NodeRefList *newlist = new NodeRefList;
+            for (; itm; itm = itm->nextSibling ())
+                if (step->selected (itm->data))
+                    newlist->append (new NodeRefItem (itm->data));
+            delete eval_state->process_list;
+            eval_state->process_list = newlist;
         }
     }
-    eval_state->context = ctx;
-    return b;
+    if (step->next_sibling)
+        childByPath ((Step *) step->next_sibling, step->anyPath ());
 }
 
 QString Identifier::toString () const {
     if (eval_state->sequence != sequence) {
         NodeRefList *lst = toNodeList ();
-        if (lst && lst->first ())
+        int i = lst->length ();
+        if (i == 1)
             string = lst->first ()->data->nodeValue ();
+        else
+            string = QString::number (i);
         delete lst;
         sequence = eval_state->sequence;
     }
@@ -513,8 +545,13 @@ QString Identifier::toString () const {
 }
 
 NodeRefList *Identifier::toNodeList () const {
+    NodeRefList *old = eval_state->process_list;
     NodeRefList *lst = new NodeRefList;
-    childByPath (eval_state->root, (Step *) first_child, lst);
+    eval_state->process_list = lst;
+    lst->append (new NodeRefItem (eval_state->root));
+    childByPath ((Step *) first_child, false);
+    lst = eval_state->process_list;
+    eval_state->process_list = old;
     return lst;
 }
 
@@ -593,15 +630,19 @@ int Last::toInt () const {
     if (eval_state->sequence != sequence) {
         sequence = eval_state->sequence;
         if (eval_state->parent) {
-            Node *p = eval_state->parent->context;
-            Node *r = eval_state->root;
-            if (p == r->parentNode ()) {
-                i = 0;
-                for (Node *c = p->firstChild(); c; c = c->nextSibling ())
-                    if (!strcmp (c->nodeName (), r->nodeName ()))
-                        i++;
-            }
+            NodeRefList *lst = eval_state->parent->process_list;
+            if (lst)
+                i = lst->length ();
         }
+    }
+    return i;
+}
+
+int Number::toInt () const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        if (first_child)
+            return first_child->toInt ();
     }
     return i;
 }
@@ -610,14 +651,13 @@ int Position::toInt () const {
     if (eval_state->sequence != sequence) {
         sequence = eval_state->sequence;
         if (eval_state->parent) {
-            Node *p = eval_state->parent->context;
+            NodeRefList *lst = eval_state->parent->process_list;
             Node *r = eval_state->root;
-            if (p == r->parentNode ()) {
+            if (lst) {
                 i = 0;
-                for (Node *c = p->firstChild (); c; c = c->nextSibling ()) {
-                    if (!strcmp (c->nodeName (), r->nodeName ()))
-                        i++;
-                    if (r == c)
+                for (NodeRefItem *n = lst->first(); n; n = n->nextSibling ()) {
+                    i++;
+                    if (r == n->data.ptr ())
                         break;
                 }
             }
@@ -1063,6 +1103,8 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                     func = new CurrentDate (ast->eval_state);
                 else if (name == "last")
                     func = new Last (ast->eval_state);
+                else if (name == "number")
+                    func = new Number (ast->eval_state);
                 else if (name == "position")
                     func = new Position (ast->eval_state);
                 else
