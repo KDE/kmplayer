@@ -1321,7 +1321,7 @@ KDE_NO_EXPORT void SMIL::Head::message (MessageType msg, void *content) {
 //-----------------------------------------------------------------------------
 
 SMIL::State::State (NodePtr &d)
- : Element (d, id_node_state) {}
+ : Element (d, id_node_state), media_info (NULL) {}
 
 Node *SMIL::State::childFromTag (const QString &tag) {
     if (tag == "data")
@@ -1334,6 +1334,35 @@ void SMIL::State::closed () {
         appendChild (new DarkNode (m_doc, "data", SMIL::id_node_state_data));
         firstChild ()->setAuxiliaryNode (true);
     }
+}
+
+KDE_NO_EXPORT void SMIL::State::activate () {
+    init ();
+    Element::activate ();
+}
+
+KDE_NO_EXPORT
+void SMIL::State::parseParam (const TrieString &name, const QString &val) {
+    if (name == StringPool::attr_src) {
+        Smil *s = val.isEmpty () ? NULL : SMIL::Smil::findSmilNode (this);
+        if (s) {
+            if (!media_info)
+                media_info = new MediaInfo (this, MediaManager::Text);
+            Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : NULL;
+            QString url = mrl ? KURL (mrl->absolutePath(), val).url() : val;
+            postpone_lock = document ()->postpone ();
+            media_info->wget (url);
+        }
+    } else {
+        Element::parseParam (name, val);
+    }
+}
+
+KDE_NO_EXPORT void SMIL::State::deactivate () {
+    delete media_info;
+    media_info = NULL;
+    postpone_lock = NULL;
+    Element::deactivate ();
 }
 
 static void stateChanged (SMIL::State *s, Node *ref) {
@@ -1380,6 +1409,29 @@ void SMIL::State::newValue (Node *ref, Where where,
         n->appendChild (new TextNode (m_doc, s));
         stateChanged (this, ref);
     }
+}
+
+void SMIL::State::message (MessageType msg, void *content) {
+    switch (msg) {
+
+    case MsgMediaReady:
+        if (media_info && media_info->media) {
+            if (firstChild ())
+                removeChild (firstChild ());
+            QTextStream in (&((TextMedia *)media_info->media)->text);
+            readXML (this, in, QString ());
+            if (firstChild ())
+                stateChanged (this, firstChild ());
+        }
+        delete media_info;
+        media_info = NULL;
+        postpone_lock = NULL;
+        return;
+
+    default:
+        break;
+    }
+    Element::message (msg, content);
 }
 
 void *SMIL::State::role (RoleType msg, void *content) {

@@ -307,17 +307,23 @@ public:
 
     State (NodePtr & d);
 
-    Node *childFromTag (const QString & tag);
-    void closed ();
-    void *role (RoleType msg, void *content=NULL);
-    KDE_NO_EXPORT const char * nodeName () const { return "state"; }
-    bool expose () const { return false; }
+    virtual Node *childFromTag (const QString & tag);
+    virtual void closed ();
+    virtual void activate ();
+    virtual void parseParam (const TrieString & name, const QString & value);
+    virtual void deactivate ();
+    virtual void message (MessageType msg, void *content=NULL);
+    virtual void *role (RoleType msg, void *content=NULL);
+    KDE_NO_EXPORT virtual const char * nodeName () const { return "state"; }
+    virtual bool expose () const { return false; }
 
     void newValue (Node *ref, Where w, const QString &name, const QString &val);
     void setValue (Node *ref, const QString &value);
     void delValue (Node *ref);
 
     ConnectionList m_StateChangeListeners;        // setValue changed a value
+    PostponePtr postpone_lock;                    // pause while loading src
+    MediaInfo *media_info;
 };
 
 /**
