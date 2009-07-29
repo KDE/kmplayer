@@ -2984,12 +2984,10 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
             src = val;
             if (external_tree)
                 removeChild (external_tree);
-            if (!val.isEmpty () && runtimeBegan (runtime)) {
+            delete media_info;
+            media_info = NULL;
+            if (!val.isEmpty () && runtimeBegan (runtime))
                 prefetch ();
-            } else {
-                delete media_info;
-                media_info = NULL;
-            }
             if (state == state_began && resolved)
                 clipStart ();
         }
@@ -3128,7 +3126,7 @@ KDE_NO_EXPORT void SMIL::MediaType::undefer () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::begin () {
-    if (!src.isEmpty () && (!media_info || !media_info->media))
+    if (!src.isEmpty () && !media_info)
         prefetch ();
     if (media_info && media_info->downloading ()) {
         postpone_lock = document ()->postpone ();
@@ -3383,7 +3381,7 @@ void SMIL::MediaType::message (MessageType msg, void *content) {
 
         case MsgMediaPrefetch:
             init ();
-            if (!src.isEmpty () && (!media_info || !media_info->media))
+            if (!src.isEmpty () && !media_info)
                 prefetch ();
             return;
 
@@ -3499,9 +3497,10 @@ KDE_NO_EXPORT Node *SMIL::RefMediaType::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::prefetch () {
-    if (!media_info)
+    if (!media_info) {
         media_info = new MediaInfo (this, MediaManager::AudioVideo);
-    resolved = media_info->wget (absolutePath ());
+        resolved = media_info->wget (absolutePath ());
+    }
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::clipStart () {
@@ -3584,14 +3583,13 @@ KDE_NO_EXPORT Node *SMIL::ImageMediaType::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::ImageMediaType::activate () {
-    if (!media_info)
-        media_info = new MediaInfo (this, MediaManager::Image);
-
     MediaType::activate ();
 
-    if (src.isEmpty () && !media_info->media) {
+    if (src.isEmpty () && (!media_info || !media_info->media)) {
         Node *n = findChildWithId (this, id_node_svg);
         if (n) {
+            if (!media_info)
+                media_info = new MediaInfo (this, MediaManager::Image);
             media_info->media = new ImageMedia (this);
             message (MsgMediaReady);
         }
@@ -3669,10 +3667,10 @@ KDE_NO_EXPORT void SMIL::TextMediaType::init () {
 }
 
 KDE_NO_EXPORT void SMIL::TextMediaType::prefetch () {
-    if (!media_info)
+    if (!media_info) {
         media_info = new MediaInfo (this, MediaManager::Text);
-    media_info->wget (absolutePath ());
-    return;
+        media_info->wget (absolutePath ());
+    }
 }
 
 void
