@@ -2263,7 +2263,7 @@ KDE_NO_EXPORT void SMIL::Par::reset () {
 }
 
 static bool childrenReady (Node *node) {
-    for (NodePtr n = node->firstChild (); n; n = n->nextSibling ())
+    for (Node *n = node->firstChild (); n; n = n->nextSibling ())
         if (!n->role (RoleReady))
             return false;
     return true;
@@ -3615,36 +3615,36 @@ void SMIL::ImageMediaType::message (MessageType msg, void *content) {
     if (media_info) {
         switch (msg) {
 
-            case MsgMediaUpdated: {
-                Surface *s = surface ();
-                if (s) {
-                    s->markDirty ();
-                    s->repaint ();
-                }
-                if (state >= state_finished)
-                    clipStop ();
-                return;
+        case MsgMediaUpdated: {
+            Surface *s = surface ();
+            if (s) {
+                s->markDirty ();
+                s->repaint ();
             }
+            if (state >= state_finished)
+                clipStop ();
+            return;
+        }
 
-            case MsgMediaFinished:
-                if (state >= Node::state_began)
-                    runtime->tryFinish ();
+        case MsgMediaFinished:
+            if (state >= Node::state_began)
+                runtime->tryFinish ();
+            return;
+
+        case MsgChildFinished:
+            if (id_node_svg == ((Posting *) content)->source->id)
                 return;
 
-            case MsgChildFinished:
-                if (id_node_svg == ((Posting *) content)->source->id)
-                    return;
+        case MsgMediaReady:
+            if (media_info) {
+                ImageMedia *im = static_cast <ImageMedia *> (media_info->media);
+                if (im && !im->isEmpty ())
+                    im->sizes (size);
+            }
+            break;
 
-            case MsgMediaReady:
-                if (media_info) {
-                    ImageMedia *im = static_cast <ImageMedia *> (media_info->media);
-                    if (im && !im->isEmpty ())
-                        im->sizes (size);
-                }
-                break;
-
-            default:
-                break;
+        default:
+            break;
         }
     }
     MediaType::message (msg, content);
@@ -4188,7 +4188,6 @@ KDE_NO_EXPORT void SMIL::AnimateGroup::activate () {
  * animation finished
  */
 KDE_NO_EXPORT void SMIL::AnimateGroup::finish () {
-    //kDebug () << "AnimateGroup::stopped " << durTime ().durval << endl;
     runtime->finish ();
 }
 

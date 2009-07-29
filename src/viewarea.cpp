@@ -751,7 +751,6 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
-    //kDebug() << "Visit " << img->nodeName() << " " << img->src;
     if (!img->media_info)
         return;
     Surface *s = img->surface ();
@@ -886,7 +885,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
-    //kDebug() << "Visit " << brush->nodeName();
     Surface *s = brush->surface ();
     if (s) {
         opacity = 1.0;
@@ -1230,7 +1228,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
-    //kDebug() << "Visit " << fi->nodeName();
     CAIRO_SET_SOURCE_RGB (cr, fi->color);
     if ((int)fi->w && (int)fi->h) {
         cairo_rectangle (cr, fi->x, fi->y, fi->w, fi->h);
@@ -1239,7 +1236,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
-    //kDebug() << "Visit " << fi->nodeName();
     if (fi->target && fi->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (fi->target);
         ImageMedia *im = img && img->media_info
@@ -1278,7 +1274,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
-    //kDebug() << "Visit " << fo->nodeName();
     if (fo->progress > 0) {
         CAIRO_SET_SOURCE_RGB (cr, fo->to_color);
         if ((int)fo->w && (int)fo->h) {
@@ -1292,7 +1287,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
-    //kDebug() << "Visit " << cf->nodeName();
     if (cf->target && cf->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (cf->target);
         ImageMedia *im = img && img->media_info
@@ -1331,7 +1325,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
-    //kDebug() << "Visit " << wipe->nodeName();
     if (wipe->target && wipe->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (wipe->target);
         ImageMedia *im = img && img->media_info
@@ -1390,7 +1383,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::ViewChange * vc) {
-    //kDebug() << "Visit " << vc->nodeName();
     if (vc->unfinished () || vc->progress < 100) {
         cairo_pattern_t * pat = cairo_pop_group (cr); // from imfl
         cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
