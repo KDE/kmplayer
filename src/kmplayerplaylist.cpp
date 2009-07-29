@@ -513,7 +513,7 @@ void Node::message (MessageType msg, void *content) {
     case MsgChildFinished: {
         Posting *post = (Posting *) content;
         if (unfinished ()) {
-            if (post->source->state == state_finished)
+            if (post->source && post->source->state == state_finished)
                 post->source->deactivate ();
             if (post->source && post->source->nextSibling ())
                 post->source->nextSibling ()->activate ();
