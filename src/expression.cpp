@@ -135,13 +135,13 @@ struct StringBase : public AST {
 };
 
 struct Step : public StringBase {
-    Step (EvalState *ev) : StringBase (ev),any_path (true) {}
+    Step (EvalState *ev) : StringBase (ev), any_path (false) {}
     Step (EvalState *ev, const char *s, const char *e)
-     : StringBase (ev, s, e), any_path (false) {}
+     : StringBase (ev, s, e), any_path (string == "*") {}
 
     bool matches (Node *n);
     bool selected (Node *n);
-    bool anyPath () const { return any_path; }
+    bool anyPath () const { return string.isEmpty (); }
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Step %s", string.toAscii ().data ());
@@ -465,7 +465,7 @@ AST::Type StringBase::type () const {
 }
 
 bool Step::matches (Node *n) {
-    return string == n->nodeName ();
+    return any_path || string == n->nodeName ();
 }
 
 bool Step::selected (Node *n) {
