@@ -222,6 +222,12 @@ struct Position : public IntegerBase {
     virtual int toInt () const;
 };
 
+struct Concat : public StringBase {
+    Concat (EvalState *ev) : StringBase (ev) {}
+
+    virtual QString toString () const;
+};
+
 struct CurrentTime : public StringBase {
     CurrentTime (EvalState *ev) : StringBase (ev) {}
 
@@ -666,6 +672,16 @@ int Position::toInt () const {
     return i;
 }
 
+QString Concat::toString () const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        string.clear ();
+        for (AST *child = first_child; child; child = child->next_sibling)
+            string += child->toString ();
+    }
+    return string;
+}
+
 QString CurrentTime::toString () const {
     if (eval_state->sequence != sequence) {
         char buf[200];
@@ -926,6 +942,9 @@ static bool parseLiteral (const char *str, const char **end, AST *ast) {
         if (*s) {
             appendASTChild (ast, new StringLiteral (ast->eval_state, ++str, s));
             *end = s + 1;
+#ifdef KMPLAYER_EXPR_DEBUG
+            fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
+#endif
             return true;
         }
     } else {
@@ -1086,12 +1105,15 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                     str = *end;
                 if (!*str || *str != ',')
                     break;
+                str++;
             }
             if (parseSpace (str, end))
                 str = *end;
             if (*str && *(str++) == ')') {
                 AST *func = NULL;
-                if (name == "hours-from-time")
+                if (name == "concat")
+                    func = new Concat (ast->eval_state);
+                else if (name == "hours-from-time")
                     func = new HoursFromTime (ast->eval_state);
                 else if (name == "minutes-from-time")
                     func = new MinutesFromTime (ast->eval_state);
