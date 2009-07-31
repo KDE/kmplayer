@@ -23,9 +23,9 @@
     <state id="mystate" language="http://www.w3.org/TR/1999/REC-xpath-19991116">
      <data xmlns="">
       <time>0</time>
-      <hour>0</hour>
-      <minute>0</minute>
-      <second>0</second>
+      <hour>66</hour>
+      <minute>66</minute>
+      <second>66</second>
       <mode>0</mode>
       <countminutes>0</countminutes>
       <endtime>0</endtime>
@@ -34,17 +34,29 @@
   </head>
   <body>
     <par>
-      <text begin="mystate.stateChange(minute)" fontPtSize="35" region="minutes"
-            src="data:,{minute}" regPoint="center" regAlign="center"/>
-      <text begin="mystate.stateChange(hour)" fontPtSize="35" region="hours"
-            src="data:,{hour}" regPoint="center" regAlign="center"/>
+      <switch begin="mystate.stateChange(minute)">
+        <text fontPtSize="35" region="minutes" src="data:,{minute}"
+              expr="minute &gt; 9" regPoint="center" regAlign="center"/>
+        <text fontPtSize="35" region="minutes" src="data:,{concat('0',minute)}"
+              regPoint="center" regAlign="center"/>
+      </switch>
+      <switch begin="mystate.stateChange(hour)">
+        <text fontPtSize="35" region="hours" src="data:,{hour}"
+              expr="hour &gt; 9" regPoint="center" regAlign="center"/>
+        <text fontPtSize="35" region="hours" src="data:,{concat('0',hour)}"
+              regPoint="center" regAlign="center"/>
+      </switch>
       <seq repeat="indefinite">
         <setvalue ref="time" value="current-time()" />
         <setvalue ref="hour" value="hours-from-time(time)" />
         <setvalue ref="minute" value="minutes-from-time(time)" />
         <setvalue ref="second" value="seconds-from-time(time)" />
-        <text region="seconds" fontPtSize="35" src="data:,{second}" dur="1"
-              regPoint="center" regAlign="center"/>
+        <switch dur="1" fill="freeze">
+          <text region="seconds" fontPtSize="35" src="data:,{second}"
+                expr="second &gt; 9" regPoint="center" regAlign="center"/>
+          <text region="seconds" fontPtSize="35" regPoint="center"
+                src="data:,{concat('0',second)}" regAlign="center"/>
+        </switch>
       </seq>
       <seq>
         <seq id="play" dur="indefinite">
@@ -60,12 +72,24 @@
                   <setvalue ref="countminutes"
                             value="endtime - hour * 60 - minute"/>
                   <par>
-                    <text fontPtSize="18" region="chours"
-                          src="data:,{countminutes div 60}"
-                          regPoint="center" regAlign="center"/>
-                    <text fontPtSize="18" region="cminutes"
-                          src="data:,{countminutes mod 60}"
-                          regPoint="center" regAlign="center" dur="5"/>
+                    <switch>
+                      <text fontPtSize="18" region="chours"
+                            expr="countminutes div 60 &gt; 9"
+                            src="data:,{countminutes div 60}"
+                            regPoint="center" regAlign="center"/>
+                      <text fontPtSize="18" region="chours"
+                            src="data:,{concat('0',countminutes div 60)}"
+                            regPoint="center" regAlign="center"/>
+                    </switch>
+                    <switch dur="5">
+                      <text fontPtSize="18" region="cminutes"
+                            expr="countminutes mod 60 &gt; 9"
+                            src="data:,{countminutes mod 60}"
+                            regPoint="center" regAlign="center" dur="5"/>
+                      <text fontPtSize="18" region="cminutes"
+                            src="data:,{concat('0',countminutes mod 60)}"
+                            regPoint="center" regAlign="center" dur="5"/>
+                    </switch>
                   </par>
                 </seq>
                 <seq dur="indefinite"/>
