@@ -402,6 +402,15 @@ static void appendASTChild (AST *p, AST *c) {
             }
 }
 
+static AST *releaseLastASTChild (AST *p) {
+    AST **chldptr = &p->first_child;
+    while ((*chldptr)->next_sibling)
+        chldptr = &(*chldptr)->next_sibling;
+    AST *last = *chldptr;
+    *chldptr = NULL;
+    return last;
+}
+
 QString BoolBase::toString () const {
     return toBool () ? "true" : "false";
 }
@@ -1195,10 +1204,9 @@ static bool parseTerm (const char *str, const char **end, AST *ast) {
             if (op) {
                 AST tmp (ast->eval_state);
                 if (parseFactor (str + 1, end, &tmp)) {
-                    AST *chlds = ast->first_child;
+                    AST *chlds = releaseLastASTChild (ast);
                     chlds->next_sibling = tmp.first_child;
                     tmp.first_child = NULL;
-                    ast->first_child = NULL;
                     appendASTChild (ast,
                             op == '*'
                             ? (AST *) new Multiply (ast->eval_state, chlds)
@@ -1233,10 +1241,9 @@ static bool parseExpression (const char *str, const char **end, AST *ast) {
             if (op == '+' || op == '-') {
                 AST tmp (ast->eval_state);
                 if (parseTerm (str + 1, end, &tmp)) {
-                    AST *chlds = ast->first_child;
+                    AST *chlds = releaseLastASTChild (ast);
                     chlds->next_sibling = tmp.first_child;
                     tmp.first_child = NULL;
-                    ast->first_child = NULL;
                     appendASTChild (ast, op == '+'
                             ? (AST *) new Plus (ast->eval_state, chlds)
                             : (AST *) new Minus (ast->eval_state, chlds));
@@ -1309,10 +1316,9 @@ static bool parseStatement (const char *str, const char **end, AST *ast) {
         if (err != comparison) {
             AST tmp (ast->eval_state);
             if (parseExpression (str, end, &tmp)) {
-                AST *chlds = ast->first_child;
+                AST *chlds = releaseLastASTChild (ast);
                 chlds->next_sibling = tmp.first_child;
                 tmp.first_child = NULL;
-                ast->first_child = NULL;
                 appendASTChild (ast, new Comparison (ast->eval_state,
                             (Comparison::CompType)comparison, chlds));
                 str = *end;
