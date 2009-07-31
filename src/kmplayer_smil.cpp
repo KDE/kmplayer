@@ -2242,7 +2242,8 @@ KDE_NO_EXPORT void *SMIL::GroupBase::role (RoleType msg, void *content) {
     switch (msg) {
 
     case RoleTiming:
-        init ();
+        if (Runtime::TimingsInitialized > runtime->timingstate)
+            init ();
         return runtime;
 
     default:
@@ -2771,7 +2772,10 @@ KDE_NO_EXPORT void SMIL::PriorityClass::message (MessageType msg, void *data) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void SMIL::Switch::init () {
+    Node *n = chosen_one.ptr ();
     chosen_one = NULL;
+    if (n && n->active ())
+        n->deactivate ();
     GroupBase::init ();
 }
 
@@ -2832,7 +2836,7 @@ KDE_NO_EXPORT void SMIL::Switch::begin () {
     if (n)
         n->activate ();
     else
-        finish ();
+        runtime->tryFinish ();
 }
 
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {
@@ -2856,9 +2860,11 @@ KDE_NO_EXPORT void SMIL::Switch::reset () {
 KDE_NO_EXPORT void SMIL::Switch::message (MessageType msg, void *content) {
     if (MsgChildFinished == msg) {
         Posting *post = (Posting *) content;
-        if (post->source->state == state_finished)
-            post->source->deactivate ();
-        finish (); // only one child can run
+        if (unfinished () && post->source == chosen_one) {
+            runtime->tryFinish ();
+            FreezeStateUpdater visitor;
+            accept (&visitor);
+        }
         return;
     }
     GroupBase::message (msg, content);
@@ -3128,7 +3134,7 @@ KDE_NO_EXPORT void SMIL::MediaType::activate () {
                 parseParam (a->name (), applySubstitution (this, v, p, q));
         }
     }
-    if (Runtime::TimingsInitialized == runtime->timingstate)
+    if (!runtime->started ())
         runtime->start ();
 }
 
