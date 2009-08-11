@@ -42,6 +42,7 @@ class QColor;
 class Q3ButtonGroup;
 class Q3ListBox;
 class KHistoryCombo;
+class KIntSpinBox;
 class KComboBox;
 class KUrlRequester;
 class KColorButton;
@@ -125,7 +126,7 @@ public:
     QCheckBox *adjustvolume;
     QCheckBox *adjustcolors;
 
-    QSpinBox *seekTime;
+    KIntSpinBox *seekTime;
 };
 
 class KMPLAYER_NO_EXPORT PrefGeneralPageLooks : public KVBox {
@@ -181,7 +182,7 @@ public:
     KUrlRequester * url;
     Q3ButtonGroup * recorder;
     Q3ButtonGroup * replay;
-    QLineEdit * replaytime;
+    KIntSpinBox * replaytime;
     QLabel * source;
 protected:
     void showEvent (QShowEvent *);

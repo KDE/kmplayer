@@ -46,6 +46,7 @@
 #include <kfiledialog.h>
 #include <kmessagebox.h>
 #include <klineedit.h>
+#include <knuminput.h>
 #include <kiconloader.h>
 #include <kdeversion.h>
 #include <kcombobox.h>
@@ -256,7 +257,12 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     QHBoxLayout *seekLayout = new QHBoxLayout (bbox);
     seekLayout->addWidget(new QLabel(i18n("Forward/backward seek time:"),bbox));
     seekLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
-    seekTime = new QSpinBox(1, 600, 1, bbox);
+    seekTime = new KIntSpinBox(1, 600, 1, 0, bbox);
+#if KDE_IS_VERSION(4, 2, 80)
+    seekTime->setSuffix (ki18np (" second", " seconds"));
+#else
+    seekTime->setSuffix (i18n (" seconds"));
+#endif
     seekLayout->addWidget(seekTime);
     seekLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
     gridlayout->addMultiCellLayout (seekLayout, 2, 2, 0, 1);
@@ -434,9 +440,14 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent,
     new QRadioButton (i18n ("&When recording finished"), replay);
     new QRadioButton (i18n ("A&fter"), replay);
     QWidget * customreplay = new QWidget (replay);
-    replaytime = new QLineEdit (customreplay);
+    replaytime = new KIntSpinBox (customreplay);
+#if KDE_IS_VERSION(4, 2, 80)
+    replaytime->setSuffix (ki18np (" second", " seconds"));
+#else
+    replaytime->setSuffix (i18n (" seconds"));
+#endif
     QHBoxLayout *replaylayout = new QHBoxLayout (customreplay);
-    replaylayout->addWidget (new QLabel (i18n("Time (seconds):"), customreplay));
+    replaylayout->addWidget (new QLabel (i18n("Time:"), customreplay));
     replaylayout->addWidget (replaytime);
     replaylayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
     layout()->addItem(new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
@@ -521,7 +532,7 @@ KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
         m_player->source ()->document ()->reset ();
         kDebug() << "Source resetted" << endl;
         m_player->settings ()->recordfile = url->lineEdit()->text();
-        m_player->settings ()->replaytime = replaytime->text ().toInt ();
+        m_player->settings ()->replaytime = replaytime->value();
         int id = recorder->selectedId ();
         int replayid = replay->selectedId ();
         m_player->settings ()->recorder = Settings::Recorder (id);

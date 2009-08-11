@@ -41,6 +41,7 @@
 #include <kurl.h>
 #include <kdebug.h>
 #include <klocale.h>
+#include <knuminput.h>
 #include <kcombobox.h>
 #include <kmessagebox.h>
 #include <kglobalsettings.h>
@@ -505,7 +506,7 @@ void Settings::show (const char * pagename) {
     configdialog->m_RecordPage->recorder->setButton (int (recorder));
     configdialog->m_RecordPage->replayClicked (int (replayoption));
     configdialog->m_RecordPage->recorderClicked (int (recorder));
-    configdialog->m_RecordPage->replaytime->setText (QString::number (replaytime));
+    configdialog->m_RecordPage->replaytime->setValue (replaytime);
     configdialog->m_MEncoderPage->arguments->setText (mencoderarguments);
     configdialog->m_MEncoderPage->format->setButton (recordcopy ? 0 : 1);
     configdialog->m_MEncoderPage->formatClicked (recordcopy ? 0 : 1);
@@ -738,7 +739,7 @@ void Settings::okPressed () {
     recorder = Recorder (configdialog->m_RecordPage->recorder->selectedId ());
 #endif
     replaytime = configdialog->m_RecordPage->replaytime->text ().toInt ();
-    configdialog->m_RecordPage->replaytime->setText (QString::number (replaytime));
+    configdialog->m_RecordPage->replaytime->setValue (replaytime);
     recordfile = configdialog->m_RecordPage->url->lineEdit()->text ();
     mencoderarguments = configdialog->m_MEncoderPage->arguments->text ();
     ffmpegarguments = configdialog->m_FFMpegPage->arguments->text ();
