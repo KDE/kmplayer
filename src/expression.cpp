@@ -27,18 +27,25 @@
 
 using namespace KMPlayer;
 
+QString NodeValue::value () const {
+    if (attr)
+        return attr->value ();
+    return node->nodeValue ();
+}
+
 namespace {
 
 struct EvalState {
     EvalState (EvalState *p)
-     : root (NULL), process_list (NULL), parent (p),
+     : root (NULL), attr (NULL), process_list (NULL), parent (p),
        sequence (1), ref_count (0) {}
 
     void addRef () { ++ref_count; }
     void removeRef () { if (--ref_count == 0) delete this; }
 
     Node *root;
-    NodeRefList *process_list;
+    Attribute *attr;
+    NodeValueList *process_list;
     EvalState *parent;
     int sequence;
     int ref_count;
@@ -56,9 +63,10 @@ struct AST : public Expression {
     virtual int toInt () const;
     virtual float toFloat () const;
     virtual QString toString () const;
-    virtual NodeRefList *toNodeList () const;
+    virtual NodeValueList *toNodeList () const;
     virtual Type type () const;
     virtual void setRoot (Node *root);
+    void setRoot (Node *root, Attribute *a);
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -135,21 +143,24 @@ struct StringBase : public AST {
 };
 
 struct Step : public StringBase {
-    Step (EvalState *ev) : StringBase (ev), any_path (false) {}
-    Step (EvalState *ev, const char *s, const char *e)
-     : StringBase (ev, s, e), any_path (string == "*") {}
+    Step (EvalState *ev) : StringBase (ev), any_node (false), is_attr (false) {}
+    Step (EvalState *ev, const char *s, const char *e, bool isattr=false)
+     : StringBase (ev, s, e), any_node (string == "*"), is_attr (isattr) {}
 
     bool matches (Node *n);
-    bool selected (Node *n);
+    bool matches (Attribute *a);
+    bool selected (Node *n, Attribute *a);
     bool anyPath () const { return string.isEmpty (); }
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
-        fprintf (stderr, "Step %s", string.toAscii ().data ());
+        fprintf (stderr, "Step %c%s",
+                is_attr ? '@' : ' ',string.toAscii ().data ());
         AST::dump();
     }
 #endif
 
-    bool any_path;
+    bool any_node;
+    bool is_attr;
 };
 
 struct Identifier : public StringBase {
@@ -159,9 +170,8 @@ struct Identifier : public StringBase {
 
     virtual bool toBool () const;
     virtual QString toString () const;
-    virtual NodeRefList *toNodeList () const;
+    virtual NodeValueList *toNodeList () const;
     virtual Type type () const;
-    bool childByPath (Node *node, Step *path, NodeRefList *lst) const;
     void childByStep (Step *step, bool recurse) const;
     void childByPath (Step *step, bool recurse) const;
 #ifdef KMPLAYER_EXPR_DEBUG
@@ -364,8 +374,8 @@ QString AST::toString () const {
     }
 }
 
-NodeRefList *AST::toNodeList () const {
-    return new NodeRefList;
+NodeValueList *AST::toNodeList () const {
+    return new NodeValueList;
 }
 
 AST::Type AST::type () const {
@@ -374,7 +384,13 @@ AST::Type AST::type () const {
 
 void AST::setRoot (Node *root) {
     eval_state->root = root;
+    eval_state->attr = NULL;
     eval_state->sequence++;
+}
+
+void AST::setRoot (Node *root, Attribute *a) {
+    setRoot (root);
+    eval_state->attr = a;
 }
 
 #ifdef KMPLAYER_EXPR_DEBUG
@@ -422,13 +438,13 @@ AST::Type BoolBase::type () const {
 bool NumberBase::toBool () const {
     int ii = toInt ();
     if (eval_state->parent) {
-        NodeRefList *lst = eval_state->parent->process_list;
-        Node *r = eval_state->root;
+        NodeValueList *lst = eval_state->parent->process_list;
         if (lst) {
             int count = 0;
-            for (NodeRefItem *n = lst->first (); n; n = n->nextSibling ())
+            for (NodeValueItem *n = lst->first (); n; n = n->nextSibling ())
                 if (ii == ++count)
-                    return r == n->data.ptr ();
+                    return eval_state->root == n->data.node &&
+                        eval_state->attr == n->data.attr;
         }
         return false;
     }
@@ -480,12 +496,16 @@ AST::Type StringBase::type () const {
 }
 
 bool Step::matches (Node *n) {
-    return any_path || string == n->nodeName ();
+    return any_node || string == n->nodeName ();
 }
 
-bool Step::selected (Node *n) {
+bool Step::matches (Attribute *a) {
+    return any_node || string == a->name ();
+}
+
+bool Step::selected (Node *n, Attribute *a) {
     if (first_child) {
-        first_child->setRoot (n);
+        first_child->setRoot (n, a);
         return first_child->toBool ();
     }
     return true;
@@ -495,7 +515,7 @@ bool Identifier::toBool () const {
     bool b = false;
     if (eval_state->parent) {
         sequence = eval_state->sequence;
-        NodeRefList *lst = toNodeList ();
+        NodeValueList *lst = toNodeList ();
         b = lst && lst->first ();
         delete lst;
     } else {
@@ -505,25 +525,39 @@ bool Identifier::toBool () const {
 }
 
 void Identifier::childByStep (Step *step, bool recurse) const {
-    NodeRefList *lst = eval_state->process_list;
-    NodeRefItem *last = lst->last ();
-    NodeRefList recursive_lst;
-    for (NodeRefItem *itm = lst->first (); itm; ) {
-        NodeRefItem *next = itm == last ? NULL : itm->nextSibling ();
-        for (Node *c = itm->data->firstChild (); c; c = c->nextSibling ()) {
-            if (step->matches (c))
-                lst->append (new NodeRefItem (c));
+    NodeValueList *lst = eval_state->process_list;
+    NodeValueItem *last = lst->last ();
+    NodeValueList recursive_lst;
+    for (NodeValueItem *itm = lst->first (); itm; ) {
+        NodeValueItem *next = itm == last ? NULL : itm->nextSibling ();
+
+        Node *n = itm->data.node;
+        if (step->is_attr) {
+            Element *e = n->isElementNode() ? static_cast<Element *> (n) : NULL;
+            Attribute *a = e ? e->attributes ().first () : NULL;
+            for (; a; a = a->nextSibling ())
+                if (step->matches (a))
+                    lst->append (new NodeValueItem (NodeValue (n, a)));
             if (recurse)
-                recursive_lst.append (new NodeRefItem (c));
+                for (Node *c = n->firstChild(); c; c = c->nextSibling ())
+                    recursive_lst.append (new NodeValueItem (c));
+        } else {
+            for (Node *c = n->firstChild(); c; c = c->nextSibling ()) {
+                if (step->matches (c))
+                    lst->append (new NodeValueItem (c));
+                if (recurse)
+                    recursive_lst.append (new NodeValueItem (c));
+            }
         }
+
         lst->remove (itm);
         itm = next;
     }
     if (recurse && recursive_lst.first ()) {
         eval_state->process_list = &recursive_lst;
         childByStep (step, recurse);
-        for (NodeRefItem *r = recursive_lst.first (); r; r = r->nextSibling ())
-            lst->append (new NodeRefItem (r->data));
+        for (NodeValueItem *r = recursive_lst.first (); r; r = r->nextSibling ())
+            lst->append (new NodeValueItem (r->data));
         eval_state->process_list = lst;
     }
 }
@@ -531,12 +565,12 @@ void Identifier::childByStep (Step *step, bool recurse) const {
 void Identifier::childByPath (Step *step, bool recurse) const {
     if (!step->anyPath ()) {
         childByStep (step, recurse);
-        NodeRefItem *itm = eval_state->process_list->first ();
+        NodeValueItem *itm = eval_state->process_list->first ();
         if (itm && step->first_child) {
-            NodeRefList *newlist = new NodeRefList;
+            NodeValueList *newlist = new NodeValueList;
             for (; itm; itm = itm->nextSibling ())
-                if (step->selected (itm->data))
-                    newlist->append (new NodeRefItem (itm->data));
+                if (step->selected (itm->data.node, itm->data.attr))
+                    newlist->append (new NodeValueItem (itm->data));
             delete eval_state->process_list;
             eval_state->process_list = newlist;
         }
@@ -547,10 +581,10 @@ void Identifier::childByPath (Step *step, bool recurse) const {
 
 QString Identifier::toString () const {
     if (eval_state->sequence != sequence) {
-        NodeRefList *lst = toNodeList ();
+        NodeValueList *lst = toNodeList ();
         int i = lst->length ();
         if (i == 1)
-            string = lst->first ()->data->nodeValue ();
+            string = lst->first ()->data.value ();
         else
             string = QString::number (i);
         delete lst;
@@ -559,11 +593,11 @@ QString Identifier::toString () const {
     return string;
 }
 
-NodeRefList *Identifier::toNodeList () const {
-    NodeRefList *old = eval_state->process_list;
-    NodeRefList *lst = new NodeRefList;
+NodeValueList *Identifier::toNodeList () const {
+    NodeValueList *old = eval_state->process_list;
+    NodeValueList *lst = new NodeValueList;
     eval_state->process_list = lst;
-    lst->append (new NodeRefItem (eval_state->root));
+    lst->append (new NodeValueItem (eval_state->root));
     childByPath ((Step *) first_child, false);
     lst = eval_state->process_list;
     eval_state->process_list = old;
@@ -645,7 +679,7 @@ int Last::toInt () const {
     if (eval_state->sequence != sequence) {
         sequence = eval_state->sequence;
         if (eval_state->parent) {
-            NodeRefList *lst = eval_state->parent->process_list;
+            NodeValueList *lst = eval_state->parent->process_list;
             if (lst)
                 i = lst->length ();
         }
@@ -666,13 +700,13 @@ int Position::toInt () const {
     if (eval_state->sequence != sequence) {
         sequence = eval_state->sequence;
         if (eval_state->parent) {
-            NodeRefList *lst = eval_state->parent->process_list;
+            NodeValueList *lst = eval_state->parent->process_list;
             Node *r = eval_state->root;
             if (lst) {
                 i = 0;
-                for (NodeRefItem *n = lst->first(); n; n = n->nextSibling ()) {
+                for (NodeValueItem *n = lst->first(); n; n = n->nextSibling()) {
                     i++;
-                    if (r == n->data.ptr ())
+                    if (r == n->data.node)
                         break;
                 }
             }
@@ -864,7 +898,7 @@ bool Comparison::toBool () const {
     case gteq:
         return first_child->toInt () >= first_child->next_sibling->toInt ();
     case eq:
-        if (t1 == t2 && t1 == AST::TString)
+        if (t1 == AST::TString || t2 == AST::TString)
             return first_child->toString () ==
                 first_child->next_sibling->toString ();
         return first_child->toInt () == first_child->next_sibling->toInt ();
@@ -998,6 +1032,9 @@ static bool parseStep (const char *str, const char **end, AST *ast) {
     if (*s == '/') {
         entry = new Step (ast->eval_state);
     } else {
+        bool is_attr = *s == '@';
+        if (is_attr)
+            s = ++str;
         for (; *s; ++s)
             if (!((*s >= 'a' && *s <= 'z') ||
                         (*s >= 'A' && *s <= 'Z') ||
@@ -1007,7 +1044,7 @@ static bool parseStep (const char *str, const char **end, AST *ast) {
                 break;
         if (str == s)
             return false;
-        entry = new Step (ast->eval_state, str, s);
+        entry = new Step (ast->eval_state, str, s, is_attr);
         if (*s == '[') {
             AST pred (new EvalState (ast->eval_state));
             if (parseStatement (s + 1, end, &pred)) {

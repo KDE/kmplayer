@@ -1371,9 +1371,9 @@ static void stateChanged (SMIL::State *s, Node *ref) {
         if (c->payload && c->connecter) {
             Expression *expr = (Expression *) c->payload;
             expr->setRoot (s);
-            NodeRefList *lst = expr->toNodeList ();
-            for (NodeRefItem *itm = lst->first(); itm; itm = itm->nextSibling())
-                if (itm->data.ptr () == ref)
+            NodeValueList *lst = expr->toNodeList ();
+            for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling())
+                if (itm->data.node == ref)
                     s->document()->post (c->connecter,
                                          new Posting (s, MsgStateChanged));
             delete lst;
@@ -4154,9 +4154,15 @@ void SMIL::NewValue::begin () {
         if (!ref)
             ref = evaluateExpr ("/data");
         ref->setRoot (st);
-        NodeRefList *lst = ref->toNodeList ();
-        if (lst->first ())
-            st->newValue (lst->first ()->data, where, name, value);
+        NodeValueList *lst = ref->toNodeList ();
+        NodeValueItem *itm = lst->first ();
+        if (itm) {
+            if (name.startsWith(QChar('@')) && itm->data.node->isElementNode())
+                static_cast <Element *> (itm->data.node)->setAttribute (
+                        name.mid (1), value);
+            else
+                st->newValue (itm->data.node, where, name, value);
+        }
         delete lst;
     }
 }
@@ -4184,9 +4190,15 @@ void SMIL::SetValue::begin () {
         kWarning () << "ref is empty or no state";
     } else {
         ref->setRoot (st);
-        NodeRefList *lst = ref->toNodeList ();
-        if (lst->first ())
-            st->setValue (lst->first ()->data, value);
+        NodeValueList *lst = ref->toNodeList ();
+        NodeValueItemPtr itm = lst->first ();
+        if (itm) {
+            if (itm->data.attr && itm->data.node->isElementNode ())
+                static_cast <Element *> (itm->data.node)->setAttribute (
+                        itm->data.attr->name (), itm->data.attr->value ());
+            else
+                st->setValue (itm->data.node, value);
+        }
         delete lst;
     }
 }
@@ -4199,9 +4211,14 @@ void SMIL::DelValue::begin () {
         kWarning () << "ref is empty or no state";
     } else {
         ref->setRoot (st);
-        NodeRefList *lst = ref->toNodeList ();
-        for (NodeRefItem *itm = lst->first (); itm; itm = itm->nextSibling ())
-            itm->data->parentNode ()->removeChild (itm->data);
+        NodeValueList *lst = ref->toNodeList ();
+        for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling()) {
+            if (itm->data.attr && itm->data.node->isElementNode ())
+                static_cast <Element *> (itm->data.node)->setAttribute (
+                        itm->data.attr->name (), QString ());
+            else
+                itm->data.node->parentNode ()->removeChild (itm->data.node);
+        }
         delete lst;
     }
 }

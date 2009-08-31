@@ -40,6 +40,22 @@
       <text src="data:,books%20{number(/data/books/book)}"
             left="10" top="160" width="300" height="20"/>
     </par>
+    <newvalue name="@price" ref="/data/books/book[1]" value="10p"/>
+    <newvalue name="@foo" ref="/data/books/book[2]" value="fred"/>
+    <newvalue name="@bar" ref="/data/books/book[2]" value="barney"/>
+    <newvalue name="@price" ref="/data/books/book[3]" value="5&#36;"/>
+    <par dur="5">
+      <text src="data:,books%20with%20price%20{//book[@price]}" left="10" top="10" width="300" height="20"/>
+      <text src="data:,books%20with%20price%2010p%20{//book[@price=&quot;10p&quot;]/title}" left="10" top="40" width="300" height="20"/>
+      <text src="data:,price%20of%20Pygmalion%20{//book[title=&quot;Pygmalion&quot;]/@price}" left="10" top="70" width="300" height="20"/>
+      <text src="data:,attributes%20on%20second%20book%20{//book[2]/@*}" left="10" top="100" width="300" height="20"/>
+      <text src="data:,total%20attributes%20on%20book%20{//book/@*}" left="10" top="130" width="300" height="20"/>
+      <text src="data:,second%20attribute%20on%20book%20{//book/@*[2]}" left="10" top="160" width="300" height="20"/>
+    </par>
+    <delvalue ref="//@foo"/>
+    <par dur="5">
+      <text src="data:,second%20attribute%20on%20book%20{//book/@*[2]}" left="10" top="160" width="300" height="20"/>
+    </par>
     <delvalue ref="//books"/>
   </body>
 </smil>
