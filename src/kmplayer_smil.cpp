@@ -3125,7 +3125,7 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
 KDE_NO_EXPORT void SMIL::MediaType::activate () {
     init (); // sets all attributes
     setState (state_activated);
-    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
+    for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
         QString v = a->value ();
         int p = v.indexOf ('{');
         if (p > -1) {

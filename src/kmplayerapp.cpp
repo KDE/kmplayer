@@ -1110,7 +1110,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
                 QTextStream ts (&file);
                 ts.setEncoding (QTextStream::UnicodeUTF8);
                 ts << QString ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-                if (doc->childNodes ()->length () == 1)
+                if (doc->childNodes ().length () == 1)
                     ts << doc->innerXML ();
                 else
                     ts << doc->outerXML ();

@@ -135,10 +135,10 @@ private:
  }
 
 /*
- * A shareable double linked list of ListNodeBase<T> nodes
+ * A double linked list of ListNodeBase<T> nodes
  */
 template <class T>
-class KMPLAYER_EXPORT List : public Item <List <T> > {
+class KMPLAYER_EXPORT List {
 public:
     List () {}
     List (typename Item<T>::SharedType f, typename Item<T>::SharedType l)
@@ -299,12 +299,7 @@ typedef Item<Node>::WeakType NodePtrW;
 typedef Item<Attribute>::SharedType AttributePtr;
 typedef Item<Attribute>::WeakType AttributePtrW;
 typedef List<Node> NodeList;                 // eg. for Node's children
-typedef Item<NodeList>::SharedType NodeListPtr;
-typedef Item<NodeList>::WeakType NodeListPtrW;
-ITEM_AS_POINTER(KMPlayer::NodeList)
 typedef List<Attribute> AttributeList;       // eg. for Element's attributes
-typedef Item<AttributeList>::SharedType AttributeListPtr;
-ITEM_AS_POINTER(KMPlayer::AttributeList)
 typedef ListNode<NodePtrW> NodeRefItem;      // Node for ref Nodes
 ITEM_AS_POINTER(KMPlayer::NodeRefItem)
 typedef ListNode<NodePtr> NodeStoreItem;   // list stores Nodes
@@ -530,7 +525,7 @@ public:
     void normalize ();
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
 
-    KDE_NO_EXPORT NodeListPtr childNodes () const;
+    NodeList childNodes () const;
     void setState (State nstate);
     /*
      * Open tag is found by parser, attributes are set
@@ -573,10 +568,11 @@ const short id_node_svg = 31;
 class KMPLAYER_EXPORT Element : public Node {
 public:
     ~Element ();
-    void setAttributes (AttributeListPtr attrs);
+    void setAttributes (const AttributeList &attrs);
     void setAttribute (const TrieString & name, const QString & value);
     QString getAttribute (const TrieString & name);
-    KDE_NO_EXPORT AttributeList *attributes () const { return m_attributes.ptr (); }
+    KDE_NO_EXPORT AttributeList &attributes () { return m_attributes; }
+    KDE_NO_EXPORT AttributeList attributes () const { return m_attributes; }
     virtual void init ();
     virtual void reset ();
     virtual void clear ();
@@ -596,7 +592,7 @@ public:
     virtual void parseParam (const TrieString &, const QString &) {}
 protected:
     Element (NodePtr & d, short id=0);
-    AttributeListPtr m_attributes;
+    AttributeList m_attributes;
 private:
     ElementPrivate * d;
 };
@@ -1074,8 +1070,8 @@ inline void TreeNode<T>::removeChildImpl (typename Item<T>::SharedType c) {
     c->m_parent = 0L;
 }
 
-inline KDE_NO_EXPORT NodeListPtr Node::childNodes () const {
-    return new NodeList (m_first_child, m_last_child);
+inline KDE_NO_EXPORT NodeList Node::childNodes () const {
+    return NodeList (m_first_child, m_last_child);
 }
 
 }  // KMPlayer namespace

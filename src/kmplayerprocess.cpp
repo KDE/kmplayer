@@ -2504,7 +2504,7 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
                     remote_service, "/plugin", "org.kde.kmplayer.backend", "play");
             msg << m_url << mime << plugin;
             QMap <QString, QVariant> urlargs;
-            for (AttributePtr a = elm->attributes ()->first (); a; a = a->nextSibling ())
+            for (AttributePtr a = elm->attributes ().first (); a; a = a->nextSibling ())
                 urlargs.insert (a->name ().toString (), a->value ());
             msg << urlargs;
             msg.setDelayedReply (false);

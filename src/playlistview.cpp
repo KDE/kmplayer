@@ -117,7 +117,7 @@ KDE_NO_CDTOR_EXPORT void RootPlayListItem::paintCell (QPainter * p, const QColor
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, KActionCollection * ac)
+KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget *, View * view, KActionCollection * ac)
  : //K3ListView (parent),
    m_view (view),
    m_find_dialog (0L),
@@ -204,7 +204,7 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
     for (Node *c = e->lastChild (); c; c = c->previousSibling ())
         populate (c, focus, root, item, curitem);
     if (e->isElementNode ()) {
-        Attribute *a = static_cast <Element *> (e)->attributes ()->first ();
+        Attribute *a = static_cast <Element *> (e)->attributes ().first ();
         if (a) {
             root->have_dark_nodes = true;
             if (root->show_all_nodes) {
@@ -661,7 +661,7 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
                 m_current_find_attr = 0L;
                 found = true;
             } else if (elm && ri->show_all_nodes) {
-                for (Attribute *a = static_cast <Element *> (n)->attributes ()->first (); a; a = a->nextSibling ()) {
+                for (Attribute *a = static_cast <Element *> (n)->attributes ().first (); a; a = a->nextSibling ()) {
                     QString attr = a->name ().toString ();
                     if (((opt & KFind::RegularExpression) &&
                                 (attr.find (regexp, 0) || a->value ().find (regexp, 0) > -1)) ||

@@ -43,7 +43,7 @@ KDE_NO_CDTOR_EXPORT RP::Imfl::~Imfl () {
 KDE_NO_EXPORT void RP::Imfl::closed () {
     for (Node *n = firstChild (); n; n = n->nextSibling ())
         if (RP::id_node_head == n->id) {
-            Attribute *a = static_cast <Element *> (n)->attributes ()->first ();
+            Attribute *a = static_cast <Element *> (n)->attributes ().first ();
             for (; a; a = a->nextSibling ()) {
                 if (StringPool::attr_width == a->name ()) {
                     size.width = a->value ().toInt ();
@@ -281,7 +281,7 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
     setState (state_activated);
     x = y = w = h = 0;
     srcx = srcy = srcw = srch = 0;
-    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
+    for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
         if (a->name () == StringPool::attr_target) {
             for (Node *n = parentNode()->firstChild(); n; n= n->nextSibling())
                 if (static_cast <Element *> (n)->

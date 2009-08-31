@@ -89,7 +89,7 @@ Node::PlayType ATOM::Link::playType () {
 void ATOM::Link::closed () {
     QString href;
     QString rel;
-    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
+    for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
         if (a->name () == StringPool::attr_href)
             href = a->value ();
         else if (a->name () == StringPool::attr_title)
@@ -105,7 +105,7 @@ void ATOM::Link::closed () {
 }
 
 void ATOM::Content::closed () {
-    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
+    for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
         if (a->name () == StringPool::attr_src)
             src = a->value ();
         else if (a->name () == StringPool::attr_type) {
@@ -271,7 +271,7 @@ void ATOM::MediaGroup::addSummary (Node *p, Node *rating_node) {
 void ATOM::MediaContent::closed () {
     unsigned fsize = 0;
     TrieString fs ("fileSize");
-    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
+    for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
         if (a->name () == StringPool::attr_url)
             src = a->value();
         else if (a->name () == StringPool::attr_type)

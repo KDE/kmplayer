@@ -466,7 +466,7 @@ static void getOuterXML (const Node *p, QTextOStream & out, int depth) {
         const Element *e = static_cast <const Element *> (p);
         QString indent (QString ().fill (QChar (' '), depth));
         out << indent << QChar ('<') << XMLStringlet (e->nodeName ());
-        for (Attribute *a = e->attributes()->first(); a; a = a->nextSibling())
+        for (Attribute *a = e->attributes().first(); a; a = a->nextSibling())
             out << " " << XMLStringlet (a->name ().toString ()) <<
                 "=\"" << XMLStringlet (a->value ()) << "\"";
         if (e->hasChildNodes ()) {
@@ -594,7 +594,7 @@ KDE_NO_EXPORT void ElementPrivate::clear () {
 }
 
 Element::Element (NodePtr & d, short id)
-    : Node (d, id), m_attributes (new AttributeList), d (new ElementPrivate) {}
+    : Node (d, id), d (new ElementPrivate) {}
 
 Element::~Element () {
     delete d;
@@ -652,20 +652,20 @@ void Element::resetParam (const TrieString &name, int mid) {
 }
 
 void Element::setAttribute (const TrieString & name, const QString & value) {
-    for (Attribute *a = m_attributes->first (); a; a = a->nextSibling ())
+    for (Attribute *a = m_attributes.first (); a; a = a->nextSibling ())
         if (name == a->name ()) {
             if (value.isNull ())
-                m_attributes->remove (a);
+                m_attributes.remove (a);
             else
                 a->setValue (value);
             return;
         }
     if (!value.isNull ())
-        m_attributes->append (new Attribute (TrieString (), name, value));
+        m_attributes.append (new Attribute (TrieString (), name, value));
 }
 
 QString Element::getAttribute (const TrieString & name) {
-    for (Attribute *a = m_attributes->first (); a; a = a->nextSibling ())
+    for (Attribute *a = m_attributes.first (); a; a = a->nextSibling ())
         if (name == a->name ())
             return a->value ();
     return QString ();
@@ -673,7 +673,7 @@ QString Element::getAttribute (const TrieString & name) {
 
 void Element::init () {
     d->clear();
-    for (Attribute *a = attributes ()->first (); a; a = a->nextSibling ()) {
+    for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
         QString v = a->value ();
         int p = v.indexOf ('{');
         if (p > -1) {
@@ -691,12 +691,12 @@ void Element::reset () {
 }
 
 void Element::clear () {
-    m_attributes = new AttributeList; // remove attributes
+    m_attributes = AttributeList (); // remove attributes
     d->clear();
     Node::clear ();
 }
 
-void Element::setAttributes (AttributeListPtr attrs) {
+void Element::setAttributes (const AttributeList &attrs) {
     m_attributes = attrs;
 }
 
@@ -1431,7 +1431,7 @@ class KMPLAYER_NO_EXPORT DocumentBuilder {
 public:
     DocumentBuilder (NodePtr d, bool set_opener);
     ~DocumentBuilder () {}
-    bool startTag (const QString & tag, AttributeListPtr attr);
+    bool startTag (const QString & tag, const AttributeList &attr);
     bool endTag (const QString & tag);
     bool characterData (const QString & data);
     bool cdataData (const QString & data);
@@ -1454,7 +1454,7 @@ DocumentBuilder::DocumentBuilder (NodePtr d, bool set_opener)
 #endif
 {}
 
-bool DocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
+bool DocumentBuilder::startTag(const QString &tag, const AttributeList &attr) {
     if (m_ignore_depth) {
         m_ignore_depth++;
         //kDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth;
@@ -1556,10 +1556,10 @@ void DocumentBuilder::cdataEnd () {
 
 static void startTag (void *data, const char * tag, const char **attr) {
     DocumentBuilder * builder = static_cast <DocumentBuilder *> (data);
-    AttributeListPtr attributes = new AttributeList;
+    AttributeList attributes;
     if (attr && attr [0]) {
         for (int i = 0; attr[i]; i += 2)
-            attributes->append (new Attribute (
+            attributes.append (new Attribute (
                         TrieString(),
                         QString::fromUtf8 (attr [i]),
                         QString::fromUtf8 (attr [i+1])));
@@ -1640,7 +1640,7 @@ public:
         SharedPtr <TokenInfo> next;
     };
     typedef SharedPtr <TokenInfo> TokenInfoPtr;
-    SimpleSAXParser (DocumentBuilder & b) : builder (b), position (0), m_attributes (new AttributeList), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false), no_entitity_look_ahead (false), have_next_char (false) {}
+    SimpleSAXParser (DocumentBuilder & b) : builder (b), position (0), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false), no_entitity_look_ahead (false), have_next_char (false) {}
     virtual ~SimpleSAXParser () {};
     bool parse (QTextStream & d);
 private:
@@ -1661,7 +1661,7 @@ private:
     TokenInfoPtr next_token, token, prev_token;
     // for element reading
     QString tagname;
-    AttributeListPtr m_attributes;
+    AttributeList m_attributes;
     QString attr_namespace, attr_name, attr_value;
     QString cdata;
     bool equal_seen;
@@ -1728,7 +1728,7 @@ void SimpleSAXParser::push () {
 
 void SimpleSAXParser::push_attribute () {
     //kDebug () << "attribute " << attr_name.latin1 () << "=" << attr_value.latin1 ();
-    m_attributes->append(new Attribute (attr_namespace, attr_name, attr_value));
+    m_attributes.append(new Attribute (attr_namespace, attr_name, attr_value));
     attr_namespace.clear ();
     attr_name.truncate (0);
     attr_value.truncate (0);
@@ -2114,7 +2114,7 @@ bool SimpleSAXParser::parse (QTextStream & d) {
                     if (token->token == tok_angle_open) {
                         attr_name.truncate (0);
                         attr_value.truncate (0);
-                        m_attributes = new AttributeList;
+                        m_attributes = AttributeList ();
                         equal_seen = in_sngl_quote = in_dbl_quote = false;
                         m_state = new StateInfo (InTag, m_state);
                         ok = readTag ();
