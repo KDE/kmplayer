@@ -1707,10 +1707,13 @@ namespace KMPlayer {
 class KMPLAYER_NO_EXPORT ViewerAreaPrivate {
 public:
     ViewerAreaPrivate (ViewArea *v)
-        : m_view_area (v), backing_store (0), width (0), height (0) {
+        : m_view_area (v), backing_store (0),
+          width (0), height (0), have_gc (false) {
     }
     ~ViewerAreaPrivate() {
         destroyBackingStore ();
+        if (have_gc)
+            XFreeGC (QX11Info::display (), gc);
     }
     void clearSurface (Surface *s) {
 #ifdef KMPLAYER_WITH_CAIRO
@@ -1752,10 +1755,19 @@ public:
             w, h);*/
     }
     void swapBuffer (const IRect &sr, int dx, int dy) {
-        GC gc = XCreateGC (QX11Info::display(), backing_store, 0, NULL);
+        if (!have_gc) {
+            XGCValues values;
+            values.graphics_exposures = false;
+            values.function = GXcopy;
+            values.fill_style = FillSolid;
+            values.subwindow_mode = ClipByChildren;
+            gc = XCreateGC (QX11Info::display (), backing_store,
+                    GCGraphicsExposures | GCFunction |
+                    GCFillStyle | GCSubwindowMode, &values);
+            have_gc = true;
+        }
         XCopyArea (QX11Info::display(), backing_store, m_view_area->winId(),
                 gc, sr.x(), sr.y(), sr.width (), sr.height (), dx, dy);
-        XFreeGC (QX11Info::display(), gc);
         XFlush (QX11Info::display());
     }
 #endif
@@ -1768,8 +1780,10 @@ public:
     }
     ViewArea *m_view_area;
     Drawable backing_store;
+    GC gc;
     int width;
     int height;
+    bool have_gc;
 };
 
 class KMPLAYER_NO_EXPORT RepaintUpdater {
