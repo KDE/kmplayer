@@ -140,7 +140,8 @@ if (KMPLAYER_WITH_NPP)
         "${GLibDBusCflags} ${GTKCflags} ${GThreadCflags}"
     )
 
-    target_link_libraries(knpplayer ${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags})
+    target_link_libraries(knpplayer ${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags}
+        ${X11_X11_LIB} )
 
     install(TARGETS knpplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
