@@ -121,6 +121,7 @@ public:
     /**
      * Reset all data, called from end() and init()
      */
+    void init ();
     void initialize ();
     bool parseParam (const TrieString & name, const QString & value);
     TimingState state () const { return timingstate; }

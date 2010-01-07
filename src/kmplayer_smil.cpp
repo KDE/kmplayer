@@ -240,7 +240,7 @@ KDE_NO_CDTOR_EXPORT Runtime::Runtime (Element *e)
    stopped_timer (NULL),
    fill_active (fill_auto),
    element (NULL) {
-    initialize();
+    init();
     element = e;
 }
 
@@ -251,10 +251,11 @@ KDE_NO_CDTOR_EXPORT Runtime::~Runtime () {
     if (duration_timer)
         element->document ()->cancelPosting (duration_timer);
     element = NULL;
-    initialize ();
+    init ();
 }
 
-KDE_NO_EXPORT void Runtime::initialize () {
+KDE_NO_EXPORT void Runtime::init ()
+{
     if (element && begin_timer) {
         element->document ()->cancelPosting (begin_timer);
         begin_timer = NULL;
@@ -272,8 +273,17 @@ KDE_NO_EXPORT void Runtime::initialize () {
     start_time = finish_time = 0;
     fill = fill_default;
     fill_def = fill_inherit;
-    if (element)
-        fill_active = getDefaultFill (element);
+}
+
+KDE_NO_EXPORT void Runtime::initialize ()
+{
+    if (fill == fill_default) {
+        if (fill_def == fill_inherit)
+            fill_active = getDefaultFill (element);
+        else
+            fill_active = fill_def;
+    }
+    timingstate = Runtime::TimingsInitialized;
 }
 
 static
@@ -2029,7 +2039,7 @@ KDE_NO_EXPORT Node *SMIL::GroupBase::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void SMIL::GroupBase::init () {
     if (Runtime::TimingsInitialized > runtime->timingstate) {
         Element::init ();
-        runtime->timingstate = Runtime::TimingsInitialized;
+        runtime->initialize ();
     }
 }
 
@@ -2152,15 +2162,19 @@ public:
                     }
                     if (prev_freeze)
                         prev->element->accept (this);
-                    if (rt->timingstate == Runtime::timings_stopped)
-                        rt->element->deactivate();
-                    else
-                        prev = rt;
+                    if (prev &&
+                            (!prev_freeze ||
+                             prev->timingstate == Runtime::timings_stopped))
+                        prev->element->deactivate();
+                    prev = rt;
                 }
             }
         }
-        if (prev)
+        if (prev) {
             prev->element->accept (this);
+            if (prev->timingstate == Runtime::timings_stopped)
+                prev->element->deactivate();
+        }
 
         freeze = old_freeze;
     }
@@ -2275,13 +2289,13 @@ KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
             e->deactivate ();
     if (unfinished ())
         finish ();
-    runtime->initialize ();
+    runtime->init ();
     Element::deactivate ();
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::reset () {
     Element::reset ();
-    runtime->initialize ();
+    runtime->init ();
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
@@ -3130,7 +3144,7 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
             if (SMIL::id_node_param == c->id)
                 c->activate (); // activate param children
-        runtime->timingstate = Runtime::TimingsInitialized;
+        runtime->initialize ();
     }
 }
 
@@ -3161,7 +3175,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     }
     if (unfinished ())
         finish ();
-    runtime->initialize ();
+    runtime->init ();
     Mrl::deactivate ();
     (void) surface ();
     region_node = 0L;
@@ -3282,7 +3296,7 @@ KDE_NO_EXPORT void SMIL::MediaType::finish () {
 
 KDE_NO_EXPORT void SMIL::MediaType::reset () {
     Mrl::reset ();
-    runtime->initialize ();
+    runtime->init ();
 }
 
 KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
@@ -3815,7 +3829,7 @@ void SMIL::SmilText::init () {
     if (Runtime::TimingsInitialized > runtime->timingstate) {
         props.init ();
         Element::init ();
-        runtime->timingstate = Runtime::TimingsInitialized;
+        runtime->initialize ();
     }
 }
 
@@ -3849,12 +3863,12 @@ void SMIL::SmilText::deactivate () {
         text_surface->remove ();
         text_surface = NULL;
     }
-    runtime->initialize ();
+    runtime->init ();
     Element::deactivate ();
 }
 
 void SMIL::SmilText::reset () {
-    runtime->initialize ();
+    runtime->init ();
     Element::reset ();
 }
 
@@ -4089,7 +4103,7 @@ void SMIL::StateValue::init () {
         if (smil)
             state = smil->state_node.ptr ();
         Element::init ();
-        runtime->timingstate = Runtime::TimingsInitialized;
+        runtime->initialize ();
     }
 }
 
@@ -4108,12 +4122,12 @@ void SMIL::StateValue::deactivate () {
         finish ();
     delete ref;
     ref = NULL;
-    runtime->initialize ();
+    runtime->init ();
     Element::deactivate ();
 }
 
 void SMIL::StateValue::reset () {
-    runtime->initialize ();
+    runtime->init ();
     Element::reset ();
 }
 
@@ -4263,7 +4277,7 @@ void SMIL::AnimateGroup::parseParam (const TrieString &name, const QString &val)
 KDE_NO_EXPORT void SMIL::AnimateGroup::init () {
     if (Runtime::TimingsInitialized > runtime->timingstate) {
         Element::init ();
-        runtime->timingstate = Runtime::TimingsInitialized;
+        runtime->initialize ();
     }
 }
 
@@ -4283,14 +4297,14 @@ KDE_NO_EXPORT void SMIL::AnimateGroup::finish () {
 KDE_NO_EXPORT void SMIL::AnimateGroup::reset () {
     Element::reset ();
     target_id.truncate (0);
-    runtime->initialize ();
+    runtime->init ();
 }
 
 KDE_NO_EXPORT void SMIL::AnimateGroup::deactivate () {
     restoreModification ();
     if (unfinished ())
         finish ();
-    runtime->initialize ();
+    runtime->init ();
     Element::deactivate ();
 }
 
