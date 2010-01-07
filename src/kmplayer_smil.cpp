@@ -1231,9 +1231,12 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
     Mrl::closed ();
 }
 
-KDE_NO_EXPORT bool SMIL::Smil::expose () const {
-    return !title.isEmpty () || //return false if no title and only one
-        previousSibling () || nextSibling ();
+void *SMIL::Smil::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg)
+        return !title.isEmpty () || //return false if no title and only one
+            previousSibling () || nextSibling () ? (PlaylistRole *) this : NULL;
+    return Mrl::role (msg, content);
 }
 
 void SMIL::Smil::jump (const QString & id) {
@@ -1306,10 +1309,6 @@ KDE_NO_EXPORT Node *SMIL::Head::childFromTag (const QString & tag) {
     else if (!strcmp (ctag, "transition"))
         return new SMIL::Transition (m_doc);
     return NULL;
-}
-
-KDE_NO_EXPORT bool SMIL::Head::expose () const {
-    return false;
 }
 
 KDE_NO_EXPORT void SMIL::Head::closed () {
@@ -3520,6 +3519,9 @@ void *SMIL::MediaType::role (RoleType msg, void *content) {
         return s;
     }
 
+    case RolePlaylist:
+        return NULL;
+
     case RoleReceivers: {
         MessageType m = (MessageType) (long) content;
         ConnectionList *l = mouse_listeners.receivers (m);
@@ -3601,8 +3603,11 @@ KDE_NO_EXPORT void SMIL::RefMediaType::accept (Visitor * v) {
     v->visit (this);
 }
 
-KDE_NO_EXPORT bool SMIL::RefMediaType::expose () const {
-    return !src.isEmpty () && !external_tree;
+void *SMIL::RefMediaType::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg)
+        return !src.isEmpty () && !external_tree ? (PlaylistRole *) this : NULL;
+    return MediaType::role (msg, content);
 }
 
 //-----------------------------------------------------------------------------
@@ -3637,10 +3642,6 @@ namespace {
 
         const char *nodeName () const {
             return tag.ascii ();
-        }
-
-        bool expose () const {
-            return false;
         }
     };
 }

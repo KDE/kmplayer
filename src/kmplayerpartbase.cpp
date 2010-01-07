@@ -1137,7 +1137,7 @@ void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
             emit stopPlaying ();
         }
     }
-    if (elm->expose ()) {
+    if (elm->role (RolePlaylist)) {
         if (ns == Node::state_activated || ns == Node::state_deactivated)
             m_player->updateTree ();
         else if (ns == Node::state_began || os == Node::state_began)

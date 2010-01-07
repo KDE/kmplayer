@@ -275,7 +275,7 @@ public:
     void activate ();
     void deactivate ();
     void closed ();
-    bool expose () const;
+    void *role (RoleType msg, void *content=NULL);
     void message (MessageType msg, void *content=NULL);
     void accept (Visitor *v) { v->visit (this); }
     void jump (const QString & id);
@@ -296,7 +296,6 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "head"; }
     void closed ();
     void message (MessageType msg, void *content=NULL);
-    bool expose () const;
 };
 
 /**
@@ -316,7 +315,6 @@ public:
     virtual void message (MessageType msg, void *content=NULL);
     virtual void *role (RoleType msg, void *content=NULL);
     KDE_NO_EXPORT virtual const char * nodeName () const { return "state"; }
-    virtual bool expose () const { return false; }
 
     void newValue (Node *ref, Where w, const QString &name, const QString &val);
     void setValue (Node *ref, const QString &value);
@@ -338,7 +336,6 @@ public:
     void closed ();
     void message (MessageType msg, void *content=NULL);
     void accept (Visitor *v) { v->visit (this); }
-    bool expose () const { return false; }
 
     NodePtrW root_layout;
 };
@@ -351,7 +348,6 @@ public:
     enum ShowBackground { ShowAlways, ShowWhenActive };
 
     ~RegionBase ();
-    virtual bool expose () const { return false; }
     virtual void activate ();
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
@@ -423,7 +419,6 @@ public:
     KDE_NO_CDTOR_EXPORT RegPoint (NodePtr & d) : Element(d, id_node_regpoint) {}
     KDE_NO_CDTOR_EXPORT ~RegPoint () {}
     KDE_NO_EXPORT const char * nodeName () const { return "regPoint"; }
-    KDE_NO_EXPORT bool expose () const { return false; }
     void parseParam (const TrieString & name, const QString & value);
     CalculatedSizer sizes;
 };
@@ -467,7 +462,6 @@ public:
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     KDE_NO_EXPORT const char * nodeName () const { return "transition"; }
     void parseParam (const TrieString & name, const QString & value);
-    KDE_NO_EXPORT bool expose () const { return false; }
     bool supported ();
     TransType type;
     TransSubType sub_type;
@@ -492,7 +486,6 @@ public:
     void activate ();
     void deactivate ();
     void reset ();
-    bool expose () const { return false; }
     void message (MessageType msg, void *content=NULL);
     void *role (RoleType msg, void *content=NULL);
     void setJumpNode (NodePtr);
@@ -611,7 +604,6 @@ class KMPLAYER_NO_EXPORT LinkingBase : public Element {
 public:
     KDE_NO_CDTOR_EXPORT ~LinkingBase () {}
     void deactivate ();
-    KDE_NO_EXPORT bool expose () const { return false; }
     void parseParam (const TrieString & name, const QString & value);
     ConnectionLink mediatype_attach;
     QString href;
@@ -672,7 +664,6 @@ public:
     virtual void message (MessageType msg, void *content=NULL);
     virtual void *role (RoleType msg, void *content=NULL);
     virtual void accept (Visitor *v) { v->visit (this); }
-    bool expose () const { return false; }
 
     Surface *surface ();
 
@@ -719,7 +710,7 @@ public:
     virtual void begin ();
     virtual void finish ();
     virtual void accept (Visitor *);
-    virtual bool expose () const;
+    virtual void *role (RoleType msg, void *content=NULL);
     virtual void prefetch ();
     virtual void clipStart ();
 };
@@ -768,7 +759,6 @@ public:
     virtual void finish ();
     virtual void deactivate ();
     virtual void reset ();
-    virtual bool expose () const { return false; }
     KDE_NO_EXPORT const char *nodeName () const { return "smilText"; }
     Node *childFromTag (const QString & tag);
     virtual void parseParam (const TrieString &name, const QString &value);
@@ -794,7 +784,6 @@ public:
 
     virtual void init ();
     virtual void activate ();
-    virtual bool expose () const { return false; }
     KDE_NO_EXPORT const char *nodeName () const { return tag.data (); }
     Node *childFromTag (const QString &tag);
     virtual void parseParam (const TrieString &name, const QString &value);
@@ -816,7 +805,6 @@ public:
     virtual void parseParam (const TrieString &name, const QString &value);
     virtual void message (MessageType msg, void *content=NULL);
     virtual void *role (RoleType msg, void *content=NULL);
-    virtual bool expose () const { return false; }
 protected:
     StateValue (NodePtr &d, short _id);
 
@@ -864,7 +852,6 @@ public:
     virtual void finish ();
     virtual void deactivate ();
     virtual void reset ();
-    virtual bool expose () const { return false; }
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual void message (MessageType msg, void *content=NULL);
     virtual void *role (RoleType msg, void *content=NULL);
@@ -1016,7 +1003,6 @@ public:
     KDE_NO_CDTOR_EXPORT Param (NodePtr & d) : Element (d, id_node_param) {}
     KDE_NO_EXPORT const char * nodeName () const { return "param"; }
     void activate ();
-    bool expose () const { return false; }
 };
 
 } // SMIL namespace

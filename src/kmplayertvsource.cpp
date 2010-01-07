@@ -271,6 +271,13 @@ KDE_NO_EXPORT void TVDevice::message (KMPlayer::MessageType msg, void *data) {
         TVNode::message (msg, data);
 }
 
+void *TVDevice::role (KMPlayer::RoleType msg, void *content)
+{
+    if (KMPlayer::RolePlaylist == msg)
+        return NULL;
+    return TVNode::role (msg, content);
+}
+
 KDE_NO_EXPORT void TVDevice::setNodeName (const QString & name) {
     TVNode::setNodeName (name);
     updateNodeName ();

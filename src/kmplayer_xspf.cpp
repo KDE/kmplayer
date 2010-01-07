@@ -68,6 +68,13 @@ KDE_NO_EXPORT void XSPF::Playlist::closed () {
     Mrl::closed ();
 }
 
+void *XSPF::Playlist::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg)
+        return !title.isEmpty () ? (PlaylistRole *) this : NULL;
+    return Mrl::role (msg, content);
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT Node *XSPF::Tracklist::childFromTag (const QString & tag) {
@@ -150,4 +157,11 @@ KDE_NO_EXPORT Mrl * XSPF::Track::linkNode () {
 void XSPF::Location::closed () {
     src = innerText ().stripWhiteSpace ();
     Mrl::closed ();
+}
+
+void *XSPF::Location::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg)
+        return NULL;
+    return Mrl::role (msg, content);
 }

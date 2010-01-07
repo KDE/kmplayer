@@ -29,6 +29,13 @@ KDE_NO_EXPORT Node *RSS::Rss::childFromTag (const QString & tag) {
     return 0L;
 }
 
+void *RSS::Rss::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg)
+        return NULL;
+    return Element::role (msg, content);
+}
+
 KDE_NO_EXPORT Node *RSS::Channel::childFromTag (const QString & tag) {
     const char *ctag = tag.ascii ();
     if (!strcmp (ctag, "item"))
@@ -47,12 +54,15 @@ KDE_NO_EXPORT void RSS::Channel::closed () {
             title = c->innerText ().simplifyWhiteSpace ();
             break;
         }
-    Title::closed ();
+    Element::closed ();
 }
 
-KDE_NO_EXPORT bool RSS::Channel::expose () const {
-    return !title.isEmpty () || //return false if no title and only one
-        previousSibling () || nextSibling ();
+void *RSS::Channel::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg)
+        return !title.isEmpty () || //return false if no title and only one
+            previousSibling () || nextSibling () ? (PlaylistRole *) this : NULL;
+    return Element::role (msg, content);
 }
 
 KDE_NO_EXPORT Node *RSS::Item::childFromTag (const QString & tag) {
@@ -106,7 +116,7 @@ KDE_NO_EXPORT void RSS::Item::closed () {
         }
         summary_added = true;
     }
-    Title::closed ();
+    Element::closed ();
 }
 
 KDE_NO_EXPORT void RSS::Enclosure::activate () {

@@ -265,17 +265,6 @@ void Node::setState (State nstate) {
     }
 }
 
-bool Node::expose () const {
-    return true;
-}
-
-QString Node::caption () const {
-    return QString ();
-}
-
-void Node::setCaption (const QString &) {
-}
-
 void Node::activate () {
     //kDebug () << nodeName () << " Node::activate";
     setState (state_activated);
@@ -719,11 +708,12 @@ void Attribute::setValue (const QString & v) {
 
 //-----------------------------------------------------------------------------
 
-QString Title::caption () const {
+QString PlaylistRole::caption () const {
     return title;
 }
 
-void Title::setCaption (const QString &) {
+void PlaylistRole::setCaption (const QString &s) {
+    title = s;
 }
 
 //-----------------------------------------------------------------------------
@@ -736,7 +726,7 @@ static bool hasMrlChildren (const NodePtr & e) {
 }
 
 Mrl::Mrl (NodePtr & d, short id)
-    : Title (d, id), cached_ismrl_version (~0),
+    : Element (d, id), cached_ismrl_version (~0),
       media_info (NULL),
       aspect (0), repeat (0),
       view_mode (SingleMode),
@@ -822,6 +812,11 @@ void *Mrl::role (RoleType msg, void *content) {
             if (p->mrl ())
                 return p->role (msg, content);
         return NULL;
+
+    case RolePlaylist:
+        if (title.isEmpty ())
+            title = src;
+        return !title.isEmpty () ? (PlaylistRole *) this : NULL;
 
     default:
         break;
@@ -1322,10 +1317,6 @@ QString TextNode::nodeValue () const {
     return text;
 }
 
-KDE_NO_EXPORT bool TextNode::expose () const {
-    return false;
-}
-
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT CData::CData (NodePtr & d, const QString & s)
@@ -1339,10 +1330,6 @@ DarkNode::DarkNode (NodePtr & d, const QByteArray &n, short id)
 
 Node *DarkNode::childFromTag (const QString & tag) {
     return new DarkNode (m_doc, tag.toUtf8 ());
-}
-
-KDE_NO_EXPORT bool DarkNode::expose () const {
-    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -1384,9 +1371,13 @@ void GenericMrl::closed () {
     Mrl::closed ();
 }
 
-bool GenericMrl::expose () const {
-    return !title.isEmpty () || //return false if no title and only one
-        previousSibling () || nextSibling ();
+void *GenericMrl::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg)
+        return !title.isEmpty () || //return false if no title and only one
+            previousSibling () || nextSibling ()
+            ? (PlaylistRole *) this : NULL;
+    return Mrl::role (msg, content);
 }
 
 //-----------------------------------------------------------------------------

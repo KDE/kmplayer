@@ -282,7 +282,8 @@ enum RoleType
     RoleDisplay,
     RoleChildDisplay,    // Mrl*
     RoleSizer,
-    RoleReceivers
+    RoleReceivers,
+    RolePlaylist
 };
 
 #define MsgUnhandled ((void *) 357L)
@@ -448,12 +449,6 @@ public:
     bool isPlayable () { return playType () > play_type_none; }
     virtual bool isElementNode () const { return false; }
     /**
-     * If this node should be visible to the user
-     */
-    virtual bool expose () const;
-    virtual QString caption () const;
-    virtual void setCaption (const QString &t);
-    /**
      * If this node purpose is for storing runtime data only,
      * ie. node doesn't exist in the original document
      */
@@ -611,13 +606,10 @@ inline Node *findChildWithId (const Node *p, const short id) {
     return NULL;
 }
 
-class KMPLAYER_EXPORT Title : public Element {
-protected:
-    Title (NodePtr & d, short id=0) : Element (d, id ) {}
-
+class KMPLAYER_EXPORT PlaylistRole {
 public:
-    virtual QString caption () const;
-    virtual void setCaption (const QString &t);
+    QString caption () const;
+    void setCaption (const QString &t);
 
     QString title;
 };
@@ -625,7 +617,8 @@ public:
 /**
  * Element representing a playable link, like URL to a movie or playlist.
  */
-class KMPLAYER_EXPORT Mrl : public Title {
+class KMPLAYER_EXPORT Mrl : public Element, public PlaylistRole
+{
 protected:
     Mrl (NodePtr & d, short id=0);
     Node *childFromTag (const QString & tag);
@@ -903,7 +896,6 @@ public:
     const char * nodeName () const { return "#text"; }
     void accept (Visitor *v) { v->visit (this); }
     QString nodeValue () const;
-    bool expose () const;
 protected:
     QString text;
 };
@@ -927,7 +919,6 @@ public:
     KDE_NO_CDTOR_EXPORT ~DarkNode () {}
     const char * nodeName () const { return name.data (); }
     Node *childFromTag (const QString & tag);
-    virtual bool expose () const;
 protected:
     QByteArray name;
 };
@@ -953,7 +944,7 @@ public:
     GenericMrl(NodePtr &d, const QString &s, const QString &name=QString (), const QByteArray &tag=QByteArray ("mrl"));
     KDE_NO_EXPORT const char * nodeName () const { return node_name.data (); }
     void closed ();
-    bool expose () const;
+    void *role (RoleType msg, void *content=NULL);
     QByteArray node_name;
 };
 

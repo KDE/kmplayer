@@ -39,7 +39,14 @@ void ATOM::Feed::closed () {
             title = c->innerText ().simplifyWhiteSpace ();
             break;
         }
-    Mrl::closed ();
+    Element::closed ();
+}
+
+void *ATOM::Feed::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg)
+        return !title.isEmpty () ? (PlaylistRole *) this : NULL;
+    return Element::role (msg, content);
 }
 
 Node *ATOM::Entry::childFromTag (const QString &tag) {
@@ -79,7 +86,14 @@ void ATOM::Entry::closed () {
         }
     if (group)
         group->addSummary (this, rating);
-    Mrl::closed ();
+    Element::closed ();
+}
+
+void *ATOM::Entry::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg)
+        return !title.isEmpty () ? (PlaylistRole *) this : NULL;
+    return Element::role (msg, content);
 }
 
 Node::PlayType ATOM::Link::playType () {

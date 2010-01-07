@@ -54,7 +54,7 @@ public:
     KDE_NO_CDTOR_EXPORT Playlist (NodePtr & d) : Mrl (d, id_node_playlist) {}
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
-    bool expose () const { return !title.isEmpty (); }
+    void *role (RoleType msg, void *content=NULL);
     void closed ();
 };
 
@@ -63,7 +63,6 @@ public:
     KDE_NO_CDTOR_EXPORT Tracklist (NodePtr & d) : Element (d, id_node_tracklist) {}
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "tracklist"; }
-    bool expose () const { return false; }
 };
 
 class KMPLAYER_NO_EXPORT Track : public Mrl {
@@ -83,7 +82,7 @@ public:
     KDE_NO_CDTOR_EXPORT Location (NodePtr &d) : Mrl (d, id_node_location) {}
     KDE_NO_EXPORT const char * nodeName () const { return "location"; }
     void closed ();
-    bool expose () const { return false; }
+    void *role (RoleType msg, void *content=NULL);
 };
 
 } //namespace XSPF

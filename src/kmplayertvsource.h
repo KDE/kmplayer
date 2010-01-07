@@ -118,8 +118,8 @@ public:
     KMPlayer::Node *childFromTag (const QString &);
     void closed ();
     void message (KMPlayer::MessageType msg, void *content=NULL);
+    void *role (KMPlayer::RoleType msg, void *content=NULL);
     void setNodeName (const QString &);
-    bool expose () const { return false; }
     void updateNodeName ();
     void updateDevicePage ();
     bool zombie;

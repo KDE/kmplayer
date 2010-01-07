@@ -47,7 +47,7 @@ public:
     KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d, id_node_asx) {}
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
-    bool expose () const { return !title.isEmpty (); }
+    void *role (RoleType msg, void *content=NULL);
     PlayType playType ();
 };
 
@@ -67,7 +67,7 @@ public:
     PlayType playType ();
     void activate ();
     void deactivate ();
-    bool expose () const;
+    void *role (RoleType msg, void *content=NULL);
 
     Posting *duration_timer;
     int ref_child_count;
@@ -82,7 +82,6 @@ public:
     //Node *childFromTag (const QString & tag);
     void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
-    bool expose () const;
 };
 
 /**

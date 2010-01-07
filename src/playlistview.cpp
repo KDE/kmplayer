@@ -176,23 +176,19 @@ int PlayListView::addTree (NodePtr root, const QString & source, const QString &
 
 KDE_NO_EXPORT PlayListItem * PlayListView::populate
 (Node *e, Node *focus, RootPlayListItem *root, PlayListItem * pitem, PlayListItem ** curitem) {
-    root->have_dark_nodes |= !e->expose ();
-    if (pitem && !root->show_all_nodes && !e->expose ()) {
+    root->have_dark_nodes |= !e->role (RolePlaylist);
+    if (pitem && !root->show_all_nodes && !e->role (RolePlaylist)) {
         for (Node *c = e->lastChild (); c; c = c->previousSibling ())
             populate (c, focus, root, pitem, curitem);
         return pitem;
     }
     PlayListItem * item = pitem ? new PlayListItem (pitem, e, this) : root;
-    Mrl * mrl = e->mrl ();
-    QString text (e->caption ());
+    PlaylistRole *title = (PlaylistRole *) e->role (RolePlaylist);
+    QString text (title ? title->caption () : "");
     if (text.isEmpty ()) {
         text = id_node_text == e->id ? e->nodeValue () : e->nodeName ();
-        if (mrl && !root->show_all_nodes) {
-            if (!mrl->src.isEmpty())
-                text = KUrl (mrl->src).pathOrUrl ();
-            else if (e->isDocument ())
-                text = e->hasChildNodes () ? i18n ("unnamed") : i18n ("none");
-        }
+        if (e->isDocument ())
+            text = e->hasChildNodes () ? i18n ("unnamed") : i18n ("none");
     }
     item->setText(0, text);
     if (focus == e)
@@ -309,7 +305,7 @@ void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active, bool se
     if (!ritem->show_all_nodes)
         for (NodePtr n = active; n; n = n->parentNode ()) {
             active = n;
-            if (n->expose ())
+            if (n->role (RolePlaylist))
                 break;
         }
     populate (ritem->node, active, ritem, 0L, &curitem);
@@ -395,7 +391,7 @@ void PlayListView::itemExpanded (Q3ListViewItem * item) {
     if (!m_ignore_expanded && item->childCount () == 1) {
         PlayListItem * child_item = static_cast<PlayListItem*>(item->firstChild ());
         child_item->setOpen (rootItem (item)->show_all_nodes ||
-                (child_item->node && child_item->node->expose ()));
+                (child_item->node && child_item->node->role (RolePlaylist)));
     }
 }
 
@@ -452,7 +448,7 @@ KDE_NO_EXPORT void PlayListView::showAllNodes(RootPlayListItem *ri, bool show) {
         if (m_current_find_elm &&
                 ri->node->document() == m_current_find_elm->document() &&
                 !ri->show_all_nodes) {
-            if (!m_current_find_elm->expose ())
+            if (!m_current_find_elm->role (RolePlaylist))
                 m_current_find_elm = 0L;
             m_current_find_attr = 0L;
         }
@@ -586,7 +582,7 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
     Node *node = NULL, *n = m_current_find_elm.ptr ();
     RootPlayListItem * ri = rootItem (current_find_tree_id);
     while (!found && n) {
-        if (ri->show_all_nodes || n->expose ()) {
+        if (ri->show_all_nodes || n->role (RolePlaylist)) {
             bool elm = n->isElementNode ();
             QString val = n->nodeName ();
             if (elm && !ri->show_all_nodes) {

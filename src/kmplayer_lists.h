@@ -58,7 +58,7 @@ public:
         : KMPlayer::URLSource (p, KUrl ("lists://")) {}
     void play (KMPlayer::Mrl *);
     void activate ();
-    QString prettyName () { return m_document->caption (); }
+    QString prettyName ();
 };
 
 class KMPLAYER_NO_EXPORT FileDocument : public KMPlayer::SourceDocument {
@@ -89,12 +89,15 @@ public:
     KMPlayerApp *app;
 };
 
-class KMPLAYER_NO_EXPORT Group : public KMPlayer::Title {
+class KMPLAYER_NO_EXPORT Group
+ : public KMPlayer::Element, public KMPlayer::PlaylistRole
+{
 public:
     Group (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn=QString());
     KMPlayer::Node *childFromTag (const QString &tag);
     void defer () {} // TODO lazy loading of largish sub trees
     void closed ();
+    void *role (KMPlayer::RoleType msg, void *content=NULL);
     KDE_NO_EXPORT const char *nodeName () const { return "group"; }
     KMPlayerApp *app;
 };
@@ -129,12 +132,15 @@ public:
     const char *nodeName () const KDE_NO_EXPORT { return "item"; }
 };
 
-class KMPLAYER_NO_EXPORT PlaylistGroup : public KMPlayer::Title {
+class KMPLAYER_NO_EXPORT PlaylistGroup
+ : public KMPlayer::Element, public KMPlayer::PlaylistRole
+{
 public:
     PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn);
     PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool plmode=false);
     KMPlayer::Node *childFromTag (const QString &tag);
     void closed ();
+    void *role (KMPlayer::RoleType msg, void *content=NULL);
     void setNodeName (const QString&);
     KDE_NO_EXPORT const char *nodeName () const { return "group"; }
     KMPlayerApp *app;

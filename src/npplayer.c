@@ -267,7 +267,7 @@ static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
                         (int32_t) count > sz ? sz : (int32_t) count, buf);
                 if (sz < 0) { /*FIXME plugin destroys stream here*/
                     si->reason = NPERR_INVALID_PLUGIN_ERROR;
-                    destroyStream ((gpointer)stream);
+                    destroyStream ((gpointer)p);
                     return 0;
                 }
             } else {

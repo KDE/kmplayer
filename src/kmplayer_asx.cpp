@@ -46,6 +46,13 @@ KDE_NO_EXPORT Node *ASX::Asx::childFromTag (const QString & tag) {
     return 0L;
 }
 
+void *ASX::Asx::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg)
+        return !title.isEmpty () ? (PlaylistRole *) this : NULL;
+    return Mrl::role (msg, content);
+}
+
 KDE_NO_EXPORT Node::PlayType ASX::Asx::playType () {
     if (cached_ismrl_version != document ()->m_tree_version)
         for (Node *e = firstChild (); e; e = e->nextSibling ()) {
@@ -139,8 +146,12 @@ KDE_NO_EXPORT void ASX::Entry::deactivate () {
     Mrl::deactivate ();
 }
 
-KDE_NO_EXPORT bool ASX::Entry::expose () const {
-    return ref_child_count > 1 && !title.isEmpty ();
+void *ASX::Entry::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg)
+        return ref_child_count > 1 && !title.isEmpty ()
+            ? (PlaylistRole *) this : NULL;
+    return Mrl::role (msg, content);
 }
 
 //-----------------------------------------------------------------------------
@@ -148,10 +159,6 @@ KDE_NO_EXPORT bool ASX::Entry::expose () const {
 KDE_NO_EXPORT void ASX::Ref::opened () {
     src = getAsxAttribute (this, "href");
     Mrl::opened ();
-}
-
-KDE_NO_EXPORT bool ASX::Ref::expose () const {
-    return !src.isEmpty ();
 }
 
 //-----------------------------------------------------------------------------

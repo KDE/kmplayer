@@ -41,28 +41,29 @@ const short id_node_ignored = 207;
 /**
  * '<RSS>' tag
  */
-class KMPLAYER_NO_EXPORT Rss : public Mrl {
+class KMPLAYER_NO_EXPORT Rss : public Element, public PlaylistRole
+{
 public:
-    KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Mrl (d, id_node_rss) {}
+    KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Element (d, id_node_rss) {}
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "rss"; }
-    bool expose () const { return false; }
+    void *role (RoleType msg, void *content=NULL);
 };
 
-class KMPLAYER_NO_EXPORT Channel : public Title {
+class KMPLAYER_NO_EXPORT Channel : public Element, public PlaylistRole
+{
 public:
-    KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Title (d, id_node_channel) {}
+    KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Element (d, id_node_channel) {}
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
-    PlayType playType () { return play_type_none; }
     void closed ();
-    bool expose () const;
+    void *role (RoleType msg, void *content=NULL);
 };
 
-class KMPLAYER_NO_EXPORT Item : public Title {
+class KMPLAYER_NO_EXPORT Item : public Element, public PlaylistRole {
 public:
     KDE_NO_CDTOR_EXPORT Item (NodePtr &d)
-        : Title (d, id_node_item), summary_added (false) {}
+        : Element (d, id_node_item), summary_added (false) {}
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "item"; }
     void closed ();
