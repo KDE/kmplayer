@@ -155,8 +155,6 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget *, View * view, KActionC
              this, SLOT (itemExpanded (Q3ListViewItem *)));
     connect (this, SIGNAL (dropped (QDropEvent *, Q3ListViewItem *)),
              this, SLOT (itemDropped (QDropEvent *, Q3ListViewItem *)));
-    connect (this, SIGNAL (itemRenamed (Q3ListViewItem *)),
-             this, SLOT (itemIsRenamed (Q3ListViewItem *)));
     connect (this, SIGNAL (selectionChanged (Q3ListViewItem *)),
              this, SLOT (itemIsSelected (Q3ListViewItem *)));
 }
@@ -508,60 +506,9 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, Q3ListViewItem *a
         m_view->dropEvent (de);
 }
 
-KDE_NO_EXPORT void PlayListView::itemIsRenamed (Q3ListViewItem * qitem) {
-    PlayListItem * item = static_cast <PlayListItem *> (qitem);
-    if (item->node) {
-        RootPlayListItem * ri = rootItem (qitem);
-        if (!ri->show_all_nodes && item->node->isEditable ()) {
-            item->node->setNodeName (item->text (0));
-            if (item->node->caption ().isEmpty ())
-                item->setText (0, KURL (item->node->mrl ()->src).pathOrUrl ());
-        } else // restore damage ..
-            updateTree (ri, item->node, true);
-    } else if (item->m_attr) {
-        QString txt = item->text (0);
-        int pos = txt.find (QChar ('='));
-        if (pos > -1) {
-            item->m_attr->setName (txt.left (pos));
-            item->m_attr->setValue (txt.mid (pos + 1));
-        } else {
-            item->m_attr->setName (txt);
-            item->m_attr->setValue (QString (""));
-        }
-        PlayListItem * pi = static_cast <PlayListItem *> (item->parent ());
-        if (pi && pi->node)
-            pi->node->document ()->m_tree_version++;
-    }
-}
-
 KDE_NO_EXPORT void PlayListView::itemIsSelected (Q3ListViewItem * qitem) {
     RootPlayListItem * ri = rootItem (qitem);
     setItemsRenameable (ri && (ri->flags & TreeEdit) && ri != qitem);
-}
-
-KDE_NO_EXPORT void PlayListView::rename (Q3ListViewItem * qitem, int c) {
-    PlayListItem * item = static_cast <PlayListItem *> (qitem);
-    if (rootItem (qitem)->show_all_nodes && item && item->m_attr) {
-        PlayListItem * pi = static_cast <PlayListItem *> (qitem->parent ());
-        if (pi && pi->node && pi->node->isEditable ())
-            K3ListView::rename (item, c);
-    } else if (item && item->node && item->node->isEditable ()) {
-        if (!rootItem (qitem)->show_all_nodes &&
-                item->node->isPlayable () &&
-                item->node->mrl ()->title.isEmpty ())
-            // populate() has crippled src, restore for editing 
-            item->setText (0, item->node->mrl ()->src);
-        K3ListView::rename (item, c);
-    }
-}
-
-KDE_NO_EXPORT void PlayListView::editCurrent () {
-    Q3ListViewItem * qitem = selectedItem ();
-    if (qitem) {
-        RootPlayListItem * ri = rootItem (qitem);
-        if (ri && (ri->flags & TreeEdit) && ri != qitem)
-            rename (qitem, 0);
-    }
 }
 
 KDE_NO_EXPORT void PlayListView::slotFind () {

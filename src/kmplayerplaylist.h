@@ -454,10 +454,6 @@ public:
     virtual QString caption () const;
     virtual void setCaption (const QString &t);
     /**
-     * If this node should be visible to the user
-     */
-    bool isEditable () const { return editable; }
-    /**
      * If this node purpose is for storing runtime data only,
      * ie. node doesn't exist in the original document
      */
@@ -548,7 +544,6 @@ public:
     State state;
     short id;
     bool auxiliary_node : 1;
-    bool editable : 1;
     bool open : 1;
 };
 

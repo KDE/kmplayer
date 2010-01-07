@@ -238,7 +238,7 @@ void Matrix::translate (Single x, Single y) {
 
 KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d, short _id)
  : m_doc (d), state (state_init), id (_id),
-   auxiliary_node (false), editable (true), open (false) {}
+   auxiliary_node (false), open (false) {}
 
 Node::~Node () {
     clear ();
@@ -952,7 +952,6 @@ Document::Document (const QString & s, PlayListNotify * n)
    cur_timeout (-1) {
     m_doc = m_self; // just-in-time setting fragile m_self to m_doc
     src = s;
-    editable = false;
 }
 
 Document::~Document () {

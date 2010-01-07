@@ -160,7 +160,6 @@ void PartBase::init (KActionCollection * action_collection, const QString &objna
 
     (void) new PartAdaptor (this);
     QDBusConnection::sessionBus().registerObject (objname, this);
-    //new KAction (i18n ("Edit playlist &item"), 0, 0, m_view->playList (), SLOT (editCurrent ()), action_collection, "edit_playlist_item");
 }
 
 void PartBase::connectPanel (ControlPanel * panel) {

@@ -105,8 +105,6 @@ protected:
     bool acceptDrag (QDropEvent* event) const;
     Q3DragObject * dragObject ();
 public slots:
-    void editCurrent ();
-    void rename (Q3ListViewItem * item, int c);
     void updateTree (int id, NodePtr root, NodePtr active, bool sel, bool open);
 private slots:
     void contextMenuItem (Q3ListViewItem *, const QPoint &, int);
@@ -115,7 +113,6 @@ private slots:
     void addBookMark ();
     void toggleShowAllNodes ();
     void itemDropped (QDropEvent * e, Q3ListViewItem * after);
-    void itemIsRenamed (Q3ListViewItem * item);
     void itemIsSelected (Q3ListViewItem * item);
     void updateTrees ();
     void slotFind ();
