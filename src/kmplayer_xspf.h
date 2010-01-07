@@ -65,16 +65,13 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "tracklist"; }
 };
 
-class KMPLAYER_NO_EXPORT Track : public Mrl {
+class KMPLAYER_NO_EXPORT Track : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Track (NodePtr & d) : Mrl (d, id_node_track) {}
+    KDE_NO_CDTOR_EXPORT Track (NodePtr & d) : Element (d, id_node_track) {}
     void closed ();
     void activate ();
-    PlayType playType ();
-    Mrl * linkNode ();
     KDE_NO_EXPORT const char * nodeName () const { return "track"; }
     Node *childFromTag (const QString & tag);
-    NodePtrW location;
 };
 
 class KMPLAYER_NO_EXPORT Location : public Mrl {
@@ -82,7 +79,6 @@ public:
     KDE_NO_CDTOR_EXPORT Location (NodePtr &d) : Mrl (d, id_node_location) {}
     KDE_NO_EXPORT const char * nodeName () const { return "location"; }
     void closed ();
-    void *role (RoleType msg, void *content=NULL);
 };
 
 } //namespace XSPF

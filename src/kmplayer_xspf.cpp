@@ -118,18 +118,21 @@ KDE_NO_EXPORT Node *XSPF::Track::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void XSPF::Track::closed () {
+    Location *location = NULL;
+    QString title;
     for (Node *e = firstChild (); e; e = e->nextSibling ()) {
         switch (e->id) {
             case id_node_title:
                 title = e->innerText ();
                 break;
             case id_node_location:
-                location = e;
-                src = e->mrl ()->src;
+                location = static_cast <Location *> (e);
                 break;
         }
     }
-    Mrl::closed ();
+    if (location && !title.isEmpty ())
+        location->setCaption (title);
+    Element::closed ();
 }
 
 KDE_NO_EXPORT void XSPF::Track::activate () {
@@ -139,29 +142,10 @@ KDE_NO_EXPORT void XSPF::Track::activate () {
             document ()->message (MsgInfoString, &inf);
             break;
         }
-    Mrl::activate ();
-}
-
-KDE_NO_EXPORT Node::PlayType XSPF::Track::playType () {
-    if (location)
-        return location->playType ();
-    return Mrl::playType ();
-}
-
-KDE_NO_EXPORT Mrl * XSPF::Track::linkNode () {
-    if (location)
-        return location->mrl ();
-    return Mrl::linkNode ();
+    Element::activate ();
 }
 
 void XSPF::Location::closed () {
     src = innerText ().stripWhiteSpace ();
     Mrl::closed ();
-}
-
-void *XSPF::Location::role (RoleType msg, void *content)
-{
-    if (RolePlaylist == msg)
-        return NULL;
-    return Mrl::role (msg, content);
 }
