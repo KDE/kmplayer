@@ -23,6 +23,7 @@
 
 #include <qobject.h>
 #include <qstring.h>
+#include <qlist.h>
 #include <qbytearray.h>
 #include <qstringlist.h>
 #include <qregexp.h>
@@ -128,12 +129,14 @@ public slots:
     virtual void quit ();
 protected:
     bool sendCommand (const QString &);
-    QStringList commands;
-    bool m_use_slave : 1;
+    QList<QByteArray> commands;
+    bool m_use_slave;
+    bool m_needs_restarted;
 protected slots:
-    virtual void processStopped (K3Process *);
+    virtual void processStopped ();
 private slots:
     void dataWritten (K3Process *);
+    void processStopped (K3Process *);
 };
 
 /*
@@ -167,8 +170,8 @@ public slots:
     virtual bool contrast (int pos, bool absolute);
     virtual bool brightness (int pos, bool absolute);
     bool ready ();
-protected slots:
-    void processStopped (K3Process *);
+protected:
+    void processStopped ();
 private slots:
     void processOutput (K3Process *, char *, int);
 private:
@@ -187,7 +190,6 @@ private:
     WeakPtr <LangInfo> slanglist_end;
     int aid, sid;
     int old_volume;
-    bool m_needs_restarted;
 };
 
 #ifdef _KMPLAYERCONFIG_H_

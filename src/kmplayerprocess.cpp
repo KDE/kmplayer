@@ -334,7 +334,9 @@ static bool proxyForURL (const KUrl &url, QString &proxy) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT MPlayerBase::MPlayerBase (QObject *parent, ProcessInfo *pinfo, Settings * settings, const char * n)
-    : Process (parent, pinfo, settings, n), m_use_slave (true) {
+    : Process (parent, pinfo, settings, n),
+      m_use_slave (true),
+      m_needs_restarted (false) {
     m_process = new K3Process;
 }
 
@@ -357,10 +359,10 @@ KDE_NO_EXPORT void MPlayerBase::initProcess () {
 
 KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
     if (running () && m_use_slave) {
-        commands.push_front (cmd + '\n');
-        fprintf (stderr, "eval %s", commands.last ().latin1 ());
+        commands.push_front (QString (cmd + '\n').toAscii ());
+        fprintf (stderr, "eval %s", commands.last ().data ());
         if (commands.size () < 2)
-            m_process->writeStdin (QFile::encodeName(commands.last ()),
+            m_process->writeStdin (commands.last ().data(),
                     commands.last ().size ());
         return true;
     }
@@ -385,24 +387,29 @@ KDE_NO_EXPORT void MPlayerBase::quit () {
         m_process->wait(2);
         if (m_process->isRunning ())
             Process::quit ();
-        processStopped (0L);
         commands.clear ();
+        m_needs_restarted = false;
+        processStopped ();
     }
     Process::quit ();
 }
 
 KDE_NO_EXPORT void MPlayerBase::dataWritten (K3Process *) {
     if (!commands.size ()) return;
-    kDebug() << "eval done " << commands.last ();
+    kDebug() << "eval done " << commands.last ().data ();
     commands.pop_back ();
     if (commands.size ())
-        m_process->writeStdin (QFile::encodeName(commands.last ()),
+        m_process->writeStdin (commands.last ().data (),
                              commands.last ().size ());
+}
+
+KDE_NO_EXPORT void MPlayerBase::processStopped () {
 }
 
 KDE_NO_EXPORT void MPlayerBase::processStopped (K3Process *) {
     kDebug() << "process stopped" << endl;
     commands.clear ();
+    processStopped ();
     setState (IProcess::Ready);
 }
 
@@ -428,9 +435,8 @@ KDE_NO_CDTOR_EXPORT
 MPlayer::MPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings)
  : MPlayerBase (parent, pinfo, settings, "mplayer"),
    m_widget (0L),
-   aid (-1), sid (-1),
-   m_needs_restarted (false) {
-}
+   aid (-1), sid (-1)
+{}
 
 KDE_NO_CDTOR_EXPORT MPlayer::~MPlayer () {
     if (m_widget && !m_widget->parent ())
@@ -529,10 +535,10 @@ KDE_NO_EXPORT bool MPlayer::seek (int pos, bool absolute) {
             (absolute && m_source->position () == pos))
         return false;
     if (m_request_seek >= 0 && commands.size () > 1) {
-        QStringList::iterator i = commands.begin ();
-        QStringList::iterator end ( commands.end () );
+        QList<QByteArray>::iterator i = commands.begin ();
+        QList<QByteArray>::iterator end ( commands.end () );
         for (++i; i != end; ++i)
-            if ((*i).startsWith (QString ("seek"))) {
+            if (!strncmp ((*i).data (), "seek", 4)) {
                 i = commands.erase (i);
                 m_request_seek = -1;
                 break;
@@ -889,7 +895,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (K3Process *, char * str, int slen) {
     } while (slen > 0);
 }
 
-KDE_NO_EXPORT void MPlayer::processStopped (K3Process * p) {
+KDE_NO_EXPORT void MPlayer::processStopped () {
     if (mrl ()) {
         QString url;
         if (!m_grab_dir.isEmpty ()) {
@@ -921,13 +927,12 @@ KDE_NO_EXPORT void MPlayer::processStopped (K3Process * p) {
                 m_tmpURL.truncate (0);
             }
         }
-        if (p && m_source && m_needs_restarted) {
+        if (m_source && m_needs_restarted) {
             commands.clear ();
             int pos = m_source->position ();
             play ();
             seek (pos, true);
-        } else
-            MPlayerBase::processStopped (p);
+        }
     }
 }
 
