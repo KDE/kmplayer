@@ -501,8 +501,6 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
         line = textstream.readLine ();
     } while (!line.isNull () && line.stripWhiteSpace ().isEmpty ());
     if (!line.isNull ()) {
-        if (cur_elm->isPlayable ())
-            cur_elm = cur_elm->mrl ()->linkNode ();
         bool pls_groupfound =
             line.startsWith ("[") && line.endsWith ("]") &&
             line.mid (1, line.size () - 2).stripWhiteSpace () == "playlist";

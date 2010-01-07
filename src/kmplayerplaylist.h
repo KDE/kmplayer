@@ -631,10 +631,6 @@ public:
 
     ~Mrl ();
     PlayType playType ();
-    /*
-     * The original node (or this) having the URL, needed for playlist expansion
-     */
-    virtual Mrl * linkNode ();
     virtual Mrl * mrl ();
     QString absolutePath ();
 

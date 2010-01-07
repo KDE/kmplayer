@@ -767,10 +767,6 @@ Node *Mrl::childFromTag (const QString & tag) {
     return NULL;
 }
 
-Mrl * Mrl::linkNode () {
-    return this;
-}
-
 Mrl * Mrl::mrl () {
     return this;
 }
@@ -778,7 +774,7 @@ Mrl * Mrl::mrl () {
 void Mrl::message (MessageType msg, void *content) {
     switch (msg) {
     case MsgMediaReady:
-        linkNode ()->resolved = true;
+        resolved = true;
         if (state == state_deferred) {
             if (isPlayable ()) {
                 setState (state_activated);
@@ -825,8 +821,7 @@ void *Mrl::role (RoleType msg, void *content) {
 }
 
 void Mrl::activate () {
-    resolved |= linkNode ()->resolved;
-    if (!resolved && linkNode () == this && isPlayable ()) {
+    if (!resolved && isPlayable ()) {
         setState (state_deferred);
         media_info = new MediaInfo (this, MediaManager::AudioVideo);
         resolved = media_info->wget (absolutePath ());
@@ -840,11 +835,7 @@ void Mrl::activate () {
 
 void Mrl::begin () {
     kDebug () << nodeName () << src << this;
-    if (linkNode () != this) {
-        linkNode ()->activate ();
-        if (linkNode ()->unfinished ())
-            setState (state_began);
-    } else if (!src.isEmpty ()) {
+    if (!src.isEmpty ()) {
         if (!media_info)
             media_info = new MediaInfo (this, MediaManager::AudioVideo);
         if (!media_info->media)
