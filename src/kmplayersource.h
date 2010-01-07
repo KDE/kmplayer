@@ -166,6 +166,7 @@ public:
     void *role (RoleType msg, void *data=NULL);
 protected:
     Source *m_source;
+    ConnectionList m_KeyListeners;
 };
 
 } // namespace

@@ -66,6 +66,7 @@ public slots:
     void scale (int);
 protected:
     void showEvent (QShowEvent *);
+    void keyPressEvent (QKeyEvent *);
     void mouseMoveEvent (QMouseEvent *);
     void mousePressEvent (QMouseEvent *);
     void mouseDoubleClickEvent (QMouseEvent *);

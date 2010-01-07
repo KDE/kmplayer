@@ -256,6 +256,7 @@ enum MessageType
     MsgEventStopped,
     MsgMediaFinished,
     MsgStateChanged,
+    MsgAccessKey,
     // the above messages are ordered like SMIL timing events
     MsgMediaPrefetch,
     MsgMediaReady,
@@ -326,6 +327,11 @@ struct VirtualVoid {
     virtual ~VirtualVoid () {}
 };
 
+struct KeyLoad : public VirtualVoid {
+    KeyLoad (int ch) : key (ch) {}
+    int key;
+};
+
 struct Connection {
     NodePtrW connectee; // the one that will, when ever, trigger the event
     NodePtrW connecter; // the one that will, when ever, receive the event
@@ -373,7 +379,7 @@ public:
     Connection *link_next;
 public:
     ConnectionList ();
-    ~ConnectionList ();
+    ~ConnectionList () KMPLAYER_EXPORT;
 
     Connection *first () {
         link_next = link_first ? link_first->next : NULL;

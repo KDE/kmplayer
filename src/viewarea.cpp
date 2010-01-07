@@ -1817,6 +1817,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view, bool paint_bg)
     setAcceptDrops (true);
     //new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
+    setFocusPolicy (Qt::ClickFocus);
     kapp->installX11EventFilter (this);
 }
 
@@ -1881,6 +1882,15 @@ void ViewArea::minimalMode () {
 
 KDE_NO_EXPORT void ViewArea::accelActivated () {
     m_view->controlPanel()->fullscreenAction->trigger ();
+}
+
+KDE_NO_EXPORT void ViewArea::keyPressEvent (QKeyEvent *e) {
+    if (surface->node) {
+        QString txt = e->text ();
+        if (!txt.isEmpty ())
+            surface->node->document ()->message (MsgAccessKey,
+                    (void *)(long) txt[0].unicode ());
+    }
 }
 
 KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {

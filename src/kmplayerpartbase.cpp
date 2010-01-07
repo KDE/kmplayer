@@ -877,6 +877,15 @@ void SourceDocument::message (MessageType msg, void *data) {
         return;
     }
 
+    case MsgAccessKey:
+        for (Connection *c = m_KeyListeners.first(); c; c = m_KeyListeners.next ())
+            if (c->payload && c->connecter) {
+                KeyLoad *load = (KeyLoad *) c->payload;
+                if (load->key == (int) (long) data)
+                    post (c->connecter, new Posting (this, MsgAccessKey));
+            }
+        return;
+
     default:
         break;
     }
@@ -897,10 +906,21 @@ void *SourceDocument::role (RoleType msg, void *data) {
     }
 
     case RoleReceivers:
-        if (MsgSurfaceUpdate == (MessageType) (long) data) {
+
+        switch ((MessageType) (long) data) {
+
+        case MsgAccessKey:
+            return &m_KeyListeners;
+
+        case MsgSurfaceUpdate: {
             PartBase *p = m_source->player ();
             if (p->view ())
                 return p->viewWidget ()->viewArea ()->updaters ();
+        }
+        // fall through
+
+        default:
+            break;
         }
         // fall through
 

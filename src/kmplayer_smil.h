@@ -104,6 +104,7 @@ public:
         DurEnd = (int) MsgEventStopped,
         DurMedia = (int)MsgMediaFinished,
         DurStateChanged = (int)MsgStateChanged,
+        DurAccessKey = (int)MsgAccessKey,
         DurTransition,
         DurLastDuration
     };

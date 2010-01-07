@@ -250,9 +250,9 @@ void PlayListView::updateTree (int id, NodePtr root, NodePtr active,
         bool select, bool open) {
     // TODO, if root is same as rootitems->node and treeversion is the same
     // and show all nodes is unchanged then only update the cells
-    QWidget * w = focusWidget ();
-    if (w && w != this)
-        w->clearFocus ();
+    //QWidget * w = focusWidget ();
+    //if (w && w != this)
+    //    w->clearFocus ();
     //setSelected (firstChild (), true);
     RootPlayListItem * ritem = static_cast <RootPlayListItem *> (firstChild ());
     RootPlayListItem * before = 0L;

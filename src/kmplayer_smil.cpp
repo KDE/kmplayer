@@ -364,6 +364,19 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
                         dur = Runtime::DurStateChanged;
                     }
                 }
+            } else if (*q && !strncmp (q, "accesskey", 9)) {
+                int op = vl.indexOf ('(', 9);
+                if (op > -1) {
+                    int cp = vl.indexOf (')', op + 1);
+                    if (cp > -1) {
+                        QString ch = vl.mid (op + 1, cp - op - 1);
+                        if (!ch.isEmpty ()) {
+                            payload = new KeyLoad (ch[0].unicode ());
+                            dur = Runtime::DurAccessKey;
+                            target = n->document ();
+                        }
+                    }
+                }
             } else
                 kWarning () << "setDuration no match " << cval;
             if (!target &&

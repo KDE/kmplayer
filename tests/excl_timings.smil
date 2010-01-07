@@ -102,13 +102,13 @@
                begin="but_pause.activateEvent" end="but_play.activateEvent"/>
       <excl dur="indefinite">
         <animateMotion targetElement="reg_img" from="5,5" to="140,5"
-                       begin="but1.activateEvent" dur="2" fill="freeze"
+                       begin="but1.activateEvent;accesskey(h)" dur="2" fill="freeze"
                        calcMode="spline" keySplines="0 .75 .25 1"/>
         <animateMotion targetElement="reg_img" from="5,5" to="5,180"
-                       begin="reg_but2.activateEvent" dur="2" fill="freeze"
+                       begin="reg_but2.activateEvent;accesskey(v)" dur="2" fill="freeze"
                        calcMode="spline" keySplines="0.75 0 1 0.25"/>
         <animateMotion targetElement="reg_img" from="5,5" to="140,180"
-                       begin="reg_but3.activateEvent" dur="2" fill="freeze"
+                       begin="reg_but3.activateEvent;accesskey(d)" dur="2" fill="freeze"
                        calcMode="spline" keySplines=".5 0 .5 1"/>
       </excl>
     </par>
