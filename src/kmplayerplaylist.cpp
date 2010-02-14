@@ -1019,6 +1019,10 @@ int diffTime (const struct timeval & tv1, const struct timeval & tv2) {
 }
 
 static inline void addTime (struct timeval & tv, int ms) {
+    if (ms >= 1000) {
+        tv.tv_sec += ms / 1000;
+        ms %= 1000;
+    }
     tv.tv_sec += (tv.tv_usec + ms*1000) / 1000000;
     tv.tv_usec = (tv.tv_usec + ms*1000) % 1000000;
 }
