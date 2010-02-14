@@ -1683,6 +1683,7 @@ inline void SimpleSAXParser::TokenInfo::operator delete (void *p) {
 KMPLAYER_EXPORT
 void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
     DocumentBuilder builder (root, set_opener);
+    root->opened ();
     SimpleSAXParser parser (builder);
     if (!firstline.isEmpty ()) {
         QString str (firstline + QChar ('\n'));
@@ -1691,7 +1692,9 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
     }
     if (!in.atEnd ())
         parser.parse (in);
-    for (NodePtr e = root; e; e = e->parentNode ()) {
+    if (root->open) // endTag may have closed it
+        root->closed ();
+    for (NodePtr e = root->parentNode (); e; e = e->parentNode ()) {
         if (e->open)
             break;
         e->closed ();
