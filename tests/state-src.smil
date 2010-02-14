@@ -1,0 +1,29 @@
+<smil xmlns="http://www.w3.org/ns/SMIL" version="3.0" baseProfile="Language">
+  <head>
+    <layout>
+      <root-layout width="400" height="200" backgroundColor="white"/>
+    </layout>
+    <state src="books.xml"/>
+  </head>
+  <body>
+    <par dur="5">
+      <text src="data:,author%3A" left="10" top="10" width="100" height="20"/>
+      <text src="data:,title%3A" left="200" top="10" width="100" height="20"/>
+      <text src="data:,author%3A%20{/books/book[title = &quot;Tom Sawyer&quot;]/author}"
+            left="10" top="40" width="190" height="20"/>
+      <text src="data:,{//book/title[1]}"
+            left="200" top="40" width="190" height="20"/>
+      <text src="data:,{/books/book[title = &quot;Uncle Tom's Cabin&quot;]/author}"
+            left="10" top="70" width="190" height="20"/>
+      <text src="data:,{/books/book[position() = 2]/title}"
+            left="200" top="70" width="190" height="20"/>
+      <text src="data:,{//book[last()]/author}"
+            left="10" top="100" width="190" height="20"/>
+      <text src="data:,{/books/book[last()]/title}"
+            left="200" top="100" width="190" height="20"/>
+      <text src="data:,books%20{number(/books/book)}"
+            left="10" top="160" width="300" height="20"/>
+    </par>
+  </body>
+</smil>
+

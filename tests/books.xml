@@ -1,0 +1,14 @@
+<books>
+  <book price='10p'>
+    <title>Tom Sawyer</title>
+    <author>Mark Twain</author>
+  </book>
+  <book>
+    <title>Uncle Tom's Cabin</title>
+    <author>Harriet Beecher Stowe</author>
+  </book>
+  <book price='5$'>
+    <title>Pygmalion</title>
+    <author>George Bernard Shaw</author>
+  </book>
+</books>
