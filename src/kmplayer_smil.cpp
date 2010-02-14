@@ -100,17 +100,17 @@ KDE_NO_EXPORT bool KMPlayer::parseTime (const QString & vl, int & dur) {
     if (!num.isEmpty ())
         t = sign * num.toDouble (&ok);
     if (ok) {
-        dur = (int) (100 * t);
         for ( ; *p; p++ ) {
             if (*p == 'm') {
-                dur = (int) (t * 60);
+                t *= 60;
                 break;
             } else if (*p == 'h') {
-                dur = (int) (t * 60 * 60);
+                t *= 60 * 60;
                 break;
             } else if (*p != ' ')
                 break;
         }
+        dur = (int) (100 * t);
     } else {
         dur = 0;
         return false;
