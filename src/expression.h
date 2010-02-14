@@ -50,7 +50,7 @@ public:
     virtual void setRoot (Node *root) = 0;
 };
 
-Expression *evaluateExpr (const QString &expr);
+Expression *evaluateExpr (const QString &expr, const QString &root = QString());
 
 }
 

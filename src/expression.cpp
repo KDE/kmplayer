@@ -36,13 +36,15 @@ QString NodeValue::value () const {
 namespace {
 
 struct EvalState {
-    EvalState (EvalState *p)
-     : root (NULL), attr (NULL), process_list (NULL), parent (p),
+    EvalState (EvalState *p, const QString &root_tag=QString())
+     : def_root_tag (root_tag), root (NULL), attr (NULL),
+       process_list (NULL), parent (p),
        sequence (1), ref_count (0) {}
 
     void addRef () { ++ref_count; }
     void removeRef () { if (--ref_count == 0) delete this; }
 
+    QString def_root_tag;
     Node *root;
     Attribute *attr;
     NodeValueList *process_list;
@@ -154,7 +156,7 @@ struct Step : public StringBase {
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Step %c%s",
-                is_attr ? '@' : ' ',string.toAscii ().data ());
+                is_attr ? '@' : ' ',string.toAscii ().constData ());
         AST::dump();
     }
 #endif
@@ -190,7 +192,7 @@ struct StringLiteral : public StringBase {
     virtual Type type () const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
-        fprintf (stderr, "StringLiteral %s", string.toAscii ().data ());
+        fprintf (stderr, "StringLiteral %s", string.toAscii ().constData ());
         AST::dump();
     }
 #endif
@@ -1080,8 +1082,10 @@ static bool parseIdentifier (const char *str, const char **end, AST *ast) {
         return false;
     if (*str == '/')
         ++str;
-    else if (!ast->eval_state->parent)
-        appendASTChild (&ident, new Step (ast->eval_state, "data", NULL));
+    else if (!ast->eval_state->parent &&
+            !ast->eval_state->def_root_tag.isEmpty ())
+        appendASTChild (&ident, new Step (ast->eval_state,
+                  ast->eval_state->def_root_tag.toAscii ().constData (), NULL));
     while (parseStep (str, end, &ident)) {
         str = *end;
         has_any = true;
@@ -1371,11 +1375,11 @@ static bool parseStatement (const char *str, const char **end, AST *ast) {
     return false;
 }
 
-Expression *KMPlayer::evaluateExpr (const QString &expr) {
-    EvalState *eval_state = new EvalState (NULL);
+Expression *KMPlayer::evaluateExpr (const QString &expr, const QString &root) {
+    EvalState *eval_state = new EvalState (NULL, root);
     AST ast (eval_state);
     const char *end;
-    if (parseStatement (expr.toAscii ().data (), &end, &ast)) {
+    if (parseStatement (expr.toAscii ().constData (), &end, &ast)) {
         AST *res = ast.first_child;
 #ifdef KMPLAYER_EXPR_DEBUG
         ast.dump();

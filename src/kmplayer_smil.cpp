@@ -370,7 +370,7 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
                 if (op > -1) {
                     int cp = vl.indexOf (')', op + 1);
                     if (cp > -1) {
-                        payload = evaluateExpr (vl.mid (op + 1, cp - op - 1));
+                        payload = evaluateExpr (vl.mid (op + 1, cp - op - 1), "data");
                         dur = Runtime::DurStateChanged;
                     }
                 }
@@ -431,7 +431,7 @@ void setDurationItems (Node *n, const QString &s, Runtime::DurationItem *item) {
 static bool disabledByExpr (Runtime *rt) {
     bool b = false;
     if (!rt->expr.isEmpty ()) {
-        Expression *res = evaluateExpr (rt->expr);
+        Expression *res = evaluateExpr (rt->expr, "data");
         if (res) {
             SMIL::Smil *smil = SMIL::Smil::findSmilNode (rt->element);
             res->setRoot (smil ? smil->state_node.ptr() : NULL);
@@ -1279,7 +1279,7 @@ SMIL::Smil * SMIL::Smil::findSmilNode (Node * node) {
 }
 
 static QString exprStringValue (Node *node, const QString &str) {
-    Expression *res = evaluateExpr (str);
+    Expression *res = evaluateExpr (str, "data");
     if (res) {
         SMIL::Smil *smil = SMIL::Smil::findSmilNode (node);
         res->setRoot (smil ? smil->state_node.ptr() : NULL);
@@ -4137,7 +4137,7 @@ void SMIL::StateValue::parseParam (const TrieString &para, const QString &val) {
     } else if (para == "ref") {
         delete ref;
         if (state)
-            ref = evaluateExpr (val);
+            ref = evaluateExpr (val, "data");
         else
             ref = NULL;
     } else if (!runtime->parseParam (para, val)) {
