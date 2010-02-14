@@ -33,6 +33,7 @@
 
 #include "kmplayer_def.h"
 #include "kmplayerplaylist.h"
+#include "kmplayersource.h"
 #include "mediaobject.h"
 
 class QWidget;
@@ -226,10 +227,10 @@ private:
 /*
  * Base class for all recorders
  */
-class KMPLAYER_NO_EXPORT RecordDocument : public Document {
+class KMPLAYER_NO_EXPORT RecordDocument : public SourceDocument {
 public:
     RecordDocument (const QString &url, const QString &rurl, const QString &rec,
-                    bool video, PlayListNotify *notify);
+                    Source *source);
 
     virtual void begin ();
     virtual void endOfFile ();
@@ -237,7 +238,6 @@ public:
 
     QString record_file;
     QString recorder;
-    bool has_video;
 };
 
 /*

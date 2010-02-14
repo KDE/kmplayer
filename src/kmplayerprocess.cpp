@@ -294,17 +294,18 @@ View *Process::view () const {
 //-----------------------------------------------------------------------------
 
 RecordDocument::RecordDocument (const QString &url, const QString &rurl,
-        const QString &rec, bool video, PlayListNotify *n)
- : Document (url, n),
+        const QString &rec, Source *src)
+ : SourceDocument (src, url),
    record_file (rurl),
-   recorder (rec),
-   has_video (video) {
+   recorder (rec) {
     id = id_node_record_document;
 }
 
 void RecordDocument::begin () {
-    media_info = new MediaInfo (this, MediaManager::AudioVideo);
-    media_info->create ();
+    if (!media_info) {
+        media_info = new MediaInfo (this, MediaManager::AudioVideo);
+        media_info->create ();
+    }
     media_info->media->play ();
 }
 

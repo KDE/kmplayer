@@ -186,7 +186,6 @@ public:
     QLabel * source;
 protected:
     void showEvent (QShowEvent *);
-    void timerEvent (QTimerEvent *);
 public slots:
     void replayClicked (int id);
     void recorderClicked (int id);
@@ -198,9 +197,7 @@ private:
     RecorderPage *m_recorders;
     QPushButton * recordButton;
     QString source_url;
-    NodePtr record_doc;
     int m_recorders_length;
-    int rec_timer;
 };
 
 class KMPLAYER_NO_EXPORT RecorderPage : public KVBox

@@ -57,6 +57,7 @@
 #include "kmplayerpartbase.h"
 #include "kmplayerview.h"
 #include "playlistview.h"
+#include "kmplayerprocess.h"
 #include "viewarea.h"
 #include "kmplayercontrolpanel.h"
 #include "kmplayerconfig.h"
@@ -108,6 +109,7 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
    m_source (0L),
    m_bookmark_menu (0L),
    m_update_tree_timer (0),
+   m_rec_timer (0),
    m_noresize (false),
    m_auto_controls (true),
    m_bPosSliderPressed (false),
@@ -229,6 +231,8 @@ PartBase::~PartBase () {
     kDebug() << "PartBase::~PartBase";
     m_view = (View*) 0;
     stop ();
+    if (m_record_doc)
+        m_record_doc->document ()->dispose ();
     if (m_source)
         m_source->deactivate ();
     delete m_media_manager;
@@ -505,6 +509,10 @@ void PartBase::timerEvent (QTimerEvent * e) {
     if (e->timerId () == m_update_tree_timer) {
         m_update_tree_timer = 0;
         updateTree (m_update_tree_full, true);
+    } else if (e->timerId () == m_rec_timer) {
+        m_rec_timer = 0;
+        if (m_record_doc)
+            openUrl (convertNode <RecordDocument> (m_record_doc)->record_file);
     }
     killTimer (e->timerId ());
 }
@@ -680,21 +688,41 @@ void PartBase::stopRecording () {
     if (m_view) {
         m_view->controlPanel ()->setRecording (false);
         emit recording (false);
+        if (m_record_doc && m_record_doc->active ()) {
+            m_record_doc->deactivate ();
+            if (m_rec_timer > 0)
+                killTimer (m_rec_timer);
+            if (m_rec_timer)
+                openUrl (convertNode<RecordDocument>(m_record_doc)->record_file);
+            m_rec_timer = 0;
+        }
     }
 }
 
 void PartBase::record () {
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
     if (!m_view->controlPanel()->button(ControlPanel::button_record)->isOn ()) {
-        MediaManager::ProcessList &r = m_media_manager->recorders ();
-        const MediaManager::ProcessList::const_iterator e = r.constEnd ();
-        for (MediaManager::ProcessList::const_iterator i = r.constBegin(); i!=e; ++i)
-            (*i)->quit ();
+        stopRecording ();
     } else {
         m_settings->show  ("RecordPage");
         m_view->controlPanel ()->setRecording (false);
     }
     if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
+}
+
+void PartBase::record (const QString &src, const QString &f, const QString &rec, int auto_start)
+{
+    if (m_record_doc) {
+        if (m_record_doc->active ())
+            m_record_doc->reset ();
+        m_record_doc->document ()->dispose ();
+    }
+    m_record_doc = new RecordDocument (src, f, rec, source ());
+    m_record_doc->activate ();
+    if (auto_start > 0)
+        m_rec_timer = startTimer (auto_start);
+    else
+        m_rec_timer = auto_start;
 }
 
 void PartBase::play () {
@@ -749,6 +777,7 @@ void PartBase::stop () {
             b->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
+    stopRecording ();
     if (m_source)
         m_source->reset ();
     MediaManager::ProcessInfoMap &pi = m_media_manager->processInfos ();

@@ -405,8 +405,7 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent,
  : KVBox (player->view ()),
    m_player (player),
    m_recorders (rl),
-   m_recorders_length (rec_len),
-   rec_timer (0) {
+   m_recorders_length (rec_len) {
     setObjectName ("RecordPage");
     setMargin (5);
     setSpacing (2);
@@ -462,8 +461,6 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent,
 }
 
 PrefRecordPage::~PrefRecordPage () {
-    if (record_doc)
-        record_doc->document ()->dispose ();
 }
 
 KDE_NO_EXPORT void PrefRecordPage::recording (bool on) {
@@ -472,20 +469,8 @@ KDE_NO_EXPORT void PrefRecordPage::recording (bool on) {
             ? i18n ("Stop &Recording")
             : i18n ("Start &Recording"));
     url->setEnabled (!on);
-    if (on) {
+    if (on)
         topLevelWidget ()->hide ();
-    } else if (record_doc && record_doc->active ()) {
-        record_doc->deactivate ();
-        if (replay->selectedId () != Settings::ReplayNo) {
-            if (record_doc)
-                record_doc->deactivate ();
-            if (rec_timer)
-                timerEvent (NULL);
-            else
-                m_player->openUrl (
-                        convertNode <RecordDocument> (record_doc)->record_file);
-        }
-    }
 }
 
 KDE_NO_EXPORT void PrefRecordPage::showEvent (QShowEvent *e) {
@@ -506,13 +491,6 @@ KDE_NO_EXPORT void PrefRecordPage::showEvent (QShowEvent *e) {
         recordButton->setEnabled (nr_recs > 0);
     }
     KVBox::showEvent (e);
-}
-
-KDE_NO_EXPORT void PrefRecordPage::timerEvent (QTimerEvent *) {
-    killTimer (rec_timer);
-    rec_timer = 0;
-    if (record_doc)
-        m_player->openUrl(convertNode<RecordDocument>(record_doc)->record_file);
 }
 
 KDE_NO_EXPORT void PrefRecordPage::recorderClicked (int id) {
@@ -539,24 +517,17 @@ KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
         m_player->settings ()->replayoption = Settings::ReplayOption (replayid);
         for (RecorderPage * p = m_recorders; p; p = p->next)
             if (id-- == 0) {
-                if (record_doc) {
-                    if (record_doc->active ())
-                        record_doc->reset ();
-                    record_doc->document ()->dispose ();
-                }
-                record_doc = new RecordDocument (
-                        source_url,
-                        url->lineEdit()->text(),
-                        p->recorderName (),
-                        !strcmp (p->recorderName (), "xine"), // FIXME
-                        m_player->source ());
-                p->startRecording ();
-                record_doc->activate ();
+                int start_after = 0;
                 if (replay->selectedId () == Settings::ReplayAfter) {
                     double t = replaytime->text ().toDouble ();
                     if (t > 0.01)
-                        rec_timer = startTimer (int (t * 1000));
+                        start_after = (int (t * 1000));
+                } else if (replay->selectedId () != Settings::ReplayNo) {
+                    start_after = -1;
                 }
+                m_player->record (source_url, url->lineEdit()->text(),
+                        p->recorderName (), start_after);
+                p->startRecording ();
                 break;
             }
     }

@@ -135,6 +135,8 @@ public slots:
     virtual void play (void);
     virtual void stop (void);
     void record ();
+    void record (const QString &src, const QString &file,
+                 const QString &recorder, int auto_start);
     void adjustVolume (int incdec);
     bool playing () const;
     void showConfigDialog ();
@@ -199,6 +201,7 @@ protected slots:
     void subtitleSelected (int);
 protected:
     KUrl m_docbase;
+    NodePtr m_record_doc;
     KSharedConfigPtr m_config;
     QPointer <View> m_view;
     QMap <QString, QString> temp_backends;
@@ -210,6 +213,7 @@ protected:
     BookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;
     int m_update_tree_timer;
+    int m_rec_timer;
     bool m_noresize : 1;
     bool m_auto_controls : 1;
     bool m_use_slave : 1;

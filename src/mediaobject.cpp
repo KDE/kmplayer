@@ -155,7 +155,7 @@ MediaObject *MediaManager::createAVMedia (Node *node, const QByteArray &) {
         m_processes.push_back (av->process);
     }
     av->process->user = av;
-    av->setViewer (!rec || rec->has_video
+    av->setViewer (!rec
         ? m_player->viewWidget ()->viewArea ()->createVideoWidget ()
         : NULL);
 
@@ -200,7 +200,6 @@ void MediaManager::stateChange (AudioVideoMedia *media,
             const ProcessList::iterator i = m_recorders.find (media->process);
             if (i != m_recorders.end ())
                 m_player->startRecording ();
-            has_video = static_cast <RecordDocument *> (mrl)->has_video;
         }
         if (has_video) {
             if (m_player->view ()) {
@@ -651,7 +650,10 @@ void MediaInfo::create () {
 KDE_NO_EXPORT void MediaInfo::ready () {
     if (MediaManager::Data != type) {
         create ();
-        node->document()->post (node, new Posting (node, MsgMediaReady));
+        if (id_node_record_document == node->id)
+            node->message (MsgMediaReady);
+        else
+            node->document()->post (node, new Posting (node, MsgMediaReady));
     } else {
         node->message (MsgMediaReady);
     }
