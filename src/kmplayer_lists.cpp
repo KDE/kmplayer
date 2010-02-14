@@ -123,6 +123,7 @@ Recent::Recent (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url)
 KDE_NO_EXPORT void Recent::closed () {
     if (src.isEmpty ())
         src = getAttribute (KMPlayer::StringPool::attr_url);
+    Mrl::closed ();
 }
 
 KDE_NO_EXPORT void Recent::activate () {
@@ -148,6 +149,7 @@ KDE_NO_EXPORT KMPlayer::Node *Group::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void Group::closed () {
     if (title.isEmpty ())
         title = getAttribute (KMPlayer::StringPool::attr_title);
+    Element::closed ();
 }
 
 void *Group::role (KMPlayer::RoleType msg, void *content)
@@ -252,6 +254,7 @@ KDE_NO_EXPORT void PlaylistItemBase::activate () {
 void PlaylistItemBase::closed () {
     if (title.isEmpty ())
         title = getAttribute (KMPlayer::StringPool::attr_title);
+    Mrl::closed ();
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -306,6 +309,7 @@ KDE_NO_EXPORT KMPlayer::Node *PlaylistGroup::childFromTag (const QString &tag) {
 KDE_NO_EXPORT void PlaylistGroup::closed () {
     if (title.isEmpty ())
         title = getAttribute (KMPlayer::StringPool::attr_title);
+    Element::closed ();
 }
 
 KDE_NO_EXPORT void PlaylistGroup::setNodeName (const QString &t) {
