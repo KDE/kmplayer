@@ -65,7 +65,7 @@ struct AST : public Expression {
     virtual int toInt () const;
     virtual float toFloat () const;
     virtual QString toString () const;
-    virtual NodeValueList *toNodeList () const;
+    virtual NodeValueList *toNodeList () const; // uncachable
     virtual Type type () const;
     virtual void setRoot (Node *root);
     void setRoot (Node *root, Attribute *a);
@@ -318,6 +318,17 @@ struct Minus : public NumberBase {
     virtual int toInt () const;
     virtual float toFloat () const;
     virtual Type type () const;
+#ifdef KMPLAYER_EXPR_DEBUG
+    virtual void dump () const;
+#endif
+};
+
+struct Join : public AST {
+    Join (EvalState *ev, AST *children) : AST (ev) {
+        first_child = children;
+    }
+
+    virtual NodeValueList *toNodeList () const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -945,6 +956,27 @@ void Minus::dump () const {
 }
 #endif
 
+NodeValueList *Join::toNodeList () const {
+    if (first_child) {
+        NodeValueList *lst = first_child->toNodeList ();
+        if (first_child->next_sibling) {
+            NodeValueList *l2 = first_child->next_sibling->toNodeList ();
+            lst->splice (NULL, *l2);
+            delete l2;
+        }
+        return lst;
+    }
+    return AST::toNodeList ();
+}
+
+#ifdef KMPLAYER_EXPR_DEBUG
+void Join::dump () const {
+    fprintf (stderr, "| [");
+    AST::dump();
+    fprintf (stderr, " ]");
+}
+#endif
+
 bool Comparison::toBool () const {
     AST::Type t1 = first_child->type ();
     AST::Type t2 = first_child->next_sibling->type ();
@@ -1339,7 +1371,7 @@ static bool parseExpression (const char *str, const char **end, AST *ast) {
         while (true) {
             str = parseSpace (str, end) ? *end : str;
             op = *str;
-            if (op == '+' || op == '-') {
+            if (op == '+' || op == '-' || op == '|') {
                 AST tmp (ast->eval_state);
                 if (parseTerm (str + 1, end, &tmp)) {
                     AST *chlds = releaseLastASTChild (ast);
@@ -1347,7 +1379,9 @@ static bool parseExpression (const char *str, const char **end, AST *ast) {
                     tmp.first_child = NULL;
                     appendASTChild (ast, op == '+'
                             ? (AST *) new Plus (ast->eval_state, chlds)
-                            : (AST *) new Minus (ast->eval_state, chlds));
+                            :  op == '-'
+                                ? (AST *) new Minus (ast->eval_state, chlds)
+                                : (AST *) new Join (ast->eval_state, chlds));
                     str = *end;
                 }
             } else {
