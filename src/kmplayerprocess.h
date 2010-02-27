@@ -350,80 +350,7 @@ public:
 public slots:
     virtual bool ready ();
 };
-/*
- * Base class for backend processes having the KMPlayer::Backend interface
- */
-/*
-class KMPLAYER_EXPORT CallbackProcessInfo
- : public QObject, public ProcessInfo {
-    Q_OBJECT
-public:
-    CallbackProcessInfo (const char *nm, const QString &lbl,
-            const char **supported,MediaManager *, PreferencesPage *);
-    ~CallbackProcessInfo ();
 
-    QString dcopName ();
-    virtual bool startBackend () = 0;
-    virtual void quitProcesses ();
-    void stopBackend ();
-    void backendStarted (QCString dcopname, QByteArray & data);
-
-    KDE_NO_EXPORT bool haveConfig () { return have_config == config_yes; }
-    bool getConfigData ();
-    void setChangedData (const QByteArray &);
-    void changesReceived ();
-
-    QByteArray changed_data;
-    NodePtr config_doc;
-    Backend_stub *backend;
-    Callback *callback;
-    KProcess *m_process;
-
-signals:
-    void configReceived ();
-
-protected slots:
-    void processStopped (KProcess *);
-    void processOutput (KProcess *, char *, int);
-
-protected:
-    void initProcess ();
-    enum { config_unknown, config_probe, config_yes, config_no } have_config;
-    enum { send_no, send_try, send_new } send_config;
-};
-
-class KMPLAYER_EXPORT CallbackProcess : public Process {
-    Q_OBJECT
-    friend class CallbackProcessInfo;
-public:
-    CallbackProcess (QObject *, ProcessInfo *, Settings *, const char * n);
-    ~CallbackProcess ();
-    virtual void setStatusMessage (const QString & msg);
-    virtual void setErrorMessage (int code, const QString & msg);
-    virtual void setFinished ();
-    virtual void setPlaying ();
-    virtual void setMovieParams (int length, int width, int height, float aspect, const QStringList & alang, const QStringList & slang);
-    virtual void setMoviePosition (int position);
-    virtual void setLoadingProgress (int percentage);
-    virtual void setAudioLang (int, const QString &);
-    virtual void setSubtitle (int, const QString &);
-    virtual bool deMediafiedPlay ();
-    virtual bool running () const;
-public slots:
-    void stop ();
-    void quit ();
-    void pause ();
-    bool seek (int pos, bool absolute);
-    bool volume (int pos, bool absolute);
-    bool saturation (int pos, bool absolute);
-    bool hue (int pos, bool absolute);
-    bool contrast (int pos, bool absolute);
-    bool brightness (int pos, bool absolute);
-protected:
-    XMLPreferencesPage * m_configpage;
-    bool in_gui_update;
-};
-*/
 /*
  * Config document as used by kxineplayer backend
  */
@@ -456,58 +383,6 @@ struct KMPLAYER_NO_EXPORT TypeNode : public ConfigNode {
     QString tag;
 };
 
-/*
- * Preference page for XML type of docuement
- */
-/*
-class KMPLAYER_NO_EXPORT XMLPreferencesPage : public PreferencesPage {
-public:
-    XMLPreferencesPage (CallbackProcessInfo *);
-    ~XMLPreferencesPage ();
-    void write (KSharedConfigPtr);
-    void read (KSharedConfigPtr);
-    void sync (bool fromUI);
-    void prefLocation (QString & item, QString & icon, QString & tab);
-    QFrame * prefPage (QWidget * parent);
-private:
-    CallbackProcess *m_process_info;
-    XMLPreferencesFrame * m_configframe;
-};
-*/
-/*
- * Xine backend process
- */
-/*
-class KMPLAYER_NO_EXPORT XineProcessInfo : public CallbackProcessInfo {
-public:
-    XineProcessInfo (MediaManager *);
-    virtual IProcess *create (PartBase*, AudioVideoMedia*);
-
-    virtual bool startBackend ();
-};
-
-class KMPLAYER_NO_EXPORT Xine : public CallbackProcess {
-    Q_OBJECT
-public:
-    Xine (QObject *parent, ProcessInfo*, Settings *settings);
-    ~Xine ();
-public slots:
-    bool ready ();
-};
-*/
-/*
- * GStreamer backend process
- */
-/*
-class KMPLAYER_NO_EXPORT GStreamer : public CallbackProcess {
-    Q_OBJECT
-public:
-    GStreamer (QObject * parent, Settings * settings);
-    ~GStreamer ();
-public slots:
-    virtual bool ready ();
-};
-*/
 /*
  * ffmpeg backend recorder
  */
