@@ -252,6 +252,12 @@ struct CurrentDate : public StringBase {
     virtual QString toString () const;
 };
 
+struct Sort : public AST {
+    Sort (EvalState *ev) : AST (ev) {}
+
+    virtual NodeValueList *toNodeList () const;
+};
+
 struct Multiply : public NumberBase {
     Multiply (EvalState *ev, AST *children) : NumberBase (ev) {
         first_child = children;
@@ -751,6 +757,58 @@ QString CurrentDate::toString () const {
     return string;
 }
 
+static void sortList (NodeValueList *lst, Expression *expr) {
+    NodeValueItem *cur = lst->first ();
+    NodeValueList lt;
+    NodeValueList gt;
+    expr->setRoot (cur->data.node);
+    QString str = expr->toString ();
+    for (NodeValueItem *itm = cur->nextSibling (); itm; ) {
+        NodeValueItem *next = itm->nextSibling ();
+        expr->setRoot (itm->data.node);
+        int cmp = str.compare (expr->toString ());
+        if (cmp < 0) {
+            NodeValueItemPtr s = itm;
+            lst->remove (itm);
+            gt.append (itm);
+        } else if (cmp > 0) {
+            NodeValueItemPtr s = itm;
+            lst->remove (itm);
+            lt.append (itm);
+        }
+        itm = next;
+    }
+    if (lt.first ()) {
+        sortList (&lt, expr);
+        lst->splice (lst->first (), lt);
+    }
+    if (gt.first ()) {
+        sortList (&gt, expr);
+        lst->splice (NULL, gt);
+    }
+}
+
+NodeValueList *Sort::toNodeList () const {
+    if (first_child) {
+        Expression *exp = evaluateExpr (first_child->toString ());
+        if (exp) {
+            exp->setRoot (eval_state->root);
+            NodeValueList *lst = exp->toNodeList ();
+            if (lst->first () && first_child->next_sibling) {
+                Expression *sort_exp =
+                    evaluateExpr (first_child->next_sibling->toString ());
+                if (sort_exp) {
+                    sortList (lst, sort_exp);
+                    delete sort_exp;
+                }
+            }
+            delete exp;
+            return lst;
+        }
+    }
+    return AST::toNodeList ();
+}
+
 #define BIN_OP_TO_INT(NAME,OP)                                           \
     AST *second_child = first_child->next_sibling;                       \
     AST::Type t1 = first_child->type ();                                 \
@@ -1179,6 +1237,8 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                     func = new Number (ast->eval_state);
                 else if (name == "position")
                     func = new Position (ast->eval_state);
+                else if (name == "sort")
+                    func = new Sort (ast->eval_state);
                 else
                     return false;
                 appendASTChild (ast, func);

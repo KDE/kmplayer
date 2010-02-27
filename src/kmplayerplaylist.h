@@ -148,6 +148,7 @@ public:
     T* first () const { return m_first.ptr (); }
     T* last () const { return m_last.ptr (); }
     void append (T *c);
+    void splice (T *pos, List <T> &lst);
     void insertBefore (T *c, T *b);
     void remove (T *c);
     void clear ();
@@ -959,6 +960,26 @@ template <class T> inline void List<T>::append (T *c) {
         m_last->m_next = c->m_self;
         c->m_prev = m_last;
         m_last = c->m_self;
+    }
+}
+
+template <class T> inline void List<T>::splice (T *pos, List <T> &lst) {
+    if (lst.m_first) {
+        if (!pos) {
+            if (!m_first)
+                m_first = lst.m_first;
+            else
+                m_last->m_next = lst.m_first;
+            m_last = lst.m_last;
+        } else {
+            lst.m_last->m_next = pos;
+            if (!pos->m_prev) // pos must be first
+                m_first = lst.m_first;
+            else
+                pos->m_prev->m_next = lst.m_first;
+        }
+        lst.m_first = NULL;
+        lst.m_last = NULL;
     }
 }
 
