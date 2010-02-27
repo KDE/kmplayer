@@ -132,7 +132,7 @@ install(FILES kmplayer.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
 
 if (KMPLAYER_WITH_NPP)
     MESSAGE("build npp")
-    set(knpplayer_SRCS npplayer.c)
+    set(knpplayer_SRCS npplayer.cpp)
 
     add_executable(knpplayer ${knpplayer_SRCS})
 

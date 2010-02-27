@@ -21,11 +21,12 @@
 http://devedge-temp.mozilla.org/library/manuals/2002/plugin/1.0/
 http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
 */
-
+extern "C" {
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <fcntl.h>
@@ -42,7 +43,10 @@ http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
 
 #define XP_UNIX
 #define MOZ_X11
-#include "moz-sdk/npupp.h"
+#include "moz-sdk/npapi.h"
+#include "moz-sdk/npruntime.h"
+#include "moz-sdk/npfunctions.h"
+#include "moz-sdk/prtypes.h"
 
 #define INITIAL_WINDOW_WIDTH 1920
 
@@ -68,6 +72,7 @@ static int top_w, top_h;
 static int update_dimension_timer;
 static int stdin_read_watch;
 
+static NPNetscapeFuncs ns_funcs;
 static NPPluginFuncs np_funcs;       /* plugin functions              */
 static NPP npp;                      /* single instance of the plugin */
 static NPWindow np_window;
@@ -96,12 +101,11 @@ typedef struct _StreamInfo {
     bool called_plugin;
     bool destroyed;
 } StreamInfo;
-struct JsObject;
-typedef struct _JsObject {
+struct JsObject {
     NPObject npobject;
-    struct _JsObject * parent;
+    struct JsObject * parent;
     char * name;
-} JsObject;
+};
 
 static NP_GetMIMEDescriptionUPP npGetMIMEDescription;
 static NP_GetValueUPP npGetValue;
@@ -181,7 +185,6 @@ static gboolean requestStream (void * p) {
         createPath (-1, cb_path, sizeof (cb_path));
         print ("call %s.%s()\n", cb_path, "request_stream");
         if (callback_service) {
-            int i;
             DBusMessageIter it, ait;
             DBusMessage *msg = dbus_message_new_method_call (
                     callback_service,
@@ -250,7 +253,7 @@ static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
                 uint16 stype = NP_NORMAL;
                 NPError err = np_funcs.newstream (npp, si->mimetype
                         ?  si->mimetype
-                        : "text/plain",
+                        : (char *)"text/plain",
                         &si->np_stream, 0, &stype);
                 if (err != NPERR_NO_ERROR) {
                     g_printerr ("newstream error %d\n", err);
@@ -479,12 +482,23 @@ static void nsReloadPlugins (NPBool reloadPages) {
     print ("NPN_ReloadPlugins\n");
 }
 
-static JRIEnv* nsGetJavaEnv () {
+/*static JRIEnv* nsGetJavaEnv () {
+    print ("NPN_GetJavaEnv\n");
+    return NULL;
+}*/
+
+static void *nsGetJavaEnv () {
     print ("NPN_GetJavaEnv\n");
     return NULL;
 }
 
-static jref nsGetJavaPeer (NPP instance) {
+/*static jref nsGetJavaPeer (NPP instance) {
+    (void)instance;
+    print ("NPN_GetJavaPeer\n");
+    return NULL;
+}*/
+
+static void *nsGetJavaPeer (NPP instance) {
     (void)instance;
     print ("NPN_GetJavaPeer\n");
     return NULL;
@@ -517,22 +531,24 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
             print ("NPNVnetscapeWindow\n");
             break;
         case NPNVjavascriptEnabledBool:
-            *(int*)value = 1;
+            *(NPBool*)value = 1;
             break;
         case NPNVasdEnabledBool:
-            *(int*)value = 0;
+            *(NPBool*)value = 0;
             break;
         case NPNVisOfflineBool:
-            *(int*)value = 0;
+            *(NPBool*)value = 0;
             break;
         case NPNVserviceManager:
-            *(int*)value = 0;
+            *(void**)value = NULL;
+            return NPERR_GENERIC_ERROR;
+            /* *(int*)value = 0;*/
             break;
         case NPNVToolkit:
             *(int*)value = NPNVGtk2;
             break;
         case NPNVSupportsXEmbedBool:
-            *(int*)value = 1;
+            *(NPBool*)value = 1;
             break;
         case NPNVWindowNPObject:
             if (!js_window) {
@@ -605,7 +621,7 @@ static bool nsIdentifierIsString (NPIdentifier name) {
 }
 
 static NPUTF8 * nsUTF8FromIdentifier (NPIdentifier name) {
-    char *str = g_tree_lookup (identifiers, name);
+    char *str = (char *)g_tree_lookup (identifiers, name);
     print ("NPN_UTF8FromIdentifier %s\n", str ? str : "not found");
     if (str)
         return strdup (str);
@@ -777,6 +793,72 @@ static bool nsPopPopupsEnabledState (NPP instance) {
     return false;
 }
 
+static bool nsEnumerate (NPP npp, NPObject *obj, NPIdentifier **identifier, uint32_t *count) {
+    (void)npp; (void)obj; (void)identifier; (void)count;
+    print ("NPN_Enumerate\n");
+    return false;
+}
+
+typedef struct _AsyncCall {
+    void (*func)(void *);
+    void *arg;
+} AsyncCall;
+
+static gboolean asyncCall (gpointer data) {
+    AsyncCall *ac = (AsyncCall *) data;
+    print ("NPN_PluginThreadAsyncCall %p\n", ac->func);
+    ac->func (ac->arg);
+    nsMemFree (ac);
+    return FALSE;
+}
+
+static void nsPluginThreadAsyncCall (NPP instance, void (*func)(void *), void *userData) {
+    (void)instance;
+    if (func) {
+        AsyncCall *ac = (AsyncCall *) nsAlloc (sizeof (AsyncCall) );
+        ac->func = func;
+        ac->arg = userData;
+        g_idle_add (asyncCall, ac);
+    }
+}
+
+static bool nsConstruct (NPP npp, NPObject* obj, const NPVariant *args, uint32_t argCount, NPVariant *result) {
+    (void)npp; (void)obj; (void)args; (void)argCount; (void)result;
+    print ("NPN_Construct\n");
+    return FALSE;
+}
+
+static NPError nsGetValueForURL (NPP npp, NPNURLVariable variable, const char *url, char **value, uint32_t *len) {
+    (void)npp; (void)url; (void)value;
+    print ("NPN_GetValueForURL\n");
+    switch (variable) {
+    case NPNURLVCookie:
+    case NPNURLVProxy:
+    default:
+        *value = (char *) nsAlloc (1);
+        (*value)[0] = 0;
+        *len = 0;
+    }
+    return NPERR_NO_ERROR;
+}
+
+static NPError nsSetValueForURL (NPP npp, NPNURLVariable variable, const char *url, const char *value, uint32_t len) {
+    (void)npp; (void)variable; (void)url; (void)value; (void)len;
+    print ("NPN_SetValueForURL\n");
+    return NPERR_NO_ERROR;
+}
+
+static NPError nsGetAuthenticationInfo (NPP npp, const char *protocol, const char *host, int32_t port, const char *scheme, const char *realm, char **username, uint32_t *ulen, char **password, uint32_t *plen) {
+    (void)npp;
+    (void)protocol; (void)host; (void)port; (void)scheme; (void)realm;
+    print ("NPN_GetAuthenticationInfo\n");
+    *username = NULL;
+    *ulen = 0;
+    *password = NULL;
+    *plen = 0;
+    return NPERR_NO_ERROR;
+}
+
 /*----------------%<---------------------------------------------------------*/
 
 static bool doInvoke (uint32_t obj, const char *func, GSList *arglst,
@@ -787,7 +869,7 @@ static bool doInvoke (uint32_t obj, const char *func, GSList *arglst,
 
     *resultstring = NULL;
     if (!obj && npp) { /*TODO NPObject tracking */
-        NPError np_err = np_funcs.getvalue ((void*)npp,
+        NPError np_err = np_funcs.getvalue (npp,
                 NPPVpluginScriptableNPObject, (void*)&npobj);
         if (np_err == NPERR_NO_ERROR && npobj) {
             NPIdentifier method = nsGetStringIdentifier (func);
@@ -832,7 +914,7 @@ static bool doGet (uint32_t obj, const char *prop, char **resultstring) {
 
     *resultstring = NULL;
     if (!obj && npp) { /*TODO NPObject tracking */
-        NPError np_err = np_funcs.getvalue ((void*)npp,
+        NPError np_err = np_funcs.getvalue (npp,
                 NPPVpluginScriptableNPObject, (void*)&npobj);
         if (np_err == NPERR_NO_ERROR && npobj) {
             NPIdentifier identifier = nsGetStringIdentifier (prop);
@@ -1099,7 +1181,6 @@ static void readStdin (gpointer p, gint src, GdkInputCondition cond) {
 }
 
 static int initPlugin (const char *plugin_lib) {
-    NPNetscapeFuncs ns_funcs;
     NPError np_err;
     char *pname;
 
@@ -1174,6 +1255,12 @@ static int initPlugin (const char *plugin_lib) {
     ns_funcs.setexception = nsSetException;
     ns_funcs.pushpopupsenabledstate = nsPushPopupsEnabledState;
     ns_funcs.poppopupsenabledstate = nsPopPopupsEnabledState;
+    ns_funcs.enumerate = nsEnumerate;
+    ns_funcs.pluginthreadasynccall = nsPluginThreadAsyncCall;
+    ns_funcs.construct = nsConstruct;
+    ns_funcs.getvalueforurl = nsGetValueForURL;
+    ns_funcs.setvalueforurl = nsSetValueForURL;
+    ns_funcs.getauthenticationinfo = nsGetAuthenticationInfo;
 
     js_class.structVersion = NP_CLASS_STRUCT_VERSION;
     js_class.allocate = windowClassAllocate;
@@ -1234,18 +1321,18 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     if (np_funcs.getvalue) {
         char *pname;
         void *iid;
-        np_err = np_funcs.getvalue ((void*)npp,
+        np_err = np_funcs.getvalue (npp,
                 NPPVpluginNameString, (void*)&pname);
         if (np_err == NPERR_NO_ERROR)
             print ("plugin name %s\n", pname);
-        np_err = np_funcs.getvalue ((void*)npp,
+        np_err = np_funcs.getvalue (npp,
                 NPPVpluginNeedsXEmbed, (void*)&needs_xembed);
         if (np_err != NPERR_NO_ERROR || !needs_xembed) {
             print ("NPP_GetValue NPPVpluginNeedsXEmbed failure %d\n", np_err);
             shutDownPlugin();
             return -1;
         }
-        np_err = np_funcs.getvalue ((void*)npp,
+        np_err = np_funcs.getvalue (npp,
                 NPPVpluginScriptableIID, (void*)&iid);
     }
     memset (&np_window, 0, sizeof (NPWindow));
@@ -1258,8 +1345,8 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     np_window.type = NPWindowTypeWindow;
     ws_info.type = NP_SETWINDOW;
     screen = DefaultScreen (display);
-    ws_info.display = (void*)(long)display;
-    ws_info.visual = (void*)(long)DefaultVisual (display, screen);
+    ws_info.display = display;
+    ws_info.visual = DefaultVisual (display, screen);
     ws_info.colormap = DefaultColormap (display, screen);
     ws_info.depth = DefaultDepth (display, screen);
     print ("display %u %dx%d\n", socket_id, width, height);
@@ -1305,9 +1392,9 @@ static void defaultReply (DBusConnection *conn, DBusMessage *msg) {
 
 static bool dbusMsgIterGet (DBusMessage *msg, DBusMessageIter *it,
         int arg_type, void *p, bool first) {
-    if ((first && dbus_message_iter_init (msg, it)) ||
-            (!first && dbus_message_iter_has_next (it) &&
-             dbus_message_iter_next (it)) &&
+    if (((first && dbus_message_iter_init (msg, it)) ||
+                (!first && dbus_message_iter_has_next (it) &&
+                 dbus_message_iter_next (it))) &&
             dbus_message_iter_get_arg_type (it) == arg_type) {
         dbus_message_iter_get_basic (it, p);
         return true;
@@ -1321,6 +1408,7 @@ static DBusHandlerResult dbusStreamMessage (DBusConnection *conn,
     const char *iface = "org.kde.kmplayer.backend";
     gpointer stream_id;
     StreamInfo *si;
+    (void)user_data;
 
     print ("dbusStreamMessage %s %s %s\n", dbus_message_get_interface (msg),
             dbus_message_get_member (msg), dbus_message_get_signature (msg));
@@ -1380,10 +1468,12 @@ static DBusHandlerResult dbusStreamMessage (DBusConnection *conn,
 }
 
 static void dbusStreamUnregister (DBusConnection *conn, void *user_data) {
+    (void)conn; (void)user_data;
     print( "dbusStreamUnregister\n");
 }
 
 static void dbusPluginUnregister (DBusConnection *conn, void *user_data) {
+    (void)conn; (void)user_data;
     print( "dbusPluginUnregister\n");
 }
 
@@ -1773,7 +1863,6 @@ static gboolean initPlayer (void * p) {
 
     if (callback_service && callback_path) {
         DBusError dberr;
-        const char *serv = "type='method_call',interface='org.kde.kmplayer.backend'";
         char myname[64];
 
         dbus_error_init (&dberr);
@@ -1841,7 +1930,7 @@ int main (int argc, char **argv) {
         return 1;
     }
 
-    identifiers = g_tree_new (strcmp);
+    identifiers = g_tree_new ((GCompareFunc)strcmp);
     stream_list = g_tree_new (streamCompare);
     stream_vtable.unregister_function = dbusStreamUnregister;
     stream_vtable.message_function = dbusStreamMessage;
@@ -1858,4 +1947,5 @@ int main (int argc, char **argv) {
         dbus_connection_unref (dbus_connection);
 
     return 0;
+}
 }

@@ -133,7 +133,7 @@ typedef struct _NPVariant {
     NPVariantType type;
     union {
         bool boolValue;
-        uint32_t intValue;
+        int32_t intValue;
         double doubleValue;
         NPString stringValue;
         NPObject *objectValue;
@@ -292,6 +292,12 @@ typedef bool (*NPSetPropertyFunctionPtr)(NPObject *npobj, NPIdentifier name,
                                          const NPVariant *value);
 typedef bool (*NPRemovePropertyFunctionPtr)(NPObject *npobj,
                                             NPIdentifier name);
+typedef bool (*NPEnumerationFunctionPtr)(NPObject *npobj, NPIdentifier **value,
+                                         uint32_t *count);
+typedef bool (*NPConstructFunctionPtr)(NPObject *npobj,
+                                       const NPVariant *args,
+                                       uint32_t argCount,
+                                       NPVariant *result);
 
 /*
     NPObjects returned by create, retain, invoke, and getProperty pass
@@ -310,6 +316,11 @@ typedef bool (*NPRemovePropertyFunctionPtr)(NPObject *npobj,
     will typically return immediately, with 0 or NULL, from an attempt
     to dispatch to a NPObject, but this behavior should not be
     depended upon.)
+
+    The NPEnumerationFunctionPtr function may pass an array of
+    NPIdentifiers back to the caller. The callee allocs the memory of
+    the array using NPN_MemAlloc(), and it's the caller's responsibility
+    to release it using NPN_MemFree().
 */
 struct NPClass
 {
@@ -324,9 +335,20 @@ struct NPClass
     NPGetPropertyFunctionPtr getProperty;
     NPSetPropertyFunctionPtr setProperty;
     NPRemovePropertyFunctionPtr removeProperty;
+    NPEnumerationFunctionPtr enumerate;
+    NPConstructFunctionPtr construct;
 };
 
-#define NP_CLASS_STRUCT_VERSION 1
+#define NP_CLASS_STRUCT_VERSION      3
+
+#define NP_CLASS_STRUCT_VERSION_ENUM 2
+#define NP_CLASS_STRUCT_VERSION_CTOR 3
+
+#define NP_CLASS_STRUCT_VERSION_HAS_ENUM(npclass)   \
+        ((npclass)->structVersion >= NP_CLASS_STRUCT_VERSION_ENUM)
+
+#define NP_CLASS_STRUCT_VERSION_HAS_CTOR(npclass)   \
+        ((npclass)->structVersion >= NP_CLASS_STRUCT_VERSION_CTOR)
 
 struct NPObject {
     NPClass *_class;
@@ -381,6 +403,10 @@ bool NPN_SetProperty(NPP npp, NPObject *npobj, NPIdentifier propertyName,
 bool NPN_RemoveProperty(NPP npp, NPObject *npobj, NPIdentifier propertyName);
 bool NPN_HasProperty(NPP npp, NPObject *npobj, NPIdentifier propertyName);
 bool NPN_HasMethod(NPP npp, NPObject *npobj, NPIdentifier methodName);
+bool NPN_Enumerate(NPP npp, NPObject *npobj, NPIdentifier **identifier,
+                   uint32_t *count);
+bool NPN_Construct(NPP npp, NPObject *npobj, const NPVariant *args,
+                   uint32_t argCount, NPVariant *result);
 
 /*
     NPN_SetException may be called to trigger a script exception upon

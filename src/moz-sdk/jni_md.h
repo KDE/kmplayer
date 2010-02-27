@@ -98,20 +98,8 @@
  ******************************************************************************/
 
 /* DLL Entry modifiers... */
-#if defined(XP_OS2)
-#  ifdef XP_OS2_VACPP
-#     define JNI_PUBLIC_API(ResultType)      ResultType _System
-#     define JNI_PUBLIC_VAR(VarType)         VarType
-#     define JNICALL                         _Optlink
-#     define JNIEXPORT
-#  else
-#     define JNI_PUBLIC_API(ResultType)	   ResultType
-#     define JNI_PUBLIC_VAR(VarType)         VarType
-#     define JNICALL
-#     define JNIEXPORT
-#  endif
 /* Win32 */
-#elif defined(XP_WIN) || defined(_WINDOWS) || defined(WIN32) || defined(_WIN32)
+#if defined(XP_WIN) || defined(_WINDOWS) || defined(WIN32) || defined(_WIN32)
 #	include <windows.h>
 #	if defined(_MSC_VER) || defined(__GNUC__)
 #		if defined(WIN32) || defined(_WIN32)
@@ -152,7 +140,27 @@
 #	endif
 	/*  This is the stuff inherited from JavaSoft .. */
 #	define JNIEXPORT __declspec(dllexport)
+#	define JNIIMPORT __declspec(dllimport)
 
+/* OS/2 */
+#elif defined(XP_OS2)
+#	ifdef __declspec
+#		define JNI_PUBLIC_API(ResultType)	__declspec(dllexport) ResultType
+#		define JNI_PUBLIC_VAR(VarType)		VarType
+#		define JNI_NATIVE_STUB(ResultType)	__declspec(dllexport) ResultType
+#		define JNICALL
+#		define JNIEXPORT
+#		define JNIIMPORT
+#	else
+#		define JNI_PUBLIC_API(ResultType)	ResultType
+#		define JNI_PUBLIC_VAR(VarType)		VarType
+#		define JNICALL
+#		define JNIEXPORT
+#		define JNIIMPORT
+#	endif
+#	ifndef IS_LITTLE_ENDIAN
+#		define IS_LITTLE_ENDIAN
+#	endif
 
 /* Mac */
 #elif macintosh || Macintosh || THINK_C
@@ -178,6 +186,7 @@
 #	define JNICALL
 	/*  This is the stuff inherited from JavaSoft .. */
 #	define JNIEXPORT
+#	define JNIIMPORT
 
 /* Unix or else */
 #else
@@ -187,6 +196,7 @@
 #	define JNICALL
 	/*  This is the stuff inherited from JavaSoft .. */
 #	define JNIEXPORT
+#	define JNIIMPORT
 #endif
 
 #ifndef FAR		/* for non-Win16 */
