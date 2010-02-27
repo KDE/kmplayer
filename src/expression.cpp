@@ -240,6 +240,12 @@ struct Concat : public StringBase {
     virtual QString toString () const;
 };
 
+struct StringJoin : public StringBase {
+    StringJoin (EvalState *ev) : StringBase (ev) {}
+
+    virtual QString toString () const;
+};
+
 struct CurrentTime : public StringBase {
     CurrentTime (EvalState *ev) : StringBase (ev) {}
 
@@ -740,6 +746,28 @@ QString Concat::toString () const {
         string.clear ();
         for (AST *child = first_child; child; child = child->next_sibling)
             string += child->toString ();
+    }
+    return string;
+}
+
+QString StringJoin::toString () const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        string.clear ();
+        AST *child = first_child;
+        if (child) {
+            NodeValueList *lst = child->toNodeList ();
+            NodeValueItem *n = lst->first();
+            if (n) {
+                QString sep;
+                if (child->next_sibling)
+                    sep = child->next_sibling->toString ();
+                string = n->data.value ();
+                for (n = n->nextSibling (); n; n = n->nextSibling ())
+                    string += sep + n->data.value ();
+            }
+            delete lst;
+        }
     }
     return string;
 }
@@ -1271,6 +1299,8 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                     func = new Position (ast->eval_state);
                 else if (name == "sort")
                     func = new Sort (ast->eval_state);
+                else if (name == "string-join")
+                    func = new StringJoin (ast->eval_state);
                 else
                     return false;
                 appendASTChild (ast, func);
