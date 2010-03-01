@@ -19,6 +19,7 @@
  */
 #include <math.h>
 #include "config-kmplayer.h"
+#include <unistd.h>
 #include <qstring.h>
 #include <qfile.h>
 #include <qfileinfo.h>
