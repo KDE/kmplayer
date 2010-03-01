@@ -198,6 +198,12 @@ struct StringLiteral : public StringBase {
 #endif
 };
 
+struct Not : public BoolBase {
+    Not (EvalState *ev) : BoolBase (ev) {}
+
+    virtual bool toBool () const;
+};
+
 struct HoursFromTime : public IntegerBase {
     HoursFromTime (EvalState *ev) : IntegerBase (ev) {}
 
@@ -650,6 +656,14 @@ QString StringLiteral::toString () const {
 
 AST::Type StringLiteral::type () const {
     return TString;
+}
+
+bool Not::toBool () const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        b = first_child ? !first_child->toBool () : true;
+    }
+    return b;
 }
 
 int HoursFromTime::toInt () const {
@@ -1293,6 +1307,8 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                     func = new CurrentDate (ast->eval_state);
                 else if (name == "last")
                     func = new Last (ast->eval_state);
+                else if (name == "not")
+                    func = new Not (ast->eval_state);
                 else if (name == "number")
                     func = new Number (ast->eval_state);
                 else if (name == "position")
