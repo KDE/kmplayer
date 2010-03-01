@@ -34,6 +34,7 @@
 #include <qslider.h>
 #include <qfile.h>
 #include <qregexp.h>
+#include <qprocess.h>
 #include <QtDBus/QtDBus>
 
 #include <kmessagebox.h>
@@ -46,7 +47,6 @@
 #include <kconfiggroup.h>
 #include <ksimpleconfig.h>
 #include <kaction.h>
-#include <k3process.h>
 #include <kstandarddirs.h>
 #include <kmimetype.h>
 #include <kprotocolinfo.h>
@@ -120,10 +120,12 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
     QString bmfile = KStandardDirs::locate ("data", "kmplayer/bookmarks.xml");
     QString localbmfile = KStandardDirs::locateLocal ("data", "kmplayer/bookmarks.xml");
     if (localbmfile != bmfile) {
-        kDebug () << "cp " << bmfile << " " << localbmfile;
-        K3Process p;
-        p << "/bin/cp" << QFile::encodeName (bmfile) << QFile::encodeName (localbmfile);
-        p.start (K3Process::Block);
+        QProcess p;
+        QStringList args;
+        args << QFile::encodeName (bmfile) << QFile::encodeName (localbmfile);
+        p.start ("/bin/cp", args);
+        kDebug () << "cp " << args.join (" ");
+        p.waitForFinished ();
     }
     m_bookmark_manager = KBookmarkManager::managerForFile (localbmfile, "kmplayer");
     m_bookmark_owner = new BookmarkOwner (this);

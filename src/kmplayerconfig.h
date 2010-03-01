@@ -136,7 +136,6 @@ public:
     bool showrecordbutton : 1;
     bool showbroadcastbutton : 1;
     bool autohideslider : 1;
-    bool mplayerpost090 : 1;
     bool clicktoplay : 1;
     bool grabhref : 1;
 // postproc thingies

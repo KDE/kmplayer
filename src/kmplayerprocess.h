@@ -27,6 +27,7 @@
 #include <qbytearray.h>
 #include <qstringlist.h>
 #include <qregexp.h>
+#include <qprocess.h>
 
 #include <kurl.h>
 #include <kio/global.h>
@@ -37,7 +38,6 @@
 #include "mediaobject.h"
 
 class QWidget;
-class K3Process;
 class KJob;
 
 namespace KIO {
@@ -74,7 +74,7 @@ public:
     virtual void setAudioLang (int, const QString &);
     virtual void setSubtitle (int, const QString &);
     virtual bool running () const;
-    KDE_NO_EXPORT K3Process * process () const { return m_process; }
+    KDE_NO_EXPORT QProcess * process () const { return m_process; }
     KDE_NO_EXPORT Source * source () const { return m_source; }
     View *view () const;
     WId widget ();
@@ -102,17 +102,20 @@ public slots:
 protected slots:
     void rescheduledStateChanged ();
     void result (KJob *);
+    void processStateChanged (QProcess::ProcessState);
 protected:
     virtual bool deMediafiedPlay ();
     virtual void terminateJobs ();
+    void startProcess (const QString &program, const QStringList &args);
 
     Source * m_source;
     Settings * m_settings;
     State m_old_state;
-    K3Process * m_process;
+    QProcess * m_process;
     KIO::Job * m_job;
     QString m_url;
     int m_request_seek;
+    QProcess::ProcessState m_process_state;
 };
 
 
@@ -131,13 +134,12 @@ public slots:
 protected:
     bool sendCommand (const QString &);
     QList<QByteArray> commands;
-    bool m_use_slave;
     bool m_needs_restarted;
 protected slots:
     virtual void processStopped ();
 private slots:
-    void dataWritten (K3Process *);
-    void processStopped (K3Process *);
+    void dataWritten (qint64);
+    void processStopped (int, QProcess::ExitStatus);
 };
 
 /*
@@ -159,7 +161,6 @@ public:
     virtual bool grabPicture (const QString &file, int pos);
     virtual void setAudioLang (int, const QString &);
     virtual void setSubtitle (int, const QString &);
-    bool run (const char * args, const char * pipe = 0L);
 public slots:
     virtual bool deMediafiedPlay ();
     virtual void stop ();
@@ -174,7 +175,7 @@ public slots:
 protected:
     void processStopped ();
 private slots:
-    void processOutput (K3Process *, char *, int);
+    void processOutput ();
 private:
     QString m_process_output;
     QString m_grab_file;
@@ -294,11 +295,11 @@ public:
     QString m_service;
     QString m_path;
     QString m_slave_service;
-    K3Process *m_slave;
+    QProcess *m_slave;
 
 private slots:
-    void slaveStopped (K3Process *);
-    void slaveOutput (K3Process *, char *, int);
+    void slaveStopped (int, QProcess::ExitStatus);
+    void slaveOutput ();
 
 protected:
     virtual void initSlave ();
@@ -403,7 +404,7 @@ public slots:
     virtual void stop ();
     virtual void quit ();
 private slots:
-    void processStopped (K3Process *);
+    void processStopped (int, QProcess::ExitStatus);
 };
 
 /*
@@ -491,9 +492,9 @@ public slots:
 public slots:
     bool ready ();
 private slots:
-    void processOutput (K3Process *, char *, int);
-    void processStopped (K3Process *);
-    void wroteStdin (K3Process *);
+    void processOutput ();
+    void processStopped (int, QProcess::ExitStatus);
+    void wroteStdin (qint64);
     void streamStateChanged ();
     void streamRedirected (uint32_t, const KUrl &);
 protected:

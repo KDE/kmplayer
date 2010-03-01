@@ -164,7 +164,6 @@ static const char * strAddConfigButton = "Add Configure Button";
 static const char * strAddPlaylistButton = "Add Playlist Button";
 static const char * strAddRecordButton = "Add Record Button";
 static const char * strAddBroadcastButton = "Add Broadcast Button";
-static const char * strPostMPlayer090 = "Post MPlayer 0.90";
 //static const char * strAutoHideSlider = "Auto Hide Slider";
 static const char * strSeekTime = "Forward/Backward Seek Time";
 static const char * strDVDDevice = "DVD Device";
@@ -313,7 +312,6 @@ KDE_NO_EXPORT void Settings::readConfig () {
     framedrop = mplayer.readEntry (strFrameDrop, true);
     autoadjustvolume = mplayer.readEntry (strAdjustVolume, true);
     autoadjustcolors = mplayer.readEntry (strAdjustColors, true);
-    mplayerpost090 = mplayer.readEntry (strPostMPlayer090, true);
     showcnfbutton = mplayer.readEntry (strAddConfigButton, true);
     showrecordbutton = mplayer.readEntry (strAddRecordButton, true);
     showbroadcastbutton = mplayer.readEntry (strAddBroadcastButton, true);
