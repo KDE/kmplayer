@@ -53,6 +53,7 @@
 #include <kauthorized.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
+#include <kauthorized.h>
 
 #include "kmplayerpartbase.h"
 #include "kmplayerview.h"

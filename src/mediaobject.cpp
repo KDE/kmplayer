@@ -34,6 +34,7 @@
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 #include <kmimetype.h>
+#include <kauthorized.h>
 
 #include "mediaobject.h"
 #include "kmplayerpartbase.h"
@@ -429,6 +430,16 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
     }
 
     KUrl kurl (str);
+    for (Node *p = node->parentNode (); p; p = p->parentNode ()) {
+        Mrl *m = p->mrl ();
+        if (m && !m->src.isEmpty () &&
+                m->src != "Playlist://" &&
+                !KAuthorized::authorizeUrlAction ("redirect", m->src, kurl)) {
+            kWarning () << "local acces denied";
+            ready ();
+            return true;
+        }
+    }
     if (kurl.isLocalFile ()) {
         QFile file (kurl.path ());
         if (file.exists ()) {
