@@ -306,6 +306,7 @@ void Process::processStateChanged (QProcess::ProcessState nstate)
             setState (IProcess::NotRunning);
         else if (state () == IProcess::Ready)
             setState (IProcess::Buffering);
+        m_process_state = nstate;
     }
 }
 
@@ -596,7 +597,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
                 args << QString (QFile::encodeName (myurl));
             }
         }
-    fprintf (stderr, " %s\n", args.join (" ").toLocal8Bit ().constData ());
+    qDebug ("mplayer %s\n", args.join (" ").toLocal8Bit ().constData ());
 
     startProcess (exe, args);
 
@@ -1117,7 +1118,7 @@ bool MEncoder::deMediafiedPlay () {
     args << "-o" << QString (QFile::encodeName (
                 out.isLocalFile () ? getPath (out) : out.url ()));
     startProcess (exe, args);
-    fprintf (stderr, "mencoder %s\n", args.join (" ").toLocal8Bit ().constData ());
+    qDebug ("mencoder %s\n", args.join (" ").toLocal8Bit ().constData ());
     if (m_process->waitForStarted ()) {
         setState (Playing);
         return true;
@@ -1184,7 +1185,7 @@ bool MPlayerDumpstream::deMediafiedPlay () {
     args << "-dumpstream" << "-dumpfile" <<
         QString (QFile::encodeName (out.isLocalFile ()
                     ? getPath (out) : out.url ()));
-    fprintf (stderr, "mplayer %s\n", args.join (" ").toLocal8Bit ().constData ());
+    qDebug ("mplayer %s\n", args.join (" ").toLocal8Bit ().constData ());
     startProcess (exe, args);
     if (m_process->waitForStarted ()) {
         setState (Playing);
@@ -1614,7 +1615,7 @@ bool FFMpeg::deMediafiedPlay () {
     }
     args << KShell::splitArgs (m_settings->ffmpegarguments);
     args << QString (QFile::encodeName (outurl));
-    fprintf (stderr, "ffmpeg %s\n", args.join (" ").toLocal8Bit().constData ());
+    qDebug ("ffmpeg %s\n", args.join (" ").toLocal8Bit().constData ());
     // FIXME if (m_player->source () == source) // ugly
     //    m_player->stop ();
     m_process->start (exe, args);
@@ -1840,7 +1841,6 @@ KDE_NO_EXPORT void NpPlayer::initProcess () {
 
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     kDebug() << "NpPlayer::play '" << m_url << "'";
-    qDebug("NpPlayer::play");
     // if we change from XPLAIN to XEMBED, the DestroyNotify may come later
     Mrl *node = mrl ();
     if (!view ())
@@ -1902,7 +1902,7 @@ KDE_NO_EXPORT bool NpPlayer::ready () {
     QStringList args;
     args << "-cb" << (service + path);
     args << "-wid" << QString::number (user->viewer ()->windowHandle ());
-    qDebug ("knpplayer %s", args.join(" ").toLocal8Bit().constData ());
+    //qDebug ("knpplayer %s", args.join(" ").toLocal8Bit().constData ());
     startProcess (exe, args);
     return true;
 }
