@@ -123,7 +123,7 @@ MediaManager::~MediaManager () {
         // bug elsewere, but don't crash
         const MediaList::iterator me = m_media_objects.end ();
         for (MediaList::iterator i = m_media_objects.begin (); i != me; ) {
-            if ((*i)->mrl () &&
+            if (*i && (*i)->mrl () &&
                     (*i)->mrl ()->document ()->active ()) {
                 (*i)->mrl ()->document ()->deactivate ();
                 i = m_media_objects.begin ();
@@ -200,7 +200,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
         if (is_rec) {
             const ProcessList::iterator i = m_recorders.find (media->process);
             if (i != m_recorders.end ())
-                m_player->startRecording ();
+                m_player->recorderPlaying ();
         }
         if (has_video) {
             if (m_player->view ()) {
@@ -229,10 +229,14 @@ void MediaManager::stateChange (AudioVideoMedia *media,
                             (*i)->state () == IProcess::Ready)
                         (*i)->play (); // delayed playing
             }
-            if (AudioVideoMedia::ask_delete == media->request)
+            if (AudioVideoMedia::ask_delete == media->request) {
                 delete media;
-            else if (olds > IProcess::Ready && mrl->unfinished ())
-                mrl->document()->post(mrl, new Posting (mrl, MsgMediaFinished));
+            } else if (olds > IProcess::Ready && mrl->unfinished ()) {
+                if (is_rec)
+                    mrl->message (MsgMediaFinished, NULL); // FIXME
+                else
+                    mrl->document()->post(mrl, new Posting (mrl, MsgMediaFinished));
+            }
         }
     } else if (IProcess::Buffering == news) {
         if (AudioVideoMedia::ask_pause == media->request) {

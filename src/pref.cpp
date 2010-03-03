@@ -506,7 +506,9 @@ KDE_NO_EXPORT void PrefRecordPage::replayClicked (int id) {
 }
 
 KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
-    if (!url->lineEdit()->text().isEmpty()) {
+    if (m_player->isRecording ()) {
+        m_player->stopRecording ();
+    } else if (!url->lineEdit()->text().isEmpty()) {
         m_player->source ()->document ()->reset ();
         kDebug() << "Source resetted" << endl;
         m_player->settings ()->recordfile = url->lineEdit()->text();
@@ -519,9 +521,9 @@ KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
             if (id-- == 0) {
                 int start_after = 0;
                 if (replay->selectedId () == Settings::ReplayAfter) {
-                    double t = replaytime->text ().toDouble ();
-                    if (t > 0.01)
-                        start_after = (int (t * 1000));
+                    int t = replaytime->value ();
+                    if (t > 0)
+                        start_after = 1000 * t;
                 } else if (replay->selectedId () != Settings::ReplayNo) {
                     start_after = -1;
                 }

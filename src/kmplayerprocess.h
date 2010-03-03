@@ -234,7 +234,7 @@ public:
                     Source *source);
 
     virtual void begin ();
-    virtual void endOfFile ();
+    virtual void message (MessageType msg, void *);
     virtual void deactivate ();
 
     QString record_file;

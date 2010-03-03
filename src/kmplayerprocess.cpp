@@ -338,13 +338,19 @@ void RecordDocument::begin () {
     media_info->media->play ();
 }
 
-void RecordDocument::endOfFile () {
-    deactivate ();
+void RecordDocument::message (MessageType msg, void *content) {
+    switch (msg) {
+    case MsgMediaFinished:
+        deactivate ();
+        break;
+    default:
+        SourceDocument::message (msg, content);
+    }
 }
 
 void RecordDocument::deactivate () {
     state = state_deactivated;
-    ((MediaManager *) role (RoleMediaManager))->player ()->stopRecording ();
+    ((MediaManager *) role (RoleMediaManager))->player ()->recorderStopped ();
     Document::deactivate ();
 }
 

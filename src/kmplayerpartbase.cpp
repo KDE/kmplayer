@@ -233,12 +233,13 @@ void PartBase::connectInfoPanel (InfoWindow * infopanel) {
 PartBase::~PartBase () {
     kDebug() << "PartBase::~PartBase";
     m_view = (View*) 0;
+    stopRecording ();
     stop ();
-    if (m_record_doc)
-        m_record_doc->document ()->dispose ();
     if (m_source)
         m_source->deactivate ();
     delete m_media_manager;
+    if (m_record_doc)
+        m_record_doc->document ()->dispose ();
     delete m_settings;
     delete m_bookmark_menu;
     delete m_sources ["urlsource"];
@@ -682,9 +683,16 @@ KDE_NO_EXPORT void PartBase::subtitleSelected (int id) {
     emit subtitleIsSelected (id);
 }
 
-void PartBase::startRecording () {
+void PartBase::recorderPlaying () {
+    stop ();
     m_view->controlPanel ()->setRecording (true);
     emit recording (true);
+}
+
+void PartBase::recorderStopped () {
+    stopRecording ();
+    if (m_view && m_rec_timer < 0 && m_record_doc)
+        openUrl (convertNode <RecordDocument> (m_record_doc)->record_file);
 }
 
 void PartBase::stopRecording () {
@@ -695,11 +703,14 @@ void PartBase::stopRecording () {
             m_record_doc->deactivate ();
             if (m_rec_timer > 0)
                 killTimer (m_rec_timer);
-            if (m_rec_timer)
-                openUrl (convertNode<RecordDocument>(m_record_doc)->record_file);
             m_rec_timer = 0;
         }
     }
+}
+
+bool PartBase::isRecording ()
+{
+    return m_record_doc && m_record_doc->active ();
 }
 
 void PartBase::record () {
@@ -780,7 +791,6 @@ void PartBase::stop () {
             b->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
-    stopRecording ();
     if (m_source)
         m_source->reset ();
     MediaManager::ProcessInfoMap &pi = m_media_manager->processInfos ();

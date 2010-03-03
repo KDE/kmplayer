@@ -124,8 +124,10 @@ public:
     void changeURL (const QString & url);
     void updateTree (bool full=true, bool force=false);
     void setLanguages (const QStringList & alang, const QStringList & slang);
-    void startRecording ();
+    void recorderPlaying ();
+    void recorderStopped ();
     void stopRecording ();
+    bool isRecording ();
 public slots:
     virtual bool openUrl (const KUrl & url);
     virtual bool openUrl (const KUrl::List & urls);
