@@ -1089,16 +1089,16 @@ void Source::setTitle (const QString & title) {
     emit titleChanged (title);
 }
 
-KDE_NO_EXPORT void Source::setAudioLang (int /*id*/) {
-    //View * v = static_cast <View *> (m_player->view());
-    //if (v && m_player->mediaManager ()->processes ().size ())
-    //    m_player->mediaManager ()->processes ().first ()->setAudioLang (id, v->controlPanel ()->audioMenu ()->text (id));
+KDE_NO_EXPORT void Source::setAudioLang (int id) {
+    if (m_player->view () && m_player->mediaManager ()->processes ().size ())
+        m_player->mediaManager ()->processes ().first ()->setAudioLang (id,
+             m_player->viewWidget ()->controlPanel ()->audioMenu->text (id));
 }
 
-KDE_NO_EXPORT void Source::setSubtitle (int /*id*/) {
-    //View * v = static_cast <View *> (m_player->view());
-    //if (v && m_player->mediaManager ()->processes ().size ())
-    //    m_player->mediaManager ()->processes ().first ()->setSubtitle (id, v->controlPanel ()->subtitleMenu ()->text (id));
+KDE_NO_EXPORT void Source::setSubtitle (int id) {
+    if (m_player->view () && m_player->mediaManager ()->processes ().size ())
+        m_player->mediaManager ()->processes ().first ()->setSubtitle (id,
+             m_player->viewWidget ()->controlPanel ()->subtitleMenu->text (id));
 }
 
 void Source::reset () {
