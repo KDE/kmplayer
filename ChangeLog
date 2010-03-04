@@ -1,3 +1,9 @@
+Changes since version 0.11.1b
+- Add pulse and vpau output drivers for MPlayer
+- Fix audio language and sub title selection for MPlayer
+- Port all K3Process to use QProcess
+- Update npp to xulrunner-1.9
+- Begin of SMIL state support, limited implementation of XPath
 Changes since version 0.11.1a
 - Hopefully fix crash reported in bugs.kde.org:195464
 - Implement animateColor

@@ -69,6 +69,7 @@ static OutputDriver _ads[] = {
     { "alsa5", i18n ("Advanced Linux Sound Architecture v0.5") },
     { "alsa9", i18n ("Advanced Linux Sound Architecture v0.9") },
     { "", i18n ("Use back-end defaults") },
+    { "pulse", i18n ("PulseAudio") },
     { 0, QString () }
 };
 
@@ -81,6 +82,7 @@ static OutputDriver _vds [] = {
     { "gl", i18n ("OpenGL") },
     { "gl2", i18n ("OpenGL MT") },
     { "xv", i18n ("XVideo") },
+    { "vdpau", i18n ("Video Decode and Presentation API for Unix") },
     { 0, QString () }
 };
 
