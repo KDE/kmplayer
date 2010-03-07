@@ -148,20 +148,39 @@ static SMIL::RegionBase *findRegion (Node *n, const QString &id) {
     return region;
 }
 
-static SMIL::Transition *findTransition (Node *n, const QString & id) {
-    SMIL::Smil *s = SMIL::Smil::findSmilNode (n);
-    if (s) {
-        Node *head = s->firstChild ();
-        while (head && head->id != SMIL::id_node_head)
-            head = head->nextSibling ();
-        if (head)
-            for (Node *c = head->firstChild (); c; c = c->nextSibling())
-                if (c->id == SMIL::id_node_transition &&
-                        id == static_cast <Element *> (c)->
-                            getAttribute (StringPool::attr_id))
-                    return static_cast <SMIL::Transition *> (c);
-    }
+static Node *findHeadNode (SMIL::Smil *s)
+{
+    for (Node *h = s ? s->firstChild () : NULL; h; h = h->nextSibling ())
+        if (SMIL::id_node_head == h->id)
+            return h;
+    return NULL;
+}
+
+static SMIL::Transition *findTransition (Node *n, const QString &id)
+{
+    Node *head = findHeadNode (SMIL::Smil::findSmilNode (n));
+    if (head)
+        for (Node *c = head->firstChild (); c; c = c->nextSibling())
+            if (c->id == SMIL::id_node_transition &&
+                    id == static_cast <Element *> (c)->
+                    getAttribute (StringPool::attr_id))
+                return static_cast <SMIL::Transition *> (c);
     return 0L;
+}
+
+static NodeValueList *findParamGroup (Node *n, const QString &id)
+{
+    Node *head = findHeadNode (SMIL::Smil::findSmilNode (n));
+    if (head) {
+        Expression *expr = evaluateExpr ("/paramGroup[@id='" + id + "']/param");
+        if (expr) {
+            expr->setRoot (head);
+            NodeValueList *lst = expr->toNodeList ();
+            delete expr;
+            return lst;
+        }
+    }
+    return NULL;
 }
 
 static Node *findLocalNodeById (Node *n, const QString & id) {
@@ -1220,12 +1239,7 @@ KDE_NO_EXPORT void SMIL::Smil::message (MessageType msg, void *content) {
 }
 
 KDE_NO_EXPORT void SMIL::Smil::closed () {
-    Node *head = NULL;
-    for (Node *e = firstChild (); e; e = e->nextSibling ())
-        if (e->id == id_node_head) {
-            head = e;
-            break;
-        }
+    Node *head = findHeadNode (this);
     if (!head) {
         head = new SMIL::Head (m_doc);
         insertBefore (head, firstChild ());
@@ -3151,6 +3165,20 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
         background_color = 0;
         opacity = 100;
         bg_opacity = 100;
+        QString pg = getAttribute ("paramGroup");
+        if (!pg.isEmpty ()) {
+            NodeValueList *lst = findParamGroup (this, pg);
+            if (lst) {
+                for (NodeValueItem *i = lst->first(); i; i = i->nextSibling())
+                    if (i->data.node->isElementNode ()) {
+                        Element *e = static_cast <Element *> (i->data.node);
+                        QString n = e->getAttribute (StringPool::attr_name);
+                        if (!n.isEmpty ())
+                            parseParam (n, e->getAttribute (StringPool::attr_value));
+                    }
+                delete lst;
+            }
+        }
         Mrl::init (); // sets all attributes
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
             if (SMIL::id_node_param == c->id)
@@ -3772,12 +3800,12 @@ KDE_NO_EXPORT void SMIL::TextMediaType::prefetch () {
 
 void
 SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
-    if (name == "fontColor") {
+    if (name == "color" || name == "fontColor") {
         font_color = val.isEmpty () ? 0 : QColor (val).rgb ();
     } else if (name == "fontFace") {
         if (val.lower ().indexOf ("sans" ) < 0)
             font_name = "serif";
-    } else if (name == "fontPtSize") {
+    } else if (name == "font-size" || name == "fontPtSize") {
         font_size = val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
     } else if (name == "fontSize") {
         font_size += val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
