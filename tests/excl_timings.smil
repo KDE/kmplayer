@@ -21,31 +21,24 @@
       </region>
       <region id="reg_paused" left="225" top="225" width="80" height="15"/>
     </layout>
+    <paramGroup id="HVD_text_params">
+      <param name="fontColor" value="yellow"/>
+      <param name="fontSize" value="+1"/>
+      <param name="backgroundColor" value="navy"/>
+    </paramGroup>
   </head>
   <body>
     <par end="but4.activateEvent">
       <text src="data:,Horizontal" id="but1" region="reg_but1" fill="freeze"
-            regPoint="midLeft" regAlign="midLeft">
-        <param name="fontColor" value="yellow"/>
-        <param name="fontSize" value="+1"/>
-        <param name="backgroundColor" value="navy"/>
-      </text>
+            regPoint="midLeft" regAlign="midLeft" paramGroup="HVD_text_params"/>
       <set targetElement="reg_but1" attributeName="background-color" to="red"
            begin="reg_but1.activateEvent" dur="0.1"/>
       <text src="data:,Vertical" id="but2" region="reg_but2" fill="freeze"
-            regPoint="topMid" regAlign="topMid">
-        <param name="fontColor" value="yellow"/>
-        <param name="fontSize" value="+1"/>
-        <param name="backgroundColor" value="navy"/>
-      </text>
+            regPoint="topMid" regAlign="topMid" paramGroup="HVD_text_params"/>
       <set targetElement="reg_but2" attributeName="background-color" to="red"
            begin="reg_but2.activateEvent" dur="0.1"/>
       <text src="data:,Diagonal" id="but3" region="reg_but3" fill="freeze"
-            regPoint="center" regAlign="center">
-        <param name="fontColor" value="yellow"/>
-        <param name="fontSize" value="+1"/>
-        <param name="backgroundColor" value="navy"/>
-      </text>
+            regPoint="center" regAlign="center" paramGroup="HVD_text_params"/>
       <set targetElement="reg_but3" attributeName="background-color" to="red"
            begin="reg_but3.activateEvent" dur="0.1"/>
       <text src="data:,Repeat" id="but_rep" region="reg_text" fill="freeze">
