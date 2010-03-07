@@ -928,12 +928,16 @@ static bool regPoints (const QString & str, Single & x, Single & y) {
 }
 
 KDE_NO_EXPORT
-bool CalculatedSizer::applyRegPoints (Node * node, Single w, Single h,
+bool CalculatedSizer::applyRegPoints (Node * node,
+        CalculatedSizer *region_sizes, Single w, Single h,
         Single & xoff, Single & yoff, Single & w1, Single & h1) {
-    if (reg_point.isEmpty ())
+    QString rp = reg_point;
+    if (rp.isEmpty () && region_sizes)
+        rp = region_sizes->reg_point;
+    if (rp.isEmpty ())
         return false;
     Single rpx, rpy, rax, ray;
-    if (!regPoints (reg_point, rpx, rpy)) {
+    if (!regPoints (rp, rpx, rpy)) {
         node = SMIL::Smil::findSmilNode (node);
         if (!node)
             return false;
@@ -944,10 +948,10 @@ bool CalculatedSizer::applyRegPoints (Node * node, Single w, Single h,
         for (; c; c = c->nextSibling ())
             if (c->id == SMIL::id_node_regpoint &&
                     static_cast<Element*>(c)->getAttribute (StringPool::attr_id)
-                        == reg_point) {
+                        == rp) {
                 Single i1, i2; // dummies
                 SMIL::RegPoint *rp_elm = static_cast <SMIL::RegPoint *> (c);
-                rp_elm->sizes.calcSizes (0L, 100, 100, rpx, rpy, i1, i2);
+                rp_elm->sizes.calcSizes (0L, NULL, 100, 100, rpx, rpy, i1, i2);
                 QString ra = rp_elm->getAttribute ("regAlign");
                 if (!ra.isEmpty () && reg_align.isEmpty ())
                     reg_align = ra;
@@ -956,7 +960,10 @@ bool CalculatedSizer::applyRegPoints (Node * node, Single w, Single h,
         if (!c)
             return false; // not found
     }
-    if (!regPoints (reg_align, rax, ray))
+    QString ra = reg_align;
+    if (ra.isEmpty () && region_sizes)
+        ra = region_sizes->reg_align;
+    if (!regPoints (ra, rax, ray))
         rax = ray = 0; // default back to topLeft
     if (!(int)w1 || !(int)h1) {
         xoff = w * (rpx - rax) / 100;
@@ -970,9 +977,10 @@ bool CalculatedSizer::applyRegPoints (Node * node, Single w, Single h,
     return true; // success getting sizes based on regPoint
 }
 
-KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, Single w, Single h,
+KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node,
+        CalculatedSizer *region_sz, Single w, Single h,
         Single & xoff, Single & yoff, Single & w1, Single & h1) {
-    if (applyRegPoints (node, w, h, xoff, yoff, w1, h1))
+    if (region_sz && applyRegPoints (node, region_sz, w, h, xoff, yoff, w1, h1))
         return;
     if (left.isSet ())
         xoff = left.size (w);
@@ -1027,6 +1035,9 @@ bool CalculatedSizer::setSizeParam(const TrieString &name, const QString &val) {
     } else if (name == "regPoint") {
         reg_point = val;
     } else if (name == "regAlign") {
+        reg_align = val;
+    } else if (name == "mediaAlign") {
+        reg_point = val;
         reg_align = val;
     } else
         return false;
@@ -1858,7 +1869,7 @@ void SMIL::Region::message (MessageType msg, void *content) {
             if (ps) {
                 SSize dim = ps->bounds.size;
                 Single x, y, w, h;
-                sizes.calcSizes (this, dim.width, dim.height, x, y, w, h);
+                sizes.calcSizes (this, NULL, dim.width, dim.height, x, y, w, h);
                 region_surface->resize (SRect (x, y, w, h), !!content);
             }
         }
@@ -3304,7 +3315,7 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
     if (rb && rb->role (RoleDisplay)) {
         SRect rr = rb->region_surface->bounds;
         Single x, y, w = size.width, h = size.height;
-        sizes.calcSizes (this, rr.width(), rr.height(), x, y, w, h);
+        sizes.calcSizes (this, &rb->sizes, rr.width(), rr.height(), x, y, w, h);
         Fit ft = fit_default == fit ? rb->fit : fit;
         ImageMedia *im;
         switch (ft) {

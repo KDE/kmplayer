@@ -69,9 +69,9 @@ public:
     KDE_NO_CDTOR_EXPORT ~CalculatedSizer () {}
 
     void resetSizes ();
-    void calcSizes (Node *, Single w, Single h,
+    void calcSizes (Node *, CalculatedSizer *region_sz, Single w, Single h,
             Single & xoff, Single & yoff, Single & w1, Single & h1);
-    bool applyRegPoints (Node *, Single w, Single h,
+    bool applyRegPoints (Node *, CalculatedSizer *region_sz, Single w, Single h,
             Single & xoff, Single & yoff, Single & w1, Single & h1);
     SizeType left, top, width, height, right, bottom;
     QString reg_point, reg_align;

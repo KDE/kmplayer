@@ -125,7 +125,7 @@ void ImageData::copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar
     if (zoom) {
         cairo_matrix_t mat;
         Single zx, zy, zw, zh;
-        zoom->calcSizes (NULL, width, height, zx, zy, zw, zh);
+        zoom->calcSizes (NULL, NULL, width, height, zx, zy, zw, zh);
         cairo_matrix_init_translate (&mat, zx, zy);
         cairo_matrix_scale (&mat, 1.0 * zw/w, 1.0 * zh/h);
         cairo_pattern_set_matrix (img_pat, &mat);
