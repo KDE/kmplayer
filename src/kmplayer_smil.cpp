@@ -1649,7 +1649,7 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
             show_background = ShowAlways;
         need_repaint = true;
     } else if (name == "backgroundRepeat") {
-        if (val == "norepeat")
+        if (val == "noRepeat")
             bg_repeat = BgNoRepeat;
         else if (val == "repeatX")
             bg_repeat = BgRepeatX;
