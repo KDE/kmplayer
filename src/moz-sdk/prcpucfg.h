@@ -711,8 +711,13 @@
 
 #elif defined(__sh__)
 
+#ifdef __LITTLE_ENDIAN__
 #define IS_LITTLE_ENDIAN 1
 #undef  IS_BIG_ENDIAN
+#else
+#define IS_BIG_ENDIAN 1
+#undef  IS_LITTLE_ENDIAN
+#endif
 
 #define PR_BYTES_PER_BYTE   1
 #define PR_BYTES_PER_SHORT  2
