@@ -178,7 +178,7 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     cairo_surface_t * cairo_surface;
     Matrix matrix;
     // stack vars need for transitions
-    SMIL::MediaType *cur_media;
+    TransitionModule *cur_transition;
     cairo_pattern_t * cur_pat;
     cairo_matrix_t cur_mat;
     SMIL::RegionBase::BackgroundRepeat bg_repeat;
@@ -188,7 +188,8 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
 
     void traverseRegion (Node *reg, Surface *s);
     void updateExternal (SMIL::MediaType *av, SurfacePtr s);
-    void paint(SMIL::MediaType *, Surface *, const IPoint &p, const IRect &);
+    void paint (TransitionModule *trans, MediaOpacity mopacity, Surface *s,
+                const IPoint &p, const IRect &);
     void video (Mrl *mt, Surface *s);
 public:
     cairo_t * cr;
@@ -481,8 +482,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
     }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
-    float perc = trans->start_progress + (trans->end_progress - trans->start_progress)*cur_media->trans_gain;
-    if (cur_media->trans_out_active)
+    float perc = trans->start_progress + (trans->end_progress - trans->start_progress)*cur_transition->trans_gain;
+    if (cur_transition->trans_out_active)
         perc = 1.0 - perc;
     if (SMIL::Transition::Fade == trans->type) {
         CAIRO_SET_PATTERN_COND(cr, cur_pat, cur_mat)
@@ -658,17 +659,18 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
         video (ref, s);
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
+KDE_NO_EXPORT void CairoPaintVisitor::paint (TransitionModule *trans,
+        MediaOpacity mopacity, Surface *s,
         const IPoint &point, const IRect &rect) {
     cairo_save (cr);
     opacity = 1.0;
     cairo_matrix_init_translate (&cur_mat, -point.x, -point.y);
     cur_pat = cairo_pattern_create_for_surface (s->surface);
-    if (mt->active_trans) {
+    if (trans->active_trans) {
         IRect clip_save = clip;
         clip = rect;
-        cur_media = mt;
-        mt->active_trans->accept (this);
+        cur_transition = trans;
+        trans->active_trans->accept (this);
         clip = clip_save;
     } else {
         cairo_pattern_set_extend (cur_pat, CAIRO_EXTEND_NONE);
@@ -677,7 +679,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
         cairo_set_source (cr, cur_pat);
         cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
     }
-    opacity *= mt->opacity / 100.0;
+    opacity *= mopacity.opacity / 100.0;
     bool over = opacity < 0.99 ||
                 CAIRO_CONTENT_COLOR != cairo_surface_get_content (s->surface);
     cairo_operator_t op;
@@ -747,7 +749,7 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
         ext_mrl->accept (&visitor);
         s->dirty = false;
     }
-    paint (av, s.ptr (), scr.point, clip_rect);
+    paint (&av->transition, av->media_opacity, s.ptr (), scr.point, clip_rect);
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
@@ -778,7 +780,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     }
     if (!s->surface || s->dirty)
         id->copyImage (s, SSize (scr.width (), scr.height ()), cairo_surface, img->pan_zoom);
-    paint (img, s, scr.point, clip_rect);
+    paint (&img->transition, img->media_opacity, s, scr.point, clip_rect);
     s->dirty = false;
 }
 
@@ -805,6 +807,30 @@ static void calculateTextDimensions (PangoFontDescription *desc,
     g_object_unref (layout);
     cairo_destroy (cr_txt);
     cairo_surface_destroy (img_surf);
+}
+
+static cairo_t *createContext (cairo_surface_t *similar, Surface *s, int w, int h) {
+    unsigned int bg_alpha = s->background_color & 0xff000000;
+    bool clear = s->surface;
+    if (!s->surface)
+        s->surface = cairo_surface_create_similar (similar,
+                bg_alpha < 0xff000000
+                ? CAIRO_CONTENT_COLOR_ALPHA
+                : CAIRO_CONTENT_COLOR,
+                w, h);
+    cairo_t *cr = cairo_create (s->surface);
+    if (clear)
+        clearSurface (cr, IRect (0, 0, w, h));
+    cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+
+    if (bg_alpha) {
+        if (bg_alpha < 0xff000000)
+            CAIRO_SET_SOURCE_ARGB (cr, s->background_color);
+        else
+            CAIRO_SET_SOURCE_RGB (cr, s->background_color);
+        cairo_paint (cr);
+    }
+    return cr;
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
@@ -837,25 +863,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
             calculateTextDimensions (desc, text.data (),
                     w, 2 * ft_size, &pxw, &pxh, false);
         }
-        unsigned int bg_alpha = s->background_color & 0xff000000;
-        if (!s->surface)
-            s->surface = cairo_surface_create_similar (cairo_surface,
-                    bg_alpha < 0xff000000
-                    ? CAIRO_CONTENT_COLOR_ALPHA
-                    : CAIRO_CONTENT_COLOR,
-                    pxw, pxh);
-        cairo_t *cr_txt = cairo_create (s->surface);
-        if (clear)
-            clearSurface (cr_txt, IRect (0, 0, pxw, pxh));
-        cairo_set_operator (cr_txt, CAIRO_OPERATOR_SOURCE);
-
-        if (bg_alpha) {
-            if (bg_alpha < 0xff000000)
-                CAIRO_SET_SOURCE_ARGB (cr_txt, s->background_color);
-            else
-                CAIRO_SET_SOURCE_RGB (cr_txt, s->background_color);
-            cairo_paint (cr_txt);
-        }
+        cairo_t *cr_txt = createContext (cairo_surface, s, pxw, pxh);
 
         CAIRO_SET_SOURCE_RGB (cr_txt, txt->font_color);
         PangoLayout *layout = pango_cairo_create_layout (cr_txt);
@@ -880,7 +888,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     }
     IRect clip_rect = clip.intersect (scr);
     if (!clip_rect.isEmpty ())
-        paint (txt, s, scr.point, clip_rect);
+        paint (&txt->transition, txt->media_opacity, s, scr.point, clip_rect);
     s->dirty = false;
 }
 
@@ -892,15 +900,15 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
         if (clip_rect.isEmpty ())
             return;
         cairo_save (cr);
-        if (brush->active_trans) {
-            cur_media = brush;
+        if (brush->transition.active_trans) {
+            cur_transition = &brush->transition;
             cur_pat = NULL;
-            brush->active_trans->accept (this);
+            brush->transition.active_trans->accept (this);
         } else {
             cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
                     clip_rect.width (), clip_rect.height ());
         }
-        opacity *= brush->opacity / 100.0;
+        opacity *= brush->media_opacity.opacity / 100.0;
         if (opacity < 0.99) {
             cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
             cairo_set_source_rgba (cr,
@@ -1070,6 +1078,7 @@ void SmilTextVisitor::visit (TextNode *text) {
 void SmilTextVisitor::visit (SMIL::TextFlow *flow) {
     if (flow->firstChild ()) {
         bool new_block = SMIL::id_node_p == flow->id ||
+            SMIL::id_node_br == flow->id ||
             SMIL::id_node_div == flow->id;
         float fs = info.props.font_size;
         if (fs < 0)
@@ -1120,11 +1129,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
 
         info.push ();
         if (info.first) {
-
-            s->surface = cairo_surface_create_similar (cairo_surface,
-                    CAIRO_CONTENT_COLOR_ALPHA, (int) w, info.voffset);
-            cairo_t *cr_txt = cairo_create (s->surface);
-            cairo_set_operator (cr_txt, CAIRO_OPERATOR_SOURCE);
+            cairo_t *cr_txt = createContext (cairo_surface, s, (int) w, info.voffset);
 
             CAIRO_SET_SOURCE_RGB (cr_txt, 0);
             SmilTextBlock *b = info.first;
@@ -1159,22 +1164,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
         }
     }
     IRect clip_rect = clip.intersect (scr);
-    if (!clip_rect.isEmpty ()) {
-        cairo_save (cr);
-        cairo_matrix_init_translate (&cur_mat, -scr.x (), -scr.y ());
-        cairo_pattern_t *pat = cairo_pattern_create_for_surface (s->surface);
-        cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
-        cairo_pattern_set_matrix (pat, &cur_mat);
-        cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);
-        cairo_set_source (cr, pat);
-        cairo_rectangle(cr, clip_rect.x (), clip_rect.y (),
-                clip_rect.width (), clip_rect.height ());
-        cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-        cairo_fill (cr);
-        cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
-        cairo_pattern_destroy (pat);
-        cairo_restore (cr);
-    }
+    if (!clip_rect.isEmpty ())
+        paint (&txt->transition, txt->media_opacity, s, scr.point, clip_rect);
     s->dirty = false;
 }
 

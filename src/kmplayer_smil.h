@@ -193,26 +193,80 @@ bool parseTime (const QString & val, int & dur /*,const QString & dateformat*/);
 
 class KMPLAYER_NO_EXPORT SmilTextProperties {
 public:
+    enum Align { AlignInherit, AlignLeft, AlignCenter, AlignRight };
+    enum FontWeight { WeightNormal, WeightBold, WeightInherit };
+    enum Spacing { SpaceDefault, SpacePreserve };
+    enum Style {
+        StyleNormal, StyleItalic, StyleOblique, StyleRevOblique, StyleInherit
+    };
+    enum TextDirection { DirLtr, DirRtl, DirLtro, DirRtlo, DirInherit };
+    enum TextMode { ModeAppend, ModeReplace, ModeInherit };
+    enum TextPlace { PlaceStart, PlaceCenter, PlaceEnd, PlaceInherit };
+    enum TextWrap { Wrap, NoWrap, WrapInherit };
+    enum TextWriting { WritingLrTb, WritingRlTb, WritingTbLr, WritingTbRl };
+
     void init ();
     bool parseParam (const TrieString &name, const QString &value);
     void mask (const SmilTextProperties &props);
 
     QString font_family;
+    QString text_style;
     int font_color;
     int background_color;
-    enum { DirLtr, DirRtl, DirLtro, DirRtlo, DirInherit } text_direction;
-    int font_size;
-    enum Style {
-        StyleNormal, StyleItalic, StyleOblique, StyleRevOblique, StyleInherit
-    } font_style;
-    enum { WeightNormal, WeightBold, WeightInherit } font_weight;
-    enum { ModeAppend, ModeReplace, ModeInherit } text_mode;
-    enum { PlaceStart, PlaceCenter, PlaceEnd, PlaceInherit } text_place;
-    QString text_style;
-    enum { Wrap, NoWrap, WrapInherit } text_wrap;
-    enum { SpaceDefault, SpacePreserve } space;
-    enum { WritingLrTb, WritingRlTb, WritingTbLr, WritingTbRl } text_writing;
-    enum Align { AlignInherit, AlignLeft, AlignCenter, AlignRight } text_align;
+    unsigned char text_direction;
+    unsigned char font_style;
+    unsigned char font_weight;
+    unsigned char text_mode;
+    unsigned char text_place;
+    unsigned char text_wrap;
+    unsigned char space;
+    unsigned char text_writing;
+    unsigned char text_align;
+    unsigned char padding;
+    short font_size;
+};
+
+class KMPLAYER_NO_EXPORT SmilColorProperty {
+public:
+    void init ();
+    void setColor (const QString &value);
+    void setOpacity (const QString &value);
+
+    unsigned int color;
+    int opacity;
+};
+
+class KMPLAYER_NO_EXPORT MediaOpacity {
+public:
+    void init ();
+
+    unsigned short opacity;
+    unsigned short bg_opacity;
+};
+
+class KMPLAYER_NO_EXPORT TransitionModule {
+public:
+    TransitionModule ()
+     : trans_start_time (0),
+       trans_out_timer (NULL),
+       trans_out_active (false) {}
+
+    void init ();
+    void begin (Node *n, Runtime *r);
+    bool handleMessage (Node *n, Runtime *r, Surface *s, MessageType m, void *);
+    void cancelTimer (Node *n);
+    void finish (Node *n);
+
+    NodePtrW trans_in;
+    NodePtrW trans_out;
+    NodePtrW active_trans;
+    unsigned int trans_start_time;
+    unsigned int trans_end_time;
+    Posting *trans_out_timer;
+    float trans_gain;
+    ConnectionList m_TransformedIn;        // transIn ready
+    ConnectionLink transition_updater;
+    bool trans_out_active;
 };
 
 //-----------------------------------------------------------------------------
@@ -252,6 +306,7 @@ const short id_node_priorityclass = 143;
 const short id_node_div = 144;
 const short id_node_span = 145;
 const short id_node_p = 146;
+const short id_node_br = 147;
 const short id_node_anchor = 150;
 const short id_node_area = 151;
 const short id_node_state_data = 151;
@@ -366,14 +421,15 @@ public:
     CalculatedSizer sizes;
 
     int z_order;
-    unsigned int background_color;
-    int bg_opacity;
+    SmilColorProperty background_color;
+    MediaOpacity media_opacity;
     QString background_image;
     enum BackgroundRepeat {
         BgRepeat, BgRepeatX, BgRepeatY, BgNoRepeat, BgInherit
     } bg_repeat;
     ShowBackground show_background;
     Fit fit;
+    SmilTextProperties font_props;
     ConnectionList m_AttachedMediaTypes;   // active attached mediatypes
 protected:
     RegionBase (NodePtr & d, short id);
@@ -671,24 +727,16 @@ public:
     Runtime *runtime;
     SurfacePtrW sub_surface;
     NodePtrW external_tree; // if src points to playlist, the resolved top node
-    NodePtrW trans_in;
-    NodePtrW trans_out;
-    NodePtrW active_trans;
+    TransitionModule transition;
     NodePtrW region_node;
     QString m_type;
     CalculatedSizer sizes;
     CalculatedSizer *pan_zoom;
     Fit fit;
-    unsigned int background_color;
-    int opacity;
-    int bg_opacity;
+    SmilColorProperty background_color;
+    MediaOpacity media_opacity;
     unsigned int bitrate;
-    unsigned int trans_start_time;
-    unsigned int trans_end_time;
-    float trans_gain;
-    Posting *trans_out_timer;
     enum { sens_opaque, sens_transparent, sens_percentage } sensitivity;
-    bool trans_out_active;
 
 protected:
     virtual void prefetch ();
@@ -697,10 +745,8 @@ protected:
 
     MouseListeners mouse_listeners;
     ConnectionList m_MediaAttached;
-    ConnectionList m_TransformedIn;        // transIn ready
     ConnectionLink region_attach;          // attached to region
     ConnectionLink document_postponed;     // pause audio/video accordantly
-    ConnectionLink transition_updater;
     PostponePtr postpone_lock;
 };
 
@@ -769,6 +815,9 @@ public:
 
     Surface *surface ();
 
+    SmilColorProperty background_color;
+    MediaOpacity media_opacity;
+    TransitionModule transition;
     SmilTextProperties props;
     SurfacePtrW text_surface;
     NodePtrW region_node;

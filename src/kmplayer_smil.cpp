@@ -168,6 +168,26 @@ static SMIL::Transition *findTransition (Node *n, const QString &id)
     return 0L;
 }
 
+static bool parseTransitionParam (Node *n, TransitionModule &m, Runtime *r,
+        const TrieString &para, const QString &val) {
+    if (para == "transIn") {
+        SMIL::Transition *t = findTransition (n, val);
+        if (t) {
+            m.trans_in = t;
+            r->trans_in_dur = t->dur;
+        } else {
+            kWarning() << "Transition " << val << " not found in head";
+        }
+    } else if (para == "transOut") {
+        m.trans_out = findTransition (n, val);
+        if (!m.trans_out)
+            kWarning() << "Transition " << val << " not found in head";
+    } else {
+        return false;
+    }
+    return true;
+}
+
 static NodeValueList *findParamGroup (Node *n, const QString &id)
 {
     Node *head = findHeadNode (SMIL::Smil::findSmilNode (n));
@@ -1182,7 +1202,160 @@ static Element *fromTextFlowGroup (NodePtr &d, const QString &tag) {
         return new SMIL::TextFlow (d, SMIL::id_node_span, tag.toUtf8 ());
     if (!strcmp (taglatin, "p"))
         return new SMIL::TextFlow (d, SMIL::id_node_p, tag.toUtf8 ());
+    if (!strcmp (taglatin, "br"))
+        return new SMIL::TextFlow (d, SMIL::id_node_br, tag.toUtf8 ());
     return NULL;
+}
+
+static unsigned int setRGBA (unsigned int color, int opacity) {
+    int a = ((color >> 24) & 0xff) * opacity / 100;
+    return (a << 24) | (color & 0xffffff);
+}
+
+void SmilColorProperty::init ()
+{
+    color = 0;
+    opacity = 100;
+}
+
+void SmilColorProperty::setColor (const QString &val)
+{
+    if (val.isEmpty ())
+        color = 0;
+    else
+        color = setRGBA (QColor (val).rgba (), opacity);
+}
+
+void SmilColorProperty::setOpacity (const QString &val)
+{
+    opacity = SizeType (val, true).size (100);
+    color = setRGBA (color, opacity);
+}
+
+static bool parseBackgroundParam (SmilColorProperty &p, const TrieString &name, const QString &val)
+{
+    if (name == "background-color" || name == "backgroundColor")
+        p.setColor (val);
+    else if (name == "backgroundOpacity")
+        p.setOpacity (val);
+    else
+        return false;
+    return true;
+}
+
+void MediaOpacity::init () {
+    bg_opacity = opacity = 100;
+}
+
+static bool parseMediaOpacityParam (MediaOpacity &p, const TrieString &name, const QString &val) {
+    if (name == "mediaOpacity")
+        p.opacity = (int) SizeType (val, true).size (100);
+    else if (name == "mediaBackgroundOpacity")
+        p.bg_opacity = (int) SizeType (val, true).size (100);
+    else
+        return false;
+    return true;
+}
+
+void TransitionModule::init () {
+    trans_out_active = false;
+    trans_start_time = 0;
+}
+
+void TransitionModule::cancelTimer (Node *n) {
+    if (trans_out_timer) {
+        n->document ()->cancelPosting (trans_out_timer);
+        trans_out_timer = NULL;
+    }
+}
+
+void TransitionModule::begin (Node *n, Runtime *runtime)
+{
+    SMIL::Transition *trans = convertNode <SMIL::Transition> (trans_in);
+    if (trans && trans->supported ()) {
+        active_trans = trans_in;
+        runtime->timingstate = Runtime::TimingsTransIn;
+        trans_gain = 0.0;
+        transition_updater.connect (n->document (), MsgSurfaceUpdate, n);
+        trans_start_time = n->document ()->last_event_time;
+        trans_end_time = trans_start_time + 10 * trans->dur;
+        if (Runtime::DurTimer == runtime->durTime ().durval &&
+                0 == runtime->durTime ().offset &&
+                Runtime::DurMedia == runtime->endTime ().durval)
+            runtime->durTime ().durval = Runtime::DurTransition;
+    }
+    if (Runtime::DurTimer == runtime->durTime().durval &&
+            runtime->durTime().offset > 0) {
+        // FIXME: also account for fill duration
+        trans = convertNode <SMIL::Transition> (trans_out);
+        if (trans && trans->supported () &&
+                (int) trans->dur < runtime->durTime().offset)
+            trans_out_timer = n->document()->post (n,
+                    new TimerPosting ((runtime->durTime().offset - trans->dur) * 10,
+                        trans_out_timer_id));
+    }
+}
+
+bool TransitionModule::handleMessage (Node *n, Runtime *runtime, Surface *s,
+        MessageType msg, void *content) {
+    switch (msg) {
+    case MsgSurfaceUpdate: {
+        UpdateEvent *ue = static_cast <UpdateEvent *> (content);
+
+        trans_start_time += ue->skipped_time;
+        trans_end_time += ue->skipped_time;
+
+        trans_gain = 1.0 * (ue->cur_event_time - trans_start_time) /
+            (trans_end_time - trans_start_time);
+        if (trans_gain > 0.9999) {
+            transition_updater.disconnect ();
+            if (active_trans == trans_in) {
+                runtime->timingstate = Runtime::timings_started;
+                n->deliver (MsgChildTransformedIn, n);
+            }
+            if (!trans_out_active)
+                active_trans = NULL;
+            trans_gain = 1.0;
+            if (Runtime::DurTransition == runtime->durTime ().durval) {
+                runtime->durTime ().durval = Runtime::DurTimer;
+                runtime->tryFinish ();
+            }
+        }
+        if (s && s->parentNode())
+            s->parentNode()->repaint (s->bounds);
+        return true;
+    }
+
+    case MsgEventTimer: {
+        TimerPosting *te = static_cast <TimerPosting *> (content);
+        if (te->event_id == trans_out_timer_id) {
+            if (active_trans)
+                transition_updater.disconnect ();
+            trans_out_timer = NULL;
+            active_trans = trans_out;
+            SMIL::Transition *trans = convertNode<SMIL::Transition> (trans_out);
+            if (trans) {
+                trans_gain = 0.0;
+                transition_updater.connect (n->document(), MsgSurfaceUpdate, n);
+                trans_start_time = n->document ()->last_event_time;
+                trans_end_time = trans_start_time + 10 * trans->dur;
+                trans_out_active = true;
+                if (s)
+                    s->repaint ();
+            }
+            return true;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    return false;
+}
+
+void TransitionModule::finish (Node *n) {
+    transition_updater.disconnect ();
+    cancelTimer (n);
 }
 
 //-----------------------------------------------------------------------------
@@ -1534,7 +1707,7 @@ KDE_NO_EXPORT void SMIL::Layout::message (MessageType msg, void *content) {
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id),
    media_info (NULL),
-   z_order (0), background_color (0), bg_opacity (100)
+   z_order (0)
 {}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
@@ -1546,7 +1719,8 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
     show_background = ShowAlways;
-    bg_opacity = 100;
+    background_color.init ();
+    media_opacity.init ();
     bg_repeat = BgRepeat;
     fit = fit_default;
     Node *n = parentNode ();
@@ -1554,13 +1728,14 @@ KDE_NO_EXPORT void SMIL::RegionBase::activate () {
         n = n->firstChild ();
     state = state_deferred;
     role (RoleDisplay);
+    font_props.init ();
     init ();
     Element::activate ();
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
     show_background = ShowAlways;
-    background_color = 0;
+    background_color.init ();
     background_image.truncate (0);
     if (media_info) {
         delete media_info;
@@ -1638,11 +1813,6 @@ static void updateSurfaceSort (SMIL::RegionBase *rb) {
     prs->insertBefore (rs, next);
 }
 
-static unsigned int setRGBA (unsigned int color, int opacity) {
-    int a = ((color >> 24) & 0xff) * opacity / 100;
-    return (a << 24) | (color & 0xffffff);
-}
-
 KDE_NO_EXPORT
 void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
     bool need_repaint = false;
@@ -1651,14 +1821,8 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
         if (region_surface)
             region_surface->scroll = fit_scroll == fit;
         need_repaint = true;
-    } else if (name == "background-color" || name == "backgroundColor") {
-        if (val.isEmpty ())
-            background_color = 0;
-        else
-            background_color = setRGBA (QColor (val).rgba (), bg_opacity);
-    } else if (name == "backgroundOpacity") {
-        bg_opacity = SizeType (val, true).size (100);
-        background_color = setRGBA (background_color, bg_opacity);
+    } else if (parseBackgroundParam (background_color, name, val) ||
+            parseMediaOpacityParam (media_opacity, name, val)) {
     } else if (name == "z-index") {
         z_order = val.toInt ();
         if (region_surface)
@@ -1706,11 +1870,13 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
                 media_info->wget (url);
             }
         }
+    } else {
+        font_props.parseParam (name, val);
     }
     if (active ()) {
         Surface *s = (Surface *) role (RoleDisplay);
-        if (s && s->background_color != background_color){
-            s->setBackgroundColor (background_color);
+        if (s && s->background_color != background_color.color){
+            s->setBackgroundColor (background_color.color);
             need_repaint = true;
         }
         if (need_repaint && s)
@@ -1906,7 +2072,7 @@ void *SMIL::Region::role (RoleType msg, void *content) {
             Surface *s = (Surface *) n->role (RoleDisplay);
             if (s) {
                 region_surface = s->createSurface (this, SRect ());
-                region_surface->background_color = background_color;
+                region_surface->background_color = background_color.color;
                 updateSurfaceSort (this);
             }
         }
@@ -2641,8 +2807,8 @@ public:
         }
 
         Posting *event = NULL;
-        if (mt->trans_out_timer)
-            event = mt->trans_out_timer;
+        if (mt->transition.trans_out_timer)
+            event = mt->transition.trans_out_timer;
         updatePauseStateEvent (event, mt->runtime->paused_time);
 
         visit (static_cast <Element *> (mt));
@@ -3042,10 +3208,7 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
    m_type (t),
    pan_zoom (NULL),
    bitrate (0),
-   trans_start_time (0),
-   trans_out_timer (NULL),
-   sensitivity (sens_opaque),
-   trans_out_active (false) {
+   sensitivity (sens_opaque) {
     view_mode = Mrl::WindowMode;
 }
 
@@ -3116,28 +3279,11 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
         pan_zoom->top = coords[1];
         pan_zoom->width = coords[2];
         pan_zoom->height = coords[3];
-    } else if (para == "backgroundColor" || para == "background-color") {
-        background_color = val.isEmpty () ? 0 : QColor (val).rgba ();
-        background_color = setRGBA (background_color, bg_opacity);
-    } else if (para == "mediaOpacity") {
-        opacity = (int) SizeType (val, true).size (100);
-    } else if (para == "mediaBackgroundOpacity" || para == "backgroundOpacity"){
-        bg_opacity = (int) SizeType (val, true).size (100);
-        background_color = setRGBA (background_color, bg_opacity);
+    } else if (parseBackgroundParam (background_color, para, val) ||
+            parseMediaOpacityParam (media_opacity, para, val)) {
     } else if (para == "system-bitrate") {
         bitrate = val.toInt ();
-    } else if (para == "transIn") {
-        Transition *t = findTransition (this, val);
-        if (t) {
-            trans_in = t;
-            runtime->trans_in_dur = t->dur;
-        } else {
-            kWarning() << "Transition " << val << " not found in head";
-        }
-    } else if (para == "transOut") {
-        trans_out = findTransition (this, val);
-        if (!trans_out)
-            kWarning() << "Transition " << val << " not found in head";
+    } else if (parseTransitionParam (this, transition, runtime, para, val)) {
     } else if (para == "sensitivity") {
         if (val == "transparent")
             sensitivity = sens_transparent;
@@ -3152,19 +3298,17 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
     }
     if (sub_surface) {
         sub_surface->markDirty ();
-        sub_surface->setBackgroundColor (background_color);
+        sub_surface->setBackgroundColor (background_color.color);
         sub_surface->repaint ();
     }
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::init () {
     if (Runtime::TimingsInitialized > runtime->timingstate) {
-        trans_out_active = false;
-        trans_start_time = 0;
         fit = fit_default;
-        background_color = 0;
-        opacity = 100;
-        bg_opacity = 100;
+        background_color.init ();
+        media_opacity.init ();
+        transition.init ();
         QString pg = getAttribute ("paramGroup");
         if (!pg.isEmpty ()) {
             NodeValueList *lst = findParamGroup (this, pg);
@@ -3207,11 +3351,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     region_attach.disconnect ();
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
-    transition_updater.disconnect ();
-    if (trans_out_timer) {
-        document ()->cancelPosting (trans_out_timer);
-        trans_out_timer = NULL;
-    }
+    transition.finish (this);
     if (unfinished ())
         finish ();
     runtime->init ();
@@ -3258,10 +3398,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
     }
 
     SMIL::RegionBase *r = findRegion (this, param (StringPool::attr_region));
-    if (trans_out_timer) { // eg transOut and we're repeating
-        document ()->cancelPosting (trans_out_timer);
-        trans_out_timer = NULL;
-    }
+    transition.cancelTimer (this); // eg transOut and we're repeating
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (SMIL::id_node_param != c->id && c != external_tree)
             c->activate (); // activate set/animate.. children
@@ -3270,29 +3407,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         region_attach.connect (r, MsgSurfaceAttach, this);
         r->repaint ();
         clipStart ();
-        Transition * trans = convertNode <Transition> (trans_in);
-        if (trans && trans->supported ()) {
-            active_trans = trans_in;
-            runtime->timingstate = Runtime::TimingsTransIn;
-            trans_gain = 0.0;
-            transition_updater.connect (m_doc, MsgSurfaceUpdate, this);
-            trans_start_time = document ()->last_event_time;
-            trans_end_time = trans_start_time + 10 * trans->dur;
-            if (Runtime::DurTimer == runtime->durTime ().durval &&
-                    0 == runtime->durTime ().offset &&
-                    Runtime::DurMedia == runtime->endTime ().durval)
-                runtime->durTime ().durval = Runtime::DurTransition;
-        }
-        if (Runtime::DurTimer == runtime->durTime().durval &&
-                runtime->durTime().offset > 0) {
-            // FIXME: also account for fill duration
-            trans = convertNode <Transition> (trans_out);
-            if (trans && trans->supported () &&
-                    (int) trans->dur < runtime->durTime().offset)
-                trans_out_timer = document()->post (this,
-                        new TimerPosting ((runtime->durTime().offset - trans->dur) * 10,
-                        trans_out_timer_id));
-        }
+        transition.begin (this, runtime);
     } else {
         kWarning () << nodeName() << "::begin " << src << " region '" <<
             param (StringPool::attr_region) << "' not found" << endl;
@@ -3323,7 +3438,7 @@ KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::finish () {
-    transition_updater.disconnect ();
+    transition.transition_updater.disconnect ();
     if (media_info && media_info->media)
         media_info->media->pause ();
 
@@ -3416,61 +3531,10 @@ void SMIL::MediaType::message (MessageType msg, void *content) {
             return;
         }
 
-        case MsgSurfaceUpdate: {
-            UpdateEvent *ue = static_cast <UpdateEvent *> (content);
-
-            trans_start_time += ue->skipped_time;
-            trans_end_time += ue->skipped_time;
-
-            trans_gain = 1.0 * (ue->cur_event_time - trans_start_time) /
-                               (trans_end_time - trans_start_time);
-            if (trans_gain > 0.9999) {
-                transition_updater.disconnect ();
-                if (active_trans == trans_in) {
-                    runtime->timingstate = Runtime::timings_started;
-                    deliver (MsgChildTransformedIn, this);
-                }
-                if (!trans_out_active)
-                    active_trans = NULL;
-                trans_gain = 1.0;
-                if (Runtime::DurTransition == runtime->durTime ().durval) {
-                    runtime->durTime ().durval = Runtime::DurTimer;
-                    runtime->tryFinish ();
-                }
-            }
-            Surface *s = surface ();
-            if (s && s->parentNode())
-                s->parentNode()->repaint (s->bounds);
-            return;
-        }
-
         case MsgSurfaceBoundsUpdate:
             if (sub_surface)
                 sub_surface->resize (calculateBounds (), !!content);
             return;
-
-        case MsgEventTimer: {
-            TimerPosting *te = static_cast <TimerPosting *> (content);
-            if (te->event_id == trans_out_timer_id) {
-                if (active_trans)
-                    transition_updater.disconnect ();
-                trans_out_timer = NULL;
-                active_trans = trans_out;
-                Transition * trans = convertNode <Transition> (trans_out);
-                if (trans) {
-                    trans_gain = 0.0;
-                    transition_updater.connect (m_doc, MsgSurfaceUpdate, this);
-                    trans_start_time = document ()->last_event_time;
-                    trans_end_time = trans_start_time + 10 * trans->dur;
-                    trans_out_active = true;
-                    Surface *s = surface ();
-                    if (s)
-                        s->repaint ();
-                }
-                return;
-            }
-            break;
-        }
 
         case MsgStateFreeze:
             clipStop ();
@@ -3540,10 +3604,12 @@ void SMIL::MediaType::message (MessageType msg, void *content) {
         default:
             break;
     }
-    if ((int) msg >= (int) Runtime::DurLastDuration)
-        Mrl::message (msg, content);
-    else
-        runtime->message (msg, content);
+    if (!transition.handleMessage (this, runtime, surface (), msg, content)) {
+        if ((int) msg >= (int) Runtime::DurLastDuration)
+            Mrl::message (msg, content);
+        else
+            runtime->message (msg, content);
+    }
 }
 
 void *SMIL::MediaType::role (RoleType msg, void *content) {
@@ -3583,7 +3649,7 @@ void *SMIL::MediaType::role (RoleType msg, void *content) {
         if (MsgSurfaceAttach == m)
             return &m_MediaAttached;
         if (MsgChildTransformedIn == m)
-            return &m_TransformedIn;
+            return &transition.m_TransformedIn;
     } // fall through
 
     default:
@@ -3605,7 +3671,7 @@ Surface *SMIL::MediaType::surface () {
         Surface *rs = (Surface *) region_node->role (RoleDisplay);
         if (rs) {
             sub_surface = rs->createSurface (this, SRect ());
-            sub_surface->setBackgroundColor (background_color);
+            sub_surface->setBackgroundColor (background_color.color);
             message (MsgSurfaceBoundsUpdate);
         }
     }
@@ -3866,13 +3932,25 @@ KDE_NO_CDTOR_EXPORT SMIL::SmilText::~SmilText () {
 
 void SMIL::SmilText::init () {
     if (Runtime::TimingsInitialized > runtime->timingstate) {
+        background_color.init ();
+        transition.init ();
         props.init ();
+        RegionBase *rb = static_cast<SMIL::RegionBase *> (region_node.ptr ());
+        if (rb) {
+            props.mask (rb->font_props);
+            media_opacity = rb->media_opacity;
+        } else {
+            media_opacity.init ();
+        }
         Element::init ();
         runtime->initialize ();
     }
 }
 
 void SMIL::SmilText::activate () {
+    SMIL::RegionBase *r = findRegion (this, param (StringPool::attr_region));
+    if (r)
+        region_node = r;
     init (); // sets all attributes
     setState (state_activated);
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
@@ -3881,21 +3959,24 @@ void SMIL::SmilText::activate () {
 }
 
 void SMIL::SmilText::begin () {
-    SMIL::RegionBase *r = findRegion (this, param (StringPool::attr_region));
-    if (r) {
-        region_node = r;
-        region_attach.connect (r, MsgSurfaceAttach, this);
-        r->repaint ();
+    RegionBase *rb = static_cast<SMIL::RegionBase *> (region_node.ptr ());
+    transition.cancelTimer (this); // eg transOut and we're repeating
+    if (rb) {
+        region_attach.connect (rb, MsgSurfaceAttach, this);
+        rb->repaint ();
+        transition.begin (this, runtime);
     }
     Element::begin ();
 
 }
 
 void SMIL::SmilText::finish () {
+    transition.transition_updater.disconnect ();
     runtime->finish ();
 }
 
 void SMIL::SmilText::deactivate () {
+    transition.finish (this);
     region_attach.disconnect ();
     if (text_surface) {
         text_surface->repaint ();
@@ -3920,7 +4001,10 @@ Node *SMIL::SmilText::childFromTag (const QString &tag) {
 
 void SMIL::SmilText::parseParam (const TrieString &name, const QString &value) {
     if (!props.parseParam (name, value) &&
-            !runtime->parseParam (name, value)) {
+            !runtime->parseParam (name, value) &&
+            !parseBackgroundParam (background_color, name, value) &&
+            !parseMediaOpacityParam (media_opacity, name, value) &&
+            !parseTransitionParam (this, transition, runtime, name, value)) {
         Element::parseParam (name, value);
     }
 }
@@ -3947,10 +4031,12 @@ void SMIL::SmilText::message (MessageType msg, void *content) {
         default:
             break;
     }
-    if ((int) msg >= (int) Runtime::DurLastDuration)
-        Element::message (msg, content);
-    else
-        runtime->message (msg, content);
+    if (!transition.handleMessage (this, runtime, surface (), msg, content)) {
+        if ((int) msg >= (int) Runtime::DurLastDuration)
+            Element::message (msg, content);
+        else
+            runtime->message (msg, content);
+    }
 }
 
 void *SMIL::SmilText::role (RoleType msg, void *content) {
@@ -3969,6 +4055,8 @@ void *SMIL::SmilText::role (RoleType msg, void *content) {
             return l;
         if (MsgSurfaceAttach == msgt)
             return &media_attached;
+        if (MsgChildTransformedIn == msgt)
+            return &transition.m_TransformedIn;
     } // fall through
 
     default:
@@ -3997,6 +4085,7 @@ Surface *SMIL::SmilText::surface () {
             else if (!text_surface->surface)
                 text_surface->bounds = SRect (0, 0, b.width (), b.height ());
 #endif
+            text_surface->setBackgroundColor (background_color.color);
         }
     }
     return text_surface.ptr ();
@@ -4124,6 +4213,7 @@ void SMIL::TextFlow::parseParam(const TrieString &name, const QString &val) {
     if (!props.parseParam (name, val))
         Element::parseParam (name, val);
 }
+
 
 //-----------------------------------------------------------------------------
 
