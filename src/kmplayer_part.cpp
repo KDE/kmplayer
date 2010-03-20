@@ -672,6 +672,9 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
             mrl->opener = n;
             mrl->setAttributes (convertNode <Element> (doc)->attributes ());
             n->closed ();
+            NodePtr im = doc->document ()->getElementById ("image1");
+            if (im)
+                im->mrl ()->access_granted = true;
         }
         doc->document ()->resolved = true;
         if (m_source)
