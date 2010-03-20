@@ -1434,6 +1434,8 @@ void URLSource::play (Mrl *mrl) {
 }
 
 void URLSource::deactivate () {
+    if (!activated)
+        return;
     activated = false;
     reset ();
     if (m_document) {
