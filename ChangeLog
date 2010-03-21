@@ -1,3 +1,11 @@
+Changes since version 0.11.2
+- Add 'escape-uri' and 'contains' expression functions, support for '.' node
+- Fix slider hiding when mplayer starts and no length available
+- TV device scanner fix, recognize v4l2 inputs and fix detection when done
+- Fix opening multiple files on commandline
+- smilText improvements, support transition and background attributes
+- Fix load-on-demand icon not shown for plugin
+- SMIL support for paramGroup and mediaAlign attributes
 Changes since version 0.11.1b
 - Add pulse and vpau output drivers for MPlayer
 - Fix audio language and sub title selection for MPlayer
