@@ -873,7 +873,7 @@ void Mrl::deactivate () {
 }
 
 void Mrl::parseParam (const TrieString & para, const QString & val) {
-    if (para == StringPool::attr_src && !src.startsWith ("#")) {
+    if (para == Ids::attr_src && !src.startsWith ("#")) {
         QString abs = absolutePath ();
         if (abs != src)
             src = val;
@@ -949,7 +949,7 @@ static Node *getElementByIdImpl (Node *n, const QString & id, bool inter) {
     if (!n->isElementNode ())
         return NULL;
     Element *e = static_cast <Element *> (n);
-    if (e->getAttribute (StringPool::attr_id) == id)
+    if (e->getAttribute (Ids::attr_id) == id)
         return n;
     for (Node *c = e->firstChild (); c; c = c->nextSibling ()) {
         if (!inter && c->mrl () && c->mrl ()->opener.ptr () == n)
@@ -1333,13 +1333,13 @@ GenericURL::GenericURL (NodePtr & d, const QString & s, const QString & name)
  : Mrl (d, id_node_playlist_item) {
     src = s;
     if (!src.isEmpty ())
-        setAttribute (StringPool::attr_src, src);
+        setAttribute (Ids::attr_src, src);
     title = name;
 }
 
 KDE_NO_EXPORT void GenericURL::closed () {
     if (src.isEmpty ())
-        src = getAttribute (StringPool::attr_src);
+        src = getAttribute (Ids::attr_src);
     Mrl::closed ();
 }
 
@@ -1349,20 +1349,20 @@ GenericMrl::GenericMrl (NodePtr & d, const QString &s, const QString &name, cons
  : Mrl (d, id_node_playlist_item), node_name (tag) {
     src = s;
     if (!src.isEmpty ())
-        setAttribute (StringPool::attr_src, src);
+        setAttribute (Ids::attr_src, src);
     title = name;
     if (!name.isEmpty ())
-        setAttribute (StringPool::attr_name, name);
+        setAttribute (Ids::attr_name, name);
 }
 
 void GenericMrl::closed () {
     if (src.isEmpty ()) {
-        src = getAttribute (StringPool::attr_src);
+        src = getAttribute (Ids::attr_src);
         if (src.isEmpty ())
-            src = getAttribute (StringPool::attr_url);
+            src = getAttribute (Ids::attr_url);
     }
     if (title.isEmpty ())
-        title = getAttribute (StringPool::attr_name);
+        title = getAttribute (Ids::attr_name);
     Mrl::closed ();
 }
 

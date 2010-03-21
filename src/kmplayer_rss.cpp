@@ -130,6 +130,6 @@ KDE_NO_EXPORT void RSS::Enclosure::deactivate () {
 }
 
 KDE_NO_EXPORT void RSS::Enclosure::closed () {
-    src = getAttribute (StringPool::attr_url);
+    src = getAttribute (Ids::attr_url);
     Mrl::closed ();
 }

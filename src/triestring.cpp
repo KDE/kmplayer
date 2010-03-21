@@ -376,29 +376,29 @@ bool KMPlayer::operator == (const TrieString & s1, const char * s2) {
 }
 
 
-TrieString StringPool::attr_id;
-TrieString StringPool::attr_name;
-TrieString StringPool::attr_src;
-TrieString StringPool::attr_url;
-TrieString StringPool::attr_href;
-TrieString StringPool::attr_width;
-TrieString StringPool::attr_height;
-TrieString StringPool::attr_top;
-TrieString StringPool::attr_left;
-TrieString StringPool::attr_bottom;
-TrieString StringPool::attr_right;
-TrieString StringPool::attr_title;
-TrieString StringPool::attr_begin;
-TrieString StringPool::attr_dur;
-TrieString StringPool::attr_end;
-TrieString StringPool::attr_region;
-TrieString StringPool::attr_target;
-TrieString StringPool::attr_type;
-TrieString StringPool::attr_value;
-TrieString StringPool::attr_fill;
-TrieString StringPool::attr_fit;
+TrieString Ids::attr_id;
+TrieString Ids::attr_name;
+TrieString Ids::attr_src;
+TrieString Ids::attr_url;
+TrieString Ids::attr_href;
+TrieString Ids::attr_width;
+TrieString Ids::attr_height;
+TrieString Ids::attr_top;
+TrieString Ids::attr_left;
+TrieString Ids::attr_bottom;
+TrieString Ids::attr_right;
+TrieString Ids::attr_title;
+TrieString Ids::attr_begin;
+TrieString Ids::attr_dur;
+TrieString Ids::attr_end;
+TrieString Ids::attr_region;
+TrieString Ids::attr_target;
+TrieString Ids::attr_type;
+TrieString Ids::attr_value;
+TrieString Ids::attr_fill;
+TrieString Ids::attr_fit;
 
-void StringPool::init() {
+void Ids::init() {
     attr_width = "width";
     attr_value = "value";
     attr_url = "url";
@@ -422,7 +422,7 @@ void StringPool::init() {
     attr_begin = "begin";
 }
 
-void StringPool::reset() {
+void Ids::reset() {
     attr_id.clear ();
     attr_name.clear ();
     attr_src.clear ();
@@ -461,7 +461,7 @@ void KMPlayer::dumpTrie () {
 // g++ triestring.cpp -o triestring -I$QTDIR/include -L$QTDIR/lib -lqt-mt -g -DTEST_TRIE
 
 int main (int, char **) {
-    StringPool::init();
+    Ids::init();
     {
     TrieString s1;
     TrieString s1_1(QString ("region"));
@@ -513,7 +513,7 @@ int main (int, char **) {
     printf("%s startsWith %s %d\n", s8.toString().toAscii(), s14.toString().toAscii(), s8.startsWith(s14));
     }
     dump (root_trie, 0);
-    StringPool::reset();
+    Ids::reset();
     return 0;
 }
 #endif

@@ -119,7 +119,7 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
             }
         } else if (e->id == id_node_duration) {
             QString s = static_cast <Element *> (e)->getAttribute (
-                    StringPool::attr_value);
+                    Ids::attr_value);
             int pos = parseTimeString( s );
             if (pos > 0)
                 duration_timer = document()->post (

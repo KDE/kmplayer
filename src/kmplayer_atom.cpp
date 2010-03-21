@@ -104,9 +104,9 @@ void ATOM::Link::closed () {
     QString href;
     QString rel;
     for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
-        if (a->name () == StringPool::attr_href)
+        if (a->name () == Ids::attr_href)
             href = a->value ();
-        else if (a->name () == StringPool::attr_title)
+        else if (a->name () == Ids::attr_title)
             title = a->value ();
         else if (a->name () == "rel")
             rel = a->value ();
@@ -120,9 +120,9 @@ void ATOM::Link::closed () {
 
 void ATOM::Content::closed () {
     for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
-        if (a->name () == StringPool::attr_src)
+        if (a->name () == Ids::attr_src)
             src = a->value ();
-        else if (a->name () == StringPool::attr_type) {
+        else if (a->name () == Ids::attr_type) {
             QString v = a->value ().lower ();
             if (v == QString::fromLatin1 ("text"))
                 mimetype = QString::fromLatin1 ("text/plain");
@@ -217,18 +217,18 @@ void ATOM::MediaGroup::addSummary (Node *p, Node *rating_node) {
             desc = c->innerText ();
             break;
         case id_node_media_player:
-            player = static_cast <Element *> (c)->getAttribute (StringPool::attr_url);
+            player = static_cast <Element *> (c)->getAttribute (Ids::attr_url);
             break;
         case id_node_media_thumbnail:
         {
             Element *e = static_cast <Element *> (c);
-            QString url = e->getAttribute (StringPool::attr_url);
+            QString url = e->getAttribute (Ids::attr_url);
             if (!url.isEmpty ()) {
                 images += QString ("<img region=\"image\" src=\"") + url + QChar ('"');
-                QString w = e->getAttribute (StringPool::attr_width);
+                QString w = e->getAttribute (Ids::attr_width);
                 if (!w.isEmpty ())
                     images += QString (" width=\"") + w + QChar ('"');
-                QString h = e->getAttribute (StringPool::attr_height);
+                QString h = e->getAttribute (Ids::attr_height);
                 if (!h.isEmpty ())
                     images += QString (" height=\"") + h + QChar ('"');
                 images += QString (" dur=\"20\" transIn=\"fade\" fill=\"transition\" fit=\"meet\"/>");
@@ -286,15 +286,15 @@ void ATOM::MediaContent::closed () {
     unsigned fsize = 0;
     TrieString fs ("fileSize");
     for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
-        if (a->name () == StringPool::attr_url)
+        if (a->name () == Ids::attr_url)
             src = a->value();
-        else if (a->name () == StringPool::attr_type)
+        else if (a->name () == Ids::attr_type)
             mimetype = a->value ();
-        else if (a->name () == StringPool::attr_height)
+        else if (a->name () == Ids::attr_height)
             size.height = a->value ().toInt ();
-        else if (a->name () == StringPool::attr_width)
+        else if (a->name () == Ids::attr_width)
             size.width = a->value ().toInt ();
-        else if (a->name () == StringPool::attr_width)
+        else if (a->name () == Ids::attr_width)
             size.width = a->value ().toInt ();
         else if (a->name () == fs)
             fsize = a->value ().toInt ();

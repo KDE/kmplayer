@@ -1499,12 +1499,12 @@ Node *SomeNode::childFromTag (const QString & t) {
 }
 
 QWidget * TypeNode::createWidget (QWidget * parent) {
-    QString type_attr = getAttribute (StringPool::attr_type);
+    QString type_attr = getAttribute (Ids::attr_type);
     const char * ctype = type_attr.ascii ();
-    QString value = getAttribute (StringPool::attr_value);
+    QString value = getAttribute (Ids::attr_value);
     if (!strcmp (ctype, "range")) {
         w = new QSlider (getAttribute (QString ("START")).toInt (),
-                getAttribute (StringPool::attr_end).toInt (),
+                getAttribute (Ids::attr_end).toInt (),
                 1, value.toInt (), Qt::Horizontal, parent);
     } else if (!strcmp (ctype, "num") || !strcmp (ctype,  "string")) {
         w = new QLineEdit (value, parent);
@@ -1516,7 +1516,7 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
         QComboBox * combo = new QComboBox (parent);
         for (Node *e = firstChild (); e; e = e->nextSibling ())
             if (e->isElementNode () && !strcmp (e->nodeName (), "item"))
-                combo->insertItem (static_cast <Element *> (e)->getAttribute (StringPool::attr_value));
+                combo->insertItem (static_cast <Element *> (e)->getAttribute (Ids::attr_value));
         combo->setCurrentItem (value.toInt ());
         w = combo;
     } else if (!strcmp (ctype, "tree")) {
@@ -1527,9 +1527,9 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
 
 void TypeNode::changedXML (QTextStream & out) {
     if (!w) return;
-    QString type_attr = getAttribute (StringPool::attr_type);
+    QString type_attr = getAttribute (Ids::attr_type);
     const char * ctype = type_attr.ascii ();
-    QString value = getAttribute (StringPool::attr_value);
+    QString value = getAttribute (Ids::attr_value);
     QString newvalue;
     if (!strcmp (ctype, "range")) {
         newvalue = QString::number (static_cast <QSlider *> (w)->value ());
@@ -1544,7 +1544,7 @@ void TypeNode::changedXML (QTextStream & out) {
         kDebug() << "Unknown type:" << ctype;
     if (value != newvalue) {
         value = newvalue;
-        setAttribute (StringPool::attr_value, newvalue);
+        setAttribute (Ids::attr_value, newvalue);
         out << outerXML ();
     }
 }

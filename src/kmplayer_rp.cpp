@@ -45,9 +45,9 @@ KDE_NO_EXPORT void RP::Imfl::closed () {
         if (RP::id_node_head == n->id) {
             Attribute *a = static_cast <Element *> (n)->attributes ().first ();
             for (; a; a = a->nextSibling ()) {
-                if (StringPool::attr_width == a->name ()) {
+                if (Ids::attr_width == a->name ()) {
                     size.width = a->value ().toInt ();
-                } else if (StringPool::attr_height == a->name ()) {
+                } else if (Ids::attr_height == a->name ()) {
                     size.height = a->value ().toInt ();
                 } else if (a->name () == "duration") {
                     int dur;
@@ -203,7 +203,7 @@ KDE_NO_CDTOR_EXPORT RP::Image::~Image () {
 }
 
 KDE_NO_EXPORT void RP::Image::closed () {
-    src = getAttribute (StringPool::attr_name);
+    src = getAttribute (Ids::attr_name);
     Mrl::closed ();
 }
 
@@ -282,7 +282,7 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
     x = y = w = h = 0;
     srcx = srcy = srcw = srch = 0;
     for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
-        if (a->name () == StringPool::attr_target) {
+        if (a->name () == Ids::attr_target) {
             for (Node *n = parentNode()->firstChild(); n; n= n->nextSibling())
                 if (static_cast <Element *> (n)->
                         getAttribute ("handle") == a->value ())

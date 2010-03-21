@@ -67,12 +67,12 @@ static KMPlayerPartStatic * kmplayerpart_static = 0L;
 
 KDE_NO_CDTOR_EXPORT
 KMPlayerPartStatic::KMPlayerPartStatic (KMPlayerPartStatic **glob) : GlobalShared<KMPlayerPartStatic> (glob), counter (0) {
-    StringPool::init ();
+    Ids::init ();
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerPartStatic::~KMPlayerPartStatic () {
     kmplayerpart_static = 0L;
-    StringPool::reset ();
+    Ids::reset ();
     // delete map content
 }
 

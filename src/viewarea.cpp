@@ -1544,7 +1544,7 @@ static void followLink (SMIL::LinkingBase * link) {
             for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {
                 if (n->mrl () && n->mrl ()->opener == p) {
                     p->setState (Node::state_deferred);
-                    p->mrl ()->setParam (StringPool::attr_src, link->href, 0L);
+                    p->mrl ()->setParam (Ids::attr_src, link->href, 0L);
                     p->activate ();
                     break;
                 }

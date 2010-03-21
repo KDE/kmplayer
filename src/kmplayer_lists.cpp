@@ -117,12 +117,12 @@ KDE_NO_CDTOR_EXPORT
 Recent::Recent (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url)
   : KMPlayer::Mrl (doc, id_node_recent_node), app (a) {
     src = url;
-    setAttribute (KMPlayer::StringPool::attr_url, url);
+    setAttribute (KMPlayer::Ids::attr_url, url);
 }
 
 KDE_NO_EXPORT void Recent::closed () {
     if (src.isEmpty ())
-        src = getAttribute (KMPlayer::StringPool::attr_url);
+        src = getAttribute (KMPlayer::Ids::attr_url);
     Mrl::closed ();
 }
 
@@ -135,7 +135,7 @@ Group::Group (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn)
   : KMPlayer::Element (doc, KMPlayer::id_node_group_node), app (a) {
     title = pn;
     if (!pn.isEmpty ())
-        setAttribute (KMPlayer::StringPool::attr_title, pn);
+        setAttribute (KMPlayer::Ids::attr_title, pn);
 }
 
 KDE_NO_EXPORT KMPlayer::Node *Group::childFromTag (const QString & tag) {
@@ -148,7 +148,7 @@ KDE_NO_EXPORT KMPlayer::Node *Group::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void Group::closed () {
     if (title.isEmpty ())
-        title = getAttribute (KMPlayer::StringPool::attr_title);
+        title = getAttribute (KMPlayer::Ids::attr_title);
     Element::closed ();
 }
 
@@ -253,7 +253,7 @@ KDE_NO_EXPORT void PlaylistItemBase::activate () {
 
 void PlaylistItemBase::closed () {
     if (title.isEmpty ())
-        title = getAttribute (KMPlayer::StringPool::attr_title);
+        title = getAttribute (KMPlayer::Ids::attr_title);
     Mrl::closed ();
 }
 
@@ -261,12 +261,12 @@ KDE_NO_CDTOR_EXPORT
 PlaylistItem::PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp *a, bool pm, const QString &url)
  : PlaylistItemBase (doc, KMPlayer::id_node_playlist_item, a, pm) {
     src = url;
-    setAttribute (KMPlayer::StringPool::attr_url, url);
+    setAttribute (KMPlayer::Ids::attr_url, url);
 }
 
 KDE_NO_EXPORT void PlaylistItem::closed () {
     if (src.isEmpty ())
-        src = getAttribute (KMPlayer::StringPool::attr_url);
+        src = getAttribute (KMPlayer::Ids::attr_url);
     PlaylistItemBase::closed ();
 }
 
@@ -279,7 +279,7 @@ KDE_NO_EXPORT void PlaylistItem::begin () {
 
 KDE_NO_EXPORT void PlaylistItem::setNodeName (const QString & s) {
     src = s;
-    setAttribute (KMPlayer::StringPool::attr_url, s);
+    setAttribute (KMPlayer::Ids::attr_url, s);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -287,7 +287,7 @@ PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QStr
   : KMPlayer::Element (doc, KMPlayer::id_node_group_node), app (a), playmode (false) {
     title = pn;
     if (!pn.isEmpty ())
-        setAttribute (KMPlayer::StringPool::attr_title, pn);
+        setAttribute (KMPlayer::Ids::attr_title, pn);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -308,13 +308,13 @@ KDE_NO_EXPORT KMPlayer::Node *PlaylistGroup::childFromTag (const QString &tag) {
 
 KDE_NO_EXPORT void PlaylistGroup::closed () {
     if (title.isEmpty ())
-        title = getAttribute (KMPlayer::StringPool::attr_title);
+        title = getAttribute (KMPlayer::Ids::attr_title);
     Element::closed ();
 }
 
 KDE_NO_EXPORT void PlaylistGroup::setNodeName (const QString &t) {
     title = t;
-    setAttribute (KMPlayer::StringPool::attr_title, t);
+    setAttribute (KMPlayer::Ids::attr_title, t);
 }
 
 void *PlaylistGroup::role (KMPlayer::RoleType msg, void *content)
@@ -339,17 +339,17 @@ KDE_NO_EXPORT void HtmlObject::closed () {
     for (Node *n = firstChild (); n; n = n->nextSibling ()) {
         if (n->id == KMPlayer::id_node_param) {
             KMPlayer::Element *e = static_cast <KMPlayer::Element *> (n);
-            QString name = e->getAttribute (KMPlayer::StringPool::attr_name);
+            QString name = e->getAttribute (KMPlayer::Ids::attr_name);
             if (name == "type")
-                mimetype = e->getAttribute (KMPlayer::StringPool::attr_value);
+                mimetype = e->getAttribute (KMPlayer::Ids::attr_value);
             else if (name == "movie")
-                src = e->getAttribute (KMPlayer::StringPool::attr_value);
+                src = e->getAttribute (KMPlayer::Ids::attr_value);
         } else if (n->id == KMPlayer::id_node_html_embed) {
             KMPlayer::Element *e = static_cast <KMPlayer::Element *> (n);
-            QString type = e->getAttribute (KMPlayer::StringPool::attr_type);
+            QString type = e->getAttribute (KMPlayer::Ids::attr_type);
             if (!type.isEmpty ())
                 mimetype = type;
-            QString asrc = e->getAttribute (KMPlayer::StringPool::attr_src);
+            QString asrc = e->getAttribute (KMPlayer::Ids::attr_src);
             if (!asrc.isEmpty ())
                 src = asrc;
         }
@@ -384,7 +384,7 @@ QString Generator::genReadAsk (KMPlayer::Node *n) {
     QString title;
     QString desc;
     QString type = static_cast <Element *> (n)->getAttribute (
-            KMPlayer::StringPool::attr_type);
+            KMPlayer::Ids::attr_type);
     QString key = static_cast<Element*>(n)->getAttribute ("key");
     QString def = static_cast<Element*>(n)->getAttribute ("default");
     QString input;
@@ -523,7 +523,7 @@ void Generator::activate () {
     KMPlayer::Node *n = firstChild ();
     if (n && n->id == id_node_gen_generator) {
         title = static_cast<Element *>(n)->getAttribute (
-                KMPlayer::StringPool::attr_name);
+                KMPlayer::Ids::attr_name);
         for (KMPlayer::Node *c = n->firstChild (); c && !canceled; c = c->nextSibling ())
             switch (c->id) {
             case id_node_gen_input:
@@ -631,7 +631,7 @@ void Generator::readyRead () {
             m_source->setDocument (pl, pl);
             if (reset_only) {
                 m_source->activate ();
-                app->setCaption (getAttribute(KMPlayer::StringPool::attr_name));
+                app->setCaption (getAttribute(KMPlayer::Ids::attr_name));
             } else {
                 app->player ()->setSource (m_source);
             }

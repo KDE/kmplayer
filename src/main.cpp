@@ -45,7 +45,7 @@ extern "C" KDE_EXPORT int kdemain (int argc, char *argv[]) {
     options.add ("+[File]", ki18n ("file to open"));
     KCmdLineArgs::addCmdLineOptions (options);
 
-    KMPlayer::StringPool::init();
+    KMPlayer::Ids::init();
 
     KApplication app;
     QPointer <KMPlayerApp> kmplayer;
@@ -76,7 +76,7 @@ extern "C" KDE_EXPORT int kdemain (int argc, char *argv[]) {
 
     delete kmplayer;
 
-    KMPlayer::StringPool::reset();
+    KMPlayer::Ids::reset();
 
     return retvalue;
 }

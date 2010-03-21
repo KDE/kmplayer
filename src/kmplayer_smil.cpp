@@ -125,7 +125,7 @@ static SMIL::Region *findRegion2 (Node *p, const QString &id) {
             SMIL::Region *r = static_cast <SMIL::Region *> (c);
             QString a = r->getAttribute (regionname_attr);
             if (a.isEmpty ())
-                a = r->getAttribute (StringPool::attr_id);
+                a = r->getAttribute (Ids::attr_id);
             if ((a.isEmpty () && id.isEmpty ()) || a == id)
                 return r;
         }
@@ -163,7 +163,7 @@ static SMIL::Transition *findTransition (Node *n, const QString &id)
         for (Node *c = head->firstChild (); c; c = c->nextSibling())
             if (c->id == SMIL::id_node_transition &&
                     id == static_cast <Element *> (c)->
-                    getAttribute (StringPool::attr_id))
+                    getAttribute (Ids::attr_id))
                 return static_cast <SMIL::Transition *> (c);
     return 0L;
 }
@@ -562,7 +562,7 @@ KDE_NO_EXPORT void Runtime::startAndBeginNode () {
 
 KDE_NO_EXPORT
 bool Runtime::parseParam (const TrieString & name, const QString & val) {
-    if (name == StringPool::attr_begin) {
+    if (name == Ids::attr_begin) {
         setDurationItems (element, val, durations + (int) BeginTime);
         if ((timingstate == timings_began && !begin_timer) ||
                 timingstate >= timings_stopped) {
@@ -578,13 +578,13 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
                 propagateStart ();
             }
         }
-    } else if (name == StringPool::attr_dur) {
+    } else if (name == Ids::attr_dur) {
         setDurationItems (element, val, durations + (int) DurTime);
-    } else if (name == StringPool::attr_end) {
+    } else if (name == Ids::attr_end) {
         setDurationItems (element, val, durations + (int) EndTime);
-    } else if (name.startsWith (StringPool::attr_fill)) {
+    } else if (name.startsWith (Ids::attr_fill)) {
         Fill * f = &fill;
-        if (name != StringPool::attr_fill) {
+        if (name != Ids::attr_fill) {
             f = &fill_def;
             *f = fill_inherit;
         } else
@@ -607,7 +607,7 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
                 fill_active = fill_def;
         } else
             fill_active = fill;
-    } else if (name == StringPool::attr_title) {
+    } else if (name == Ids::attr_title) {
         Mrl *mrl = element->mrl ();
         if (mrl)
             mrl->title = val;
@@ -986,7 +986,7 @@ bool CalculatedSizer::applyRegPoints (Node * node,
         Node *c = node->firstChild ();
         for (; c; c = c->nextSibling ())
             if (c->id == SMIL::id_node_regpoint &&
-                    static_cast<Element*>(c)->getAttribute (StringPool::attr_id)
+                    static_cast<Element*>(c)->getAttribute (Ids::attr_id)
                         == rp) {
                 Single i1, i2; // dummies
                 SMIL::RegPoint *rp_elm = static_cast <SMIL::RegPoint *> (c);
@@ -1059,17 +1059,17 @@ KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node,
 
 KDE_NO_EXPORT
 bool CalculatedSizer::setSizeParam(const TrieString &name, const QString &val) {
-    if (name == StringPool::attr_left) {
+    if (name == Ids::attr_left) {
         left = val;
-    } else if (name == StringPool::attr_top) {
+    } else if (name == Ids::attr_top) {
         top = val;
-    } else if (name == StringPool::attr_width) {
+    } else if (name == Ids::attr_width) {
         width = val;
-    } else if (name == StringPool::attr_height) {
+    } else if (name == Ids::attr_height) {
         height = val;
-    } else if (name == StringPool::attr_right) {
+    } else if (name == Ids::attr_right) {
         right = val;
-    } else if (name == StringPool::attr_bottom) {
+    } else if (name == Ids::attr_bottom) {
         bottom = val;
     } else if (name == "regPoint") {
         reg_point = val;
@@ -1429,7 +1429,7 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
             state_node = e;
         } else if (e->id == id_node_meta) {
             Element *elm = static_cast <Element *> (e);
-            const QString name = elm->getAttribute (StringPool::attr_name);
+            const QString name = elm->getAttribute (Ids::attr_name);
             if (name == QString::fromLatin1 ("title"))
                 title = elm->getAttribute ("content");
             else if (name == QString::fromLatin1 ("base"))
@@ -1563,7 +1563,7 @@ KDE_NO_EXPORT void SMIL::State::activate () {
 
 KDE_NO_EXPORT
 void SMIL::State::parseParam (const TrieString &name, const QString &val) {
-    if (name == StringPool::attr_src) {
+    if (name == Ids::attr_src) {
         Smil *s = val.isEmpty () ? NULL : SMIL::Smil::findSmilNode (this);
         if (s) {
             if (!media_info)
@@ -1816,7 +1816,7 @@ static void updateSurfaceSort (SMIL::RegionBase *rb) {
 KDE_NO_EXPORT
 void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
     bool need_repaint = false;
-    if (name == StringPool::attr_fit) {
+    if (name == Ids::attr_fit) {
         fit = parseFit (val.ascii ());
         if (region_surface)
             region_surface->scroll = fit_scroll == fit;
@@ -1924,8 +1924,8 @@ void *SMIL::RegionBase::role (RoleType msg, void *content) {
 //--------------------------%<-------------------------------------------------
 
 KDE_NO_EXPORT void SMIL::RootLayout::closed () {
-    QString width = getAttribute (StringPool::attr_width);
-    QString height = getAttribute (StringPool::attr_height);
+    QString width = getAttribute (Ids::attr_width);
+    QString height = getAttribute (Ids::attr_height);
     if (!width.isEmpty () && !height.isEmpty ()) {
         Smil *s = Smil::findSmilNode (this);
         if (s) {
@@ -2146,7 +2146,7 @@ KDE_NO_EXPORT void SMIL::Transition::activate () {
 
 KDE_NO_EXPORT
 void SMIL::Transition::parseParam (const TrieString & para, const QString & val) {
-    if (para == StringPool::attr_type) {
+    if (para == Ids::attr_type) {
         type_info = transInfoFromString (val.ascii ());
         if (type_info) {
             type = type_info->type;
@@ -2158,7 +2158,7 @@ void SMIL::Transition::parseParam (const TrieString & para, const QString & val)
             if (type_info->sub_types > 0)
                 sub_type = type_info->sub_type[0];
         }
-    } else if (para == StringPool::attr_dur) {
+    } else if (para == Ids::attr_dur) {
         parseTime (val, dur);
     } else if (para == "subtype") {
         sub_type = subTransInfoFromString (val.ascii ());
@@ -3099,9 +3099,9 @@ KDE_NO_EXPORT void SMIL::LinkingBase::deactivate () {
 
 KDE_NO_EXPORT
 void SMIL::LinkingBase::parseParam(const TrieString &para, const QString &val) {
-    if (para == StringPool::attr_href) {
+    if (para == Ids::attr_href) {
         href = val;
-    } else if (para == StringPool::attr_target) {
+    } else if (para == Ids::attr_target) {
         target = val;
     }
 }
@@ -3242,7 +3242,7 @@ KDE_NO_EXPORT void SMIL::MediaType::closed () {
     Mrl *mrl = external_tree ? external_tree->mrl () : NULL;
     if (mrl)
         size = mrl->size;
-    title = getAttribute (StringPool::attr_title);
+    title = getAttribute (Ids::attr_title);
     Mrl::closed ();
 }
 
@@ -3251,7 +3251,7 @@ KDE_NO_EXPORT void SMIL::MediaType::prefetch () {
 
 KDE_NO_EXPORT
 void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
-    if (para == StringPool::attr_src) {
+    if (para == Ids::attr_src) {
         if (src != val) {
             src = val;
             if (external_tree)
@@ -3263,9 +3263,9 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
             if (state == state_began && resolved)
                 clipStart ();
         }
-    } else if (para == StringPool::attr_fit) {
+    } else if (para == Ids::attr_fit) {
         fit = parseFit (val.ascii ());
-    } else if (para == StringPool::attr_type) {
+    } else if (para == Ids::attr_type) {
         mimetype = val;
     } else if (para == "panZoom") {
         QStringList coords = QStringList::split (QString (","), val);
@@ -3316,9 +3316,9 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
                 for (NodeValueItem *i = lst->first(); i; i = i->nextSibling())
                     if (i->data.node->isElementNode ()) {
                         Element *e = static_cast <Element *> (i->data.node);
-                        QString n = e->getAttribute (StringPool::attr_name);
+                        QString n = e->getAttribute (Ids::attr_name);
                         if (!n.isEmpty ())
-                            parseParam (n, e->getAttribute (StringPool::attr_value));
+                            parseParam (n, e->getAttribute (Ids::attr_value));
                     }
                 delete lst;
             }
@@ -3397,7 +3397,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         return; // wait for MsgMediaReady
     }
 
-    SMIL::RegionBase *r = findRegion (this, param (StringPool::attr_region));
+    SMIL::RegionBase *r = findRegion (this, param (Ids::attr_region));
     transition.cancelTimer (this); // eg transOut and we're repeating
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (SMIL::id_node_param != c->id && c != external_tree)
@@ -3410,7 +3410,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         transition.begin (this, runtime);
     } else {
         kWarning () << nodeName() << "::begin " << src << " region '" <<
-            param (StringPool::attr_region) << "' not found" << endl;
+            param (Ids::attr_region) << "' not found" << endl;
     }
     Element::begin ();
 }
@@ -3948,7 +3948,7 @@ void SMIL::SmilText::init () {
 }
 
 void SMIL::SmilText::activate () {
-    SMIL::RegionBase *r = findRegion (this, param (StringPool::attr_region));
+    SMIL::RegionBase *r = findRegion (this, param (Ids::attr_region));
     if (r)
         region_node = r;
     init (); // sets all attributes
@@ -4261,7 +4261,7 @@ void SMIL::StateValue::reset () {
 }
 
 void SMIL::StateValue::parseParam (const TrieString &para, const QString &val) {
-    if (para == StringPool::attr_value) {
+    if (para == Ids::attr_value) {
         value = val;
     } else if (para == "ref") {
         delete ref;
@@ -4325,7 +4325,7 @@ void SMIL::NewValue::begin () {
 }
 
 void SMIL::NewValue::parseParam (const TrieString &para, const QString &val) {
-    if (para == StringPool::attr_name)
+    if (para == Ids::attr_name)
         name = val;
     else if (para == "where") {
         if (val == "before")
@@ -4392,7 +4392,7 @@ KDE_NO_CDTOR_EXPORT SMIL::AnimateGroup::~AnimateGroup () {
 }
 
 void SMIL::AnimateGroup::parseParam (const TrieString &name, const QString &val) {
-    if (name == StringPool::attr_target || name == "targetElement") {
+    if (name == Ids::attr_target || name == "targetElement") {
         target_id = val;
     } else if (name == "attribute" || name == "attributeName") {
         changed_attribute = TrieString (val);
@@ -5266,11 +5266,11 @@ KDE_NO_EXPORT bool SMIL::AnimateColor::timerTick (unsigned int cur_time) {
 
 KDE_NO_EXPORT void SMIL::Param::activate () {
     setState (state_activated);
-    QString name = getAttribute (StringPool::attr_name);
+    QString name = getAttribute (Ids::attr_name);
     Node * parent = parentNode ();
     if (!name.isEmpty () && parent && parent->isElementNode ())
         static_cast<Element*>(parent)->setParam (name,
-                getAttribute (StringPool::attr_value));
+                getAttribute (Ids::attr_value));
     Element::activate (); //finish (); // no livetime of itself, will deactivate
 }
 

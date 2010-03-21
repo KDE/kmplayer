@@ -51,7 +51,7 @@ public:
 
 inline TrieString::TrieString () : node (0L) {}
 
-class KMPLAYER_EXPORT StringPool {
+class KMPLAYER_EXPORT Ids {
 public:
     static void init();
     static void reset();

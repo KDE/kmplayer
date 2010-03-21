@@ -1146,7 +1146,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotGeneratorMenu () {
             KMPlayer::Node *n = gen->firstChild ();
             if (n && n->isElementNode ()) {
                 QString name = static_cast<KMPlayer::Element*>(n)->getAttribute(
-                        KMPlayer::StringPool::attr_name);
+                        KMPlayer::Ids::attr_name);
                 if (name.isEmpty ())
                     name = QFile (files[i]).fileName ();
                 generators.append (new KMPlayer::NodeStoreItem (doc));

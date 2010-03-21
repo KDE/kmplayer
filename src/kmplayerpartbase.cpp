@@ -617,10 +617,10 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
         } else if (vi->firstChild ())
             vi->listView ()->setOpen (vi, !vi->isOpen ());
     } else if (vi->m_attr) {
-        if (vi->m_attr->name () == StringPool::attr_src ||
-                vi->m_attr->name () == StringPool::attr_href ||
-                vi->m_attr->name () == StringPool::attr_url ||
-                vi->m_attr->name () == StringPool::attr_value ||
+        if (vi->m_attr->name () == Ids::attr_src ||
+                vi->m_attr->name () == Ids::attr_href ||
+                vi->m_attr->name () == Ids::attr_url ||
+                vi->m_attr->name () == Ids::attr_value ||
                 vi->m_attr->name () == "data") {
             QString src (vi->m_attr->value ());
             if (!src.isEmpty ()) {
