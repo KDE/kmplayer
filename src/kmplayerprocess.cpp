@@ -878,6 +878,7 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                         slst.push_back (li->name);
                     m_source->setLanguages (alst, slst);
                     setState (IProcess::Playing);
+                    m_source->setPosition (0);
                 }
             }
         }
