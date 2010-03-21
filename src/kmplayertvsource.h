@@ -162,7 +162,7 @@ public:
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-    virtual void play ();
+    virtual void play (KMPlayer::Mrl *);
     void scanningFinished ();
 signals:
     void scanFinished (TVDevice * tvdevice);
@@ -173,9 +173,11 @@ private:
     KMPlayer::IViewer *m_viewer;
     KMPlayer::Source * m_old_source;
     QString m_driver;
+    QString m_caps;
     QRegExp m_nameRegExp;
     QRegExp m_sizesRegExp;
     QRegExp m_inputRegExp;
+    QRegExp m_inputRegExpV4l2;
 };
 
 /*

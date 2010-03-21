@@ -229,7 +229,7 @@ KDE_NO_EXPORT void TVInput::setNodeName (const QString & name) {
     Node *p = parentNode ();
     QString nm (name);
     if (p && p->id == id_node_tv_device) {
-        int pos = name.find (QString (" - ") + p->mrl ()->title);
+        int pos = name.indexOf (QString (" - ") + p->mrl ()->title);
         if (pos > -1)
             nm.truncate (pos);
     }
@@ -485,8 +485,8 @@ KDE_NO_EXPORT void KMPlayerTVSource::setCurrent (KMPlayer::Mrl *mrl) {
         m_xvencoding = xvenc.toInt ();
     QString command;
     command.sprintf ("device=%s:input=%s",
-            tvdevice->src.ascii (),
-            input->getAttribute (KMPlayer::Ids::attr_id).ascii ());
+            tvdevice->src.toAscii ().data (),
+            input->getAttribute (KMPlayer::Ids::attr_id).toAscii ().data ());
     if (channel) {
         QString freq = channel->getAttribute ("frequency");
         m_frequency = (int)(1000 * freq.toDouble ());
@@ -499,8 +499,8 @@ KDE_NO_EXPORT void KMPlayerTVSource::setCurrent (KMPlayer::Mrl *mrl) {
     setDimensions (m_cur_tvdevice,
             tvdevice->getAttribute (KMPlayer::Ids::attr_width).toInt (),
             tvdevice->getAttribute (KMPlayer::Ids::attr_height).toInt ());
-    m_options.sprintf ("-tv noaudio:driver=%s:%s:width=%d:height=%d -slave -nocache -quiet", tvdriver.ascii (), command.ascii (), width (), height ());
-    m_recordcmd.sprintf ("-tv %s:driver=%s:%s:width=%d:height=%d", m_audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_audiodevice).ascii(), tvdriver.ascii (), command.ascii (), width (), height ());
+    m_options.sprintf ("-tv noaudio:driver=%s:%s:width=%d:height=%d -slave -nocache -quiet", tvdriver.toAscii ().data (), command.toAscii ().data (), width (), height ());
+    m_recordcmd.sprintf ("-tv %s:driver=%s:%s:width=%d:height=%d", m_audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_audiodevice).toAscii ().data(), tvdriver.toAscii ().data (), command.toAscii ().data (), width (), height ());
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::menuClicked (int id) {
@@ -554,7 +554,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
 
 KDE_NO_EXPORT void KMPlayerTVSource::read (KSharedConfigPtr m_config) {
     tvdriver = KConfigGroup (m_config, strTV).readEntry (
-            strTVDriver, QString ("v4l"));
+            strTVDriver, QString ("v4l2"));
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::sync (bool fromUI) {
@@ -568,6 +568,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::sync (bool fromUI) {
         for (KMPlayer::Node *d=m_document->firstChild();d; d=d->nextSibling())
             if (d->id == id_node_tv_device)
                 static_cast <TVDevice *> (d)->updateDevicePage ();
+        static_cast <KMPlayer::View*>(m_player->view ())->playList ()->updateTree (tree_id, m_document, 0, false, false);
     } else {
         m_configpage->driver->setText (tvdriver);
         for (KMPlayer::Node *dp = m_document->firstChild (); dp; dp = dp->nextSibling ())
@@ -616,6 +617,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::slotScanFinished (TVDevice * tvdevice) {
     if (tvdevice) {
         tvdevice->zombie = false;
         addTVDevicePage (tvdevice, true);
+        static_cast <KMPlayer::View*>(m_player->view ())->playList ()->updateTree (tree_id, m_document, 0, false, false);
     } else
         KMessageBox::error(m_configpage,i18n("No device found."),i18n("Error"));
 }
@@ -634,6 +636,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::addTVDevicePage(TVDevice *dev, bool show) {
 KDE_NO_EXPORT void KMPlayerTVSource::slotDeviceDeleted (TVDevicePage *devpage) {
     m_document->removeChild (devpage->device_doc);
     m_configpage->notebook->setCurrentPage (0);
+    static_cast <KMPlayer::View*>(m_player->view ())->playList ()->updateTree (tree_id, m_document, 0, false, false);
 }
 
 //-----------------------------------------------------------------------------
@@ -671,8 +674,26 @@ KDE_NO_EXPORT bool TVDeviceScannerSource::processOutput (const QString & line) {
             input->setAttribute ("tuner", "1");
         m_tvdevice->appendChild (input);
         kDebug() << "Input " << input->mrl ()->title;
-    } else
+    } else if (m_inputRegExpV4l2.search (line) > -1) {
+        KMPlayer::NodePtr doc = m_tvsource->document ();
+        QStringList sl = m_inputRegExpV4l2.cap(1).split (QChar (';'));
+        const QStringList::iterator e = sl.end ();
+        for (QStringList::iterator i = sl.begin (); i != e; ++i) {
+            int pos = (*i).indexOf (QChar ('='));
+            if (pos > 0) {
+                int id = (*i).left (pos).trimmed ().toInt ();
+                TVInput *input = new TVInput(doc,(*i).mid(pos+1).trimmed(), id);
+                if (!id && m_caps.indexOf ("tuner") > -1)
+                    input->setAttribute ("tuner", "1");
+                m_tvdevice->appendChild (input);
+            }
+        }
+    } else {
+        int pos = line.indexOf ("Capabilites:");
+        if (pos > 0)
+            m_caps = line.mid (pos + 12);
         return false;
+    }
     return true;
 }
 
@@ -700,7 +721,7 @@ KDE_NO_EXPORT bool TVDeviceScannerSource::scan (const QString & dev, const QStri
     m_old_source = m_tvsource->player ()->source ();
     m_tvsource->player ()->setSource (this);
     m_identified = true;
-    play ();
+    play (m_tvdevice);
     return true;
 }
 
@@ -708,6 +729,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::activate () {
     m_nameRegExp.setPattern ("Selected device:\\s*([^\\s].*)");
     m_sizesRegExp.setPattern ("Supported sizes:\\s*([0-9]+)x([0-9]+) => ([0-9]+)x([0-9]+)");
     m_inputRegExp.setPattern ("\\s*([0-9]+):\\s*([^:]+):[^\\(]*\\(tuner:([01]),\\s*norm:([^\\)]+)\\)");
+    m_inputRegExpV4l2.setPattern ("inputs:((?:\\s*[0-9]+\\s*=\\s*[^;]+;)+)");
 }
 
 KDE_NO_EXPORT void TVDeviceScannerSource::deactivate () {
@@ -721,26 +743,33 @@ KDE_NO_EXPORT void TVDeviceScannerSource::deactivate () {
     }
 }
 
-KDE_NO_EXPORT void TVDeviceScannerSource::play () {
+KDE_NO_EXPORT void TVDeviceScannerSource::play (KMPlayer::Mrl *) {
     if (!m_tvdevice)
         return;
-    m_options.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->src.ascii ());
+    m_options.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.toAscii ().data (), m_tvdevice->src.toAscii ().data ());
     m_tvsource->player ()->stop ();
     KMPlayer::Node *n = new KMPlayer::SourceDocument (this, QString ());
     setDocument (n, n);
     m_process = m_player->mediaManager()->processInfos()["mplayer"]->create (m_player, this);
     m_viewer = m_player->viewWidget ()->viewArea ()->createVideoWidget ();
-    m_process->play ();
+    m_process->ready ();
 }
 
 KDE_NO_EXPORT void TVDeviceScannerSource::scanningFinished () {
     TVDevice * dev = 0L;
     delete m_process;
     kDebug () << "scanning done " << m_tvdevice->hasChildNodes ();
-    if (!m_tvdevice->hasChildNodes ())
+    if (!m_tvdevice->hasChildNodes ()) {
         m_tvsource->document ()->removeChild (m_tvdevice);
-    else
+    } else {
         dev = m_tvdevice;
+        if (width () > 0 && height () > 0) {
+            m_tvdevice->setAttribute (KMPlayer::Ids::attr_width,
+                    QString::number (width ()));
+            m_tvdevice->setAttribute (KMPlayer::Ids::attr_height,
+                    QString::number (height ()));
+        }
+    }
     m_tvdevice = 0L;
     m_player->setSource (m_old_source);
     emit scanFinished (dev);
@@ -748,8 +777,12 @@ KDE_NO_EXPORT void TVDeviceScannerSource::scanningFinished () {
 
 void TVDeviceScannerSource::stateChange (KMPlayer::IProcess *,
                    KMPlayer::IProcess::State os, KMPlayer::IProcess::State ns) {
-    if (KMPlayer::IProcess::Ready == ns && os > KMPlayer::IProcess::Ready)
-        QTimer::singleShot (0, this, SLOT (scanningFinished()));
+    if (KMPlayer::IProcess::Ready == ns) {
+        if (os > KMPlayer::IProcess::Ready)
+            QTimer::singleShot (0, this, SLOT (scanningFinished()));
+        else if (m_process && os < KMPlayer::IProcess::Ready)
+            m_process->play ();
+    }
 }
 
 void TVDeviceScannerSource::processDestroyed (KMPlayer::IProcess *) {
