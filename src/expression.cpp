@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <qurl.h>
 #include "expression.h"
 
 using namespace KMPlayer;
@@ -145,9 +146,12 @@ struct StringBase : public AST {
 };
 
 struct Step : public StringBase {
-    Step (EvalState *ev) : StringBase (ev), any_node (false), is_attr (false) {}
+    Step (EvalState *ev, bool context=false)
+     : StringBase (ev),
+       any_node (false), context_node (context), is_attr (false) {}
     Step (EvalState *ev, const char *s, const char *e, bool isattr=false)
-     : StringBase (ev, s, e), any_node (string == "*"), is_attr (isattr) {}
+     : StringBase (ev, s, e),
+       any_node (string == "*"), context_node (false), is_attr (isattr) {}
 
     bool matches (Node *n);
     bool matches (Attribute *a);
@@ -156,12 +160,14 @@ struct Step : public StringBase {
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Step %c%s",
-                is_attr ? '@' : ' ',string.toAscii ().constData ());
+                is_attr ? '@' : ' ',
+                context_node ? "." : string.toAscii ().constData ());
         AST::dump();
     }
 #endif
 
     bool any_node;
+    bool context_node;
     bool is_attr;
 };
 
@@ -196,6 +202,12 @@ struct StringLiteral : public StringBase {
         AST::dump();
     }
 #endif
+};
+
+struct Contains : public BoolBase {
+    Contains (EvalState *ev) : BoolBase (ev) {}
+
+    virtual bool toBool () const;
 };
 
 struct Not : public BoolBase {
@@ -260,6 +272,12 @@ struct CurrentTime : public StringBase {
 
 struct CurrentDate : public StringBase {
     CurrentDate (EvalState *ev) : StringBase (ev) {}
+
+    virtual QString toString () const;
+};
+
+struct EscapeUri : public StringBase {
+    EscapeUri (EvalState *ev) : StringBase (ev) {}
 
     virtual QString toString () const;
 };
@@ -572,6 +590,9 @@ void Identifier::childByStep (Step *step, bool recurse) const {
             if (recurse)
                 for (Node *c = n->firstChild(); c; c = c->nextSibling ())
                     recursive_lst.append (new NodeValueItem (c));
+        } else if (step->context_node) {
+            if (eval_state->parent)
+                lst->append (new NodeValueItem (eval_state->parent->root));
         } else {
             for (Node *c = n->firstChild(); c; c = c->nextSibling ()) {
                 if (step->matches (c))
@@ -656,6 +677,19 @@ QString StringLiteral::toString () const {
 
 AST::Type StringLiteral::type () const {
     return TString;
+}
+
+bool Contains::toBool () const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        b = false;
+        if (first_child) {
+            AST *s = first_child->next_sibling;
+            if (s)
+                b = first_child->toString ().indexOf (s->toString ()) > -1;
+        }
+    }
+    return b;
 }
 
 bool Not::toBool () const {
@@ -760,6 +794,16 @@ QString Concat::toString () const {
         string.clear ();
         for (AST *child = first_child; child; child = child->next_sibling)
             string += child->toString ();
+    }
+    return string;
+}
+
+QString EscapeUri::toString () const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        string.clear ();
+        if (first_child)
+            string = QUrl::toPercentEncoding (first_child->toString ());
     }
     return string;
 }
@@ -1140,7 +1184,8 @@ static bool parseLiteral (const char *str, const char **end, AST *ast) {
             }
             *end = s;
         }
-        if (*end && (!sign || *end > str) && *end - str < 64) {
+        if (*end && (!sign || *end > str) && *end - str < 64 &&
+                (!decimal || *end > str)) {
             char buf[64];
             ++(*end);
             memcpy (buf, str, *end - str);
@@ -1163,7 +1208,15 @@ static bool parseStep (const char *str, const char **end, AST *ast) {
 #endif
     Step *entry = NULL;
     const char *s = str;
-    if (*s == '/') {
+    if (*s == '.') {
+        ++s;
+        if (s && *s == '.') { // TODO
+            entry = new Step (ast->eval_state, true);
+            ++s;
+        } else {
+            entry = new Step (ast->eval_state, true);
+        }
+    } else if (*s == '/') {
         entry = new Step (ast->eval_state);
     } else {
         bool is_attr = *s == '@';
@@ -1196,6 +1249,9 @@ static bool parseStep (const char *str, const char **end, AST *ast) {
     if (entry) {
         appendASTChild (ast, entry);
         *end = s;
+#ifdef KMPLAYER_EXPR_DEBUG
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
+#endif
         return true;
     }
     return false;
@@ -1295,6 +1351,8 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                 AST *func = NULL;
                 if (name == "concat")
                     func = new Concat (ast->eval_state);
+                else if (name == "contains")
+                    func = new Contains (ast->eval_state);
                 else if (name == "hours-from-time")
                     func = new HoursFromTime (ast->eval_state);
                 else if (name == "minutes-from-time")
@@ -1317,6 +1375,8 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                     func = new Sort (ast->eval_state);
                 else if (name == "string-join")
                     func = new StringJoin (ast->eval_state);
+                else if (name == "escape-uri")
+                    func = new EscapeUri (ast->eval_state);
                 else
                     return false;
                 appendASTChild (ast, func);
