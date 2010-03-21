@@ -1220,7 +1220,7 @@ void SmilColorProperty::init ()
 
 void SmilColorProperty::setColor (const QString &val)
 {
-    if (val.isEmpty ())
+    if (val.isEmpty () || val == "transparent")
         color = 0;
     else
         color = setRGBA (QColor (val).rgba (), opacity);
