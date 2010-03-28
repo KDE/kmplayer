@@ -2254,7 +2254,7 @@ public:
     }
 
     void visit (Node *node) {
-        node->message (MsgMediaPrefetch);
+        node->message (MsgMediaPrefetch, MsgBool (1));
     }
     void visit (SMIL::PriorityClass *pc) {
         for (NodePtr n = pc->firstChild (); n; n = n->nextSibling ())
@@ -2478,6 +2478,8 @@ KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->active ())
             e->deactivate ();
+        else
+            e->message (MsgMediaPrefetch, MsgBool (0));
     if (unfinished ())
         finish ();
     runtime->init ();
@@ -3567,9 +3569,14 @@ void SMIL::MediaType::message (MessageType msg, void *content) {
             return;
 
         case MsgMediaPrefetch:
-            init ();
-            if (!src.isEmpty () && !media_info)
-                prefetch ();
+            if (content) {
+                init ();
+                if (!src.isEmpty () && !media_info)
+                    prefetch ();
+            } else if (media_info) {
+                delete media_info;
+                media_info = NULL;
+            }
             return;
 
         case MsgMediaReady: {

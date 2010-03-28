@@ -76,7 +76,7 @@ public slots:
     virtual void forward ();
     virtual void backward ();
     virtual void play (Mrl *);
-private:
+protected:
     bool activated; // 'solve' an singleShot race w/ cmdline url's
 };
 

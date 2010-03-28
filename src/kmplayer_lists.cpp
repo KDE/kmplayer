@@ -41,6 +41,7 @@ KDE_NO_EXPORT void ListsSource::play (KMPlayer::Mrl *mrl) {
 }
 
 KDE_NO_EXPORT void ListsSource::activate () {
+    activated = true;
     play (m_current ? m_current->mrl () : NULL);
 }
 
