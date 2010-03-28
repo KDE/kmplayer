@@ -46,9 +46,9 @@ class KMPLAYER_NO_EXPORT Asx : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d, id_node_asx) {}
     Node *childFromTag (const QString & tag);
+    void closed ();
     KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
     void *role (RoleType msg, void *content=NULL);
-    PlayType playType ();
 };
 
 /**
@@ -61,12 +61,13 @@ public:
     Node *childFromTag (const QString & tag);
     void message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
+    void closed ();
+    void activate ();
+    void deactivate ();
     /**
      * False, but since we might have a 'base' child, we can have a rel. src
      */
     PlayType playType ();
-    void activate ();
-    void deactivate ();
     void *role (RoleType msg, void *content=NULL);
 
     Posting *duration_timer;

@@ -53,15 +53,13 @@ void *ASX::Asx::role (RoleType msg, void *content)
     return Mrl::role (msg, content);
 }
 
-KDE_NO_EXPORT Node::PlayType ASX::Asx::playType () {
-    if (cached_ismrl_version != document ()->m_tree_version)
-        for (Node *e = firstChild (); e; e = e->nextSibling ()) {
-            if (e->id == id_node_title)
-                title = e->innerText ().simplifyWhiteSpace ();
-            else if (e->id == id_node_base)
-                src = getAsxAttribute (static_cast <Element *> (e), "href");
-        }
-    return Mrl::playType ();
+KDE_NO_EXPORT void ASX::Asx::closed () {
+    for (Node *e = firstChild (); e; e = e->nextSibling ()) {
+        if (e->id == id_node_title)
+            title = e->innerText ().simplifyWhiteSpace ();
+        else if (e->id == id_node_base)
+            src = getAsxAttribute (static_cast <Element *> (e), "href");
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -84,27 +82,27 @@ KDE_NO_EXPORT Node *ASX::Entry::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT Node::PlayType ASX::Entry::playType () {
-    if (cached_ismrl_version != document ()->m_tree_version) {
-        ref_child_count = 0;
-        Node *ref = NULL;
-        for (Node *e = firstChild (); e; e = e->nextSibling ()) {
-            switch (e->id) {
-            case id_node_title:
-                title = e->innerText (); // already normalized (hopefully)
-                break;
-            case id_node_base:
-                src = getAsxAttribute (static_cast <Element *> (e), "href");
-                break;
-            case id_node_ref:
-                ref = e;
-                ref_child_count++;
-            }
-        }
-        if (ref_child_count == 1 && !title.isEmpty ())
-            static_cast <ASX::Ref *> (ref)->title = title;
-        cached_ismrl_version = document()->m_tree_version;
-    }
     return play_type_none;
+}
+
+KDE_NO_EXPORT void ASX::Entry::closed () {
+    ref_child_count = 0;
+    Node *ref = NULL;
+    for (Node *e = firstChild (); e; e = e->nextSibling ()) {
+        switch (e->id) {
+        case id_node_title:
+            title = e->innerText (); // already normalized (hopefully)
+            break;
+        case id_node_base:
+            src = getAsxAttribute (static_cast <Element *> (e), "href");
+            break;
+        case id_node_ref:
+            ref = e;
+            ref_child_count++;
+        }
+    }
+    if (ref_child_count == 1 && !title.isEmpty ())
+        static_cast <ASX::Ref *> (ref)->title = title;
 }
 
 KDE_NO_EXPORT void ASX::Entry::activate () {
