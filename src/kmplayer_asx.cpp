@@ -111,8 +111,8 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
         if (e->id == id_node_param) {
             Element * elm = static_cast <Element *> (e);
             if (getAsxAttribute(elm,"name").lower() == QString("clipsummary")) {
-                QString inf = KURL::decode_string (
-                                getAsxAttribute (elm, "value"));
+                QString inf = QUrl::fromPercentEncoding (
+                                getAsxAttribute (elm, "value").toUtf8 ());
                 document ()->message (MsgInfoString, &inf);
             }
         } else if (e->id == id_node_duration) {

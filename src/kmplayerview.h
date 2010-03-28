@@ -143,8 +143,6 @@ public:
     void playingStop ();
     void mouseMoved (int x, int y) KMPLAYER_NO_MBR_EXPORT;
 public slots:
-    void setVolume (int);
-    void updateVolume ();
     void fullScreen ();
     void updateLayout ();
     void toggleShowPlaylist ();
@@ -176,8 +174,6 @@ private:
     QImage m_image;
     ControlPanel * m_control_panel;
     StatusBar * m_status_bar;
-    QSlider * m_volume_slider;
-    const char * m_mixer_object;
     ControlPanelMode m_controlpanel_mode;
     ControlPanelMode m_old_controlpanel_mode;
     StatusBarMode m_statusbar_mode;
@@ -186,8 +182,6 @@ private:
     int m_powerManagerStopSleep;
     bool m_keepsizeratio;
     bool m_playing;
-    bool m_mixer_init;
-    bool m_inVolumeUpdate;
     bool m_sreensaver_disabled;
     bool m_tmplog_needs_eol;
     bool m_revert_fullscreen;

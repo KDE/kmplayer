@@ -400,7 +400,7 @@ KDE_NO_EXPORT void PrefSourcePageURL::slotTextChanged (const QString &) {
     changed = true;
 }
 
-KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent,
+KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *,
         PartBase * player, RecorderPage * rl, int rec_len)
  : KVBox (player->view ()),
    m_player (player),

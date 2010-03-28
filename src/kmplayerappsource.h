@@ -88,7 +88,7 @@ public slots:
     void chapterMenuClicked (int id);
 private:
     void setCurrent (KMPlayer::Mrl *);
-    void play ();
+    void play (KMPlayer::Mrl *);
     QMenu * m_dvdtitlemenu;
     QMenu * m_dvdchaptermenu;
     QMenu * m_dvdlanguagemenu;
@@ -97,25 +97,6 @@ private:
     KMPlayerPrefSourcePageDVD * m_configpage;
     int m_current_title;
     bool m_start_play;
-};
-
-
-/*
- * Source from DVDNav
- */
-class KMPLAYER_NO_EXPORT KMPlayerDVDNavSource : public KMPlayerMenuSource {
-    Q_OBJECT
-public:
-    KMPlayerDVDNavSource (KMPlayerApp * app, QMenu * m);
-    virtual ~KMPlayerDVDNavSource ();
-    virtual QString prettyName ();
-public slots:
-    virtual void activate ();
-    virtual void deactivate ();
-    virtual void play ();
-
-    void finished ();
-    void navMenuClicked (int id);
 };
 
 

@@ -80,12 +80,6 @@
 //#include "kmplayervdr.h"
 #include "kmplayerconfig.h"
 
-static const int DVDNav_start = 1;
-static const int DVDNav_previous = 2;
-static const int DVDNav_next = 3;
-static const int DVDNav_root = 4;
-static const int DVDNav_up = 5;
-
 extern const char * strMPlayerGroup;
 
 
@@ -118,7 +112,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
     ListsSource * lstsrc = new ListsSource (m_player);
     m_player->sources () ["listssource"] = lstsrc;
     m_player->sources () ["dvdsource"] = new ::KMPlayerDVDSource(this, m_dvdmenu);
-    m_player->sources () ["dvdnavsource"] = new KMPlayerDVDNavSource (this, m_dvdnavmenu);
     m_player->sources () ["vcdsource"] = new KMPlayerVCDSource(this, m_vcdmenu);
     m_player->sources () ["audiocdsource"] = new KMPlayerAudioCDSource (this, m_audiocdmenu);
     m_player->sources () ["pipesource"] = new KMPlayerPipeSource (this);
@@ -454,12 +447,6 @@ KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPla
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::dvdNav () {
-    slotStatusMsg(i18n("DVD Navigation..."));
-    m_player->setSource (m_player->sources () ["dvdnavsource"]);
-    slotStatusMsg(i18n("Ready"));
-}
-
 KDE_NO_EXPORT void KMPlayerApp::openDVD () {
     slotStatusMsg(i18n("Opening DVD..."));
     m_player->setSource (m_player->sources () ["dvdsource"]);
@@ -757,7 +744,7 @@ KDE_NO_EXPORT void KMPlayerApp::readProperties (const KConfigGroup &def_cfg) {
         hide ();
 }
 
-KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
+KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int /*percentage*/) {
     /*KMPlayer::Source * source = m_player->source ();
     if (!source)
         return;
@@ -1083,7 +1070,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileOpen () {
         openDocumentFile (urls [0]);
     } else if (urls.size () > 1) {
         m_player->openUrl (KUrl ());
-        for (unsigned int i = 0; i < urls.size (); i++)
+        for (int i = 0; i < urls.size (); i++)
             addUrl (urls [i]);
     }
 }
@@ -1429,12 +1416,12 @@ KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayListItem * it
         pm->insertSeparator ();
         manip_node = item->node;
         if (ri->flags & KMPlayer::PlayListView::Deleteable)
-            pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("edit-delete"), KIconLoader::Small, 0, true), i18n ("&Delete item"), this, SLOT (menuDeleteNode ()));
+            pm->insertItem (KIcon ("edit-delete"), i18n ("&Delete item"), this, SLOT (menuDeleteNode ()));
         if (ri->flags & KMPlayer::PlayListView::Moveable) {
             if (manip_node->previousSibling ())
-                pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("go-up"), KIconLoader::Small, 0, true), i18n ("&Move up"), this, SLOT (menuMoveUpNode ()));
+                pm->insertItem (KIcon ("go-up"), i18n ("&Move up"), this, SLOT (menuMoveUpNode ()));
             if (manip_node->nextSibling ())
-                pm->insertItem (KIconLoader::global()->loadIconSet (QString ("go-down"), KIconLoader::Small, 0, true), i18n ("Move &down"), this, SLOT (menuMoveDownNode ()));
+                pm->insertItem (KIcon ("go-down"), i18n ("Move &down"), this, SLOT (menuMoveDownNode ()));
         }
     }
 }
@@ -1581,8 +1568,8 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
         return false;
     //kDebug () << "scanning " << cstr;
     QRegExp * patterns = static_cast <KMPlayer::MPlayerPreferencesPage *> (m_player->mediaManager ()->processInfos () ["mplayer"]->config_page)->m_patterns;
-    QRegExp & langRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdlang];
-    QRegExp & subtitleRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdsub];
+    //QRegExp & langRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdlang];
+    //QRegExp & subtitleRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdsub];
     QRegExp & titleRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdtitle];
     QRegExp & chapterRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdchapter];
     if (titleRegExp.search (str) > -1) {
@@ -1694,7 +1681,7 @@ KDE_NO_EXPORT void KMPlayerDVDSource::titleMenuClicked (int id) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerDVDSource::play () {
+KDE_NO_EXPORT void KMPlayerDVDSource::play (KMPlayer::Mrl *) {
     if (m_start_play) {
         m_player->stop ();
         QTimer::singleShot (0, m_player, SLOT (play ()));
@@ -1703,17 +1690,17 @@ KDE_NO_EXPORT void KMPlayerDVDSource::play () {
 
 KDE_NO_EXPORT void KMPlayerDVDSource::subtitleMenuClicked (int id) {
     menuItemClicked (m_dvdsubtitlemenu, id);
-    play ();
+    play (NULL);
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::languageMenuClicked (int id) {
     menuItemClicked (m_dvdlanguagemenu, id);
-    play ();
+    play (NULL);
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::chapterMenuClicked (int id) {
     menuItemClicked (m_dvdchaptermenu, id);
-    play ();
+    play (NULL);
 }
 
 KDE_NO_EXPORT QString KMPlayerDVDSource::prettyName () {
@@ -1749,66 +1736,6 @@ KDE_NO_EXPORT void KMPlayerDVDSource::prefLocation (QString & item, QString & ic
 KDE_NO_EXPORT QFrame * KMPlayerDVDSource::prefPage (QWidget * parent) {
     m_configpage = new KMPlayerPrefSourcePageDVD (parent);
     return m_configpage;
-}
-
-//-----------------------------------------------------------------------------
-
-KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QMenu * m)
-    : KMPlayerMenuSource (i18n ("DVDNav"), app, m, "dvdnavsource") {
-    m_menu->insertTearOffHandle (-1, 0);
-    setUrl ("dvd://");
-}
-
-KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
-
-KDE_NO_EXPORT void KMPlayerDVDNavSource::activate () {
-    setUrl ("dvd://");
-    play ();
-}
-
-KDE_NO_EXPORT void KMPlayerDVDNavSource::deactivate () {
-}
-
-KDE_NO_EXPORT void KMPlayerDVDNavSource::play () {
-    if (!m_menu->findItem (DVDNav_previous)) {
-        m_menu->insertItem (i18n ("&Previous"), this, SLOT (navMenuClicked (int)), 0, DVDNav_previous);
-        m_menu->insertItem (i18n ("&Next"), this, SLOT (navMenuClicked (int)), 0, DVDNav_next);
-        m_menu->insertItem (i18n ("&Root"), this, SLOT (navMenuClicked (int)), 0, DVDNav_root);
-        m_menu->insertItem (i18n ("&Up"), this, SLOT (navMenuClicked (int)), 0, DVDNav_up);
-    }
-    QTimer::singleShot (0, m_player, SLOT (play ()));
-    connect (this, SIGNAL (stopPlaying ()), this, SLOT(finished ()));
-}
-
-KDE_NO_EXPORT void KMPlayerDVDNavSource::finished () {
-    disconnect (this, SIGNAL (stopPlaying ()), this, SLOT(finished ()));
-    m_menu->removeItem (DVDNav_previous);
-    m_menu->removeItem (DVDNav_next);
-    m_menu->removeItem (DVDNav_root);
-    m_menu->removeItem (DVDNav_up);
-}
-
-KDE_NO_EXPORT void KMPlayerDVDNavSource::navMenuClicked (int id) {
-    /*switch (id) {
-        case DVDNav_start:
-            break;
-        case DVDNav_previous:
-            m_app->view ()->viewer ()->sendKeyEvent ('p');
-            break;
-        case DVDNav_next:
-            m_app->view ()->viewer ()->sendKeyEvent ('n');
-            break;
-        case DVDNav_root:
-            m_app->view ()->viewer ()->sendKeyEvent ('r');
-            break;
-        case DVDNav_up:
-            m_app->view ()->viewer ()->sendKeyEvent ('u');
-            break;
-    }*/
-}
-
-KDE_NO_EXPORT QString KMPlayerDVDNavSource::prettyName () {
-    return i18n ("DVD");
 }
 
 //-----------------------------------------------------------------------------

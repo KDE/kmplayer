@@ -417,8 +417,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
 
     zoomMenu = new KMPlayerPopupMenu (this, i18n ("&Zoom"));
     zoomAction = popupMenu->addMenu (zoomMenu);
-    zoomAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("zoom-fit-best"), KIconLoader::Small, 0, false));
+    zoomAction->setIcon (KIcon ("zoom-fit-best"));
     zoom50Action = zoomMenu->addAction (i18n ("50%"));
     zoom100Action = zoomMenu->addAction (i18n ("100%"));
     zoom150Action = zoomMenu->addAction (i18n ("150%"));
@@ -430,8 +429,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
 
     colorMenu = new KMPlayerPopupMenu (this, i18n ("Co&lors"));
     colorAction = popupMenu->addMenu (colorMenu);
-    colorAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("format-fill-color"), KIconLoader::Small, 0, true));
+    colorAction->setIcon (KIcon ("format-fill-color"));
     /*QLabel * label = new QLabel (i18n ("Contrast:"), colorMenu);
     colorMenu->insertItem (label);
     m_contrastSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
@@ -460,10 +458,8 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     subtitleMenu = new KMPlayerPopupMenu (this, i18n ("&Subtitles"));
     QAction *audioAction = languageMenu->addMenu (audioMenu);
     QAction *subtitleAction = languageMenu->addMenu (subtitleMenu);
-    audioAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("audio-x-generic"), KIconLoader::Small, 0, true));
-    subtitleAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("view-list-text"), KIconLoader::Small, 0, true));
+    audioAction->setIcon (KIcon ("audio-x-generic"));
+    subtitleAction->setIcon (KIcon ("view-list-text"));
     languageAction->setVisible (false);
 
     scaleLabelAction = new QWidgetAction (popupMenu);
@@ -581,7 +577,6 @@ void ControlPanel::setAutoControls (bool b) {
 }
 
 KDE_NO_EXPORT void ControlPanel::showPopupMenu () {
-    m_view->updateVolume ();
     popupMenu->exec (m_buttons [button_config]->mapToGlobal (QPoint (0, maximumSize ().height ())));
 }
 

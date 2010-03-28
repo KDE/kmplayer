@@ -301,6 +301,7 @@ public:
     void setViewer (IViewer *v) { m_viewer = v; }
 
     IProcess *process;
+    IViewer *m_viewer;
     QString m_grab_file;
     int m_frame;
     Request request;
@@ -308,8 +309,6 @@ public:
 
 protected:
     ~AudioVideoMedia ();
-
-    IViewer *m_viewer;
 };
 
 

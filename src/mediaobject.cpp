@@ -25,6 +25,7 @@
 #include <QSvgRenderer>
 #include <qimage.h>
 #include <qfile.h>
+#include <qurl.h>
 #include <qtextcodec.h>
 #include <qtextstream.h>
 
@@ -482,9 +483,9 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
     }
     QString protocol = kurl.protocol ();
     if (MediaManager::Data != type &&
-            memory_cache->get (str, mime, data) ||
-            protocol == "mms" || protocol == "rtsp" || protocol == "rtp" ||
-            (only_playlist && !maybe_playlist && !mime.isEmpty () )) {
+            (memory_cache->get (str, mime, data) ||
+             protocol == "mms" || protocol == "rtsp" || protocol == "rtp" ||
+             (only_playlist && !maybe_playlist && !mime.isEmpty ()))) {
         ready ();
         return true;
     }
@@ -566,8 +567,8 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
             for (int i = 0; i < nr; i++)
                 if (!entries[i].url.isEmpty ())
                     cur_elm->appendChild (new GenericURL (doc,
-                                KUrl::decode_string (entries[i].url),
-                                entries[i].title));
+                           QUrl::fromPercentEncoding (entries[i].url.toUtf8 ()),
+                           entries[i].title));
             delete [] entries;
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             readXML (cur_elm, textstream, line);
@@ -853,7 +854,7 @@ void AudioVideoMedia::starting (IProcess*) {
     request = AudioVideoMedia::ask_nothing;
 }
 
-void AudioVideoMedia::stateChange (IProcess *p,
+void AudioVideoMedia::stateChange (IProcess *,
                                    IProcess::State os, IProcess::State ns) {
     m_manager->stateChange (this, os, ns);
 }

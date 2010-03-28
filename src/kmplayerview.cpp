@@ -111,8 +111,8 @@ KDE_NO_EXPORT void TextEdit::contextMenuEvent (QContextMenuEvent * e) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT InfoWindow::InfoWindow (QWidget * parent, View * view)
- : /*QTextEdit (parent),*/ m_view (view) {
+KDE_NO_CDTOR_EXPORT InfoWindow::InfoWindow (QWidget *, View * view)
+ : m_view (view) {
     setReadOnly (true);
     //setLinkUnderline (false);
 }
@@ -127,8 +127,6 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
   : KMediaPlayer::View (parent),
     m_control_panel (0L),
     m_status_bar (0L),
-    m_volume_slider (0L),
-    m_mixer_object ("kicker"),
     m_controlpanel_mode (CP_Show),
     m_old_controlpanel_mode (CP_Show),
     m_statusbar_mode (SB_Hide),
@@ -137,8 +135,6 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
     m_powerManagerStopSleep( -1 ),
     m_keepsizeratio (false),
     m_playing (false),
-    m_mixer_init (false),
-    m_inVolumeUpdate (false),
     m_tmplog_needs_eol (false),
     m_revert_fullscreen (false),
     m_no_info (false),
@@ -157,7 +153,7 @@ KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
     }
     if (uris.size () > 0) {
         for (int i = 0; i < uris.size (); i++)
-            uris [i] = KURL::decode_string (uris [i].url ());
+            uris [i] = QUrl::fromPercentEncoding (uris [i].url ().toUtf8 ());
         //m_widgetstack->currentWidget ()->setFocus ();
         emit urlDropped (uris);
         de->accept ();
@@ -238,7 +234,7 @@ KDE_NO_CDTOR_EXPORT View::~View () {
         delete m_view_area;
 }
 
-KDE_NO_EXPORT void View::setEraseColor (const QColor & color) {
+KDE_NO_EXPORT void View::setEraseColor (const QColor & /*color*/) {
     /*KMediaPlayer::View::setEraseColor (color);
     if (statusBar ()) {
         statusBar ()->setEraseColor (color);
@@ -341,57 +337,15 @@ bool View::setPicture (const QString & path) {
 }
 #endif
 
-KDE_NO_EXPORT void View::updateVolume () {
-    /*if (m_mixer_init && !m_volume_slider)
-        return;
-    QByteArray data, replydata;
-    QCString replyType;
-    int volume;
-    bool has_mixer = false;
-    bool has_mixer = kapp->dcopClient ()->call (m_mixer_object, "Mixer0",
-            "masterVolume()", data, replyType, replydata);
-    if (!has_mixer) {
-        m_mixer_object = "kmix";
-        has_mixer = kapp->dcopClient ()->call (m_mixer_object, "Mixer0",
-                "masterVolume()", data, replyType, replydata);
-    }
-    if (has_mixer) {
-        QDataStream replystream (replydata, IO_ReadOnly);
-        replystream >> volume;
-        if (!m_mixer_init) {
-            QLabel * mixer_label = new QLabel (i18n ("Volume:"), m_control_panel->popupMenu ());
-            m_control_panel->popupMenu ()->insertItem (mixer_label, -1, 4);
-            m_volume_slider = new QSlider (0, 100, 10, volume, Qt::Horizontal, m_control_panel->popupMenu ());
-            connect(m_volume_slider, SIGNAL(valueChanged(int)), this,SLOT(setVolume(int)));
-            m_control_panel->popupMenu ()->insertItem (m_volume_slider, ControlPanel::menu_volume, 5);
-            m_control_panel->popupMenu ()->insertSeparator (6);
-        } else {
-            m_inVolumeUpdate = true;
-            m_volume_slider->setValue (volume);
-            m_inVolumeUpdate = false;
-        }
-    } else if (m_volume_slider) {
-        m_control_panel->popupMenu ()->removeItemAt (6);
-        m_control_panel->popupMenu ()->removeItemAt (5);
-        m_control_panel->popupMenu ()->removeItemAt (4);
-        m_volume_slider = 0L;
-    }*/
-    m_mixer_init = true;
-}
-
 void View::toggleVideoConsoleWindow () {
     if (m_multiedit->isVisible ()) {
         m_multiedit->hide ();
         m_view_area->setVideoWidgetVisible (true);
-        m_control_panel->videoConsoleAction->setIcon (
-                KIconLoader::global ()->loadIconSet (
-                    QString ("konsole"), KIconLoader::Small, 0, true));
+        m_control_panel->videoConsoleAction->setIcon (KIcon (("konsole")));
         m_control_panel->videoConsoleAction->setText (i18n ("Con&sole"));
         delayedShowButtons (false);
     } else {
-        m_control_panel->videoConsoleAction->setIcon (
-                KIconLoader::global ()->loadIconSet (
-                    QString ("video"), KIconLoader::Small, 0, true));
+        m_control_panel->videoConsoleAction->setIcon (KIcon ("video"));
         m_control_panel->videoConsoleAction->setText (i18n ("V&ideo"));
         m_multiedit->show ();
         m_multiedit->raise ();
@@ -450,22 +404,13 @@ KDE_NO_EXPORT void View::delayedShowButtons (bool show) {
     }
 }
 
-KDE_NO_EXPORT void View::mouseMoved (int x, int y) {
+KDE_NO_EXPORT void View::mouseMoved (int, int y) {
     int h = m_view_area->height ();
     int vert_buttons_pos = h - statusBarHeight ();
     int cp_height = controlPanel ()->maximumSize ().height ();
     if (cp_height > int (0.25 * h))
         cp_height = int (0.25 * h);
     delayedShowButtons (y > vert_buttons_pos-cp_height && y < vert_buttons_pos);
-}
-
-KDE_NO_EXPORT void View::setVolume (int vol) {
-    if (m_inVolumeUpdate) return;
-    //QByteArray data;
-    //QDataStream arg( data, IO_WriteOnly );
-    //arg << vol;
-    //if (!kapp->dcopClient()->send (m_mixer_object, "Mixer0", "setMasterVolume(int)", data))
-    //    kWarning() << "Failed to update volume";
 }
 
 KDE_NO_EXPORT void View::updateLayout () {

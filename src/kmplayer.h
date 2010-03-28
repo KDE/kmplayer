@@ -91,7 +91,6 @@ public slots:
     void slotStatusMsg (const QString &text);
     void slotSourceChanged (KMPlayer::Source *, KMPlayer::Source *);
 private slots:
-    void dvdNav ();
     void openDVD ();
     void openVCD ();
     void openAudioCD ();

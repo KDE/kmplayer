@@ -1101,7 +1101,6 @@ KDE_NO_EXPORT void MEncoder::init () {
 }
 
 bool MEncoder::deMediafiedPlay () {
-    bool success = false;
     stop ();
     RecordDocument *rd = recordDocument (user);
     if (!rd)
@@ -1172,7 +1171,6 @@ KDE_NO_EXPORT void MPlayerDumpstream::init () {
 }
 
 bool MPlayerDumpstream::deMediafiedPlay () {
-    bool success = false;
     stop ();
     RecordDocument *rd = recordDocument (user);
     if (!rd)
@@ -1949,7 +1947,7 @@ KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString 
     }
     kDebug () << "NpPlayer::request " << path << " '" << uri << "'" << m_url << "->" << url;
     Q_UINT32 sid = getStreamId (path);
-    if (sid >= 0) {
+    if ((int)sid >= 0) {
         if (!target.isEmpty ()) {
             kDebug () << "new page request " << target;
             if (js) {
