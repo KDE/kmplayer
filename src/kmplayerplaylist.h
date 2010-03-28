@@ -824,7 +824,6 @@ namespace SMIL {
     class Transition;
     class AnimateBase;
     class MediaType;
-    class ImageMediaType;
     class TextMediaType;
     class RefMediaType;
     class Brush;
@@ -863,7 +862,6 @@ public:
     virtual void visit (SMIL::AnimateBase *);
     virtual void visit (SMIL::PriorityClass *);
     virtual void visit (SMIL::MediaType *);
-    virtual void visit (SMIL::ImageMediaType *);
     virtual void visit (SMIL::TextMediaType *);
     virtual void visit (SMIL::RefMediaType *);
     virtual void visit (SMIL::Brush *);

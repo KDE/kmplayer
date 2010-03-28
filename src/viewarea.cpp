@@ -202,7 +202,6 @@ public:
     void visit (SMIL::Layout *);
     void visit (SMIL::RegionBase *);
     void visit (SMIL::Transition *);
-    void visit (SMIL::ImageMediaType *);
     void visit (SMIL::TextMediaType *);
     void visit (SMIL::Brush *);
     void visit (SMIL::SmilText *);
@@ -635,7 +634,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
 KDE_NO_EXPORT void CairoPaintVisitor::video (Mrl *m, Surface *s) {
     if (m->media_info &&
             m->media_info->media &&
-            MediaManager::AudioVideo == m->media_info->type) {
+            (MediaManager::Audio == m->media_info->type ||
+             MediaManager::AudioVideo == m->media_info->type)) {
         AudioVideoMedia *avm = static_cast<AudioVideoMedia *> (m->media_info->media);
         if (avm->viewer ()) {
             if (s &&
@@ -652,11 +652,38 @@ KDE_NO_EXPORT void CairoPaintVisitor::video (Mrl *m, Surface *s) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
+    if (!ref->media_info)
+        return;
     Surface *s = ref->surface ();
-    if (s && ref->external_tree)
+    if (s && ref->external_tree) {
         updateExternal (ref, s);
-    else
+        return;
+    }
+    if (ref->media_info->media &&
+            ref->media_info->media->type () == MediaManager::Image) {
+        if (!s)
+            return;
+
+        IRect scr = matrix.toScreen (s->bounds);
+        IRect clip_rect = clip.intersect (scr);
+        if (clip_rect.isEmpty ())
+            return;
+
+        ImageMedia *im = static_cast <ImageMedia *> (ref->media_info->media);
+        ImageData *id = im ? im->cached_img.ptr () : NULL;
+        if (id && id->flags == ImageData::ImageScalable)
+            im->render (scr.size);
+        if (!id || im->isEmpty () || ref->size.isEmpty ()) {
+            s->remove();
+            return;
+        }
+        if (!s->surface || s->dirty)
+            id->copyImage (s, SSize (scr.width (), scr.height ()), cairo_surface, ref->pan_zoom);
+        paint (&ref->transition, ref->media_opacity, s, scr.point, clip_rect);
+        s->dirty = false;
+    } else {
         video (ref, s);
+    }
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::paint (TransitionModule *trans,
@@ -708,7 +735,8 @@ static Mrl *findActiveMrl (Node *n, bool *rp_or_smil) {
              mrl->id < RP::id_node_last);
         if (*rp_or_smil ||
                 (mrl->media_info &&
-                 MediaManager::AudioVideo == mrl->media_info->type))
+                 (MediaManager::Audio == mrl->media_info->type ||
+                  MediaManager::AudioVideo == mrl->media_info->type)))
             return mrl;
     }
     for (Node *c = n->firstChild (); c; c = c->nextSibling ())
@@ -750,38 +778,6 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
         s->dirty = false;
     }
     paint (&av->transition, av->media_opacity, s.ptr (), scr.point, clip_rect);
-}
-
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
-    if (!img->media_info)
-        return;
-    Surface *s = img->surface ();
-    if (!s)
-        return;
-    if (img->external_tree) {
-        updateExternal (img, s);
-        return;
-    }
-    if (!img->media_info->media)
-        return;
-
-    IRect scr = matrix.toScreen (s->bounds);
-    IRect clip_rect = clip.intersect (scr);
-    if (clip_rect.isEmpty ())
-        return;
-
-    ImageMedia *im = static_cast <ImageMedia *> (img->media_info->media);
-    ImageData *id = im ? im->cached_img.ptr () : NULL;
-    if (id && id->flags == ImageData::ImageScalable)
-        im->render (scr.size);
-    if (!id || im->isEmpty () || img->size.isEmpty ()) {
-        s->remove();
-        return;
-    }
-    if (!s->surface || s->dirty)
-        id->copyImage (s, SSize (scr.width (), scr.height ()), cairo_surface, img->pan_zoom);
-    paint (&img->transition, img->media_opacity, s, scr.point, clip_rect);
-    s->dirty = false;
 }
 
 static void calculateTextDimensions (PangoFontDescription *desc,

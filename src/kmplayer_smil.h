@@ -286,7 +286,6 @@ const short id_node_par = 111;
 const short id_node_seq = 112;
 const short id_node_switch = 113;
 const short id_node_excl = 114;
-const short id_node_img = 120;
 const short id_node_text = 122;
 const short id_node_ref = 123;
 const short id_node_brush = 124;
@@ -313,7 +312,7 @@ const short id_node_state_data = 151;
 const short id_node_first = id_node_smil;
 const short id_node_first_timed_mrl = id_node_body;
 const short id_node_last_timed_mrl = id_node_animate_motion;
-const short id_node_first_mediatype = id_node_img;
+const short id_node_first_mediatype = id_node_text;
 const short id_node_last_mediatype = id_node_brush;
 const short id_node_first_group = id_node_body;
 const short id_node_last_group = id_node_excl;
@@ -754,23 +753,15 @@ class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
     RefMediaType (NodePtr &doc, const QString &tag);
     Node *childFromTag (const QString & tag);
+    virtual void activate ();
     virtual void begin ();
     virtual void finish ();
+    virtual PlayType playType ();
     virtual void accept (Visitor *);
+    virtual void message (MessageType msg, void *content=NULL);
     virtual void *role (RoleType msg, void *content=NULL);
     virtual void prefetch ();
     virtual void clipStart ();
-};
-
-class KMPLAYER_NO_EXPORT ImageMediaType : public MediaType {
-public:
-    ImageMediaType (NodePtr & d);
-    Node *childFromTag (const QString & tag);
-    PlayType playType () { return play_type_image; }
-    virtual void activate ();
-    virtual void accept (Visitor *);
-    virtual void message (MessageType msg, void *content=NULL);
-    virtual void prefetch ();
 };
 
 class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {

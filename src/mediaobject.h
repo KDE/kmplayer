@@ -237,6 +237,7 @@ private slots:
 private:
     void ready ();
     bool readChildDoc ();
+    void setMimetype (const QString &);
 
     Node *node;
     KIO::Job *job;

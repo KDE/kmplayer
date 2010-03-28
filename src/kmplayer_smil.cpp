@@ -1172,10 +1172,11 @@ static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
     const char * taglatin = tag.latin1 ();
     if (!strcmp (taglatin, "video") ||
             !strcmp (taglatin, "audio") ||
+            !strcmp (taglatin, "img") ||
+            !strcmp (taglatin, "animation") ||
+            !strcmp (taglatin, "textstream") ||
             !strcmp (taglatin, "ref"))
         return new SMIL::RefMediaType (d, tag);
-    else if (!strcmp (taglatin, "img"))
-        return new SMIL::ImageMediaType (d);
     else if (!strcmp (taglatin, "text"))
         return new SMIL::TextMediaType (d);
     else if (!strcmp (taglatin, "brush"))
@@ -3687,61 +3688,6 @@ Surface *SMIL::MediaType::surface () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT
-SMIL::RefMediaType::RefMediaType (NodePtr &d, const QString &t)
- : SMIL::MediaType (d, t, id_node_ref) {}
-
-KDE_NO_EXPORT Node *SMIL::RefMediaType::childFromTag (const QString & tag) {
-    return fromXMLDocumentTag (m_doc, tag);
-}
-
-KDE_NO_EXPORT void SMIL::RefMediaType::prefetch () {
-    if (!media_info) {
-        media_info = new MediaInfo (this, MediaManager::AudioVideo);
-        resolved = media_info->wget (absolutePath ());
-    }
-}
-
-KDE_NO_EXPORT void SMIL::RefMediaType::clipStart () {
-    if (region_node && !external_tree && !src.isEmpty()) {
-        repeat = runtime->repeat_count == Runtime::DurIndefinite
-            ? 9998 : runtime->repeat_count;
-        runtime->repeat_count = 1;
-        document_postponed.connect (document(), MsgEventPostponed, this);
-    }
-    MediaType::clipStart ();
-}
-
-KDE_NO_EXPORT void SMIL::RefMediaType::finish () {
-    if (runtime->durTime ().durval == Runtime::DurMedia)
-        runtime->durTime ().durval = Runtime::DurTimer;//reset to make this finish
-    MediaType::finish ();
-}
-
-KDE_NO_EXPORT void SMIL::RefMediaType::begin () {
-    if (0 == runtime->durTime ().offset &&
-            Runtime::DurMedia == runtime->endTime ().durval)
-        runtime->durTime ().durval = Runtime::DurMedia; // duration of clip
-    MediaType::begin ();
-}
-
-KDE_NO_EXPORT void SMIL::RefMediaType::accept (Visitor * v) {
-    v->visit (this);
-}
-
-void *SMIL::RefMediaType::role (RoleType msg, void *content)
-{
-    if (RolePlaylist == msg)
-        return !src.isEmpty () && !external_tree ? (PlaylistRole *) this : NULL;
-    return MediaType::role (msg, content);
-}
-
-//-----------------------------------------------------------------------------
-
-KDE_NO_CDTOR_EXPORT
-SMIL::ImageMediaType::ImageMediaType (NodePtr & d)
-    : SMIL::MediaType (d, "img", id_node_img) {}
-
 namespace {
     class SvgElement : public Element {
         QString tag;
@@ -3772,15 +3718,33 @@ namespace {
     };
 }
 
-KDE_NO_EXPORT Node *SMIL::ImageMediaType::childFromTag (const QString & tag) {
+KDE_NO_CDTOR_EXPORT
+SMIL::RefMediaType::RefMediaType (NodePtr &d, const QString &t)
+ : SMIL::MediaType (d, t, id_node_ref) {}
+
+KDE_NO_EXPORT Node *SMIL::RefMediaType::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "imfl"))
         return new RP::Imfl (m_doc);
     else if (!strcmp (tag.latin1 (), "svg"))
         return new SvgElement (m_doc, this, tag, id_node_svg);
+    Node *n = fromXMLDocumentTag (m_doc, tag);
+    if (n)
+        return n;
     return SMIL::MediaType::childFromTag (tag);
 }
 
-KDE_NO_EXPORT void SMIL::ImageMediaType::activate () {
+KDE_NO_EXPORT void SMIL::RefMediaType::prefetch () {
+    if (!src.isEmpty ()) {
+        Node *n = findChildWithId (this, id_node_svg);
+        if (n)
+            removeChild (n);
+        if (!media_info)
+            media_info = new MediaInfo (this, MediaManager::Any);
+        resolved = media_info->wget (absolutePath ());
+    }
+}
+
+KDE_NO_EXPORT void SMIL::RefMediaType::activate () {
     MediaType::activate ();
 
     if (src.isEmpty () && (!media_info || !media_info->media)) {
@@ -3794,23 +3758,37 @@ KDE_NO_EXPORT void SMIL::ImageMediaType::activate () {
     }
 }
 
-KDE_NO_EXPORT void SMIL::ImageMediaType::accept (Visitor * v) {
+KDE_NO_EXPORT void SMIL::RefMediaType::clipStart () {
+    if (region_node && !external_tree && !src.isEmpty()) {
+        repeat = runtime->repeat_count == Runtime::DurIndefinite
+            ? 9998 : runtime->repeat_count;
+        runtime->repeat_count = 1;
+        document_postponed.connect (document(), MsgEventPostponed, this);
+    }
+    MediaType::clipStart ();
+}
+
+KDE_NO_EXPORT void SMIL::RefMediaType::finish () {
+    if (runtime->durTime ().durval == Runtime::DurMedia)
+        runtime->durTime ().durval = Runtime::DurTimer;//reset to make this finish
+    MediaType::finish ();
+}
+
+KDE_NO_EXPORT void SMIL::RefMediaType::begin () {
+    if (0 == runtime->durTime ().offset &&
+            Runtime::DurMedia == runtime->endTime ().durval)
+        runtime->durTime ().durval = Runtime::DurMedia; // duration of clip
+    MediaType::begin ();
+}
+
+KDE_NO_EXPORT void SMIL::RefMediaType::accept (Visitor * v) {
     v->visit (this);
 }
 
-KDE_NO_EXPORT void SMIL::ImageMediaType::prefetch () {
-    if (!src.isEmpty ()) {
-        Node *n = findChildWithId (this, id_node_svg);
-        if (n)
-            removeChild (n);
-        if (!media_info)
-            media_info = new MediaInfo (this, MediaManager::Image);
-        resolved = media_info->wget (absolutePath ());
-    }
-}
-
-void SMIL::ImageMediaType::message (MessageType msg, void *content) {
-    if (media_info) {
+void SMIL::RefMediaType::message (MessageType msg, void *content) {
+    if (media_info &&
+            media_info->media &&
+            media_info->media->type () == MediaManager::Image) {
         switch (msg) {
 
         case MsgMediaUpdated: {
@@ -3846,6 +3824,31 @@ void SMIL::ImageMediaType::message (MessageType msg, void *content) {
         }
     }
     MediaType::message (msg, content);
+}
+
+void *SMIL::RefMediaType::role (RoleType msg, void *content)
+{
+    if (RolePlaylist == msg) {
+        if (caption ().isEmpty () &&
+                !src.isEmpty () &&
+                !external_tree &&
+                (m_type == "video" || m_type == "audio"))
+            setCaption (src);
+        return !caption ().isEmpty () ? (PlaylistRole *) this : NULL;
+    }
+    return MediaType::role (msg, content);
+}
+
+Node::PlayType SMIL::RefMediaType::playType ()
+{
+    if (media_info && media_info->media)
+        switch (media_info->media->type ()) {
+        case MediaManager::AudioVideo:
+            return play_type_video;
+        case MediaManager::Image:
+            return play_type_image;
+        }
+    return play_type_unknown;
 }
 
 //-----------------------------------------------------------------------------
@@ -5321,10 +5324,6 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::PriorityClass * n) {
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::MediaType * n) {
     visit (static_cast <Mrl *> (n));
-}
-
-KDE_NO_EXPORT void Visitor::visit (SMIL::ImageMediaType * n) {
-    visit (static_cast <SMIL::MediaType *> (n));
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::TextMediaType * n) {

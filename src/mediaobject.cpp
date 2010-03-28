@@ -380,6 +380,15 @@ static bool isPlayListMime (const QString & mime) {
             !strcmp (mimestr, "application/x-mplayer2"));
 }
 
+static QString mimeByContent (const QByteArray &data)
+{
+    int accuraty;
+    KMimeType::Ptr mimep = KMimeType::findByContent (data, &accuraty);
+    if (mimep)
+        return mimep->name ();
+    return QString ();
+}
+
 MediaInfo::MediaInfo (Node *n, MediaManager::MediaType t)
  : media (NULL), type (t), node (n), job (NULL), preserve_wait (false) {
 }
@@ -411,27 +420,23 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
         ImageDataMap::iterator i = image_data_map->find (str);
         if (i != image_data_map->end ()) {
             media = new ImageMedia (node, i.data ());
+            type = MediaManager::Image;
             ready ();
             return true;
         }
     }
 
     Mrl *mrl = node->mrl ();
-    bool only_playlist = false;
-    bool maybe_playlist = false;
-
     if (mrl && (MediaManager::Any == type || MediaManager::AudioVideo == type))
     {
-        only_playlist = true;
         mime = mrl->mimetype;
-        if (mime == "application/x-shockwave-flash" ||
-                mime == "application/futuresplash" ||
-                str.startsWith ("tv:")) {
-            ready ();
-            return true; // FIXME
-        }
-        maybe_playlist = isPlayListMime (mime);
-        kDebug () << "wget1 " << str << mime << only_playlist;
+        if (mrl && (MediaManager::Any == type || MediaManager::AudioVideo == type))
+            if (mime == "application/x-shockwave-flash" ||
+                    mime == "application/futuresplash" ||
+                    str.startsWith ("tv:")) {
+                ready ();
+                return true; // FIXME
+            }
     }
 
     KUrl kurl (str);
@@ -446,13 +451,24 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
                 return true;
             }
         }
+
+    bool only_playlist = false;
+    bool maybe_playlist = false;
+    if (MediaManager::Audio == type || MediaManager::AudioVideo == type) {
+        only_playlist = true;
+        maybe_playlist = isPlayListMime (mime);
+    }
+
     if (kurl.isLocalFile ()) {
         QFile file (kurl.path ());
         if (file.exists ()) {
             if (MediaManager::Data != type && mime.isEmpty ()) {
                 KMimeType::Ptr mimeptr = KMimeType::findByUrl (kurl);
                 if (mrl && mimeptr) {
-                    mrl->mimetype = mime = mimeptr->name ();
+                    mrl->mimetype = mimeptr->name ();
+                    setMimetype (mrl->mimetype);
+                    only_playlist = MediaManager::Audio == type ||
+                        MediaManager::AudioVideo == type;
                     maybe_playlist = isPlayListMime (mime); // get new mime
                 }
                 kDebug () << "wget2 " << str << " " << mime;
@@ -486,6 +502,7 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
             (memory_cache->get (str, mime, data) ||
              protocol == "mms" || protocol == "rtsp" || protocol == "rtp" ||
              (only_playlist && !maybe_playlist && !mime.isEmpty ()))) {
+        setMimetype (mime);
         ready ();
         return true;
     }
@@ -604,13 +621,22 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
     return !cur_elm->isPlayable ();
 }
 
-KDE_NO_EXPORT QString MediaInfo::mimetype () {
-    if (data.size () > 0 && mime.isEmpty ()) {
-        int accuraty;
-        KMimeType::Ptr mimep = KMimeType::findByContent (data, &accuraty);
-        if (mimep)
-            mime = mimep->name ();
+void MediaInfo::setMimetype (const QString &mt)
+{
+    mime = mt;
+    if (MediaManager::Any == type) {
+        if (mimetype ().startsWith ("image/"))
+            type = MediaManager::Image;
+        else if (mime.startsWith ("audio/"))
+            type = MediaManager::Audio;
+        else
+            type = MediaManager::AudioVideo;
     }
+}
+
+KDE_NO_EXPORT QString MediaInfo::mimetype () {
+    if (data.size () > 0 && mime.isEmpty ())
+        setMimetype (mimeByContent (data));
     return mime;
 }
 
@@ -701,9 +727,9 @@ KDE_NO_EXPORT void MediaInfo::slotData (KIO::Job *, const QByteArray &qb) {
     if (qb.size ()) {
         int old_size = data.size ();
         int newsize = old_size + qb.size ();
+        if (!old_size)
+            setMimetype (mimeByContent (qb));
         switch (type) {
-        case MediaManager::Any:
-            //TODO
         case MediaManager::Audio:
         case MediaManager::AudioVideo:
             if (newsize > 2000000 ||
@@ -731,7 +757,8 @@ KDE_NO_EXPORT void MediaInfo::slotMimetype (KIO::Job *, const QString & m) {
         mrl->mimetype = m;
     switch (type) {
     case MediaManager::Any:
-        //TODO
+        //fall through
+        break;
     case MediaManager::Audio:
     case MediaManager::AudioVideo:
         if (!isPlayListMime (m))
