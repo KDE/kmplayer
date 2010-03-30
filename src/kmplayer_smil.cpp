@@ -3759,7 +3759,9 @@ KDE_NO_EXPORT void SMIL::RefMediaType::activate () {
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::clipStart () {
-    if (region_node && !external_tree && !src.isEmpty()) {
+    if (media_info && media_info->media &&
+            media_info->media->type () != MediaManager::Image &&
+            region_node && !external_tree && !src.isEmpty()) {
         repeat = runtime->repeat_count == Runtime::DurIndefinite
             ? 9998 : runtime->repeat_count;
         runtime->repeat_count = 1;
@@ -3769,13 +3771,17 @@ KDE_NO_EXPORT void SMIL::RefMediaType::clipStart () {
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::finish () {
-    if (runtime->durTime ().durval == Runtime::DurMedia)
+    if (media_info && media_info->media &&
+            media_info->media->type () != MediaManager::Image &&
+            runtime->durTime ().durval == Runtime::DurMedia)
         runtime->durTime ().durval = Runtime::DurTimer;//reset to make this finish
     MediaType::finish ();
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::begin () {
-    if (0 == runtime->durTime ().offset &&
+    if (media_info && media_info->media &&
+            media_info->media->type () != MediaManager::Image &&
+            0 == runtime->durTime ().offset &&
             Runtime::DurMedia == runtime->endTime ().durval)
         runtime->durTime ().durval = Runtime::DurMedia; // duration of clip
     MediaType::begin ();
