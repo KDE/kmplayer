@@ -729,7 +729,8 @@ KDE_NO_EXPORT void KMPlayerApp::addUrl (const KUrl& url) {
     KMPlayer::Source * src = m_player->sources () ["urlsource"];
     KMPlayer::NodePtr d = src->document ();
     if (d)
-        d->appendChild (new KMPlayer::GenericURL (d, url.url ()));
+        d->appendChild (new KMPlayer::GenericURL (d,
+                    url.isLocalFile() ? url.toLocalFile() : url.url()));
 }
 
 KDE_NO_EXPORT void KMPlayerApp::saveProperties (KConfigGroup &def_cfg) {

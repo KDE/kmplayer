@@ -105,6 +105,19 @@ static QString getPath (const KUrl & url) {
     return p;
 }
 
+static QString encodeFileOrUrl (const KUrl &url)
+{
+    return url.isEmpty ()
+        ? QString ()
+        : QString::fromLocal8Bit (QFile::encodeName (
+                    url.isLocalFile () ? url.toLocalFile () : url.url ()));
+}
+
+static QString encodeFileOrUrl (const QString &str)
+{
+    return encodeFileOrUrl (KUrl (str));
+}
+
 static void setupProcess (QProcess **process)
 {
     delete *process;
@@ -571,7 +584,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
             m_process->setWorkingDirectory
                 (QFileInfo (m_source->url ().path ()).dirPath (true));
         if (url.isLocalFile ()) {
-            m_url = getPath (url);
+            m_url = url.toLocalFile ();
             if (cfg_page->alwaysbuildindex &&
                     (m_url.lower ().endsWith (".avi") ||
                      m_url.lower ().endsWith (".divx")))
@@ -587,22 +600,17 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
                 m_url = QString ("cdda://") + m_url.mid (6);
         }
         if (url.protocol () != QString ("stdin"))
-            args << QString (QFile::encodeName (m_url));
+            args << encodeFileOrUrl (url);
     }
-        Mrl *m = mrl ();
-        if (m && m->repeat > 0)
-            args << "-loop" << QString::number (m->repeat);
-        else if (m_settings->loop)
-            args << "-loop" << 0;
-            args << "-identify";
-        if (!m_source->subUrl ().isEmpty ()) {
-            args << "-sub";
-            const KUrl & sub_url (m_source->subUrl ());
-            if (!sub_url.isEmpty ()) {
-                QString myurl (sub_url.isLocalFile () ? getPath (sub_url) : sub_url.url ());
-                args << QString (QFile::encodeName (myurl));
-            }
-        }
+    Mrl *m = mrl ();
+    if (m && m->repeat > 0)
+        args << "-loop" << QString::number (m->repeat);
+    else if (m_settings->loop)
+        args << "-loop" << 0;
+    args << "-identify";
+    const QString surl = encodeFileOrUrl (m_source->subUrl ());
+    if (!surl.isEmpty ())
+        args << "-sub" << surl;
     qDebug ("mplayer %s\n", args.join (" ").toLocal8Bit ().constData ());
 
     startProcess (exe, args);
@@ -695,8 +703,6 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
     ba.append ("XXXXXX");
     if (mkdtemp ((char *) ba.constData ())) {
         m_grab_dir = QString::fromLocal8Bit (ba.constData ());
-        KUrl url (m->src);
-        QString myurl (url.isLocalFile () ? getPath (url) : url.url ());
         QString exe ("mplayer");
         QStringList args;
         QString jpgopts ("jpeg:outdir=");
@@ -705,7 +711,7 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
         args << "-frames" << "1" << "-nosound" << "-quiet";
         if (pos > 0)
             args << "-ss" << QString::number (pos);
-        args << QString (QFile::encodeName (myurl));
+        args << encodeFileOrUrl (m->src);
         kDebug () << args.join (" ");
         m_process->start (exe, args);
         if (m_process->waitForStarted ()) {
@@ -778,7 +784,8 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
             if (!m_tmpURL.isEmpty () &&
                     (m_url.endsWith (m_tmpURL) || m_tmpURL.endsWith (m_url)))
                 m_source->insertURL (mrl (), m_tmpURL);;
-            m_tmpURL = KUrl (m_refURLRegExp.cap (1)).url ();
+            KUrl tmp (m_refURLRegExp.cap (1));
+            m_tmpURL = tmp.isLocalFile () ? tmp.toLocalFile () : tmp.url ();
             if (m_source->url () == m_tmpURL ||
                     m_url.endsWith (m_tmpURL) || m_tmpURL.endsWith (m_url))
                 m_tmpURL.truncate (0);
@@ -1106,7 +1113,6 @@ bool MEncoder::deMediafiedPlay () {
     if (!rd)
         return false;
     initProcess ();
-    KUrl url (m_url);
     QString exe ("mencoder");
     QString margs = m_settings->mencoderarguments;
     if (m_settings->recordcopy)
@@ -1116,13 +1122,10 @@ bool MEncoder::deMediafiedPlay () {
         args << KShell::splitArgs (m_source->recordCmd ());
     // FIXME if (m_player->source () == source) // ugly
     //    m_player->stop ();
-    QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
-    if (!myurl.isEmpty ()) {
-        args << QString (QFile::encodeName (myurl));
-    }
-    KUrl out (rd->record_file);
-    args << "-o" << QString (QFile::encodeName (
-                out.isLocalFile () ? getPath (out) : out.url ()));
+    QString myurl = encodeFileOrUrl (m_url);
+    if (!myurl.isEmpty ())
+        args << myurl;
+    args << "-o" << encodeFileOrUrl (rd->record_file);
     startProcess (exe, args);
     qDebug ("mencoder %s\n", args.join (" ").toLocal8Bit ().constData ());
     if (m_process->waitForStarted ()) {
@@ -1176,20 +1179,15 @@ bool MPlayerDumpstream::deMediafiedPlay () {
     if (!rd)
         return false;
     initProcess ();
-    KUrl url (m_url);
     QString exe ("mplayer");
     QStringList args;
     args << KShell::splitArgs (m_source->recordCmd ());
     // FIXME if (m_player->source () == source) // ugly
     //    m_player->stop ();
-    QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
-    if (!myurl.isEmpty ()) {
-        args << QString (QFile::encodeName (myurl));
-    }
-    KURL out (rd->record_file);
-    args << "-dumpstream" << "-dumpfile" <<
-        QString (QFile::encodeName (out.isLocalFile ()
-                    ? getPath (out) : out.url ()));
+    QString myurl = encodeFileOrUrl (m_url);
+    if (!myurl.isEmpty ())
+        args << myurl;
+    args << "-dumpstream" << "-dumpfile" << encodeFileOrUrl (rd->record_file);
     qDebug ("mplayer %s\n", args.join (" ").toLocal8Bit ().constData ());
     startProcess (exe, args);
     if (m_process->waitForStarted ()) {
@@ -1580,13 +1578,10 @@ bool FFMpeg::deMediafiedPlay () {
     if (!rd)
         return false;
     initProcess ();
-    KUrl url (m_url);
     connect (m_process, SIGNAL (finished (int, QProcess::ExitStatus)),
             this, SLOT (processStopped (int, QProcess::ExitStatus)));
-    KUrl out (rd->record_file);
-    QString outurl = QString (QFile::encodeName (out.isLocalFile ()
-                ? getPath (out) : out.url ()));
-    if (out.isLocalFile ())
+    QString outurl = encodeFileOrUrl (rd->record_file);
+    if (outurl.startsWith (QChar ('/')))
         QFile (outurl).remove ();
     QString exe ("ffmpeg ");
     QStringList args;
@@ -1616,10 +1611,10 @@ bool FFMpeg::deMediafiedPlay () {
             process.waitForFinished (5000);
         }
     } else {
-        args << "-i" << QString (QFile::encodeName (url.isLocalFile () ? getPath (url) : url.url ()));
+        args << "-i" << encodeFileOrUrl (m_url);
     }
     args << KShell::splitArgs (m_settings->ffmpegarguments);
-    args << QString (QFile::encodeName (outurl));
+    args << outurl;
     qDebug ("ffmpeg %s\n", args.join (" ").toLocal8Bit().constData ());
     // FIXME if (m_player->source () == source) // ugly
     //    m_player->stop ();

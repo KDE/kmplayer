@@ -464,7 +464,7 @@ bool PartBase::openUrl (const KUrl &url) {
     Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
     setSource (src);
     src->setSubURL (KUrl ());
-    src->setUrl (url.url ());
+    src->setUrl (url.isLocalFile () ? url.toLocalFile() : url.url ());
     return true;
 }
 
@@ -475,8 +475,11 @@ bool PartBase::openUrl (const KUrl::List & urls) {
         openUrl (KUrl ());
         NodePtr d = m_source->document ();
         if (d)
-            for (unsigned int i = 0; i < urls.size (); i++)
-                d->appendChild (new GenericURL (d, QUrl::fromPercentEncoding (urls [i].url ().toUtf8 ())));
+            for (unsigned int i = 0; i < urls.size (); i++) {
+                const KUrl &url = urls [i];
+                d->appendChild (new GenericURL (d,
+                            url.isLocalFile() ? url.toLocalFile() : url.url()));
+            }
     }
     return true;
 }
