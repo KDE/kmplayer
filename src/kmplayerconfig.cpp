@@ -738,8 +738,7 @@ void Settings::okPressed () {
 #else
     recorder = Recorder (configdialog->m_RecordPage->recorder->selectedId ());
 #endif
-    replaytime = configdialog->m_RecordPage->replaytime->text ().toInt ();
-    configdialog->m_RecordPage->replaytime->setValue (replaytime);
+    replaytime = configdialog->m_RecordPage->replaytime->value ();
     recordfile = configdialog->m_RecordPage->url->lineEdit()->text ();
     mencoderarguments = configdialog->m_MEncoderPage->arguments->text ();
     ffmpegarguments = configdialog->m_FFMpegPage->arguments->text ();
