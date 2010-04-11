@@ -527,9 +527,9 @@ KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
                 } else if (replay->selectedId () != Settings::ReplayNo) {
                     start_after = -1;
                 }
+                p->startRecording ();
                 m_player->record (source_url, url->lineEdit()->text(),
                         p->recorderName (), start_after);
-                p->startRecording ();
                 break;
             }
     }
