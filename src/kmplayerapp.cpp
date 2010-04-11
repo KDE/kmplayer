@@ -1541,14 +1541,7 @@ KDE_NO_EXPORT void Disk::activate () {
 KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QMenu * m)
     : KMPlayerMenuSource (i18n ("DVD"), a, m, "dvdsource"), m_configpage (0L) {
     m_menu->insertTearOffHandle ();
-    m_dvdtitlemenu = new QMenu (m_app);
-    m_dvdsubtitlemenu = new QMenu (m_app);
-    m_dvdchaptermenu = new QMenu (m_app);
-    m_dvdlanguagemenu = new QMenu (m_app);
-    m_dvdtitlemenu->setCheckable (true);
-    m_dvdsubtitlemenu->setCheckable (true);
-    m_dvdchaptermenu->setCheckable (true);
-    m_dvdlanguagemenu->setCheckable (true);
+    // FIXME: these menus are void currently
     setUrl ("dvd://");
     m_player->settings ()->addPage (this);
     disks = new Disks (a);
@@ -1567,97 +1560,49 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
         return true;
     if (m_identified)
         return false;
-    //kDebug () << "scanning " << cstr;
-    QRegExp * patterns = static_cast <KMPlayer::MPlayerPreferencesPage *> (m_player->mediaManager ()->processInfos () ["mplayer"]->config_page)->m_patterns;
-    //QRegExp & langRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdlang];
-    //QRegExp & subtitleRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdsub];
-    QRegExp & titleRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdtitle];
-    QRegExp & chapterRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdchapter];
-    if (titleRegExp.search (str) > -1) {
-        kDebug () << "title " << titleRegExp.cap (1);
-        unsigned ts = titleRegExp.cap (1).toInt ();
-        if ( ts > 100) ts = 100;
-        for (unsigned t = 1; t <= ts; t++)
-            m_dvdtitlemenu->insertItem (QString::number (t), t);
-    } else if (chapterRegExp.search (str) > -1) {
-        kDebug () << "chapter " << chapterRegExp.cap (1);
-        unsigned chs = chapterRegExp.cap (1).toInt ();
-        if ( chs > 100) chs = 100;
-        for (unsigned c = 1; c <= chs; c++)
-            m_dvdchaptermenu->insertItem (QString::number (c), c);
-    } else
-        return false;
-    return true;
+    if (str.startsWith ("ID_DVD_TITLES=")) {
+        int nt = str.mid (14).toInt ();
+        for (int i = 0; i < nt; i++)
+            m_document->appendChild (new KMPlayer::GenericMrl (m_document,
+                        QString ("dvd://%1").arg (i+1),
+                        i18n ("Track %1", QString::number (i+1))));
+        return true;
+    }
+    return false;
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::activate () {
     m_start_play = m_auto_play;
-    m_current_title = -1;
     setUrl ("dvd://");
-    m_menu->insertItem (i18n ("&Titles"), m_dvdtitlemenu);
-    m_menu->insertItem (i18n ("&Chapters"), m_dvdchaptermenu);
-    connect (m_dvdtitlemenu, SIGNAL (activated (int)),
-             this, SLOT (titleMenuClicked (int)));
-    connect (m_dvdchaptermenu, SIGNAL (activated (int)),
-             this, SLOT (chapterMenuClicked (int)));
-    if (m_start_play)
-        QTimer::singleShot (0, m_player, SLOT (play ()));
+    QTimer::singleShot (0, m_player, SLOT (play ()));
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::setIdentified (bool b) {
     KMPlayer::Source::setIdentified (b);
     m_start_play = true;
-    if (m_current_title < 0 || m_current_title >= int (m_dvdtitlemenu->count()))
-        m_current_title = 0;
-    if (m_dvdtitlemenu->count ())
-        m_dvdtitlemenu->setItemChecked (m_current_title, true);
-    else
-        m_current_title = -1; // hmmm
-    if (m_dvdchaptermenu->count ()) m_dvdchaptermenu->setItemChecked (0, true);
-    // TODO remember lang/subtitles settings
-    if (m_dvdlanguagemenu->count())
-        m_dvdlanguagemenu->setItemChecked (m_dvdlanguagemenu->idAt (0), true);
+    m_player->updateTree ();
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::deactivate () {
     if (m_player->view ()) {
-        m_dvdtitlemenu->clear ();
-        m_dvdsubtitlemenu->clear ();
-        m_dvdchaptermenu->clear ();
-        m_dvdlanguagemenu->clear ();
         m_menu->removeItemAt (m_menu->count () - 1);
         m_menu->removeItemAt (m_menu->count () - 1);
-        disconnect (m_dvdtitlemenu, SIGNAL (activated (int)),
-                    this, SLOT (titleMenuClicked (int)));
-        disconnect (m_dvdchaptermenu, SIGNAL (activated (int)),
-                    this, SLOT (chapterMenuClicked (int)));
     }
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::setCurrent (KMPlayer::Mrl *cur) {
     KMPlayer::Source::setCurrent (cur);
     QString url ("dvd://");
-    if (m_document) {
-        if (m_current_title > 0)
-            url += QString::number (m_current_title);
+    if (m_document)
         m_document->mrl ()->src = url;
-    } else
+    else
         setUrl (url);
     m_options = QString (m_identified ? "" : "-v ");
-    if (m_identified) {
-        for (unsigned i = 0; i < m_dvdsubtitlemenu->count (); i++)
-            if (m_dvdsubtitlemenu->isItemChecked (m_dvdsubtitlemenu->idAt (i)))
-                m_options += "-sid " + QString::number (m_dvdsubtitlemenu->idAt(i));
-        for (unsigned i = 0; i < m_dvdchaptermenu->count (); i++)
-            if (m_dvdchaptermenu->isItemChecked (i))
-                m_options += QString (" -chapter %1").arg (i);
-        for (unsigned i = 0; i < m_dvdlanguagemenu->count (); i++)
-            if (m_dvdlanguagemenu->isItemChecked (m_dvdlanguagemenu->idAt (i)))
-                m_options += " -aid " + QString::number(m_dvdlanguagemenu->idAt(i));
-        if (m_player->settings ()->dvddevice.size () > 0)
-            m_options += QString(" -dvd-device ") + m_player->settings()->dvddevice;
-    }
+    if (m_player->settings ()->dvddevice.size () > 0)
+        m_options += QString(" -dvd-device ") + m_player->settings()->dvddevice;
+    if (!m_start_play)
+        m_options += " -frames 0";
     m_recordcmd = m_options + QString (" -vf scale -zoom");
 }
 
@@ -1668,40 +1613,8 @@ KDE_NO_EXPORT QString KMPlayerDVDSource::filterOptions () {
     return QString ("");
 }
 
-KDE_NO_EXPORT void KMPlayerDVDSource::titleMenuClicked (int id) {
-    if (m_current_title != id) {
-        m_player->stop ();
-        m_current_title = id;
-        m_identified = false;
-        m_dvdtitlemenu->clear ();
-        m_dvdsubtitlemenu->clear ();
-        m_dvdchaptermenu->clear ();
-        m_dvdlanguagemenu->clear ();
-        if (m_start_play)
-            QTimer::singleShot (0, m_player, SLOT (play ()));
-    }
-}
-
-KDE_NO_EXPORT void KMPlayerDVDSource::play (KMPlayer::Mrl *) {
-    if (m_start_play) {
-        m_player->stop ();
-        QTimer::singleShot (0, m_player, SLOT (play ()));
-    }
-}
-
-KDE_NO_EXPORT void KMPlayerDVDSource::subtitleMenuClicked (int id) {
-    menuItemClicked (m_dvdsubtitlemenu, id);
-    play (NULL);
-}
-
-KDE_NO_EXPORT void KMPlayerDVDSource::languageMenuClicked (int id) {
-    menuItemClicked (m_dvdlanguagemenu, id);
-    play (NULL);
-}
-
-KDE_NO_EXPORT void KMPlayerDVDSource::chapterMenuClicked (int id) {
-    menuItemClicked (m_dvdchaptermenu, id);
-    play (NULL);
+KDE_NO_EXPORT void KMPlayerDVDSource::play (KMPlayer::Mrl *mrl) {
+        KMPlayerMenuSource::play (mrl);
 }
 
 KDE_NO_EXPORT QString KMPlayerDVDSource::prettyName () {

@@ -82,10 +82,6 @@ public slots:
     virtual void activate ();
     virtual void deactivate ();
 
-    void titleMenuClicked (int id);
-    void subtitleMenuClicked (int id);
-    void languageMenuClicked (int id);
-    void chapterMenuClicked (int id);
 private:
     void setCurrent (KMPlayer::Mrl *);
     void play (KMPlayer::Mrl *);

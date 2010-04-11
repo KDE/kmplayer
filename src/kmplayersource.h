@@ -39,6 +39,12 @@ class PartBase;
 class KMPLAYER_EXPORT Source : public QObject, public PlayListNotify {
     Q_OBJECT
 public:
+    struct LangInfo {
+        LangInfo (int i, const QString & n) : id (i), name (n) {}
+        int id; QString name; SharedPtr <LangInfo> next;
+    };
+    typedef SharedPtr <LangInfo> LangInfoPtr;
+
     Source (const QString & name, PartBase * player, const char * src);
     virtual ~Source ();
     virtual void init ();
@@ -67,6 +73,8 @@ public:
     KDE_NO_EXPORT int frequency () const { return m_frequency; }
     KDE_NO_EXPORT int xvPort () const { return m_xvport; }
     KDE_NO_EXPORT int xvEncoding () const { return m_xvencoding; }
+    KDE_NO_EXPORT int audioLangId () const { return m_audio_id; }
+    KDE_NO_EXPORT int subTitleId () const { return m_subtitle_id; }
     KDE_NO_EXPORT const QString & pipeCmd () const { return m_pipecmd; }
     KDE_NO_EXPORT const QString & options () const { return m_options; }
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
@@ -83,7 +91,7 @@ public:
     virtual void setUrl (const QString &url);
     void insertURL (NodePtr mrl, const QString & url, const QString & title=QString());
     KDE_NO_EXPORT void setSubURL (const KUrl & url) { m_sub_url = url; }
-    void setLanguages (const QStringList & alang, const QStringList & slang);
+    void setLanguages (LangInfoPtr alang, LangInfoPtr slang);
     KDE_NO_EXPORT void setWidth (int w) { m_width = w; }
     KDE_NO_EXPORT void setHeight (int h) { m_height = h; }
     virtual void setDimensions (NodePtr, int w, int h);
@@ -146,9 +154,13 @@ protected:
     int m_frequency;
     int m_xvport;
     int m_xvencoding;
+    int m_audio_id;
+    int m_subtitle_id;
     QString m_pipecmd;
     QString m_options;
     QString m_plugin;
+    LangInfoPtr m_audio_infos;
+    LangInfoPtr m_subtitle_infos;
 private:
     int m_width;
     int m_height;

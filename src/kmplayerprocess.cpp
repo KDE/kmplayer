@@ -517,11 +517,20 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     m_process_output = QString ();
     m_source->setPosition (0);
     if (!m_needs_restarted) {
-        aid = sid = -1;
-    } else
+        qDebug( "deMediafiedPlay iden %d sub %d", m_source->identified (), m_source->subTitleId ());
+        if (m_source->identified ()) {
+            aid = m_source->audioLangId ();
+            sid = m_source->subTitleId ();
+        } else {
+            aid = sid = -1;
+        }
+    } else {
         m_needs_restarted = false;
-    alanglist = 0L;
-    slanglist = 0L;
+    }
+    alanglist = NULL;
+    slanglist = NULL;
+    slanglist_end = NULL;
+    alanglist_end = NULL;
     m_request_seek = -1;
     m_tmpURL.truncate (0);
 
@@ -829,10 +838,10 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                 pos = out.find ('=', pos);
                 if (pos > 0) {
                     if (!alanglist_end) {
-                        alanglist = new LangInfo (id, out.mid (pos + 1));
+                        alanglist = new Source::LangInfo (id, out.mid (pos + 1));
                         alanglist_end = alanglist;
                     } else {
-                        alanglist_end->next = new LangInfo (id, out.mid(pos+1));
+                        alanglist_end->next = new Source::LangInfo (id, out.mid(pos+1));
                         alanglist_end = alanglist_end->next;
                     }
                     kDebug () << "lang " << id << " " << alanglist_end->name;
@@ -845,10 +854,10 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                 pos = out.find ('=', pos);
                 if (pos > 0) {
                     if (!slanglist_end) {
-                        slanglist = new LangInfo (id, out.mid (pos + 1));
+                        slanglist = new Source::LangInfo (id, out.mid (pos + 1));
                         slanglist_end = slanglist;
                     } else {
-                        slanglist_end->next = new LangInfo (id, out.mid(pos+1));
+                        slanglist_end->next = new Source::LangInfo (id, out.mid(pos+1));
                         slanglist_end = slanglist_end->next;
                     }
                     kDebug () << "sid " << id << " " << slanglist_end->name;
@@ -883,12 +892,7 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                         m_tmpURL.truncate (0);
                     }
                     m_source->setIdentified ();
-                    QStringList alst, slst;
-                    for (SharedPtr <LangInfo> li = alanglist; li; li = li->next)
-                        alst.push_back (li->name);
-                    for (SharedPtr <LangInfo> li = slanglist; li; li = li->next)
-                        slst.push_back (li->name);
-                    m_source->setLanguages (alst, slst);
+                    m_source->setLanguages (alanglist, slanglist);
                     setState (IProcess::Playing);
                     m_source->setPosition (0);
                 }
@@ -933,21 +937,13 @@ KDE_NO_EXPORT void MPlayer::processStopped () {
 }
 
 void MPlayer::setAudioLang (int id, const QString &) {
-    SharedPtr <LangInfo> li = alanglist;
-    for (; id > 0 && li; li = li->next)
-        id--;
-    if (li)
-        aid = li->id;
+    aid = id;
     m_needs_restarted = true;
     sendCommand (QString ("quit"));
 }
 
 void MPlayer::setSubtitle (int id, const QString &) {
-    SharedPtr <LangInfo> li = slanglist;
-    for (; id > 0 && li; li = li->next)
-        id--;
-    if (li)
-        sid = li->id;
+    sid = id;
     m_needs_restarted = true;
     sendCommand (QString ("quit"));
 }
@@ -974,10 +970,6 @@ static struct MPlayerPattern {
     { i18n ("Reference URL pattern"), "Reference URL Pattern", "Playing\\s+(.*[^\\.])\\.?\\s*$" },
     { i18n ("Reference pattern"), "Reference Pattern", "Reference Media file" },
     { i18n ("Start pattern"), "Start Playing", "Start[^ ]* play" },
-    { i18n ("DVD language pattern"), "DVD Language", "\\[open].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)" },
-    { i18n ("DVD subtitle pattern"), "DVD Sub Title", "\\[open].*subtitle.*[^0-9]([0-9]+).*language: ([A-Za-z]+)" },
-    { i18n ("DVD titles pattern"), "DVD Titles", "There are ([0-9]+) titles" },
-    { i18n ("DVD chapters pattern"), "DVD Chapters", "There are ([0-9]+) chapters" },
     { i18n ("VCD track pattern"), "VCD Tracks", "track ([0-9]+):" },
     { i18n ("Audio CD tracks pattern"), "CDROM Tracks", "[Aa]udio CD[^0-9]+([0-9]+)[^0-9]tracks" }
 };

@@ -182,14 +182,10 @@ private:
     QString m_grab_dir;
     QWidget * m_widget;
     QString m_tmpURL;
-    struct LangInfo {
-        LangInfo (int i, const QString & n) : id (i), name (n) {}
-        int id; QString name; SharedPtr <LangInfo> next;
-    };
-    SharedPtr <LangInfo> alanglist;
-    WeakPtr <LangInfo> alanglist_end;
-    SharedPtr <LangInfo> slanglist;
-    WeakPtr <LangInfo> slanglist_end;
+    Source::LangInfoPtr alanglist;
+    WeakPtr <Source::LangInfo> alanglist_end;
+    Source::LangInfoPtr slanglist;
+    WeakPtr <Source::LangInfo> slanglist_end;
     int aid, sid;
     int old_volume;
 };
@@ -203,7 +199,6 @@ public:
     enum Pattern {
         pat_size = 0, pat_cache, pat_pos, pat_index,
         pat_refurl, pat_ref, pat_start,
-        pat_dvdlang, pat_dvdsub, pat_dvdtitle, pat_dvdchapter,
         pat_vcdtrack, pat_cdromtracks,
         pat_last
     };

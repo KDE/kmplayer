@@ -994,13 +994,26 @@ void Source::init () {
     m_height = 0;
     m_aspect = 0.0;
     m_length = 0;
+    m_audio_id = -1;
+    m_subtitle_id = -1;
     m_position = 0;
     setLength (m_document, 0);
     m_recordcmd.truncate (0);
 }
 
-KDE_NO_EXPORT void Source::setLanguages (const QStringList & alang, const QStringList & slang) {
-    m_player->setLanguages (alang, slang);
+KDE_NO_EXPORT void Source::setLanguages (LangInfoPtr audio, LangInfoPtr sub)
+{
+    m_audio_infos = audio;
+    m_subtitle_infos = sub;
+
+    QStringList alst;
+    QStringList slst;
+    for (LangInfoPtr li = audio; li; li = li->next)
+        alst.push_back (li->name);
+    for (LangInfoPtr li = sub; li; li = li->next)
+        slst.push_back (li->name);
+
+    m_player->setLanguages (alst, slst);
 }
 
 void Source::setDimensions (NodePtr node, int w, int h) {
@@ -1093,14 +1106,24 @@ void Source::setTitle (const QString & title) {
 }
 
 KDE_NO_EXPORT void Source::setAudioLang (int id) {
+    LangInfoPtr li = m_audio_infos;
+    for (; id > 0 && li; li = li->next)
+        id--;
+    m_audio_id = li ? li->id : -1;
     if (m_player->view () && m_player->mediaManager ()->processes ().size ())
-        m_player->mediaManager ()->processes ().first ()->setAudioLang (id,
+        m_player->mediaManager ()->processes ().first ()->setAudioLang (
+             m_audio_id,
              m_player->viewWidget ()->controlPanel ()->audioMenu->text (id));
 }
 
 KDE_NO_EXPORT void Source::setSubtitle (int id) {
+    LangInfoPtr li = m_subtitle_infos;
+    for (; id > 0 && li; li = li->next)
+        id--;
+    m_subtitle_id = li ? li->id : -1;
     if (m_player->view () && m_player->mediaManager ()->processes ().size ())
-        m_player->mediaManager ()->processes ().first ()->setSubtitle (id,
+        m_player->mediaManager ()->processes ().first ()->setSubtitle (
+             m_subtitle_id,
              m_player->viewWidget ()->controlPanel ()->subtitleMenu->text (id));
 }
 
@@ -1369,6 +1392,10 @@ bool Source::isSeekable () {
 void Source::setIdentified (bool b) {
     //kDebug () << "Source::setIdentified " << m_identified << b;
     m_identified = b;
+    if (!b) {
+        m_audio_infos = NULL;
+        m_subtitle_infos = NULL;
+    }
 }
 
 QString Source::plugin (const QString &mime) const {
