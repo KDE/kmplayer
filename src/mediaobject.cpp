@@ -175,7 +175,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
     //p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
     Mrl *mrl = media->mrl ();
     kDebug () << "processState " << media->process->process_info->name << " "
-        << statemap[olds] << " -> " << statemap[news] << endl;
+        << statemap[olds] << " -> " << statemap[news];
 
     if (!mrl) { // document dispose
         if (IProcess::Ready < news)
@@ -224,11 +224,16 @@ void MediaManager::stateChange (AudioVideoMedia *media,
             grabPicture (media);
         } else {
             if (!is_rec && Mrl::SingleMode == mrl->view_mode) {
-                ProcessList::ConstIterator e = m_processes.constEnd ();
-                for (ProcessList::ConstIterator i = m_processes.constBegin(); i != e; ++i)
+                ProcessList::ConstIterator i, e = m_processes.constEnd ();
+                for (i = m_processes.constBegin(); i != e; ++i)
                     if (*i != media->process &&
                             (*i)->state () == IProcess::Ready)
                         (*i)->play (); // delayed playing
+                e = m_recorders.constEnd ();
+                for (i = m_recorders.constBegin (); i != e; ++i)
+                    if (*i != media->process &&
+                            (*i)->state () == IProcess::Ready)
+                        (*i)->play (); // delayed recording
             }
             if (AudioVideoMedia::ask_delete == media->request) {
                 delete media;
@@ -255,15 +260,11 @@ void MediaManager::playAudioVideo (AudioVideoMedia *media) {
     media->request = AudioVideoMedia::ask_nothing;
     if (!mrl ||!m_player->view ())
         return;
-    if (id_node_record_document != mrl->id &&
-            Mrl::SingleMode == mrl->view_mode) {
-        ProcessList::ConstIterator e = m_processes.constEnd ();
-        for (ProcessList::ConstIterator i = m_processes.constBegin(); i != e; ++i)
-        {
-            kDebug() << "found process " << (*i != media->process) << (*i)->state () << endl;
+    if (Mrl::SingleMode == mrl->view_mode) {
+        ProcessList::ConstIterator i, e = m_processes.constEnd ();
+        for (i = m_processes.constBegin(); i != e; ++i)
             if (*i != media->process && (*i)->state () > IProcess::Ready)
                 return; // delay, avoiding two overlaping widgets
-        }
     }
     media->process->play ();
 }
