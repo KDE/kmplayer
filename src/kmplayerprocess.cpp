@@ -115,7 +115,12 @@ static QString encodeFileOrUrl (const KUrl &url)
 
 static QString encodeFileOrUrl (const QString &str)
 {
-    return encodeFileOrUrl (KUrl (str));
+    if (!str.startsWith (QString ("dvd:")) &&
+            !str.startsWith (QString ("vcd:")) &&
+            !str.startsWith (QString ("tv:")) &&
+            !str.startsWith (QString ("cdda:")))
+        return encodeFileOrUrl (KUrl (str));
+    return str;
 }
 
 static void setupProcess (QProcess **process)
@@ -600,7 +605,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
                 m_url = QString ("cdda://") + m_url.mid (6);
         }
         if (url.protocol () != QString ("stdin"))
-            args << encodeFileOrUrl (url);
+            args << encodeFileOrUrl (m_url);
     }
     Mrl *m = mrl ();
     if (m && m->repeat > 0)
