@@ -3853,6 +3853,8 @@ Node::PlayType SMIL::RefMediaType::playType ()
             return play_type_video;
         case MediaManager::Image:
             return play_type_image;
+        default:
+            break;
         }
     return play_type_unknown;
 }
