@@ -652,13 +652,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::video (Mrl *m, Surface *s) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
-    if (!ref->media_info)
-        return;
     Surface *s = ref->surface ();
     if (s && ref->external_tree) {
         updateExternal (ref, s);
         return;
     }
+    if (!ref->media_info)
+        return;
     if (ref->media_info->media &&
             ref->media_info->media->type () == MediaManager::Image) {
         if (!s)
