@@ -390,16 +390,18 @@ void PartBase::connectSource (Source * old_source, Source * source) {
         disconnect (old_source, SIGNAL (dimensionsChanged ()),
                     this, SLOT (sourceHasChangedAspects ()));
         disconnect (old_source, SIGNAL (startPlaying ()),
-                    this, SLOT (playingStarted ()));
+                    this, SLOT (slotPlayingStarted ()));
         disconnect (old_source, SIGNAL (stopPlaying ()),
-                    this, SLOT (playingStopped ()));
+                    this, SLOT (slotPlayingStopped ()));
     }
     if (source) {
         connect (source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
         connect (source, SIGNAL (dimensionsChanged ()),
                 this, SLOT (sourceHasChangedAspects ()));
-        connect (source, SIGNAL (startPlaying()), this, SLOT(playingStarted()));
-        connect (source, SIGNAL (stopPlaying ()), this, SLOT(playingStopped()));
+        connect (source, SIGNAL (startPlaying ()),
+                this, SLOT (slotPlayingStarted ()));
+        connect (source, SIGNAL (stopPlaying ()),
+                this, SLOT (slotPlayingStopped ()));
     }
 }
 
@@ -537,6 +539,10 @@ void PartBase::playingStarted () {
     emit loading (100);
 }
 
+void PartBase::slotPlayingStarted () {
+    playingStarted ();
+}
+
 void PartBase::playingStopped () {
     kDebug () << "playingStopped " << this;
     if (m_view) {
@@ -545,6 +551,10 @@ void PartBase::playingStopped () {
         m_view->reset ();
     }
     m_bPosSliderPressed = false;
+}
+
+void PartBase::slotPlayingStopped () {
+    playingStarted ();
 }
 
 KDE_NO_EXPORT void PartBase::setPosition (int position, int length) {

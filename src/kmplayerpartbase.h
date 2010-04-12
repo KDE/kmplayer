@@ -184,6 +184,8 @@ signals:
 protected:
     bool openFile();
     virtual void timerEvent (QTimerEvent *);
+    virtual void playingStarted ();
+    virtual void playingStopped ();
 protected slots:
     void posSliderPressed ();
     void posSliderReleased ();
@@ -196,8 +198,8 @@ protected slots:
     void fullScreen ();
     void playListItemClicked (Q3ListViewItem *);
     void playListItemExecuted (Q3ListViewItem *);
-    virtual void playingStarted ();
-    virtual void playingStopped ();
+    void slotPlayingStarted ();
+    void slotPlayingStopped ();
     void settingsChanged ();
     void audioSelected (int);
     void subtitleSelected (int);

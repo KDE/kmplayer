@@ -150,9 +150,9 @@ public slots:
     void setMenuZoom (int id);
 protected:
     virtual void processCreated (KMPlayer::Process *);
-protected slots:
     virtual void playingStarted ();
     virtual void playingStopped ();
+protected slots:
     void viewerPartDestroyed (QObject *);
     void viewerPartProcessChanged (const char *);
     void viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *);
