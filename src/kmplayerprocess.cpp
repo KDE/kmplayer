@@ -517,7 +517,6 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     m_process_output = QString ();
     m_source->setPosition (0);
     if (!m_needs_restarted) {
-        qDebug( "deMediafiedPlay iden %d sub %d", m_source->identified (), m_source->subTitleId ());
         if (m_source->identified ()) {
             aid = m_source->audioLangId ();
             sid = m_source->subTitleId ();
