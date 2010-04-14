@@ -510,7 +510,6 @@ KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
         m_player->stopRecording ();
     } else if (!url->lineEdit()->text().isEmpty()) {
         m_player->source ()->document ()->reset ();
-        kDebug() << "Source resetted" << endl;
         m_player->settings ()->recordfile = url->lineEdit()->text();
         m_player->settings ()->replaytime = replaytime->value();
         int id = recorder->selectedId ();

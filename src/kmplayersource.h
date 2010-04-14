@@ -107,6 +107,14 @@ public:
     void setLoading (int percentage);
 
     virtual QString prettyName ();
+    virtual void activate () = 0;
+    virtual void deactivate () = 0;
+    virtual void forward ();
+    virtual void backward ();
+    /**
+     * Play at node position
+     */
+    virtual void play (Mrl *);
 signals:
     void startPlaying ();
     void stopPlaying ();
@@ -117,14 +125,7 @@ signals:
     void dimensionsChanged ();
     void titleChanged (const QString & title);
 public slots:
-    virtual void activate () = 0;
-    virtual void deactivate () = 0;
-    virtual void forward ();
-    virtual void backward ();
-    /**
-     * Play at node position
-     */
-    virtual void play (Mrl *);
+    void slotActivate ();
     void setAudioLang (int);
     void setSubtitle (int);
 protected:

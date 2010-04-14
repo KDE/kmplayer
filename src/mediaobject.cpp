@@ -449,7 +449,7 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
             if (m && !m->src.isEmpty () &&
                   m->src != "Playlist://" &&
                   !KAuthorized::authorizeUrlAction ("redirect", m->src, kurl)) {
-                kWarning () << "redirect acces denied";
+                kWarning () << "redirect access denied";
                 ready ();
                 return true;
             }

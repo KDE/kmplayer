@@ -78,7 +78,6 @@ public:
     virtual void sync (bool);
     virtual void prefLocation (QString & item, QString & icon, QString & tab);
     virtual QFrame * prefPage (QWidget * parent);
-public slots:
     virtual void activate ();
     virtual void deactivate ();
 
@@ -125,7 +124,6 @@ public:
     virtual void sync (bool);
     virtual void prefLocation (QString & item, QString & icon, QString & tab);
     virtual QFrame * prefPage (QWidget * parent);
-public slots:
     virtual void activate ();
     virtual void deactivate ();
 private:
@@ -146,7 +144,6 @@ public:
     virtual bool processOutput (const QString & line);
     virtual void setIdentified (bool b = true);
     virtual QString prettyName ();
-public slots:
     virtual void activate ();
     virtual void deactivate ();
 private:
@@ -166,7 +163,6 @@ public:
     virtual bool isSeekable ();
     void setCommand (const QString & cmd);
     virtual QString prettyName ();
-public slots:
     virtual void activate ();
     virtual void deactivate ();
 private:

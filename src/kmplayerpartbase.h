@@ -69,7 +69,6 @@ public:
     virtual void reset ();
     virtual void setUrl (const QString &url);
     virtual bool authoriseUrl (const QString &url);
-public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();

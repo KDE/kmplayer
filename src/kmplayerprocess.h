@@ -82,9 +82,7 @@ public:
     void setState (IProcess::State newstate);
     virtual bool grabPicture (const QString &file, int frame);
     Mrl *mrl () const;
-signals:
-    void grabReady (const QString & path);
-public slots:
+
     virtual bool ready ();
     virtual bool play ();
     virtual void stop ();
@@ -99,6 +97,8 @@ public slots:
     virtual bool hue (int pos, bool absolute);
     virtual bool contrast (int pos, bool absolute);
     virtual bool brightness (int pos, bool absolute);
+signals:
+    void grabReady (const QString & path);
 protected slots:
     void rescheduledStateChanged ();
     void result (KJob *);
@@ -128,7 +128,6 @@ public:
     MPlayerBase (QObject *parent, ProcessInfo *, Settings *, const char *);
     ~MPlayerBase ();
     void initProcess ();
-public slots:
     virtual void stop ();
     virtual void quit ();
 protected:
@@ -161,7 +160,6 @@ public:
     virtual bool grabPicture (const QString &file, int pos);
     virtual void setAudioLang (int, const QString &);
     virtual void setSubtitle (int, const QString &);
-public slots:
     virtual bool deMediafiedPlay ();
     virtual void stop ();
     virtual void pause ();
@@ -252,7 +250,6 @@ public:
     ~MEncoder ();
     virtual void init ();
     virtual bool deMediafiedPlay ();
-public slots:
     virtual void stop ();
 };
 
@@ -272,7 +269,6 @@ public:
     ~MPlayerDumpstream ();
     virtual void init ();
     virtual bool deMediafiedPlay ();
-public slots:
     virtual void stop ();
 };
 
@@ -321,9 +317,7 @@ public:
     bool seek (int pos, bool absolute);
     void volume (int pos, bool absolute);
     void eof ();
-
-public slots:
-    virtual void stop ();
+    void stop ();
 
 private:
     QString m_slave_path;
@@ -343,7 +337,6 @@ class KMPLAYER_NO_EXPORT Phonon : public MasterProcess {
 public:
     Phonon (QObject *parent, ProcessInfo*, Settings *settings);
 
-public slots:
     virtual bool ready ();
 };
 
@@ -395,7 +388,6 @@ public:
     ~FFMpeg ();
     virtual void init ();
     virtual bool deMediafiedPlay ();
-public slots:
     virtual void stop ();
     virtual void quit ();
 private slots:
@@ -475,17 +467,15 @@ public:
     KDE_NO_EXPORT const QString & destination () const { return service; }
     KDE_NO_EXPORT const QString & interface () const { return iface; }
     KDE_NO_EXPORT QString objectPath () const { return path; }
+    virtual void stop ();
+    virtual void quit ();
+    bool ready ();
 signals:
     void evaluate (const QString & scr, bool store, QString & result);
     void loaded ();
 public slots:
     void requestGet (const uint32_t, const QString &, QString *);
     void requestCall (const uint32_t, const QString &, const QStringList &, QString *);
-public slots:
-    virtual void stop ();
-    virtual void quit ();
-public slots:
-    bool ready ();
 private slots:
     void processOutput ();
     void processStopped (int, QProcess::ExitStatus);

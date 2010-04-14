@@ -159,10 +159,10 @@ public:
     virtual KMPlayer::IViewer *viewer ();
     virtual KMPlayer::Mrl *getMrl ();
 
-public slots:
     virtual void activate ();
     virtual void deactivate ();
     virtual void play (KMPlayer::Mrl *);
+public slots:
     void scanningFinished ();
 signals:
     void scanFinished (TVDevice * tvdevice);
@@ -201,10 +201,10 @@ public:
     virtual QFrame * prefPage (QWidget * parent);
     void readXML ();
     void setCurrent (KMPlayer::Mrl *);
-public slots:
     virtual void activate ();
     virtual void deactivate ();
     virtual void play (KMPlayer::Mrl *);
+public slots:
     void menuAboutToShow ();
     void menuClicked (int id);
 private slots:

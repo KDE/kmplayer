@@ -438,7 +438,8 @@ void PartBase::setSource (Source * _source) {
     m_source->setIdentified (false);
     if (m_view)
         updatePlayerMenu (m_view->controlPanel ());
-    if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
+    if (m_source)
+        QTimer::singleShot (0, m_source, SLOT (slotActivate ()));
     updateTree (true, true);
     emit sourceChanged (old_source, m_source);
 }
@@ -1420,6 +1421,11 @@ QString Source::plugin (const QString &mime) const {
 
 QString Source::prettyName () {
     return i18n ("Unknown");
+}
+
+void Source::slotActivate ()
+{
+    activate ();
 }
 
 //-----------------------------------------------------------------------------
