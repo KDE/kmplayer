@@ -1063,6 +1063,9 @@ void Source::setAspect (NodePtr node, float a) {
     if (!mrl || mrl->view_mode == Mrl::SingleMode) {
         changed |= (fabs (m_aspect - a) > 0.001);
         m_aspect = a;
+        if (changed && m_player->view ())
+            m_player->viewWidget ()->viewArea ()->resizeEvent (NULL);
+
     }
     if (changed)
         emit dimensionsChanged ();
@@ -1192,6 +1195,9 @@ void Source::timerEvent (QTimerEvent * e) {
 
 void Source::setCurrent (Mrl *mrl) {
     m_current = mrl;
+    m_width = mrl->size.width;
+    m_height = mrl->size.height;
+    m_aspect = mrl->aspect;
 }
 
 void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {

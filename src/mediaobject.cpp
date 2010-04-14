@@ -205,8 +205,10 @@ void MediaManager::stateChange (AudioVideoMedia *media,
         }
         if (has_video) {
             if (m_player->view ()) {
-                if (media->viewer ())
+                if (media->viewer ()) {
+                    media->viewer ()->setAspect (mrl->aspect);
                     media->viewer ()->map ();
+                }
                 if (Mrl::SingleMode == mrl->view_mode)
                     m_player->viewWidget ()->viewArea ()->resizeEvent (NULL);
             }
