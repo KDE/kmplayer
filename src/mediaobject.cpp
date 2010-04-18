@@ -705,8 +705,26 @@ KDE_NO_EXPORT void MediaInfo::ready () {
     }
 }
 
+static bool validDataFormat (MediaManager::MediaType type, const QByteArray &ba)
+{
+    switch (type) {
+        case MediaManager::Audio:
+        case MediaManager::AudioVideo:
+            return !(ba.size () > 2000000 || ba.size () < 4 ||
+                    KMimeType::isBufferBinaryData (ba) ||
+                     !strncmp (ba.data (), "RIFF", 4));
+        default:
+            return true;
+    }
+}
+
 KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
     if (MediaManager::Data != type && !kjob->error ()) {
+        if (data.size () && data.size () < 512) {
+            setMimetype (mimeByContent (data));
+            if (!validDataFormat (type, data))
+                data.resize (0);
+        }
         memory_cache->add (url, mime, data);
     } else {
         memory_cache->unpreserve (url);
@@ -730,26 +748,16 @@ KDE_NO_EXPORT void MediaInfo::slotData (KIO::Job *, const QByteArray &qb) {
     if (qb.size ()) {
         int old_size = data.size ();
         int newsize = old_size + qb.size ();
-        if (!old_size)
+        data.resize (newsize);
+        memcpy (data.data () + old_size, qb.constData (), qb.size ());
+        if (old_size < 512 && newsize >= 512) {
             setMimetype (mimeByContent (qb));
-        switch (type) {
-        case MediaManager::Audio:
-        case MediaManager::AudioVideo:
-            if (newsize > 2000000 ||
-                    (!old_size &&
-                     (KMimeType::isBufferBinaryData (qb) ||
-                      (newsize > 4 && !strncmp (qb.data (), "RIFF", 4))))) {
+            if (!validDataFormat (type, data)) {
                 data.resize (0);
                 job->kill (KJob::EmitResult);
                 return;
             }
-            break;
-        default:
-            //TODO
-            break;
         }
-        data.resize (newsize);
-        memcpy (data.data () + old_size, qb.constData (), qb.size ());
     }
 }
 
