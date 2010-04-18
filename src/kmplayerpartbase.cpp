@@ -578,10 +578,22 @@ qlonglong PartBase::position () const {
 void PartBase::pause () {
     NodePtr doc = m_source ? m_source->document () : 0L;
     if (doc) {
-        if (doc->state == Node::state_deferred)
+        Mrl *mrl = NULL;
+        NodePtrW cur = m_source->current ();
+        if (cur) {
+            mrl = cur->mrl ();
+            if (mrl && Mrl::WindowMode == mrl->view_mode)
+                mrl = NULL;
+        }
+        if (doc->state == Node::state_deferred) {
             doc->undefer ();
-        else
+            if (cur && mrl && mrl->state == Node::state_deferred)
+                mrl->undefer ();
+        } else {
             doc->defer ();
+            if (cur && mrl && mrl->unfinished ())
+                mrl->defer ();
+        }
     }
 }
 
