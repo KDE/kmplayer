@@ -2061,22 +2061,21 @@ KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t sid, const KUrl &u) {
 
 KDE_NO_EXPORT
 void NpPlayer::requestGet (const uint32_t id, const QString &prop, QString *res) {
-    QDBusMessage msg = QDBusMessage::createMethodCall (
-            remote_service, "/plugin", "org.kde.kmplayer.backend", "get");
-    msg << id << prop;
-    QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg, QDBus::BlockWithGui);
-    if (rmsg.type () == QDBusMessage::ReplyMessage) {
-        //kDebug() << "get " << prop << rmsg.arguments ().size ();
-        if (rmsg.arguments ().size ()) {
-            QString s = rmsg.arguments ().first ().toString ();
-            if (s != "error")
-                *res = s;
+    if (!remote_service.isEmpty ()) {
+        QDBusMessage msg = QDBusMessage::createMethodCall (
+                remote_service, "/plugin", "org.kde.kmplayer.backend", "get");
+        msg << id << prop;
+        QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg, QDBus::BlockWithGui);
+        if (rmsg.type () == QDBusMessage::ReplyMessage) {
+            //kDebug() << "get " << prop << rmsg.arguments ().size ();
+            if (rmsg.arguments ().size ()) {
+                QString s = rmsg.arguments ().first ().toString ();
+                if (s != "error")
+                    *res = s;
+            }
         } else {
-            *res = QString ("'null'"); //FIXME
+            kError() << "get" << prop << rmsg.type () << rmsg.errorMessage ();
         }
-    } else {
-        kError() << "get" << prop << rmsg.type () << rmsg.errorMessage ();
-        *res = QString ("'null'"); //FIXME
     }
 }
 
