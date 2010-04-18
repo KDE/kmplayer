@@ -453,13 +453,13 @@ KDE_NO_EXPORT void MPlayerBase::dataWritten (qint64) {
 }
 
 KDE_NO_EXPORT void MPlayerBase::processStopped () {
+    setState (IProcess::Ready);
 }
 
 KDE_NO_EXPORT void MPlayerBase::processStopped (int, QProcess::ExitStatus) {
     kDebug() << "process stopped" << endl;
     commands.clear ();
     processStopped ();
-    setState (IProcess::Ready);
 }
 
 //-----------------------------------------------------------------------------
@@ -931,8 +931,10 @@ KDE_NO_EXPORT void MPlayer::processStopped () {
             int pos = m_source->position ();
             play ();
             seek (pos, true);
+            return;
         }
     }
+    setState (IProcess::Ready);
 }
 
 void MPlayer::setAudioLang (int id, const QString &) {
