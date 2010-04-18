@@ -1257,8 +1257,9 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
                         .arg (name));
                 redir_funcs.push_back (name);
                 m_skip_put = false;
+                return false;
             }
-            return false;
+            return true;
         }
     }
     kDebug () << "[01;35mget[00m " << name;

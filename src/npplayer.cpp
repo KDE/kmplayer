@@ -1004,7 +1004,8 @@ static bool windowClassInvoke (NPObject *npobj, NPIdentifier method,
     nsMemFree ((char *) str.utf8characters);
     for (i = 0; i < arg_count; i++) {
         char *arg = nsVariant2Str (args + i);
-        pos += snprintf (buf + pos, sizeof (buf) - pos, i ? ",%s" : "%s", arg);
+        pos += snprintf (buf + pos,
+                sizeof (buf) - pos, i ? ",%s" : "%s", *arg ? arg : "undefined");
         nsMemFree (arg);
     }
     pos += snprintf (buf + pos, sizeof (buf) - pos, ")");
