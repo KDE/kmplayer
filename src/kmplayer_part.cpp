@@ -239,18 +239,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
             } else if (name == QString::fromLatin1("height")) {
                 m_noresize = true;
                 m_expected_view_height = value.toInt ();
-            } else if (name == QString::fromLatin1("type")) {
-                source->document ()->mrl ()->mimetype = value;
-                if (value == "application/x-shockwave-flash" ||
-                        value == "application/futuresplash")
-                    m_wait_npp_loaded = true;
-            } else if (name == QString::fromLatin1("classid") ||
-                    name == QString::fromLatin1("__khtml__classid")) {
-                if (value.lower () == "clsid:d27cdb6e-ae6d-11cf-96b8-444553540000") {
-                    source->document ()->mrl ()->mimetype =
-                        "application/x-shockwave-flash";
-                    m_wait_npp_loaded = true;
-                }
             } else if (name == QString::fromLatin1("controls")) {
                 //http://service.real.com/help/library/guides/production8/realpgd.htm?src=noref,rnhmpg_080301,rnhmtn,nosrc
                 //http://service.real.com/help/library/guides/production8/htmfiles/control.htm
@@ -571,6 +559,9 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
     KParts::OpenUrlArguments args = arguments ();
     if (!args.mimeType ().isEmpty ())
         urlsource->document ()->mrl ()->mimetype = args.mimeType ();
+    if (args.mimeType () == "application/x-shockwave-flash" ||
+            args.mimeType () == "application/futuresplash")
+        m_wait_npp_loaded = true;
 
     startUrl (url);
 
