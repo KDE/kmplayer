@@ -103,6 +103,8 @@ public:
     virtual void setIdentified (bool b = true);
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
     KDE_NO_EXPORT bool autoPlay () const { return m_auto_play; }
+    KDE_NO_EXPORT void setAvoidRedirects (bool b) { m_avoid_redirects = b; }
+    KDE_NO_EXPORT bool avoidRedirects () const { return m_avoid_redirects; }
     void setTitle (const QString & title);
     void setLoading (int percentage);
 
@@ -146,6 +148,7 @@ protected:
     QString m_recordcmd;
     bool m_identified;
     bool m_auto_play;
+    bool m_avoid_redirects;
     KUrl m_url;
     KUrl m_sub_url;
     QString m_audiodevice;

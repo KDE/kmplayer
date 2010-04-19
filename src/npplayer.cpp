@@ -125,9 +125,9 @@ static void dbusStreamUnregister (DBusConnection *conn, void *user_data);
 static void print (const char * format, ...) {
     va_list vl;
     va_start (vl, format);
-    vprintf (format, vl);
+    vfprintf (stderr, format, vl);
     va_end (vl);
-    fflush (stdout);
+    fflush (stderr);
 }
 
 static void *nsAlloc (uint32 size) {
@@ -1365,13 +1365,11 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     return 0;
 }
 
-static gpointer startPlugin (const char *url, const char *mime,
+static bool startPlugin (const char *mime,
         int argc, char *argn[], char *argv[]) {
-    StreamInfo *si;
     if (!npp && (initPlugin (plugin) || newPlugin (mimetype, argc, argn, argv)))
-        return 0L;
-    si = addStream (url, mime, 0L, 0, NULL, 0L, false);
-    return si;
+        return false;
+    return true;
 }
 
 /*----------------%<---------------------------------------------------------*/
@@ -1488,11 +1486,13 @@ static const char *plugin_inspect =
     "  </method>"
     " </interface>"
     "  <interface name=\"org.kde.kmplayer.backend\">"
-    "   <method name=\"play\">"
-    "    <arg name=\"url\" type=\"s\" direction=\"in\"/>"
+    "   <method name=\"setup\">"
     "    <arg name=\"mimetype\" type=\"s\" direction=\"in\"/>"
     "    <arg name=\"plugin\" type=\"s\" direction=\"in\"/>"
     "    <arg name=\"arguments\" type=\"a{sv}\" direction=\"in\"/>"
+    "   </method>"
+    "   <method name=\"play\">"
+    "    <arg name=\"url\" type=\"s\" direction=\"in\"/>"
     "   </method>"
     "  </interface>"
     "</node>";
@@ -1514,7 +1514,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         dbus_connection_send (conn, rmsg, NULL);
         dbus_connection_flush (conn);
         dbus_message_unref (rmsg);
-    } else if (dbus_message_is_method_call (msg, iface, "play")) {
+    } else if (dbus_message_is_method_call (msg, iface, "setup")) {
         DBusMessageIter ait;
         char *param = 0;
         unsigned int params = 0;
@@ -1522,11 +1522,6 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         char **argv = NULL;
         GSList *arglst = NULL;
         if (!dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &param, true)) {
-            g_printerr ("missing url arg");
-            return DBUS_HANDLER_RESULT_HANDLED;
-        }
-        object_url = g_strdup (param);
-        if (!dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &param, false)) {
             g_printerr ("missing mimetype arg");
             return DBUS_HANDLER_RESULT_HANDLED;
         }
@@ -1585,9 +1580,19 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
             }
             g_slist_free (arglst);
         }
-        print ("play %s %s %s params:%d\n", object_url,
+        print ("setup %s %s params:%d\n",
                 mimetype ? mimetype : "", plugin, params);
-        startPlugin (object_url, mimetype, params, argn, argv);
+        startPlugin (mimetype, params, argn, argv);
+        defaultReply (conn, msg);
+    } else if (dbus_message_is_method_call (msg, iface, "play")) {
+        char *param = 0;
+        if (!dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &param, true)) {
+            g_printerr ("missing url arg");
+            return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        object_url = g_strdup (param);
+        print ("play %s\n", object_url);
+        addStream (object_url, mimetype, 0L, 0, NULL, 0L, false);
         defaultReply (conn, msg);
     } else if (dbus_message_is_method_call (msg, iface, "get")) {
         DBusMessage * rmsg;
@@ -1771,7 +1776,8 @@ static void windowCreatedEvent (GtkWidget *w, gpointer d) {
     if (!callback_service) {
         char *argn[] = { "WIDTH", "HEIGHT", "debug", "SRC" };
         char *argv[] = { "440", "330", g_strdup("yes"), g_strdup(object_url) };
-        startPlugin (object_url, mimetype, 4, argn, argv);
+        if (startPlugin (mimetype, 4, argn, argv))
+            addStream (object_url, mimetype, 0L, 0, NULL, 0L, false);
     }
 }
 
@@ -1893,10 +1899,13 @@ static gboolean initPlayer (void * p) {
 
 
         /* TODO: remove DBUS_BUS_SESSION and create a private connection */
-        callFunction (-1, "running",
-                DBUS_TYPE_STRING, &service_name, DBUS_TYPE_INVALID);
+        //callFunction (-1, "running",
+        //        DBUS_TYPE_STRING, &service_name, DBUS_TYPE_INVALID);
 
         dbus_connection_flush (dbus_connection);
+
+        fprintf (stdout, "NPP_DBUS_SRV=%s\n", service_name);
+        fflush (stdout);
     }
     return 0; /* single shot */
 }

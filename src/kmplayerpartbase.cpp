@@ -438,7 +438,7 @@ void PartBase::setSource (Source * _source) {
     m_source->setIdentified (false);
     if (m_view)
         updatePlayerMenu (m_view->controlPanel ());
-    if (m_source)
+    if (m_source && !m_source->avoidRedirects ())
         QTimer::singleShot (0, m_source, SLOT (slotActivate ()));
     updateTree (true, true);
     emit sourceChanged (old_source, m_source);
@@ -468,6 +468,8 @@ bool PartBase::openUrl (const KUrl &url) {
     setSource (src);
     src->setSubURL (KUrl ());
     src->setUrl (url.isLocalFile () ? url.toLocalFile() : url.url ());
+    if (src->avoidRedirects ())
+        src->activate ();
     return true;
 }
 
@@ -1000,7 +1002,8 @@ void *SourceDocument::role (RoleType msg, void *data) {
 
 Source::Source (const QString & name, PartBase * player, const char * n)
  : QObject (player, n),
-   m_name (name), m_player (player), m_identified (false), m_auto_play (true),
+   m_name (name), m_player (player),
+   m_identified (false), m_auto_play (true), m_avoid_redirects (false),
    m_frequency (0), m_xvport (0), m_xvencoding (-1), m_doc_timer (0) {
     init ();
 }

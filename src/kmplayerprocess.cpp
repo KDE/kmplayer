@@ -285,7 +285,10 @@ bool Process::play () {
     m_url = url;
     if (user) // FIXME: remove check
         user->starting (this);
-    if (!changed || KUrl (m_url).isLocalFile () || nonstdurl)
+    if (!changed ||
+            KUrl (m_url).isLocalFile () ||
+            nonstdurl ||
+            (m_source && m_source->avoidRedirects ()))
         return deMediafiedPlay ();
     m_job = KIO::stat (m_url, KIO::HideProgressInfo);
     connect (m_job, SIGNAL (result (KJob *)), this, SLOT (result (KJob *)));
@@ -1815,11 +1818,10 @@ KDE_NO_EXPORT void NpPlayer::init () {
 }
 
 KDE_NO_EXPORT void NpPlayer::initProcess () {
-    Process::initProcess ();
+    setupProcess (&m_process);
+    m_process_state = QProcess::NotRunning;
     connect (m_process, SIGNAL (finished (int, QProcess::ExitStatus)),
             this, SLOT (processStopped (int, QProcess::ExitStatus)));
-    connect (m_process, SIGNAL (readyReadStandardOutput ()),
-            this, SLOT (processOutput ()));
     connect (m_process, SIGNAL (readyReadStandardError ()),
             this, SLOT (processOutput ()));
     connect (m_process, SIGNAL (bytesWritten (qint64)),
@@ -1838,16 +1840,57 @@ KDE_NO_EXPORT void NpPlayer::initProcess () {
 }
 
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
-    kDebug() << "NpPlayer::play '" << m_url << "'";
+    kDebug() << "NpPlayer::play '" << m_url << "' state " << m_state;
     // if we change from XPLAIN to XEMBED, the DestroyNotify may come later
     Mrl *node = mrl ();
     if (!view ())
         return false;
-    if (user && user->viewer ()) {
-        user->viewer ()->useIndirectWidget (false);
-        user->viewer ()->setMonitoring (IViewer::MonitorNothing);
+    if (!m_url.isEmpty () && m_url != "about:empty") {
+        QDBusMessage msg = QDBusMessage::createMethodCall (
+                remote_service, "/plugin", "org.kde.kmplayer.backend", "play");
+        msg << m_url;
+        msg.setDelayedReply (false);
+        QDBusConnection::sessionBus().send (msg);
+        setState (IProcess::Buffering);
     }
-    if (node && !m_url.isEmpty ()) {
+    return true;
+}
+
+KDE_NO_EXPORT bool NpPlayer::ready () {
+    Mrl *node = mrl ();
+    if (!node || !user || !user->viewer ())
+        return false;
+
+    user->viewer ()->useIndirectWidget (false);
+    user->viewer ()->setMonitoring (IViewer::MonitorNothing);
+
+    if (state () == IProcess::Ready)
+        return true;
+
+    initProcess ();
+    QString exe ("knpplayer");
+    QStringList args;
+    args << "-cb" << (service + path);
+    args << "-wid" << QString::number (user->viewer ()->windowHandle ());
+    startProcess (exe, args);
+    if (m_process->waitForStarted (5000)) {
+        QString s;
+        for (int i = 0; i < 2 && remote_service.isEmpty (); ++i) {
+            if (!m_process->waitForReadyRead (5000))
+                return false;
+            const QByteArray ba = m_process->readAllStandardOutput ();
+            s += QString::fromAscii (ba.data (), ba.size ());
+            int nl = s.indexOf (QChar ('\n'));
+            if (nl > 0) {
+                int p = s.indexOf ("NPP_DBUS_SRV=");
+                if (p > -1)
+                    remote_service = s.mid (p + 13, nl - p - 13);
+            }
+        }
+    }
+    connect (m_process, SIGNAL (readyReadStandardOutput ()),
+            this, SLOT (processOutput ()));
+    if (!remote_service.isEmpty ()) {
         QString mime = "text/plain";
         QString plugin;
         Element *elm = node;
@@ -1872,37 +1915,22 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
         }
         if (!plugin.isEmpty ()) {
             QDBusMessage msg = QDBusMessage::createMethodCall (
-                    remote_service, "/plugin", "org.kde.kmplayer.backend", "play");
-            msg << m_url << mime << plugin;
+                    remote_service, "/plugin", "org.kde.kmplayer.backend", "setup");
+            msg << mime << plugin;
             QMap <QString, QVariant> urlargs;
             for (AttributePtr a = elm->attributes ().first (); a; a = a->nextSibling ())
                 urlargs.insert (a->name ().toString (), a->value ());
             msg << urlargs;
             msg.setDelayedReply (false);
-            QDBusConnection::sessionBus().send (msg);
-            setState (IProcess::Buffering);
+            QDBusConnection::sessionBus().call (msg, QDBus::BlockWithGui);
+            setState (IProcess::Ready);
             return true;
         }
     }
+    m_old_state = m_state = Ready;
     stop ();
-    return false;
-}
 
-KDE_NO_EXPORT bool NpPlayer::ready () {
-    if (!user || !user->viewer ())
-        return false;
-    // FIXME wait for callback
-    user->viewer ()->useIndirectWidget (false);
-    if (state () == IProcess::Ready)
-        return true;
-    initProcess ();
-    QString exe ("knpplayer");
-    QStringList args;
-    args << "-cb" << (service + path);
-    args << "-wid" << QString::number (user->viewer ()->windowHandle ());
-    //qDebug ("knpplayer %s", args.join(" ").toLocal8Bit().constData ());
-    startProcess (exe, args);
-    return true;
+    return false;
 }
 
 KDE_NO_EXPORT void NpPlayer::running (const QString &srv) {
@@ -2032,7 +2060,8 @@ KDE_NO_EXPORT void NpPlayer::quit () {
 }
 
 KDE_NO_EXPORT void NpPlayer::processOutput () {
-    outputToView (view (), m_process->readAllStandardOutput ());
+    if (!remote_service.isEmpty ())
+        outputToView (view (), m_process->readAllStandardOutput ());
     outputToView (view (), m_process->readAllStandardError ());
 }
 

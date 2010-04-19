@@ -825,6 +825,11 @@ void Mrl::activate () {
         setState (state_deferred);
         media_info = new MediaInfo (this, MediaManager::AudioVideo);
         resolved = media_info->wget (absolutePath ());
+        if (resolved && isPlayable ()) {
+            // ignore the MsgMediaReady message redirection
+            setState (state_activated);
+            begin ();
+        }
     } else if (isPlayable ()) {
         setState (state_activated);
         begin ();

@@ -492,15 +492,27 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartSourceChanged(Source *o, Source *s) {
 }
 
 KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
-    kDebug () << "KMPlayerPart::openUrl " << _url.url();
+    KUrl url;
+    KParts::OpenUrlArguments args = arguments ();
     Source * urlsource = m_sources ["urlsource"];
     KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
     KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end ();
     GroupPredicate pred (this, m_group);
-    KUrl url;
-    if (!m_file_name.isEmpty () && (_url.isEmpty () || _url == m_docbase))
+    bool emit_started = true;
+
+    kDebug () << "KMPlayerPart::openUrl " << _url.url() << " " << args.mimeType();;
+    if (args.mimeType () == "application/x-shockwave-flash" ||
+            args.mimeType () == "application/futuresplash") {
+        m_wait_npp_loaded = true;
+        urlsource->setAvoidRedirects (true);
+    }
+
+    if (m_wait_npp_loaded && (_url.isEmpty () || _url == m_docbase)) {
+        url = KUrl ("about:empty");
+        m_wait_npp_loaded = emit_started = false;
+    } else if (!m_file_name.isEmpty () && (_url.isEmpty () || _url == m_docbase)) {
         url = KUrl (m_docbase, m_file_name); // fix misdetected SRC attr
-    else if (_url != m_docbase) {
+    } else if (_url != m_docbase) {
         url = _url;
         if (!m_file_name.isEmpty () && _url.url ().find (m_file_name) < 0) {
             KUrl u (m_file_name);
@@ -534,6 +546,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
            m_href_url.truncate (0);
     if (m_href_url.isEmpty ())
         setUrl (url.url ());
+
     if (url.isEmpty ()) {
         if (!m_master && !(m_features & Feat_Viewer))
             // no master set, wait for a viewer to attach or timeout
@@ -556,16 +569,12 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
     if (!m_view || !url.isValid ())
         return false;
 
-    KParts::OpenUrlArguments args = arguments ();
     if (!args.mimeType ().isEmpty ())
         urlsource->document ()->mrl ()->mimetype = args.mimeType ();
-    if (args.mimeType () == "application/x-shockwave-flash" ||
-            args.mimeType () == "application/futuresplash")
-        m_wait_npp_loaded = true;
 
     startUrl (url);
 
-    if (urlsource->autoPlay ()) {
+    if (emit_started && urlsource->autoPlay ()) {
         emit started (0L);
         m_started_emited = true;
     }
