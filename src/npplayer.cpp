@@ -82,7 +82,7 @@ static NPClass js_class;
 static GTree *stream_list;
 static gpointer current_stream_id;
 static uint32_t stream_chunk_size;
-static char stream_buf[32 * 1024];
+static char stream_buf[64 * 1024];
 static unsigned int stream_buf_pos;
 static int stream_id_counter;
 static GTree *identifiers;
@@ -112,7 +112,9 @@ static NP_GetValueUPP npGetValue;
 static NP_InitializeUPP npInitialize;
 static NP_ShutdownUPP npShutdown;
 
-static void callFunction(int stream, const char *func, int first_arg_type, ...);
+static const char *iface_stream = "org.kde.kmplayer.stream";
+static const char *iface_callback = "org.kde.kmplayer.callback";
+static void callFunction(int stream, const char *iface, const char *func, int first_arg_type, ...);
 static void readStdin (gpointer d, gint src, GdkInputCondition cond);
 static char *evaluate (const char *script, bool store);
 
@@ -155,7 +157,7 @@ static gint streamCompare (gconstpointer a, gconstpointer b) {
 
 static void freeStream (StreamInfo *si) {
     char stream_name[64];
-    sprintf (stream_name, "/stream_%d", (long) si->np_stream.ndata);
+    sprintf (stream_name, "/stream_%d", (int)(long) si->np_stream.ndata);
     if (!g_tree_remove (stream_list, si->np_stream.ndata))
         print ("WARNING freeStream not in tree\n");
     else
@@ -217,9 +219,8 @@ static gboolean requestStream (void * p) {
 
 static gboolean destroyStream (void * p) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
-    print ("FIXME destroyStream\n");
     if (si)
-        callFunction ((int)(long)p, "destroy", DBUS_TYPE_INVALID);
+        callFunction ((int)(long)p, iface_stream, "destroy", DBUS_TYPE_INVALID);
     return 0; /* single shot */
 }
 
@@ -246,7 +247,7 @@ static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
     /*print ("writeStream found %d count %d\n", !!si, count);*/
     if (si) {
-        if (si->reason > NPERR_NO_ERROR) {
+        if (si->reason > NPERR_NO_ERROR || si->destroyed) {
             sz = count; /* stream closed, skip remainings */
         } else {
             if (!si->called_plugin) {
@@ -310,7 +311,7 @@ static StreamInfo *addStream (const char *url, const char *mime, const char *tar
     si->notify = notify;
     si->np_stream.ndata = (void *) (long) (stream_id_counter++);
     print ("add stream %d\n", (long) si->np_stream.ndata);
-    sprintf (stream_name, "/stream_%d", (long) si->np_stream.ndata);
+    sprintf (stream_name, "/stream_%d", (int)(long) si->np_stream.ndata);
     if (!dbus_connection_register_object_path (dbus_connection, stream_name,
                 &stream_vtable, si))
         g_printerr ("dbus_connection_register_object_path error\n");
@@ -1663,7 +1664,8 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-static void callFunction(int stream,const char *func, int first_arg_type, ...) {
+static void callFunction(int stream, const char *iface, const char *func, int first_arg_type, ...)
+{
     char path[64];
     createPath (stream, path, sizeof (path));
     print ("call %s.%s()\n", path, func);
@@ -1672,7 +1674,7 @@ static void callFunction(int stream,const char *func, int first_arg_type, ...) {
         DBusMessage *msg = dbus_message_new_method_call (
                 callback_service,
                 path,
-                "org.kde.kmplayer.callback",
+                iface,
                 func);
         if (first_arg_type != DBUS_TYPE_INVALID) {
             va_start (var_args, first_arg_type);
@@ -1751,7 +1753,7 @@ static void pluginAdded (GtkSocket *socket, gpointer d) {
                     );
         }
     }
-    callFunction (-1, "plugged", DBUS_TYPE_INVALID);
+    callFunction (-1, iface_callback, "plugged", DBUS_TYPE_INVALID);
 }
 
 static void windowCreatedEvent (GtkWidget *w, gpointer d) {

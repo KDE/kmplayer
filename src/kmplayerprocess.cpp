@@ -1764,7 +1764,8 @@ KDE_NO_EXPORT void NpStream::close () {
 }
 
 KDE_NO_EXPORT void NpStream::destroy () {
-     static_cast <NpPlayer *> (parent ())->destroyStream (stream_id);
+    pending_buf.clear ();
+    static_cast <NpPlayer *> (parent ())->destroyStream (stream_id);
 }
 
 KDE_NO_EXPORT void NpStream::slotResult (KJob *jb) {
@@ -1775,20 +1776,22 @@ KDE_NO_EXPORT void NpStream::slotResult (KJob *jb) {
 }
 
 KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
-    int sz = pending_buf.size ();
-    if (sz) {
-        pending_buf.resize (sz + qb.size ());
-        memcpy (pending_buf.data () + sz, qb.constData (), qb.size ());
-    } else {
-        pending_buf = qb;
+    if (job) {
+        int sz = pending_buf.size ();
+        if (sz) {
+            pending_buf.resize (sz + qb.size ());
+            memcpy (pending_buf.data () + sz, qb.constData (), qb.size ());
+        } else {
+            pending_buf = qb;
+        }
+        if (sz + qb.size () > 64000 &&
+                !job->isSuspended () && !job->suspend ())
+            kError () << "suspend not supported" << endl;
+        if (!sz)
+            gettimeofday (&data_arrival, 0L);
+        if (sz + qb.size ())
+            emit stateChanged ();
     }
-    if (sz + qb.size () > 64000 &&
-            !job->isSuspended () && !job->suspend ())
-        kError () << "suspend not supported" << endl;
-    if (!sz)
-        gettimeofday (&data_arrival, 0L);
-    if (sz + qb.size ())
-        emit stateChanged ();
 }
 
 KDE_NO_EXPORT void NpStream::redirection (KIO::Job *, const KUrl &kurl) {
@@ -2177,7 +2180,10 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
     }
     //kDebug() << "NpPlayer::processStreams " << stream;
     if (stream) {
-        if (!stream->bytes && (!stream->mimetype.isEmpty() || stream->content_length)) {
+        if (stream->finish_reason != NpStream::BecauseStopped &&
+                stream->finish_reason != NpStream::BecauseError &&
+                !stream->bytes &&
+                (!stream->mimetype.isEmpty() || stream->content_length)) {
             QString objpath = QString ("/stream_%1").arg (stream->stream_id);
             QDBusMessage msg = QDBusMessage::createMethodCall (
                     remote_service, objpath, "org.kde.kmplayer.backend", "streamInfo");
@@ -2203,13 +2209,11 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
     in_process_stream = false;
 }
 
-KDE_NO_EXPORT void NpPlayer::wroteStdin (qint64) {
-    write_in_progress = false;
-    if (running ()) {
-        if (in_process_stream) {
-            kDebug() << "sync wroteStdin";
-        }
-        processStreams ();
+KDE_NO_EXPORT void NpPlayer::wroteStdin (qint64 sz) {
+    if (!m_process->bytesToWrite ()) {
+        write_in_progress = false;
+        if (running ())
+            processStreams ();
     }
 }
 
