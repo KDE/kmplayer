@@ -751,7 +751,7 @@ KDE_NO_EXPORT void MediaInfo::slotData (KIO::Job *, const QByteArray &qb) {
         data.resize (newsize);
         memcpy (data.data () + old_size, qb.constData (), qb.size ());
         if (old_size < 512 && newsize >= 512) {
-            setMimetype (mimeByContent (qb));
+            setMimetype (mimeByContent (data));
             if (!validDataFormat (type, data)) {
                 data.resize (0);
                 job->kill (KJob::EmitResult);
