@@ -498,7 +498,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
     KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
     KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end ();
     GroupPredicate pred (this, m_group);
-    bool emit_started = true;
+    bool emit_started = !m_settings->clicktoplay;
 
     kDebug () << "KMPlayerPart::openUrl " << _url.url() << " " << args.mimeType();;
     if (args.mimeType () == "application/x-shockwave-flash" ||
@@ -611,6 +611,8 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
         m_src_url = m_href_url;
         src->setDocument (n, n);
         setSource (src);
+        if (m_source->avoidRedirects ())
+            m_source->activate();
         return true;
     }
     if ((m_settings->clicktoplay || !m_href_url.isEmpty ()) &&
@@ -684,10 +686,13 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
                 im->mrl ()->access_granted = true;
         }
         doc->document ()->resolved = true;
-        if (m_source)
+        if (m_source) {
             m_source->activate();
-        else
+        } else {
             setSource (src);
+            if (m_source->avoidRedirects ())
+                m_source->activate();
+        }
 #else
         if (m_view->setPicture (KUrl (img).path ())) {
             connect (m_view, SIGNAL (pictureClicked ()),
