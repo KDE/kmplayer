@@ -2161,10 +2161,7 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
                 (ns->finish_reason == NpStream::BecauseDone &&
                  ns->pending_buf.size () == 0)) {
             sendFinish (i.key(), ns->bytes, ns->finish_reason);
-            StreamMap::iterator ii = i;
-            ++ii;
-            streams.erase (i);
-            i = ii;
+            i = streams.erase (i);
             delete ns;
         } else {
             if (ns->pending_buf.size () > 0 &&

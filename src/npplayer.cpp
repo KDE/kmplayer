@@ -219,8 +219,10 @@ static gboolean requestStream (void * p) {
 
 static gboolean destroyStream (void * p) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
-    if (si)
+    if (si) {
+        si->destroyed = true;
         callFunction ((int)(long)p, iface_stream, "destroy", DBUS_TYPE_INVALID);
+    }
     return 0; /* single shot */
 }
 
@@ -272,7 +274,7 @@ static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
                 if (sz < 0) { /*FIXME plugin destroys stream here*/
                     si->reason = NPERR_INVALID_PLUGIN_ERROR;
                     destroyStream ((gpointer)p);
-                    return 0;
+                    return count; /* stream not accepted, skip remainings */
                 }
             } else {
                 sz = 0;
