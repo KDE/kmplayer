@@ -1,3 +1,13 @@
+Changes since version 0.11.2a
+- Fix npp destroy stream
+- Synchronously start npp from kpart to handle immediate JS version calls
+- Fix pause for list items
+- Fix adding empty arguments to generated JS functions
+- Mimetype detection fix when first arrived data is too small to call
+- SMIL 'img' is now an alias to 'ref'
+- The mplayer detected DVD titles are selectable again, now as child items
+- Fix filename encoding for local files
+- Fix crash after running the youtube generator
 Changes since version 0.11.2
 - Add 'escape-uri' and 'contains' expression functions, support for '.' node
 - Fix slider hiding when mplayer starts and no length available
