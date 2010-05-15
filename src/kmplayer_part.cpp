@@ -41,6 +41,11 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include <kstandarddirs.h>
 
 #include "kmplayer_part.h"
+#if KDE_IS_VERSION(4, 4, 75)
+#include "kmplayerscriptable.h"
+#else
+#include "kmplayerliveconnect.h"
+#endif
 #include "kmplayerview.h"
 #include "playlistview.h"
 #include "kmplayercontrolpanel.h"
@@ -192,7 +197,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
  : PartBase (wparent, ppart, KSharedConfig::openConfig ("kmplayerrc")),
    m_master (0L),
    m_browserextension (new KMPlayerBrowserExtension (this)),
+#if KDE_IS_VERSION(4, 4, 75)
+   m_scriptableextension (new KMPlayerScriptableExtension (this)),
+#else
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
+#endif
    m_expected_view_width (0),
    m_expected_view_height (0),
    m_features (Feat_Unknown),
@@ -442,6 +451,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
 KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
 #ifdef KMPLAYER_WITH_NPP
     if (!strcmp (p->name (), "npp")) {
+# if KDE_IS_VERSION(4, 4, 75)
+# else
         if (m_wait_npp_loaded)
             connect (p, SIGNAL (loaded ()), this, SLOT (nppLoaded ()));
         connect (p, SIGNAL (evaluate (const QString &, bool, QString &)),
@@ -453,6 +464,7 @@ KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
         connect (m_liveconnectextension,
                 SIGNAL (requestCall (const uint32_t, const QString &, const QStringList, QString *)),
                 p, SLOT (requestCall (const uint32_t, const QString &, const QStringList, QString *)));
+# endif
     }
 #endif
 }
@@ -792,14 +804,19 @@ KDE_NO_EXPORT void KMPlayerPart::playingStarted () {
     else
         return; // ugh
     kDebug () << "KMPlayerPart::processStartedPlaying ";
+#if 0
     if (m_settings->sizeratio && !m_noresize && m_source->width() > 0 && m_source->height() > 0)
         m_liveconnectextension->setSize (m_source->width(), m_source->height());
+#endif
     m_browserextension->setLoadingProgress (100);
     if (m_started_emited && !m_wait_npp_loaded) {
         emit completed ();
         m_started_emited = false;
     }
+#if KDE_IS_VERSION(4, 4, 75)
+#else
     m_liveconnectextension->started ();
+#endif
     m_browserextension->infoMessage (i18n("KMPlayer: Playing"));
 }
 
@@ -810,7 +827,10 @@ KDE_NO_EXPORT void KMPlayerPart::playingStopped () {
         m_browserextension->setLoadingProgress (100);
         emit completed ();
     }
+#if KDE_IS_VERSION(4, 4, 75)
+#else
     m_liveconnectextension->finished ();
+#endif
     m_browserextension->infoMessage (i18n ("KMPlayer: Stop Playing"));
     if (m_view)
         m_view->controlPanel ()->setPlaying (false);
@@ -860,8 +880,23 @@ KDE_NO_EXPORT void KMPlayerPart::statusPosition (int pos, int length) {
 }
 
 KDE_NO_EXPORT QString KMPlayerPart::doEvaluate (const QString &script) {
+#if KDE_IS_VERSION(4, 4, 75)
+    KParts::ScriptableExtension* host = m_scriptableextension->host ();
+    if (host) {
+        QVariant embed = m_scriptableextension->enclosingObject ();
+        if (embed.canConvert <KParts::ScriptableExtension::Object> ()) {
+            quint64 id = embed.value <KParts::ScriptableExtension::Object> ().objId;
+            QVariant result = host->evaluateScript (m_scriptableextension,
+                    id, script);
+            host->release (id);
+            return result.toString ();
+        }
+    }
+    return "undefined";
+#else
     return m_liveconnectextension->evaluate (
             QString ("this.__kmplayer__res=" ) + script);
+#endif
 }
 
 //---------------------------------------------------------------------
@@ -906,6 +941,182 @@ KDE_NO_EXPORT void KMPlayerBrowserExtension::requestOpenURL (const KUrl & url, c
  * .controls.stop()
  * .controls.play()
  */
+
+#if KDE_IS_VERSION(4, 4, 75)
+
+namespace {
+
+    enum MediaFunction {
+        MediaPartObject=0,
+        MediaPlay, MediaStop,
+        MediaFunctionLast
+    };
+    struct FunctionTable {
+        const char *function;
+        MediaFunction function_id;
+    };
+}
+
+static FunctionTable function_table[] = {
+    { "Play", MediaPlay },
+    { "Stop", MediaStop },
+    { NULL, MediaPartObject }
+};
+
+static MediaFunction getMediaFunction (const char *name) {
+    for (FunctionTable *t = function_table; t->function; ++t)
+        if (!strcmp (t->function, name))
+            return t->function_id;
+    return MediaFunctionLast;
+}
+
+static bool callMediaFunction (KMPlayerPart *player,
+        MediaFunction func, const KParts::ScriptableExtension::ArgList& args,
+        QVariant &result)
+{
+    KParts::ScriptableExtension::Undefined undefined;
+    result.setValue <KParts::ScriptableExtension::Undefined> (undefined);
+    qDebug ("%s", __FUNCTION__);
+
+    switch (func) {
+    case MediaPlay:
+        if (args.size ()) {
+            KUrl url (args.first ().toString ());
+            if (player->allowRedir (url))
+                player->openNewURL (url);
+        } else {
+            player->play ();
+        }
+        break;
+    case MediaStop:
+        player->stop ();
+        break;
+    default:
+        break;
+    }
+    return true;
+}
+
+KMPlayerScriptableExtension::KMPlayerScriptableExtension (KMPlayerPart * parent)
+    : ScriptableExtension (parent), player (parent)
+{}
+
+KMPlayerScriptableExtension::~KMPlayerScriptableExtension ()
+{
+}
+
+QVariant KMPlayerScriptableExtension::rootObject ()
+{
+    qDebug ("rootObject");
+    QVariant v;
+    KParts::ScriptableExtension::Object object;
+    object.owner = this;
+    object.objId = 0;
+    v.setValue <KParts::ScriptableExtension::Object> (object);
+    return v;
+}
+
+QVariant KMPlayerScriptableExtension::callAsFunction (KParts::ScriptableExtension* caller,
+        quint64 objId, const ArgList& args)
+{
+    QVariant v;
+    qDebug ("callAsFunction");
+
+    if (objId > (int)MediaPartObject && objId < (int)MediaFunctionLast &&
+            callMediaFunction (player, (MediaFunction) objId, args, v))
+        return v;
+
+    KParts::ScriptableExtension::Undefined undefined;
+    v.setValue <KParts::ScriptableExtension::Undefined> (undefined);
+
+    return v;
+}
+
+QVariant KMPlayerScriptableExtension::callFunctionReference (KParts::ScriptableExtension* caller,
+        quint64 objId, const QString& f, const ArgList& args)
+{
+    QVariant v;
+    qDebug ("callFunctionReference");
+    if (objId == (int)MediaPartObject) {
+        MediaFunction func = getMediaFunction (f.toUtf8 ().constData ());
+        if (func != MediaFunctionLast &&
+                callMediaFunction (player, func, args, v))
+            return v;
+    }
+    return false;
+}
+
+QVariant KMPlayerScriptableExtension::callAsConstructor (KParts::ScriptableExtension* caller,
+        quint64 objId, const ArgList& args)
+{
+    QVariant v;
+    qDebug ("callAsConstructor");
+    return v;
+}
+
+bool KMPlayerScriptableExtension::hasProperty (KParts::ScriptableExtension* caller,
+        quint64 objId, const QString& propName)
+{
+    qDebug ("hasProperty property %s", propName.toUtf8 ().constData ());
+    return false;
+}
+
+QVariant KMPlayerScriptableExtension::get (KParts::ScriptableExtension* caller,
+        quint64 objId, const QString& prop)
+{
+    QVariant v;
+    qDebug ("KMPlayerScriptableExtension::get %ld %s", objId, prop.toUtf8().constData());
+    if (objId == (int)MediaPartObject) {
+        MediaFunction func = getMediaFunction (prop.toUtf8 ().constData ());
+        if (func != MediaFunctionLast) {
+            KParts::ScriptableExtension::Object object;
+            object.owner = this;
+            object.objId = (int) func;
+            v.setValue <KParts::ScriptableExtension::Object> (object);
+        }
+    }
+    return v;
+}
+
+bool KMPlayerScriptableExtension::put (KParts::ScriptableExtension* caller,
+        quint64 objId, const QString& propName, const QVariant& value)
+{
+    qDebug ("KMPlayerScriptableExtension::put");
+    return false;
+}
+
+bool KMPlayerScriptableExtension::removeProperty (KParts::ScriptableExtension* caller,
+        quint64 objId, const QString& propName)
+{
+    qDebug ("removeProperty");
+    return false;
+}
+
+bool KMPlayerScriptableExtension::enumerateProperties (KParts::ScriptableExtension* caller,
+        quint64 objId, QStringList* result)
+{
+    qDebug ("enumerateProperties");
+    return false;
+}
+
+bool KMPlayerScriptableExtension::setException (KParts::ScriptableExtension* caller,
+        const QString& message)
+{
+    qDebug ("setException");
+    return false;
+}
+
+void KMPlayerScriptableExtension::acquire (quint64 objid)
+{
+    qDebug ("acquire %ld", objid);
+}
+
+void KMPlayerScriptableExtension::release (quint64 objid)
+{
+    qDebug ("release %ld", objid);
+}
+
+#else
 
 enum JSCommand {
     notsupported,
@@ -1541,4 +1752,11 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     emit partEvent (0, "eval", args);
 }
 
+#endif
+
 #include "kmplayer_part.moc"
+#if KDE_IS_VERSION(4, 4, 75)
+#include "kmplayerscriptable.moc"
+#else
+#include "kmplayerliveconnect.moc"
+#endif

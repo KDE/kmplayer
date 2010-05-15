@@ -26,7 +26,8 @@
 
 
 class KMPlayerPart;
-class JSCommandEntry;
+class KMPlayerLiveConnectExtension;
+class KMPlayerScriptableExtension;
 namespace KMPlayer {
     class PlayListNotify;
 }
@@ -64,52 +65,6 @@ public:
     void requestOpenURL (const KUrl & url, const QString & target, const QString & service);
 };
 
-/*
- * Part javascript support
- */
-class KMPLAYER_NO_EXPORT KMPlayerLiveConnectExtension : public KParts::LiveConnectExtension {
-    Q_OBJECT
-public:
-    KMPlayerLiveConnectExtension (KMPlayerPart * parent);
-    ~KMPlayerLiveConnectExtension ();
-
-    // LiveConnect interface
-    bool get (const unsigned long, const QString &,
-            KParts::LiveConnectExtension::Type &, unsigned long &, QString &);
-    bool put (const unsigned long, const QString &, const QString &);
-    bool call (const unsigned long, const QString &,
-            const QStringList &, KParts::LiveConnectExtension::Type &, 
-            unsigned long &, QString &);
-    void unregister (const unsigned long);
-    void sendEvent(const unsigned long objid, const QString & event, const KParts::LiveConnectExtension::ArgList & args ) {
-        emit partEvent(objid, event, args);
-    }
-
-    void enableFinishEvent (bool b = true) { m_enablefinish = b; }
-    QString evaluate (const QString & script);
-signals:
-    void partEvent (const unsigned long, const QString &,
-                    const KParts::LiveConnectExtension::ArgList &);
-    void requestGet (const uint32_t, const QString &, QString *);
-    void requestCall (const uint32_t, const QString &, const QStringList &, QString *);
-public slots:
-    void setSize (int w, int h);
-    void started ();
-    void finished ();
-    void evaluate (const QString & script, bool store, QString & result);
-private:
-    KMPlayerPart * player;
-    QString script_result;
-    QString m_allow;
-    QStringList redir_funcs;
-    const JSCommandEntry * lastJSCommandEntry;
-    unsigned int object_counter;
-    bool m_started;
-    bool m_enablefinish;
-    bool m_evaluating;
-    bool m_skip_put;
-};
-
 
 /*
  * Part that gets created when used a KPart
@@ -130,8 +85,13 @@ public:
 
     KDE_NO_EXPORT KMPlayerBrowserExtension * browserextension() const
         { return m_browserextension; }
+#if KDE_IS_VERSION(4, 4, 75)
+    KMPlayerScriptableExtension * scriptableextension () const
+        { return m_scriptableextension; }
+#else
     KMPlayerLiveConnectExtension * liveconnectextension () const
         { return m_liveconnectextension; }
+#endif
     KDE_NO_EXPORT bool hasFeature (int f) { return m_features & f; }
     bool allowRedir (const KUrl & url) const;
     void connectToPart (KMPlayerPart *);
@@ -166,7 +126,11 @@ private:
     void setAutoControls (bool);
     KMPlayerPart * m_master;
     KMPlayerBrowserExtension * m_browserextension;
+#if KDE_IS_VERSION(4, 4, 75)
+    KMPlayerScriptableExtension * m_scriptableextension;
+#else
     KMPlayerLiveConnectExtension * m_liveconnectextension;
+#endif
     QString m_group;
     QString m_src_url;
     QString m_href_url;
