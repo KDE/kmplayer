@@ -2273,7 +2273,7 @@ KDE_NO_EXPORT void NpPlayer::initProcess () {}
 KDE_NO_EXPORT void NpPlayer::stop () {}
 KDE_NO_EXPORT void NpPlayer::quit () { }
 KDE_NO_EXPORT bool NpPlayer::ready () { return false; }
-KDE_NO_EXPORT void NpPlayer::requestRoot (const QString &, qint64 *)
+KDE_NO_EXPORT void NpPlayer::requestRoot (const QString &, qint64 *) {}
 KDE_NO_EXPORT void NpPlayer::requestGet (const uint64_t, const QString &, QString *) {}
 KDE_NO_EXPORT void NpPlayer::requestCall (const uint64_t, const QString &, const QStringList &, QString *) {}
 KDE_NO_EXPORT void NpPlayer::processOutput () {}
