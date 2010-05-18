@@ -1946,6 +1946,39 @@ void NpPlayer::plugged () {
     view ()->videoStart ();
 }
 
+QDBusVariant NpPlayer::call (const QDBusVariant &obj,
+        const QString &func, const QVariantList &args)
+{
+    QVariant v;
+    emit objectCall (obj.variant (), func, args, v);
+    return QDBusVariant (v);
+}
+
+QDBusVariant NpPlayer::get (const QDBusVariant &obj, const QString &field)
+{
+    QVariant v;
+    emit objectGet (obj.variant (), field, v);
+    return QDBusVariant (v);
+}
+
+QDBusVariant NpPlayer::root()
+{
+    qDebug ("NpPlayer::root");
+    QVariant v;
+    emit hostRoot (v);
+    return QDBusVariant (v);
+}
+
+void NpPlayer::acquire (const QDBusVariant &obj)
+{
+    emit acquireObject (obj.variant ());
+}
+
+void NpPlayer::release (const QDBusVariant &obj)
+{
+    emit releaseObject (obj.variant ());
+}
+
 static int getStreamId (const QString &path) {
     int p = path.lastIndexOf (QChar ('_'));
     if (p < 0) {
@@ -2093,12 +2126,16 @@ KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t sid, const KUrl &u) {
     }
 }
 
+KDE_NO_EXPORT void NpPlayer::requestRoot (const QString &, qint64 *)
+{
+}
+
 KDE_NO_EXPORT
-void NpPlayer::requestGet (const uint32_t id, const QString &prop, QString *res) {
+void NpPlayer::requestGet (const uint64_t id, const QString &prop, QString *res) {
     if (!remote_service.isEmpty ()) {
         QDBusMessage msg = QDBusMessage::createMethodCall (
                 remote_service, "/plugin", "org.kde.kmplayer.backend", "get");
-        msg << id << prop;
+        msg << (qulonglong) id << prop;
         QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg, QDBus::BlockWithGui);
         if (rmsg.type () == QDBusMessage::ReplyMessage) {
             //kDebug() << "get " << prop << rmsg.arguments ().size ();
@@ -2113,11 +2150,11 @@ void NpPlayer::requestGet (const uint32_t id, const QString &prop, QString *res)
     }
 }
 
-KDE_NO_EXPORT void NpPlayer::requestCall (const uint32_t id, const QString &func,
+KDE_NO_EXPORT void NpPlayer::requestCall (const uint64_t id, const QString &func,
         const QStringList &args, QString *res) {
     QDBusMessage msg = QDBusMessage::createMethodCall (
             remote_service, "/plugin", "org.kde.kmplayer.backend", "call");
-    msg << id << func << args;
+    msg << (qulonglong) id << func << args;
     QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg, QDBus::BlockWithGui);
     //kDebug() << "call " << func << rmsg.arguments ().size ();
     if (rmsg.arguments ().size ()) {
@@ -2236,8 +2273,9 @@ KDE_NO_EXPORT void NpPlayer::initProcess () {}
 KDE_NO_EXPORT void NpPlayer::stop () {}
 KDE_NO_EXPORT void NpPlayer::quit () { }
 KDE_NO_EXPORT bool NpPlayer::ready () { return false; }
-KDE_NO_EXPORT void NpPlayer::requestGet (const uint32_t, const QString &, QString *) {}
-KDE_NO_EXPORT void NpPlayer::requestCall (const uint32_t, const QString &, const QStringList &, QString *) {}
+KDE_NO_EXPORT void NpPlayer::requestRoot (const QString &, qint64 *)
+KDE_NO_EXPORT void NpPlayer::requestGet (const uint64_t, const QString &, QString *) {}
+KDE_NO_EXPORT void NpPlayer::requestCall (const uint64_t, const QString &, const QStringList &, QString *) {}
 KDE_NO_EXPORT void NpPlayer::processOutput () {}
 KDE_NO_EXPORT void NpPlayer::processStopped (int, QProcess::ExitStatus) {}
 KDE_NO_EXPORT void NpPlayer::wroteStdin (qint64) {}

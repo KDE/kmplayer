@@ -79,6 +79,7 @@ static NPWindow np_window;
 static NPObject *js_window;
 static NPSavedData *saved_data;
 static NPClass js_class;
+static NPClass browser_class;
 static GTree *stream_list;
 static gpointer current_stream_id;
 static uint32_t stream_chunk_size;
@@ -106,6 +107,11 @@ struct JsObject {
     struct JsObject * parent;
     char * name;
 };
+struct BrowserObject {
+    NPObject npobject;
+    uint64_t id;
+    uint64_t owner;
+};
 
 static NP_GetMIMEDescriptionUPP npGetMIMEDescription;
 static NP_GetValueUPP npGetValue;
@@ -126,10 +132,11 @@ static void dbusStreamUnregister (DBusConnection *conn, void *user_data);
 
 static void print (const char * format, ...) {
     va_list vl;
+    static FILE *out = fopen ("/tmp/npp.out", "w+");
     va_start (vl, format);
-    vfprintf (stderr, format, vl);
+    vfprintf (out, format, vl);
     va_end (vl);
-    fflush (stderr);
+    fflush (out);
 }
 
 static void *nsAlloc (uint32 size) {
@@ -416,6 +423,75 @@ static void nsReleaseObject (NPObject *obj) {
         obj->_class->deallocate (obj);
 }
 
+/*----------------%<---------------------------------------------------------*/
+
+static void readObject (DBusMessageIter *it, NPVariant *result)
+{
+    DBusMessageIter si;
+    uint64_t id, owner;
+
+    dbus_message_iter_recurse (it, &si);
+    if (dbus_message_iter_get_arg_type (&si) == DBUS_TYPE_UINT64) {
+        dbus_message_iter_get_basic (&si, &owner);
+        if (dbus_message_iter_has_next (&si) &&
+                dbus_message_iter_next (&si) &&
+                dbus_message_iter_get_arg_type (&si) == DBUS_TYPE_UINT64) {
+            BrowserObject *bo;
+            result->type = NPVariantType_Object;
+            dbus_message_iter_get_basic (&si, &id);
+            if (owner) {
+                // TODO: check if we have this object already wrapped
+                bo = (BrowserObject *) nsCreateObject (NULL, &browser_class);
+                bo->id = id;
+                bo->owner = owner;
+                result->value.objectValue = (NPObject *) bo;
+            } else {
+                result->value.objectValue = (NPObject *) id;
+            }
+            print ("read NPObject %p owner %p\n", id, owner);
+        } else {
+            print ("Error read NPObject\n");
+        }
+    } else {
+        result->type = NPVariantType_Null;
+        print ("read Null\n");
+    }
+}
+
+static void readNPVariant (DBusMessageIter *it, NPVariant *result)
+{
+    DBusMessageIter vi;
+    dbus_message_iter_recurse (it, &vi);
+    switch (dbus_message_iter_get_arg_type (&vi)) {
+    case DBUS_TYPE_STRUCT:
+        readObject (&vi, result);
+        break;
+    case DBUS_TYPE_STRING:
+        result->type = NPVariantType_String;
+        dbus_message_iter_get_basic (&vi, &result->value.stringValue.utf8characters);
+        result->value.stringValue.utf8length = strlen (result->value.stringValue.utf8characters);
+        print ("readNPVariant string %s\n", result->value.stringValue.utf8characters);
+        break;
+    default:
+        result->type = NPVariantType_Null;
+        print ("readNPVariant null\n");
+    }
+}
+
+static DBusMessageIter *writeBrowserObject (DBusMessageIter *it, BrowserObject *bo)
+{
+    DBusMessageIter vi, si;
+    dbus_message_iter_open_container (it, DBUS_TYPE_VARIANT, "(tt)", &vi);
+    dbus_message_iter_open_container (&vi, DBUS_TYPE_STRUCT, NULL, &si);
+    dbus_message_iter_append_basic (&si, DBUS_TYPE_UINT64, &bo->owner);
+    dbus_message_iter_append_basic (&si, DBUS_TYPE_UINT64, &bo->id);
+    dbus_message_iter_close_container (&vi, &si);
+    dbus_message_iter_close_container (it, &vi);
+    return it;
+}
+
+/*----------------%<---------------------------------------------------------*/
+
 static NPError nsGetURL (NPP instance, const char* url, const char* target) {
     (void)instance;
     print ("nsGetURL %s %s\n", url, target ? target : "");
@@ -554,6 +630,31 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
             *(NPBool*)value = 1;
             break;
         case NPNVWindowNPObject:
+            if (callback_service) {
+                DBusMessage *rmsg;
+                DBusMessage *msg = dbus_message_new_method_call (
+                        callback_service,
+                        callback_path,
+                        "org.kde.kmplayer.callback",
+                        "root");
+                rmsg = dbus_connection_send_with_reply_and_block (dbus_connection,
+                        msg, 2000, NULL);
+                if (rmsg) {
+                    DBusMessageIter it;
+                    if (dbus_message_iter_init (rmsg, &it) &&
+                            DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type (&it)) {
+                        NPVariant npvar;
+                        readNPVariant (&it, &npvar);
+                        if (NPVariantType_Object == npvar.type) {
+                            *(NPObject**)value = npvar.value.objectValue;
+                            dbus_message_unref (rmsg);
+                            break;
+                        } else
+                            print("not a struct\n");
+                    } else
+                        print("not a variant\n");
+                }
+            }
             if (!js_window) {
                 JsObject *jo = (JsObject*) nsCreateObject (instance, &js_class);
                 jo->name = g_strdup ("window");
@@ -1102,6 +1203,106 @@ static bool windowClassRemoveProperty (NPObject *npobj, NPIdentifier name) {
 }
 
 
+static NPObject *browserClassAllocate (NPP instance, NPClass *aClass)
+{
+    (void)instance;
+    BrowserObject *bo = (BrowserObject *) nsAlloc (sizeof (BrowserObject));
+    print ("browserClassAllocate\n");
+    memset (bo, 0, sizeof (BrowserObject));
+    bo->npobject._class = aClass;
+    return (NPObject *) bo;
+}
+
+static void browserClassDeallocate (NPObject *npobj)
+{
+    nsMemFree (npobj);
+}
+
+static void browserClassInvalidate (NPObject *npobj)
+{
+    (void)npobj;
+    print ("browserClassInvalidate\n");
+}
+
+static bool browserClassHasMethod (NPObject *npobj, NPIdentifier name)
+{
+    (void)npobj; (void)name;
+    print ("browserClassHasMehtod\n");
+    return false;
+}
+
+static bool browserClassInvoke (NPObject *npobj, NPIdentifier method,
+        const NPVariant *args, uint32_t arg_count, NPVariant *result)
+{
+    return false;
+}
+
+static bool browserClassInvokeDefault (NPObject *npobj,
+        const NPVariant *args, uint32_t arg_count, NPVariant *result)
+{
+    (void)npobj; (void)args; (void)arg_count; (void)result;
+    print ("browserClassInvokeDefault\n");
+    return false;
+}
+
+static bool browserClassHasProperty (NPObject *npobj, NPIdentifier name)
+{
+    (void)npobj; (void)name;
+    print ("browserClassHasProperty\n");
+    return false;
+}
+
+static bool browserClassGetProperty (NPObject *npobj, NPIdentifier property,
+        NPVariant *result)
+{
+    bool success = false;
+    char *id = (char *) g_tree_lookup (identifiers, property);
+    if (callback_service) {
+        DBusMessage *rmsg;
+        DBusMessage *msg = dbus_message_new_method_call (
+                callback_service,
+                callback_path,
+                "org.kde.kmplayer.callback",
+                "get");
+        DBusMessageIter it;
+        dbus_message_iter_init_append (msg, &it);
+        writeBrowserObject (&it, (BrowserObject *) npobj);
+        dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &id);
+        rmsg = dbus_connection_send_with_reply_and_block (dbus_connection,
+                msg, 2000, NULL);
+        if (rmsg) {
+            DBusMessageIter rit;
+            if (dbus_message_iter_init (rmsg, &rit) &&
+                    DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type (&rit))
+                readNPVariant (&rit, result);
+            dbus_message_unref (rmsg);
+            success = true;
+        } else
+            print ("failed to get response of get");
+        dbus_message_unref (msg);
+    } else
+        print ("no callback service");
+    print ("browserClassGetProperty %s\n", id);
+
+    return success;
+}
+
+static bool browserClassSetProperty (NPObject *npobj, NPIdentifier property,
+        const NPVariant *value)
+{
+    char *id = (char *) g_tree_lookup (identifiers, property);
+    print ("browserClassSetProperty %s\n", id);
+    return true;
+}
+
+static bool browserClassRemoveProperty (NPObject *npobj, NPIdentifier name)
+{
+    (void)npobj; (void)name;
+    print ("browserClassRemoveProperty\n");
+    return false;
+}
+
+
 /*----------------%<---------------------------------------------------------*/
 
 static void shutDownPlugin() {
@@ -1277,6 +1478,18 @@ static int initPlugin (const char *plugin_lib) {
     js_class.getProperty = windowClassGetProperty;
     js_class.setProperty = windowClassSetProperty;
     js_class.removeProperty = windowClassRemoveProperty;
+
+    browser_class.structVersion = NP_CLASS_STRUCT_VERSION;
+    browser_class.allocate = browserClassAllocate;
+    browser_class.deallocate = browserClassDeallocate;
+    browser_class.invalidate = browserClassInvalidate;
+    browser_class.hasMethod = browserClassHasMethod;
+    browser_class.invoke = browserClassInvoke;
+    browser_class.invokeDefault = browserClassInvokeDefault;
+    browser_class.hasProperty = browserClassHasProperty;
+    browser_class.getProperty = browserClassGetProperty;
+    browser_class.setProperty = browserClassSetProperty;
+    browser_class.removeProperty = browserClassRemoveProperty;
 
     np_funcs.size = sizeof (NPPluginFuncs);
 
@@ -1599,9 +1812,9 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         defaultReply (conn, msg);
     } else if (dbus_message_is_method_call (msg, iface, "get")) {
         DBusMessage * rmsg;
-        uint32_t object;
+        uint64_t object;
         char *prop;
-        if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT32, &object, true) &&
+        if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT64, &object, true) &&
                 dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &prop, false)) {
             char *result = NULL;
             doGet (object, prop, &result);
@@ -1617,13 +1830,13 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
     } else if (dbus_message_is_method_call (msg, iface, "call")) {
         DBusMessage * rmsg;
         DBusMessageIter ait;
-        uint32_t object;
+        uint64_t object;
         char *func;
         GSList *arglst = NULL;
         GSList *sl;
         uint32_t arg_count = 0;
         char *result = NULL;
-        if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT32, &object, true) &&
+        if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT64, &object, true) &&
                 dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &func, false)) {
             if (!dbus_message_iter_next (&args) ||
                     DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type (&args)) {

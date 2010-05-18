@@ -28,6 +28,7 @@
 #include <qstringlist.h>
 #include <qregexp.h>
 #include <qprocess.h>
+#include <QDBusVariant>
 
 #include <kurl.h>
 #include <kio/global.h>
@@ -441,6 +442,7 @@ public:
     virtual IProcess *create (PartBase*, ProcessUser*);
 };
 
+
 class KMPLAYER_NO_EXPORT NpPlayer : public Process {
     Q_OBJECT
 public:
@@ -456,6 +458,11 @@ public:
     virtual void initProcess ();
 
     using Process::running;
+    QDBusVariant call(const QDBusVariant &object, const QString &function, const QVariantList &arguments) KMPLAYER_NO_MBR_EXPORT;
+    QDBusVariant get(const QDBusVariant &object, const QString &field) KMPLAYER_NO_MBR_EXPORT;
+    QDBusVariant root() KMPLAYER_NO_MBR_EXPORT;
+    void acquire (const QDBusVariant &obj) KMPLAYER_NO_MBR_EXPORT;
+    void release (const QDBusVariant &obj) KMPLAYER_NO_MBR_EXPORT;
     void running (const QString &srv) KMPLAYER_NO_MBR_EXPORT;
     void plugged () KMPLAYER_NO_MBR_EXPORT;
     void request_stream (const QString &path, const QString &url, const QString &target, const QByteArray &post) KMPLAYER_NO_MBR_EXPORT;
@@ -472,10 +479,19 @@ public:
     bool ready ();
 signals:
     void evaluate (const QString & scr, bool store, QString & result);
+    void evaluate (const QString & scr, QString & result);
     void loaded ();
+    void objectCall (const QVariant &obj, const QString &func,
+            const QVariantList &args, QVariant &result);
+    void objectGet (const QVariant &obj, const QString &func,
+            QVariant &result);
+    void hostRoot (QVariant &result);
+    void acquireObject (const QVariant &object);
+    void releaseObject (const QVariant &object);
 public slots:
-    void requestGet (const uint32_t, const QString &, QString *);
-    void requestCall (const uint32_t, const QString &, const QStringList &, QString *);
+    void requestRoot (const QString &, qint64 *);
+    void requestGet (const uint64_t, const QString &, QString *);
+    void requestCall (const uint64_t, const QString &, const QStringList &, QString *);
 private slots:
     void processOutput ();
     void processStopped (int, QProcess::ExitStatus);

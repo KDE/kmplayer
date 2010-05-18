@@ -28,6 +28,7 @@
 #include <qslider.h>
 #include <QFile>
 #include <QMetaObject>
+#include <QDBusMetaType>
 
 class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollection.h does not forward declare KXMLGUIClient
 #include <kaboutdata.h>
@@ -451,19 +452,43 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
 KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
 #ifdef KMPLAYER_WITH_NPP
     if (!strcmp (p->name (), "npp")) {
-# if KDE_IS_VERSION(4, 4, 75)
-# else
         if (m_wait_npp_loaded)
             connect (p, SIGNAL (loaded ()), this, SLOT (nppLoaded ()));
+# if KDE_IS_VERSION(4, 4, 75)
+        connect (p, SIGNAL (evaluate (const QString &, QString &)),
+                m_scriptableextension,
+                SLOT (evaluate (const QString &, QString &)));
+        connect (p, SIGNAL (objectCall (const QVariant&, const QString&,
+                        const QVariantList&, QVariant&)),
+                m_scriptableextension,
+                SLOT (objectCall (const QVariant&, const QString&,
+                        const QVariantList&, QVariant&)));
+        connect (p,
+                SIGNAL (objectGet (const QVariant&, const QString&, QVariant&)),
+                m_scriptableextension,
+                SLOT (objectGet (const QVariant&, const QString&, QVariant&)));
+        connect (p, SIGNAL (hostRoot (QVariant&)),
+                m_scriptableextension, SLOT (hostRoot (QVariant&)));
+        connect (p, SIGNAL (acquireObject (const QVariant&)),
+                m_scriptableextension, SLOT (acquireObject (const QVariant&)));
+        connect (p, SIGNAL (releaseObject (const QVariant&)),
+                m_scriptableextension, SLOT(releaseObject (const QVariant&)));
+        connect (m_scriptableextension,
+                SIGNAL (requestGet (const uint64_t, const QString &, QString *)),
+                p, SLOT (requestGet (const uint64_t, const QString &, QString *)));
+        connect (m_scriptableextension,
+                SIGNAL (requestCall (const uint64_t, const QString &, const QStringList, QString *)),
+                p, SLOT (requestCall (const uint64_t, const QString &, const QStringList, QString *)));
+# else
         connect (p, SIGNAL (evaluate (const QString &, bool, QString &)),
                 m_liveconnectextension,
                 SLOT (evaluate (const QString &, bool, QString &)));
         connect (m_liveconnectextension,
-                SIGNAL (requestGet (const uint32_t, const QString &, QString *)),
-                p, SLOT (requestGet (const uint32_t, const QString &, QString *)));
+                SIGNAL (requestGet (const uint64_t, const QString &, QString *)),
+                p, SLOT (requestGet (const uint64_t, const QString &, QString *)));
         connect (m_liveconnectextension,
-                SIGNAL (requestCall (const uint32_t, const QString &, const QStringList, QString *)),
-                p, SLOT (requestCall (const uint32_t, const QString &, const QStringList, QString *)));
+                SIGNAL (requestCall (const uint64_t, const QString &, const QStringList, QString *)),
+                p, SLOT (requestCall (const uint64_t, const QString &, const QStringList, QString *)));
 # endif
     }
 #endif
@@ -881,18 +906,9 @@ KDE_NO_EXPORT void KMPlayerPart::statusPosition (int pos, int length) {
 
 KDE_NO_EXPORT QString KMPlayerPart::doEvaluate (const QString &script) {
 #if KDE_IS_VERSION(4, 4, 75)
-    KParts::ScriptableExtension* host = m_scriptableextension->host ();
-    if (host) {
-        QVariant embed = m_scriptableextension->enclosingObject ();
-        if (embed.canConvert <KParts::ScriptableExtension::Object> ()) {
-            quint64 id = embed.value <KParts::ScriptableExtension::Object> ().objId;
-            QVariant result = host->evaluateScript (m_scriptableextension,
-                    id, script);
-            host->release (id);
-            return result.toString ();
-        }
-    }
-    return "undefined";
+    QString result = "undefined";
+    m_scriptableextension->evaluate (script, result);
+    return result;
 #else
     return m_liveconnectextension->evaluate (
             QString ("this.__kmplayer__res=" ) + script);
@@ -947,38 +963,60 @@ KDE_NO_EXPORT void KMPlayerBrowserExtension::requestOpenURL (const KUrl & url, c
 namespace {
 
     enum MediaFunction {
-        MediaPartObject=0,
+        MediaPartObject = 0,
         MediaPlay, MediaStop,
         MediaFunctionLast
     };
-    struct FunctionTable {
-        const char *function;
-        MediaFunction function_id;
+    enum MediaProperty {
+        MediaPropertyNone = 0,
+        MediaStatus
+    };
+    struct DescriptorTable {
+        const char *identifier;
+        int identifier_id;
+    };
+    struct ObjectContainer {
+        ObjectContainer () : owner (0), id (0) {}
+        ObjectContainer (const KParts::ScriptableExtension::Object &o)
+            : owner ((quint64)o.owner), id (o.objId) {}
+        KParts::ScriptableExtension::Object get () {
+            return KParts::ScriptableExtension::Object ((KParts::ScriptableExtension *)owner, id);
+        }
+        qulonglong owner;
+        qulonglong id;
     };
 }
 
-static FunctionTable function_table[] = {
-    { "Play", MediaPlay },
-    { "Stop", MediaStop },
-    { NULL, MediaPartObject }
+Q_DECLARE_METATYPE(ObjectContainer);
+
+static DescriptorTable function_table[] = {
+    { "Play", (int) MediaPlay },
+    { "Stop", (int) MediaStop },
+    { NULL, (int) MediaPartObject }
 };
 
-static MediaFunction getMediaFunction (const char *name) {
-    for (FunctionTable *t = function_table; t->function; ++t)
-        if (!strcmp (t->function, name))
-            return t->function_id;
-    return MediaFunctionLast;
+static DescriptorTable property_table[] = {
+    { "GetPluginStatus", (int) MediaStatus },
+    { NULL, (int) MediaPropertyNone }
+};
+
+static int getMediaIdentifierId (DescriptorTable *t, const char *name)
+{
+    for (; t->identifier; ++t)
+        if (!strcmp (t->identifier, name))
+            return t->identifier_id;
+    return 0;
 }
 
 static bool callMediaFunction (KMPlayerPart *player,
-        MediaFunction func, const KParts::ScriptableExtension::ArgList& args,
+        int func, const KParts::ScriptableExtension::ArgList& args,
         QVariant &result)
 {
     KParts::ScriptableExtension::Undefined undefined;
     result.setValue <KParts::ScriptableExtension::Undefined> (undefined);
     qDebug ("%s", __FUNCTION__);
 
-    switch (func) {
+    switch ((MediaFunction) func) {
     case MediaPlay:
         if (args.size ()) {
             KUrl url (args.first ().toString ());
@@ -997,9 +1035,72 @@ static bool callMediaFunction (KMPlayerPart *player,
     return true;
 }
 
+static bool getMediaProperty (KMPlayerPart *player, int prop, QVariant &result)
+{
+    switch ((MediaProperty) prop) {
+    case MediaStatus:
+        result.setValue (player->getStatus ());
+        break;
+    default:
+        break;
+    }
+    qDebug ("%s -> %s", __FUNCTION__, result.toString().toUtf8().constData());
+    return true;
+}
+
+ObjectContainer makeObjectContainer (const KParts::ScriptableExtension::Object &o)
+{
+    ObjectContainer c;
+    c.owner = (quint64)o.owner;
+    c.id = o.objId;
+    return c;
+}
+
+static QVariant variantForTransport (const QVariant &v)
+{
+    QVariant tv;
+    if (v.canConvert <KParts::ScriptableExtension::Object>()) {
+        KParts::ScriptableExtension::Object o = v.value <KParts::ScriptableExtension::Object>();
+        o.owner->acquire (o.objId);
+        tv.setValue <ObjectContainer> (makeObjectContainer (v.value <KParts::ScriptableExtension::Object>()));
+    } else {
+        tv = v;
+    }
+    return tv;
+}
+
+QDBusArgument& operator<<(QDBusArgument& arg, const ObjectContainer &o)
+{
+    arg.beginStructure();
+    qDebug ("serializing object %p id %p", o.owner, o.id);
+    arg << (qulonglong)o.owner << (qulonglong)o.id;
+    arg.endStructure();
+    return arg;
+}
+
+const QDBusArgument& operator>>(const QDBusArgument& arg, ObjectContainer &o)
+{
+    arg.beginStructure();
+    qulonglong owner, id;
+    arg >> owner >> id;
+    o.owner = owner;
+    o.id = id;
+    qDebug ("deserializing object %p id %p", o.owner, o.id);
+    arg.endStructure();
+    return arg;
+}
+
 KMPlayerScriptableExtension::KMPlayerScriptableExtension (KMPlayerPart * parent)
     : ScriptableExtension (parent), player (parent)
-{}
+{
+    static bool first_time;
+    if (!first_time) {
+        registerDBusTypes ();
+        first_time = true;
+        qDBusRegisterMetaType<ObjectContainer>();
+        //qDBusRegisterMetaType<FunctionRef>();
+    }
+}
 
 KMPlayerScriptableExtension::~KMPlayerScriptableExtension ()
 {
@@ -1023,7 +1124,7 @@ QVariant KMPlayerScriptableExtension::callAsFunction (KParts::ScriptableExtensio
     qDebug ("callAsFunction");
 
     if (objId > (int)MediaPartObject && objId < (int)MediaFunctionLast &&
-            callMediaFunction (player, (MediaFunction) objId, args, v))
+            callMediaFunction (player, (int) objId, args, v))
         return v;
 
     KParts::ScriptableExtension::Undefined undefined;
@@ -1038,9 +1139,8 @@ QVariant KMPlayerScriptableExtension::callFunctionReference (KParts::ScriptableE
     QVariant v;
     qDebug ("callFunctionReference");
     if (objId == (int)MediaPartObject) {
-        MediaFunction func = getMediaFunction (f.toUtf8 ().constData ());
-        if (func != MediaFunctionLast &&
-                callMediaFunction (player, func, args, v))
+        int func = getMediaIdentifierId (function_table, f.toUtf8().constData());
+        if (func && callMediaFunction (player, func, args, v))
             return v;
     }
     return false;
@@ -1055,10 +1155,10 @@ QVariant KMPlayerScriptableExtension::callAsConstructor (KParts::ScriptableExten
 }
 
 bool KMPlayerScriptableExtension::hasProperty (KParts::ScriptableExtension* caller,
-        quint64 objId, const QString& propName)
+        quint64 objId, const QString& prop)
 {
-    qDebug ("hasProperty property %s", propName.toUtf8 ().constData ());
-    return false;
+    qDebug ("hasProperty property %s", prop.toUtf8 ().constData ());
+    return !!getMediaIdentifierId (property_table, prop.toUtf8 ().constData ());
 }
 
 QVariant KMPlayerScriptableExtension::get (KParts::ScriptableExtension* caller,
@@ -1067,12 +1167,19 @@ QVariant KMPlayerScriptableExtension::get (KParts::ScriptableExtension* caller,
     QVariant v;
     qDebug ("KMPlayerScriptableExtension::get %ld %s", objId, prop.toUtf8().constData());
     if (objId == (int)MediaPartObject) {
-        MediaFunction func = getMediaFunction (prop.toUtf8 ().constData ());
-        if (func != MediaFunctionLast) {
+        int desc = getMediaIdentifierId (function_table, prop.toUtf8 ().constData ());
+        if (desc) {
             KParts::ScriptableExtension::Object object;
             object.owner = this;
-            object.objId = (int) func;
+            object.objId = (int) desc;
             v.setValue <KParts::ScriptableExtension::Object> (object);
+        } else {
+            desc = getMediaIdentifierId (property_table, prop.toUtf8 ().constData ());
+            if (desc)
+                getMediaProperty (player, desc, v);
+            else
+                v.setValue <KParts::ScriptableExtension::Undefined>
+                    (KParts::ScriptableExtension::Undefined ());
         }
     }
     return v;
@@ -1114,6 +1221,90 @@ void KMPlayerScriptableExtension::acquire (quint64 objid)
 void KMPlayerScriptableExtension::release (quint64 objid)
 {
     qDebug ("release %ld", objid);
+}
+
+void KMPlayerScriptableExtension::evaluate (const QString &script, QString &out)
+{
+    ScriptableExtension* h = host ();
+    if (h) {
+        QVariant embed = enclosingObject ();
+        if (embed.canConvert <KParts::ScriptableExtension::Object> ()) {
+            quint64 id = embed.value <KParts::ScriptableExtension::Object> ().objId;
+            QVariant v = h->evaluateScript (this, id, script);
+            h->release (id);
+            out = v.toString ();
+        }
+    }
+}
+
+void KMPlayerScriptableExtension::objectCall (const QVariant &obj,
+        const QString &func, const QVariantList &args, QVariant &result)
+{
+    qDebug ("%s", __FUNCTION__);
+}
+
+void KMPlayerScriptableExtension::objectGet (const QVariant &obj,
+        const QString &func, QVariant &result)
+{
+    qDebug ("%s %s valid %d %s", __FUNCTION__, func.toAscii().data(),
+            obj.canConvert <ObjectContainer> (), obj.typeName());
+    if (obj.canConvert <ObjectContainer> ()) {
+        quint64 id = obj.value <ObjectContainer> ().id;
+        ScriptableExtension* h = host ();
+        if (h) {
+            qDebug ("%s on id %p", __FUNCTION__, id);
+            result = variantForTransport (h->get (this, id, func));
+            return;
+        }
+    } else if (obj.canConvert <QDBusArgument>()) {
+        const QDBusArgument arg = obj.value <QDBusArgument>();
+        arg.beginStructure();
+        qulonglong owner, id;
+        arg >> owner >> id;
+        qDebug ("QDBusArgument object %p id %p", owner, id);
+        arg.endStructure();
+        ScriptableExtension* h = host ();
+        if (h) {
+            qDebug ("%s on id %p", __FUNCTION__, id);
+            result = variantForTransport (h->get (this, id, func));
+            return;
+        }
+    }
+    //result.setValue <KParts::ScriptableExtension::Undefined>
+    //    (KParts::ScriptableExtension::Undefined());
+}
+
+void KMPlayerScriptableExtension::hostRoot (QVariant &result)
+{
+    qDebug ("%s", __FUNCTION__);
+    ScriptableExtension* h = host ();
+    if (h)
+        result = variantForTransport (h->rootObject ());
+    else
+        result.setValue <KParts::ScriptableExtension::Null>
+            (KParts::ScriptableExtension::Null());
+}
+
+void KMPlayerScriptableExtension::acquireObject (const QVariant &obj)
+{
+    qDebug ("%s", __FUNCTION__);
+    if (obj.canConvert <KParts::ScriptableExtension::Object> ()) {
+        quint64 id = obj.value <KParts::ScriptableExtension::Object> ().objId;
+        ScriptableExtension* h = host ();
+        if (h)
+            h->acquire (id);
+    }
+}
+
+void KMPlayerScriptableExtension::releaseObject (const QVariant &obj)
+{
+    qDebug ("%s", __FUNCTION__);
+    if (obj.canConvert <KParts::ScriptableExtension::Object> ()) {
+        quint64 id = obj.value <KParts::ScriptableExtension::Object> ().objId;
+        ScriptableExtension* h = host ();
+        if (h)
+            h->release (id);
+    }
 }
 
 #else

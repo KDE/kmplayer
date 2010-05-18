@@ -54,6 +54,20 @@ public:
     virtual void acquire (quint64 objid);
     virtual void release (quint64 objid);
 
+signals:
+    void requestRoot (uint64_t *);
+    void requestGet (const uint64_t, const QString &, QString *);
+    void requestCall (const uint64_t, const QString &, const QStringList &, QString *);
+
+public slots:
+    void evaluate (const QString &script, QString &result);
+    void objectCall (const QVariant &obj, const QString &func,
+            const QVariantList &args, QVariant &result);
+    void objectGet (const QVariant &obj, const QString &func, QVariant &res);
+    void hostRoot (QVariant &result);
+    void acquireObject (const QVariant &object);
+    void releaseObject (const QVariant &object);
+
 private:
     KMPlayerPart * player;
 };

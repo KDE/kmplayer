@@ -26,5 +26,25 @@
       <arg name="script" type="s" direction="in"/>
       <arg name="store" type="b" direction="in"/>
     </method>
+    <method name="root">
+      <arg type="v" direction="out"/>
+    </method>
+    <method name="get">
+      <arg type="v" direction="out"/>
+      <arg name="object" type="v" direction="in"/>
+      <arg name="field" type="s" direction="in"/>
+    </method>
+    <method name="call">
+      <arg type="v" direction="out"/>
+      <arg name="object" type="v" direction="in"/>
+      <arg name="function" type="s" direction="in"/>
+      <arg name="arguments" type="av" direction="in"/>
+    </method>
+    <method name="acquire">
+      <arg name="object" type="v" direction="in"/>
+    </method>
+    <method name="release">
+      <arg name="object" type="v" direction="in"/>
+    </method>
   </interface>
 </node>
