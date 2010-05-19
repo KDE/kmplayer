@@ -1219,6 +1219,20 @@ static NPObject *browserClassAllocate (NPP instance, NPClass *aClass)
 static void browserClassDeallocate (NPObject *npobj)
 {
     print ("browserClassDeAllocate\n");
+    if (callback_service) {
+        DBusMessage *msg = dbus_message_new_method_call (
+                callback_service,
+                callback_path,
+                "org.kde.kmplayer.callback",
+                "release");
+        DBusMessageIter it, ait;
+        dbus_message_iter_init_append (msg, &it);
+        writeBrowserObject (&it, (BrowserObject *) npobj);
+        dbus_message_set_no_reply (msg, TRUE);
+        dbus_connection_send (dbus_connection, msg, NULL);
+        dbus_message_unref (msg);
+        dbus_connection_flush (dbus_connection);
+    }
     nsMemFree (npobj);
 }
 

@@ -1303,13 +1303,12 @@ void KMPlayerScriptableExtension::acquireObject (const QVariant &obj)
 
 void KMPlayerScriptableExtension::releaseObject (const QVariant &obj)
 {
-    qDebug ("%s", __FUNCTION__);
-    if (obj.canConvert <KParts::ScriptableExtension::Object> ()) {
-        quint64 id = obj.value <KParts::ScriptableExtension::Object> ().objId;
-        ScriptableExtension* h = host ();
-        if (h)
-            h->release (id);
+    KParts::ScriptableExtension* owner;
+    quint64 id;
+    if (readObject (obj, owner, id)) {
+        owner->release (id);
     }
+    qDebug ("%s on id %p", __FUNCTION__, id);
 }
 
 #else
