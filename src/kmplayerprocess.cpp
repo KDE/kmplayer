@@ -1950,6 +1950,7 @@ QDBusVariant NpPlayer::call (const QDBusVariant &obj,
         const QString &func, const QVariantList &args)
 {
     QVariant v;
+    qDebug("NpPlayer::call  %s", func.toAscii().data());
     emit objectCall (obj.variant (), func, args, v);
     return QDBusVariant (v);
 }

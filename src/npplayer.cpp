@@ -466,12 +466,15 @@ static void readNPVariant (DBusMessageIter *it, NPVariant *result)
     case DBUS_TYPE_STRUCT:
         readObject (&vi, result);
         break;
-    case DBUS_TYPE_STRING:
+    case DBUS_TYPE_STRING: {
+        char *s;
         result->type = NPVariantType_String;
-        dbus_message_iter_get_basic (&vi, &result->value.stringValue.utf8characters);
-        result->value.stringValue.utf8length = strlen (result->value.stringValue.utf8characters);
+        dbus_message_iter_get_basic (&vi, &s);
+        result->value.stringValue.utf8characters = g_strdup (s);
+        result->value.stringValue.utf8length = strlen (s);
         print ("readNPVariant string %s\n", result->value.stringValue.utf8characters);
         break;
+    }
     default:
         result->type = NPVariantType_Null;
         print ("readNPVariant null\n");
@@ -1215,6 +1218,7 @@ static NPObject *browserClassAllocate (NPP instance, NPClass *aClass)
 
 static void browserClassDeallocate (NPObject *npobj)
 {
+    print ("browserClassDeAllocate\n");
     nsMemFree (npobj);
 }
 
@@ -1234,6 +1238,36 @@ static bool browserClassHasMethod (NPObject *npobj, NPIdentifier name)
 static bool browserClassInvoke (NPObject *npobj, NPIdentifier method,
         const NPVariant *args, uint32_t arg_count, NPVariant *result)
 {
+    bool success = false;
+    char *id = (char *) g_tree_lookup (identifiers, method);
+    print ("browserClassInvoke %s\n", method);
+    if (callback_service) {
+        DBusMessage *rmsg;
+        DBusMessage *msg = dbus_message_new_method_call (
+                callback_service,
+                callback_path,
+                "org.kde.kmplayer.callback",
+                "call");
+        DBusMessageIter it, ait;
+        dbus_message_iter_init_append (msg, &it);
+        writeBrowserObject (&it, (BrowserObject *) npobj);
+        dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &id);
+        dbus_message_iter_open_container (&it, DBUS_TYPE_ARRAY, "v", &ait);
+        dbus_message_iter_close_container(&it, &ait);
+        rmsg = dbus_connection_send_with_reply_and_block (dbus_connection,
+                msg, 2000, NULL);
+        if (rmsg) {
+            DBusMessageIter rit;
+            if (dbus_message_iter_init (rmsg, &rit) &&
+                    DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type (&rit))
+                readNPVariant (&rit, result);
+            dbus_message_unref (rmsg);
+            success = true;
+        } else
+            print ("failed to get response of call");
+        dbus_message_unref (msg);
+    } else
+        print ("no callback service");
     return false;
 }
 
