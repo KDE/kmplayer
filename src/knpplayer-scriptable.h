@@ -73,7 +73,7 @@ signals:
     void acquireObject (const QVariant &object);
     void releaseObject (const QVariant &object);
 public slots:
-    void requestGet (const QVariant &object, const QString &, QVariant &result, bool *);
+    void requestGet (const QVariant&, const QString&, QVariantList&, bool*);
     void requestCall (const QVariant&, const QString&, const QVariantList&, QVariant&, bool *);
 private slots:
     void processOutput ();

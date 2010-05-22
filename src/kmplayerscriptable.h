@@ -56,8 +56,8 @@ public:
 
 signals:
     void requestRoot (uint64_t *);
-    void requestGet (const QVariant &object, const QString &, QVariant&, bool*);
-    void requestCall (const QVariant &object, const QString &, const QVariantList&, QVariant&, bool*);
+    void requestGet (const QVariant&, const QString&, QVariantList&, bool*);
+    void requestCall (const QVariant&, const QString&, const QVariantList&, QVariant&, bool*);
 
 public slots:
     void evaluate (const QString &script, QVariant &result);

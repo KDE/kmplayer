@@ -2138,12 +2138,39 @@ void NpPlayer::release (const QDBusVariant &obj)
     emit releaseObject (obj.variant ());
 }
 
-void NpPlayer::requestGet (const QVariant &object, const QString &, QVariant &result, bool *)
+void NpPlayer::requestGet (const QVariant &obj, const QString &prop, QVariantList &result, bool *ok)
 {
+    if (!remote_service.isEmpty ()) {
+        QDBusMessage msg = QDBusMessage::createMethodCall (
+                remote_service, "/plugin", "org.kde.kmplayer.backend", "get");
+        msg << obj << prop;
+        QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg, QDBus::BlockWithGui);
+        if (rmsg.type () == QDBusMessage::ReplyMessage) {
+            //kDebug() << "get " << prop << rmsg.arguments ().size ();
+            qDebug( "NpPlayer get %s %s", prop.toAscii().data(), rmsg.signature ().toAscii().data());
+            result = rmsg.arguments ();
+            *ok = true;
+        }
+    }
 }
 
-void NpPlayer::requestCall (const QVariant &obj, const QString &, const QVariantList&, QVariant &, bool *)
+void NpPlayer::requestCall (const QVariant &obj, const QString &func,
+        const QVariantList& args, QVariant &result, bool *ok)
 {
+    if (!remote_service.isEmpty ()) {
+        QDBusMessage msg = QDBusMessage::createMethodCall (
+                remote_service, "/plugin", "org.kde.kmplayer.backend", "call");
+        msg << obj << func << args;
+        QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg, QDBus::BlockWithGui);
+        if (rmsg.type () == QDBusMessage::ReplyMessage) {
+            //kDebug() << "get " << func << rmsg.arguments ().size ();
+            qDebug( "NpPlayer call %s %s", func.toAscii().data(), rmsg.signature ().toAscii().data());
+            if (rmsg.arguments ().size ()) {
+                result = rmsg.arguments ().first ();
+                *ok = true;
+            }
+        }
+    }
 }
 
 #else

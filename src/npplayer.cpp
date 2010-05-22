@@ -451,7 +451,12 @@ static void readObject (DBusMessageIter *it, NPVariant *result)
                 bo->owner = owner;
                 result->value.objectValue = (NPObject *) bo;
             } else {
-                result->value.objectValue = (NPObject *) id;
+                if (id)
+                    result->value.objectValue = (NPObject *) id;
+                else
+                    np_funcs.getvalue (npp,
+                            NPPVpluginScriptableNPObject,
+                            (void*)&result->value.objectValue);
                 nsRetainObject (result->value.objectValue);
             }
             print ("read NPObject %p owner %p\n", id, owner);
@@ -487,17 +492,48 @@ static void readNPVariant (DBusMessageIter *it, NPVariant *result)
     }
 }
 
-static DBusMessageIter *writeBrowserObject (DBusMessageIter *it, BrowserObject *bo)
+static DBusMessageIter *writeNPObject (DBusMessageIter *it, NPObject *no)
 {
     DBusMessageIter vi, si;
+    uint64_t owner = 0;
+    uint64_t id = 0;
+    if (no && &browser_class == no->_class) {
+        BrowserObject *bo = (BrowserObject *) no;
+        owner = bo->owner;
+        id = bo->id;
+    } else {
+        id = (uint64_t) no;
+    }
     dbus_message_iter_open_container (it, DBUS_TYPE_VARIANT, "(tt)", &vi);
     dbus_message_iter_open_container (&vi, DBUS_TYPE_STRUCT, NULL, &si);
-    dbus_message_iter_append_basic (&si, DBUS_TYPE_UINT64, &bo->owner);
-    dbus_message_iter_append_basic (&si, DBUS_TYPE_UINT64, &bo->id);
+    dbus_message_iter_append_basic (&si, DBUS_TYPE_UINT64, &owner);
+    dbus_message_iter_append_basic (&si, DBUS_TYPE_UINT64, &id);
     dbus_message_iter_close_container (&vi, &si);
     dbus_message_iter_close_container (it, &vi);
     return it;
 }
+
+static void writeNPVariant (DBusMessageIter *it, NPVariant *var)
+{
+    print ("writeNPVariant %d\n", var->type);
+    switch (var->type) {
+    case NPVariantType_Bool:
+        dbus_message_iter_append_basic (it,
+                DBUS_TYPE_BOOLEAN, &var->value.boolValue);
+        break;
+    case NPVariantType_Object:
+        writeNPObject (it, var->value.objectValue);
+        break;
+    case NPVariantType_String:
+        dbus_message_iter_append_basic (it,
+                DBUS_TYPE_STRING, &var->value.stringValue.utf8characters);
+        break;
+    case NPVariantType_Null:
+        writeNPObject (it, NULL);
+        break;
+    }
+}
+
 #endif
 /*----------------%<---------------------------------------------------------*/
 
@@ -606,6 +642,23 @@ static NPError nsPostURLNotify (NPP instance, const char* url, const char* targe
     return NPERR_NO_ERROR;
 }
 
+static void nsReleaseVariantValue (NPVariant * variant) {
+    /*print ("NPN_ReleaseVariantValue\n");*/
+    switch (variant->type) {
+        case NPVariantType_String:
+            if (variant->value.stringValue.utf8characters)
+                g_free ((char *) variant->value.stringValue.utf8characters);
+            break;
+        case NPVariantType_Object:
+            if (variant->value.objectValue)
+                nsReleaseObject (variant->value.objectValue);
+            break;
+        default:
+            break;
+    }
+    variant->type = NPVariantType_Null;
+}
+
 static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
     print ("NPN_GetValue %d\n", variable & ~NP_ABI_MASK);
     switch (variable) {
@@ -659,12 +712,13 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
                             *(NPObject**)value = npvar.value.objectValue;
                             dbus_message_unref (rmsg);
                             break;
-                        } else
-                            print("not a struct\n");
-                    } else
-                        print("not a variant\n");
+                        } else {
+                            nsReleaseVariantValue (&npvar);
+                        }
+                    }
                 }
             }
+            return NPERR_GENERIC_ERROR;
 #else
             if (!js_window) {
                 JsObject *jo = (JsObject*) nsCreateObject (instance, &js_class);
@@ -685,7 +739,6 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
             break;
         }
         default:
-            *(int*)value = 0;
             print ("unknown value\n");
             return NPERR_GENERIC_ERROR;
     }
@@ -893,23 +946,6 @@ static bool nsHasProperty (NPP instance, NPObject * npobj, NPIdentifier prop) {
 static bool nsHasMethod (NPP instance, NPObject * npobj, NPIdentifier method) {
     (void)instance;
     return npobj->_class->hasMethod (npobj, method);
-}
-
-static void nsReleaseVariantValue (NPVariant * variant) {
-    /*print ("NPN_ReleaseVariantValue\n");*/
-    switch (variant->type) {
-        case NPVariantType_String:
-            if (variant->value.stringValue.utf8characters)
-                g_free ((char *) variant->value.stringValue.utf8characters);
-            break;
-        case NPVariantType_Object:
-            if (variant->value.objectValue)
-                nsReleaseObject (variant->value.objectValue);
-            break;
-        default:
-            break;
-    }
-    variant->type = NPVariantType_Null;
 }
 
 static void nsSetException (NPObject *npobj, const NPUTF8 *message) {
@@ -1259,7 +1295,7 @@ static void browserClassDeallocate (NPObject *npobj)
                 "release");
         DBusMessageIter it, ait;
         dbus_message_iter_init_append (msg, &it);
-        writeBrowserObject (&it, (BrowserObject *) npobj);
+        writeNPObject (&it, npobj);
         dbus_message_set_no_reply (msg, TRUE);
         dbus_connection_send (dbus_connection, msg, NULL);
         dbus_message_unref (msg);
@@ -1296,7 +1332,7 @@ static bool browserClassInvoke (NPObject *npobj, NPIdentifier method,
                 "call");
         DBusMessageIter it, ait;
         dbus_message_iter_init_append (msg, &it);
-        writeBrowserObject (&it, (BrowserObject *) npobj);
+        writeNPObject (&it, npobj);
         dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &id);
         dbus_message_iter_open_container (&it, DBUS_TYPE_ARRAY, "v", &ait);
         dbus_message_iter_close_container(&it, &ait);
@@ -1346,7 +1382,7 @@ static bool browserClassGetProperty (NPObject *npobj, NPIdentifier property,
                 "get");
         DBusMessageIter it;
         dbus_message_iter_init_append (msg, &it);
-        writeBrowserObject (&it, (BrowserObject *) npobj);
+        writeNPObject (&it, npobj);
         dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &id);
         rmsg = dbus_connection_send_with_reply_and_block (dbus_connection,
                 msg, 2000, NULL);
@@ -1894,8 +1930,50 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         addStream (object_url, mimetype, 0L, 0, NULL, 0L, false);
         defaultReply (conn, msg);
     } else if (dbus_message_is_method_call (msg, iface, "get")) {
-#ifndef KMPLAYER_SCRIPTABLE
-        DBusMessage * rmsg;
+        DBusMessage *rmsg;
+#ifdef KMPLAYER_SCRIPTABLE
+        if (dbus_message_iter_init (msg, &args) &&
+                DBUS_TYPE_STRUCT == dbus_message_iter_get_arg_type (&args)) {
+            char *prop;
+            NPVariant target;
+            bool is_function = false;
+            readObject (&args, &target);
+            if (dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &prop, false)) {
+                NPVariant result;
+                DBusMessageIter it;
+                rmsg = dbus_message_new_method_return (msg);
+                dbus_message_iter_init_append (rmsg, &it);
+
+                print ("%d %p.%s\n", NPVariantType_Object == target.type, target.value.objectValue, prop);
+                if (NPVariantType_Object == target.type) {
+                    NPIdentifier identifier = nsGetStringIdentifier (prop);
+                    if (nsHasMethod (npp, target.value.objectValue, identifier)) {
+                        is_function = true;
+                    } else {
+                        nsGetProperty (NULL, target.value.objectValue,
+                                identifier, &result);
+                    }
+                } else {
+                    result.type = NPVariantType_Null;
+                }
+                if (is_function) {
+                    writeNPVariant (&it, &target);
+                    dbus_message_iter_append_basic(&it, DBUS_TYPE_STRING, &prop);
+                } else {
+                    writeNPVariant (&it, &result);
+                }
+
+                dbus_connection_send (conn, rmsg, NULL);
+                dbus_connection_flush (conn);
+                dbus_message_unref (rmsg);
+
+                if (!is_function && NPVariantType_Object != result.type)
+                    nsReleaseVariantValue (&result);
+            }
+            if (!is_function) // FunctionRef = target + prop
+                nsReleaseVariantValue (&target);
+        }
+#else
         uint64_t object;
         char *prop;
         if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT64, &object, true) &&
@@ -1913,14 +1991,74 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         }
 #endif
     } else if (dbus_message_is_method_call (msg, iface, "call")) {
-#ifndef KMPLAYER_SCRIPTABLE
-        DBusMessage * rmsg;
         DBusMessageIter ait;
-        uint64_t object;
+        DBusMessage *rmsg;
         char *func;
         GSList *arglst = NULL;
         GSList *sl;
         uint32_t arg_count = 0;
+#ifdef KMPLAYER_SCRIPTABLE
+        if (dbus_message_iter_init (msg, &args) &&
+                DBUS_TYPE_STRUCT == dbus_message_iter_get_arg_type (&args)) {
+            NPVariant target;
+            readObject (&args, &target);
+            if (dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &func, false)) {
+                NPVariant result;
+                DBusMessageIter it;
+
+                NPVariant *arg = NULL;
+                if (dbus_message_iter_next (&args) &&
+                     DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type (&args)) {
+                    dbus_message_iter_recurse (&args, &ait);
+                    do {
+                        if (dbus_message_iter_get_arg_type (&ait) != DBUS_TYPE_VARIANT)
+                            break;
+                        arg = (NPVariant *) nsAlloc (sizeof (NPVariant));
+                        readNPVariant (&ait, arg);
+                        arglst = g_slist_append (arglst, arg);
+                        arg_count++;
+                    } while (dbus_message_iter_has_next (&ait) &&
+                            dbus_message_iter_next (&ait));
+                    if (arg) {
+                        int i;
+                        arg = (NPVariant *) nsAlloc (arg_count * sizeof (NPVariant));
+                        for (sl = arglst, i = 0; sl; sl = sl->next, i++)
+                            arg[i] = *((NPVariant *) sl->data);
+                    }
+                }
+                rmsg = dbus_message_new_method_return (msg);
+                dbus_message_iter_init_append (rmsg, &it);
+
+                print ("%d %p.%s\n", NPVariantType_Object == target.type, target.value.objectValue, func);
+                result.type = NPVariantType_Null;
+                if (NPVariantType_Object == target.type) {
+                    NPIdentifier identifier = nsGetStringIdentifier (func);
+                    if (nsHasMethod (npp, target.value.objectValue, identifier)) {
+                        nsInvoke (NULL, target.value.objectValue,
+                                identifier, arg, arg_count, &result);
+                    }
+                }
+                writeNPVariant (&it, &result);
+
+                dbus_connection_send (conn, rmsg, NULL);
+                dbus_connection_flush (conn);
+                dbus_message_unref (rmsg);
+
+                if (NPVariantType_Object != result.type)
+                    nsReleaseVariantValue (&result);
+                if (arglst) {
+                    for (sl = arglst; sl; sl = sl->next) {
+                        nsReleaseVariantValue ((NPVariant *) sl->data);
+                        nsMemFree (sl->data);
+                    }
+                    g_slist_free (arglst);
+                    nsMemFree (arg);
+                }
+            }
+            nsReleaseVariantValue (&target);
+        }
+#else
+        uint64_t object;
         char *result = NULL;
         if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT64, &object, true) &&
                 dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &func, false)) {
