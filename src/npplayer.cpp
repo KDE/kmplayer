@@ -76,10 +76,13 @@ static NPNetscapeFuncs ns_funcs;
 static NPPluginFuncs np_funcs;       /* plugin functions              */
 static NPP npp;                      /* single instance of the plugin */
 static NPWindow np_window;
-static NPObject *js_window;
 static NPSavedData *saved_data;
-static NPClass js_class;
+#ifdef KMPLAYER_SCRIPTABLE
 static NPClass browser_class;
+#else
+static NPObject *js_window;
+static NPClass js_class;
+#endif
 static GTree *stream_list;
 static gpointer current_stream_id;
 static uint32_t stream_chunk_size;
@@ -333,6 +336,7 @@ static StreamInfo *addStream (const char *url, const char *mime, const char *tar
 
 /*----------------%<---------------------------------------------------------*/
 
+#ifndef KMPLAYER_SCRIPTABLE
 static void createJsName (JsObject * obj, char **name, uint32_t * len) {
     int slen = strlen (obj->name);
     if (obj->parent) {
@@ -393,7 +397,7 @@ static char *nsVariant2Str (const NPVariant *value) {
     }
     return str;
 }
-
+#endif
 /*----------------%<---------------------------------------------------------*/
 
 static NPObject * nsCreateObject (NPP instance, NPClass *aClass) {
@@ -425,6 +429,7 @@ static void nsReleaseObject (NPObject *obj) {
 
 /*----------------%<---------------------------------------------------------*/
 
+#ifdef KMPLAYER_SCRIPTABLE
 static void readObject (DBusMessageIter *it, NPVariant *result)
 {
     DBusMessageIter si;
@@ -447,6 +452,7 @@ static void readObject (DBusMessageIter *it, NPVariant *result)
                 result->value.objectValue = (NPObject *) bo;
             } else {
                 result->value.objectValue = (NPObject *) id;
+                nsRetainObject (result->value.objectValue);
             }
             print ("read NPObject %p owner %p\n", id, owner);
         } else {
@@ -492,7 +498,7 @@ static DBusMessageIter *writeBrowserObject (DBusMessageIter *it, BrowserObject *
     dbus_message_iter_close_container (it, &vi);
     return it;
 }
-
+#endif
 /*----------------%<---------------------------------------------------------*/
 
 static NPError nsGetURL (NPP instance, const char* url, const char* target) {
@@ -633,6 +639,7 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
             *(NPBool*)value = 1;
             break;
         case NPNVWindowNPObject:
+#ifdef KMPLAYER_SCRIPTABLE
             if (callback_service) {
                 DBusMessage *rmsg;
                 DBusMessage *msg = dbus_message_new_method_call (
@@ -658,17 +665,23 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
                         print("not a variant\n");
                 }
             }
+#else
             if (!js_window) {
                 JsObject *jo = (JsObject*) nsCreateObject (instance, &js_class);
                 jo->name = g_strdup ("window");
                 js_window = (NPObject *) jo;
             }
             *(NPObject**)value = nsRetainObject (js_window);
+#endif
             break;
         case NPNVPluginElementNPObject: {
+#ifdef KMPLAYER_SCRIPTABLE
+            return NPERR_GENERIC_ERROR;
+#else
             JsObject * obj = (JsObject *) nsCreateObject (instance, &js_class);
             obj->name = g_strdup ("this");
             *(NPObject**)value = (NPObject *) obj;
+#endif
             break;
         }
         default:
@@ -753,6 +766,7 @@ static bool nsInvokeDefault (NPP instance, NPObject * npobj,
     return npobj->_class->invokeDefault (npobj,args, arg_count, result);
 }
 
+#ifndef KMPLAYER_SCRIPTABLE
 static bool str2NPVariant (NPP instance, const char *str, NPVariant *result) {
     if (!str || !*str)
         return false;
@@ -817,12 +831,26 @@ static bool doEvaluate (NPP instance, NPObject * npobj, NPString * script,
     return success;
 }
 
+#endif
+
 static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
         NPVariant * result) {
+    bool res;
+#ifdef KMPLAYER_SCRIPTABLE
+    /*FIXME: should return a variant*/
+    char *s = evaluate (script->utf8characters, true);
+    if (s) {
+        result->type = NPVariantType_String;
+        result->value.stringValue.utf8characters = s;
+        result->value.stringValue.utf8length = strlen (s);
+    } else {
+        result->type = NPVariantType_Null;
+    }
+    res = !!s;
+#else
     NPString str;
     char *jsscript;
     char *escaped;
-    bool res;
 
     print ("NPN_Evaluate:");
     escaped = g_strescape (script->utf8characters, "");
@@ -835,6 +863,7 @@ static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
 
     nsMemFree (jsscript);
     g_free (escaped);
+#endif
 
     return res;
 }
@@ -967,6 +996,8 @@ static NPError nsGetAuthenticationInfo (NPP npp, const char *protocol, const cha
 }
 
 /*----------------%<---------------------------------------------------------*/
+
+#ifndef KMPLAYER_SCRIPTABLE
 
 static bool doInvoke (uint32_t obj, const char *func, GSList *arglst,
         uint32_t arg_count, char **resultstring) {
@@ -1205,6 +1236,7 @@ static bool windowClassRemoveProperty (NPObject *npobj, NPIdentifier name) {
     return false;
 }
 
+#else
 
 static NPObject *browserClassAllocate (NPP instance, NPClass *aClass)
 {
@@ -1350,6 +1382,7 @@ static bool browserClassRemoveProperty (NPObject *npobj, NPIdentifier name)
     return false;
 }
 
+#endif
 
 /*----------------%<---------------------------------------------------------*/
 
@@ -1515,6 +1548,7 @@ static int initPlugin (const char *plugin_lib) {
     ns_funcs.setvalueforurl = nsSetValueForURL;
     ns_funcs.getauthenticationinfo = nsGetAuthenticationInfo;
 
+#ifndef KMPLAYER_SCRIPTABLE
     js_class.structVersion = NP_CLASS_STRUCT_VERSION;
     js_class.allocate = windowClassAllocate;
     js_class.deallocate = windowClassDeallocate;
@@ -1526,7 +1560,7 @@ static int initPlugin (const char *plugin_lib) {
     js_class.getProperty = windowClassGetProperty;
     js_class.setProperty = windowClassSetProperty;
     js_class.removeProperty = windowClassRemoveProperty;
-
+#else
     browser_class.structVersion = NP_CLASS_STRUCT_VERSION;
     browser_class.allocate = browserClassAllocate;
     browser_class.deallocate = browserClassDeallocate;
@@ -1538,6 +1572,7 @@ static int initPlugin (const char *plugin_lib) {
     browser_class.getProperty = browserClassGetProperty;
     browser_class.setProperty = browserClassSetProperty;
     browser_class.removeProperty = browserClassRemoveProperty;
+#endif
 
     np_funcs.size = sizeof (NPPluginFuncs);
 
@@ -1859,6 +1894,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         addStream (object_url, mimetype, 0L, 0, NULL, 0L, false);
         defaultReply (conn, msg);
     } else if (dbus_message_is_method_call (msg, iface, "get")) {
+#ifndef KMPLAYER_SCRIPTABLE
         DBusMessage * rmsg;
         uint64_t object;
         char *prop;
@@ -1875,7 +1911,9 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
             dbus_message_unref (rmsg);
             g_free (result);
         }
+#endif
     } else if (dbus_message_is_method_call (msg, iface, "call")) {
+#ifndef KMPLAYER_SCRIPTABLE
         DBusMessage * rmsg;
         DBusMessageIter ait;
         uint64_t object;
@@ -1918,6 +1956,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
                 g_slist_free (arglst);
             }
         }
+#endif
     } else if (dbus_message_is_method_call (msg, iface, "quit")) {
         print ("quit\n");
         shutDownPlugin();

@@ -455,9 +455,9 @@ KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
         if (m_wait_npp_loaded)
             connect (p, SIGNAL (loaded ()), this, SLOT (nppLoaded ()));
 # if KDE_IS_VERSION(4, 4, 75)
-        connect (p, SIGNAL (evaluate (const QString &, QString &)),
+        connect (p, SIGNAL (evaluate (const QString &, QVariant &)),
                 m_scriptableextension,
-                SLOT (evaluate (const QString &, QString &)));
+                SLOT (evaluate (const QString &, QVariant &)));
         connect (p, SIGNAL (objectCall (const QVariant&, const QString&,
                         const QVariantList&, QVariant&)),
                 m_scriptableextension,
@@ -474,11 +474,11 @@ KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
         connect (p, SIGNAL (releaseObject (const QVariant&)),
                 m_scriptableextension, SLOT(releaseObject (const QVariant&)));
         connect (m_scriptableextension,
-                SIGNAL (requestGet (const uint64_t, const QString &, QString *)),
-                p, SLOT (requestGet (const uint64_t, const QString &, QString *)));
+                SIGNAL (requestGet (const QVariant&, const QString&, QVariant&, bool*)),
+                p, SLOT (requestGet (const QVariant&, const QString&, QVariant&, bool*)));
         connect (m_scriptableextension,
-                SIGNAL (requestCall (const uint64_t, const QString &, const QStringList, QString *)),
-                p, SLOT (requestCall (const uint64_t, const QString &, const QStringList, QString *)));
+                SIGNAL (requestCall (const QVariant&, const QString&, const QVariantList&, QVariant&, bool*)),
+                p, SLOT (requestCall (const QVariant&, const QString&, const QVariantList&, QVariant&, bool*)));
 # else
         connect (p, SIGNAL (evaluate (const QString &, bool, QString &)),
                 m_liveconnectextension,
@@ -906,9 +906,9 @@ KDE_NO_EXPORT void KMPlayerPart::statusPosition (int pos, int length) {
 
 KDE_NO_EXPORT QString KMPlayerPart::doEvaluate (const QString &script) {
 #if KDE_IS_VERSION(4, 4, 75)
-    QString result = "undefined";
+    QVariant result = QString ("undefined");
     m_scriptableextension->evaluate (script, result);
-    return result;
+    return result.toString ();
 #else
     return m_liveconnectextension->evaluate (
             QString ("this.__kmplayer__res=" ) + script);
@@ -977,6 +977,7 @@ namespace {
     };
     struct ObjectContainer {
         ObjectContainer () : owner (0), id (0) {}
+        ObjectContainer (quint64 obj) : owner (0), id (obj) {}
         ObjectContainer (const KParts::ScriptableExtension::Object &o)
             : owner ((quint64)o.owner), id (o.objId) {}
         KParts::ScriptableExtension::Object get () {
@@ -1158,7 +1159,12 @@ QVariant KMPlayerScriptableExtension::get (KParts::ScriptableExtension* caller,
 {
     QVariant v;
     qDebug ("KMPlayerScriptableExtension::get %ld %s", objId, prop.toUtf8().constData());
-    if (objId == (int)MediaPartObject) {
+    bool ok = false;
+    QVariant obj;
+    obj.setValue <ObjectContainer> (ObjectContainer (objId));
+    emit requestGet (obj, prop, v, &ok);
+    if (ok) {
+    } else if (objId == (int)MediaPartObject) {
         int desc = getMediaIdentifierId (function_table, prop.toUtf8 ().constData ());
         if (desc) {
             KParts::ScriptableExtension::Object object;
@@ -1215,16 +1221,15 @@ void KMPlayerScriptableExtension::release (quint64 objid)
     qDebug ("release %ld", objid);
 }
 
-void KMPlayerScriptableExtension::evaluate (const QString &script, QString &out)
+void KMPlayerScriptableExtension::evaluate (const QString &script, QVariant &out)
 {
     ScriptableExtension* h = host ();
     if (h) {
         QVariant embed = enclosingObject ();
         if (embed.canConvert <KParts::ScriptableExtension::Object> ()) {
             quint64 id = embed.value <KParts::ScriptableExtension::Object> ().objId;
-            QVariant v = h->evaluateScript (this, id, script);
+            out = h->evaluateScript (this, id, script);
             h->release (id);
-            out = v.toString ();
         }
     }
 }

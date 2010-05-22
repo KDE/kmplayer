@@ -50,8 +50,15 @@ qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.part.xml
     ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerpartbase.h KMPlayer::PartBase)
 
 if (KMPLAYER_WITH_NPP)
-    qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.callback.xml
-        ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::NpPlayer)
+    if (${KDE_VERSION} VERSION_LESS "4.4.75")
+        qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.callback.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/knpplayer-liveconnect.h KMPlayer::NpPlayer)
+        SET(KMPLAYER_SCRIPTABLE "")
+    else (${KDE_VERSION} VERSION_LESS "4.4.75")
+        qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.scriptable.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/knpplayer-scriptable.h KMPlayer::NpPlayer)
+        SET(KMPLAYER_SCRIPTABLE "-DKMPLAYER_SCRIPTABLE")
+    endif (${KDE_VERSION} VERSION_LESS "4.4.75")
     qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.stream.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::NpStream)
 endif (KMPLAYER_WITH_NPP)
@@ -137,7 +144,7 @@ if (KMPLAYER_WITH_NPP)
     add_executable(knpplayer ${knpplayer_SRCS})
 
     SET_TARGET_PROPERTIES(knpplayer PROPERTIES COMPILE_FLAGS
-        "${GLibDBusCflags} ${GTKCflags} ${GThreadCflags}"
+        "${GLibDBusCflags} ${GTKCflags} ${GThreadCflags} ${KMPLAYER_SCRIPTABLE}"
     )
 
     target_link_libraries(knpplayer ${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags}

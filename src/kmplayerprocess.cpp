@@ -59,6 +59,11 @@
 #include "masteradaptor.h"
 #include "streammasteradaptor.h"
 #ifdef KMPLAYER_WITH_NPP
+# if KDE_IS_VERSION(4, 4, 75)
+#  include "knpplayer-scriptable.h"
+# else
+#  include "knpplayer-liveconnect.h"
+# endif
 # include "callbackadaptor.h"
 # include "streamadaptor.h"
 #endif
@@ -1656,11 +1661,15 @@ NppProcessInfo::NppProcessInfo (MediaManager *mgr)
  : ProcessInfo ("npp", i18n ("&Ice Ape"), npp_supports, mgr, NULL) {}
 
 IProcess *NppProcessInfo::create (PartBase *p, ProcessUser *usr) {
+#ifdef KMPLAYER_WITH_NPP
     NpPlayer *n = new NpPlayer (p, this, p->settings());
     n->setSource (p->source ());
     n->user = usr;
     p->processCreated (n);
     return n;
+#else
+    return NULL;
+#endif
 }
 
 #ifdef KMPLAYER_WITH_NPP
@@ -1946,40 +1955,6 @@ void NpPlayer::plugged () {
     view ()->videoStart ();
 }
 
-QDBusVariant NpPlayer::call (const QDBusVariant &obj,
-        const QString &func, const QVariantList &args)
-{
-    QVariant v;
-    qDebug("NpPlayer::call  %s", func.toAscii().data());
-    emit objectCall (obj.variant (), func, args, v);
-    return QDBusVariant (v);
-}
-
-QDBusVariant NpPlayer::get (const QDBusVariant &obj, const QString &field)
-{
-    QVariant v;
-    emit objectGet (obj.variant (), field, v);
-    return QDBusVariant (v);
-}
-
-QDBusVariant NpPlayer::root()
-{
-    qDebug ("NpPlayer::root");
-    QVariant v;
-    emit hostRoot (v);
-    return QDBusVariant (v);
-}
-
-void NpPlayer::acquire (const QDBusVariant &obj)
-{
-    emit acquireObject (obj.variant ());
-}
-
-void NpPlayer::release (const QDBusVariant &obj)
-{
-    emit releaseObject (obj.variant ());
-}
-
 static int getStreamId (const QString &path) {
     int p = path.lastIndexOf (QChar ('_'));
     if (p < 0) {
@@ -2030,13 +2005,6 @@ KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString 
                 processStreams ();
         }
     }
-}
-
-KDE_NO_EXPORT QString NpPlayer::evaluate (const QString &script, bool store) {
-    QString result ("undefined");
-    emit evaluate (script, store, result);
-    //kDebug () << "evaluate " << script << " => " << result;
-    return result;
 }
 
 KDE_NO_EXPORT void NpPlayer::dimension (int w, int h) {
@@ -2127,6 +2095,66 @@ KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t sid, const KUrl &u) {
     }
 }
 
+#if KDE_IS_VERSION(4, 4, 75)
+
+KDE_NO_EXPORT QString NpPlayer::evaluate (const QString &script, bool) {
+    QVariant v = QString ("undefined");
+    emit evaluate (script, v);
+    //kDebug () << "evaluate " << script << " => " << result;
+    return v.toString ();
+}
+
+QDBusVariant NpPlayer::call (const QDBusVariant &obj,
+        const QString &func, const QVariantList &args)
+{
+    QVariant v;
+    qDebug("NpPlayer::call  %s", func.toAscii().data());
+    emit objectCall (obj.variant (), func, args, v);
+    return QDBusVariant (v);
+}
+
+QDBusVariant NpPlayer::get (const QDBusVariant &obj, const QString &field)
+{
+    QVariant v;
+    emit objectGet (obj.variant (), field, v);
+    return QDBusVariant (v);
+}
+
+QDBusVariant NpPlayer::root()
+{
+    qDebug ("NpPlayer::root");
+    QVariant v;
+    emit hostRoot (v);
+    return QDBusVariant (v);
+}
+
+void NpPlayer::acquire (const QDBusVariant &obj)
+{
+    emit acquireObject (obj.variant ());
+}
+
+void NpPlayer::release (const QDBusVariant &obj)
+{
+    emit releaseObject (obj.variant ());
+}
+
+void NpPlayer::requestGet (const QVariant &object, const QString &, QVariant &result, bool *)
+{
+}
+
+void NpPlayer::requestCall (const QVariant &obj, const QString &, const QVariantList&, QVariant &, bool *)
+{
+}
+
+#else
+
+KDE_NO_EXPORT QString NpPlayer::evaluate (const QString &script, bool store) {
+    QString result ("undefined");
+    emit evaluate (script, store, result);
+    //kDebug () << "evaluate " << script << " => " << result;
+    return result;
+}
+
 KDE_NO_EXPORT void NpPlayer::requestRoot (const QString &, qint64 *)
 {
 }
@@ -2164,6 +2192,8 @@ KDE_NO_EXPORT void NpPlayer::requestCall (const uint64_t id, const QString &func
             *res = s;
     }
 }
+
+#endif
 
 KDE_NO_EXPORT void NpPlayer::processStreams () {
     NpStream *stream = 0L;
@@ -2264,26 +2294,14 @@ void NpStream::redirection (KIO::Job *, const KUrl &) {}
 void NpStream::slotMimetype (KIO::Job *, const QString &) {}
 void NpStream::slotTotalSize (KJob *, KIO::filesize_t) {}
 
-KDE_NO_CDTOR_EXPORT
-NpPlayer::NpPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings)
- : Process (parent, pinfo, settings, "npp") {}
-KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {}
-KDE_NO_EXPORT void NpPlayer::init () {}
-KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () { return false; }
-KDE_NO_EXPORT void NpPlayer::initProcess () {}
-KDE_NO_EXPORT void NpPlayer::stop () {}
-KDE_NO_EXPORT void NpPlayer::quit () { }
-KDE_NO_EXPORT bool NpPlayer::ready () { return false; }
-KDE_NO_EXPORT void NpPlayer::requestRoot (const QString &, qint64 *) {}
-KDE_NO_EXPORT void NpPlayer::requestGet (const uint64_t, const QString &, QString *) {}
-KDE_NO_EXPORT void NpPlayer::requestCall (const uint64_t, const QString &, const QStringList &, QString *) {}
-KDE_NO_EXPORT void NpPlayer::processOutput () {}
-KDE_NO_EXPORT void NpPlayer::processStopped (int, QProcess::ExitStatus) {}
-KDE_NO_EXPORT void NpPlayer::wroteStdin (qint64) {}
-KDE_NO_EXPORT void NpPlayer::streamStateChanged () {}
-KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t, const KUrl &) {}
-KDE_NO_EXPORT void NpPlayer::terminateJobs () {}
-
 #endif
 
 #include "kmplayerprocess.moc"
+
+#ifdef KMPLAYER_WITH_NPP
+# if KDE_IS_VERSION(4, 4, 75)
+#  include "knpplayer-scriptable.moc"
+# else
+#  include "knpplayer-liveconnect.moc"
+# endif
+#endif

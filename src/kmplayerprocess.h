@@ -28,7 +28,6 @@
 #include <qstringlist.h>
 #include <qregexp.h>
 #include <qprocess.h>
-#include <QDBusVariant>
 
 #include <kurl.h>
 #include <kio/global.h>
@@ -440,80 +439,6 @@ class KMPLAYER_NO_EXPORT NppProcessInfo : public ProcessInfo {
 public:
     NppProcessInfo (MediaManager *);
     virtual IProcess *create (PartBase*, ProcessUser*);
-};
-
-
-class KMPLAYER_NO_EXPORT NpPlayer : public Process {
-    Q_OBJECT
-public:
-    NpPlayer (QObject *, KMPlayer::ProcessInfo*, Settings *);
-    ~NpPlayer ();
-
-    static const char *name;
-    static const char *supports [];
-    static IProcess *create (PartBase *, ProcessUser *);
-
-    virtual void init ();
-    virtual bool deMediafiedPlay ();
-    virtual void initProcess ();
-
-    using Process::running;
-    QDBusVariant call(const QDBusVariant &object, const QString &function, const QVariantList &arguments) KMPLAYER_NO_MBR_EXPORT;
-    QDBusVariant get(const QDBusVariant &object, const QString &field) KMPLAYER_NO_MBR_EXPORT;
-    QDBusVariant root() KMPLAYER_NO_MBR_EXPORT;
-    void acquire (const QDBusVariant &obj) KMPLAYER_NO_MBR_EXPORT;
-    void release (const QDBusVariant &obj) KMPLAYER_NO_MBR_EXPORT;
-    void running (const QString &srv) KMPLAYER_NO_MBR_EXPORT;
-    void plugged () KMPLAYER_NO_MBR_EXPORT;
-    void request_stream (const QString &path, const QString &url, const QString &target, const QByteArray &post) KMPLAYER_NO_MBR_EXPORT;
-    QString evaluate (const QString &script, bool store) KMPLAYER_NO_MBR_EXPORT;
-    void dimension (int w, int h) KMPLAYER_NO_MBR_EXPORT;
-
-    void destroyStream (uint32_t sid);
-
-    KDE_NO_EXPORT const QString & destination () const { return service; }
-    KDE_NO_EXPORT const QString & interface () const { return iface; }
-    KDE_NO_EXPORT QString objectPath () const { return path; }
-    virtual void stop ();
-    virtual void quit ();
-    bool ready ();
-signals:
-    void evaluate (const QString & scr, bool store, QString & result);
-    void evaluate (const QString & scr, QString & result);
-    void loaded ();
-    void objectCall (const QVariant &obj, const QString &func,
-            const QVariantList &args, QVariant &result);
-    void objectGet (const QVariant &obj, const QString &func,
-            QVariant &result);
-    void hostRoot (QVariant &result);
-    void acquireObject (const QVariant &object);
-    void releaseObject (const QVariant &object);
-public slots:
-    void requestRoot (const QString &, qint64 *);
-    void requestGet (const uint64_t, const QString &, QString *);
-    void requestCall (const uint64_t, const QString &, const QStringList &, QString *);
-private slots:
-    void processOutput ();
-    void processStopped (int, QProcess::ExitStatus);
-    void wroteStdin (qint64);
-    void streamStateChanged ();
-    void streamRedirected (uint32_t, const KUrl &);
-protected:
-    virtual void terminateJobs ();
-private:
-    void sendFinish (uint32_t sid, uint32_t total, NpStream::Reason because);
-    void processStreams ();
-    QString service;
-    QString iface;
-    QString path;
-    QString filter;
-    typedef QMap <uint32_t, NpStream *> StreamMap;
-    StreamMap streams;
-    QString remote_service;
-    QString m_base_url;
-    QByteArray send_buf;
-    bool write_in_progress;
-    bool in_process_stream;
 };
 
 } // namespace
