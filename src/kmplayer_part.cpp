@@ -1094,50 +1094,61 @@ variantFromTransport (KMPlayerScriptableExtension *ex, const QVariantList &vl)
 {
     QVariant v;
     qDebug("%s %d", __FUNCTION__, vl.size ());
-    if (!vl.size ()) {
-        v.setValue <KParts::ScriptableExtension::Null>
-            (KParts::ScriptableExtension::Null ());
-    } else {
+    if (vl.size ()) {
         QVariant rarg = vl.first ();
         if (rarg.canConvert <QDBusVariant>())
             rarg = rarg.value <QDBusVariant> ().variant ();
         switch (rarg.type()) {
         case QVariant::Bool:
+        case QVariant::Double:
         case QVariant::Int:
         case QVariant::String:
-            v = rarg;
-            break;
+            return rarg;
         default:
             if (rarg.canConvert <QDBusArgument>()) {
-                qDebug ("can convert to QDBusArgument");
                 const QDBusArgument arg = rarg.value <QDBusArgument>();
                 KParts::ScriptableExtension *owner;
-                quint64 id;
-                if (readObject (arg, owner, id)) {
-                    if (!owner)
-                        owner = ex;
-                    if (!id && vl.size () == 1) {
-                        v.setValue <KParts::ScriptableExtension::Null>
-                            (KParts::ScriptableExtension::Null ());
-                    } else if (vl.size () > 1) {
-                        rarg = vl.at (1);
-                        if (rarg.canConvert <QDBusVariant>())
-                            rarg = rarg.value <QDBusVariant> ().variant ();
-                        QString func = rarg.toString();
-                        qDebug("read function %s", func.toAscii().data());
-                        v.setValue <KParts::ScriptableExtension::FunctionRef>
-                            (KParts::ScriptableExtension::FunctionRef
-                             (KParts::ScriptableExtension::Object (owner, id),
-                              func));
+                quint64 id, tmp;
+                if (arg.currentType () == QDBusArgument::StructureType) {
+                    arg.beginStructure();
+                    arg >> tmp;
+                    if (arg.currentType () == QDBusArgument::BasicType) {
+                        owner = (KParts::ScriptableExtension*) tmp;
+                        if (!owner)
+                            owner = ex;
+                        arg >> id;
+                        arg.endStructure();
+                        if (vl.size () > 1) {
+                            rarg = vl.at (1);
+                            if (rarg.canConvert <QDBusVariant>())
+                                rarg = rarg.value <QDBusVariant> ().variant ();
+                            QString func = rarg.toString();
+                            qDebug("read function %ld.%s", id, func.toAscii().data());
+                            v.setValue <KParts::ScriptableExtension::FunctionRef>
+                                (KParts::ScriptableExtension::FunctionRef
+                                 (KParts::ScriptableExtension::Object (owner, id),
+                                  func));
+                        } else {
+                            qDebug ("reading Object %ld", id);
+                            v.setValue <KParts::ScriptableExtension::Object>
+                                (KParts::ScriptableExtension::Object (owner, id));
+                        }
                     } else {
-                        v.setValue <KParts::ScriptableExtension::Object>
-                            (KParts::ScriptableExtension::Object (owner, id));
+                        qDebug ("reading %c", (char) tmp);
+                        arg.endStructure();
+                        if ('n' == tmp)
+                            v.setValue <KParts::ScriptableExtension::Null>
+                                (KParts::ScriptableExtension::Null ());
+                        else
+                            break;
                     }
                     return v;
                 }
             }
         }
     }
+    v.setValue <KParts::ScriptableExtension::Undefined>
+        (KParts::ScriptableExtension::Undefined ());
     return v;
 }
 

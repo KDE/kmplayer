@@ -540,6 +540,18 @@ static DBusMessageIter *writeNPObject (DBusMessageIter *it, NPObject *no)
     return it;
 }
 
+static DBusMessageIter *writeUndefinedNull (DBusMessageIter *it, char c)
+{
+    DBusMessageIter vi, si;
+    uint64_t i = c;
+    dbus_message_iter_open_container (it, DBUS_TYPE_VARIANT, "(t)", &vi);
+    dbus_message_iter_open_container (&vi, DBUS_TYPE_STRUCT, NULL, &si);
+    dbus_message_iter_append_basic (&si, DBUS_TYPE_UINT64, &i);
+    dbus_message_iter_close_container (&vi, &si);
+    dbus_message_iter_close_container (it, &vi);
+    return it;
+}
+
 static void writeNPVariant (DBusMessageIter *it, NPVariant *var)
 {
     print ("writeNPVariant %d\n", var->type);
@@ -548,15 +560,26 @@ static void writeNPVariant (DBusMessageIter *it, NPVariant *var)
         dbus_message_iter_append_basic (it,
                 DBUS_TYPE_BOOLEAN, &var->value.boolValue);
         break;
+    case NPVariantType_Double:
+        dbus_message_iter_append_basic (it,
+                DBUS_TYPE_DOUBLE, &var->value.intValue);
+        break;
+    case NPVariantType_Int32:
+        dbus_message_iter_append_basic (it,
+                DBUS_TYPE_INT32, &var->value.intValue);
+        break;
     case NPVariantType_Object:
         writeNPObject (it, var->value.objectValue);
+        break;
+    case NPVariantType_Null:
+        writeUndefinedNull (it, 'n');
         break;
     case NPVariantType_String:
         dbus_message_iter_append_basic (it,
                 DBUS_TYPE_STRING, &var->value.stringValue.utf8characters);
         break;
-    case NPVariantType_Null:
-        writeNPObject (it, NULL);
+    case NPVariantType_Void:
+        writeUndefinedNull (it, 'u');
         break;
     }
 }
@@ -1951,9 +1974,11 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
                     NPIdentifier identifier = nsGetStringIdentifier (prop);
                     if (nsHasMethod (npp, target.value.objectValue, identifier)) {
                         is_function = true;
-                    } else {
+                    } else if (nsHasProperty (npp, target.value.objectValue, identifier)) {
                         nsGetProperty (NULL, target.value.objectValue,
                                 identifier, &result);
+                    } else {
+                        result.type = NPVariantType_Void;
                     }
                 } else {
                     result.type = NPVariantType_Null;
