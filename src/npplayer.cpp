@@ -480,14 +480,17 @@ static void readObject (DBusMessageIter *it, NPVariant *result)
                 bo->id = id;
                 bo->owner = owner;
                 result->value.objectValue = (NPObject *) bo;
-            } else {
-                if (id)
-                    result->value.objectValue = (NPObject *) id;
-                else
-                    np_funcs.getvalue (npp,
-                            NPPVpluginScriptableNPObject,
-                            (void*)&result->value.objectValue);
+            } else if (id) {
+                result->value.objectValue = (NPObject *) id;
                 nsRetainObject (result->value.objectValue);
+            } else {
+                NPObject *no = NULL;
+                NPError np_err = np_funcs.getvalue(npp,
+                        NPPVpluginScriptableNPObject, (void*)&no);
+                if (NPERR_NO_ERROR == np_err && no)
+                    result->value.objectValue = no;
+                else
+                    result->type = NPVariantType_Null;
             }
             print ("read NPObject %p owner %p\n", id, owner);
         } else {
