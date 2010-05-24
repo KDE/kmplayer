@@ -150,7 +150,36 @@ static void nsMemFree (void* ptr) {
     g_free (ptr);
 }
 
-static void createPath (int stream, char *buf, int buf_len) {
+/*----------------%<---------------------------------------------------------*/
+
+static void dbusSendAndUnref (DBusConnection *conn, DBusMessage *msg)
+{
+    dbus_connection_send (conn, msg, NULL);
+    dbus_connection_flush (conn);
+    dbus_message_unref (msg);
+}
+
+static void defaultReply (DBusConnection *conn, DBusMessage *msg) {
+    if (!dbus_message_get_no_reply (msg)) {
+        DBusMessage *rmsg = dbus_message_new_method_return (msg);
+        dbusSendAndUnref (conn, rmsg);
+    }
+}
+
+static bool dbusMsgIterGet (DBusMessage *msg, DBusMessageIter *it,
+        int arg_type, void *p, bool first) {
+    if (((first && dbus_message_iter_init (msg, it)) ||
+                (!first && dbus_message_iter_has_next (it) &&
+                 dbus_message_iter_next (it))) &&
+            dbus_message_iter_get_arg_type (it) == arg_type) {
+        dbus_message_iter_get_basic (it, p);
+        return true;
+    }
+    return false;
+}
+
+static void dbusCreatePath (int stream, char *buf, int buf_len)
+{
     strncpy (buf, callback_path, buf_len -1);
     buf [buf_len -1] = 0;
     if (stream > -1) {
@@ -191,10 +220,10 @@ static gboolean requestStream (void * p) {
             current_stream_id = p;
         if (!stdin_read_watch)
             stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
-        createPath ((int)(long)p, path, 64);
+        dbusCreatePath ((int)(long)p, path, 64);
 
         char cb_path[64];
-        createPath (-1, cb_path, sizeof (cb_path));
+        dbusCreatePath (-1, cb_path, sizeof (cb_path));
         print ("call %s.%s()\n", cb_path, "request_stream");
         if (callback_service) {
             DBusMessageIter it, ait;
@@ -213,9 +242,7 @@ static gboolean requestStream (void * p) {
                         DBUS_TYPE_BYTE, &si->post, si->post_len);
             dbus_message_iter_close_container(&it, &ait);
             dbus_message_set_no_reply (msg, TRUE);
-            dbus_connection_send (dbus_connection, msg, NULL);
-            dbus_message_unref (msg);
-            dbus_connection_flush (dbus_connection);
+            dbusSendAndUnref (dbus_connection, msg);
         }
 
         nsMemFree (path);
@@ -1297,9 +1324,7 @@ static void browserClassDeallocate (NPObject *npobj)
         dbus_message_iter_init_append (msg, &it);
         writeNPObject (&it, npobj);
         dbus_message_set_no_reply (msg, TRUE);
-        dbus_connection_send (dbus_connection, msg, NULL);
-        dbus_message_unref (msg);
-        dbus_connection_flush (dbus_connection);
+        dbusSendAndUnref (dbus_connection, msg);
     }
     nsMemFree (npobj);
 }
@@ -1715,27 +1740,6 @@ static StreamInfo *getStreamInfo (const char *path, gpointer *stream_id) {
     return (StreamInfo *) g_tree_lookup (stream_list, *stream_id);
 }
 
-static void defaultReply (DBusConnection *conn, DBusMessage *msg) {
-    if (!dbus_message_get_no_reply (msg)) {
-        DBusMessage *rmsg = dbus_message_new_method_return (msg);
-        dbus_connection_send (conn, rmsg, NULL);
-        dbus_connection_flush (conn);
-        dbus_message_unref (rmsg);
-    }
-}
-
-static bool dbusMsgIterGet (DBusMessage *msg, DBusMessageIter *it,
-        int arg_type, void *p, bool first) {
-    if (((first && dbus_message_iter_init (msg, it)) ||
-                (!first && dbus_message_iter_has_next (it) &&
-                 dbus_message_iter_next (it))) &&
-            dbus_message_iter_get_arg_type (it) == arg_type) {
-        dbus_message_iter_get_basic (it, p);
-        return true;
-    }
-    return false;
-}
-
 static DBusHandlerResult dbusStreamMessage (DBusConnection *conn,
         DBusMessage *msg, void *user_data) {
     DBusMessageIter args;
@@ -1846,9 +1850,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         DBusMessage * rmsg = dbus_message_new_method_return (msg);
         dbus_message_append_args (rmsg,
                 DBUS_TYPE_STRING, &plugin_inspect, DBUS_TYPE_INVALID);
-        dbus_connection_send (conn, rmsg, NULL);
-        dbus_connection_flush (conn);
-        dbus_message_unref (rmsg);
+        dbusSendAndUnref (conn, rmsg);
     } else if (dbus_message_is_method_call (msg, iface, "setup")) {
         DBusMessageIter ait;
         char *param = 0;
@@ -1963,9 +1965,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
                     writeNPVariant (&it, &result);
                 }
 
-                dbus_connection_send (conn, rmsg, NULL);
-                dbus_connection_flush (conn);
-                dbus_message_unref (rmsg);
+                dbusSendAndUnref (conn, rmsg);
 
                 if (!is_function && NPVariantType_Object != result.type)
                     nsReleaseVariantValue (&result);
@@ -1984,9 +1984,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
             rmsg = dbus_message_new_method_return (msg);
             dbus_message_append_args (rmsg,
                     DBUS_TYPE_STRING, &result, DBUS_TYPE_INVALID);
-            dbus_connection_send (conn, rmsg, NULL);
-            dbus_connection_flush (conn);
-            dbus_message_unref (rmsg);
+            dbusSendAndUnref (conn, rmsg);
             g_free (result);
         }
 #endif
@@ -2040,9 +2038,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
                 }
                 writeNPVariant (&it, &result);
 
-                dbus_connection_send (conn, rmsg, NULL);
-                dbus_connection_flush (conn);
-                dbus_message_unref (rmsg);
+                dbusSendAndUnref (conn, rmsg);
 
                 if (NPVariantType_Object != result.type)
                     nsReleaseVariantValue (&result);
@@ -2084,9 +2080,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
             rmsg = dbus_message_new_method_return (msg);
             dbus_message_append_args (rmsg,
                     DBUS_TYPE_STRING, &result, DBUS_TYPE_INVALID);
-            dbus_connection_send (conn, rmsg, NULL);
-            dbus_connection_flush (conn);
-            dbus_message_unref (rmsg);
+            dbusSendAndUnref (conn, rmsg);
             g_free (result);
             if (arglst) {
                 for (sl = arglst; sl; sl = sl->next)
@@ -2107,7 +2101,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
 static void callFunction(int stream, const char *iface, const char *func, int first_arg_type, ...)
 {
     char path[64];
-    createPath (stream, path, sizeof (path));
+    dbusCreatePath (stream, path, sizeof (path));
     print ("call %s.%s()\n", path, func);
     if (callback_service) {
         va_list var_args;
@@ -2122,9 +2116,7 @@ static void callFunction(int stream, const char *iface, const char *func, int fi
             va_end (var_args);
         }
         dbus_message_set_no_reply (msg, TRUE);
-        dbus_connection_send (dbus_connection, msg, NULL);
-        dbus_message_unref (msg);
-        dbus_connection_flush (dbus_connection);
+        dbusSendAndUnref (dbus_connection, msg);
     }
 }
 
