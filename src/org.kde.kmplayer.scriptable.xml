@@ -46,5 +46,9 @@
     <method name="release">
       <arg name="object" type="v" direction="in"/>
     </method>
+    <method name="cookie">
+      <arg type="s" direction="out"/>
+      <arg name="url" type="s" direction="in"/>
+    </method>
   </interface>
 </node>

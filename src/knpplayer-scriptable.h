@@ -48,6 +48,7 @@ public:
     QDBusVariant root() KMPLAYER_NO_MBR_EXPORT;
     void acquire (const QDBusVariant &obj) KMPLAYER_NO_MBR_EXPORT;
     void release (const QDBusVariant &obj) KMPLAYER_NO_MBR_EXPORT;
+    QString cookie (const QString &url);
     void running (const QString &srv) KMPLAYER_NO_MBR_EXPORT;
     void plugged () KMPLAYER_NO_MBR_EXPORT;
     void request_stream (const QString &path, const QString &url, const QString &target, const QByteArray &post) KMPLAYER_NO_MBR_EXPORT;

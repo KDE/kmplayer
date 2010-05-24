@@ -424,6 +424,8 @@ public:
     uint32_t content_length;
     Reason finish_reason;
     QString mimetype;
+    QString http_headers;
+    bool received_data;
 signals:
     void stateChanged ();
     void redirected (uint32_t, const KUrl &);
