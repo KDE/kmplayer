@@ -507,6 +507,24 @@ static void readNPVariant (DBusMessageIter *it, NPVariant *result)
     DBusMessageIter vi;
     dbus_message_iter_recurse (it, &vi);
     switch (dbus_message_iter_get_arg_type (&vi)) {
+    case DBUS_TYPE_BOOLEAN: {
+        result->type = NPVariantType_Bool;
+        dbus_message_iter_get_basic (&vi, &result->value.boolValue);
+        print ("readNPVariant bool %d\n", result->value.boolValue);
+        break;
+    }
+    case DBUS_TYPE_DOUBLE: {
+        result->type = NPVariantType_Double;
+        dbus_message_iter_get_basic (&vi, &result->value.doubleValue);
+        print ("readNPVariant double %f\n", result->value.doubleValue);
+        break;
+    }
+    case DBUS_TYPE_INT32: {
+        result->type = NPVariantType_Int32;
+        dbus_message_iter_get_basic (&vi, &result->value.intValue);
+        print ("readNPVariant int %d\n", result->value.intValue);
+        break;
+    }
     case DBUS_TYPE_STRUCT:
         readObject (&vi, result);
         break;
