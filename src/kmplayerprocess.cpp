@@ -2338,6 +2338,10 @@ KDE_NO_EXPORT void NpPlayer::wroteStdin (qint64 sz) {
 
 #else
 
+namespace KMPlayer {
+    class NpPlayer : public QObject {};
+}
+
 KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString &u, const QByteArray &/*ps*/)
     : QObject (p) {}
 
