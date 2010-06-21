@@ -63,10 +63,11 @@
 #ifdef KMPLAYER_WITH_NPP
 # if KDE_IS_VERSION(4, 4, 75)
 #  include "knpplayer-scriptable.h"
+#  include "scriptableadaptor.h"
 # else
 #  include "knpplayer-liveconnect.h"
+#  include "callbackadaptor.h"
 # endif
-# include "callbackadaptor.h"
 # include "streamadaptor.h"
 #endif
 
