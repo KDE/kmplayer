@@ -988,7 +988,7 @@ namespace {
     };
 }
 
-Q_DECLARE_METATYPE(ObjectContainer);
+Q_DECLARE_METATYPE(ObjectContainer)
 
 static DescriptorTable function_table[] = {
     { "Play", (int) MediaPlay },
