@@ -1448,8 +1448,10 @@ bool DocumentBuilder::startTag(const QString &tag, const AttributeList &attr) {
     if (m_ignore_depth) {
         m_ignore_depth++;
         //kDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth;
+    } else if (!m_node) {
+        return false; // had underflow
     } else {
-        NodePtr n = m_node ? m_node->childFromTag (tag) : NULL;
+        NodePtr n = m_node->childFromTag (tag);
         if (!n) {
             kDebug () << "Warning: unknown tag " << tag.latin1 ();
             NodePtr doc = m_root->document ();
@@ -1477,6 +1479,8 @@ bool DocumentBuilder::endTag (const QString & tag) {
     if (m_ignore_depth) { // endtag to ignore
         m_ignore_depth--;
         kDebug () << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth;
+    } else if (!m_node) {
+        return false; // had underflow
     } else {  // endtag
         NodePtr n = m_node;
         while (n) {
@@ -1519,16 +1523,16 @@ bool DocumentBuilder::characterData (const QString & data) {
             m_node->characterData (data);
     }
     //kDebug () << "characterData " << d.latin1();
-    return true;
+    return !!m_node;
 }
 
 bool DocumentBuilder::cdataData (const QString & data) {
-    if (!m_ignore_depth) {
+    if (!m_ignore_depth && m_node) {
         NodePtr d = m_node->document ();
         m_node->appendChild (new CData (d, data));
     }
     //kDebug () << "cdataData " << d.latin1();
-    return true;
+    return !!m_node;
 }
 
 #ifdef KMPLAYER_WITH_EXPAT
@@ -1949,7 +1953,7 @@ bool SimpleSAXParser::readAttributes () {
         //kDebug () << "readTag " << tagname << " closed:" << closed << " ok:" << have_error;
     }
     m_state = m_state->next; // pop Node or PI
-    return true;
+    return have_error;
 }
 
 bool SimpleSAXParser::readPI () {
