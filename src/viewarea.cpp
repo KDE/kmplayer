@@ -1160,7 +1160,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
         }
     }
     IRect clip_rect = clip.intersect (scr);
-    if (!clip_rect.isEmpty ())
+    if (s->surface && !clip_rect.isEmpty ())
         paint (&txt->transition, txt->media_opacity, s, scr.point, clip_rect);
     s->dirty = false;
 }
