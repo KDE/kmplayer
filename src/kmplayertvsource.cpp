@@ -179,6 +179,7 @@ KDE_NO_EXPORT void KMPlayerPrefSourcePageTV::showEvent (QShowEvent *) {
 
 KDE_NO_CDTOR_EXPORT TVNode::TVNode (KMPlayer::NodePtr &d, const QString & s, const char * t, short id, const QString & n) : KMPlayer::GenericMrl (d, s, n, t) {
     this->id = id;
+    editable = true;
 }
 
 KDE_NO_EXPORT void TVNode::setNodeName (const QString & nn) {

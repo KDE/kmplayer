@@ -609,10 +609,13 @@ inline Node *findChildWithId (const Node *p, const short id) {
 
 class KMPLAYER_EXPORT PlaylistRole {
 public:
+    PlaylistRole () : editable (false) {}
+
     QString caption () const;
     void setCaption (const QString &t);
 
     QString title;
+    bool editable;
 };
 
 /**

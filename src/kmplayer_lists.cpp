@@ -122,8 +122,7 @@ Recent::Recent (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url)
 }
 
 KDE_NO_EXPORT void Recent::closed () {
-    if (src.isEmpty ())
-        src = getAttribute (KMPlayer::Ids::attr_url);
+    src = getAttribute (KMPlayer::Ids::attr_url);
     Mrl::closed ();
 }
 
@@ -148,8 +147,7 @@ KDE_NO_EXPORT KMPlayer::Node *Group::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void Group::closed () {
-    if (title.isEmpty ())
-        title = getAttribute (KMPlayer::Ids::attr_title);
+    title = getAttribute (KMPlayer::Ids::attr_title);
     Element::closed ();
 }
 
@@ -205,6 +203,7 @@ KDE_NO_EXPORT void Playlist::message (KMPlayer::MessageType msg, void *data) {
 KDE_NO_CDTOR_EXPORT
 PlaylistItemBase::PlaylistItemBase (KMPlayer::NodePtr &d, short i, KMPlayerApp *a, bool pm)
     : KMPlayer::Mrl (d, i), app (a), playmode (pm) {
+    editable = !pm;
 }
 
 KDE_NO_EXPORT void PlaylistItemBase::activate () {
@@ -253,8 +252,7 @@ KDE_NO_EXPORT void PlaylistItemBase::activate () {
 }
 
 void PlaylistItemBase::closed () {
-    if (title.isEmpty ())
-        title = getAttribute (KMPlayer::Ids::attr_title);
+    title = getAttribute (KMPlayer::Ids::attr_title);
     Mrl::closed ();
 }
 
@@ -266,8 +264,7 @@ PlaylistItem::PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp *a, bool pm, co
 }
 
 KDE_NO_EXPORT void PlaylistItem::closed () {
-    if (src.isEmpty ())
-        src = getAttribute (KMPlayer::Ids::attr_url);
+    src = getAttribute (KMPlayer::Ids::attr_url);
     PlaylistItemBase::closed ();
 }
 
@@ -294,6 +291,7 @@ PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QStr
 KDE_NO_CDTOR_EXPORT
 PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool lm)
   : KMPlayer::Element (doc, KMPlayer::id_node_group_node), app (a), playmode (lm) {
+    editable = !lm;
 }
 
 KDE_NO_EXPORT KMPlayer::Node *PlaylistGroup::childFromTag (const QString &tag) {
@@ -308,8 +306,7 @@ KDE_NO_EXPORT KMPlayer::Node *PlaylistGroup::childFromTag (const QString &tag) {
 }
 
 KDE_NO_EXPORT void PlaylistGroup::closed () {
-    if (title.isEmpty ())
-        title = getAttribute (KMPlayer::Ids::attr_title);
+    title = getAttribute (KMPlayer::Ids::attr_title);
     Element::closed ();
 }
 

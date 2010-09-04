@@ -113,7 +113,9 @@ private slots:
     void addBookMark ();
     void toggleShowAllNodes ();
     void itemDropped (QDropEvent * e, Q3ListViewItem * after);
+    void itemIsRenamed (Q3ListViewItem *item, int column);
     void itemIsSelected (Q3ListViewItem * item);
+    void renameSelected ();
     void updateTrees ();
     void slotFind ();
     void slotFindOk ();
@@ -135,6 +137,7 @@ private:
     QMenu * m_itemmenu;
     KAction * m_find;
     KAction * m_find_next;
+    QAction * m_edit_playlist_item;
     KFindDialog * m_find_dialog;
     QPixmap folder_pix;
     QPixmap auxiliary_pix;

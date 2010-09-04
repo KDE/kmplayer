@@ -150,11 +150,17 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget *, View * view, KActionC
     m_find = KStandardAction::find (this, SLOT (slotFind ()), this);
     m_find_next = KStandardAction::findNext (this, SLOT(slotFindNext()), this);
     m_find_next->setEnabled (false);
+    m_edit_playlist_item = ac->addAction ("edit_playlist_item");
+    m_edit_playlist_item->setText (i18n ("Edit &item"));
+    connect (m_edit_playlist_item, SIGNAL (triggered (bool)),
+             this, SLOT (renameSelected ()));
     connect (this, SIGNAL (contextMenuRequested (Q3ListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (Q3ListViewItem *, const QPoint &, int)));
     connect (this, SIGNAL (expanded (Q3ListViewItem *)),
              this, SLOT (itemExpanded (Q3ListViewItem *)));
     connect (this, SIGNAL (dropped (QDropEvent *, Q3ListViewItem *)),
              this, SLOT (itemDropped (QDropEvent *, Q3ListViewItem *)));
+    connect (this, SIGNAL (itemRenamed (Q3ListViewItem *, int)),
+             this, SLOT (itemIsRenamed (Q3ListViewItem *, int)));
     connect (this, SIGNAL (selectionChanged (Q3ListViewItem *)),
              this, SLOT (itemIsSelected (Q3ListViewItem *)));
 }
@@ -191,6 +197,8 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
             text = e->hasChildNodes () ? i18n ("unnamed") : i18n ("none");
     }
     item->setText(0, text);
+    if (title)
+        item->setRenameEnabled (0, !root->show_all_nodes && title->editable);
     if (focus == e)
         *curitem = item;
     if (e->active ())
@@ -207,6 +215,8 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
                 as->setPixmap (0, menu_pix);
                 for (; a; a = a->nextSibling ()) {
                     PlayListItem * ai = new PlayListItem (as, a, this);
+                    if (root->id > 0)
+                        ai->setRenameEnabled (0, true);
                     ai->setText (0, QString ("%1=%2").arg (
                                 a->name ().toString ()).arg (a->value ()));
                     ai->setPixmap (0, config_pix);
@@ -377,6 +387,8 @@ KDE_NO_EXPORT void PlayListView::contextMenuItem (Q3ListViewItem * vi, const QPo
                         this, SLOT (toggleShowAllNodes ()), 0, 2);
                 m_itemmenu->setItemChecked (2, ritem->show_all_nodes);
             }
+            if (item->renameEnabled (0))
+                m_itemmenu->addAction (m_edit_playlist_item);
             m_itemmenu->insertSeparator ();
             m_find->setVisible (true);
             m_find_next->setVisible (true);
@@ -500,6 +512,52 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, Q3ListViewItem *a
         }
     } else
         m_view->dropEvent (de);
+}
+
+KDE_NO_EXPORT void PlayListView::itemIsRenamed (Q3ListViewItem *qitem, int) {
+    PlayListItem *item = static_cast <PlayListItem *> (qitem);
+    RootPlayListItem *ri = rootItem (qitem);
+    if (ri->show_all_nodes && item->m_attr) {
+        QString txt = item->text (0);
+        int pos = txt.find (QChar ('='));
+        if (pos > -1) {
+            item->m_attr->setName (txt.left (pos));
+            item->m_attr->setValue (txt.mid (pos + 1));
+        } else {
+            item->m_attr->setName (txt);
+            item->m_attr->setValue (QString (""));
+        }
+        PlayListItem *pi = static_cast <PlayListItem *> (item->parent ());
+        if (pi && pi->node) {
+            pi->node->document ()->m_tree_version++;
+            pi->node->closed ();
+        }
+    } else if (item->node) {
+        PlaylistRole *title = (PlaylistRole *) item->node->role (RolePlaylist);
+        if (title && !ri->show_all_nodes && title->editable) {
+            QString ntext = item->text (0);
+            if (ntext.isEmpty ()) {
+                ntext = item->node->mrl ()
+                    ? item->node->mrl ()->src
+                    : title->caption ();
+                item->setText (0, ntext);
+            }
+            if (title->caption () != ntext) {
+                title->setCaption (ntext);
+                item->node->setNodeName (ntext);
+                item->node->document ()->m_tree_version++;
+            }
+            //} else { // restore damage ..
+            // cannot update because of crashing, shouldn't get here anyhow
+            //updateTree (ri, item->node, true);
+        }
+    }
+}
+
+KDE_NO_EXPORT void PlayListView::renameSelected () {
+    PlayListItem *item = static_cast <PlayListItem *> (selectedItem ());
+    if (item->renameEnabled (0))
+        item->startRename (0);
 }
 
 KDE_NO_EXPORT void PlayListView::itemIsSelected (Q3ListViewItem * qitem) {
