@@ -75,7 +75,7 @@ void FileDocument::readFromFile (const QString & fn) {
 void FileDocument::writeToFile (const QString & fn) {
     QFile file (fn);
     kDebug () << "writeToFile " << fn;
-    file.open (IO_WriteOnly);
+    file.open (IO_WriteOnly | QIODevice::Truncate);
     QByteArray utf = outerXML ().toUtf8 ();
     file.writeBlock (utf, utf.size ());
 }

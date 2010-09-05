@@ -1088,7 +1088,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
     QString url = KFileDialog::getSaveFileName (QString (), QString (), this, i18n ("Save File"));
     if (!url.isEmpty ()) {
         QFile file (url);
-        if (!file.open (IO_WriteOnly)) {
+        if (!file.open (IO_WriteOnly | QIODevice::Truncate)) {
             KMessageBox::error (this, i18n ("Error opening file %1.\n%2.",url,file.errorString ()), i18n("Error"));
             return;
         }
