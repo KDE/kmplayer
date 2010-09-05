@@ -1606,7 +1606,7 @@ static int initPlugin (const char *plugin_lib) {
     NPError np_err;
     char *pname;
 
-    print ("starting %s with %s\n", plugin_lib, object_url);
+    print ("starting %s\n", plugin_lib);
     library = g_module_open (plugin_lib, G_MODULE_BIND_LAZY);
     if (!library) {
         print ("failed to load %s %s\n", plugin_lib, g_module_error ());
