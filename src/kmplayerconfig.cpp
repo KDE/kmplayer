@@ -226,8 +226,8 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
             QPalette palette;
             switch (ColorSetting::Target (i)) {
                 case ColorSetting::playlist_background:
-                   palette.setColor (view->playList()->backgroundRole(), colors[i].color);
-                   view->playList()->setPalette (palette);
+                   palette.setColor (view->playList()->viewport ()->backgroundRole(), colors[i].color);
+                   view->playList()->viewport ()->setPalette (palette);
                    break;
                 case ColorSetting::playlist_foreground:
                    palette.setColor (view->playList()->foregroundRole(), colors[i].color);

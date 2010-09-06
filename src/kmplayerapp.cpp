@@ -312,10 +312,10 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
                  this, SLOT (zoom100 ()));
     connect (m_view, SIGNAL (fullScreenChanged ()),
             this, SLOT (fullScreen ()));
-    connect (m_view->playList (), SIGNAL (selectionChanged (Q3ListViewItem *)),
-            this, SLOT (playListItemSelected (Q3ListViewItem *)));
-    connect (m_view->playList(), SIGNAL (dropped (QDropEvent*, Q3ListViewItem*)),
-            this, SLOT (playListItemDropped (QDropEvent *, Q3ListViewItem *)));
+    connect (m_view->playList (), SIGNAL (itemActivated (QTreeWidgetItem *, int)),
+            this, SLOT (playListItemActivated (QTreeWidgetItem *, int)));
+    connect (m_view->playList(), SIGNAL (dropped (QDropEvent*, KMPlayer::PlayListItem*)),
+            this, SLOT (playListItemDropped (QDropEvent *, KMPlayer::PlayListItem *)));
     connect (m_view->playList(), SIGNAL (moved ()),
             this, SLOT (playListItemMoved ()));
     connect (m_view->playList(), SIGNAL (prepareMenu (KMPlayer::PlayListItem *, QMenu *)), this, SLOT (preparePlaylistMenu (KMPlayer::PlayListItem *, QMenu *)));
@@ -811,7 +811,7 @@ KDE_NO_EXPORT void KMPlayerApp::editMode () {
 
 KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
     if (edit_tree_id > -1) {
-        KMPlayer::PlayListItem *si = m_view->playList()->selectedPlayListItem();
+        KMPlayer::PlayListItem *si = m_view->playList()->selectedItem();
         if (si && si->node) {
             si->node->clearChildren ();
             QString txt = m_view->infoPanel ()->text ();
@@ -1264,7 +1264,7 @@ KDE_NO_EXPORT void KMPlayerApp::fullScreen () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::playListItemSelected (Q3ListViewItem * item) {
+KDE_NO_EXPORT void KMPlayerApp::playListItemActivated (QTreeWidgetItem * item, int) {
     KMPlayer::PlayListItem * vi = static_cast <KMPlayer::PlayListItem *> (item);
     if (edit_tree_id > -1) {
         if (vi->playListView ()->rootItem (item)->id != edit_tree_id)
@@ -1275,44 +1275,55 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemSelected (Q3ListViewItem * item) {
 }
 
 KDE_NO_EXPORT
-void KMPlayerApp::playListItemDropped (QDropEvent * de, Q3ListViewItem * after) {
-    if (!after) { // could still be a descendent
-        after = m_view->playList()->itemAt (m_view->playList()->contentsToViewport (de->pos ()));
-        if (after) {
-            Q3ListViewItem * p = after->itemAbove ();
-            if (p && p->nextSibling () != after)
-                after = after->parent ();
-        }
-    }
-    if (!after)
-        return;
-    KMPlayer::RootPlayListItem *ritem = m_view->playList()->rootItem(after);
-    if (ritem->id == 0)
-        return;
+void KMPlayerApp::playListItemDropped (QDropEvent *de, KMPlayer::PlayListItem *item) {
+    KMPlayer::RootPlayListItem *ritem = m_view->playList()->rootItem(item);
+    KUrl url;
+
     manip_node = 0L;
     m_drop_list.clear ();
-    m_drop_after = after;
-    KMPlayer::NodePtr after_node = static_cast<KMPlayer::PlayListItem*> (after)->node;
-    if (after_node->id == KMPlayer::id_node_playlist_document ||
-            after_node->id == KMPlayer::id_node_group_node)
-        after_node->defer (); // make sure it has loaded
-    if (de->source () == m_view->playList() &&
-            m_view->playList()->lastDragTreeId () == playlist_id)
-        manip_node = m_view->playList()->lastDragNode ();
-    if (!manip_node && ritem->id == playlist_id) {
-        m_drop_list = KUrl::List::fromMimeData (de->mimeData ());
-        if (m_drop_list.isEmpty () && Q3TextDrag::canDecode (de)) {
-            QString text;
-            if (Q3TextDrag::decode (de, text) && KUrl (text).isValid ())
-                m_drop_list.push_back (KUrl (text));
+
+    if (de->mimeData()->hasFormat ("text/uri-list")) {
+        m_drop_list = KUrl::List::fromMimeData (de->mimeData());
+    } else if (de->mimeData ()->hasFormat ("application/x-qabstractitemmodeldatalist")) {
+        KMPlayer::PlayListItem* pli = m_view->playList()->selectedItem ();
+        if (pli && pli->node) {
+            manip_node = pli->node;
+            if (pli->node->mrl ()) {
+                KUrl url (pli->node->mrl ()->src);
+                if (url.isValid ())
+                    m_drop_list.push_back (url);
+            }
         }
     }
-    m_dropmenu->changeItem (m_dropmenu->idAt (0),
-            !!manip_node ? i18n ("Move here") : i18n ("&Add to list"));
-    m_dropmenu->setItemVisible (m_dropmenu->idAt (3), !!manip_node);
-    m_dropmenu->setItemVisible (m_dropmenu->idAt (2), (manip_node && manip_node->isPlayable ()));
-    if (manip_node || m_drop_list.size () > 0)
-        m_dropmenu->exec (m_view->playList ()->mapToGlobal (m_view->playList ()->contentsToViewport (de->pos ())));
+    if (m_drop_list.isEmpty ()) {
+        KUrl url (de->mimeData ()->text ());
+        if (url.isValid ())
+            m_drop_list.push_back (url);
+    }
+    if (ritem->id == 0) {
+        if (m_drop_list.size () > 0) {
+            if (m_drop_list.size () == 1) {
+                url = m_drop_list[0];
+            } else if (m_drop_list.size () > 1) {
+                m_player->sources () ["urlsource"]->setUrl (QString ());
+                for (int i = 0; i < m_drop_list.size (); i++)
+                    addUrl (m_drop_list[i]);
+            }
+            openDocumentFile (url);
+        }
+    } else {
+        m_drop_after = item;
+        KMPlayer::NodePtr after_node = static_cast<KMPlayer::PlayListItem*> (item)->node;
+        if (after_node->id == KMPlayer::id_node_playlist_document ||
+                after_node->id == KMPlayer::id_node_group_node)
+            after_node->defer (); // make sure it has loaded
+        m_dropmenu->changeItem (m_dropmenu->idAt (0),
+                !!manip_node ? i18n ("Move here") : i18n ("&Add to list"));
+        m_dropmenu->setItemVisible (m_dropmenu->idAt (3), !!manip_node);
+        m_dropmenu->setItemVisible (m_dropmenu->idAt (2), (manip_node && manip_node->isPlayable ()));
+        if (manip_node || m_drop_list.size () > 0)
+            m_dropmenu->exec (m_view->playList ()->mapToGlobal (de->pos ()));
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {
@@ -1325,7 +1336,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {
             pi->parentNode ()->removeChild (pi);
         } else
             pi = new PlaylistItem(playlist, this,false, m_drop_list[i-1].url());
-        if (n == playlist || m_drop_after->isOpen ())
+        if (n == playlist || m_drop_after->isExpanded ())
             n->insertBefore (pi, n->firstChild ());
         else
             n->parentNode ()->insertBefore (pi, n->nextSibling ());
@@ -1338,7 +1349,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
     if (!n)
         return;
     KMPlayer::NodePtr g = new PlaylistGroup (playlist, this, i18n("New group"));
-    if (n == playlist || m_drop_after->isOpen ())
+    if (n == playlist || m_drop_after->isExpanded ())
         n->insertBefore (g, n->firstChild ());
     else
         n->parentNode ()->insertBefore (g, n->nextSibling ());
@@ -1359,7 +1370,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuCopyDrop () {
     KMPlayer::NodePtr n = static_cast<KMPlayer::PlayListItem*>(m_drop_after)->node;
     if (n && manip_node) {
         KMPlayer::NodePtr pi = new PlaylistItem (playlist, this, false, manip_node->mrl ()->src);
-        if (n == playlist || m_drop_after->isOpen ())
+        if (n == playlist || m_drop_after->isExpanded ())
             n->insertBefore (pi, n->firstChild ());
         else
             n->parentNode ()->insertBefore (pi, n->nextSibling ());
@@ -1397,7 +1408,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuMoveDownNode () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
-    KMPlayer::PlayListItem * si = m_view->playList ()->selectedPlayListItem ();
+    KMPlayer::PlayListItem *si = m_view->playList ()->selectedItem ();
     KMPlayer::RootPlayListItem * ri = m_view->playList ()->rootItem (si);
     kDebug() << "playListItemMoved " << (ri->id == playlist_id) << !! si->node;
     if (ri->id == playlist_id && si->node) {

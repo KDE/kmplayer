@@ -161,7 +161,7 @@ KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
 }
 
 KDE_NO_EXPORT void View::dragEnterEvent (QDragEnterEvent* dee) {
-    if (isDragValid (dee))
+    if (m_playlist->isDragValid (dee))
         dee->accept ();
 }
 

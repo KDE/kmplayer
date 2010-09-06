@@ -41,7 +41,7 @@ class KAboutData;
 class KActionCollection;
 class KBookmarkMenu;
 class KBookmarkManager;
-class Q3ListViewItem;
+class QTreeWidgetItem;
 class KMenu;
 
 
@@ -195,8 +195,8 @@ protected slots:
     void saturationValueChanged (int val);
     void sourceHasChangedAspects ();
     void fullScreen ();
-    void playListItemClicked (Q3ListViewItem *);
-    void playListItemExecuted (Q3ListViewItem *);
+    void playListItemClicked (QTreeWidgetItem *, int);
+    void playListItemActivated (QTreeWidgetItem *, int);
     void slotPlayingStarted ();
     void slotPlayingStopped ();
     void settingsChanged ();

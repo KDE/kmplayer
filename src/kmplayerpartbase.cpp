@@ -114,7 +114,8 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
    m_noresize (false),
    m_auto_controls (true),
    m_bPosSliderPressed (false),
-   m_in_update_tree (false)
+   m_in_update_tree (false),
+   m_update_tree_full (false)
 {
     m_sources ["urlsource"] = new URLSource (this);
 
@@ -215,10 +216,10 @@ void PartBase::createBookmarkMenu (KMenu *owner, KActionCollection *ac) {
 void PartBase::connectPlaylist (PlayListView * playlist) {
     connect (playlist, SIGNAL (addBookMark (const QString &, const QString &)),
              this, SLOT (addBookMark (const QString &, const QString &)));
-    connect (playlist, SIGNAL (executed (Q3ListViewItem *)),
-             this, SLOT (playListItemExecuted (Q3ListViewItem *)));
-    connect (playlist, SIGNAL (clicked (Q3ListViewItem *)),
-             this, SLOT (playListItemClicked (Q3ListViewItem *)));
+    connect (playlist, SIGNAL (itemActivated (QTreeWidgetItem *, int)),
+             this, SLOT (playListItemActivated (QTreeWidgetItem *, int)));
+    connect (playlist, SIGNAL (itemClicked (QTreeWidgetItem *, int)),
+             this, SLOT (playListItemClicked (QTreeWidgetItem *, int)));
     connect (this, SIGNAL (treeChanged (int, NodePtr, NodePtr, bool, bool)),
              playlist, SLOT (updateTree (int, NodePtr, NodePtr, bool, bool)));
     connect (this, SIGNAL (treeUpdated ()),
@@ -354,7 +355,7 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int menu) {
         if (!pinfo->supports (srcname))
             continue;
         int menuid = player_menu->idAt (id);
-        player_menu->setItemChecked (menuid, menu == id);
+        player_menu->setItemChecked (menuid, menu == (int) id);
         if (menuid == menu) {
             if (strcmp (pinfo->name, "npp"))
                 m_settings->backends [srcname] = pinfo->name;
@@ -607,7 +608,7 @@ void PartBase::forward () {
     m_source->forward ();
 }
 
-KDE_NO_EXPORT void PartBase::playListItemClicked (Q3ListViewItem * item) {
+KDE_NO_EXPORT void PartBase::playListItemClicked (QTreeWidgetItem *item, int) {
     if (!item)
         return;
     PlayListItem * vi = static_cast <PlayListItem *> (item);
@@ -620,13 +621,22 @@ KDE_NO_EXPORT void PartBase::playListItemClicked (Q3ListViewItem * item) {
             source->play (vi->node->mrl ()); //may become !isPlayable by lazy loading
             if (!vi->node->isPlayable ())
                 emit treeChanged (ri->id, vi->node, 0, false, true);
-        } else if (vi->firstChild ())
-            vi->listView ()->setOpen (vi, !vi->isOpen ());
+        } else if (vi->childCount ()) {
+            if (vi->isExpanded ())
+                vi->playListView ()->collapseItem (vi);
+            else
+                vi->playListView ()->expandItem (vi);
+        }
+    } else if (ri != item && vi->node && !vi->node->isPlayable () && item->childCount ()) {
+        if (vi->isExpanded ())
+            vi->playListView ()->collapseItem (vi);
+        else
+            vi->playListView ()->expandItem (vi);
     } else if (!vi->node && !vi->m_attr)
         updateTree (); // items already deleted
 }
 
-KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
+KDE_NO_EXPORT void PartBase::playListItemActivated(QTreeWidgetItem *item, int) {
     if (m_in_update_tree) return;
     if (m_view->editMode ()) return;
     PlayListItem * vi = static_cast <PlayListItem *> (item);
@@ -642,8 +652,7 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
             source->play (node->mrl ()); //may become !isPlayable by lazy loading
             if (node && !node->isPlayable ())
                 emit treeChanged (ri->id, node, 0, false, true);
-        } else if (vi->firstChild ())
-            vi->listView ()->setOpen (vi, !vi->isOpen ());
+        } // else if (vi->childCount ()) {handled by playListItemClicked
     } else if (vi->m_attr) {
         if (vi->m_attr->name () == Ids::attr_src ||
                 vi->m_attr->name () == Ids::attr_href ||
@@ -782,14 +791,14 @@ void PartBase::play () {
     if (!playing ()) {
         PlayListItem *lvi = m_view->playList ()->currentPlayListItem ();
         if (lvi) { // make sure it's in the first tree
-            Q3ListViewItem * pitem = lvi;
+            QTreeWidgetItem *pitem = lvi;
             while (pitem->parent())
                 pitem = pitem->parent();
-            if (pitem != m_view->playList ()->firstChild ())
+            if (pitem != m_view->playList ()->topLevelItem (0))
                 lvi = 0L;
         }
         if (!lvi)
-            lvi = static_cast<PlayListItem*>(m_view->playList()->firstChild());
+            lvi = static_cast<PlayListItem*>(m_view->playList()->topLevelItem(0));
         if (lvi) {
             Mrl *mrl = NULL;
             for (Node * n = lvi->node.ptr (); n; n = n->parentNode ()) {
