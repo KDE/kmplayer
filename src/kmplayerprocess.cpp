@@ -2192,8 +2192,8 @@ QString NpPlayer::cookie (const QString &url)
         KIO::Integration::CookieJar jar (v);
         jar.setWindowId (v->topLevelWidget()->winId ());
         QList<QNetworkCookie> c = jar.cookiesForUrl (url);
-        QList<QNetworkCookie>::const_iterator e = c.end ();
-        for (QList<QNetworkCookie>::const_iterator i = c.begin (); i != e; ++i)
+        QList<QNetworkCookie>::const_iterator e = c.constEnd ();
+        for (QList<QNetworkCookie>::const_iterator i = c.constBegin (); i != e; ++i)
             s += (s.isEmpty() ? "" : ";") + QString::fromUtf8 ((*i).toRawForm());
     }
     return s;
