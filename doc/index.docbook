@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <!DOCTYPE book PUBLIC "-//KDE//DTD DocBook XML V4.2-Based Variant V1.1//EN" "dtd/kdex.dtd" [
-  <!ENTITY kmplayer '<application>KMPlayer</application>'>
+  <!ENTITY kmplayer "<application>KMPlayer</application>">
   <!ENTITY kappname "&kmplayer;"><!-- replace kmplayer here -->
   <!ENTITY package "kdeextragear-2">
   <!ENTITY % addindex "IGNORE">
@@ -18,9 +18,7 @@
 <author>
 <firstname>Koos</firstname>
 <surname>Vriezen</surname>
-<affiliation>
-<address><email>koos dot vriezen at gmail dot com</email></address>
-</affiliation>
+<email>koos dot vriezen at gmail dot com</email>
 </author>
 </authorgroup>
 
