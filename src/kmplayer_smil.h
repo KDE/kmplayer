@@ -371,6 +371,7 @@ public:
     virtual void *role (RoleType msg, void *content=NULL);
     KDE_NO_EXPORT virtual const char * nodeName () const { return "state"; }
 
+    QString domain ();
     void newValue (Node *ref, Where w, const QString &name, const QString &val);
     void setValue (Node *ref, const QString &value);
     void delValue (Node *ref);
@@ -378,6 +379,7 @@ public:
     ConnectionList m_StateChangeListeners;        // setValue changed a value
     PostponePtr postpone_lock;                    // pause while loading src
     MediaInfo *media_info;
+    QString m_url;
 };
 
 /**

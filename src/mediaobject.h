@@ -214,7 +214,7 @@ public:
     MediaInfo (Node *node, MediaManager::MediaType type);
     ~MediaInfo ();
 
-    bool wget (const QString &url);
+    bool wget (const QString &url, const QString &from_domain=QString ());
     void killWGet ();
     void clearData ();
     QString mimetype ();
@@ -241,7 +241,10 @@ private:
 
     Node *node;
     KIO::Job *job;
+    QString cross_domain;
+    QString access_from;
     bool preserve_wait;
+    bool check_access;
 };
 
 //------------------------%<----------------------------------------------------

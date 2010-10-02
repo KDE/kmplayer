@@ -1567,12 +1567,14 @@ void SMIL::State::parseParam (const TrieString &name, const QString &val) {
     if (name == Ids::attr_src) {
         Smil *s = val.isEmpty () ? NULL : SMIL::Smil::findSmilNode (this);
         if (s) {
+            m_url.clear ();
             if (!media_info)
                 media_info = new MediaInfo (this, MediaManager::Text);
             Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : NULL;
             QString url = mrl ? KURL (mrl->absolutePath(), val).url() : val;
             postpone_lock = document ()->postpone ();
-            media_info->wget (url);
+            media_info->wget (url, domain ());
+            m_url = url;
         }
     } else {
         Element::parseParam (name, val);
@@ -1584,6 +1586,24 @@ KDE_NO_EXPORT void SMIL::State::deactivate () {
     media_info = NULL;
     postpone_lock = NULL;
     Element::deactivate ();
+    m_url.clear ();
+}
+
+QString SMIL::State::domain () {
+    QString s = m_url;
+    if (s.isEmpty ()) {
+        for (Node *p = parentNode (); p; p = p->parentNode ()) {
+            Mrl *m = p->mrl ();
+            if (m && !m->src.isEmpty () && m->src != "Playlist://") {
+                s = m->absolutePath ();
+                break;
+            }
+        }
+    }
+    KUrl url (s);
+    if (url.isLocalFile ())
+        return QString ();
+    return url.protocol () + "://" + url.host ();
 }
 
 static void stateChanged (SMIL::State *s, Node *ref) {

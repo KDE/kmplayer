@@ -42,6 +42,7 @@
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
 #include "kmplayerview.h"
+#include "expression.h"
 #include "viewarea.h"
 
 using namespace KMPlayer;
@@ -393,7 +394,8 @@ static QString mimeByContent (const QByteArray &data)
 }
 
 MediaInfo::MediaInfo (Node *n, MediaManager::MediaType t)
- : media (NULL), type (t), node (n), job (NULL), preserve_wait (false) {
+ : media (NULL), type (t), node (n), job (NULL),
+    preserve_wait (false), check_access (false) {
 }
 
 MediaInfo::~MediaInfo () {
@@ -415,7 +417,7 @@ KDE_NO_EXPORT void MediaInfo::killWGet () {
 /**
  * Gets contents from url and puts it in m_data
  */
-KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
+KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
     clearData ();
     url = str;
 
@@ -501,15 +503,26 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
         return true;
     }
     QString protocol = kurl.protocol ();
-    if (MediaManager::Data != type &&
-            (memory_cache->get (str, mime, data) ||
-             protocol == "mms" || protocol == "rtsp" || protocol == "rtp" ||
-             (only_playlist && !maybe_playlist && !mime.isEmpty ()))) {
-        setMimetype (mime);
-        ready ();
-        return true;
+    if (!domain.isEmpty ()) {
+        QString get_from = protocol + "://" + kurl.host ();
+        if (get_from != domain) {
+            check_access = true;
+            access_from = domain;
+            cross_domain = get_from + "/crossdomain.xml";
+            kurl = KUrl (cross_domain);
+        }
     }
-    if (memory_cache->preserve (str)) {
+    if (!check_access) {
+        if (MediaManager::Data != type &&
+                (memory_cache->get (str, mime, data) ||
+                 protocol == "mms" || protocol == "rtsp" || protocol == "rtp" ||
+                 (only_playlist && !maybe_playlist && !mime.isEmpty ()))) {
+            setMimetype (mime);
+            ready ();
+            return true;
+        }
+    }
+    if (check_access || memory_cache->preserve (str)) {
         //kDebug () << "downloading " << str;
         job = KIO::get (kurl, KIO::NoReload, KIO::HideProgressInfo);
         job->addMetaData ("PropagateHttpHeader", "true");
@@ -518,8 +531,9 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
                 this, SLOT (slotData (KIO::Job *, const QByteArray &)));
         connect (job, SIGNAL (result (KJob *)),
                 this, SLOT (slotResult (KJob *)));
-        connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
-                this, SLOT (slotMimetype (KIO::Job *, const QString &)));
+        if (!check_access)
+            connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
+                    this, SLOT (slotMimetype (KIO::Job *, const QString &)));
     } else {
         //kDebug () << "download preserved " << str;
         connect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
@@ -656,6 +670,7 @@ KDE_NO_EXPORT void MediaInfo::clearData () {
     }
     url.truncate (0);
     mime.truncate (0);
+    access_from.truncate (0);
     data.resize (0);
 }
 
@@ -724,20 +739,54 @@ static bool validDataFormat (MediaManager::MediaType type, const QByteArray &ba)
 }
 
 KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
-    if (MediaManager::Data != type && !kjob->error ()) {
-        if (data.size () && data.size () < 512) {
-            setMimetype (mimeByContent (data));
-            if (!validDataFormat (type, data))
+    job = 0L; // signal KIO::Job::result deletes itself
+    if (check_access) {
+        check_access = false;
+
+        bool success = false;
+        if (!kjob->error () && data.size () > 0) {
+            QTextStream ts (data, IO_ReadOnly);
+            NodePtr doc = new Document (QString ());
+            readXML (doc, ts, QString ());
+
+            Expression *expr = evaluateExpr (
+                    "//cross-domain-policy/allow-access-from/@domain");
+            if (expr) {
+                expr->setRoot (doc);
+                NodeValueList *lst = expr->toNodeList ();
+                for (NodeValueItem *i = lst->first(); i; i = i->nextSibling()) {
+                    QRegExp match (i->data.value (), Qt::CaseInsensitive, QRegExp::Wildcard);
+                    if (match.exactMatch (access_from)) {
+                        success = true;
+                        break;
+                    }
+                }
+                delete expr;
+                delete lst;
+            }
+            doc->document ()->dispose ();
+        }
+        if (success) {
+            wget (QString (url));
+        } else {
+            data.resize (0);
+            ready ();
+        }
+    } else {
+        if (MediaManager::Data != type && !kjob->error ()) {
+            if (data.size () && data.size () < 512) {
+                setMimetype (mimeByContent (data));
+                if (!validDataFormat (type, data))
+                    data.resize (0);
+            }
+            memory_cache->add (url, mime, data);
+        } else {
+            memory_cache->unpreserve (url);
+            if (MediaManager::Data != type)
                 data.resize (0);
         }
-        memory_cache->add (url, mime, data);
-    } else {
-        memory_cache->unpreserve (url);
-        if (MediaManager::Data != type)
-            data.resize (0);
+        ready ();
     }
-    job = 0L; // signal KIO::Job::result deletes itself
-    ready ();
 }
 
 KDE_NO_EXPORT void MediaInfo::cachePreserveRemoved (const QString & str) {
@@ -755,7 +804,7 @@ KDE_NO_EXPORT void MediaInfo::slotData (KIO::Job *, const QByteArray &qb) {
         int newsize = old_size + qb.size ();
         data.resize (newsize);
         memcpy (data.data () + old_size, qb.constData (), qb.size ());
-        if (old_size < 512 && newsize >= 512) {
+        if (!check_access && old_size < 512 && newsize >= 512) {
             setMimetype (mimeByContent (data));
             if (!validDataFormat (type, data)) {
                 data.resize (0);
