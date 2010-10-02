@@ -1,3 +1,9 @@
+Changes since version 0.11.2b
+- Don't show local files with file://, nor percent encoded in recent list
+- Fix replaying a .pls file
+- Fix playlist.xml file can contain trailing XNL fragments when it gets smaller
+- Fix crash when SmilText has no text
+- Reenable item renaming in the playlist
 Changes since version 0.11.2a
 - Fix npp destroy stream
 - Synchronously start npp from kpart to handle immediate JS version calls
