@@ -1947,13 +1947,13 @@ bool SimpleSAXParser::readAttributes () {
                   kDebug () << "encodeing " << i.data().latin1();*/
         }
     } else {
-        have_error = builder.startTag (tagname, m_attributes);
+        have_error = !builder.startTag (tagname, m_attributes);
         if (closed)
-            have_error &= builder.endTag (tagname);
+            have_error &= !builder.endTag (tagname);
         //kDebug () << "readTag " << tagname << " closed:" << closed << " ok:" << have_error;
     }
     m_state = m_state->next; // pop Node or PI
-    return have_error;
+    return !have_error;
 }
 
 bool SimpleSAXParser::readPI () {
@@ -2007,7 +2007,7 @@ bool SimpleSAXParser::readCDATA () {
             cdata.truncate (cdata.size () - 2);
             m_state = m_state->next;
             if (m_state->state == InContent)
-                have_error = builder.cdataData (cdata);
+                have_error = !builder.cdataData (cdata);
             else if (m_state->state == InAttributes) {
                 if (equal_seen)
                     attr_value += cdata;
@@ -2043,7 +2043,7 @@ bool SimpleSAXParser::readEndTag () {
         if (!nextToken ()) return false;
     if (token->token != tok_angle_close)
         return false;
-    have_error = builder.endTag (tagname);
+    have_error = !builder.endTag (tagname);
     m_state = m_state->next;
     return true;
 }
@@ -2126,10 +2126,10 @@ bool SimpleSAXParser::parse (QTextStream & d) {
                                 if (pos > -1)
                                     white_space = white_space.mid (pos + 1);
                             }
-                            have_error = builder.characterData (white_space);
+                            have_error = !builder.characterData (white_space);
                             white_space.truncate (0);
                         }
-                        have_error = builder.characterData (token->string);
+                        have_error = !builder.characterData (token->string);
                         in_character_data = true;
                     }
                 }
