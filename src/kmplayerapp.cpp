@@ -375,19 +375,24 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
     KMPlayer::Source * source = m_player->source ();
     if (!strcmp (source->name (), "urlsource")) {
         KUrl url = source->url ();
-        if (url.isEmpty () || url.url ().startsWith ("lists"))
+        QString surl = url.url ();
+        QString nurl = url.isLocalFile()
+            ? url.toLocalFile()
+            : QUrl::fromPercentEncoding (surl.toUtf8 ());
+        if (url.isEmpty () || surl.startsWith ("lists"))
             return;
         //if (url.isEmpty () && m_player->process ()->mrl ())
         //    url = KUrl (m_player->process ()->mrl ()->mrl ()->src);
         recentFiles ()->addUrl (url);
         recents->defer (); // make sure it's loaded
-        recents->insertBefore (new Recent (recents, this, url.url ()), recents->firstChild ());
+        recents->insertBefore (new Recent (recents, this, nurl),
+                               recents->firstChild ());
         KMPlayer::Node *c = recents->firstChild ()->nextSibling ();
         int count = 1;
         KMPlayer::Node *more = NULL;
         while (c) {
             if (c->id == id_node_recent_node &&
-                    c->mrl ()->src == url.url ()) {
+                    (c->mrl ()->src == surl || c->mrl ()->src == nurl)) {
                 KMPlayer::Node *tmp = c->nextSibling ();
                 recents->removeChild (c);
                 c = tmp;
@@ -413,7 +418,7 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
             count = 0;
             while (c) {
                 if (c->id == id_node_recent_node &&
-                         c->mrl ()->src == url.url ()) {
+                        (c->mrl ()->src == surl || c->mrl ()->src == nurl)) {
                     KMPlayer::Node *tmp = c->nextSibling ();
                     more->removeChild (c);
                     c = tmp;
