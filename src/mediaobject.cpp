@@ -627,6 +627,11 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
 void MediaInfo::setMimetype (const QString &mt)
 {
     mime = mt;
+
+    Mrl *mrl = node ? node->mrl () : NULL;
+    if (mrl && mrl->mimetype.isEmpty ())
+        mrl->mimetype = mt;
+
     if (MediaManager::Any == type) {
         if (mimetype ().startsWith ("image/"))
             type = MediaManager::Image;
