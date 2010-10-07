@@ -141,7 +141,8 @@ struct Float : public AST {
 struct StringBase : public AST {
     StringBase (EvalState *ev) : AST (ev) {}
     StringBase (EvalState *ev, const char *s, const char *e)
-     : AST (ev), string (e ? QString (QByteArray (s, e - s)) : QString (s)) {}
+     : AST (ev),
+       string (QString::fromUtf8 (e ? QByteArray (s, e - s).data () : s)) {}
 
     virtual bool toBool () const;
     virtual int toInt () const;
@@ -1678,7 +1679,7 @@ Expression *KMPlayer::evaluateExpr (const QString &expr, const QString &root) {
     EvalState *eval_state = new EvalState (NULL, root);
     AST ast (eval_state);
     const char *end;
-    if (parseStatement (expr.toAscii ().constData (), &end, &ast)) {
+    if (parseStatement (expr.toUtf8 ().constData (), &end, &ast)) {
         AST *res = ast.first_child;
 #ifdef KMPLAYER_EXPR_DEBUG
         ast.dump();
