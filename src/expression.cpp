@@ -45,6 +45,12 @@ struct EvalState {
     void addRef () { ++ref_count; }
     void removeRef () { if (--ref_count == 0) delete this; }
 
+    QString value () const {
+        if (attr)
+            return attr->value ();
+        return root->nodeValue ();
+    }
+
     QString def_root_tag;
     Node *root;
     Attribute *attr;
@@ -219,6 +225,12 @@ struct Not : public BoolBase {
     virtual bool toBool () const;
 };
 
+struct StartsWith: public BoolBase {
+    StartsWith (EvalState *ev) : BoolBase (ev) {}
+
+    virtual bool toBool () const;
+};
+
 struct HoursFromTime : public IntegerBase {
     HoursFromTime (EvalState *ev) : IntegerBase (ev) {}
 
@@ -263,6 +275,18 @@ struct Concat : public StringBase {
 
 struct StringJoin : public StringBase {
     StringJoin (EvalState *ev) : StringBase (ev) {}
+
+    virtual QString toString () const;
+};
+
+struct SubstringAfter : public StringBase {
+    SubstringAfter (EvalState *ev) : StringBase (ev) {}
+
+    virtual QString toString () const;
+};
+
+struct SubstringBefore : public StringBase {
+    SubstringBefore (EvalState *ev) : StringBase (ev) {}
 
     virtual QString toString () const;
 };
@@ -708,6 +732,21 @@ bool Not::toBool () const {
     return b;
 }
 
+bool StartsWith::toBool () const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        b = false;
+        if (first_child) {
+            AST *s = first_child->next_sibling;
+            if (s)
+                b = first_child->toString ().startsWith (s->toString ());
+            else if (eval_state->parent)
+                b = eval_state->value ().startsWith (first_child->toString ());
+        }
+    }
+    return b;
+}
+
 int HoursFromTime::toInt () const {
     if (eval_state->sequence != sequence) {
         if (first_child) {
@@ -833,6 +872,44 @@ QString StringJoin::toString () const {
                     string += sep + n->data.value ();
             }
             delete lst;
+        }
+    }
+    return string;
+}
+
+QString SubstringAfter::toString () const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        string.clear ();
+        AST *child = first_child;
+        if (child) {
+            AST *next = child->next_sibling;
+            if (next) {
+                QString s = child->toString ();
+                QString t = next->toString ();
+                int p = s.indexOf (t);
+                if (p > -1)
+                    string = s.mid (p + t.length ());
+            }
+        }
+    }
+    return string;
+}
+
+QString SubstringBefore::toString () const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        string.clear ();
+        AST *child = first_child;
+        if (child) {
+            AST *next = child->next_sibling;
+            if (next) {
+                QString s = child->toString ();
+                QString t = next->toString ();
+                int p = s.indexOf (t);
+                if (p > -1)
+                    string = s.left (p);
+            }
         }
     }
     return string;
@@ -1389,8 +1466,14 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                     func = new Position (ast->eval_state);
                 else if (name == "sort")
                     func = new Sort (ast->eval_state);
+                else if (name == "starts-with")
+                    func = new StartsWith (ast->eval_state);
                 else if (name == "string-join")
                     func = new StringJoin (ast->eval_state);
+                else if (name == "substring-after")
+                    func = new SubstringAfter (ast->eval_state);
+                else if (name == "substring-before")
+                    func = new SubstringBefore (ast->eval_state);
                 else if (name == "escape-uri")
                     func = new EscapeUri (ast->eval_state);
                 else
