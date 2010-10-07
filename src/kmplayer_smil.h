@@ -294,6 +294,7 @@ const short id_node_text_styling = 126;
 const short id_node_set_value = 127;
 const short id_node_new_value = 128;
 const short id_node_del_value = 129;
+const short id_node_send = 130;
 const short id_node_set = 132;
 const short id_node_animate = 133;
 const short id_node_animate_color = 134;
@@ -359,6 +360,8 @@ public:
 class KMPLAYER_NO_EXPORT State : public Element {
 public:
     enum Where { before, after, child };
+    enum Method { get, put };
+    enum Replace { all, instance, none };
 
     State (NodePtr & d);
 
@@ -375,6 +378,7 @@ public:
     void newValue (Node *ref, Where w, const QString &name, const QString &val);
     void setValue (Node *ref, const QString &value);
     void delValue (Node *ref);
+    void stateChanged (Node *ref);
 
     ConnectionList m_StateChangeListeners;        // setValue changed a value
     PostponePtr postpone_lock;                    // pause while loading src
@@ -885,6 +889,24 @@ public:
 
     virtual void begin ();
     KDE_NO_EXPORT const char *nodeName () const { return "delvalue"; }
+};
+
+class KMPLAYER_NO_EXPORT Send : public StateValue {
+public:
+    Send (NodePtr &d) : StateValue (d, id_node_send), media_info (NULL) {}
+
+    virtual void init ();
+    virtual void begin ();
+    virtual void deactivate ();
+    virtual void parseParam (const TrieString &name, const QString &value);
+    virtual void message (MessageType msg, void *content=NULL);
+    KDE_NO_EXPORT const char *nodeName () const { return "send"; }
+
+private:
+    QString action;
+    SMIL::State::Replace replace;
+    SMIL::State::Method method;
+    MediaInfo *media_info;
 };
 
 class KMPLAYER_NO_EXPORT AnimateGroup : public Element {

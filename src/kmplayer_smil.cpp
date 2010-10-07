@@ -1165,6 +1165,8 @@ static Element * fromAnimateGroup (NodePtr & d, const QString & tag) {
         return new SMIL::SetValue (d);
     else if (!strcmp (ctag, "delvalue"))
         return new SMIL::DelValue (d);
+    else if (!strcmp (ctag, "send"))
+        return new SMIL::Send (d);
     return NULL;
 }
 
@@ -1606,17 +1608,18 @@ QString SMIL::State::domain () {
     return url.protocol () + "://" + url.host ();
 }
 
-static void stateChanged (SMIL::State *s, Node *ref) {
-    Connection *c = s->m_StateChangeListeners.first ();
-    for (; c; c = s->m_StateChangeListeners.next ()) {
+void SMIL::State::stateChanged (Node *ref) {
+    Connection *c = m_StateChangeListeners.first ();
+    for (; c; c = m_StateChangeListeners.next ()) {
         if (c->payload && c->connecter) {
             Expression *expr = (Expression *) c->payload;
-            expr->setRoot (s);
+            expr->setRoot (this);
             NodeValueList *lst = expr->toNodeList ();
-            for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling())
+            for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling()) {
                 if (itm->data.node == ref)
-                    s->document()->post (c->connecter,
-                                         new Posting (s, MsgStateChanged));
+                    document()->post (c->connecter,
+                                      new Posting (this, MsgStateChanged));
+            }
             delete lst;
         }
     }
@@ -1629,7 +1632,7 @@ void SMIL::State::setValue (Node *ref, const QString &value) {
     if (!s.isEmpty ())
         ref->appendChild (new TextNode (m_doc, s));
     if (s != old)
-        stateChanged (this, ref);
+        stateChanged (ref);
 }
 
 void SMIL::State::newValue (Node *ref, Where where,
@@ -1648,7 +1651,7 @@ void SMIL::State::newValue (Node *ref, Where where,
     if (!value.isEmpty ()) {
         const QString s = exprStringValue (this, value);
         n->appendChild (new TextNode (m_doc, s));
-        stateChanged (this, ref);
+        stateChanged (ref);
     }
 }
 
@@ -1662,7 +1665,7 @@ void SMIL::State::message (MessageType msg, void *content) {
             QTextStream in (&((TextMedia *)media_info->media)->text);
             readXML (this, in, QString ());
             if (firstChild ())
-                stateChanged (this, firstChild ());
+                stateChanged (firstChild ());
         }
         delete media_info;
         media_info = NULL;
@@ -4279,6 +4282,15 @@ void SMIL::StateValue::init () {
 void SMIL::StateValue::activate () {
     init ();
     setState (state_activated);
+    for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
+        QString v = a->value ();
+        int p = v.indexOf ('{');
+        if (p > -1) {
+            int q = v.indexOf ('}', p + 1);
+            if (q > -1)
+                parseParam (a->name (), applySubstitution (this, v, p, q));
+        }
+    }
     runtime->start ();
 }
 
@@ -4418,6 +4430,108 @@ void SMIL::DelValue::begin () {
         }
         delete lst;
     }
+}
+
+//-----------------------------------------------------------------------------
+
+void SMIL::Send::init () {
+    method = SMIL::State::get;
+    replace = SMIL::State::instance;
+    StateValue::init ();
+}
+
+void SMIL::Send::begin () {
+    SMIL::State *st = static_cast <SMIL::State *> (state.ptr ());
+    if (action.isEmpty () || !st) {
+        kWarning () << "action is empty or no state";
+    } else {
+        Smil *s = SMIL::Smil::findSmilNode (this);
+        if (s) {
+            delete media_info;
+            media_info = new MediaInfo (this, MediaManager::Text);
+            Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : NULL;
+            QString url = mrl ? KURL (mrl->absolutePath(), action).url() : action;
+            if (SMIL::State::get == method && replace == SMIL::State::instance) {
+                // TODO compose GET url
+                media_info->wget (url, st->domain ());
+            } else // TODO ..
+                qDebug("unsupported method %d replace %d", method, replace);
+        }
+    }
+}
+
+void SMIL::Send::deactivate () {
+    delete media_info;
+    media_info = NULL;
+    action.clear ();
+    StateValue::deactivate ();
+}
+
+void SMIL::Send::parseParam (const TrieString &para, const QString &val) {
+    if (para == "action") {
+        action = val;
+    } else if (para == "method") {
+        if (val == "put")
+            method = SMIL::State::put;
+        else
+            method = SMIL::State::get;
+    } else if (para == "replace") {
+        if (val == "all")
+            replace = SMIL::State::all;
+        else if (val == "none")
+            replace = SMIL::State::none;
+        else
+            replace = SMIL::State::instance;
+    } else if (para == "target") {
+        delete ref;
+        if (state)
+            ref = evaluateExpr (val, "data");
+        else
+            ref = NULL;
+    } else {
+        StateValue::parseParam (para, val);
+    }
+}
+
+void SMIL::Send::message (MessageType msg, void *content) {
+    SMIL::State *st = static_cast <SMIL::State *> (state.ptr ());
+    switch (msg) {
+
+    case MsgMediaReady: {
+        Node *target = NULL;
+        if (!ref && SMIL::State::instance == replace)
+            ref = evaluateExpr ("/data");
+        if (ref) {
+            ref->setRoot (st);
+            NodeValueList *lst = ref->toNodeList ();
+            NodeValueItem *itm = lst->first ();
+            if (itm)
+                target = itm->data.node;
+            delete lst;
+        }
+        if (target) {
+            Node *parent = target->parentNode ();
+            if (media_info && media_info->media) {
+                Node *next = target->nextSibling ();
+                target->clearChildren ();
+                QTextStream in (&((TextMedia *)media_info->media)->text);
+                readXML (target, in, QString ());
+                if (target->firstChild ()) {
+                    NodePtr store = target->firstChild ();
+                    parent->removeChild (target);
+                    parent->insertBefore (store, next);
+                    st->stateChanged (store);
+                }
+            }
+        }
+        delete media_info;
+        media_info = NULL;
+        return;
+    }
+    default:
+        break;
+    }
+    StateValue::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------
