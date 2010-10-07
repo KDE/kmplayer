@@ -54,7 +54,7 @@ struct EvalState {
     QString def_root_tag;
     Node *root;
     Attribute *attr;
-    NodeValueList *process_list;
+    Sequence *process_list;
     EvalState *parent;
     int sequence;
     int ref_count;
@@ -72,7 +72,7 @@ struct AST : public Expression {
     virtual int toInt () const;
     virtual float toFloat () const;
     virtual QString toString () const;
-    virtual NodeValueList *toNodeList () const; // uncachable
+    virtual Sequence *toSequence () const; // uncachable
     virtual Type type () const;
     virtual void setRoot (Node *root);
     void setRoot (Node *root, Attribute *a);
@@ -188,7 +188,7 @@ struct Identifier : public StringBase {
 
     virtual bool toBool () const;
     virtual QString toString () const;
-    virtual NodeValueList *toNodeList () const;
+    virtual Sequence *toSequence () const;
     virtual Type type () const;
     void childByStep (Step *step, bool recurse) const;
     void childByPath (Step *step, bool recurse) const;
@@ -313,7 +313,7 @@ struct EscapeUri : public StringBase {
 struct Sort : public AST {
     Sort (EvalState *ev) : AST (ev) {}
 
-    virtual NodeValueList *toNodeList () const;
+    virtual Sequence *toSequence () const;
 };
 
 struct Multiply : public NumberBase {
@@ -386,7 +386,7 @@ struct Join : public AST {
         first_child = children;
     }
 
-    virtual NodeValueList *toNodeList () const;
+    virtual Sequence *toSequence () const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -451,8 +451,8 @@ QString AST::toString () const {
     }
 }
 
-NodeValueList *AST::toNodeList () const {
-    return new NodeValueList;
+Sequence *AST::toSequence () const {
+    return new Sequence;
 }
 
 AST::Type AST::type () const {
@@ -515,7 +515,7 @@ AST::Type BoolBase::type () const {
 bool NumberBase::toBool () const {
     int ii = toInt ();
     if (eval_state->parent) {
-        NodeValueList *lst = eval_state->parent->process_list;
+        Sequence *lst = eval_state->parent->process_list;
         if (lst) {
             int count = 0;
             for (NodeValueItem *n = lst->first (); n; n = n->nextSibling ())
@@ -592,7 +592,7 @@ bool Identifier::toBool () const {
     bool b = false;
     if (eval_state->parent) {
         sequence = eval_state->sequence;
-        NodeValueList *lst = toNodeList ();
+        Sequence *lst = toSequence ();
         b = lst && lst->first ();
         delete lst;
     } else {
@@ -602,9 +602,9 @@ bool Identifier::toBool () const {
 }
 
 void Identifier::childByStep (Step *step, bool recurse) const {
-    NodeValueList *lst = eval_state->process_list;
+    Sequence *lst = eval_state->process_list;
     NodeValueItem *last = lst->last ();
-    NodeValueList recursive_lst;
+    Sequence recursive_lst;
     for (NodeValueItem *itm = lst->first (); itm; ) {
         NodeValueItem *next = itm == last ? NULL : itm->nextSibling ();
 
@@ -647,7 +647,7 @@ void Identifier::childByPath (Step *step, bool recurse) const {
         childByStep (step, recurse);
         NodeValueItem *itm = eval_state->process_list->first ();
         if (itm && step->first_child) {
-            NodeValueList *newlist = new NodeValueList;
+            Sequence *newlist = new Sequence;
             for (; itm; itm = itm->nextSibling ())
                 if (step->selected (itm->data.node, itm->data.attr))
                     newlist->append (new NodeValueItem (itm->data));
@@ -661,7 +661,7 @@ void Identifier::childByPath (Step *step, bool recurse) const {
 
 QString Identifier::toString () const {
     if (eval_state->sequence != sequence) {
-        NodeValueList *lst = toNodeList ();
+        Sequence *lst = toSequence ();
         int i = lst->length ();
         if (i == 1)
             string = lst->first ()->data.value ();
@@ -673,9 +673,9 @@ QString Identifier::toString () const {
     return string;
 }
 
-NodeValueList *Identifier::toNodeList () const {
-    NodeValueList *old = eval_state->process_list;
-    NodeValueList *lst = new NodeValueList;
+Sequence *Identifier::toSequence () const {
+    Sequence *old = eval_state->process_list;
+    Sequence *lst = new Sequence;
     eval_state->process_list = lst;
     EvalState *es = eval_state;
     if (!((Step *)first_child)->start_contextual)
@@ -800,7 +800,7 @@ int Last::toInt () const {
     if (eval_state->sequence != sequence) {
         sequence = eval_state->sequence;
         if (eval_state->parent) {
-            NodeValueList *lst = eval_state->parent->process_list;
+            Sequence *lst = eval_state->parent->process_list;
             if (lst)
                 i = lst->length ();
         }
@@ -821,7 +821,7 @@ int Position::toInt () const {
     if (eval_state->sequence != sequence) {
         sequence = eval_state->sequence;
         if (eval_state->parent) {
-            NodeValueList *lst = eval_state->parent->process_list;
+            Sequence *lst = eval_state->parent->process_list;
             Node *r = eval_state->root;
             if (lst) {
                 i = 0;
@@ -862,7 +862,7 @@ QString StringJoin::toString () const {
         string.clear ();
         AST *child = first_child;
         if (child) {
-            NodeValueList *lst = child->toNodeList ();
+            Sequence *lst = child->toSequence ();
             NodeValueItem *n = lst->first();
             if (n) {
                 QString sep;
@@ -940,10 +940,10 @@ QString CurrentDate::toString () const {
     return string;
 }
 
-static void sortList (NodeValueList *lst, Expression *expr) {
+static void sortList (Sequence *lst, Expression *expr) {
     NodeValueItem *cur = lst->first ();
-    NodeValueList lt;
-    NodeValueList gt;
+    Sequence lt;
+    Sequence gt;
     expr->setRoot (cur->data.node);
     QString str = expr->toString ();
     for (NodeValueItem *itm = cur->nextSibling (); itm; ) {
@@ -971,12 +971,12 @@ static void sortList (NodeValueList *lst, Expression *expr) {
     }
 }
 
-NodeValueList *Sort::toNodeList () const {
+Sequence *Sort::toSequence () const {
     if (first_child) {
         Expression *exp = evaluateExpr (first_child->toString ());
         if (exp) {
             exp->setRoot (eval_state->root);
-            NodeValueList *lst = exp->toNodeList ();
+            Sequence *lst = exp->toSequence ();
             if (lst->first () && first_child->next_sibling) {
                 Expression *sort_exp =
                     evaluateExpr (first_child->next_sibling->toString ());
@@ -989,7 +989,7 @@ NodeValueList *Sort::toNodeList () const {
             return lst;
         }
     }
-    return AST::toNodeList ();
+    return AST::toSequence ();
 }
 
 #define BIN_OP_TO_INT(NAME,OP)                                           \
@@ -1128,17 +1128,17 @@ void Minus::dump () const {
 }
 #endif
 
-NodeValueList *Join::toNodeList () const {
+Sequence *Join::toSequence () const {
     if (first_child) {
-        NodeValueList *lst = first_child->toNodeList ();
+        Sequence *lst = first_child->toSequence ();
         if (first_child->next_sibling) {
-            NodeValueList *l2 = first_child->next_sibling->toNodeList ();
+            Sequence *l2 = first_child->next_sibling->toSequence ();
             lst->splice (NULL, *l2);
             delete l2;
         }
         return lst;
     }
-    return AST::toNodeList ();
+    return AST::toSequence ();
 }
 
 #ifdef KMPLAYER_EXPR_DEBUG

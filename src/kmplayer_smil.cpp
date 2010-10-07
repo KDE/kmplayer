@@ -188,14 +188,14 @@ static bool parseTransitionParam (Node *n, TransitionModule &m, Runtime *r,
     return true;
 }
 
-static NodeValueList *findParamGroup (Node *n, const QString &id)
+static Sequence *findParamGroup (Node *n, const QString &id)
 {
     Node *head = findHeadNode (SMIL::Smil::findSmilNode (n));
     if (head) {
         Expression *expr = evaluateExpr ("/paramGroup[@id='" + id + "']/param");
         if (expr) {
             expr->setRoot (head);
-            NodeValueList *lst = expr->toNodeList ();
+            Sequence *lst = expr->toSequence ();
             delete expr;
             return lst;
         }
@@ -1614,7 +1614,7 @@ void SMIL::State::stateChanged (Node *ref) {
         if (c->payload && c->connecter) {
             Expression *expr = (Expression *) c->payload;
             expr->setRoot (this);
-            NodeValueList *lst = expr->toNodeList ();
+            Sequence *lst = expr->toSequence ();
             for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling()) {
                 if (itm->data.node == ref)
                     document()->post (c->connecter,
@@ -3339,7 +3339,7 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
         transition.init ();
         QString pg = getAttribute ("paramGroup");
         if (!pg.isEmpty ()) {
-            NodeValueList *lst = findParamGroup (this, pg);
+            Sequence *lst = findParamGroup (this, pg);
             if (lst) {
                 for (NodeValueItem *i = lst->first(); i; i = i->nextSibling())
                     if (i->data.node->isElementNode ()) {
@@ -4363,7 +4363,7 @@ void SMIL::NewValue::begin () {
         if (!ref)
             ref = evaluateExpr ("/data");
         ref->setRoot (st);
-        NodeValueList *lst = ref->toNodeList ();
+        Sequence *lst = ref->toSequence ();
         NodeValueItem *itm = lst->first ();
         if (itm) {
             if (name.startsWith(QChar('@')) && itm->data.node->isElementNode())
@@ -4399,7 +4399,7 @@ void SMIL::SetValue::begin () {
         kWarning () << "ref is empty or no state";
     } else {
         ref->setRoot (st);
-        NodeValueList *lst = ref->toNodeList ();
+        Sequence *lst = ref->toSequence ();
         NodeValueItemPtr itm = lst->first ();
         if (itm) {
             if (itm->data.attr && itm->data.node->isElementNode ())
@@ -4420,7 +4420,7 @@ void SMIL::DelValue::begin () {
         kWarning () << "ref is empty or no state";
     } else {
         ref->setRoot (st);
-        NodeValueList *lst = ref->toNodeList ();
+        Sequence *lst = ref->toSequence ();
         for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling()) {
             if (itm->data.attr && itm->data.node->isElementNode ())
                 static_cast <Element *> (itm->data.node)->setAttribute (
@@ -4503,7 +4503,7 @@ void SMIL::Send::message (MessageType msg, void *content) {
             ref = evaluateExpr ("/data");
         if (ref) {
             ref->setRoot (st);
-            NodeValueList *lst = ref->toNodeList ();
+            Sequence *lst = ref->toSequence ();
             NodeValueItem *itm = lst->first ();
             if (itm)
                 target = itm->data.node;

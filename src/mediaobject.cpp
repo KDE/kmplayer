@@ -753,7 +753,7 @@ KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
                     "//cross-domain-policy/allow-access-from/@domain");
             if (expr) {
                 expr->setRoot (doc);
-                NodeValueList *lst = expr->toNodeList ();
+                Sequence *lst = expr->toSequence ();
                 for (NodeValueItem *i = lst->first(); i; i = i->nextSibling()) {
                     QRegExp match (i->data.value (), Qt::CaseInsensitive, QRegExp::Wildcard);
                     if (match.exactMatch (access_from)) {
