@@ -3034,9 +3034,9 @@ KDE_NO_EXPORT Node *SMIL::Switch::chosenOne () {
                 if (e->isElementNode ()) {
                     Element *elm = static_cast <Element *> (e);
                     Runtime *rt = (Runtime *) e->role (RoleTiming);
-                    if (rt->state () < Runtime::TimingsInitialized)
-                        elm->init ();
                     if (rt) {
+                        if (rt->state () < Runtime::TimingsInitialized)
+                            elm->init ();
                         if (!disabledByExpr (rt)) {
                             QString lang = elm->getAttribute ("systemLanguage");
                             if (!lang.isEmpty ()) {
@@ -4511,18 +4511,22 @@ void SMIL::Send::message (MessageType msg, void *content) {
         }
         if (target) {
             Node *parent = target->parentNode ();
+            Node *next = target->nextSibling ();
+            bool changed = target->firstChild ();
+            target->clearChildren ();
             if (media_info && media_info->media) {
-                Node *next = target->nextSibling ();
-                target->clearChildren ();
                 QTextStream in (&((TextMedia *)media_info->media)->text);
                 readXML (target, in, QString ());
                 if (target->firstChild ()) {
                     NodePtr store = target->firstChild ();
                     parent->removeChild (target);
                     parent->insertBefore (store, next);
-                    st->stateChanged (store);
+                    target = store;
+                    changed = true;
                 }
             }
+            if (changed)
+                st->stateChanged (target);
         }
         delete media_info;
         media_info = NULL;
