@@ -232,6 +232,12 @@ struct StartsWith: public BoolBase {
     virtual bool toBool () const;
 };
 
+struct Count : public IntegerBase {
+    Count (EvalState *ev) : IntegerBase (ev) {}
+
+    virtual int toInt () const;
+};
+
 struct HoursFromTime : public IntegerBase {
     HoursFromTime (EvalState *ev) : IntegerBase (ev) {}
 
@@ -746,6 +752,20 @@ bool StartsWith::toBool () const {
         }
     }
     return b;
+}
+
+int Count::toInt () const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        if (first_child) {
+            Sequence *lst = first_child->toSequence ();
+            i = lst->length ();
+            delete lst;
+        } else {
+            i = 0;
+        }
+    }
+    return i;
 }
 
 int HoursFromTime::toInt () const {
@@ -1447,6 +1467,8 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                     func = new Concat (ast->eval_state);
                 else if (name == "contains")
                     func = new Contains (ast->eval_state);
+                else if (name == "count")
+                    func = new Count (ast->eval_state);
                 else if (name == "hours-from-time")
                     func = new HoursFromTime (ast->eval_state);
                 else if (name == "minutes-from-time")
