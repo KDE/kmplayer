@@ -3031,6 +3031,8 @@ KDE_NO_EXPORT Node *SMIL::Switch::chosenOne () {
                 if (e->isElementNode ()) {
                     Element *elm = static_cast <Element *> (e);
                     Runtime *rt = (Runtime *) e->role (RoleTiming);
+                    if (rt->state () < Runtime::TimingsInitialized)
+                        elm->init ();
                     if (rt) {
                         if (!disabledByExpr (rt)) {
                             QString lang = elm->getAttribute ("systemLanguage");
