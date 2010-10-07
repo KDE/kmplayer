@@ -148,10 +148,12 @@ struct StringBase : public AST {
 struct Step : public StringBase {
     Step (EvalState *ev, bool context=false)
      : StringBase (ev),
-       any_node (false), context_node (context), is_attr (false) {}
+       any_node (false), context_node (context),
+       is_attr (false), start_contextual (false) {}
     Step (EvalState *ev, const char *s, const char *e, bool isattr=false)
      : StringBase (ev, s, e),
-       any_node (string == "*"), context_node (false), is_attr (isattr) {}
+       any_node (string == "*"), context_node (false),
+       is_attr (isattr), start_contextual (false) {}
 
     bool matches (Node *n);
     bool matches (Attribute *a);
@@ -169,6 +171,7 @@ struct Step : public StringBase {
     bool any_node;
     bool context_node;
     bool is_attr;
+    bool start_contextual;
 };
 
 struct Identifier : public StringBase {
@@ -649,7 +652,12 @@ NodeValueList *Identifier::toNodeList () const {
     NodeValueList *old = eval_state->process_list;
     NodeValueList *lst = new NodeValueList;
     eval_state->process_list = lst;
-    lst->append (new NodeValueItem (eval_state->root));
+    EvalState *es = eval_state;
+    if (!((Step *)first_child)->start_contextual)
+        while (es->parent)
+            es = es->parent;
+    // TODO handle ..
+    lst->append (new NodeValueItem (es->root));
     childByPath ((Step *) first_child, false);
     lst = eval_state->process_list;
     eval_state->process_list = old;
@@ -764,7 +772,7 @@ int Number::toInt () const {
     if (eval_state->sequence != sequence) {
         sequence = eval_state->sequence;
         if (first_child)
-            return first_child->toInt ();
+            i = first_child->toInt ();
     }
     return i;
 }
@@ -1268,18 +1276,26 @@ static bool parseIdentifier (const char *str, const char **end, AST *ast) {
         str = *end;
     if (!str)
         return false;
+    bool start_contextual = *str != '/';
     if (*str == '/')
         ++str;
     else if (!ast->eval_state->parent &&
             !ast->eval_state->def_root_tag.isEmpty ())
         appendASTChild (&ident, new Step (ast->eval_state,
                   ast->eval_state->def_root_tag.toAscii ().constData (), NULL));
-    while (parseStep (str, end, &ident)) {
+    if (parseStep (str, end, &ident)) {
         str = *end;
         has_any = true;
-        if (*str != '/')
-            break;
-        ++str;
+        ((Step *) ident.first_child)->start_contextual = start_contextual;
+        if (*str == '/') {
+            ++str;
+            while (parseStep (str, end, &ident)) {
+                str = *end;
+                if (*str != '/')
+                    break;
+                ++str;
+            }
+        }
     }
     *end = str;
     if (has_any) {
