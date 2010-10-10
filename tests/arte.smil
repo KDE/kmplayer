@@ -1,0 +1,243 @@
+<smil xmlns="http://www.w3.org/ns/SMIL" version="3.0" baseProfile="Language">
+  <head>
+    <layout>
+      <root-layout width="400" height="240" background-color="SlateGray"/>
+      <region top="2" left="20" width="27" height="18">
+        <region background-color="red">
+          <region height="33.3%" background-color="black"/>
+          <region top="66%" background-color="yellow"/>
+        </region>
+        <region id="de"/>
+      </region>
+      <region top="2" left="50" width="27" height="18">
+        <region background-color="white">
+          <region width="33.3%" background-color="red"/>
+          <region left="66%" background-color="blue"/>
+        </region>
+        <region id="fr"/>
+      </region>
+      <region id="count" top="2" left="140" width="120" height="18"
+              background-color="#475360"/>
+      <region id="previous" top="2" left="280" width="30" height="18"
+              background-color="#475360" showBackground="whenActive"/>
+      <region id="index" top="2" left="320" width="20" height="18"
+              background-color="#475360" showBackground="whenActive"/>
+      <region id="next" top="2" left="350" width="30" height="18"
+              background-color="#475360" showBackground="whenActive"/>
+      <region top="25" left="20" width="360">
+        <region id="title" height="20" background-color="#475360"/>
+        <region id="play" right="0" width="40" height="20"
+                background-color="white" showBackground="whenActive"/>
+        <region top="25" z-index="1" background-color="SlateGray">
+          <region height="140">
+            <region id="description"width="175"
+                    background-color="#475360" fit="scroll"/>
+            <region id="image" right="0" width="175"
+                    background-color="#475360" fit="meet"/>
+          </region>
+          <region id="status" bottom="0" height="40"
+                  background-color="black" fit="scroll"/>
+        </region>
+        <region id="video" top="25" z-index="0" background-color="black"
+                showBackground="whenActive"/>
+      </region>
+    </layout>
+    <state id="mystate" language="http://www.w3.org/TR/1999/REC-xpath-19991116">
+     <data xmlns="">
+      <message/>
+      <language/>
+      <feed>
+       <index/>
+       <count/>
+       <rss/>
+      </feed>
+      <page>
+       <uri/>
+       <html/>
+      </page>
+      <vref>
+       <uri/>
+       <videoref/>
+      </vref>
+      <vlink>
+       <uri/>
+       <video/>
+      </vlink>
+      <swf-player/>
+      <movie-sd/>
+      <video-uri/>
+      <tmp/>
+     </data>
+    </state>
+    <paramGroup id="centered-text">
+      <param name="fontColor" value="white"/>
+      <param name="regPoint" value="center"/>
+      <param name="regAlign" value="center"/>
+    </paramGroup>
+  </head>
+  <body>
+    <par dur="indefinite">
+      <text region="de" src="data:,DE" regPoint="center" regAlign="center"/>
+      <text region="fr" src="data:,FR" regPoint="center" regAlign="center"/>
+
+      <text begin="mystate.stateChange(/data/message)"
+            region="status" src="data:,{/data/message}">
+        <param name="fontColor" value="grey"/>
+        <param name="fontSize" value="-2"/>
+      </text>
+
+      <set targetElement="de" attributeName="background-color" to="red"
+           begin="de.activateEvent" dur="0.1"/>
+
+      <setvalue begin="de.activateEvent" ref="language" value="'de'"/>
+      <setvalue begin="fr.activateEvent" ref="language" value="'fr'"/>
+
+      <seq begin="mystate.stateChange(language)">
+        <setvalue ref="/data/feed/count" value="-1"/>
+        <setvalue ref="/data/feed/index" value="0"/>
+        <setvalue ref="/data/feed/rss" value="'empty'"/>
+        <setvalue ref="/data/message" value="'Clearing data'"/>
+        <par dur="indefinite">
+          <switch>
+            <send expr="language = 'de'"
+                  action="http://videos.arte.tv/de/do_delegate/videos/index-3188626,view,rss.xml" method="get"
+                  replace="instance" target="/data/feed/rss"/>
+            <send action="http://videos.arte.tv/fr/do_delegate/videos/index-3188626,view,rss.xml" method="get"
+                  replace="instance" target="/data/feed/rss"/>
+          </switch>
+          <seq begin="mystate.stateChange(/data/feed/rss)">
+            <setvalue ref="/data/feed/count"
+                      value="count(/data/feed/rss/channel/item)"/>
+            <switch>
+              <setvalue expr="/data/feed/count &gt; 0"
+                        ref="/data/feed/index" value="1"/>
+              <setvalue ref="/data/message" value="'No items found'"/>
+            </switch>
+          </seq>
+          <seq begin="mystate.stateChange(/data/feed/index)">
+            <setvalue ref="/data/page/uri" value="'invalid'"/>
+            <setvalue ref="/data/page/html" value="'empty'"/>
+            <setvalue ref="/data/vref/uri" value="'invalid'"/>
+            <setvalue ref="/data/vref/videoref" value="'empty'"/>
+            <setvalue ref="/data/vlink/uri" value="'invalid'"/>
+            <setvalue ref="/data/vlink/video" value="'empty'"/>
+            <setvalue ref="/data/movie-sd" value="'invalid'"/>
+            <setvalue ref="/data/video-uri" value="'invalid'"/>
+            <seq/>
+            <par>
+              <setvalue ref="/data/page/uri"
+                        value="/data/feed/rss/channel/item[number(/data/feed/index)]/link"/>
+              <switch begin="mystate.stateChange(/data/page/uri)">
+                <seq expr="starts-with(/data/page/uri, 'http://')">
+                  <setvalue ref="/data/message"
+                            value="concat('Get ', /data/page/uri)"/>
+                  <send action="{/data/page/uri}"
+                        method="get" replace="instance" target="/data/page/html"/>
+                </seq>
+                <setvalue ref="/data/message"
+                          value="concat('Could not get HTML ', /data/page/uri)"/>
+              </switch>
+              <seq begin="mystate.stateChange(/data/page/html)">
+                <setvalue ref="/data/tmp"
+                          value="substring-after(/data/page/html, 'vars_player.videorefFileUrl')"/>
+                <setvalue ref="/data/tmp"
+                          value="substring-before(/data/tmp, ';')"/>
+                <setvalue ref="/data/tmp"
+                          value="substring-after(/data/tmp, '&quot;')"/>
+                <setvalue ref="/data/vref/uri"
+                          value="substring-before(/data/tmp, '&quot;')"/>
+                <setvalue ref="/data/tmp"
+                          value="substring-after(/data/page/html, 'url_player')"/>
+                <setvalue ref="/data/tmp"
+                          value="substring-before(/data/tmp, ';')"/>
+                <setvalue ref="/data/tmp"
+                          value="substring-after(/data/tmp, '&quot;')"/>
+                <setvalue ref="/data/swf-player"
+                          value="substring-before(/data/tmp, '&quot;')"/>
+              </seq>
+              <switch begin="mystate.stateChange(/data/vref/uri)">
+                <seq expr="starts-with(/data/vref/uri, 'http://')">
+                  <setvalue ref="/data/message"
+                            value="concat('Get ', /data/vref/uri)"/>
+                  <send action="{/data/vref/uri}"
+                      method="get" replace="instance" target="/data/vref/videoref"/>
+                </seq>
+                <setvalue ref="/data/message"
+                          value="concat('Could not get flash var ', /data/vref/uri)"/>
+              </switch>
+              <setvalue begin="mystate.stateChange(/data/vref/videoref)"
+                        ref="/data/vlink/uri"
+                        value="/data/vref/videoref/videos/video[@lang = /data/language]/@ref"/>
+              <switch begin="mystate.stateChange(/data/vlink/uri)">
+                <send expr="starts-with(/data/vlink/uri, 'http://')"
+                      action="{/data/vlink/uri}"
+                      method="get" replace="instance" target="/data/vlink/video"/>
+                <setvalue ref="/data/message"
+                          value="concat('Could not get ', /data/vlink/uri)"/>
+              </switch>
+              <setvalue begin="mystate.stateChange(/data/vlink/video)"
+                        ref="/data/movie-sd"
+                        value="/data/vlink/video/urls/url[@quality = 'hd']"/>
+              <switch begin="mystate.stateChange(/data/movie-sd)">
+                <seq expr="starts-with(/data/movie-sd, 'rtmp://')">
+                  <setvalue ref="/data/message"
+                            value="concat('Found URL ', /data/movie-sd)"/>
+                  <setvalue ref="/data/video-uri"
+                  value="concat(/data/movie-sd, ' swfVfy=1 swfUrl=', /data/swf-player)"/>
+                </seq>
+                <seq expr="string-length(/data/movie-sd) &gt 0">
+                  <setvalue ref="/data/message"
+                            value="concat('Found URL ', /data/movie-sd)"/>
+                  <setvalue ref="/data/video-uri" value="/data/movie-sd"/>
+                </seq>
+                <setvalue ref="/data/message" value="'Video not available'"/>
+              </switch>
+
+              <text region="title"
+                    src="data:,{/data/feed/rss/channel/item[number(/data/feed/index)]/title}"
+                    paramGroup="centered-text"/>
+              <text region="description"
+                    src="data:,{/data/feed/rss/channel/item[number(/data/feed/index)]/description}">
+                <param name="fontColor" value="white"/>
+                <param name="fontSize" value="-1"/>
+              </text>
+              <par begin="mystate.stateChange(/data/video-uri)" dur="indefinite">
+                <text id="playbutton" end="activateEvent"
+                      region="play" src="data:,Play" fontColor="green"/>
+                <par begin="playbutton.activateEvent">
+                  <video id="movie" region="video" src="{/data/video-uri}"/>
+                  <set end="movie.end"
+                       target="video" attribute="z-index" to="2"/>
+                </par>
+              </par>
+              <img begin="mystate.stateChange(/data/vlink/video)"
+                   expr="count(/data/vlink/video/firstThumbnailUrl) &gt 0"
+                   src="{/data/vlink/video/firstThumbnailUrl[1]}"
+                   region="image"/>
+              <text region="index" src="data:,{/data/feed/index}"
+                    paramGroup="centered-text"/>
+              <par expr="/data/feed/index &gt; 1">
+                <text region="previous" src="data:,%3C%3C" paramGroup="centered-text"/>
+                <setvalue begin="previous.activateEvent"
+                          ref="/data/feed/index" value="/data/feed/index - 1"/>
+              </par>
+              <par expr="/data/feed/index &lt; /data/feed/count">
+                <text region="next" src="data:,%3E%3E"
+                      paramGroup="centered-text"/>
+                <set targetElement="next" attributeName="background-color"
+                     to="SlateGray" begin="de.activateEvent" dur="0.1"/>
+                <setvalue begin="next.activateEvent"
+                          ref="/data/feed/index" value="/data/feed/index + 1"/>
+              </par>
+            </par>
+          </seq>
+
+          <text region="count" begin="mystate.stateChange(/data/feed/count)"
+                src="data:,{/data/feed/count}%20items%20found"
+                paramGroup="centered-text"/>
+        </par>
+      </seq>
+    </par>
+  </body>
+</smil>
+
