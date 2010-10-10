@@ -118,7 +118,9 @@ static QString encodeFileOrUrl (const KUrl &url)
     return url.isEmpty ()
         ? QString ()
         : QString::fromLocal8Bit (QFile::encodeName (
-                    url.isLocalFile () ? url.toLocalFile () : url.url ()));
+                    url.isLocalFile ()
+                    ? url.toLocalFile ()
+                    : QUrl::fromPercentEncoding (url.url ().toLocal8Bit ())));
 }
 
 static QString encodeFileOrUrl (const QString &str)
