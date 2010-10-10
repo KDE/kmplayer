@@ -3096,12 +3096,7 @@ KDE_NO_EXPORT void SMIL::Switch::begin () {
 
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {
     chosen_one = NULL;
-    Element::deactivate ();
-    for (Node *e = firstChild (); e; e = e->nextSibling ())
-        if (e->active ()) {
-            e->deactivate ();
-            break; // deactivate only the one running
-        }
+    GroupBase::deactivate ();
 }
 
 KDE_NO_EXPORT void SMIL::Switch::reset () {
