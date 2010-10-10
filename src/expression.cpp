@@ -274,6 +274,12 @@ struct Position : public IntegerBase {
     virtual int toInt () const;
 };
 
+struct StringLength : public IntegerBase {
+    StringLength (EvalState *ev) : IntegerBase (ev) {}
+
+    virtual int toInt () const;
+};
+
 struct Concat : public StringBase {
     Concat (EvalState *ev) : StringBase (ev) {}
 
@@ -852,6 +858,20 @@ int Position::toInt () const {
                 }
             }
         }
+    }
+    return i;
+}
+
+int StringLength::toInt () const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        Sequence *lst = eval_state->parent->process_list;
+        if (first_child)
+            i = first_child->toString ().length ();
+        else if (eval_state->parent)
+            i = eval_state->value ().length ();
+        else
+            i = 0;
     }
     return i;
 }
@@ -1493,6 +1513,8 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                     func = new StartsWith (ast->eval_state);
                 else if (name == "string-join")
                     func = new StringJoin (ast->eval_state);
+                else if (name == "string-length")
+                    func = new StringLength (ast->eval_state);
                 else if (name == "substring-after")
                     func = new SubstringAfter (ast->eval_state);
                 else if (name == "substring-before")
