@@ -637,7 +637,7 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
             repeat = repeat_count = val.toInt ();
     } else if (name.startsWith ("expr")) {
         expr = val;
-    } else
+    } else // TODO restart/restartDefault
         return false;
     return true;
 }
@@ -689,25 +689,27 @@ KDE_NO_EXPORT void Runtime::message (MessageType msg, void *content) {
     if ((int) msg >= (int) DurLastDuration)
         return;
 
-    if (!started ()) {
-        Posting *event = static_cast <Posting *> (content);
-        for (DurationItem *dur = beginTime ().next; dur; dur = dur->next) {
-            if (dur->matches ((Duration) msg, event)) {
+    Posting *event = static_cast <Posting *> (content);
+    for (DurationItem *dur = beginTime ().next; dur; dur = dur->next) {
+        if (dur->matches ((Duration) msg, event)) {
+            if (started ())
+                element->message (MsgStateRewind);
+            else
                 element->activate ();
-                if (element && dur->offset > 0) {
-                    if (begin_timer)
-                        element->document ()->cancelPosting (begin_timer);
-                    begin_timer = element->document ()->post (element,
-                            new TimerPosting(10 * dur->offset, begin_timer_id));
-                } else { //FIXME neg. offsets
-                    propagateStart ();
-                }
-                if (element->state == Node::state_finished)
-                    element->state = Node::state_activated;//rewind to activated
-                break;
+            if (element && dur->offset > 0) {
+                if (begin_timer)
+                    element->document ()->cancelPosting (begin_timer);
+                begin_timer = element->document ()->post (element,
+                        new TimerPosting(10 * dur->offset, begin_timer_id));
+            } else { //FIXME neg. offsets
+                propagateStart ();
             }
+            if (element->state == Node::state_finished)
+                element->state = Node::state_activated;//rewind to activated
+            return;
         }
-    } else if (started ()) {
+    }
+    if (started ()) {
         Posting *event = static_cast <Posting *> (content);
         for (DurationItem *dur = endTime ().next; dur; dur = dur->next)
             if (dur->matches ((Duration) msg, event)) {
@@ -3111,7 +3113,8 @@ KDE_NO_EXPORT void SMIL::Switch::reset () {
 }
 
 KDE_NO_EXPORT void SMIL::Switch::message (MessageType msg, void *content) {
-    if (MsgChildFinished == msg) {
+    switch (msg) {
+    case MsgChildFinished: {
         Posting *post = (Posting *) content;
         if (unfinished () && post->source == chosen_one) {
             runtime->tryFinish ();
@@ -3119,6 +3122,12 @@ KDE_NO_EXPORT void SMIL::Switch::message (MessageType msg, void *content) {
             accept (&visitor);
         }
         return;
+    }
+    case MsgStateRewind:
+        chosen_one = NULL;
+        break;
+    default:
+        break;
     }
     GroupBase::message (msg, content);
 }
