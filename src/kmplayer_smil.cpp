@@ -243,13 +243,21 @@ Runtime::DurationItem &
 Runtime::DurationItem::operator = (const Runtime::DurationItem &d) {
     durval = d.durval;
     offset = d.offset;
+    payload = d.payload;
     connection.assign (&d.connection);
     return *this;
+}
+
+bool Runtime::DurationItem::matches (const Duration dur, const Posting *post) {
+    return dur == durval &&
+        connection.signaler () == post->source.ptr () &&
+        ((Duration) MsgStateChanged != durval || post->payload == payload);
 }
 
 void Runtime::DurationItem::clear() {
     durval = DurTimer;
     offset = 0;
+    payload = NULL;
     connection.disconnect ();
     if (next) {
         next->clear ();
@@ -332,6 +340,7 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
     QString vl = vs.lower ();
     const char * cval = vl.ascii ();
     int offset = 0;
+    VirtualVoid *payload = NULL;
     if (cval && cval[0]) {
         QString idref;
         const char * p = cval;
@@ -354,7 +363,6 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
         } else if (!strncmp (cval, "media", 5)) {
             dur = Runtime::DurMedia;
         }
-        VirtualVoid *payload = NULL;
         if (dur == -2) {
             NodePtr target;
             const char * q = p;
@@ -437,6 +445,7 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
     }
     itm->durval = (Runtime::Duration) dur;
     itm->offset = offset;
+    itm->payload = payload;
 }
 
 static
@@ -682,9 +691,8 @@ KDE_NO_EXPORT void Runtime::message (MessageType msg, void *content) {
 
     if (!started ()) {
         Posting *event = static_cast <Posting *> (content);
-        for (DurationItem *dur = beginTime ().next; dur; dur = dur->next)
-            if (dur->durval == (Duration) msg &&
-                    dur->connection.signaler () == event->source.ptr ()) {
+        for (DurationItem *dur = beginTime ().next; dur; dur = dur->next) {
+            if (dur->matches ((Duration) msg, event)) {
                 element->activate ();
                 if (element && dur->offset > 0) {
                     if (begin_timer)
@@ -698,11 +706,11 @@ KDE_NO_EXPORT void Runtime::message (MessageType msg, void *content) {
                     element->state = Node::state_activated;//rewind to activated
                 break;
             }
+        }
     } else if (started ()) {
         Posting *event = static_cast <Posting *> (content);
         for (DurationItem *dur = endTime ().next; dur; dur = dur->next)
-            if (dur->durval == (Duration) msg &&
-                    dur->connection.signaler () == event->source.ptr ()) {
+            if (dur->matches ((Duration) msg, event)) {
                 if (element && dur->offset > 0) {
                     if (duration_timer)
                         element->document ()->cancelPosting (duration_timer);
@@ -1618,7 +1626,7 @@ void SMIL::State::stateChanged (Node *ref) {
             for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling()) {
                 if (itm->data.node == ref)
                     document()->post (c->connecter,
-                                      new Posting (this, MsgStateChanged));
+                                     new Posting (this, MsgStateChanged, expr));
             }
             delete lst;
         }

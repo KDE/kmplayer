@@ -133,9 +133,11 @@ public:
     struct DurationItem {
         DurationItem ();
         DurationItem &operator = (const DurationItem &other);
+        bool matches (const Duration dur, const Posting *post);
         void clear();
         Duration durval;
         int offset;
+        VirtualVoid *payload;
         ConnectionLink connection;
         DurationItem *next;
     } durations [(const int) DurTimeLast];

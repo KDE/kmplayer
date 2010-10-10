@@ -698,11 +698,12 @@ public:
  **/
 class KMPLAYER_EXPORT Posting {
 public:
-    KDE_NO_CDTOR_EXPORT Posting (Node *n, MessageType msg)
-        : source (n), message (msg) {}
+    KDE_NO_CDTOR_EXPORT Posting (Node *n, MessageType msg, VirtualVoid *p=NULL)
+        : source (n), message (msg), payload (p) {}
     KDE_NO_CDTOR_EXPORT virtual ~Posting () {}
     NodePtrW source;
     MessageType message;
+    VirtualVoid *payload;
 };
 
 /**
