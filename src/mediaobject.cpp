@@ -240,7 +240,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
             }
             if (AudioVideoMedia::ask_delete == media->request) {
                 delete media;
-            } else if (olds > IProcess::Ready && mrl->unfinished ()) {
+            } else if (olds > IProcess::Ready) {
                 if (is_rec)
                     mrl->message (MsgMediaFinished, NULL); // FIXME
                 else

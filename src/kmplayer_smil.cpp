@@ -3481,6 +3481,7 @@ KDE_NO_EXPORT void SMIL::MediaType::finish () {
     transition.transition_updater.disconnect ();
     if (media_info && media_info->media)
         media_info->media->pause ();
+    postpone_lock = 0L;
 
     Surface *s = surface ();
     if (s)
@@ -3634,6 +3635,8 @@ void SMIL::MediaType::message (MessageType msg, void *content) {
         }
 
         case MsgMediaFinished:
+            if (state_deferred == state && postpone_lock)
+                state = state_began;
             if (unfinished ()) {
                 if (runtime->durTime ().durval == Runtime::DurMedia)
                     runtime->durTime ().durval = Runtime::DurTimer;
@@ -3844,11 +3847,6 @@ void SMIL::RefMediaType::message (MessageType msg, void *content) {
                 clipStop ();
             return;
         }
-
-        case MsgMediaFinished:
-            if (state >= Node::state_began)
-                runtime->tryFinish ();
-            return;
 
         case MsgChildFinished:
             if (id_node_svg == ((Posting *) content)->source->id)
