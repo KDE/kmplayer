@@ -515,9 +515,12 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
     if (!check_access) {
         if (MediaManager::Data != type &&
                 (memory_cache->get (str, mime, data) ||
-                 protocol == "mms" || protocol == "rtsp" || protocol == "rtp" ||
+                 protocol == "mms" || protocol == "rtsp" ||
+                 protocol == "rtp" || protocol == "rtmp" ||
                  (only_playlist && !maybe_playlist && !mime.isEmpty ()))) {
             setMimetype (mime);
+            if (MediaManager::Any == type)
+                type = MediaManager::AudioVideo;
             ready ();
             return true;
         }
