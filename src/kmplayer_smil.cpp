@@ -3816,12 +3816,12 @@ KDE_NO_EXPORT void SMIL::RefMediaType::finish () {
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::begin () {
+    MediaType::begin ();
     if (media_info && media_info->media &&
             media_info->media->type () != MediaManager::Image &&
             0 == runtime->durTime ().offset &&
             Runtime::DurMedia == runtime->endTime ().durval)
         runtime->durTime ().durval = Runtime::DurMedia; // duration of clip
-    MediaType::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::accept (Visitor * v) {
