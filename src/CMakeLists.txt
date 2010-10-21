@@ -131,7 +131,7 @@ install(TARGETS kdeinit_kmplayer  ${INSTALL_TARGETS_DEFAULT_ARGS} )
 
 install(TARGETS kmplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
-install(FILES kmplayer.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
+install(PROGRAMS kmplayer.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
 
 #qt4_add_dbus_interface(kmplayer_SRCS org.kde.Konqueror.Main.xml kmplayer_interface)
 
