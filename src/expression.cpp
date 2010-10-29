@@ -164,7 +164,6 @@ struct Step : public StringBase {
 
     bool matches (Node *n);
     bool matches (Attribute *a);
-    bool selected (Node *n, Attribute *a);
     bool anyPath () const { return string.isEmpty (); }
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
@@ -592,14 +591,6 @@ bool Step::matches (Attribute *a) {
     return any_node || string == a->name ();
 }
 
-bool Step::selected (Node *n, Attribute *a) {
-    if (first_child) {
-        first_child->setRoot (n, a);
-        return first_child->toBool ();
-    }
-    return true;
-}
-
 bool Identifier::toBool () const {
     bool b = false;
     if (eval_state->parent) {
@@ -657,14 +648,18 @@ void Identifier::childByStep (Step *step, bool recurse) const {
 void Identifier::childByPath (Step *step, bool recurse) const {
     if (!step->anyPath ()) {
         childByStep (step, recurse);
-        NodeValueItem *itm = eval_state->process_list->first ();
-        if (itm && step->first_child) {
-            Sequence *newlist = new Sequence;
-            for (; itm; itm = itm->nextSibling ())
-                if (step->selected (itm->data.node, itm->data.attr))
-                    newlist->append (new NodeValueItem (itm->data));
-            delete eval_state->process_list;
-            eval_state->process_list = newlist;
+        for (AST *pred = step->first_child; pred; pred = pred->next_sibling) {
+            NodeValueItem *itm = eval_state->process_list->first ();
+            if (itm) {
+                Sequence *newlist = new Sequence;
+                for (; itm; itm = itm->nextSibling ()) {
+                    pred->setRoot (itm->data.node, itm->data.attr);
+                    if (pred->toBool ())
+                        newlist->append (new NodeValueItem (itm->data));
+                }
+                delete eval_state->process_list;
+                eval_state->process_list = newlist;
+            }
         }
     }
     if (step->next_sibling)
@@ -865,7 +860,6 @@ int Position::toInt () const {
 int StringLength::toInt () const {
     if (eval_state->sequence != sequence) {
         sequence = eval_state->sequence;
-        Sequence *lst = eval_state->parent->process_list;
         if (first_child)
             i = first_child->toString ().length ();
         else if (eval_state->parent)
@@ -1358,16 +1352,31 @@ static bool parseStep (const char *str, const char **end, AST *ast) {
         if (str == s)
             return false;
         entry = new Step (ast->eval_state, str, s, is_attr);
-        if (*s == '[') {
+        while (*s == '[') {
             AST pred (new EvalState (ast->eval_state));
             if (parseStatement (s + 1, end, &pred)) {
                 str = *end;
                 if (parseSpace (str, end))
                     str = *end;
                 if (*str == ']') {
-                    entry->first_child = pred.first_child;
-                    pred.first_child = NULL;
+                    if (pred.first_child) {
+                        appendASTChild (entry, pred.first_child);
+                        pred.first_child = NULL;
+                    }
                     s = ++str;
+                } else {
+                    delete entry;
+                    return false;
+                }
+            } else {
+                str = s + 1;
+                if (parseSpace (str, end))
+                    str = *end;
+                if (*str == ']') {
+                    s = ++str;
+                } else {
+                    delete entry;
+                    return false;
                 }
             }
         }
