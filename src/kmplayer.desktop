@@ -44,6 +44,7 @@ Comment[tr]=MPlayer için KDE arayüzü
 Comment[uk]=KDE-інтерфейс для MPlayer
 Comment[x-test]=xxKDE interface for MPlayerxx
 Comment[zh_CN]=MPlayer 的 KDE 界面
+Comment[zh_TW]=MPlayer 的 KDE 介面
 Terminal=false
 Name=KMPlayer
 Name[be]=KMPlayer
