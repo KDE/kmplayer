@@ -227,10 +227,8 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
     }
     setState (state_deactivated);
     postpone_lock = 0L;
-    if (media_info) {
-        delete media_info;
-        media_info = NULL;
-    }
+    delete media_info;
+    media_info = NULL;
 }
 
 KDE_NO_EXPORT void RP::Image::message (MessageType msg, void *content) {
