@@ -733,8 +733,7 @@ Mrl::Mrl (NodePtr & d, short id)
       resolved (false), bookmarkable (true), access_granted (false) {}
 
 Mrl::~Mrl () {
-    if (media_info)
-        delete media_info;
+    delete media_info;
 }
 
 Node::PlayType Mrl::playType () {
@@ -870,10 +869,8 @@ void Mrl::undefer () {
 }
 
 void Mrl::deactivate () {
-    if (media_info) {
-        delete media_info;
-        media_info = NULL;
-    }
+    delete media_info;
+    media_info = NULL;
     Node::deactivate ();
 }
 
