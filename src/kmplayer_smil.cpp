@@ -1745,10 +1745,8 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
 {}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
-    if (region_surface) {
+    if (region_surface)
         region_surface->remove ();
-        region_surface = NULL;
-    }
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
@@ -1971,14 +1969,16 @@ KDE_NO_EXPORT void SMIL::RootLayout::closed () {
 }
 
 KDE_NO_CDTOR_EXPORT SMIL::RootLayout::~RootLayout() {
-    region_surface = NULL;
 }
 
 KDE_NO_EXPORT void SMIL::RootLayout::deactivate () {
     SMIL::Smil *s = Smil::findSmilNode (this);
     if (s)
         s->role (RoleChildDisplay, NULL);
-    region_surface = NULL;
+    if (region_surface) {
+        region_surface->remove ();
+        region_surface = NULL;
+    }
     RegionBase::deactivate ();
 }
 
@@ -2058,8 +2058,6 @@ KDE_NO_CDTOR_EXPORT SMIL::Region::Region (NodePtr & d)
  : RegionBase (d, id_node_region) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::Region::~Region () {
-    if (region_surface)
-        region_surface->remove ();
 }
 
 KDE_NO_EXPORT void SMIL::Region::deactivate () {
