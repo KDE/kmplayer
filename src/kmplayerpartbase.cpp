@@ -216,14 +216,12 @@ void PartBase::createBookmarkMenu (KMenu *owner, KActionCollection *ac) {
 void PartBase::connectPlaylist (PlayListView * playlist) {
     connect (playlist, SIGNAL (addBookMark (const QString &, const QString &)),
              this, SLOT (addBookMark (const QString &, const QString &)));
-    connect (playlist, SIGNAL (itemActivated (QTreeWidgetItem *, int)),
-             this, SLOT (playListItemActivated (QTreeWidgetItem *, int)));
-    connect (playlist, SIGNAL (itemClicked (QTreeWidgetItem *, int)),
-             this, SLOT (playListItemClicked (QTreeWidgetItem *, int)));
+    connect (playlist, SIGNAL (activated (const QModelIndex &)),
+             this, SLOT (playListItemActivated (const QModelIndex &)));
+    connect (playlist, SIGNAL (clicked (const QModelIndex&)),
+             this, SLOT (playListItemClicked (const QModelIndex&)));
     connect (this, SIGNAL (treeChanged (int, NodePtr, NodePtr, bool, bool)),
-             playlist, SLOT (updateTree (int, NodePtr, NodePtr, bool, bool)));
-    connect (this, SIGNAL (treeUpdated ()),
-             playlist, SLOT (triggerUpdate ()));
+             playlist->model (), SLOT (updateTree (int, NodePtr, NodePtr, bool, bool)));
 }
 
 void PartBase::connectInfoPanel (InfoWindow * infopanel) {
@@ -608,12 +606,13 @@ void PartBase::forward () {
     m_source->forward ();
 }
 
-KDE_NO_EXPORT void PartBase::playListItemClicked (QTreeWidgetItem *item, int) {
-    if (!item)
+KDE_NO_EXPORT void PartBase::playListItemClicked (const QModelIndex& index) {
+    if (!index.isValid ())
         return;
-    PlayListItem * vi = static_cast <PlayListItem *> (item);
-    RootPlayListItem * ri = vi->playListView ()->rootItem (item);
-    if (ri == item && vi->node) {
+    PlayListView *pv = qobject_cast <PlayListView *> (sender ());
+    PlayItem *vi = static_cast <PlayItem *> (index.internalPointer ());
+    TopPlayItem * ri = vi->rootItem ();
+    if (ri == vi && vi->node) {
         QString src = ri->source;
         //kDebug() << "playListItemClicked " << src << " " << vi->node->nodeName();
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
@@ -622,27 +621,27 @@ KDE_NO_EXPORT void PartBase::playListItemClicked (QTreeWidgetItem *item, int) {
             if (!vi->node->isPlayable ())
                 emit treeChanged (ri->id, vi->node, 0, false, true);
         } else if (vi->childCount ()) {
-            if (vi->isExpanded ())
-                vi->playListView ()->collapseItem (vi);
+            if (pv->isExpanded (index))
+                pv->setExpanded (index, false);
             else
-                vi->playListView ()->expandItem (vi);
+                pv->setExpanded (index, true);
         }
-    } else if (ri != item && vi->node && !vi->node->isPlayable () && item->childCount ()) {
-        if (vi->isExpanded ())
-            vi->playListView ()->collapseItem (vi);
+    } else if (ri != vi && vi->node && !vi->node->isPlayable () && vi->childCount ()) {
+        if (pv->isExpanded (index))
+            pv->setExpanded (index, false);
         else
-            vi->playListView ()->expandItem (vi);
-    } else if (!vi->node && !vi->m_attr)
+            pv->setExpanded (index, true);
+    } else if (!vi->node && !vi->attribute)
         updateTree (); // items already deleted
 }
 
-KDE_NO_EXPORT void PartBase::playListItemActivated(QTreeWidgetItem *item, int) {
+KDE_NO_EXPORT void PartBase::playListItemActivated(const QModelIndex &index) {
     if (m_in_update_tree) return;
     if (m_view->editMode ()) return;
-    PlayListItem * vi = static_cast <PlayListItem *> (item);
-    RootPlayListItem * ri = vi->playListView ()->rootItem (item);
-    if (ri == item)
-        return; // both null or handled by playListItemClicked
+    PlayItem *vi = static_cast <PlayItem *> (index.internalPointer ());
+    TopPlayItem *ri = vi->rootItem ();
+    if (ri == vi)
+        return; // handled by playListItemClicked
     if (vi->node) {
         QString src = ri->source;
         NodePtrW node = vi->node;
@@ -653,15 +652,15 @@ KDE_NO_EXPORT void PartBase::playListItemActivated(QTreeWidgetItem *item, int) {
             if (node && !node->isPlayable ())
                 emit treeChanged (ri->id, node, 0, false, true);
         } // else if (vi->childCount ()) {handled by playListItemClicked
-    } else if (vi->m_attr) {
-        if (vi->m_attr->name () == Ids::attr_src ||
-                vi->m_attr->name () == Ids::attr_href ||
-                vi->m_attr->name () == Ids::attr_url ||
-                vi->m_attr->name () == Ids::attr_value ||
-                vi->m_attr->name () == "data") {
-            QString src (vi->m_attr->value ());
+    } else if (vi->attribute) {
+        if (vi->attribute->name () == Ids::attr_src ||
+                vi->attribute->name () == Ids::attr_href ||
+                vi->attribute->name () == Ids::attr_url ||
+                vi->attribute->name () == Ids::attr_value ||
+                vi->attribute->name () == "data") {
+            QString src (vi->attribute->value ());
             if (!src.isEmpty ()) {
-                PlayListItem * pi = static_cast <PlayListItem*>(item->parent());
+                PlayItem *pi = vi->parent ();
                 if (pi) {
                     for (Node *e = pi->node.ptr (); e; e = e->parentNode ()) {
                         Mrl * mrl = e->mrl ();
@@ -686,8 +685,7 @@ void PartBase::updateTree (bool full, bool force) {
         if (m_update_tree_full) {
             if (m_source)
                 emit treeChanged (0, m_source->root (), m_source->current (), true, false);
-        } else
-            emit treeUpdated ();
+        }
         m_in_update_tree = false;
         if (m_update_tree_timer) {
             killTimer (m_update_tree_timer);
@@ -789,16 +787,18 @@ void PartBase::play () {
         m_update_tree_timer = 0;
     }
     if (!playing ()) {
-        PlayListItem *lvi = m_view->playList ()->currentPlayListItem ();
-        if (lvi) { // make sure it's in the first tree
-            QTreeWidgetItem *pitem = lvi;
-            while (pitem->parent())
-                pitem = pitem->parent();
-            if (pitem != m_view->playList ()->topLevelItem (0))
+        PlayItem *lvi = m_view->playList ()->selectedItem ();
+        if (lvi) {
+            TopPlayItem *ri = lvi->rootItem ();
+            if (ri->id != 0) // make sure it's in the first tree
                 lvi = 0L;
         }
-        if (!lvi)
-            lvi = static_cast<PlayListItem*>(m_view->playList()->topLevelItem(0));
+        if (!lvi) {
+            QModelIndex index = m_view->playList ()->model ()->index (0, 0);
+            lvi = static_cast<PlayItem*>(index.internalPointer ());
+            if (!lvi->node)
+                lvi = NULL;
+        }
         if (lvi) {
             Mrl *mrl = NULL;
             for (Node * n = lvi->node.ptr (); n; n = n->parentNode ()) {

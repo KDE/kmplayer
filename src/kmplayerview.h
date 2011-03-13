@@ -46,7 +46,7 @@ class ControlPanel;
 class Console;
 class PlayListView;
 class PlayListView;
-class RootPlayListItem;
+class TopPlayItem;
 
 typedef KStatusBar StatusBar;
 
@@ -132,7 +132,7 @@ public:
 #endif
     void setNoInfoMessages (bool b) { m_no_info = b; }
     void setViewOnly ();
-    void setEditMode (RootPlayListItem *, bool enable=true);
+    void setEditMode (TopPlayItem *, bool enable=true);
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
     KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }

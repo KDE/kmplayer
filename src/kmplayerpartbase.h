@@ -27,6 +27,7 @@
 #include <QPointer>
 #include <qstringlist.h>
 #include <qmap.h>
+#include <QModelIndex>
 
 #include <kmediaplayer/player.h>
 #include <kurl.h>
@@ -41,7 +42,6 @@ class KAboutData;
 class KActionCollection;
 class KBookmarkMenu;
 class KBookmarkManager;
-class QTreeWidgetItem;
 class KMenu;
 
 
@@ -172,7 +172,6 @@ signals:
     void urlChanged (const QString & url);
     void processChanged (const char *);
     void treeChanged (int id, NodePtr root, NodePtr, bool select, bool open);
-    void treeUpdated ();
     void infoUpdated (const QString & msg);
     void statusUpdated (const QString & msg);
     void languagesUpdated(const QStringList & alang, const QStringList & slang);
@@ -195,8 +194,8 @@ protected slots:
     void saturationValueChanged (int val);
     void sourceHasChangedAspects ();
     void fullScreen ();
-    void playListItemClicked (QTreeWidgetItem *, int);
-    void playListItemActivated (QTreeWidgetItem *, int);
+    void playListItemClicked (const QModelIndex &);
+    void playListItemActivated (const QModelIndex &);
     void slotPlayingStarted ();
     void slotPlayingStopped ();
     void settingsChanged ();

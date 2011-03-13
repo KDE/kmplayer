@@ -300,7 +300,7 @@ void View::setViewOnly () {
     m_dock_infopanel->hide ();
 }
 
-void View::setEditMode (RootPlayListItem *ri, bool enable) {
+void View::setEditMode (TopPlayItem *ri, bool enable) {
     m_edit_mode = enable;
     m_infopanel->setReadOnly (!m_edit_mode);
     if (m_edit_mode && !m_dock_infopanel->isVisible ())
