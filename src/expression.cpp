@@ -180,15 +180,20 @@ struct Step : public StringBase {
     bool start_contextual;
 };
 
-struct Identifier : public StringBase {
-    Identifier (EvalState *ev, AST *steps) : StringBase (ev) {
-        first_child = steps;
-    }
+struct SequenceBase : public StringBase {
+    SequenceBase (EvalState *ev) : StringBase (ev) {}
 
     virtual bool toBool () const;
     virtual QString toString () const;
-    virtual Sequence *toSequence () const;
     virtual Type type () const;
+};
+
+struct Identifier : public SequenceBase {
+    Identifier (EvalState *ev, AST *steps) : SequenceBase (ev) {
+        first_child = steps;
+    }
+
+    virtual Sequence *toSequence () const;
     void childByStep (Step *step, bool recurse) const;
     void childByPath (Step *step, bool recurse) const;
 #ifdef KMPLAYER_EXPR_DEBUG
@@ -321,8 +326,8 @@ struct EscapeUri : public StringBase {
     virtual QString toString () const;
 };
 
-struct Sort : public AST {
-    Sort (EvalState *ev) : AST (ev) {}
+struct Sort : public SequenceBase {
+    Sort (EvalState *ev) : SequenceBase (ev) {}
 
     virtual Sequence *toSequence () const;
 };
@@ -392,8 +397,8 @@ struct Minus : public NumberBase {
 #endif
 };
 
-struct Join : public AST {
-    Join (EvalState *ev, AST *children) : AST (ev) {
+struct Join : public SequenceBase {
+    Join (EvalState *ev, AST *children) : SequenceBase (ev) {
         first_child = children;
     }
 
@@ -591,7 +596,7 @@ bool Step::matches (Attribute *a) {
     return any_node || string == a->name ();
 }
 
-bool Identifier::toBool () const {
+bool SequenceBase::toBool () const {
     bool b = false;
     if (eval_state->parent) {
         sequence = eval_state->sequence;
@@ -602,6 +607,35 @@ bool Identifier::toBool () const {
         b = StringBase::toBool ();
     }
     return b;
+}
+
+QString SequenceBase::toString () const {
+    if (eval_state->sequence != sequence) {
+        Sequence *lst = toSequence ();
+        int i = lst->length ();
+        if (i == 1)
+            string = lst->first ()->data.value ();
+        else
+            string = QString::number (i);
+        delete lst;
+        sequence = eval_state->sequence;
+    }
+    return string;
+}
+
+AST::Type SequenceBase::type () const {
+    QString s = toString ();
+    if (s.toLower () == "true" ||
+            s.toLower () == "false")
+        return TBool;
+    bool ok;
+    s.toInt (&ok);
+    if (ok)
+        return TInteger;
+    s.toFloat (&ok);
+    if (ok)
+        return TFloat;
+    return TString;
 }
 
 void Identifier::childByStep (Step *step, bool recurse) const {
@@ -666,20 +700,6 @@ void Identifier::childByPath (Step *step, bool recurse) const {
         childByPath ((Step *) step->next_sibling, step->anyPath ());
 }
 
-QString Identifier::toString () const {
-    if (eval_state->sequence != sequence) {
-        Sequence *lst = toSequence ();
-        int i = lst->length ();
-        if (i == 1)
-            string = lst->first ()->data.value ();
-        else
-            string = QString::number (i);
-        delete lst;
-        sequence = eval_state->sequence;
-    }
-    return string;
-}
-
 Sequence *Identifier::toSequence () const {
     Sequence *old = eval_state->process_list;
     Sequence *lst = new Sequence;
@@ -694,21 +714,6 @@ Sequence *Identifier::toSequence () const {
     lst = eval_state->process_list;
     eval_state->process_list = old;
     return lst;
-}
-
-AST::Type Identifier::type () const {
-    QString s = toString ();
-    if (s.toLower () == "true" ||
-            s.toLower () == "false")
-        return TBool;
-    bool ok;
-    s.toInt (&ok);
-    if (ok)
-        return TInteger;
-    s.toFloat (&ok);
-    if (ok)
-        return TFloat;
-    return TString;
 }
 
 QString StringLiteral::toString () const {
