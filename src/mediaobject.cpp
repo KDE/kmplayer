@@ -477,6 +477,8 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
                     maybe_playlist = isPlayListMime (mime); // get new mime
                 }
                 kDebug () << "wget2 " << str << " " << mime;
+            } else {
+                setMimetype (mime);
             }
             if (file.open (IO_ReadOnly)) {
                 if (only_playlist) {
