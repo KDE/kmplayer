@@ -149,6 +149,14 @@ QVariant PlayModel::data (const QModelIndex &index, int role) const
         }
         return unknown_pix;
 
+    case UrlRole:
+        if (item->node) {
+            Mrl *mrl = item->node->mrl ();
+            if (mrl && !mrl->src.isEmpty ())
+                return mrl->src;
+        }
+        return QVariant ();
+
     case Qt::EditRole:
         if (item->item_flags & Qt::ItemIsEditable)
             return item->title;
@@ -703,14 +711,19 @@ PlayItem *PlayListView::selectedItem () const {
 }
 
 void PlayListView::copyToClipboard () {
-    PlayItem * item = selectedItem ();
-    QString text = item->title;
-    if (item->node) {
-        Mrl * mrl = item->node->mrl ();
-        if (mrl && !mrl->src.isEmpty ())
-            text = mrl->src;
+    QModelIndex i = currentIndex ();
+    if (i.isValid ()) {
+        QString s;
+
+        QVariant v = i.data (PlayModel::UrlRole);
+        if (v.isValid ())
+            s = v.toString ();
+        if (s.isEmpty ())
+            s = i.data ().toString ();
+
+        if (!s.isEmpty ())
+            QApplication::clipboard()->setText (s);
     }
-    QApplication::clipboard()->setText (text);
 }
 
 void PlayListView::addBookMark () {

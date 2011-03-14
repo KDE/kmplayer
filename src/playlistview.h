@@ -110,6 +110,8 @@ class KMPLAYER_EXPORT PlayModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
+    enum { UrlRole = Qt::UserRole + 1 };
+
     PlayModel (QObject *parent, KIconLoader *);
     ~PlayModel ();
 
