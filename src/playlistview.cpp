@@ -370,9 +370,11 @@ PlayItem *PlayModel::populate (Node *e, Node *focus,
             root->have_dark_nodes = true;
             if (root->show_all_nodes) {
                 PlayItem *as = new PlayItem (e, item);
+                item->appendChild (as);
                 as->title = i18n ("[attributes]");
                 for (; a; a = a->nextSibling ()) {
                     PlayItem * ai = new PlayItem (a, as);
+                    as->appendChild (ai);
                     //pitem->setFlags(root->itemFlags() &=~Qt::ItemIsDragEnabled);
                     if (root->id > 0)
                         ai->item_flags |= Qt::ItemIsEditable;
