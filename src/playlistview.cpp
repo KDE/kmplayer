@@ -160,12 +160,56 @@ QVariant PlayModel::data (const QModelIndex &index, int role) const
 
 bool PlayModel::setData (const QModelIndex& i, const QVariant& v, int role)
 {
-    if (role != Qt::EditRole)
+    if (role != Qt::EditRole || !i.isValid ())
         return false;
+
+    bool changed = false;
     PlayItem *item = static_cast <PlayItem *> (i.internalPointer ());
-    item->title = v.toString ();
-    emit dataChanged (i, i);
-    return true;
+    QString ntext = v.toString ();
+
+    TopPlayItem *ri = item->rootItem ();
+    if (ri->show_all_nodes && item->attribute) {
+        int pos = ntext.find (QChar ('='));
+        if (pos > -1) {
+            item->attribute->setName (ntext.left (pos));
+            item->attribute->setValue (ntext.mid (pos + 1));
+        } else {
+            item->attribute->setName (ntext);
+            item->attribute->setValue (QString (""));
+        }
+        PlayItem *pi = item->parent ();
+        if (pi && pi->node) {
+            pi->node->document ()->m_tree_version++;
+            pi->node->closed ();
+        }
+        changed = true;
+    } else if (item->node) {
+        PlaylistRole *title = (PlaylistRole *) item->node->role (RolePlaylist);
+        if (title && !ri->show_all_nodes && title->editable) {
+            if (ntext.isEmpty ()) {
+                ntext = item->node->mrl ()
+                    ? item->node->mrl ()->src
+                    : title->caption ();
+                changed = true;
+            }
+            if (title->caption () != ntext) {
+                item->node->setNodeName (ntext);
+                item->node->document ()->m_tree_version++;
+                ntext = title->caption ();
+                changed = true;
+            }
+            //} else { // restore damage ..
+            // cannot update because of crashing, shouldn't get here anyhow
+            //updateTree (ri, item->node, true);
+        }
+    }
+
+    if (changed) {
+        item->title = ntext;
+        emit dataChanged (i, i);
+        return true;
+    }
+    return false;
 }
 
 Qt::ItemFlags PlayModel::flags (const QModelIndex &index) const
@@ -496,8 +540,6 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget *, View *view, KActionCo
              this, SLOT (renameSelected ()));
     connect (this, SIGNAL (expanded (const QModelIndex&)),
              this, SLOT (slotItemExpanded (const QModelIndex&)));
-    connect (model (), SIGNAL (dataChanged(const QModelIndex&, const QModelIndex&)),
-             this, SLOT(slotItemChanged(const QModelIndex&, const QModelIndex&)));
     connect (model (), SIGNAL (updating (const QModelIndex &)),
              this, SLOT(modelUpdating (const QModelIndex &)));
     connect (model (), SIGNAL (updated (const QModelIndex&, const QModelIndex&, bool, bool)),
@@ -773,50 +815,6 @@ KDE_NO_EXPORT void PlayListView::dropEvent (QDropEvent *event) {
                 modelUpdated (playModel()->indexFromItem(ritem), playModel()->indexFromItem(citem), true, false);
                 m_ignore_expanded = false;
             }
-        }
-    }
-}
-
-KDE_NO_EXPORT
-void PlayListView::slotItemChanged (const QModelIndex& i, const QModelIndex&)
-{
-    PlayItem *item = playModel ()->itemFromIndex (i);
-    if (!item)
-        return;
-    TopPlayItem *ri = item->rootItem ();
-    if (ri->show_all_nodes && item->attribute) {
-        QString txt = item->title;
-        int pos = txt.find (QChar ('='));
-        if (pos > -1) {
-            item->attribute->setName (txt.left (pos));
-            item->attribute->setValue (txt.mid (pos + 1));
-        } else {
-            item->attribute->setName (txt);
-            item->attribute->setValue (QString (""));
-        }
-        PlayItem *pi = item->parent ();
-        if (pi && pi->node) {
-            pi->node->document ()->m_tree_version++;
-            pi->node->closed ();
-        }
-    } else if (item->node) {
-        PlaylistRole *title = (PlaylistRole *) item->node->role (RolePlaylist);
-        if (title && !ri->show_all_nodes && title->editable) {
-            QString ntext = item->title;
-            if (ntext.isEmpty ()) {
-                ntext = item->node->mrl ()
-                    ? item->node->mrl ()->src
-                    : title->caption ();
-                item->title = ntext;
-            }
-            if (title->caption () != ntext) {
-                title->setCaption (ntext);
-                item->node->setNodeName (ntext);
-                item->node->document ()->m_tree_version++;
-            }
-            //} else { // restore damage ..
-            // cannot update because of crashing, shouldn't get here anyhow
-            //updateTree (ri, item->node, true);
         }
     }
 }

@@ -276,8 +276,20 @@ KDE_NO_EXPORT void PlaylistItem::begin () {
 }
 
 KDE_NO_EXPORT void PlaylistItem::setNodeName (const QString & s) {
-    src = s;
-    setAttribute (KMPlayer::Ids::attr_url, s);
+    bool uri = s.startsWith (QChar ('/'));
+    if (!uri) {
+        int p = s.indexOf ("://");
+        uri = p > 0 && p < 10;
+    }
+    if (uri) {
+        if (title.isEmpty () || title == src)
+            title = s;
+        src = s;
+        setAttribute (KMPlayer::Ids::attr_url, s);
+    } else {
+        title = s;
+        setAttribute (KMPlayer::Ids::attr_title, s);
+    }
 }
 
 KDE_NO_CDTOR_EXPORT

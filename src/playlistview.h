@@ -200,7 +200,6 @@ private slots:
     void copyToClipboard ();
     void addBookMark ();
     void toggleShowAllNodes ();
-    void slotItemChanged (const QModelIndex&, const QModelIndex&);
     void slotCurrentItemChanged (QModelIndex, QModelIndex);
     void modelUpdating (const QModelIndex &);
     void modelUpdated (const QModelIndex&, const QModelIndex&, bool, bool);
