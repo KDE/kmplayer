@@ -69,6 +69,7 @@
 #include "kmplayer.h"
 #include "kmplayer_lists.h"
 #include "kmplayerview.h"
+#include "playmodel.h"
 #include "playlistview.h"
 #include "viewarea.h"
 #include "kmplayercontrolpanel.h"
@@ -123,7 +124,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
 
     //setAutoSaveSettings();
     playlist = new Playlist (this, lstsrc);
-    playlist_id = m_view->playList ()->playModel()->addTree (playlist, "listssource", "view-media-playlist", KMPlayer::PlayListView::AllowDrag | KMPlayer::PlayListView::AllowDrops | KMPlayer::PlayListView::TreeEdit | KMPlayer::PlayListView::Moveable | KMPlayer::PlayListView::Deleteable);
+    playlist_id = m_player->playModel()->addTree (playlist, "listssource", "view-media-playlist", KMPlayer::PlayModel::AllowDrag | KMPlayer::PlayModel::AllowDrops | KMPlayer::PlayModel::TreeEdit | KMPlayer::PlayModel::Moveable | KMPlayer::PlayModel::Deleteable);
     readOptions();
 }
 
@@ -430,7 +431,7 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
             if (count > 50)
                 more->removeChild (more->lastChild ());
         }
-        m_view->playList ()->playModel()->updateTree (recents_id, recents, 0, false, false);
+        m_player->playModel()->updateTree (recents_id, recents, 0, false, false);
     }
 }
 
@@ -822,7 +823,7 @@ KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
             QString txt = m_view->infoPanel ()->text ();
             QTextStream ts (&txt, QIODevice::ReadOnly);
             KMPlayer::readXML (si->node, ts, QString (), false);
-            m_view->playList ()->playModel()->updateTree (edit_tree_id, si->node->document(), si->node, true, false);
+            m_player->playModel()->updateTree (edit_tree_id, si->node->document(), si->node, true, false);
         }
     } else
         m_player->openUrl (m_player->source ()->url ());
@@ -926,7 +927,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     if (!recents) {
         fileOpenRecent->loadEntries (KConfigGroup (config, "Recent Files"));
         recents = new Recents (this);
-        recents_id = m_view->playList ()->playModel()->addTree (recents, "listssource", "view-history", KMPlayer::PlayListView::AllowDrag);
+        recents_id = m_player->playModel()->addTree (recents, "listssource", "view-history", KMPlayer::PlayModel::AllowDrag);
     }
     configChanged ();
 }
@@ -1123,7 +1124,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
     if (recents) { // small window this check fails and thus ClearHistory fails
         recents->defer (); // make sure it's loaded
         recents->clear ();
-        m_view->playList ()->playModel()->updateTree (recents_id, recents, 0, false, false);
+        m_player->playModel()->updateTree (recents_id, recents, 0, false, false);
     }
 }
 
@@ -1277,7 +1278,7 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemActivated (const QModelIndex& index)
         m_view->setInfoMessage (edit_tree_id > -1 && vi->node
                 ? vi->node->innerXML () : QString ());
     }
-    viewEditMode->setEnabled (vi->rootItem ()->itemFlags() & KMPlayer::PlayListView::TreeEdit);
+    viewEditMode->setEnabled (vi->rootItem ()->itemFlags() & KMPlayer::PlayModel::TreeEdit);
 }
 
 KDE_NO_EXPORT
@@ -1347,7 +1348,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {
         else
             n->parentNode ()->insertBefore (pi, n->nextSibling ());
     }
-    m_view->playList()->playModel()->updateTree (playlist_id, playlist, pi, true, false);
+    m_player->playModel()->updateTree (playlist_id, playlist, pi, true, false);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
@@ -1369,7 +1370,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
             pi = new PlaylistItem (playlist,this, false, m_drop_list[i].url ());
         g->appendChild (pi);
     }
-    m_view->playList()->playModel()->updateTree (playlist_id, playlist, pi, true, false);
+    m_player->playModel()->updateTree (playlist_id, playlist, pi, true, false);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuCopyDrop () {
@@ -1380,7 +1381,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuCopyDrop () {
             n->insertBefore (pi, n->firstChild ());
         else
             n->parentNode ()->insertBefore (pi, n->nextSibling ());
-        m_view->playList()->playModel()->updateTree (playlist_id, playlist, pi, true, false);
+        m_player->playModel()->updateTree (playlist_id, playlist, pi, true, false);
     }
 }
 
@@ -1390,7 +1391,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDeleteNode () {
         n = manip_node->previousSibling() ? manip_node->previousSibling() : manip_node->parentNode ();
         manip_node->parentNode ()->removeChild (manip_node);
     }
-    m_view->playList()->playModel()->updateTree (manip_tree_id, 0L, n, true, false);
+    m_player->playModel()->updateTree (manip_tree_id, 0L, n, true, false);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuMoveUpNode () {
@@ -1400,7 +1401,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuMoveUpNode () {
         n->parentNode ()->removeChild (n);
         prev->parentNode ()->insertBefore (n, prev);
     }
-    m_view->playList()->playModel()->updateTree (manip_tree_id, 0L, n, true, false);
+    m_player->playModel()->updateTree (manip_tree_id, 0L, n, true, false);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuMoveDownNode () {
@@ -1410,7 +1411,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuMoveDownNode () {
         n->parentNode ()->removeChild (n);
         next->parentNode ()->insertBefore (n, next->nextSibling ());
     }
-    m_view->playList()->playModel()->updateTree (manip_tree_id, 0L, n, true, false);
+    m_player->playModel()->updateTree (manip_tree_id, 0L, n, true, false);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
@@ -1421,7 +1422,7 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
         KMPlayer::Node *p = si->node->parentNode ();
         if (p) {
             p->removeChild (si->node);
-            m_view->playList()->playModel()->updateTree(playlist_id,playlist,0L,false,false);
+            m_player->playModel()->updateTree(playlist_id,playlist,0L,false,false);
         }
     }
 }
@@ -1429,13 +1430,13 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
 KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayItem * item, QMenu * pm) {
     KMPlayer::TopPlayItem *ri = item->rootItem ();
     if (item->node &&
-        ri->item_flags & (KMPlayer::PlayListView::Moveable | KMPlayer::PlayListView::Deleteable)) {
+        ri->item_flags & (KMPlayer::PlayModel::Moveable | KMPlayer::PlayModel::Deleteable)) {
         manip_tree_id = ri->id;
         pm->insertSeparator ();
         manip_node = item->node;
-        if (ri->item_flags & KMPlayer::PlayListView::Deleteable)
+        if (ri->item_flags & KMPlayer::PlayModel::Deleteable)
             pm->insertItem (KIcon ("edit-delete"), i18n ("&Delete item"), this, SLOT (menuDeleteNode ()));
-        if (ri->item_flags & KMPlayer::PlayListView::Moveable) {
+        if (ri->item_flags & KMPlayer::PlayModel::Moveable) {
             if (manip_node->previousSibling ())
                 pm->insertItem (KIcon ("go-up"), i18n ("&Move up"), this, SLOT (menuMoveUpNode ()));
             if (manip_node->nextSibling ())
@@ -1565,7 +1566,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QMenu
     disks->appendChild (new Disk (disks, a, "cdda://", i18n ("CDROM - Audio Compact Disk")));
     disks->appendChild (new Disk (disks, a, "vcd://", i18n ("VCD - Video Compact Disk")));
     disks->appendChild (new Disk (disks, a, "dvd://", i18n ("DVD - Digital Video Disk")));
-    m_app->view()->playList()->playModel()->addTree (disks, "listssource", "media-optical", 0);
+    m_player->playModel()->addTree (disks, "listssource", "media-optical", 0);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::~KMPlayerDVDSource () {

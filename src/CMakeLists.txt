@@ -21,6 +21,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR} $
 
 set(libkmplayercommon_SRCS
   kmplayerview.cpp
+  playmodel.cpp
   playlistview.cpp
   kmplayercontrolpanel.cpp
   kmplayerconfig.cpp

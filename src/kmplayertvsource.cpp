@@ -47,6 +47,7 @@
 #include "kmplayerprocess.h"
 #include "kmplayerconfig.h"
 #include "kmplayertvsource.h"
+#include "playmodel.h"
 #include "playlistview.h"
 #include "viewarea.h"
 #include "kmplayer.h"
@@ -365,7 +366,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QMenu *
     connect (m_menu, SIGNAL (aboutToShow ()), this, SLOT (menuAboutToShow ()));
     m_document = new TVDocument (this);
     m_player->settings ()->addPage (this);
-    tree_id = static_cast <KMPlayer::View*>(m_player->view ())->playList ()->playModel()->addTree (m_document, "tvsource", "video-television", KMPlayer::PlayListView::TreeEdit | KMPlayer::PlayListView::Moveable | KMPlayer::PlayListView::Deleteable);
+    tree_id = m_player->playModel()->addTree (m_document, "tvsource", "video-television", KMPlayer::PlayModel::TreeEdit | KMPlayer::PlayModel::Moveable | KMPlayer::PlayModel::Deleteable);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {
@@ -468,7 +469,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::setCurrent (KMPlayer::Mrl *mrl) {
         return;
     m_cur_tvinput = input;
     m_cur_tvdevice = input->parentNode ();
-    static_cast <KMPlayer::View*>(m_player->view ())->playList ()->playModel()->updateTree (0, m_cur_tvinput, m_current, true, false);
+    m_player->playModel()->updateTree(0, m_cur_tvinput, m_current, true, false);
     if (m_cur_tvdevice->id != id_node_tv_device) {
         return;
     }
@@ -548,7 +549,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
     config_read = true;
     kDebug () << "KMPlayerTVSource::readXML";
     m_document->defer ();
-    static_cast <KMPlayer::View*>(m_player->view ())->playList ()->playModel()->updateTree (tree_id, m_document, 0, false, false);
+    m_player->playModel()->updateTree (tree_id, m_document, 0, false, false);
     buildMenu ();
     sync (false);
 }
@@ -569,7 +570,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::sync (bool fromUI) {
         for (KMPlayer::Node *d=m_document->firstChild();d; d=d->nextSibling())
             if (d->id == id_node_tv_device)
                 static_cast <TVDevice *> (d)->updateDevicePage ();
-        static_cast <KMPlayer::View*>(m_player->view ())->playList ()->playModel()->updateTree (tree_id, m_document, 0, false, false);
+        m_player->playModel()->updateTree(tree_id, m_document, 0, false, false);
     } else {
         m_configpage->driver->setText (tvdriver);
         for (KMPlayer::Node *dp = m_document->firstChild (); dp; dp = dp->nextSibling ())
@@ -618,7 +619,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::slotScanFinished (TVDevice * tvdevice) {
     if (tvdevice) {
         tvdevice->zombie = false;
         addTVDevicePage (tvdevice, true);
-        static_cast <KMPlayer::View*>(m_player->view ())->playList ()->playModel()->updateTree (tree_id, m_document, 0, false, false);
+        m_player->playModel()->updateTree(tree_id, m_document, 0, false, false);
     } else
         KMessageBox::error(m_configpage,i18n("No device found."),i18n("Error"));
 }
@@ -637,7 +638,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::addTVDevicePage(TVDevice *dev, bool show) {
 KDE_NO_EXPORT void KMPlayerTVSource::slotDeviceDeleted (TVDevicePage *devpage) {
     m_document->removeChild (devpage->device_doc);
     m_configpage->notebook->setCurrentPage (0);
-    static_cast <KMPlayer::View*>(m_player->view ())->playList ()->playModel()->updateTree (tree_id, m_document, 0, false, false);
+    m_player->playModel()->updateTree (tree_id, m_document, 0, false, false);
 }
 
 //-----------------------------------------------------------------------------

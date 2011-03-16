@@ -57,6 +57,7 @@
 
 #include "kmplayerpartbase.h"
 #include "kmplayerview.h"
+#include "playmodel.h"
 #include "playlistview.h"
 #include "kmplayerprocess.h"
 #include "viewarea.h"
@@ -107,6 +108,7 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
    m_view (new View (wparent)),
    m_settings (new Settings (this, config)),
    m_media_manager (new MediaManager (this)),
+   m_play_model (new PlayModel (this, KIconLoader::global ())),
    m_source (0L),
    m_bookmark_menu (0L),
    m_update_tree_timer (0),
@@ -214,6 +216,13 @@ void PartBase::createBookmarkMenu (KMenu *owner, KActionCollection *ac) {
 }
 
 void PartBase::connectPlaylist (PlayListView * playlist) {
+    playlist->setModel (m_play_model);
+    connect (m_play_model, SIGNAL (updating (const QModelIndex &)),
+             playlist, SLOT(modelUpdating (const QModelIndex &)));
+    connect (m_play_model, SIGNAL (updated (const QModelIndex&, const QModelIndex&, bool, bool)),
+             playlist, SLOT(modelUpdated (const QModelIndex&, const QModelIndex&, bool, bool)));
+    connect (playlist->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+             playlist, SLOT(slotCurrentItemChanged(QModelIndex,QModelIndex)));
     connect (playlist, SIGNAL (addBookMark (const QString &, const QString &)),
              this, SLOT (addBookMark (const QString &, const QString &)));
     connect (playlist, SIGNAL (activated (const QModelIndex &)),
