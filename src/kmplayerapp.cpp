@@ -1527,6 +1527,7 @@ public:
 KDE_NO_CDTOR_EXPORT Disks::Disks (KMPlayerApp * a)
                 : KMPlayer::Document ("disks://", 0L), app (a) {
     id = id_node_disk_document;
+    resolved = true;
     title = i18n ("Optical Disks");
 }
 

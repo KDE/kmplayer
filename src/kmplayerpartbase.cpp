@@ -619,38 +619,22 @@ KDE_NO_EXPORT void PartBase::playListItemClicked (const QModelIndex& index) {
     if (!index.isValid ())
         return;
     PlayListView *pv = qobject_cast <PlayListView *> (sender ());
-    PlayItem *vi = static_cast <PlayItem *> (index.internalPointer ());
-    TopPlayItem * ri = vi->rootItem ();
-    if (ri == vi && vi->node) {
-        QString src = ri->source;
-        //kDebug() << "playListItemClicked " << src << " " << vi->node->nodeName();
-        Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
-        if (vi->node->isPlayable ()) {
-            source->play (vi->node->mrl ()); //may become !isPlayable by lazy loading
-            if (!vi->node->isPlayable ())
-                emit treeChanged (ri->id, vi->node, 0, false, true);
-        } else if (vi->childCount ()) {
-            if (pv->isExpanded (index))
-                pv->setExpanded (index, false);
-            else
-                pv->setExpanded (index, true);
-        }
-    } else if (ri != vi && vi->node && !vi->node->isPlayable () && vi->childCount ()) {
+    if (pv->model ()->rowCount ()) {
         if (pv->isExpanded (index))
             pv->setExpanded (index, false);
         else
             pv->setExpanded (index, true);
-    } else if (!vi->node && !vi->attribute)
-        updateTree (); // items already deleted
+    }
 }
 
 KDE_NO_EXPORT void PartBase::playListItemActivated(const QModelIndex &index) {
     if (m_in_update_tree) return;
     if (m_view->editMode ()) return;
+    PlayListView *pv = qobject_cast <PlayListView *> (sender ());
+    if (!pv->model ()->parent (index).isValid () && index.row ())
+        return; // handled by playListItemClicked
     PlayItem *vi = static_cast <PlayItem *> (index.internalPointer ());
     TopPlayItem *ri = vi->rootItem ();
-    if (ri == vi)
-        return; // handled by playListItemClicked
     if (vi->node) {
         QString src = ri->source;
         NodePtrW node = vi->node;

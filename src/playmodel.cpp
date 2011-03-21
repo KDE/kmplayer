@@ -252,18 +252,51 @@ QModelIndex PlayModel::parent (const QModelIndex &index) const
     return createIndex (parent_item->row(), 0, parent_item);
 }
 
+bool PlayModel::hasChildren (const QModelIndex& parent) const
+{
+    if (parent.column() > 0)
+        return false;
+
+    if (!parent.isValid())
+        return root_item->childCount();
+
+    PlayItem *pitem = static_cast<PlayItem*>(parent.internalPointer());
+    int count = pitem->childCount();
+    if (!count
+            && pitem->parent_item == root_item
+            && static_cast <TopPlayItem *> (pitem)->id > 0
+            && !pitem->node->mrl()->resolved) {
+        return true;
+    }
+    return count;
+}
+
 int PlayModel::rowCount (const QModelIndex &parent) const
 {
-    PlayItem *parent_item;
     if (parent.column() > 0)
         return 0;
 
     if (!parent.isValid())
-        parent_item = root_item;
-    else
-        parent_item = static_cast<PlayItem*>(parent.internalPointer());
+        return root_item->childCount();
 
-    return parent_item->childCount();
+    PlayItem *pitem = static_cast<PlayItem*>(parent.internalPointer());
+    int count = pitem->childCount();
+    if (!count && pitem->parent_item == root_item) {
+        TopPlayItem *ritem = static_cast <TopPlayItem *> (pitem);
+        if (ritem->id > 0 && !pitem->node->mrl()->resolved) {
+            pitem->node->defer ();
+            if (!pitem->node->mrl()->resolved)
+                return 0;
+            PlayItem *curitem = 0L;
+            ritem->model->populate (ritem->node, false, ritem, 0L, &curitem);
+            count = ritem->childCount();
+            if (count) {
+                ritem->model->beginInsertRows (parent, 0, count-1);
+                ritem->model->endInsertRows ();
+            }
+        }
+    }
+    return count;
 }
 
 int PlayModel::columnCount (const QModelIndex&) const
