@@ -288,7 +288,7 @@ int PlayModel::rowCount (const QModelIndex &parent) const
             if (!pitem->node->mrl()->resolved)
                 return 0;
             PlayItem *curitem = 0L;
-            ritem->model->populate (ritem->node, false, ritem, 0L, &curitem);
+            ritem->model->populate (ritem->node, 0, ritem, 0L, &curitem);
             count = ritem->childCount();
             if (count) {
                 ritem->model->beginInsertRows (parent, 0, count-1);
@@ -398,7 +398,7 @@ int PlayModel::addTree (NodePtr doc, const QString &source, const QString &icon,
     ritem->source = source;
     ritem->icon = KIconLoader::global ()->loadIcon (icon, KIconLoader::Small);
     PlayItem *curitem = 0L;
-    populate (doc, false, ritem, 0L, &curitem);
+    populate (doc, 0, ritem, 0L, &curitem);
     ritem->add ();
     return last_id;
 }

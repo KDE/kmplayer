@@ -320,7 +320,7 @@ KDE_NO_EXPORT void PrefGeneralPageLooks::fontItemChanged (int f) {
 KDE_NO_EXPORT void PrefGeneralPageLooks::fontClicked () {
     if (fontscombo->currentItem () < int (FontSetting::last_target)) {
         QFont myfont = fonts [fontscombo->currentItem ()].newfont;
-        int res = KFontDialog::getFont (myfont, false, this);
+        int res = KFontDialog::getFont (myfont, KFontChooser::NoDisplayFlags, this);
         if (res == KFontDialog::Accepted) {
             fonts [fontscombo->currentItem ()].newfont = myfont;
             fontbutton->setFont (myfont);
