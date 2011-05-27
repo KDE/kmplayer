@@ -634,7 +634,7 @@ void Settings::okPressed () {
                     urlchanged = false;
                     KMessageBox::error (m_player->view (), i18n ("File %1 does not exist.",url.url ()), i18n ("Error"));
                 } else {
-                    configdialog->m_SourcePageURL->url->setUrl (fi.absFilePath () + xine_directives);
+                    configdialog->m_SourcePageURL->url->setUrl (QString(fi.absFilePath () + xine_directives));
                 }
             }
             if (urlchanged &&
