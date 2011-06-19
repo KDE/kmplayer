@@ -4373,7 +4373,7 @@ void SMIL::NewValue::begin () {
         ref->setRoot (st);
         Sequence *lst = ref->toSequence ();
         NodeValueItem *itm = lst->first ();
-        if (itm) {
+        if (itm && itm->data.node) {
             if (name.startsWith(QChar('@')) && itm->data.node->isElementNode())
                 static_cast <Element *> (itm->data.node)->setAttribute (
                         name.mid (1), value);
@@ -4409,7 +4409,7 @@ void SMIL::SetValue::begin () {
         ref->setRoot (st);
         Sequence *lst = ref->toSequence ();
         NodeValueItemPtr itm = lst->first ();
-        if (itm) {
+        if (itm && itm->data.node) {
             if (itm->data.attr && itm->data.node->isElementNode ())
                 static_cast <Element *> (itm->data.node)->setAttribute (
                         itm->data.attr->name (), itm->data.attr->value ());

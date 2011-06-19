@@ -31,7 +31,9 @@ using namespace KMPlayer;
 QString NodeValue::value () const {
     if (attr)
         return attr->value ();
-    return node->nodeValue ();
+    if (node)
+        return node->nodeValue ();
+    return string;
 }
 
 namespace {
@@ -646,6 +648,8 @@ void Identifier::childByStep (Step *step, bool recurse) const {
         NodeValueItem *next = itm == last ? NULL : itm->nextSibling ();
 
         Node *n = itm->data.node;
+        if (!n)
+            continue; // FIXME
         if (step->is_attr) {
             Element *e = n->isElementNode() ? static_cast<Element *> (n) : NULL;
             Attribute *a = e ? e->attributes ().first () : NULL;
@@ -684,7 +688,7 @@ void Identifier::childByPath (Step *step, bool recurse) const {
         childByStep (step, recurse);
         for (AST *pred = step->first_child; pred; pred = pred->next_sibling) {
             NodeValueItem *itm = eval_state->process_list->first ();
-            if (itm) {
+            if (itm && itm->data.node) {
                 Sequence *newlist = new Sequence;
                 for (; itm; itm = itm->nextSibling ()) {
                     pred->setRoot (itm->data.node, itm->data.attr);

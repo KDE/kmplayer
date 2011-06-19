@@ -27,11 +27,13 @@ namespace KMPlayer {
 class NodeValue {
 public:
     NodeValue (Node *n, Attribute *a=NULL) : node (n), attr (a) {}
+    NodeValue (const QString &s) : node (NULL), attr (NULL), string (s) {}
 
     QString value () const;
 
     Node *node;
     Attribute *attr;
+    QString string;
 };
 
 typedef ListNode<NodeValue> NodeValueItem;
