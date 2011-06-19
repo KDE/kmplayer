@@ -1066,6 +1066,7 @@ Sequence *SubSequence::toSequence () const {
             for (; itm && len--; itm = itm->nextSibling ())
                 lst->append (new NodeValueItem (itm->data));
         }
+        delete src;
     }
     return lst;
 }
