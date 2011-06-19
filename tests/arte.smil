@@ -143,10 +143,12 @@
                           value="concat('Could not get HTML ', /data/page/uri)"/>
               </switch>
               <seq begin="mystate.stateChange(/data/page/html)">
-                <setvalue ref="/data/tmp"
+                <!-- setvalue ref="/data/tmp"
                           value="substring-after(/data/page/html, 'vars_player.videorefFileUrl')"/>
                 <setvalue ref="/data/tmp"
-                          value="substring-before(/data/tmp, ';')"/>
+                          value="substring-before(/data/tmp, ';')"/-->
+                <setvalue ref="/data/tmp"
+                          value="subsequence(tokenize(/data/page/html, 'vars_player.videorefFileUrl *= *&quot;[^&quot;]+&quot;'),1)"/>
                 <setvalue ref="/data/tmp"
                           value="substring-after(/data/tmp, '&quot;')"/>
                 <setvalue ref="/data/vref/uri"

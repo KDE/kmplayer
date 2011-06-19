@@ -26,6 +26,8 @@
 #include <qurl.h>
 #include "expression.h"
 
+#include <QRegExp>
+
 using namespace KMPlayer;
 
 QString NodeValue::value () const {
@@ -330,6 +332,18 @@ struct EscapeUri : public StringBase {
 
 struct Sort : public SequenceBase {
     Sort (EvalState *ev) : SequenceBase (ev) {}
+
+    virtual Sequence *toSequence () const;
+};
+
+struct SubSequence : public SequenceBase {
+    SubSequence (EvalState *ev) : SequenceBase (ev) {}
+
+    virtual Sequence *toSequence () const;
+};
+
+struct Tokenize : public SequenceBase {
+    Tokenize (EvalState *ev) : SequenceBase (ev) {}
 
     virtual Sequence *toSequence () const;
 };
@@ -1035,6 +1049,47 @@ Sequence *Sort::toSequence () const {
     return AST::toSequence ();
 }
 
+Sequence *SubSequence::toSequence () const {
+    Sequence *lst = new Sequence;
+    AST *n = first_child;
+    if (n) {
+        Sequence *src = n->toSequence ();
+        n = n->next_sibling;
+        if (n) {
+            int p = n->toInt ();
+            int len = 1;
+            if (n->next_sibling)
+                len = n->next_sibling->toInt ();
+            NodeValueItem *itm = src->first ();
+            for (; itm && --p; itm = itm->nextSibling ())
+            {}
+            for (; itm && len--; itm = itm->nextSibling ())
+                lst->append (new NodeValueItem (itm->data));
+        }
+    }
+    return lst;
+}
+
+Sequence *Tokenize::toSequence () const {
+    Sequence *lst = new Sequence;
+    if (first_child) {
+        if (first_child->next_sibling) {
+            QString s = first_child->toString ();
+            QRegExp r (first_child->next_sibling->toString ());
+            int p = 0;
+            while (p >= 0) {
+                p = r.indexIn (s, p);
+                if (p >= 0) {
+                    int len = r.matchedLength();
+                    lst->append (new NodeValueItem (s.mid (p, len)));
+                    p += len;
+                }
+            }
+        }
+    }
+    return lst;
+}
+
 #define BIN_OP_TO_INT(NAME,OP)                                           \
     AST *second_child = first_child->next_sibling;                       \
     AST::Type t1 = first_child->type ();                                 \
@@ -1533,10 +1588,14 @@ static bool parseFunction (const char *str, const char **end, AST *ast) {
                     func = new StringJoin (ast->eval_state);
                 else if (name == "string-length")
                     func = new StringLength (ast->eval_state);
+                else if (name == "subsequence")
+                    func = new SubSequence (ast->eval_state);
                 else if (name == "substring-after")
                     func = new SubstringAfter (ast->eval_state);
                 else if (name == "substring-before")
                     func = new SubstringBefore (ast->eval_state);
+                else if (name == "tokenize")
+                    func = new Tokenize (ast->eval_state);
                 else if (name == "escape-uri")
                     func = new EscapeUri (ast->eval_state);
                 else
