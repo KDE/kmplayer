@@ -1057,7 +1057,9 @@ Sequence *SubSequence::toSequence () const {
         n = n->next_sibling;
         if (n) {
             int p = n->toInt ();
-            int len = 1;
+            if (p < 1)
+                p = 1;
+            int len = -1;
             if (n->next_sibling)
                 len = n->next_sibling->toInt ();
             NodeValueItem *itm = src->first ();

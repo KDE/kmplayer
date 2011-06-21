@@ -58,7 +58,7 @@
             left="10" top="10" width="300" height="20"/>
       <text src="data:,Has%20{tokenize(/data/books/book[2]/title,&quot;\S+&quot;)}%20words"
             left="10" top="40" width="300" height="20"/>
-      <text src="data:,First word%20is%20&quot;{subsequence(tokenize(/data/books/book[2]/title,&quot;\S+&quot;),1)}&quot;"
+      <text src="data:,First word%20is%20&quot;{subsequence(tokenize(/data/books/book[2]/title,&quot;\S+&quot;),1,1)}&quot;"
             left="10" top="70" width="300" height="20"/>
       <text src="data:,First two words%20are%20&quot;{string-join(subsequence(tokenize(/data/books/book[2]/title,&quot;\S+&quot;),1,2), ' ')}&quot;"
             left="10" top="100" width="300" height="20"/>
