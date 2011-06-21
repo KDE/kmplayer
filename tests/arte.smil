@@ -148,7 +148,7 @@
                 <setvalue ref="/data/tmp"
                           value="substring-before(/data/tmp, ';')"/-->
                 <setvalue ref="/data/tmp"
-                          value="subsequence(tokenize(/data/page/html, 'vars_player.videorefFileUrl *= *&quot;[^&quot;]+&quot;'),1,1)"/>
+                          value="tokenize(/data/page/html, 'vars_player.videorefFileUrl *= *&quot;[^&quot;]+&quot;')[1]"/>
                 <setvalue ref="/data/tmp"
                           value="substring-after(/data/tmp, '&quot;')"/>
                 <setvalue ref="/data/vref/uri"

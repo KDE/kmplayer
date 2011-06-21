@@ -42,22 +42,15 @@ namespace {
 
 struct EvalState {
     EvalState (EvalState *p, const QString &root_tag=QString())
-     : def_root_tag (root_tag), root (NULL), attr (NULL),
+     : def_root_tag (root_tag), root (NULL),
        process_list (NULL), parent (p),
        sequence (1), ref_count (0) {}
 
     void addRef () { ++ref_count; }
     void removeRef () { if (--ref_count == 0) delete this; }
 
-    QString value () const {
-        if (attr)
-            return attr->value ();
-        return root->nodeValue ();
-    }
-
     QString def_root_tag;
-    Node *root;
-    Attribute *attr;
+    NodeValue root;
     Sequence *process_list;
     EvalState *parent;
     int sequence;
@@ -79,7 +72,7 @@ struct AST : public Expression {
     virtual Sequence *toSequence () const; // uncachable
     virtual Type type () const;
     virtual void setRoot (Node *root);
-    void setRoot (Node *root, Attribute *a);
+    void setRoot (const NodeValue &value);
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -204,6 +197,24 @@ struct Identifier : public SequenceBase {
     virtual void dump () const {
         fprintf (stderr, "Identifier ");
         AST::dump();
+    }
+#endif
+};
+
+struct PredicateFilter : public SequenceBase {
+    PredicateFilter (EvalState *ev, AST *children) : SequenceBase (ev) {
+        first_child = children;
+    }
+
+    virtual Sequence *toSequence () const;
+#ifdef KMPLAYER_EXPR_DEBUG
+    virtual void dump () const {
+        fprintf (stderr, "Predicate ");
+        first_child->dump();
+        fprintf (stderr, "[");
+        for (AST *n = first_child->next_sibling; n; n = n->next_sibling)
+            n->dump();
+        fprintf (stderr, "]");
     }
 #endif
 };
@@ -492,14 +503,12 @@ AST::Type AST::type () const {
 }
 
 void AST::setRoot (Node *root) {
-    eval_state->root = root;
-    eval_state->attr = NULL;
-    eval_state->sequence++;
+    setRoot (NodeValue (root));
 }
 
-void AST::setRoot (Node *root, Attribute *a) {
-    setRoot (root);
-    eval_state->attr = a;
+void AST::setRoot (const NodeValue& value) {
+    eval_state->root = value;
+    eval_state->sequence++;
 }
 
 #ifdef KMPLAYER_EXPR_DEBUG
@@ -552,8 +561,10 @@ bool NumberBase::toBool () const {
             int count = 0;
             for (NodeValueItem *n = lst->first (); n; n = n->nextSibling ())
                 if (ii == ++count)
-                    return eval_state->root == n->data.node &&
-                        eval_state->attr == n->data.attr;
+                    return eval_state->root.node
+                        ? eval_state->root.node == n->data.node &&
+                          eval_state->root.attr == n->data.attr
+                        : eval_state->root.value () == n->data.value ();
         }
         return false;
     }
@@ -705,7 +716,7 @@ void Identifier::childByPath (Step *step, bool recurse) const {
             if (itm && itm->data.node) {
                 Sequence *newlist = new Sequence;
                 for (; itm; itm = itm->nextSibling ()) {
-                    pred->setRoot (itm->data.node, itm->data.attr);
+                    pred->setRoot (NodeValue (itm->data.node, itm->data.attr));
                     if (pred->toBool ())
                         newlist->append (new NodeValueItem (itm->data));
                 }
@@ -730,6 +741,25 @@ Sequence *Identifier::toSequence () const {
     lst->append (new NodeValueItem (es->root));
     childByPath ((Step *) first_child, false);
     lst = eval_state->process_list;
+    eval_state->process_list = old;
+    return lst;
+}
+
+Sequence *PredicateFilter::toSequence () const {
+    Sequence *lst = first_child->toSequence ();
+    Sequence *old = eval_state->process_list;
+
+    for (AST *p = first_child->next_sibling; p; p = p->next_sibling) {
+        eval_state->process_list = lst;
+        lst = new Sequence;
+        for (NodeValueItem *itm = eval_state->process_list->first(); itm; itm = itm->nextSibling()) {
+            p->setRoot (itm->data);
+            if (p->toBool ())
+                lst->append (new NodeValueItem (itm->data));
+        }
+        delete eval_state->process_list;
+    }
+
     eval_state->process_list = old;
     return lst;
 }
@@ -772,7 +802,7 @@ bool StartsWith::toBool () const {
             if (s)
                 b = first_child->toString ().startsWith (s->toString ());
             else if (eval_state->parent)
-                b = eval_state->value ().startsWith (first_child->toString ());
+                b = eval_state->root.value ().startsWith (first_child->toString ());
         }
     }
     return b;
@@ -866,12 +896,14 @@ int Position::toInt () const {
         sequence = eval_state->sequence;
         if (eval_state->parent) {
             Sequence *lst = eval_state->parent->process_list;
-            Node *r = eval_state->root;
+            Node *r = eval_state->root.node;
+            QString str = eval_state->root.string;
             if (lst) {
                 i = 0;
                 for (NodeValueItem *n = lst->first(); n; n = n->nextSibling()) {
                     i++;
-                    if (r == n->data.node)
+                    if ((r && r == n->data.node) ||
+                            (!r && str == n->data.string))
                         break;
                 }
             }
@@ -886,7 +918,7 @@ int StringLength::toInt () const {
         if (first_child)
             i = first_child->toString ().length ();
         else if (eval_state->parent)
-            i = eval_state->value ().length ();
+            i = eval_state->root.value ().length ();
         else
             i = 0;
     }
@@ -1032,7 +1064,7 @@ Sequence *Sort::toSequence () const {
     if (first_child) {
         Expression *exp = evaluateExpr (first_child->toString ());
         if (exp) {
-            exp->setRoot (eval_state->root);
+            exp->setRoot (eval_state->root.node);
             Sequence *lst = exp->toSequence ();
             if (lst->first () && first_child->next_sibling) {
                 Expression *sort_exp =
@@ -1389,6 +1421,32 @@ static bool parseLiteral (const char *str, const char **end, AST *ast) {
     return false;
 }
 
+static bool parsePredicate (const char *str, const char **end, AST *ast) {
+    if (parseSpace (str, end))
+        str = *end;
+    if (!*str || *str++ != '[')
+        return false;
+    AST pred (new EvalState (ast->eval_state));
+    if (parseStatement (str, end, &pred)) {
+        str = *end;
+        if (parseSpace (str, end))
+            str = *end;
+        if (*str++ != ']')
+            return false;
+        if (pred.first_child) {
+            appendASTChild (ast, pred.first_child);
+            pred.first_child = NULL;
+        }
+    } else {
+        if (parseSpace (str, end))
+            str = *end;
+        if (*str++ != ']')
+            return false;
+    }
+    *end = str;
+    return true;
+}
+
 static bool parseStep (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
     fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
@@ -1419,44 +1477,24 @@ static bool parseStep (const char *str, const char **end, AST *ast) {
         if (str == s)
             return false;
         entry = new Step (ast->eval_state, str, s, is_attr);
-        while (*s == '[') {
-            AST pred (new EvalState (ast->eval_state));
-            if (parseStatement (s + 1, end, &pred)) {
-                str = *end;
-                if (parseSpace (str, end))
-                    str = *end;
-                if (*str == ']') {
-                    if (pred.first_child) {
-                        appendASTChild (entry, pred.first_child);
-                        pred.first_child = NULL;
-                    }
-                    s = ++str;
-                } else {
-                    delete entry;
-                    return false;
-                }
-            } else {
-                str = s + 1;
-                if (parseSpace (str, end))
-                    str = *end;
-                if (*str == ']') {
-                    s = ++str;
-                } else {
-                    delete entry;
-                    return false;
-                }
-            }
+
+        AST fast (ast->eval_state);
+        const char *t = s;
+        if (parsePredicate (t, &t, &fast)) {
+            s = t;
+            while (parsePredicate (t, &t, &fast))
+                s = t;
+            entry->first_child = fast.first_child;
+            fast.first_child = NULL;
         }
+
     }
-    if (entry) {
-        appendASTChild (ast, entry);
-        *end = s;
+    appendASTChild (ast, entry);
+    *end = s;
 #ifdef KMPLAYER_EXPR_DEBUG
-        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
+    fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
 #endif
-        return true;
-    }
-    return false;
+    return true;
 }
 
 static bool parseIdentifier (const char *str, const char **end, AST *ast) {
@@ -1621,10 +1659,26 @@ static bool parseFactor (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
     fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
-    return parseGroup (str, end, ast) ||
-            parseFunction (str, end, ast) ||
-            parseLiteral (str, end, ast) ||
-            parseIdentifier (str, end, ast);
+    AST fast (ast->eval_state);
+    if (parseGroup (str, end, &fast) ||
+            parseFunction (str, end, &fast) ||
+            parseLiteral (str, end, &fast) ||
+            parseIdentifier (str, end, &fast)) {
+        str = *end;
+        const char *s = *end;
+        if (parsePredicate (s, &s, &fast)) {
+            *end = s;
+            while (parsePredicate (s, &s, &fast))
+                *end = s;
+            appendASTChild (ast,
+                    new PredicateFilter (ast->eval_state, fast.first_child));
+        } else {
+            appendASTChild (ast, fast.first_child);
+        }
+        fast.first_child = NULL;
+        return true;
+    }
+    return false;
 }
 
 struct Keyword {
