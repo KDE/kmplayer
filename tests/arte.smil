@@ -71,7 +71,6 @@
       <swf-player/>
       <movie-sd/>
       <video-uri/>
-      <tmp/>
      </data>
     </state>
     <paramGroup id="centered-text">
@@ -143,24 +142,10 @@
                           value="concat('Could not get HTML ', /data/page/uri)"/>
               </switch>
               <seq begin="mystate.stateChange(/data/page/html)">
-                <!-- setvalue ref="/data/tmp"
-                          value="substring-after(/data/page/html, 'vars_player.videorefFileUrl')"/>
-                <setvalue ref="/data/tmp"
-                          value="substring-before(/data/tmp, ';')"/-->
-                <setvalue ref="/data/tmp"
-                          value="tokenize(/data/page/html, 'vars_player.videorefFileUrl *= *&quot;[^&quot;]+&quot;')[1]"/>
-                <setvalue ref="/data/tmp"
-                          value="substring-after(/data/tmp, '&quot;')"/>
                 <setvalue ref="/data/vref/uri"
-                          value="substring-before(/data/tmp, '&quot;')"/>
-                <setvalue ref="/data/tmp"
-                          value="substring-after(/data/page/html, 'url_player')"/>
-                <setvalue ref="/data/tmp"
-                          value="substring-before(/data/tmp, ';')"/>
-                <setvalue ref="/data/tmp"
-                          value="substring-after(/data/tmp, '&quot;')"/>
+                          value="substring-before(substring-after(tokenize(/data/page/html, 'vars_player.videorefFileUrl *= *&quot;[^&quot;]+&quot;')[1], '&quot;'), '&quot;')"/>
                 <setvalue ref="/data/swf-player"
-                          value="substring-before(/data/tmp, '&quot;')"/>
+                          value="substring-before(substring-after(tokenize(/data/page/html, 'url_player *= *&quot;[^&quot;]+&quot;')[1], '&quot;'), '&quot;')"/>
               </seq>
               <switch begin="mystate.stateChange(/data/vref/uri)">
                 <seq expr="starts-with(/data/vref/uri, 'http://')">
