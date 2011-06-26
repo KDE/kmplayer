@@ -149,19 +149,29 @@ struct StringBase : public AST {
     mutable QString string;
 };
 
-struct Step : public StringBase {
-    Step (EvalState *ev, bool context=false)
-     : StringBase (ev),
-       any_node (false), context_node (context),
-       is_attr (false), start_contextual (false) {}
-    Step (EvalState *ev, const char *s, const char *e, bool isattr=false)
-     : StringBase (ev, s, e),
-       any_node (string == "*"), context_node (false),
-       is_attr (isattr), start_contextual (false) {}
+struct SequenceBase : public StringBase {
+    SequenceBase (EvalState *ev) : StringBase (ev) {}
+    SequenceBase (EvalState *ev, const char *s, const char *e)
+        : StringBase (ev, s, e) {}
 
-    bool matches (Node *n);
-    bool matches (Attribute *a);
-    bool anyPath () const { return string.isEmpty (); }
+    virtual bool toBool () const;
+    virtual QString toString () const;
+    virtual Type type () const;
+};
+
+struct Step : public SequenceBase {
+    Step (EvalState *ev, bool context=false)
+     : SequenceBase (ev),
+       any_node (false), context_node (context),
+       is_attr (false), recursive (false) {}
+    Step (EvalState *ev, const char *s, const char *e, bool isattr, bool rec)
+     : SequenceBase (ev, s, e),
+       any_node (string == "*"), context_node (false),
+       is_attr (isattr), recursive (rec) {}
+
+    Sequence *toSequence () const;
+    bool matches (Node *n) const;
+    bool matches (Attribute *a) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Step %c%s",
@@ -174,31 +184,23 @@ struct Step : public StringBase {
     bool any_node;
     bool context_node;
     bool is_attr;
-    bool start_contextual;
-};
-
-struct SequenceBase : public StringBase {
-    SequenceBase (EvalState *ev) : StringBase (ev) {}
-
-    virtual bool toBool () const;
-    virtual QString toString () const;
-    virtual Type type () const;
+    bool recursive;
 };
 
 struct Identifier : public SequenceBase {
-    Identifier (EvalState *ev, AST *steps) : SequenceBase (ev) {
+    Identifier (EvalState *ev, AST *steps, bool context)
+        : SequenceBase (ev), start_contextual (context) {
         first_child = steps;
     }
 
     virtual Sequence *toSequence () const;
-    void childByStep (Step *step, bool recurse) const;
-    void childByPath (Step *step, bool recurse) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Identifier ");
         AST::dump();
     }
 #endif
+    bool start_contextual;
 };
 
 struct PredicateFilter : public SequenceBase {
@@ -615,11 +617,11 @@ AST::Type StringBase::type () const {
     return TString;
 }
 
-bool Step::matches (Node *n) {
+bool Step::matches (Node *n) const {
     return any_node || string == n->nodeName ();
 }
 
-bool Step::matches (Attribute *a) {
+bool Step::matches (Attribute *a) const {
     return any_node || string == a->name ();
 }
 
@@ -665,82 +667,67 @@ AST::Type SequenceBase::type () const {
     return TString;
 }
 
-void Identifier::childByStep (Step *step, bool recurse) const {
-    Sequence *lst = eval_state->process_list;
-    NodeValueItem *last = lst->last ();
+Sequence *Step::toSequence () const {
+    Sequence *lst = new Sequence;
+    NodeValueItem *last = eval_state->process_list->last ();
     Sequence recursive_lst;
-    for (NodeValueItem *itm = lst->first (); itm; ) {
+    for (NodeValueItem *itm = eval_state->process_list->first (); itm; ) {
         NodeValueItem *next = itm == last ? NULL : itm->nextSibling ();
 
         Node *n = itm->data.node;
         if (!n)
             continue; // FIXME
-        if (step->is_attr) {
+        if (is_attr) {
             Element *e = n->isElementNode() ? static_cast<Element *> (n) : NULL;
             Attribute *a = e ? e->attributes ().first () : NULL;
             for (; a; a = a->nextSibling ())
-                if (step->matches (a))
+                if (matches (a))
                     lst->append (new NodeValueItem (NodeValue (n, a)));
-            if (recurse)
+            if (recursive)
                 for (Node *c = n->firstChild(); c; c = c->nextSibling ())
                     recursive_lst.append (new NodeValueItem (c));
-        } else if (step->context_node) {
+        } else if (context_node) {
             if (eval_state->parent)
-                lst->append (new NodeValueItem (eval_state->parent->root));
+                lst->append (new NodeValueItem (eval_state->root));
         } else {
             for (Node *c = n->firstChild(); c; c = c->nextSibling ()) {
-                if (step->matches (c))
+                if (matches (c))
                     lst->append (new NodeValueItem (c));
-                if (recurse)
+                if (recursive)
                     recursive_lst.append (new NodeValueItem (c));
             }
         }
 
-        lst->remove (itm);
         itm = next;
     }
-    if (recurse && recursive_lst.first ()) {
+    if (recursive && recursive_lst.first ()) {
+        Sequence *old = eval_state->process_list;
         eval_state->process_list = &recursive_lst;
-        childByStep (step, recurse);
-        for (NodeValueItem *r = recursive_lst.first (); r; r = r->nextSibling ())
+        Sequence *rlst = toSequence ();
+        for (NodeValueItem *r = rlst->first (); r; r = r->nextSibling ())
             lst->append (new NodeValueItem (r->data));
-        eval_state->process_list = lst;
+        delete rlst;
+        eval_state->process_list = old;
     }
-}
-
-void Identifier::childByPath (Step *step, bool recurse) const {
-    if (!step->anyPath ()) {
-        childByStep (step, recurse);
-        for (AST *pred = step->first_child; pred; pred = pred->next_sibling) {
-            NodeValueItem *itm = eval_state->process_list->first ();
-            if (itm && itm->data.node) {
-                Sequence *newlist = new Sequence;
-                for (; itm; itm = itm->nextSibling ()) {
-                    pred->setRoot (NodeValue (itm->data.node, itm->data.attr));
-                    if (pred->toBool ())
-                        newlist->append (new NodeValueItem (itm->data));
-                }
-                delete eval_state->process_list;
-                eval_state->process_list = newlist;
-            }
-        }
-    }
-    if (step->next_sibling)
-        childByPath ((Step *) step->next_sibling, step->anyPath ());
+    return lst;
 }
 
 Sequence *Identifier::toSequence () const {
     Sequence *old = eval_state->process_list;
+
     Sequence *lst = new Sequence;
-    eval_state->process_list = lst;
     EvalState *es = eval_state;
-    if (!((Step *)first_child)->start_contextual)
+    if (!start_contextual)
         while (es->parent)
             es = es->parent;
     // TODO handle ..
     lst->append (new NodeValueItem (es->root));
-    childByPath ((Step *) first_child, false);
-    lst = eval_state->process_list;
+    for (AST *s = first_child; s; s = s->next_sibling) {
+        eval_state->process_list = lst;
+        lst = s->toSequence ();
+        delete eval_state->process_list;
+    }
+
     eval_state->process_list = old;
     return lst;
 }
@@ -1451,8 +1438,11 @@ static bool parseStep (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
     fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
-    Step *entry = NULL;
+    AST *entry = NULL;
     const char *s = str;
+    bool recursive = *s == '/';
+    if (recursive)
+        s = ++str;
     if (*s == '.') {
         ++s;
         if (s && *s == '.') { // TODO
@@ -1461,8 +1451,6 @@ static bool parseStep (const char *str, const char **end, AST *ast) {
         } else {
             entry = new Step (ast->eval_state, true);
         }
-    } else if (*s == '/') {
-        entry = new Step (ast->eval_state);
     } else {
         bool is_attr = *s == '@';
         if (is_attr)
@@ -1476,7 +1464,7 @@ static bool parseStep (const char *str, const char **end, AST *ast) {
                 break;
         if (str == s)
             return false;
-        entry = new Step (ast->eval_state, str, s, is_attr);
+        entry = new Step (ast->eval_state, str, s, is_attr, recursive);
 
         AST fast (ast->eval_state);
         const char *t = s;
@@ -1484,7 +1472,8 @@ static bool parseStep (const char *str, const char **end, AST *ast) {
             s = t;
             while (parsePredicate (t, &t, &fast))
                 s = t;
-            entry->first_child = fast.first_child;
+            entry->next_sibling = fast.first_child;
+            entry = new PredicateFilter (ast->eval_state, entry);
             fast.first_child = NULL;
         }
 
@@ -1501,7 +1490,7 @@ static bool parseIdentifier (const char *str, const char **end, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
     fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
 #endif
-    Identifier ident (ast->eval_state, NULL);
+    Identifier ident (ast->eval_state, NULL, false);
     bool has_any = false;
 
     if (parseSpace (str, end))
@@ -1514,11 +1503,11 @@ static bool parseIdentifier (const char *str, const char **end, AST *ast) {
     else if (!ast->eval_state->parent &&
             !ast->eval_state->def_root_tag.isEmpty ())
         appendASTChild (&ident, new Step (ast->eval_state,
-                  ast->eval_state->def_root_tag.toAscii ().constData (), NULL));
+                  ast->eval_state->def_root_tag.toAscii ().constData (), NULL,
+                  false, false));
     if (parseStep (str, end, &ident)) {
         str = *end;
         has_any = true;
-        ((Step *) ident.first_child)->start_contextual = start_contextual;
         if (*str == '/') {
             ++str;
             while (parseStep (str, end, &ident)) {
@@ -1531,7 +1520,7 @@ static bool parseIdentifier (const char *str, const char **end, AST *ast) {
     }
     *end = str;
     if (has_any) {
-        appendASTChild (ast, new Identifier (ast->eval_state, ident.first_child));
+        appendASTChild (ast, new Identifier (ast->eval_state, ident.first_child, start_contextual));
         ident.first_child = NULL;
 #ifdef KMPLAYER_EXPR_DEBUG
         fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
