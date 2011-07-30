@@ -43,7 +43,8 @@ using namespace KMPlayer;
 //-----------------------------------------------------------------------------
 
 Node *KMPlayer::fromXMLDocumentTag (NodePtr & d, const QString & tag) {
-    const char * const name = tag.latin1 ();
+    const QByteArray ba = tag.toAscii ();
+    const char * const name = ba.constData();
     if (!strcmp (name, "smil"))
         return new SMIL::Smil (d);
     else if (!strcasecmp (name, "asx"))
@@ -418,7 +419,7 @@ void Node::normalize () {
     while (e) {
         Node *tmp = e->nextSibling ();
         if (!e->isElementNode () && e->id == id_node_text) {
-            QString val = e->nodeValue ().simplifyWhiteSpace ();
+            QString val = e->nodeValue ().simplified ();
             if (val.isEmpty ())
                 removeChild (e);
             else
@@ -429,7 +430,7 @@ void Node::normalize () {
     }
 }
 
-static void getInnerText (const Node *p, QTextOStream & out) {
+static void getInnerText (const Node *p, QTextStream & out) {
     for (Node *e = p->firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_text || e->id == id_node_cdata)
             out << e->nodeValue ();
@@ -440,12 +441,12 @@ static void getInnerText (const Node *p, QTextOStream & out) {
 
 QString Node::innerText () const {
     QString buf;
-    QTextOStream out (&buf);
+    QTextStream out (&buf, QIODevice::WriteOnly);
     getInnerText (this, out);
     return buf;
 }
 
-static void getOuterXML (const Node *p, QTextOStream & out, int depth) {
+static void getOuterXML (const Node *p, QTextStream & out, int depth) {
     if (!p->isElementNode ()) { // #text or #cdata
         if (p->id == id_node_cdata)
             out << "<![CDATA[" << p->nodeValue () << "]]>" << QChar ('\n');
@@ -471,7 +472,7 @@ static void getOuterXML (const Node *p, QTextOStream & out, int depth) {
 
 QString Node::innerXML () const {
     QString buf;
-    QTextOStream out (&buf);
+    QTextStream out (&buf, QIODevice::WriteOnly);
     for (Node *e = firstChild (); e; e = e->nextSibling ())
         getOuterXML (e, out, 0);
     return buf;
@@ -479,7 +480,7 @@ QString Node::innerXML () const {
 
 QString Node::outerXML () const {
     QString buf;
-    QTextOStream out (&buf);
+    QTextStream out (&buf, QIODevice::WriteOnly);
     getOuterXML (this, out, 0);
     return buf;
 }
@@ -974,7 +975,7 @@ Node *Document::childFromTag (const QString & tag) {
     Node * elm = fromXMLDocumentTag (m_doc, tag);
     if (elm)
         return elm;
-    return 0L;
+    return NULL;
 }
 
 void Document::dispose () {
@@ -1481,7 +1482,7 @@ bool DocumentBuilder::endTag (const QString & tag) {
     } else {  // endtag
         NodePtr n = m_node;
         while (n) {
-            if (!strcasecmp (n->nodeName (), tag.local8Bit ().data ()) &&
+            if (!strcasecmp (n->nodeName (), tag.toLocal8Bit ().constData ()) &&
                     (m_root_is_first || n != m_root)) {
                 while (n != m_node) {
                     kWarning() << m_node->nodeName () << " not closed";
@@ -1693,7 +1694,7 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
     SimpleSAXParser parser (builder);
     if (!firstline.isEmpty ()) {
         QString str (firstline + QChar ('\n'));
-        QTextStream fl_in (&str, IO_ReadOnly);
+        QTextStream fl_in (&str, QIODevice::ReadOnly);
         parser.parse (fl_in);
     }
     if (!in.atEnd ())

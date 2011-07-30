@@ -18,21 +18,23 @@
 
 #include "config-kmplayer.h"
 #include <kdebug.h>
-#include <kurl.h>
 
 #include "kmplayer_asx.h"
+
+#include <QUrl>
 
 using namespace KMPlayer;
 
 static QString getAsxAttribute (Element * e, const QString & attr) {
     for (Attribute *a = e->attributes ().first (); a; a = a->nextSibling ())
-        if (attr == a->name ().toString ().lower ())
+        if (attr == a->name ().toString ().toLower ())
             return a->value ();
     return QString ();
 }
 
 KDE_NO_EXPORT Node *ASX::Asx::childFromTag (const QString & tag) {
-    const char * name = tag.latin1 ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *name = ba.constData ();
     if (!strcasecmp (name, "entry"))
         return new ASX::Entry (m_doc);
     else if (!strcasecmp (name, "entryref"))
@@ -56,7 +58,7 @@ void *ASX::Asx::role (RoleType msg, void *content)
 KDE_NO_EXPORT void ASX::Asx::closed () {
     for (Node *e = firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_title)
-            title = e->innerText ().simplifyWhiteSpace ();
+            title = e->innerText ().simplified ();
         else if (e->id == id_node_base)
             src = getAsxAttribute (static_cast <Element *> (e), "href");
     }
@@ -65,7 +67,8 @@ KDE_NO_EXPORT void ASX::Asx::closed () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT Node *ASX::Entry::childFromTag (const QString & tag) {
-    const char * name = tag.latin1 ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *name = ba.constData ();
     if (!strcasecmp (name, "ref"))
         return new ASX::Ref (m_doc);
     else if (!strcasecmp (name, "title"))
@@ -110,7 +113,7 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
     for (Node *e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_param) {
             Element * elm = static_cast <Element *> (e);
-            if (getAsxAttribute(elm,"name").lower() == QString("clipsummary")) {
+            if (getAsxAttribute(elm,"name").toLower() == QString("clipsummary")) {
                 QString inf = QUrl::fromPercentEncoding (
                                 getAsxAttribute (elm, "value").toUtf8 ());
                 document ()->message (MsgInfoString, &inf);

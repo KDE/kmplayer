@@ -185,9 +185,9 @@ void GrabDocument::message (MessageType msg, void *content) {
 //-----------------------------------------------------------------------------
 
 static bool getBoolValue (const QString & value) {
-    return (value.lower() != QString::fromLatin1("false") &&
-            value.lower() != QString::fromLatin1("off") &&
-            value.lower() != QString::fromLatin1("0"));
+    return (value.toLower() != QString::fromLatin1("false") &&
+            value.toLower() != QString::fromLatin1("off") &&
+            value.toLower() != QString::fromLatin1("0"));
 }
 
 #define SET_FEAT_ON(f) { m_features |= f; turned_off_features &= ~f; }
@@ -232,7 +232,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
     for ( ; it != end; ++it) {
         int equalPos = (*it).find("=");
         if (equalPos > 0) {
-            QString name = (*it).left (equalPos).lower ();
+            QString name = (*it).left (equalPos).toLower ();
             QString value = (*it).right ((*it).size () - equalPos - 1);
             if (value.at(0)=='\"')
                 value = value.right (value.size () - 1);
@@ -256,7 +256,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                 QStringList::const_iterator it = sl.constBegin ();
                 const QStringList::const_iterator e = sl.constEnd ();
                 for (QStringList::const_iterator i = sl.constBegin (); i != e; ++i) {
-                    QString val_lower ((*i).lower ());
+                    QString val_lower ((*i).toLower ());
                     if (val_lower == QString::fromLatin1("imagewindow")) {
                         SET_FEAT_ON (Feat_ImageWindow | Feat_Viewer)
                     } else if (val_lower == QString::fromLatin1("all")) {
@@ -317,7 +317,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                     }
                 }
             } else if (name == QString::fromLatin1("uimode")) {
-                QString val_lower (value.lower ());
+                QString val_lower (value.toLower ());
                 if (val_lower == QString::fromLatin1("full"))
                     SET_FEAT_ON (Feat_All & ~(Feat_PlayList | Feat_ImageWindow))
                 // TODO: invisible, none, mini
@@ -1762,8 +1762,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
         }
     }
     kDebug () << "[01;35mget[00m " << name;
-    const char * str = name.ascii ();
-    const JSCommandEntry * entry = getJSCommandEntry (str);
+    const JSCommandEntry * entry = getJSCommandEntry (name.toAscii ().constData ());
     if (!entry)
         return false;
     type = entry->rettype;
@@ -1817,7 +1816,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
 
     kDebug () << "[01;35mput[00m " << name << "=" << val;
 
-    const JSCommandEntry * entry = getJSCommandEntry (name.ascii ());
+    const JSCommandEntry * entry = getJSCommandEntry (name.toAscii ().constData ());
     if (!entry)
         return false;
     switch (entry->command) {
@@ -1911,9 +1910,9 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
     }
     kDebug () << "[01;35mentry[00m " << func;
     const JSCommandEntry * entry = lastJSCommandEntry;
-    const char * str = func.ascii ();
-    if (!entry || strcmp (entry->name, str))
-        entry = getJSCommandEntry (str);
+    const QByteArray ascii = func.toAscii ();
+    if (!entry || strcmp (entry->name, ascii.constData ()))
+        entry = getJSCommandEntry (ascii.constData ());
     if (!entry)
         return false;
     for (unsigned int i = 0; i < args.size (); ++i)

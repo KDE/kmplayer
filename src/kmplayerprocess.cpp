@@ -558,15 +558,15 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
 
     QString strVideoDriver = QString (m_settings->videodrivers[m_settings->videodriver].driver);
     if (!strVideoDriver.isEmpty ()) {
-        args << "-vo" << strVideoDriver.lower();
+        args << "-vo" << strVideoDriver.toLower();
         if (view () && view ()->keepSizeRatio () &&
-                strVideoDriver.lower() == QString::fromLatin1 ("x11"))
+                strVideoDriver.toLower() == QString::fromLatin1 ("x11"))
             args << "-zoom";
     }
 
     QString strAudioDriver = QString (m_settings->audiodrivers[m_settings->audiodriver].driver);
     if (!strAudioDriver.isEmpty ())
-        args << "-ao" << strAudioDriver.lower();
+        args << "-ao" << strAudioDriver.toLower();
 
     if (m_settings->framedrop)
         args << "-framedrop";
@@ -612,8 +612,8 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
         if (url.isLocalFile ()) {
             m_url = url.toLocalFile ();
             if (cfg_page->alwaysbuildindex &&
-                    (m_url.lower ().endsWith (".avi") ||
-                     m_url.lower ().endsWith (".divx")))
+                    (m_url.toLower ().endsWith (".avi") ||
+                     m_url.toLower ().endsWith (".divx")))
                 args << "-idx";
         } else {
             int cache = cfg_page->cachesize;
@@ -724,7 +724,7 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
         return false; //FIXME
     initProcess ();
     m_old_state = m_state = Buffering;
-    unlink (file.ascii ());
+    unlink (file.toAscii ().constData ());
     QByteArray ba = file.toLocal8Bit ();
     ba.append ("XXXXXX");
     if (mkdtemp ((char *) ba.constData ())) {
@@ -1486,7 +1486,7 @@ KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (NodePtr & d, const QString & t)
     : DarkNode (d, t.toUtf8 ()), w (0L) {}
 
 Node *ConfigDocument::childFromTag (const QString & tag) {
-    if (tag.lower () == QString ("document"))
+    if (tag.toLower () == QString ("document"))
         return new ConfigNode (m_doc, tag);
     return 0L;
 }
@@ -1507,8 +1507,8 @@ Node *SomeNode::childFromTag (const QString & t) {
 }
 
 QWidget * TypeNode::createWidget (QWidget * parent) {
-    QString type_attr = getAttribute (Ids::attr_type);
-    const char * ctype = type_attr.ascii ();
+    QByteArray ba = getAttribute (Ids::attr_type).toAscii ();
+    const char *ctype = ba.constData ();
     QString value = getAttribute (Ids::attr_value);
     if (!strcmp (ctype, "range")) {
         w = new QSlider (getAttribute (QString ("START")).toInt (),
@@ -1535,8 +1535,8 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
 
 void TypeNode::changedXML (QTextStream & out) {
     if (!w) return;
-    QString type_attr = getAttribute (Ids::attr_type);
-    const char * ctype = type_attr.ascii ();
+    QByteArray ba = getAttribute (Ids::attr_type).toAscii ();
+    const char *ctype = ba.constData ();
     QString value = getAttribute (Ids::attr_value);
     QString newvalue;
     if (!strcmp (ctype, "range")) {
@@ -1860,7 +1860,7 @@ KDE_NO_EXPORT void NpPlayer::initProcess () {
         filter = QString ("type='method_call',interface='org.kde.kmplayer.callback'");
         service = QDBusConnection::sessionBus().baseService ();
         //service = QString (dbus_bus_get_unique_name (conn));
-        kDebug() << "using service " << service << " interface " << iface << " filter:" << filter.ascii();
+        kDebug() << "using service " << service << " interface " << iface << " filter:" << filter;
     }
 }
 

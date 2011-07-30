@@ -61,7 +61,8 @@ static const unsigned int trans_out_timer_id = (unsigned int) 7;
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT bool KMPlayer::parseTime (const QString & vl, int & dur) {
-    const char * cval = vl.ascii ();
+    QByteArray ba = vl.toLatin1 ();
+    const char *cval = ba.constData ();
     if (!cval) {
         dur = 0;
         return false;
@@ -336,9 +337,10 @@ KDE_NO_EXPORT void Runtime::initialize ()
 static
 void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
     int dur = -2; // also 0 for 'media' duration, so it will not update then
-    QString vs = val.stripWhiteSpace ();
-    QString vl = vs.lower ();
-    const char * cval = vl.ascii ();
+    QString vs = val.trimmed ();
+    QString vl = vs.toLower ();
+    QByteArray ba = vl.toLatin1 ();
+    const char *cval = ba.constData ();
     int offset = 0;
     VirtualVoid *payload = NULL;
     if (cval && cval[0]) {
@@ -945,8 +947,8 @@ KDE_NO_EXPORT void CalculatedSizer::resetSizes () {
 }
 
 static bool regPoints (const QString & str, Single & x, Single & y) {
-    QString lower = str.lower ();
-    const char * rp = lower.ascii ();
+    QByteArray ba = str.toLower ().toLatin1 ();
+    const char *rp = ba.constData ();
     if (!rp)
         return false;
     if (!strcmp (rp, "center")) {
@@ -1140,7 +1142,8 @@ ConnectionList *MouseListeners::receivers (MessageType eid) {
 //-----------------------------------------------------------------------------
 
 static Element * fromScheduleGroup (NodePtr & d, const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "par"))
         return new SMIL::Par (d);
     else if (!strcmp (ctag, "seq"))
@@ -1151,7 +1154,8 @@ static Element * fromScheduleGroup (NodePtr & d, const QString & tag) {
 }
 
 static Element * fromParamGroup (NodePtr & d, const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "param"))
         return new SMIL::Param (d);
     else if (!strcmp (ctag, "area") || !strcmp (ctag, "anchor"))
@@ -1160,7 +1164,8 @@ static Element * fromParamGroup (NodePtr & d, const QString & tag) {
 }
 
 static Element * fromAnimateGroup (NodePtr & d, const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "set"))
         return new SMIL::Set (d);
     else if (!strcmp (ctag, "animate"))
@@ -1181,14 +1186,15 @@ static Element * fromAnimateGroup (NodePtr & d, const QString & tag) {
 }
 
 static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
-    const char * taglatin = tag.latin1 ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *taglatin = ba.constData ();
     if (!strcmp (taglatin, "video") ||
             !strcmp (taglatin, "audio") ||
             !strcmp (taglatin, "img") ||
             !strcmp (taglatin, "animation") ||
             !strcmp (taglatin, "textstream") ||
             !strcmp (taglatin, "ref"))
-        return new SMIL::RefMediaType (d, tag);
+        return new SMIL::RefMediaType (d, ba);
     else if (!strcmp (taglatin, "text"))
         return new SMIL::TextMediaType (d);
     else if (!strcmp (taglatin, "brush"))
@@ -1202,13 +1208,14 @@ static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
 }
 
 static Element * fromContentControlGroup (NodePtr & d, const QString & tag) {
-    if (!strcmp (tag.latin1 (), "switch"))
+    if (!strcmp (tag.toLatin1 ().constData (), "switch"))
         return new SMIL::Switch (d);
     return NULL;
 }
 
 static Element *fromTextFlowGroup (NodePtr &d, const QString &tag) {
-    const char *taglatin = tag.latin1 ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *taglatin = ba.constData ();
     if (!strcmp (taglatin, "div"))
         return new SMIL::TextFlow (d, SMIL::id_node_div, tag.toUtf8 ());
     if (!strcmp (taglatin, "span"))
@@ -1374,7 +1381,8 @@ void TransitionModule::finish (Node *n) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT Node *SMIL::Smil::childFromTag (const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "body"))
         return new SMIL::Body (m_doc);
     else if (!strcmp (ctag, "head"))
@@ -1518,7 +1526,8 @@ static void headChildDone (Node *node, Node *child) {
 }
 
 KDE_NO_EXPORT Node *SMIL::Head::childFromTag (const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "layout"))
         return new SMIL::Layout (m_doc);
     else if (!strcmp (ctag, "title"))
@@ -1700,7 +1709,8 @@ KDE_NO_CDTOR_EXPORT SMIL::Layout::Layout (NodePtr & d)
  : Element (d, id_node_layout) {}
 
 KDE_NO_EXPORT Node *SMIL::Layout::childFromTag (const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "root-layout")) {
         Node *e = new SMIL::RootLayout (m_doc);
         root_layout = e;
@@ -1849,7 +1859,7 @@ KDE_NO_EXPORT
 void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
     bool need_repaint = false;
     if (name == Ids::attr_fit) {
-        fit = parseFit (val.ascii ());
+        fit = parseFit (val.toAscii ().constData ());
         if (region_surface)
             region_surface->scroll = fit_scroll == fit;
         need_repaint = true;
@@ -2067,7 +2077,7 @@ KDE_NO_EXPORT void SMIL::Region::deactivate () {
 }
 
 KDE_NO_EXPORT Node *SMIL::Region::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "region"))
+    if (!strcmp (tag.toLatin1 ().constData (), "region"))
         return new SMIL::Region (m_doc);
     return NULL;
 }
@@ -2179,7 +2189,7 @@ KDE_NO_EXPORT void SMIL::Transition::activate () {
 KDE_NO_EXPORT
 void SMIL::Transition::parseParam (const TrieString & para, const QString & val) {
     if (para == Ids::attr_type) {
-        type_info = transInfoFromString (val.ascii ());
+        type_info = transInfoFromString (val.toAscii ().constData ());
         if (type_info) {
             type = type_info->type;
             if (SubTransTypeNone != sub_type) {
@@ -2193,7 +2203,7 @@ void SMIL::Transition::parseParam (const TrieString & para, const QString & val)
     } else if (para == Ids::attr_dur) {
         parseTime (val, dur);
     } else if (para == "subtype") {
-        sub_type = subTransInfoFromString (val.ascii ());
+        sub_type = subTransInfoFromString (val.toAscii ().constData ());
         if (type_info) {
             if (SubTransTypeNone != sub_type) {
                 for (int i = 0; i < type_info->sub_types; ++i)
@@ -3053,7 +3063,7 @@ KDE_NO_EXPORT Node *SMIL::Switch::chosenOne () {
                                 if (!clang) {
                                     if (!fallback)
                                         fallback = e;
-                                } else if (QString (clang).lower ().startsWith (lang)) {
+                                } else if (QString (clang).toLower ().startsWith (lang)) {
                                     chosen_one = e;
                                 } else if (!fallback) {
                                     fallback = e->nextSibling ();
@@ -3222,7 +3232,7 @@ KDE_NO_EXPORT
 void SMIL::Area::parseParam (const TrieString & para, const QString & val) {
     if (para == "coords") {
         delete [] coords;
-        QStringList clist = QStringList::split (QString (","), val);
+        QStringList clist = val.split (QChar (','));
         nr_coords = clist.count ();
         coords = new SizeType [nr_coords];
         for (int i = 0; i < nr_coords; ++i)
@@ -3240,7 +3250,7 @@ KDE_NO_EXPORT void *SMIL::Area::role (RoleType msg, void *content) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, short id)
+KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QByteArray &t, short id)
  : Mrl (d, id),
    runtime (new Runtime (this)),
    m_type (t),
@@ -3302,11 +3312,11 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
                 clipStart ();
         }
     } else if (para == Ids::attr_fit) {
-        fit = parseFit (val.ascii ());
+        fit = parseFit (val.toAscii ().constData ());
     } else if (para == Ids::attr_type) {
         mimetype = val;
     } else if (para == "panZoom") {
-        QStringList coords = QStringList::split (QString (","), val);
+        QStringList coords = val.split (QChar (','));
         if (coords.size () < 4) {
             kWarning () << "panZoom less then four nubmers";
             return;
@@ -3728,11 +3738,11 @@ Surface *SMIL::MediaType::surface () {
 
 namespace {
     class SvgElement : public Element {
-        QString tag;
+        QByteArray tag;
         NodePtrW image;
 
     public:
-        SvgElement (NodePtr &doc, Node *img, const QString &t, short id=0)
+        SvgElement (NodePtr &doc, Node *img, const QByteArray &t, short id=0)
             : Element (doc, id), tag (t), image (img) {}
 
         void parseParam (const TrieString &name, const QString &val) {
@@ -3747,24 +3757,26 @@ namespace {
         }
 
         Node *childFromTag (const QString & tag) {
-            return new SvgElement (m_doc, image.ptr (), tag);
+            return new SvgElement (m_doc, image.ptr (), tag.toLatin1());
         }
 
         const char *nodeName () const {
-            return tag.ascii ();
+            return tag.constData ();
         }
     };
 }
 
 KDE_NO_CDTOR_EXPORT
-SMIL::RefMediaType::RefMediaType (NodePtr &d, const QString &t)
+SMIL::RefMediaType::RefMediaType (NodePtr &d, const QByteArray &t)
  : SMIL::MediaType (d, t, id_node_ref) {}
 
 KDE_NO_EXPORT Node *SMIL::RefMediaType::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "imfl"))
+    QByteArray ba = tag.toLatin1 ();
+    const char *taglatin = ba.constData ();
+    if (!strcmp (taglatin, "imfl"))
         return new RP::Imfl (m_doc);
-    else if (!strcmp (tag.latin1 (), "svg"))
-        return new SvgElement (m_doc, this, tag, id_node_svg);
+    else if (!strcmp (taglatin, "svg"))
+        return new SvgElement (m_doc, this, ba, id_node_svg);
     Node *n = fromXMLDocumentTag (m_doc, tag);
     if (n)
         return n;
@@ -3920,14 +3932,15 @@ SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
     if (name == "color" || name == "fontColor") {
         font_color = val.isEmpty () ? 0 : QColor (val).rgb ();
     } else if (name == "fontFace") {
-        if (val.lower ().indexOf ("sans" ) < 0)
+        if (val.toLower ().indexOf ("sans" ) < 0)
             font_name = "serif";
     } else if (name == "font-size" || name == "fontPtSize") {
         font_size = val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
     } else if (name == "fontSize") {
         font_size += val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
     } else if (name == "hAlign") {
-        const char * cval = val.ascii ();
+        QByteArray ba = val.toLatin1 ();
+        const char *cval = ba.constData ();
         if (!cval)
             halign = align_left;
         else if (!strcmp (cval, "center"))
@@ -4044,7 +4057,8 @@ void SMIL::SmilText::reset () {
 }
 
 Node *SMIL::SmilText::childFromTag (const QString &tag) {
-    const char *ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "tev"))
     {}//return new SMIL::TextTev (m_doc);
     return fromTextFlowGroup (m_doc, tag);
@@ -4820,9 +4834,9 @@ void SMIL::AnimateBase::parseParam (const TrieString &name, const QString &val) 
     } else if (name == "by" || name == "change_by") {
         change_by = val;
     } else if (name == "values") {
-        values = QStringList::split (QString (";"), val);
+        values = val.split (QChar (';'));
     } else if (name == "keyTimes") {
-        QStringList kts = QStringList::split (QString (";"), val);
+        QStringList kts = val.split (QChar (';'));
         if (keytimes)
             free (keytimes);
         keytime_count = kts.size ();
@@ -4832,11 +4846,11 @@ void SMIL::AnimateBase::parseParam (const TrieString &name, const QString &val) 
         }
         keytimes = (float *) malloc (sizeof (float) * keytime_count);
         for (unsigned int i = 0; i < keytime_count; i++) {
-            keytimes[i] = kts[i].stripWhiteSpace().toDouble();
+            keytimes[i] = kts[i].trimmed().toDouble();
             if (keytimes[i] < 0.0 || keytimes[i] > 1.0)
-                kWarning() << "animateMotion wrong keyTimes values" << endl;
+                kWarning() << "animateMotion wrong keyTimes values";
             else if (i == 0 && keytimes[i] > 0.01)
-                kWarning() << "animateMotion first keyTimes value not 0" << endl;
+                kWarning() << "animateMotion first keyTimes value not 0";
             else
                 continue;
             free (keytimes);
@@ -4845,7 +4859,7 @@ void SMIL::AnimateBase::parseParam (const TrieString &name, const QString &val) 
             return;
         }
     } else if (name == "keySplines") {
-        splines = QStringList::split (QString (";"), val);
+        splines = val.split (QChar (';'));
     } else if (name == "calcMode") {
         if (val == QString::fromLatin1 ("discrete"))
             calcMode = calc_discrete;
@@ -4912,8 +4926,7 @@ bool SMIL::AnimateBase::setInterval () {
             break;
         case calc_spline:
             if (splines.size () > (int)interval) {
-                QStringList kss = QStringList::split (
-                        QString (" "), splines[interval]);
+                QStringList kss = splines[interval].split (QChar (' '));
                 control_point[0] = control_point[1] = 0;
                 control_point[2] = control_point[3] = 1;
                 if (kss.size () == 4) {
@@ -5024,8 +5037,8 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
         return;
     }
     if (calcMode != calc_discrete) {
-        QStringList bnums = QStringList::split (QString (","), values[0]);
-        QStringList enums = QStringList::split (QString (","), values[1]);
+        QStringList bnums = values[0].split (QString (","));
+        QStringList enums = values[1].split (QString (","));
         num_count = bnums.size ();
         if (num_count) {
             begin_ = new SizeType [num_count];
@@ -5103,7 +5116,7 @@ KDE_NO_EXPORT bool SMIL::Animate::timerTick (unsigned int cur_time) {
         if (calc_discrete != calcMode) {
             if (values.size () <= (int) interval + 1)
                 return false;
-            QStringList enums = QStringList::split (QString (","), values[interval+1]);
+            QStringList enums = values[interval+1].split (QString (","));
             for (int i = 0; i < num_count; ++i) {
                 begin_[i] = end[i];
                 if (i < enums.size ())
@@ -5129,8 +5142,8 @@ bool getMotionCoordinates (const QString &coord, SizeType &x, SizeType &y) {
     if (p < 0)
         p = coord.indexOf (QChar (' '));
     if (p > 0) {
-        x = coord.left (p).stripWhiteSpace ();
-        y = coord.mid (p + 1).stripWhiteSpace ();
+        x = coord.left (p).trimmed ();
+        y = coord.mid (p + 1).trimmed ();
         return true;
     }
     return false;

@@ -51,7 +51,7 @@ KDE_NO_EXPORT void RP::Imfl::closed () {
                     size.height = a->value ().toInt ();
                 } else if (a->name () == "duration") {
                     int dur;
-                    parseTime (a->value ().lower (), dur);
+                    parseTime (a->value ().toLower (), dur);
                     duration = dur;
                 }
             }
@@ -165,7 +165,8 @@ KDE_NO_EXPORT Surface *RP::Imfl::surface () {
 }
 
 KDE_NO_EXPORT Node *RP::Imfl::childFromTag (const QString & tag) {
-    const char * ctag = tag.latin1 ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "head"))
         return new DarkNode (m_doc, "head", RP::id_node_head);
     else if (!strcmp (ctag, "image"))
@@ -287,11 +288,11 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
                     target = n;
         } else if (a->name () == "start") {
             int dur;
-            parseTime (a->value ().lower (), dur);
+            parseTime (a->value ().toLower (), dur);
             start = dur;
         } else if (a->name () == "duration") {
             int dur;
-            parseTime (a->value ().lower (), dur);
+            parseTime (a->value ().toLower (), dur);
             duration = dur;
         } else if (a->name () == "dstx") {
             x = a->value ().toInt ();
@@ -466,7 +467,7 @@ KDE_NO_EXPORT void RP::Fill::accept (Visitor * v) {
 
 KDE_NO_EXPORT void RP::Wipe::activate () {
     //TODO implement 'type="push"'
-    QString dir = getAttribute ("direction").lower ();
+    QString dir = getAttribute ("direction").toLower ();
     direction = dir_right;
     if (dir == QString::fromLatin1 ("left"))
         direction = dir_left;

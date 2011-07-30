@@ -21,14 +21,18 @@
 #include "kmplayer_atom.h"
 #include "kmplayer_smil.h"
 
+#include <QTextStream>
+
 using namespace KMPlayer;
 
 Node *ATOM::Feed::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "entry"))
+    QByteArray ba = tag.toLatin1 ();
+    const char *name = ba.constData ();
+    if (!strcmp (name, "entry"))
         return new ATOM::Entry (m_doc);
-    else if (!strcmp (tag.latin1 (), "link"))
+    else if (!strcmp (name, "link"))
         return new ATOM::Link (m_doc);
-    else if (!strcmp (tag.latin1 (), "title"))
+    else if (!strcmp (name, "title"))
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_title);
     return NULL;
 }
@@ -36,7 +40,7 @@ Node *ATOM::Feed::childFromTag (const QString & tag) {
 void ATOM::Feed::closed () {
     for (Node *c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
-            title = c->innerText ().simplifyWhiteSpace ();
+            title = c->innerText ().simplified ();
             break;
         }
     Element::closed ();
@@ -50,7 +54,8 @@ void *ATOM::Feed::role (RoleType msg, void *content)
 }
 
 Node *ATOM::Entry::childFromTag (const QString &tag) {
-    const char *cstr = tag.latin1 ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *cstr = ba.constData ();
     if (!strcmp (cstr, "link"))
         return new ATOM::Link (m_doc);
     else if (!strcmp (cstr, "content"))
@@ -78,7 +83,7 @@ void ATOM::Entry::closed () {
     Node *rating = NULL;
     for (Node *c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
-            title = c->innerText ().simplifyWhiteSpace ();
+            title = c->innerText ().simplified ();
         } else if (c->id == id_node_gd_rating) {
             rating = c;
         } else if (c->id == id_node_media_group) {
@@ -123,7 +128,7 @@ void ATOM::Content::closed () {
         if (a->name () == Ids::attr_src)
             src = a->value ();
         else if (a->name () == Ids::attr_type) {
-            QString v = a->value ().lower ();
+            QString v = a->value ().toLower ();
             if (v == QString::fromLatin1 ("text"))
                 mimetype = QString::fromLatin1 ("text/plain");
             else if (v == QString::fromLatin1 ("html"))
@@ -144,7 +149,8 @@ Node::PlayType ATOM::Content::playType () {
 }
 
 Node *ATOM::MediaGroup::childFromTag (const QString &tag) {
-    const char *cstr = tag.latin1 ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *cstr = ba.constData ();
     if (!strcmp (cstr, "media:content"))
         return new ATOM::MediaContent (m_doc);
     else if (!strcmp (cstr, "media:title"))
@@ -240,7 +246,7 @@ void ATOM::MediaGroup::addSummary (Node *p, Node *rating_node) {
     }
     if (img_count) {
         QString buf;
-        QTextOStream out (&buf);
+        QTextStream out (&buf, QIODevice::WriteOnly);
         out << "<smil><head>";
         if (!title.isEmpty ())
             out << "<title>" << title << "</title>";

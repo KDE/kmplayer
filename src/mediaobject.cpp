@@ -578,7 +578,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                     } else if (pls_groupfound) {
                         int eq_pos = line.indexOf (QChar ('='));
                         if (eq_pos > 0) {
-                            if (line.lower ().startsWith (QString ("numberofentries"))) {
+                            if (line.toLower ().startsWith (QString ("numberofentries"))) {
                                 nr = line.mid (eq_pos + 1).stripWhiteSpace ().toInt ();
                                 kDebug () << "numberofentries : " << nr;
                                 if (nr > 0 && nr < 1024)
@@ -586,7 +586,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                                 else
                                     nr = 0;
                             } else if (nr > 0) {
-                                QString ll = line.lower ();
+                                QString ll = line.toLower ();
                                 if (ll.startsWith (QString ("file"))) {
                                     int i = line.mid (4, eq_pos-4).toInt ();
                                     if (i > 0 && i <= nr)
@@ -612,7 +612,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             readXML (cur_elm, textstream, line);
             //cur_elm->normalize ();
-        } else if (line.lower () != QString ("[reference]")) {
+        } else if (line.toLower () != QString ("[reference]")) {
             bool extm3u = line.startsWith ("#EXTM3U");
             QString title;
             NodePtr doc = node->document ();
@@ -623,7 +623,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                 QString mrl = line.stripWhiteSpace ();
                 if (line == QString ("--stop--"))
                     break;
-                if (mrl.lower ().startsWith (QString ("asf ")))
+                if (mrl.toLower ().startsWith (QString ("asf ")))
                     mrl = mrl.mid (4).stripWhiteSpace ();
                 if (!mrl.isEmpty ()) {
                     if (extm3u && mrl.startsWith (QChar ('#'))) {

@@ -94,7 +94,7 @@ void ImageData::copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar
         src_sf = surface;
     } else {
         if (image->depth () < 24) {
-            QImage qi = image->convertDepth (32, 0);
+            QImage qi = image->convertToFormat (QImage::Format_RGB32);
             *image = qi;
         }
         src_sf = cairo_image_surface_create_for_data (
@@ -850,13 +850,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         bool clear = s->surface;
 
         PangoFontDescription *desc = pango_font_description_new ();
-        pango_font_description_set_family(desc, txt->font_name.toUtf8().data());
+        pango_font_description_set_family(desc, txt->font_name.toUtf8().constData());
         pango_font_description_set_size (desc, PANGO_SCALE * ft_size);
         if (clear) {
             pxw = scr.width ();
             pxh = scr.height ();
         } else {
-            calculateTextDimensions (desc, text.data (),
+            calculateTextDimensions (desc, text.constData (),
                     w, 2 * ft_size, &pxw, &pxh, false);
         }
         cairo_t *cr_txt = createContext (cairo_surface, s, pxw, pxh);
@@ -865,7 +865,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         PangoLayout *layout = pango_cairo_create_layout (cr_txt);
         pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
         pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-        pango_layout_set_text (layout, text.data (), -1);
+        pango_layout_set_text (layout, text.constData (), -1);
         pango_layout_set_font_description (layout, desc);
 
         pango_cairo_show_layout (cr_txt, layout);
@@ -1041,7 +1041,7 @@ void SmilTextVisitor::push () {
         PangoFontDescription *desc = pango_font_description_new ();
         pango_font_description_set_family (desc, "Sans");
         pango_font_description_set_size (desc, PANGO_SCALE * fs);
-        calculateTextDimensions (desc, rich_text.toUtf8 ().data (),
+        calculateTextDimensions (desc, rich_text.toUtf8 ().constData (),
                 width, 2 * maxfs, &pxw, &pxh, true, align);
         int x = 0;
         if (SmilTextProperties::AlignCenter == info.props.text_align)
@@ -1064,7 +1064,7 @@ void SmilTextVisitor::push () {
 
 void SmilTextVisitor::visit (TextNode *text) {
     QString buffer;
-    QTextStream out (&buffer);
+    QTextStream out (&buffer, QIODevice::WriteOnly);
     out << XMLStringlet (text->nodeValue ());
     addRichText (buffer);
     if (text->nextSibling ())
@@ -1137,7 +1137,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
                 PangoLayout *layout = pango_cairo_create_layout (cr_txt);
                 pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
                 pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-                pango_layout_set_markup (layout, text.data (), -1);
+                pango_layout_set_markup (layout, text.constData (), -1);
                 pango_layout_set_font_description (layout, b->desc);
                 if (b->align > -1)
                     pango_layout_set_alignment(layout,(PangoAlignment)b->align);

@@ -709,11 +709,11 @@ public:
  */
 class KMPLAYER_NO_EXPORT MediaType : public Mrl {
 public:
-    MediaType (NodePtr & d, const QString & t, short id);
+    MediaType (NodePtr & d, const QByteArray& t, short id);
     ~MediaType ();
 
     Node *childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
+    KDE_NO_EXPORT const char * nodeName () const { return m_type.constData (); }
     virtual void closed ();
     virtual void init ();
     virtual void activate ();
@@ -736,7 +736,7 @@ public:
     NodePtrW external_tree; // if src points to playlist, the resolved top node
     TransitionModule transition;
     NodePtrW region_node;
-    QString m_type;
+    QByteArray m_type;
     CalculatedSizer sizes;
     CalculatedSizer *pan_zoom;
     Fit fit;
@@ -759,7 +759,7 @@ protected:
 
 class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
-    RefMediaType (NodePtr &doc, const QString &tag);
+    RefMediaType (NodePtr &doc, const QByteArray &tag);
     Node *childFromTag (const QString & tag);
     virtual void activate ();
     virtual void begin ();
