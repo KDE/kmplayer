@@ -44,7 +44,7 @@
 
 <abstract>
 <para>
-    &kmplayer; is an application that is a &kde; frontend to <application>MPlayer</application> and <application>Phonon</application>.
+    &kmplayer; is an application that is a &kde; frontend to <application>MPlayer</application> and &phonon;.
 </para>
 </abstract>
 
@@ -63,17 +63,17 @@
 <title>Introduction</title>
 <para>
 &kmplayer; is a simple frontend to <application>MPlayer</application>,
-<application>Phonon</application> and <application>FFMpeg</application>.
+&phonon; and <application>FFMpeg</application>.
 You can use it for watching all the movie
 file formats that <application>MPlayer</application>,
-or <application>Phonon</application>
+or &phonon;
 supports as well as watching from <acronym>DVD</acronym>,
 <acronym>VCD</acronym> or <acronym>TV</acronym> and <acronym>camera</acronym>.
 </para>
 <para>
 The documentation for &kappname; was not finished when &kde; was
 installed on this computer.</para> <para>If you need more help, please
-check <ulink url="http://www.kde.org">The KDE Website</ulink> for
+check <ulink url="http://www.kde.org">The &kde; Website</ulink> for
 updates, or by submitting your question to
 <ulink url="mailto:kde-user@kde.org">The &kde; User Mailing list</ulink>.
 </para>
@@ -99,7 +99,7 @@ Of course there has to be contents, eg. see
 <link linkend="tvsource"><acronym>TV</acronym> settings</link> for adding
 content for the <guilabel>Television</guilabel> category. The
 <guilabel>Most Recent</guilabel> category will fill itself when playing
-locale media files or network <acronym>Url</acronym>s. This category can
+locale media files or network &URL;. This category can
 hold 60 items of which the last 50 are under the <guilabel>More ..</guilabel>
 branch.
 </para>
@@ -166,19 +166,19 @@ group and override it for a child group or item.
 </section>
 </section>
 <section id="XML-editing">
-<title>Direct XML editing</title>
+<title>Direct &XML; editing</title>
 <para>
 The current, <guilabel>Television</guilabel> and
 <guilabel>Persistent Playlists</guilabel> categories can also be manipulated
-by editing their <acronym>XML</acronym> storage. Of course one can do that
+by editing their &XML; storage. Of course one can do that
 when &kmplayer; is not running and editing the various files in
 <filename>~/.kde/share/apps/kmplayer/</filename>, but also in the application
 itself. Simply click on a category label, then choose <guimenu>View</guimenu>
 and next <guimenu>Edit mode</guimenu>. You can also click on a child branch
-and will then see only the <acronym>XML</acronym> contents of the branch.
+and will then see only the &XML; contents of the branch.
 </para>
 <para>
-After you have edited some <acronym>XML</acronym>, click on the
+After you have edited some &XML;, click on the
 <guilabel>Sync with playlist</guilabel> and either deselect the
 <guimenu>Edit mode</guimenu> item or click on another catergory.
 <caution><para>
@@ -187,7 +187,7 @@ After you have edited some <acronym>XML</acronym>, click on the
 </para>
 <para>
 Because of the lazyness of &kmplayer;'s author(s), some features can only be
-enabled by editing the XML.
+enabled by editing the &XML; .
 </para>
 </section>
 </chapter>
@@ -204,7 +204,7 @@ enabled by editing the XML.
     the above option to '1'. Just add this option if it's not there yet.
 </para>
 <para>
-    It's also possible to set an alternative animation. &kmplayer; will look at resp. <filename>~/.kde/share/apps/kmplayer/intro.xml</filename> and <filename>~/.kde/share/apps/kmplayer/exit.xml</filename>. The format has to be a supported <acronym>XML</acronym> file.
+    It's also possible to set an alternative animation. &kmplayer; will look at resp. <filename>~/.kde/share/apps/kmplayer/intro.xml</filename> and <filename>~/.kde/share/apps/kmplayer/exit.xml</filename>. The format has to be a supported &XML; file.
 </para>
 <para>
     The intro animation doesn't have to be a short one, because it will automatically end when another source is opened. Of course for the exit animation this would be a bit annoying, however the user can always end the application twice.
@@ -241,14 +241,14 @@ This player configuration name is <parameter>mplayer</parameter>.
 <title>Trouble shooting</title>
 <para>
 The best way to debug this backend is to start &kmplayer; from a console
-application like konsole. Then start a movie with kmplayer and see the exact
+application like konsole. Then start a movie with &kmplayer; and see the exact
 commandline that is used to start mplayer in the console application.
 Now copy/paste that to another console, remove the '-wid 12344' options, and
 make it play. Probably it's just choosing the right -ao/-vo params. Also make
-sure mplayer doesn't start default with a <acronym>GUI</acronym>.
+sure mplayer doesn't start default with a &GUI;.
 </para>
 <para>
-Another debugging tool is the 'console' button in kmplayer's toolbar. Here you
+Another debugging tool is the 'console' button in &kmplayer;'s toolbar. Here you
 can see the output from mplayer.
 </para>
 </section>
@@ -256,8 +256,8 @@ can see the output from mplayer.
 <section id="phonon">
 <title>Phonon</title>
 <para>
-<application>Phonon</application> is the &kde; desktop wide multimedia
-framework and can be configured in <application>System Settings</application>.
+&phonon; is the &kde; desktop wide multimedia
+framework and can be configured in &systemsettings;.
 </para>
 <para>
 This player configuration name is <parameter>phonon</parameter>.
@@ -289,12 +289,12 @@ plugin=/usr/lib/mozilla/plugins/libswfdecmozilla.so
 You can play flash inside &kmplayer;, actually you can even paste the special
 <parameter>embed</parameter> field for
 <ulink url="http://www.youtube.com">YouTube</ulink> in the 
-<link linkend="XML-editing">playlist <acronym>XML</acronym></link>.
+<link linkend="XML-editing">playlist &XML;</link>.
 </para>
 <para>
 In order to let &kmplayer; play flash in HTML pages, you should make the
 &kmplayer; plugin the service provider for the
-<parameter>application/x-shockwave-flash</parameter> mimetype in KDE's
+<parameter>application/x-shockwave-flash</parameter> mimetype in &kde;'s
 <guilabel>File Associations</guilabel> configuration dialog.
 </para>
 <para>
@@ -304,7 +304,7 @@ As in the above example, this player configuration name is
 <section id="npp-debug">
 <title>Trouble shooting</title>
 <para>
-Start Konqueror or &kmplayer; in a console application and look for errors
+Start &konqueror; or &kmplayer; in a console application and look for errors
 about loading the browser plugin library. The process started is called
 <filename>knpplayer</filename>. If that doesn't give any errors, check
 the backend output capturing inside &kmplayer; (<guimenu>View</guimenu>,
@@ -338,10 +338,10 @@ player=phonon
         &kmplayer; can play from TV cards using <application>MPlayer</application> or <acronym>XVideo</acronym> (using <application>kxvplayer</application>). Before you can watch TV, you have to configure which device to use and the TV channels. You can use the scanner from the configure dialog for this or edit the config file manually.
 </para>
 <para>
-The config file for TV settings is a <acronym>XML</acronym> file, located
+The config file for TV settings is a &XML; file, located
 <filename>~/.kde/share/apps/kmplayer/tv.xml</filename>. See
 <link linkend="XML-editing">here</link> for manipulating this data directly.
-The <acronym>XML</acronym> format is like this example:
+The &XML; format is like this example:
 <programlisting>
 &lt;tvdevices&gt;
     &lt;device path="/dev/video0" width="320" height="240" name="BT878 video (Hauppauge (bt878))" audio=""
@@ -381,13 +381,13 @@ See the VDR section for more information about using <acronym>XVideo</acronym>.
 <section id="vdrsource">
     <title>VDR</title>
 <para>
-To configure your VDR settings in kmplayer, see the Configure panel->Source->VDR->XVideo port panel. There should be ports detected, from which you should select one. You have to figure out what encoding you should use (eg. for western europe, that is PAL) and likely the correct one has a name with <quote>dvb</quote> in it.
+To configure your VDR settings in &kmplayer;, see the Configure panel->Source->VDR->XVideo port panel. There should be ports detected, from which you should select one. You have to figure out what encoding you should use (eg. for western europe, that is PAL) and likely the correct one has a name with <quote>dvb</quote> in it.
 </para>
 <para>
  For instance, I have a TV card, a DVB-S card and a webcam plugged into my system. With these, my settings are that there are three Ports. The first one has a long list of NTSC(-JP)/PAL(-M)/SECAM entries all saying something about television/composite/svideo (my TV card). The second one has NTSC-dvb/PAL-dvb/SECAM-dvb (my DVB-S card). And finally the third has only ntsc/pal (probably my webcam). I should therefore configure (just select it) the second port and second entry (PAL-dvb). 
 </para>
 <para>
-    Because VDR support from kmplayer can only use <acronym>XVideo</acronym>, of course <acronym>XVideo</acronym> should work (and I believe for video devices, this way of viewing only works on linux). Also this only works on your first display (:0.0). So make sure <quote>videoforlinux</quote> extension works with the X server. For the XFree86 server, therefore in its configuration (<filename>/etc/X11/XF86Config</filename>) it should have
+    Because VDR support from &kmplayer; can only use <acronym>XVideo</acronym>, of course <acronym>XVideo</acronym> should work (and I believe for video devices, this way of viewing only works on linux). Also this only works on your first display (:0.0). So make sure <quote>videoforlinux</quote> extension works with the X server. For the XFree86 server, therefore in its configuration (<filename>/etc/X11/XF86Config</filename>) it should have
 <programlisting>
 Section "Module" 
      .... 
@@ -409,13 +409,13 @@ EndSection
     starts playing the list of playable items.
 </para>
 <para>
-    You can activate a particular source with a <filename>kmplayer://</filename> type <acronym>URL</acronym>. Just set the host part as the source name and optional path part as extra arguments, so for a channel for the "vdrsource" this could look like <filename>kmplayer://vdrsource/22 MTV 2</filename>. Eg. this script starts kmplayer using "dvdnavsource" and using <acronym>DCOP</acronym> to play fullscreen.
+    You can activate a particular source with a <filename>kmplayer://</filename> type <acronym>URL</acronym>. Just set the host part as the source name and optional path part as extra arguments, so for a channel for the "vdrsource" this could look like <filename>kmplayer://vdrsource/22 MTV 2</filename>. Eg. this script starts &kmplayer; using "dvdnavsource" and using &DBus; to play fullscreen.
     <programlisting>
 /bin/bash
 kmplayer kmplayer://dvdnavsource/ &amp;
 PID=$!
 sleep 2
-dcop kmplayer-$PID KMediaPlayer toggleFullScreen
+qdbus org.kde.kmplayer-$PID /kmplayer/MainWindow_1 showFullScreen
     </programlisting>
     For some sources this will not do much because they are not meant to be
     for normal playing. For "pipesource" this is disabled because that
@@ -444,6 +444,8 @@ dcop kmplayer-$PID KMediaPlayer toggleFullScreen
 <title>Credits and Licenses</title>
 
 <para>&kmplayer; copyright 2002,2003 Koos Vriezen</para>
+
+<!-- TRANS:CREDIT_FOR_TRANSLATORS -->
 
 &underFDL;
 &underGPL;
