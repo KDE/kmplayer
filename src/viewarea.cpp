@@ -25,7 +25,6 @@
 #include <qapplication.h>
 #include <qslider.h>
 #include <qcursor.h>
-#include <qimage.h>
 #include <qmap.h>
 #include <QPalette>
 #include <QDesktopWidget>
@@ -33,6 +32,10 @@
 #include <QPainter>
 #include <QMainWindow>
 #include <QWidgetAction>
+#include <QtGui/QTextBlock>
+#include <QtGui/QTextDocument>
+#include <QtGui/QAbstractTextDocumentLayout>
+#include <QtGui/QImage>
 
 #include <kactioncollection.h>
 #include <kapplication.h>
@@ -49,7 +52,6 @@
 #ifdef KMPLAYER_WITH_CAIRO
 # include <cairo-xlib.h>
 # include <cairo-xlib-xrender.h>
-# include <pango/pangocairo.h>
 #endif
 #include "mediaobject.h"
 #include "kmplayer_smil.h"
@@ -780,29 +782,34 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
     paint (&av->transition, av->media_opacity, s.ptr (), scr.point, clip_rect);
 }
 
-static void calculateTextDimensions (PangoFontDescription *desc,
-        const char *text, Single w, Single h,
-        int *pxw, int *pxh, bool markup_text, int align = -1) {
-    cairo_surface_t *img_surf = cairo_image_surface_create (
-            CAIRO_FORMAT_RGB24, (int) w, h);
-    cairo_t *cr_txt = cairo_create (img_surf);
-    PangoLayout *layout = pango_cairo_create_layout (cr_txt);
-    pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
-    pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
+static void setAlignment (QTextDocument &td, unsigned char align) {
+    QTextOption opt = td.defaultTextOption();
+    if (SmilTextProperties::AlignLeft == align)
+        opt.setAlignment (Qt::AlignLeft);
+    else if (SmilTextProperties::AlignCenter == align)
+        opt.setAlignment (Qt::AlignCenter);
+    else if (SmilTextProperties::AlignRight == align)
+        opt.setAlignment (Qt::AlignRight);
+    td.setDefaultTextOption (opt);
+}
+
+static void calculateTextDimensions (const QFont& font,
+        const QString& text, Single w, Single h, Single maxh,
+        int *pxw, int *pxh, bool markup_text,
+        unsigned char align = SmilTextProperties::AlignLeft) {
+    QTextDocument td;
+    td.setDefaultFont( font );
+    QImage img (QSize ((int)w, (int)h), QImage::Format_RGB32);
+    td.setPageSize (QSize ((int)w, (int)maxh));
+    td.documentLayout()->setPaintDevice (&img);
     if (markup_text)
-        pango_layout_set_markup (layout, text, -1);
+        td.setHtml( text );
     else
-        pango_layout_set_text (layout, text, -1);
-    if (align > -1)
-        pango_layout_set_alignment (layout, (PangoAlignment) align);
-    pango_layout_set_font_description (layout, desc);
-
-    pango_cairo_show_layout (cr_txt, layout);
-    pango_layout_get_pixel_size (layout, pxw, pxh);
-
-    g_object_unref (layout);
-    cairo_destroy (cr_txt);
-    cairo_surface_destroy (img_surf);
+        td.setPlainText( text );
+    setAlignment (td, align);
+    QRectF r = td.documentLayout()->blockBoundingRect (td.lastBlock());
+    *pxw = (int)(r.x() + r.width());
+    *pxh = (int)(r.y() + r.height());
 }
 
 static cairo_t *createContext (cairo_surface_t *similar, Surface *s, int w, int h) {
@@ -846,32 +853,45 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         int w = scr.width ();
         int pxw, pxh;
         Single ft_size = w * txt->font_size / (double)s->bounds.width ();
-        const QByteArray text = tm->text.toUtf8 ();
         bool clear = s->surface;
 
-        PangoFontDescription *desc = pango_font_description_new ();
-        pango_font_description_set_family(desc, txt->font_name.toUtf8().constData());
-        pango_font_description_set_size (desc, PANGO_SCALE * ft_size);
+        QFont font (txt->font_name, ft_size);
         if (clear) {
             pxw = scr.width ();
             pxh = scr.height ();
         } else {
-            calculateTextDimensions (desc, text.constData (),
-                    w, 2 * ft_size, &pxw, &pxh, false);
+            calculateTextDimensions (font, tm->text,
+                    w, 2 * ft_size, scr.height (), &pxw, &pxh, false);
         }
+        QTextDocument td;
+        td.setDefaultFont (font);
+        bool have_alpha = (s->background_color & 0xff000000) < 0xff000000;
+        QImage img (QSize (pxw, pxh), have_alpha ? QImage::Format_ARGB32 : QImage::Format_RGB32);
+        img.fill (s->background_color);
+        td.setPageSize (QSize (pxw, pxh + (int)ft_size));
+        td.documentLayout()->setPaintDevice (&img);
+        setAlignment (td, 1 + (int)txt->halign);
+        td.setPlainText (tm->text);
+        QPainter painter;
+        painter.begin (&img);
+        QAbstractTextDocumentLayout::PaintContext ctx;
+        ctx.clip = QRect (0, 0, pxw, pxh);
+        ctx.palette.setColor (QPalette::Text, QColor (QRgb (txt->font_color)));
+        td.documentLayout()->draw (&painter, ctx);
+        painter.end();
+
         cairo_t *cr_txt = createContext (cairo_surface, s, pxw, pxh);
-
-        CAIRO_SET_SOURCE_RGB (cr_txt, txt->font_color);
-        PangoLayout *layout = pango_cairo_create_layout (cr_txt);
-        pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
-        pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-        pango_layout_set_text (layout, text.constData (), -1);
-        pango_layout_set_font_description (layout, desc);
-
-        pango_cairo_show_layout (cr_txt, layout);
-
-        pango_font_description_free (desc);
-        g_object_unref (layout);
+        cairo_surface_t *src_sf = cairo_image_surface_create_for_data (
+                img.bits (),
+                have_alpha ? CAIRO_FORMAT_ARGB32:CAIRO_FORMAT_RGB24,
+                img.width(), img.height(), img.bytesPerLine ());
+        cairo_pattern_t *pat = cairo_pattern_create_for_surface (src_sf);
+        cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+        cairo_set_operator (cr_txt, CAIRO_OPERATOR_SOURCE);
+        cairo_set_source (cr_txt, pat);
+        cairo_paint (cr_txt);
+        cairo_pattern_destroy (pat);
+        cairo_surface_destroy (src_sf);
         cairo_destroy (cr_txt);
 
         // update bounds rect
@@ -924,17 +944,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
 }
 
 struct SmilTextBlock {
-    SmilTextBlock (PangoFontDescription *d, const QString &t, IRect r, int a)
-        : desc (d), rich_text (t), rect (r), align (a), next (NULL) {}
+    SmilTextBlock (const QFont& f, const QString &t,
+            IRect r, unsigned char a)
+        : font (f), rich_text (t), rect (r), align (a), next (NULL) {}
 
-    ~SmilTextBlock () {
-        pango_font_description_free (desc);
-    }
-
-    PangoFontDescription *desc;
+    QFont font;
     QString rich_text;
     IRect rect;
-    int align;
+    unsigned char align;
 
     SmilTextBlock *next;
 };
@@ -974,40 +991,40 @@ public:
 };
 
 void SmilTextInfo::span (float scale) {
-    QString s = "<span";
+    QString s = "<span style=\"";
     if (props.font_size > -1)
-        s += " size='" + QString::number ((int)(1024 * scale * props.font_size)) + "'";
-    s += " face='" + props.font_family + "'";
+        s += "font-size:" + QString::number ((int)(scale * props.font_size)) + "px;";
+    s += "font-family:" + props.font_family + ";";
     if (props.font_color > -1)
-        s += QString().sprintf (" foreground='#%06x'", props.font_color);
+        s += QString().sprintf ("color:#%06x;", props.font_color);
     if (props.background_color > -1)
-        s += QString().sprintf (" background='#%06x'", props.background_color);
+        s += QString().sprintf ("background-color:#%06x;", props.background_color);
     if (SmilTextProperties::StyleInherit != props.font_style) {
-        s += " style='";
+        s += "font-style:";
         switch (props.font_style) {
             case SmilTextProperties::StyleOblique:
-                s += "oblique'";
+                s += "oblique;";
                 break;
             case SmilTextProperties::StyleItalic:
-                s += "italic'";
+                s += "italic;";
                 break;
             default:
-                s += "normal'";
+                s += "normal;";
                 break;
         }
     }
     if (SmilTextProperties::WeightInherit != props.font_weight) {
-        s += " weight='";
+        s += "font-weight:";
         switch (props.font_weight) {
             case SmilTextProperties::WeightBold:
-                s += "bold'";
+                s += "bold;";
                 break;
             default:
-                s += "normal'";
+                s += "normal;";
                 break;
         }
     }
-    s += ">";
+    s += "\">";
     span_text = s;
 }
 
@@ -1031,25 +1048,16 @@ void SmilTextVisitor::push () {
         fs *= scale;
         maxfs *= scale;
 
-        int align = -1;
-        if (SmilTextProperties::AlignLeft == info.props.text_align)
-            align = (int) PANGO_ALIGN_LEFT;
-        else if (SmilTextProperties::AlignCenter == info.props.text_align)
-            align = (int) PANGO_ALIGN_CENTER;
-        else if (SmilTextProperties::AlignRight == info.props.text_align)
-            align = (int) PANGO_ALIGN_RIGHT;
-        PangoFontDescription *desc = pango_font_description_new ();
-        pango_font_description_set_family (desc, "Sans");
-        pango_font_description_set_size (desc, PANGO_SCALE * fs);
-        calculateTextDimensions (desc, rich_text.toUtf8 ().constData (),
-                width, 2 * maxfs, &pxw, &pxh, true, align);
+        QFont font ("Sans", (int)fs);
+        calculateTextDimensions (font, rich_text.toUtf8 ().constData (),
+                width, 2 * maxfs, 1024, &pxw, &pxh, true, info.props.text_align);
         int x = 0;
         if (SmilTextProperties::AlignCenter == info.props.text_align)
             x = (width - pxw) / 2;
         else if (SmilTextProperties::AlignRight == info.props.text_align)
             x = width - pxw;
-        SmilTextBlock *block = new SmilTextBlock (desc, rich_text,
-                IRect (x, voffset, pxw, pxh), align);
+        SmilTextBlock *block = new SmilTextBlock (font, rich_text,
+                IRect (x, voffset, pxw, pxh), info.props.text_align);
         voffset += pxh;
         max_font_size = 0;
         rich_text.clear();
@@ -1131,21 +1139,36 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
             SmilTextBlock *b = info.first;
             int voff = 0;
             while (b) {
-                const QByteArray text = b->rich_text.toUtf8 ();
                 cairo_translate (cr_txt, 0, b->rect.y() - voff);
+                QTextDocument td;
+                td.setDefaultFont (b->font);
+                bool have_alpha = (s->background_color & 0xff000000) < 0xff000000;
+                QImage img (QSize (b->rect.width(), b->rect.height()), have_alpha ? QImage::Format_ARGB32 : QImage::Format_RGB32);
+                img.fill (s->background_color);
+                td.setPageSize (QSize (b->rect.width(), b->rect.height() + 10));
+                setAlignment (td, b->align);
+                td.documentLayout()->setPaintDevice (&img);
+                td.setHtml (b->rich_text);
+                QPainter painter;
+                painter.begin (&img);
+                QAbstractTextDocumentLayout::PaintContext ctx;
+                ctx.clip = QRect (QPoint (0, 0), img.size ());
+                td.documentLayout()->draw (&painter, ctx);
+                painter.end();
+
+                cairo_surface_t *src_sf = cairo_image_surface_create_for_data (
+                        img.bits (),
+                        have_alpha ? CAIRO_FORMAT_ARGB32:CAIRO_FORMAT_RGB24,
+                        img.width(), img.height(), img.bytesPerLine ());
+                cairo_pattern_t *pat = cairo_pattern_create_for_surface (src_sf);
+                cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+                cairo_set_operator (cr_txt, CAIRO_OPERATOR_SOURCE);
+                cairo_set_source (cr_txt, pat);
+                cairo_paint (cr_txt);
+                cairo_pattern_destroy (pat);
+                cairo_surface_destroy (src_sf);
+
                 voff = b->rect.y ();
-                PangoLayout *layout = pango_cairo_create_layout (cr_txt);
-                pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
-                pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-                pango_layout_set_markup (layout, text.constData (), -1);
-                pango_layout_set_font_description (layout, b->desc);
-                if (b->align > -1)
-                    pango_layout_set_alignment(layout,(PangoAlignment)b->align);
-
-                pango_cairo_show_layout (cr_txt, layout);
-
-                g_object_unref (layout);
-
                 SmilTextBlock *tmp = b;
                 b = b->next;
                 delete tmp;
