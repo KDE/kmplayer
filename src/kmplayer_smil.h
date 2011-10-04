@@ -44,6 +44,7 @@ public:
     SizeType (const QString & s, bool force_perc=false);
     void reset ();
     SizeType & operator = (const QString & s);
+    SizeType & operator = (Single d);
     SizeType & operator += (const SizeType & s);
     SizeType & operator -= (const SizeType & s);
     SizeType & operator /= (const int i)
@@ -225,7 +226,7 @@ public:
     unsigned char text_writing;
     unsigned char text_align;
     unsigned char padding;
-    short font_size;
+    SizeType font_size;
 };
 
 class KMPLAYER_NO_EXPORT SmilColorProperty {

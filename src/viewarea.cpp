@@ -994,8 +994,8 @@ public:
 
 void SmilTextInfo::span (float scale) {
     QString s = "<span style=\"";
-    if (props.font_size > -1)
-        s += "font-size:" + QString::number ((int)(scale * props.font_size)) + "px;";
+    if (props.font_size.size () > -1)
+        s += "font-size:" + QString::number ((int)(scale * props.font_size.size ())) + "px;";
     s += "font-family:" + props.font_family + ";";
     if (props.font_color > -1)
         s += QString().sprintf ("color:#%06x;", props.font_color);
@@ -1041,7 +1041,7 @@ void SmilTextVisitor::addRichText (const QString &txt) {
 void SmilTextVisitor::push () {
     if (!rich_text.isEmpty ()) {
         int pxw, pxh;
-        float fs = info.props.font_size;
+        float fs = info.props.font_size.size ();
         if (fs < 0)
             fs = TextMedia::defaultFontSize ();
         float maxfs = max_font_size;
@@ -1098,8 +1098,8 @@ void SmilTextVisitor::visit (SMIL::TextFlow *flow) {
             push ();
 
         info.props.mask (flow->props);
-        if (info.props.font_size > max_font_size)
-            max_font_size = info.props.font_size;
+        if ((float)info.props.font_size.size () > max_font_size)
+            max_font_size = info.props.font_size.size ();
         info.span (scale);
 
         flow->firstChild ()->accept (this);

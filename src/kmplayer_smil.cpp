@@ -893,6 +893,12 @@ SizeType & SizeType::operator = (const QString & s) {
     return *this;
 }
 
+SizeType & SizeType::operator = (Single d) {
+    reset ();
+    abs_size = d;
+    return *this;
+}
+
 SizeType & SizeType::operator += (const SizeType & s) {
     perc_size += s.perc_size;
     abs_size += s.abs_size;
@@ -3935,9 +3941,9 @@ SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
         if (val.toLower ().indexOf ("sans" ) < 0)
             font_name = "serif";
     } else if (name == "font-size" || name == "fontPtSize") {
-        font_size = val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
+        font_size = val.isEmpty() ? TextMedia::defaultFontSize() : (int)SizeType (val).size ();
     } else if (name == "fontSize") {
-        font_size += val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
+        font_size += val.isEmpty() ? TextMedia::defaultFontSize() : (int)SizeType (val).size ();
     } else if (name == "hAlign") {
         QByteArray ba = val.toLatin1 ();
         const char *cval = ba.constData ();
@@ -4205,7 +4211,7 @@ bool SmilTextProperties::parseParam(const TrieString &name, const QString &val) 
     } else if (name == "textFontFamily") {
         font_family = val;
     } else if (name == "textFontSize") {
-        font_size = val.toInt ();
+        font_size = SizeType (val);
     } else if (name == "textFontStyle") {
         if (val == "normal")
             font_style = StyleNormal;
@@ -4239,7 +4245,7 @@ bool SmilTextProperties::parseParam(const TrieString &name, const QString &val) 
 }
 
 void SmilTextProperties::mask (const SmilTextProperties &props) {
-    if (props.font_size > 0)
+    if ((float)props.font_size.size () > 0.1)
         font_size = props.font_size;
     if (props.font_color > -1)
         font_color = props.font_color;
