@@ -799,6 +799,7 @@ static void calculateTextDimensions (const QFont& font,
         unsigned char align = SmilTextProperties::AlignLeft) {
     QTextDocument td;
     td.setDefaultFont( font );
+    td.setDocumentMargin (0);
     QImage img (QSize ((int)w, (int)h), QImage::Format_RGB32);
     td.setPageSize (QSize ((int)w, (int)maxh));
     td.documentLayout()->setPaintDevice (&img);
@@ -808,7 +809,7 @@ static void calculateTextDimensions (const QFont& font,
         td.setPlainText( text );
     setAlignment (td, align);
     QRectF r = td.documentLayout()->blockBoundingRect (td.lastBlock());
-    *pxw = (int)(r.x() + r.width());
+    *pxw = (int)td.idealWidth ();
     *pxh = (int)(r.y() + r.height());
 }
 
@@ -864,6 +865,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
                     w, 2 * ft_size, scr.height (), &pxw, &pxh, false);
         }
         QTextDocument td;
+        td.setDocumentMargin (0);
         td.setDefaultFont (font);
         bool have_alpha = (s->background_color & 0xff000000) < 0xff000000;
         QImage img (QSize (pxw, pxh), have_alpha ? QImage::Format_ARGB32 : QImage::Format_RGB32);
@@ -1141,6 +1143,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
             while (b) {
                 cairo_translate (cr_txt, 0, b->rect.y() - voff);
                 QTextDocument td;
+                td.setDocumentMargin (0);
                 td.setDefaultFont (b->font);
                 bool have_alpha = (s->background_color & 0xff000000) < 0xff000000;
                 QImage img (QSize (b->rect.width(), b->rect.height()), have_alpha ? QImage::Format_ARGB32 : QImage::Format_RGB32);
