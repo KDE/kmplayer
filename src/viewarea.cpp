@@ -1082,11 +1082,11 @@ void SmilTextVisitor::visit (TextNode *text) {
 }
 
 void SmilTextVisitor::visit (SMIL::TextFlow *flow) {
-    if (flow->firstChild ()) {
-        bool new_block = SMIL::id_node_p == flow->id ||
-            SMIL::id_node_br == flow->id ||
-            SMIL::id_node_div == flow->id;
-        float fs = info.props.font_size;
+    bool new_block = SMIL::id_node_p == flow->id ||
+        SMIL::id_node_br == flow->id ||
+        SMIL::id_node_div == flow->id;
+    if ((new_block && !rich_text.isEmpty ()) || flow->firstChild ()) {
+        float fs = info.props.font_size.size ();
         if (fs < 0)
             fs = TextMedia::defaultFontSize ();
         int par_extra = SMIL::id_node_p == flow->id
@@ -1102,11 +1102,12 @@ void SmilTextVisitor::visit (SMIL::TextFlow *flow) {
             max_font_size = info.props.font_size.size ();
         info.span (scale);
 
-        flow->firstChild ()->accept (this);
+        if (flow->firstChild ())
+            flow->firstChild ()->accept (this);
 
         if (rich_text.isEmpty ())
             par_extra = 0;
-        if (new_block)
+        if (new_block && flow->firstChild ())
             push ();
         voffset += par_extra;
 
@@ -1139,9 +1140,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
 
             CAIRO_SET_SOURCE_RGB (cr_txt, 0);
             SmilTextBlock *b = info.first;
+            int hoff = 0;
             int voff = 0;
             while (b) {
-                cairo_translate (cr_txt, 0, b->rect.y() - voff);
+                cairo_translate (cr_txt, b->rect.x() - hoff, b->rect.y() - voff);
                 QTextDocument td;
                 td.setDocumentMargin (0);
                 td.setDefaultFont (b->font);
@@ -1167,10 +1169,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
                 cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
                 cairo_set_operator (cr_txt, CAIRO_OPERATOR_SOURCE);
                 cairo_set_source (cr_txt, pat);
-                cairo_paint (cr_txt);
+                cairo_rectangle (cr_txt, 0, 0, b->rect.width(), b->rect.height());
+                cairo_fill (cr_txt);
                 cairo_pattern_destroy (pat);
                 cairo_surface_destroy (src_sf);
 
+                hoff = b->rect.x ();
                 voff = b->rect.y ();
                 SmilTextBlock *tmp = b;
                 b = b->next;
