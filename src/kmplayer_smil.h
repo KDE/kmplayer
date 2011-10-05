@@ -791,9 +791,10 @@ public:
 class KMPLAYER_NO_EXPORT Brush : public MediaType {
 public:
     Brush (NodePtr & d);
+    virtual void init ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
-    unsigned int color;
+    SmilColorProperty color;
 };
 
 class KMPLAYER_NO_EXPORT SmilText : public Element {

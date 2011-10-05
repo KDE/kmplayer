@@ -3975,13 +3975,19 @@ KDE_NO_EXPORT void SMIL::TextMediaType::accept (Visitor * v) {
 KDE_NO_CDTOR_EXPORT SMIL::Brush::Brush (NodePtr & d)
     : SMIL::MediaType (d, "brush", id_node_brush) {}
 
+KDE_NO_EXPORT void SMIL::Brush::init () {
+    if (Runtime::TimingsInitialized > runtime->timingstate)
+        color.init ();
+    MediaType::init ();
+}
+
 KDE_NO_EXPORT void SMIL::Brush::accept (Visitor * v) {
     v->visit (this);
 }
 
 KDE_NO_EXPORT void SMIL::Brush::parseParam (const TrieString &param, const QString &val) {
     if (param == "color") {
-        color = val.isEmpty () ? 0 : QColor (val).rgb ();
+        color.setColor (val);
         Surface *s = surface ();
         if (s)
             s->repaint ();
