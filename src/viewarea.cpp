@@ -1695,7 +1695,6 @@ void MouseVisitor::surfaceEvent (Node *node, Surface *s) {
     int rx = scr.x(), ry = scr.y(), rw = scr.width(), rh = scr.height();
     const bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
     const bool had_mouse = s->has_mouse;
-    s->has_mouse = inside;
     if (deliverAndForward (node, s, inside, true) &&
             (inside || had_mouse) &&
             s->firstChild () && s->firstChild ()->node) {
