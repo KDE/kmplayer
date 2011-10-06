@@ -984,6 +984,7 @@ public:
     using Visitor::visit;
     void visit (TextNode *);
     void visit (SMIL::TextFlow *);
+    void visit (SMIL::TemporalMoment *);
 
     void addRichText (const QString &txt);
     void push ();
@@ -1124,6 +1125,12 @@ void SmilTextVisitor::visit (SMIL::TextFlow *flow) {
         flow->nextSibling ()->accept (this);
 }
 
+void SmilTextVisitor::visit (SMIL::TemporalMoment *tm) {
+    if (tm->state >= Node::state_began
+            && tm->nextSibling ())
+        tm->nextSibling ()->accept (this);
+}
+
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
     Surface *s = txt->surface ();
     if (!s)
@@ -1138,8 +1145,16 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
         float scale = 1.0 * w / (double)s->bounds.width ();
         SmilTextVisitor info (w, scale, txt->props);
 
-        if (txt->firstChild ())
-            txt->firstChild ()->accept (&info);
+        Node *first = txt->firstChild ();
+        for (Node *n = first; n; n = n->nextSibling ())
+            if (SMIL::id_node_clear == n->id) {
+                if (n->state >= Node::state_began)
+                    first = n->nextSibling ();
+                else
+                    break;
+            }
+        if (first)
+            first->accept (&info);
 
         info.push ();
         if (info.first) {

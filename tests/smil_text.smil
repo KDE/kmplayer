@@ -1,0 +1,47 @@
+<smil>
+  <head>
+    <layout>
+      <root-layout width="400" height="400" background-color="SlateGray"/>
+      <region left="10" top="10" right="10" bottom="10" background-color="black">
+        <region id="r1" left="1" top="1" right="1" bottom="1" background-color="#475360"/>
+      </region>
+    </layout>
+  </head>
+  <body>
+    <smilText dur="2" region="r1" textFontSize="24px" textAlign="left"  textColor="white">
+      Left align<br/>Second line of text
+      <p>Paragraph</p>
+    </smilText>
+    <smilText dur="2" region="r1" textFontSize="24px" textAlign="center"  textColor="white">
+      Center align
+      <br/>
+      Second line of <span textFontWeight="bold">bold text</span>
+    </smilText>
+    <smilText dur="2" region="r1" textFontSize="24px" textAlign="right"  textColor="white">
+      Right align
+      <div textFontSize="12" textFontStyle="italic">
+      Second line of text 12px italic</div>
+    </smilText>
+    <smilText textBackgroundColor="green" dur="10" region="r1" textFontSize="24px" textColor="white">
+      First line
+      <tev begin="1"/>
+      of text
+      <tev begin="2"/>
+      and <br/>Second line of text
+      <tev begin="3"/>
+      <br/>Third line of text<br/>
+      <tev begin="4"/>
+      Fourth line of text
+      <clear begin="6"/>
+      Round2 First line of text
+      <tev begin="7"/>
+      <br/>Round2 Second line of text
+      <tev begin="8"/>
+      <br/>Round2 Third line of text
+    </smilText>
+    <smilText textBackgroundColor="green" dur="1" region="r1" textFontSize="24px" textColor="white">
+      <clear begin="0"/>
+      First line of text
+    </smilText>
+  </body>
+</smil>

@@ -4072,7 +4072,9 @@ Node *SMIL::SmilText::childFromTag (const QString &tag) {
     QByteArray ba = tag.toLatin1 ();
     const char *ctag = ba.constData ();
     if (!strcmp (ctag, "tev"))
-    {}//return new SMIL::TextTev (m_doc);
+        return new TemporalMoment (m_doc, id_node_tev, ba);
+    if (!strcmp (ctag, "clear"))
+        return new TemporalMoment (m_doc, id_node_clear, ba);
     return fromTextFlowGroup (m_doc, tag);
 }
 
@@ -4103,6 +4105,14 @@ void SMIL::SmilText::message (MessageType msg, void *content) {
             return;
 
         case MsgChildFinished:
+            return;
+
+        case MsgMediaUpdated:
+            if (surface ()) {
+                text_surface->parentNode ()->repaint ();
+                text_surface->remove ();
+                text_surface = NULL;
+            }
             return;
 
         default:
@@ -4291,6 +4301,63 @@ void SMIL::TextFlow::parseParam(const TrieString &name, const QString &val) {
         Element::parseParam (name, val);
 }
 
+SMIL::TemporalMoment::TemporalMoment (NodePtr &doc, short id, const QByteArray &t)
+ : Element (doc, id),
+   runtime (new Runtime (this)),
+   tag (t) {}
+
+SMIL::TemporalMoment::~TemporalMoment () {
+    delete runtime;
+}
+
+void SMIL::TemporalMoment::init () {
+    if (Runtime::TimingsInitialized > runtime->timingstate) {
+        Element::init ();
+        runtime->initialize ();
+    }
+}
+
+void SMIL::TemporalMoment::activate () {
+    init ();
+    setState (state_activated);
+    runtime->start ();
+}
+
+void SMIL::TemporalMoment::begin () {
+    parentNode ()->message (MsgMediaUpdated);
+    Element::begin ();
+}
+
+void SMIL::TemporalMoment::deactivate () {
+    runtime->init ();
+    Element::deactivate ();
+}
+
+Node *SMIL::TemporalMoment::childFromTag (const QString & tag) {
+    return fromTextFlowGroup (m_doc, tag);
+}
+
+void SMIL::TemporalMoment::parseParam (const TrieString &name, const QString &value) {
+    // TODO: next
+    if (!runtime->parseParam (name, value))
+        Element::parseParam (name, value);
+}
+
+void SMIL::TemporalMoment::message (MessageType msg, void *content) {
+    if ((int) msg >= (int) Runtime::DurLastDuration)
+        Element::message (msg, content);
+    else
+        runtime->message (msg, content);
+}
+
+void *SMIL::TemporalMoment::role (RoleType msg, void *content) {
+    if (RoleTiming == msg)
+        return runtime;
+    void *response = runtime->role (msg, content);
+    if (response == MsgUnhandled)
+        return Element::role (msg, content);
+    return response;
+}
 
 //-----------------------------------------------------------------------------
 
@@ -5524,6 +5591,10 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::SmilText *n) {
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::TextFlow *n) {
+    visit (static_cast <Element *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::TemporalMoment *n) {
     visit (static_cast <Element *> (n));
 }
 

@@ -833,6 +833,7 @@ namespace SMIL {
     class Brush;
     class SmilText;
     class TextFlow;
+    class TemporalMoment;
     class PriorityClass;
     class Anchor;
     class Area;
@@ -871,6 +872,7 @@ public:
     virtual void visit (SMIL::Brush *);
     virtual void visit (SMIL::SmilText *);
     virtual void visit (SMIL::TextFlow *);
+    virtual void visit (SMIL::TemporalMoment *);
     virtual void visit (SMIL::Anchor *);
     virtual void visit (SMIL::Area *);
     virtual void visit (RP::Imfl *) {}

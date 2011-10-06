@@ -289,10 +289,12 @@ const short id_node_par = 111;
 const short id_node_seq = 112;
 const short id_node_switch = 113;
 const short id_node_excl = 114;
-const short id_node_text = 122;
-const short id_node_ref = 123;
-const short id_node_brush = 124;
-const short id_node_smil_text = 125;
+const short id_node_text = 120;
+const short id_node_ref = 121;
+const short id_node_brush = 122;
+const short id_node_smil_text = 123;
+const short id_node_tev = 124;
+const short id_node_clear = 125;
 const short id_node_text_styling = 126;
 const short id_node_set_value = 127;
 const short id_node_new_value = 128;
@@ -841,6 +843,25 @@ public:
     virtual void accept (Visitor *v) { v->visit (this); }
 
     SmilTextProperties props;
+    QByteArray tag;
+};
+
+class KMPLAYER_NO_EXPORT TemporalMoment : public Element {
+public:
+    TemporalMoment (NodePtr &doc, short id, const QByteArray &tag);
+    ~TemporalMoment ();
+    virtual void init ();
+    virtual void activate ();
+    virtual void begin ();
+    virtual void deactivate ();
+    KDE_NO_EXPORT const char *nodeName () const { return tag.data (); }
+    Node *childFromTag (const QString & tag);
+    virtual void parseParam (const TrieString &name, const QString &value);
+    virtual void message (MessageType msg, void *content=NULL);
+    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void accept (Visitor *v) { v->visit (this); }
+
+    Runtime *runtime;
     QByteArray tag;
 };
 
