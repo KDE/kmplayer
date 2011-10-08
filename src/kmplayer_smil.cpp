@@ -4059,6 +4059,7 @@ void SMIL::SmilText::deactivate () {
         text_surface->remove ();
         text_surface = NULL;
     }
+    sizes.resetSizes ();
     runtime->init ();
     Element::deactivate ();
 }
@@ -4079,12 +4080,31 @@ Node *SMIL::SmilText::childFromTag (const QString &tag) {
 }
 
 void SMIL::SmilText::parseParam (const TrieString &name, const QString &value) {
-    if (!props.parseParam (name, value) &&
-            !runtime->parseParam (name, value) &&
-            !parseBackgroundParam (background_color, name, value) &&
-            !parseMediaOpacityParam (media_opacity, name, value) &&
-            !parseTransitionParam (this, transition, runtime, name, value)) {
+    if (props.parseParam (name, value)
+            || sizes.setSizeParam (name, value)
+            || parseBackgroundParam (background_color, name, value)
+            || parseMediaOpacityParam (media_opacity, name, value)) {
+        message (MsgMediaUpdated);
+    } else if (!runtime->parseParam (name, value)
+            && !parseTransitionParam (this, transition, runtime, name, value)) {
         Element::parseParam (name, value);
+    }
+}
+
+void SMIL::SmilText::updateBounds (bool remove) {
+    if (text_surface) {
+        SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (region_node);
+        Surface *rs = (Surface *) region_node->role (RoleDisplay);
+        if (rs) {
+            SRect b = rs->bounds;
+            Single x, y, w = size.width, h = size.height;
+            sizes.calcSizes (this, &rb->sizes, b.width(), b.height(), x, y, w, h);
+            if (!size.isEmpty () && w > 0 && h > 0) {
+                w = size.width;
+                h = size.height;
+            }
+            text_surface->resize (SRect (x, y, w, h), remove);
+        }
     }
 }
 
@@ -4092,8 +4112,7 @@ void SMIL::SmilText::message (MessageType msg, void *content) {
     switch (msg) {
 
         case MsgSurfaceBoundsUpdate:
-            if (content && text_surface)
-                text_surface->resize (text_surface->bounds, true);
+            updateBounds (!!content);
             return;
 
         case MsgStateFreeze:
@@ -4137,6 +4156,9 @@ void *SMIL::SmilText::role (RoleType msg, void *content) {
     case RoleDisplay:
         return surface ();
 
+    case RoleSizer:
+        return &sizes;
+
     case RoleReceivers: {
         MessageType msgt = (MessageType) (long) content;
         ConnectionList *l = mouse_listeners.receivers (msgt);
@@ -4163,18 +4185,13 @@ Surface *SMIL::SmilText::surface () {
             text_surface->remove ();
             text_surface = NULL;
         }
-    } else if (region_node) {
+    } else if (region_node && !text_surface) {
         Surface *rs = (Surface *) region_node->role (RoleDisplay);
         if (rs) {
-            SRect b = rs->bounds;
-            if (!text_surface)
-                text_surface = rs->createSurface (this,
-                        SRect (0, 0, b.width (), b.height ()));
-#ifdef KMPLAYER_WITH_CAIRO
-            else if (!text_surface->surface)
-                text_surface->bounds = SRect (0, 0, b.width (), b.height ());
-#endif
+            text_surface = rs->createSurface (this, SRect ());
             text_surface->setBackgroundColor (background_color.color);
+            size = SSize ();
+            updateBounds (false);
         }
     }
     return text_surface.ptr ();

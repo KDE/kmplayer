@@ -817,6 +817,7 @@ public:
     virtual void accept (Visitor *v) { v->visit (this); }
 
     Surface *surface ();
+    void updateBounds (bool remove);
 
     SmilColorProperty background_color;
     MediaOpacity media_opacity;
@@ -824,6 +825,8 @@ public:
     SmilTextProperties props;
     SurfacePtrW text_surface;
     NodePtrW region_node;
+    CalculatedSizer sizes;
+    SSize size;
     ConnectionLink region_attach;
     ConnectionList media_attached;
     MouseListeners mouse_listeners;

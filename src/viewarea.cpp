@@ -1206,6 +1206,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
 
             // update bounds rect
             s->bounds = matrix.toUser (IRect (scr.point, ISize (w, info.voffset)));
+            txt->size = s->bounds.size;
+            txt->updateBounds (false);
 
             // update coord. for painting below
             scr = matrix.toScreen (s->bounds);
