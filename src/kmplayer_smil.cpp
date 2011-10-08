@@ -4029,8 +4029,6 @@ void SMIL::SmilText::activate () {
         region_node = r;
     init (); // sets all attributes
     setState (state_activated);
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-        c->activate ();
     runtime->start ();
 }
 
@@ -4042,7 +4040,9 @@ void SMIL::SmilText::begin () {
         rb->repaint ();
         transition.begin (this, runtime);
     }
-    Element::begin ();
+    setState (state_began);
+    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+        c->activate ();
 
 }
 
@@ -4105,6 +4105,8 @@ void SMIL::SmilText::message (MessageType msg, void *content) {
             return;
 
         case MsgChildFinished:
+            if (unfinished ())
+                runtime->tryFinish ();
             return;
 
         case MsgMediaUpdated:
