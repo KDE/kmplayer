@@ -790,8 +790,9 @@ void Mrl::message (MessageType msg, void *content) {
                 !isPlayable () && firstChild ()) {//if backend added child links
             state = state_activated;
             firstChild ()->activate ();
-        } else
+        } else if (unfinished ()) {
             finish ();
+        }
         break;
 
     default:

@@ -58,13 +58,14 @@ class Surface;
 
 class KMPLAYER_EXPORT IProcess {
 public:
-    enum State { NotRunning = 0, Ready, Buffering, Playing };
+    enum State { NotRunning = 0, Ready, Buffering, Playing, Paused };
 
     virtual ~IProcess () {}
 
     virtual bool ready () = 0;
     virtual bool play () = 0;
     virtual void pause () = 0;
+    virtual void unpause () = 0;
     virtual bool grabPicture (const QString &file, int frame) = 0;
     virtual void stop () = 0;
     virtual void quit () = 0;
@@ -203,7 +204,6 @@ protected:
 
     MediaManager *m_manager;
     NodePtrW m_node;
-    bool paused;
 };
 
 //------------------------%<----------------------------------------------------
@@ -309,7 +309,6 @@ public:
     QString m_grab_file;
     int m_frame;
     Request request;
-    bool ignore_pause;
 
 protected:
     ~AudioVideoMedia ();

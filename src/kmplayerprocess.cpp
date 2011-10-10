@@ -223,6 +223,9 @@ void Process::setSubtitle (int, const QString &) {}
 void Process::pause () {
 }
 
+void Process::unpause () {
+}
+
 bool Process::seek (int /*pos*/, bool /*absolute*/) {
     return false;
 }
@@ -426,6 +429,16 @@ KDE_NO_EXPORT void MPlayerBase::initProcess () {
             this, SLOT (processStopped (int, QProcess::ExitStatus)));
 }
 
+bool MPlayerBase::removeQueued (const char *cmd) {
+    const QList<QByteArray>::iterator e = commands.end ();
+    for (QList<QByteArray>::iterator i = commands.begin (); i != e; ++i)
+        if (!strncmp ((*i).data (), cmd, strlen (cmd))) {
+            commands.erase (i);
+            return true;
+        }
+    return false;
+}
+
 KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
     if (running ()) {
         commands.push_front (QString (cmd + '\n').toAscii ());
@@ -497,6 +510,7 @@ KDE_NO_CDTOR_EXPORT
 MPlayer::MPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings)
  : MPlayerBase (parent, pinfo, settings, "mplayer"),
    m_widget (0L),
+   m_transition_state (NotRunning),
    aid (-1), sid (-1)
 {}
 
@@ -518,6 +532,8 @@ KDE_NO_EXPORT bool MPlayer::ready () {
 KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     if (running ())
         return sendCommand (QString ("gui_play"));
+
+    m_transition_state = NotRunning;
     if (!m_needs_restarted && running ())
         quit (); // rescheduling of setState will reset state just-in-time
 
@@ -655,7 +671,21 @@ KDE_NO_EXPORT void MPlayer::stop () {
 }
 
 KDE_NO_EXPORT void MPlayer::pause () {
-    sendCommand (QString ("pause"));
+    if (Paused != m_transition_state) {
+        m_transition_state = Paused;
+        if (!removeQueued ("pause"))
+            sendCommand (QString ("pause"));
+    }
+}
+
+KDE_NO_EXPORT void MPlayer::unpause () {
+    if (m_transition_state == Paused
+            || (Paused == m_state
+                && m_transition_state != Playing)) {
+        m_transition_state = Playing;
+        if (!removeQueued ("pause"))
+            sendCommand (QString ("pause"));
+    }
 }
 
 KDE_NO_EXPORT bool MPlayer::seek (int pos, bool absolute) {
@@ -790,10 +820,16 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
         if (process_stats) {
             QRegExp & m_posRegExp = patterns[MPlayerPreferencesPage::pat_pos];
             QRegExp & m_cacheRegExp = patterns[MPlayerPreferencesPage::pat_cache];
-            if (m_source->hasLength () && m_posRegExp.search (out) > -1) {
-                int pos = int (10.0 * m_posRegExp.cap (1).toFloat ());
-                m_source->setPosition (pos);
-                m_request_seek = -1;
+            if (m_posRegExp.search (out) > -1) {
+                if (m_source->hasLength ()) {
+                    int pos = int (10.0 * m_posRegExp.cap (1).toFloat ());
+                    m_source->setPosition (pos);
+                    m_request_seek = -1;
+                }
+                if (Playing == m_transition_state) {
+                    m_transition_state = NotRunning;
+                    setState (Playing);
+                }
             } else if (m_cacheRegExp.search (out) > -1) {
                 m_source->setLoading (int (m_cacheRegExp.cap(1).toDouble()));
             }
@@ -804,6 +840,11 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                 if (ok && l >= 0) {
                     m_source->setLength (mrl (), 10 * l);
                 }
+            }
+        } else if (out.startsWith ("ID_PAUSED")) {
+            if (Paused == m_transition_state) {
+                m_transition_state = NotRunning;
+                setState (Paused);
             }
         } else if (m_refURLRegExp.search(out) > -1) {
             kDebug () << "Reference mrl " << m_refURLRegExp.cap (1);
@@ -1365,6 +1406,10 @@ void MasterProcess::pause () {
         msg.setDelayedReply (false);
         QDBusConnection::sessionBus().send (msg);
     }
+}
+
+void MasterProcess::unpause () {
+    pause ();
 }
 
 bool MasterProcess::seek (int pos, bool) {

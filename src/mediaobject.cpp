@@ -168,7 +168,7 @@ MediaObject *MediaManager::createAVMedia (Node *node, const QByteArray &) {
 }
 
 static const QString statemap [] = {
-    i18n ("Not Running"), i18n ("Ready"), i18n ("Buffering"), i18n ("Playing")
+    i18n ("Not Running"), i18n ("Ready"), i18n ("Buffering"), i18n ("Playing"),  i18n ("Paused")
 };
 
 void MediaManager::stateChange (AudioVideoMedia *media,
@@ -193,11 +193,8 @@ void MediaManager::stateChange (AudioVideoMedia *media,
     m_player->updateStatus (i18n ("Player %1 %2",
                 media->process->process_info->name, statemap[news]));
     if (IProcess::Playing == news) {
-        if (Element::state_deferred == mrl->state) {
-            media->ignore_pause = true;
+        if (Element::state_deferred == mrl->state)
             mrl->undefer ();
-            media->ignore_pause = false;
-        }
         bool has_video = !is_rec;
         if (is_rec) {
             const ProcessList::iterator i = m_recorders.find (media->process);
@@ -251,9 +248,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
         if (AudioVideoMedia::ask_pause == media->request) {
             media->pause ();
         } else if (mrl->view_mode != Mrl::SingleMode) {
-            media->ignore_pause = true;
             mrl->defer (); // paused the SMIL
-            media->ignore_pause = false;
         }
     }
 }
@@ -289,7 +284,7 @@ void MediaManager::processDestroyed (IProcess *process) {
 //------------------------%<----------------------------------------------------
 
 MediaObject::MediaObject (MediaManager *manager, Node *node)
- : m_manager (manager), m_node (node), paused (false) {
+ : m_manager (manager), m_node (node) {
     manager->medias ().push_back (this);
 }
 
@@ -851,8 +846,7 @@ AudioVideoMedia::AudioVideoMedia (MediaManager *manager, Node *node)
  : MediaObject (manager, node),
    process (NULL),
    m_viewer (NULL),
-   request (ask_nothing),
-   ignore_pause (false) {
+   request (ask_nothing) {
     kDebug() << "AudioVideoMedia::AudioVideoMedia" << endl;
 }
 
@@ -914,9 +908,8 @@ void AudioVideoMedia::stop () {
 }
 
 void AudioVideoMedia::pause () {
-    if (!ignore_pause && !paused && process) {
+    if (process) {
         if (process->state () > IProcess::Ready) {
-            paused = true;
             request = ask_nothing;
             process->pause ();
         } else {
@@ -926,12 +919,11 @@ void AudioVideoMedia::pause () {
 }
 
 void AudioVideoMedia::unpause () {
-    if (!ignore_pause && paused && process) {
+    if (process) {
         if (request == ask_pause) {
             request = ask_nothing;
         } else {
-            paused = false;
-            process->pause ();
+            process->unpause ();
         }
     }
 }

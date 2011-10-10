@@ -3406,25 +3406,19 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
     transition.finish (this);
-    if (unfinished ())
-        finish ();
     runtime->init ();
     Mrl::deactivate ();
     (void) surface ();
     region_node = 0L;
-    if (media_info) {
-        delete media_info;
-        media_info = NULL;
-    }
     postpone_lock = 0L;
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::defer () {
     if (media_info) {
         //media_info->pause ();
+        setState (state_deferred);
         if (unfinished ())
             postpone_lock = document ()->postpone ();
-        setState (state_deferred);
     }
 }
 
