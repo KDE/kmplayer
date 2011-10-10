@@ -317,8 +317,6 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
             this, SLOT (playListItemActivated (const QModelIndex&)));
     connect (m_view->playList(), SIGNAL (dropped (QDropEvent*, KMPlayer::PlayItem*)),
             this, SLOT (playListItemDropped (QDropEvent *, KMPlayer::PlayItem *)));
-    connect (m_view->playList(), SIGNAL (moved ()),
-            this, SLOT (playListItemMoved ()));
     connect (m_view->playList(), SIGNAL (prepareMenu (KMPlayer::PlayItem *, QMenu *)), this, SLOT (preparePlaylistMenu (KMPlayer::PlayItem *, QMenu *)));
     m_dropmenu = new QMenu (m_view->playList ());
     m_dropmenu->insertItem (KIcon ("view-media-playlist"),
