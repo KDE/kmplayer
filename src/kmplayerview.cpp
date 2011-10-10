@@ -359,8 +359,10 @@ void View::toggleVideoConsoleWindow () {
 }
 
 void View::setControlPanelMode (ControlPanelMode m) {
-    killTimer (controlbar_timer);
-    controlbar_timer = 0L;
+    if (controlbar_timer) {
+        killTimer (controlbar_timer);
+        controlbar_timer = 0L;
+    }
     m_old_controlpanel_mode = m_controlpanel_mode = m;
     if (m_playing && isFullScreen())
         m_controlpanel_mode = CP_AutoHide;
@@ -516,8 +518,10 @@ KDE_NO_EXPORT void View::playingStop () {
         m_control_panel->show ();
         //m_view_area->setMouseTracking (false);
     }
-    killTimer (controlbar_timer);
-    controlbar_timer = 0;
+    if (controlbar_timer) {
+        killTimer (controlbar_timer);
+        controlbar_timer = 0;
+    }
     m_playing = false;
     m_view_area->resizeEvent (0L);
 }
