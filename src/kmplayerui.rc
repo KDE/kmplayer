@@ -33,11 +33,6 @@
     <Action name="view_playlist"/>
     <Action name="view_minimal"/>
     <Action name="view_fullscreen"/>
-    <Menu name="zoom"><text>&amp;Zoom</text>
-      <Action name="view_zoom_50"/>
-      <Action name="view_zoom_100"/>
-      <Action name="view_zoom_150"/>
-    </Menu>
     <Action name="view_keep_ratio"/>
     <Separator />
     <Action name="play"/>
