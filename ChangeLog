@@ -1,3 +1,7 @@
+Changes since version 0.11.2c
+- SMIL-3.0 improvements for smilText and State
+- Remove pango dependency
+- KDE3 porting; replace K3ListView with QTreeView
 Changes since version 0.11.2b
 - Don't show local files with file://, nor percent encoded in recent list
 - Fix replaying a .pls file
