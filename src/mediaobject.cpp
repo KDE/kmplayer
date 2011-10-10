@@ -429,7 +429,8 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
     Mrl *mrl = node->mrl ();
     if (mrl && (MediaManager::Any == type || MediaManager::AudioVideo == type))
     {
-        mime = mrl->mimetype;
+        if (!mrl->mimetype.isEmpty ())
+            setMimetype (mrl->mimetype);
         if (mrl && (MediaManager::Any == type || MediaManager::AudioVideo == type))
             if (mime == "application/x-shockwave-flash" ||
                     mime == "application/futuresplash" ||
@@ -454,7 +455,9 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
 
     bool only_playlist = false;
     bool maybe_playlist = false;
-    if (MediaManager::Audio == type || MediaManager::AudioVideo == type) {
+    if (MediaManager::Audio == type
+            || MediaManager::AudioVideo == type
+            || MediaManager::Any == type) {
         only_playlist = true;
         maybe_playlist = isPlayListMime (mime);
     }
@@ -467,14 +470,14 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
                 if (mrl && mimeptr) {
                     mrl->mimetype = mimeptr->name ();
                     setMimetype (mrl->mimetype);
-                    only_playlist = MediaManager::Audio == type ||
-                        MediaManager::AudioVideo == type;
-                    maybe_playlist = isPlayListMime (mime); // get new mime
                 }
                 kDebug () << "wget2 " << str << " " << mime;
             } else {
                 setMimetype (mime);
             }
+            only_playlist = MediaManager::Audio == type ||
+                MediaManager::AudioVideo == type;
+            maybe_playlist = isPlayListMime (mime); // get new mime
             if (file.open (IO_ReadOnly)) {
                 if (only_playlist) {
                     maybe_playlist &= file.size () < 2000000;
