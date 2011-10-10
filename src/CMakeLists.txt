@@ -8,8 +8,8 @@ SET(optionalCFlags)
 SET(optionalLinkFlags)
 
 IF (KMPLAYER_WITH_CAIRO)
-    SET(optionalCFlags ${optionalCFlags} ${CAIROCFlags} ${PANGOCFlags})
-    SET(optionalLinkFlags ${optionalLinkFlags} ${CAIROLinkFlags} ${PANGOLinkFlags})
+    SET(optionalCFlags ${optionalCFlags} ${CAIROCFlags})
+    SET(optionalLinkFlags ${optionalLinkFlags} ${CAIROLinkFlags})
     MESSAGE("have cairo cflags:${optionalCFlags} ldflags:${optionalLinkFlags}")
 endif (KMPLAYER_WITH_CAIRO)
 
@@ -69,11 +69,10 @@ kde4_add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
 MESSAGE("extra ${CAIROCflags} ${GLibDBusCflags}  libs ${CAIROLinkFlags} ${GLibDBusLinkFlags}")
 
 SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES COMPILE_FLAGS
-    "${CAIROCflags} ${PANGOCflags} ${GLibDBusCflags}")
+    "${CAIROCflags} ${GLibDBusCflags}")
 
 target_link_libraries(kmplayercommon
   ${CAIROLinkFlags}
-  ${PANGOLinkFlags}
   ${GLibDBusLinkFlags}
   ${KDE4_KPARTS_LIBS}
   ${KDE4_KDEUI_LIBS}

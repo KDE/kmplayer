@@ -26,11 +26,10 @@ if(NOT WIN32)
   if (KMPLAYER_BUILT_WITH_CAIRO)
 
     PKGCONFIG(cairo CAIROIncDir CAIROLinkDir CAIROLinkFlags CAIROCflags)
-    PKGCONFIG(pangocairo PANGOIncDir PANGOLinkDir PANGOLinkFlags PANGOCflags)
 
-    if (CAIROCflags AND PANGOCflags)
+    if (CAIROCflags)
         set(KMPLAYER_WITH_CAIRO 1)
-    endif (CAIROCflags AND PANGOCflags)
+    endif (CAIROCflags)
   endif (KMPLAYER_BUILT_WITH_CAIRO)
 
   if (KMPLAYER_BUILT_WITH_NPP)
