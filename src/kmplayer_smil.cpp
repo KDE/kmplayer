@@ -2056,8 +2056,14 @@ void *SMIL::RootLayout::role (RoleType msg, void *content) {
             SMIL::Smil *s = Smil::findSmilNode (this);
             if (s && s->active ()) {
                 Surface *surface = (Surface *)s->role (RoleChildDisplay, s);
-                if (surface)
+                if (surface) {
                     region_surface = surface->createSurface (this, SRect ());
+                    // FIXME, silly heuristic to allow transparency in nesting
+                    if (!background_color.color
+                            && (!s->parentNode ()
+                                || s->parentNode()->id < id_node_smil))
+                        background_color.color = 0xFFFFFAFA; // snow
+                }
             }
         }
         return region_surface.ptr ();

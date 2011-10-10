@@ -36,16 +36,15 @@ using namespace KMPlayer;
 KDE_NO_CDTOR_EXPORT Surface::Surface (ViewArea *widget)
   : bounds (SRect (0, 0, widget->width (), widget->height ())),
     xscale (1.0), yscale (1.0),
-    background_color (widget->palette().color (widget->backgroundRole()).rgb()),
+    background_color (0),
 #ifdef KMPLAYER_WITH_CAIRO
     surface (0L),
 #endif
     dirty (false),
     scroll (false),
     has_mouse (false),
-    view_widget (widget) {
-    background_color = widget->palette().color (widget->backgroundRole()).rgb();
-}
+    view_widget (widget)
+{}
 
 Surface::~Surface() {
 #ifdef KMPLAYER_WITH_CAIRO
@@ -68,7 +67,7 @@ template <> void TreeNode<Surface>::removeChild (SurfacePtr c) {
 
 void Surface::clear () {
     m_first_child = 0L;
-    background_color = view_widget->palette().color (view_widget->backgroundRole()).rgb();
+    background_color = 0;
 }
 
 void Surface::remove () {
