@@ -1248,6 +1248,8 @@ void SmilColorProperty::setColor (const QString &val)
 {
     if (val.isEmpty () || val == "transparent")
         color = 0;
+    else if (val.startsWith (QChar ('#')) && val.length() == 9)
+        color = val.mid (1).toUInt (NULL, 16);
     else
         color = setRGBA (QColor (val).rgba (), opacity);
 }
@@ -5393,6 +5395,8 @@ static bool getAnimateColor (unsigned int val, SMIL::AnimateColor::Channels &c) 
 }
 
 static bool getAnimateColor (const QString &val, SMIL::AnimateColor::Channels &c) {
+    if (val.isEmpty ())
+        return getAnimateColor (0, c);
     QColor color (val);
     return getAnimateColor (color.rgba (), c);
 }
@@ -5494,7 +5498,7 @@ KDE_NO_EXPORT void SMIL::AnimateColor::applyStep () {
     Node *target = target_element.ptr ();
     if (target) {
         QString val; // TODO make more efficient
-        val.sprintf ("#%06x", 0xffffff & cur_c.argb ());
+        val.sprintf ("#%08x", cur_c.argb ());
         static_cast <Element *> (target)->setParam (changed_attribute, val);
     }
 }

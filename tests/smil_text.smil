@@ -49,7 +49,7 @@
                      calcMode="spline" keySplines=".5 0 .5 1" fill="freeze"/>
       <animate target="text1" begin="3" dur="4" attributeName="textFontSize"
                calcMode="discrete" values="12;14;16;18;20"/>
-      <animateColor target="text1" begin="2" dur="1" from="#475360" to="white" fill="freeze"/>
+      <animateColor target="text1" begin="2" dur="1" to="white" fill="freeze"/>
     </par>
     <par>
       <smilText begin="1.5s" region="r1" textFontSize="24px" textColor="white">
