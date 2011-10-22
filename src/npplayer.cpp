@@ -765,6 +765,12 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
         case NPNVSupportsXEmbedBool:
             *(NPBool*)value = 1;
             break;
+        case NPNVSupportsWindowless:
+            *(NPBool*)value = 0;
+            break;
+        case NPNVprivateModeBool:
+            *(NPBool*)value = 0;
+            break;
         case NPNVWindowNPObject:
 #ifdef KMPLAYER_SCRIPTABLE
             if (callback_service) {
