@@ -76,6 +76,7 @@ static NPNetscapeFuncs ns_funcs;
 static NPPluginFuncs np_funcs;       /* plugin functions              */
 static NPP npp;                      /* single instance of the plugin */
 static NPWindow np_window;
+static NPSetWindowCallbackStruct ws_info;
 static NPSavedData *saved_data;
 #ifdef KMPLAYER_SCRIPTABLE
 static NPClass browser_class;
@@ -1734,7 +1735,6 @@ static int initPlugin (const char *plugin_lib) {
 }
 
 static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
-    NPSetWindowCallbackStruct ws_info;
     NPError np_err;
     Display *display;
     int screen;
