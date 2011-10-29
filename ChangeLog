@@ -527,7 +527,7 @@ Changes since version 0.8.3-rc3
 Changes since version 0.8.3-rc2
 - All QtoolTips to QWhatsThis and help from Xine for whatsthis by xine options
 - Store xine settings in ~/.kde/share/apps/kmplayer/xine_config and not in
-  ~/.xine/config2. Save the first time if file does not exist (Automaticly
+  ~/.xine/config2. Save the first time if file does not exist (Automatically
   sets the misc.memcpy_method).
 - Added a debian build directory, builds a kmplayer-lib, kmplayer-plugin and a
   kmplayer-app package. Eg. install only kmplayer-lib and kmplayer-plugin if 

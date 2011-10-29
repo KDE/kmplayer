@@ -500,7 +500,7 @@ KDE_NO_EXPORT void View::videoStart () {
         m_dockarea->setCentralWidget (m_view_area);
     }
     if (m_controlpanel_mode == CP_Only) {
-        m_control_panel->setMaximumSize(2500, controlPanel()->preferedHeight());
+        m_control_panel->setMaximumSize(2500, controlPanel()->preferredHeight());
         setControlPanelMode (CP_Show);
     }
 }
