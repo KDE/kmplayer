@@ -3432,8 +3432,9 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
 KDE_NO_EXPORT void SMIL::MediaType::defer () {
     if (media_info) {
         //media_info->pause ();
+        bool running = unfinished ();
         setState (state_deferred);
-        if (unfinished ())
+        if (running)
             postpone_lock = document ()->postpone ();
     }
 }
