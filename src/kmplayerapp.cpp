@@ -176,7 +176,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     stopmedia->setText (i18n ("&Stop"));
     connect (stopmedia, SIGNAL (triggered (bool)), m_player, SLOT (stop ()));
     KStandardAction::keyBindings (this, SLOT (slotConfigureKeys()), ac);
-    KStandardAction::configureToolbars (this, SLOT (slotConfigureToolbars ()), ac);
+    //KStandardAction::configureToolbars (this, SLOT (slotConfigureToolbars ()), ac);
     viewFullscreen = ac->addAction ("view_fullscreen");
     viewFullscreen->setCheckable (true);
     viewFullscreen->setText (i18n("Fullscreen"));
