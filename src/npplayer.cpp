@@ -137,7 +137,7 @@ static void dbusStreamUnregister (DBusConnection *conn, void *user_data);
 
 static void print (const char * format, ...) {
     va_list vl;
-    static FILE *out = fopen ("/tmp/npp.out", "w+");
+    static FILE *out = stderr; //fopen ("/tmp/npp.out", "w+");
     va_start (vl, format);
     vfprintf (out, format, vl);
     va_end (vl);
