@@ -1244,6 +1244,13 @@ void SmilColorProperty::init ()
     opacity = 100;
 }
 
+static unsigned int rgbFromValue (const QString& val) {
+    SmilColorProperty p;
+    p.init();
+    p.setColor (val);
+    return 0xffffff & p.color;
+}
+
 void SmilColorProperty::setColor (const QString &val)
 {
     if (val.isEmpty () || val == "transparent")
@@ -3938,7 +3945,7 @@ KDE_NO_EXPORT void SMIL::TextMediaType::prefetch () {
 void
 SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
     if (name == "color" || name == "fontColor") {
-        font_color = val.isEmpty () ? 0 : QColor (val).rgb ();
+        font_color = val.isEmpty () ? 0 : rgbFromValue (val);
     } else if (name == "fontFace") {
         if (val.toLower ().indexOf ("sans" ) < 0)
             font_name = "serif";
@@ -4234,9 +4241,9 @@ bool SmilTextProperties::parseParam(const TrieString &name, const QString &val) 
         else
             text_align = AlignInherit;
     } else if (name == "textBackgroundColor") {
-        background_color = 0xffffff & QColor (val).rgb ();
+        background_color = rgbFromValue (val);
     } else if (name == "textColor") {
-        font_color = 0xffffff & QColor (val).rgb ();
+        font_color = rgbFromValue (val);
     } else if (name == "textDirection") {
         if (val == "ltr")
             text_direction = DirLtr;
