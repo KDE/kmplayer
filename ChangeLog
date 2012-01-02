@@ -1,3 +1,7 @@
+Changes since version 0.11.3
+- Fix crash when NPP player window resizes
+- Don't log in NPP output in /tmp/npp.out
+- Remove configure toolbar menu item
 Changes since version 0.11.2c
 - SMIL-3.0 improvements for smilText and State
 - Remove pango dependency
