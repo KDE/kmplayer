@@ -496,11 +496,6 @@ static bool disabledByExpr (Runtime *rt) {
  * start, or restart in case of re-use, the durations
  */
 KDE_NO_EXPORT void Runtime::start () {
-    if (disabledByExpr (this)) {
-        timingstate = TimingsDisabled;
-        doFinish ();
-        return;
-    }
     if (begin_timer || duration_timer)
         element->init ();
     timingstate = timings_began;
@@ -789,12 +784,18 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
 }
 
 KDE_NO_EXPORT void Runtime::propagateStart () {
-    timingstate = trans_in_dur ? TimingsTransIn : timings_started;
-    element->deliver (MsgEventStarting, element);
     if (begin_timer) {
         element->document ()->cancelPosting (begin_timer);
         begin_timer = NULL;
     }
+    if (disabledByExpr (this)) {
+        if (timings_freezed == timingstate)
+            element->message (MsgStateFreeze);
+        timingstate = TimingsDisabled;
+        return;
+    }
+    timingstate = trans_in_dur ? TimingsTransIn : timings_started;
+    element->deliver (MsgEventStarting, element);
     started_timer = element->document()->post (
             element, new Posting (element, MsgEventStarted));
 }
