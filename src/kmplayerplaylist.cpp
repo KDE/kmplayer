@@ -28,6 +28,7 @@
 #include "kmplayerplaylist.h"
 #include "kmplayer_asx.h"
 #include "kmplayer_atom.h"
+#include "kmplayer_opml.h"
 #include "kmplayer_rp.h"
 #include "kmplayer_rss.h"
 #include "kmplayer_smil.h"
@@ -57,6 +58,8 @@ Node *KMPlayer::fromXMLDocumentTag (NodePtr & d, const QString & tag) {
         return new ATOM::Feed (d);
     else if (!strcasecmp (name, "playlist"))
         return new XSPF::Playlist (d);
+    else if (!strcasecmp (name, "opml"))
+        return new OPML::Opml (d);
     else if (!strcasecmp (name, "url"))
         return new GenericURL (d, QString ());
     else if (!strcasecmp (name, "mrl") ||

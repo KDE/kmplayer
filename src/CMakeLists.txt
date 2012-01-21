@@ -34,6 +34,7 @@ set(libkmplayercommon_SRCS
   kmplayer_rp.cpp
   kmplayer_rss.cpp
   kmplayer_atom.cpp
+  kmplayer_opml.cpp
   kmplayer_xspf.cpp
   expression.cpp
   mediaobject.cpp
