@@ -93,6 +93,9 @@ KDE_NO_EXPORT bool KMPlayer::parseTime (const QString & vl, int & dur) {
         } else if (*p == ' ') {
             if (!num.isEmpty ())
                 break;
+        } else if (*p == ':') {
+            dur = Mrl::parseTimeString (vl);
+            return dur != 0;
         } else
             break;
     }
