@@ -2544,13 +2544,14 @@ KDE_NO_EXPORT void *SMIL::GroupBase::role (RoleType msg, void *content) {
 
 
 KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
+    bool need_finish (unfinished ());
     setState (state_deactivated); // avoid recurstion through childDone
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->active ())
             e->deactivate ();
         else
             e->message (MsgMediaPrefetch, MsgBool (0));
-    if (unfinished ())
+    if (need_finish)
         finish ();
     runtime->init ();
     Element::deactivate ();
