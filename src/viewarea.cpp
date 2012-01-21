@@ -175,16 +175,28 @@ void ImageData::copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar
             1.0 * (((c)) & 0xff) / 255,       \
             1.0 * (((c) >> 24) & 0xff) / 255)
 
-class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
-    IRect clip;
-    cairo_surface_t * cairo_surface;
+struct KMPLAYER_NO_EXPORT PaintContext
+{
+    PaintContext (const Matrix& m, const IRect& c)
+        : matrix (m)
+        , clip (c)
+        , fit (fit_default)
+        , bg_repeat (SMIL::RegionBase::BgRepeat)
+        , bg_image (NULL)
+    {}
     Matrix matrix;
+    IRect clip;
+    Fit fit;
+    SMIL::RegionBase::BackgroundRepeat bg_repeat;
+    ImageData *bg_image;
+};
+
+class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor, public PaintContext {
+    cairo_surface_t * cairo_surface;
     // stack vars need for transitions
     TransitionModule *cur_transition;
     cairo_pattern_t * cur_pat;
     cairo_matrix_t cur_mat;
-    SMIL::RegionBase::BackgroundRepeat bg_repeat;
-    ImageData *bg_image;
     float opacity;
     bool toplevel;
 
@@ -220,10 +232,8 @@ public:
 KDE_NO_CDTOR_EXPORT
 CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
         const IRect & rect, QColor c, bool top)
- : clip (rect), cairo_surface (cs),
-   matrix (m),
-   bg_repeat (SMIL::RegionBase::BgRepeat), bg_image (NULL),
-   toplevel (top) {
+ : PaintContext (m, rect), cairo_surface (cs), toplevel (top)
+{
     cr = cairo_create (cs);
     if (toplevel) {
         cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
@@ -304,12 +314,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         IRect scr = matrix.toScreen (rect);
         if (clip.intersect (scr).isEmpty ())
             return;
-        Matrix m = matrix;
+        PaintContext ctx_save = *(PaintContext *) this;
         matrix = Matrix (rect.x(), rect.y(), s->xscale, s->yscale);
-        matrix.transform (m);
-        IRect clip_save = clip;
+        matrix.transform (ctx_save.matrix);
         clip = clip.intersect (scr);
-        SMIL::RegionBase::BackgroundRepeat bg_repeat_save = bg_repeat;
         if (SMIL::RegionBase::BgInherit != reg->bg_repeat)
             bg_repeat = reg->bg_repeat;
         cairo_save (cr);
@@ -318,11 +326,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         if (!s->virtual_size.isEmpty ())
             matrix.translate (-s->x_scroll, -s->y_scroll);
 
+        if (fit_default != reg->fit)
+            fit = reg->fit;
+
         ImageMedia *im = reg->media_info
             ? (ImageMedia *) reg->media_info->media
             : NULL;
 
-        ImageData *bg_save = bg_image;
         ImageData *bg_img = im && !im->isEmpty() ? im->cached_img.ptr () : NULL;
         if (reg->background_image == "inherit")
             bg_img = bg_image;
@@ -466,10 +476,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
             }
         }
         cairo_restore (cr);
-        bg_image = bg_save;
-        matrix = m;
-        bg_repeat = bg_repeat_save;
-        clip = clip_save;
+        *(PaintContext *) this = ctx_save;
         s->dirty = false;
     }
 }
@@ -661,6 +668,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
     }
     if (!ref->media_info)
         return;
+    if (fit_default != fit
+            && fit_default == ref->fit
+            && fit != ref->effective_fit) {
+        ref->effective_fit = fit;
+        s->resize (ref->calculateBounds(), false);
+    }
     if (ref->media_info->media &&
             ref->media_info->media->type () == MediaManager::Image) {
         if (!s)

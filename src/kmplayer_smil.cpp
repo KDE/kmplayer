@@ -229,7 +229,7 @@ static Fit parseFit (const char *cval) {
     else if (!strcmp (cval, "slice"))
         fit = fit_slice;
     else
-        fit = fit_hidden;
+        fit = fit_default;
     return fit;
 }
 
@@ -1878,10 +1878,13 @@ KDE_NO_EXPORT
 void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
     bool need_repaint = false;
     if (name == Ids::attr_fit) {
-        fit = parseFit (val.toAscii ().constData ());
-        if (region_surface)
-            region_surface->scroll = fit_scroll == fit;
-        need_repaint = true;
+        Fit ft = parseFit (val.toAscii ().constData ());
+        if (ft != fit) {
+            fit = ft;
+            if (region_surface)
+                region_surface->scroll = fit_scroll == fit;
+            need_repaint = true;
+        }
     } else if (parseBackgroundParam (background_color, name, val) ||
             parseMediaOpacityParam (media_opacity, name, val)) {
     } else if (name == "z-index") {
@@ -3338,6 +3341,8 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
         }
     } else if (para == Ids::attr_fit) {
         fit = parseFit (val.toAscii ().constData ());
+        if (fit != effective_fit)
+            message (MsgSurfaceBoundsUpdate);
     } else if (para == Ids::attr_type) {
         mimetype = val;
     } else if (para == "panZoom") {
@@ -3379,6 +3384,7 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
 KDE_NO_EXPORT void SMIL::MediaType::init () {
     if (Runtime::TimingsInitialized > runtime->timingstate) {
         fit = fit_default;
+        effective_fit = fit_default;
         background_color.init ();
         media_opacity.init ();
         transition.init ();
@@ -3528,9 +3534,10 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
         SRect rr = rb->region_surface->bounds;
         Single x, y, w = size.width, h = size.height;
         sizes.calcSizes (this, &rb->sizes, rr.width(), rr.height(), x, y, w, h);
-        Fit ft = fit_default == fit ? rb->fit : fit;
+        if (fit_default != fit)
+            effective_fit = fit;
         ImageMedia *im;
-        switch (ft) {
+        switch (effective_fit) {
             case fit_scroll:
             case fit_default:
             case fit_hidden:
@@ -3540,14 +3547,14 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
                          (im = static_cast <ImageMedia *>(media_info->media)) &&
                          !im->isEmpty () &&
                          im->cached_img->flags & ImageData::ImageScalable)))
-                    ft = fit_meet;
+                    effective_fit = fit_meet;
                 break;
             default:
                 break;
         }
 
         if (!size.isEmpty () && w > 0 && h > 0)
-            switch (ft) {
+            switch (effective_fit) {
                 case fit_meet: {
                     float iasp = 1.0 * size.width / size.height;
                     float rasp = 1.0 * w / h;

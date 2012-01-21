@@ -743,6 +743,7 @@ public:
     CalculatedSizer sizes;
     CalculatedSizer *pan_zoom;
     Fit fit;
+    Fit effective_fit;
     SmilColorProperty background_color;
     MediaOpacity media_opacity;
     unsigned int bitrate;
