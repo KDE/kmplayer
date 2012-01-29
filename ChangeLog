@@ -1,3 +1,8 @@
+Changes since version 0.11.3a
+- TV list wasn't saved when editing the items in-place
+- Percentage of stream loading in status bar wasn't cleared on playing
+- Basic support for Outline Processor Markup Language
+- Some SMIL synchronization fixes
 Changes since version 0.11.3
 - Fix crash when NPP player window resizes
 - Don't log in NPP output in /tmp/npp.out
