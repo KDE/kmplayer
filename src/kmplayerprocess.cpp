@@ -946,6 +946,7 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                     }
                     m_source->setIdentified ();
                     m_source->setLanguages (alanglist, slanglist);
+                    m_source->setLoading (100);
                     setState (IProcess::Playing);
                     m_source->setPosition (0);
                 }
