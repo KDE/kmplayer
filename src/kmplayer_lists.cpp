@@ -51,7 +51,7 @@ QString ListsSource::prettyName ()
 }
 
 KDE_NO_CDTOR_EXPORT FileDocument::FileDocument (short i, const QString &s, KMPlayer::Source *src)
- : KMPlayer::SourceDocument (src, s) {
+ : KMPlayer::SourceDocument (src, s), load_tree_version ((unsigned int)-1) {
     id = i;
 }
 
@@ -70,6 +70,7 @@ void FileDocument::readFromFile (const QString & fn) {
         KMPlayer::readXML (this, inxml, QString (), false);
         normalize ();
     }
+    load_tree_version = m_tree_version;
 }
 
 void FileDocument::writeToFile (const QString & fn) {
@@ -77,6 +78,13 @@ void FileDocument::writeToFile (const QString & fn) {
     kDebug () << "writeToFile " << fn;
     file.open (QIODevice::WriteOnly | QIODevice::Truncate);
     file.write (outerXML ().toUtf8 ());
+    load_tree_version = m_tree_version;
+}
+
+void FileDocument::sync (const QString &fn)
+{
+    if (resolved && load_tree_version != m_tree_version)
+        writeToFile (fn);
 }
 
 KDE_NO_CDTOR_EXPORT Recents::Recents (KMPlayerApp *a)

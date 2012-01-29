@@ -370,6 +370,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QMenu *
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {
+    static_cast <TVDocument *> (m_document.ptr ())->sync
+        (KStandardDirs::locateLocal ("data", "kmplayer/tv.xml"));
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::activate () {

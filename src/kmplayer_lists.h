@@ -67,6 +67,8 @@ public:
     KMPlayer::Node *childFromTag (const QString &tag);
     void readFromFile (const QString &file);
     void writeToFile (const QString &file);
+    void sync (const QString & file);
+    unsigned int load_tree_version;
 };
 
 class KMPLAYER_NO_EXPORT Recents : public FileDocument {
