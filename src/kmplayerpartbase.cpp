@@ -1084,6 +1084,8 @@ void Source::setAspect (NodePtr node, float a) {
         if (changed && m_player->view ())
             m_player->viewWidget ()->viewArea ()->resizeEvent (NULL);
 
+    } else {
+       mrl->message (MsgSurfaceBoundsUpdate);
     }
     if (changed)
         emit dimensionsChanged ();
