@@ -67,6 +67,7 @@ void FileDocument::readFromFile (const QString & fn) {
     if (QFileInfo (file).exists ()) {
         file.open (QIODevice::ReadOnly);
         QTextStream inxml (&file);
+        inxml.setCodec("UTF-8");
         KMPlayer::readXML (this, inxml, QString (), false);
         normalize ();
     }
