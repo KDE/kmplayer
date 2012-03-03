@@ -40,7 +40,7 @@ class KUrl;
 namespace KMPlayer {
 
 class Document;
-class Node;
+class KMPLAYER_EXPORT Node;
 class TextNode;
 class Posting;
 class Mrl;

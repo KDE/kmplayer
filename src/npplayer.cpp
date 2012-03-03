@@ -32,7 +32,7 @@ extern "C" {
 #include <fcntl.h>
 
 #include <glib/gprintf.h>
-#include <glib/gthread.h>
+#include <glib.h>
 #include <gdk/gdkx.h>
 #include <gtk/gtk.h>
 

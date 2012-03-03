@@ -34,6 +34,7 @@ if(NOT WIN32)
 
   if (KMPLAYER_BUILT_WITH_NPP)
     PKGCONFIG(dbus-glib-1 GLibDBusIncDir GLibDBusLinkDir GLibDBusLinkFlags GLibDBusCflags)
+    PKGCONFIG(gmodule-2.0 GModuleIncDir GModuleLinkDir GModuleLinkFlags GModuleCflags)
 
     if (GLibDBusCflags)
       set(KMPLAYER_WITH_GDBUS 1)

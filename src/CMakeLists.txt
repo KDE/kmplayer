@@ -132,7 +132,7 @@ install(TARGETS kdeinit_kmplayer  ${INSTALL_TARGETS_DEFAULT_ARGS} )
 
 install(TARGETS kmplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
-install(PROGRAMS kmplayer.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
+install(FILES kmplayer.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
 
 #qt4_add_dbus_interface(kmplayer_SRCS org.kde.Konqueror.Main.xml kmplayer_interface)
 
@@ -145,10 +145,10 @@ if (KMPLAYER_WITH_NPP)
     add_executable(knpplayer ${knpplayer_SRCS})
 
     SET_TARGET_PROPERTIES(knpplayer PROPERTIES COMPILE_FLAGS
-        "${GLibDBusCflags} ${GTKCflags} ${GThreadCflags} ${KMPLAYER_SCRIPTABLE}"
+        "${GLibDBusCflags} ${GTKCflags} ${GThreadCflags}  ${GModuleCflags} ${KMPLAYER_SCRIPTABLE}"
     )
 
-    target_link_libraries(knpplayer ${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags}
+    target_link_libraries(knpplayer ${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags  ${GModuleLinkFlags}}
         ${X11_X11_LIB} )
 
     install(TARGETS knpplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
