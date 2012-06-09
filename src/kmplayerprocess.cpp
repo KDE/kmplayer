@@ -430,8 +430,9 @@ KDE_NO_EXPORT void MPlayerBase::initProcess () {
 }
 
 bool MPlayerBase::removeQueued (const char *cmd) {
-    const QList<QByteArray>::iterator e = commands.end ();
-    for (QList<QByteArray>::iterator i = commands.begin (); i != e; ++i)
+    for (QList<QByteArray>::iterator i = commands.begin ();
+            i != commands.end ();
+            ++i)
         if (!strncmp ((*i).data (), cmd, strlen (cmd))) {
             commands.erase (i);
             return true;
@@ -694,8 +695,7 @@ KDE_NO_EXPORT bool MPlayer::seek (int pos, bool absolute) {
         return false;
     if (m_request_seek >= 0 && commands.size () > 1) {
         QList<QByteArray>::iterator i = commands.begin ();
-        QList<QByteArray>::iterator end ( commands.end () );
-        for (++i; i != end; ++i)
+        for (++i; i != commands.end (); ++i)
             if (!strncmp ((*i).data (), "seek", 4)) {
                 i = commands.erase (i);
                 m_request_seek = -1;

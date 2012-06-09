@@ -95,17 +95,15 @@ MediaManager::MediaManager (PartBase *player) : m_player (player) {
 }
 
 MediaManager::~MediaManager () {
-    const ProcessList::iterator e = m_processes.end ();
     for (ProcessList::iterator i = m_processes.begin ();
-            i != e;
+            i != m_processes.end ();
             i = m_processes.begin () /*~Process removes itself from this list*/)
     {
         kDebug() << "~MediaManager " << *i << endl;
         delete *i;
     }
-    const ProcessList::iterator re = m_recorders.end ();
     for (ProcessList::iterator i = m_recorders.begin ();
-            i != re;
+            i != m_recorders.end ();
             i = m_recorders.begin ())
     {
         kDebug() << "~MediaManager " << *i << endl;
