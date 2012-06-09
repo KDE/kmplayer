@@ -2279,6 +2279,11 @@ static void pluginAdded (GtkSocket *socket, gpointer d) {
     callFunction (-1, iface_callback, "plugged", DBUS_TYPE_INVALID);
 }
 
+static gboolean pluginRemoved (GtkSocket *socket, gpointer d) {
+    (void)socket; (void)d;
+    return TRUE;
+}
+
 static void windowCreatedEvent (GtkWidget *w, gpointer d) {
     (void)d;
     print ("windowCreatedEvent\n");
@@ -2376,6 +2381,8 @@ static gboolean initPlayer (void * p) {
     xembed = gtk_socket_new();
     g_signal_connect (G_OBJECT (xembed), "plug-added",
             GTK_SIGNAL_FUNC (pluginAdded), NULL);
+    g_signal_connect (G_OBJECT (xembed), "plug-removed",
+            GTK_SIGNAL_FUNC (pluginRemoved), NULL);
 
     color_map = gdk_colormap_get_system();
     gdk_colormap_query_color (color_map, 0, &bg_color);
