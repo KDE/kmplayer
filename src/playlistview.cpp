@@ -125,6 +125,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget *, View *view, KActionCo
     //setAnimated (true);
     setUniformRowHeights (true);
     setItemDelegateForColumn (0, new ItemDelegate (this, itemDelegate ()));
+    setEditTriggers (EditKeyPressed);
     QPalette palette;
     palette.setColor (foregroundRole(), QColor (0, 0, 0));
     palette.setColor (backgroundRole(), QColor (0xB2, 0xB2, 0xB2));
