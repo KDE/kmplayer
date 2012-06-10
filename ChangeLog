@@ -1,3 +1,7 @@
+Changes since version 0.11.3c
+- Fix item activation in double click mode
+- Fix crash on plugin exit in MediaManager destructor
+- Fix GtkWindow destroyed for never libflashplugin
 Changes since version 0.11.3b
 - Include build fixes from Orcan Ogetbil
 - Set codec to utf8 when reading our own lists
