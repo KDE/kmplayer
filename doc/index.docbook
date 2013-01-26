@@ -440,8 +440,8 @@ qdbus org.kde.kmplayer-$PID /kmplayer/MainWindow_1 showFullScreen
     </qandaset>
 
   </chapter>
-<chapter id="credits-and-licenses">
-<title>Credits and Licenses</title>
+<chapter id="credits-and-license">
+<title>Credits and License</title>
 
 <para>&kmplayer; copyright 2002,2003 Koos Vriezen</para>
 
