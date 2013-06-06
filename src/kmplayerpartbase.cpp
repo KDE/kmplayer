@@ -1132,6 +1132,13 @@ void Source::setUrl (const QString &url) {
     }
     if (m_player->source () == this)
         m_player->updateTree ();
+
+    QTimer::singleShot (0, this, SLOT(changedUrl ()));
+}
+
+void Source::changedUrl()
+{
+    emit titleChanged (this->prettyName ());
 }
 
 void Source::setTitle (const QString & title) {
@@ -1521,11 +1528,14 @@ QString URLSource::prettyName () {
     if (m_url.isEmpty ())
         return i18n ("URL");
     if (m_url.url ().size () > 50) {
-        QString newurl = m_url.protocol () + QString ("://");
-        if (m_url.hasHost ())
-            newurl += m_url.host ();
-        if (m_url.port ())
-            newurl += QString (":%1").arg (m_url.port ());
+        QString newurl;
+        if (!m_url.isLocalFile ()) {
+            newurl = m_url.protocol () + QString ("://");
+            if (m_url.hasHost ())
+                newurl += m_url.host ();
+            if (m_url.port () != -1)
+                newurl += QString (":%1").arg (m_url.port ());
+        }
         QString file = m_url.fileName ();
         int len = newurl.size () + file.size ();
         KUrl path = KUrl (m_url.directory ());
@@ -1540,9 +1550,9 @@ QString URLSource::prettyName () {
         if (modified)
             dir += QString (".../");
         newurl += dir + file;
-        return i18n ("Url - ") + newurl;
+        return i18n ("URL - ") + newurl;
     }
-    return i18n ("Url - ") + m_url.prettyUrl ();
+    return i18n ("URL - ") + m_url.prettyUrl ();
 }
 
 bool URLSource::authoriseUrl (const QString &url) {

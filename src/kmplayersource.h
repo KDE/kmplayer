@@ -172,6 +172,8 @@ private:
     int m_length;
     int m_position;
     int m_doc_timer;
+private slots:
+    void changedUrl();
 };
 
 class KMPLAYER_EXPORT SourceDocument : public Document {
