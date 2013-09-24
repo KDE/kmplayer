@@ -112,7 +112,9 @@ static QString encodeFileOrUrl (const KUrl &url)
     return url.isEmpty ()
         ? QString ()
         : QString::fromLocal8Bit (QFile::encodeName (
-                    url.isLocalFile () ? url.toLocalFile () : url.url ()));
+                    url.isLocalFile ()
+                    ? url.toLocalFile ()
+                    : QUrl::fromPercentEncoding (url.url ().toLocal8Bit ())));
 }
 
 static QString encodeFileOrUrl (const QString &str)
@@ -213,6 +215,9 @@ void Process::setAudioLang (int, const QString &) {}
 void Process::setSubtitle (int, const QString &) {}
 
 void Process::pause () {
+}
+
+void Process::unpause () {
 }
 
 bool Process::seek (int /*pos*/, bool /*absolute*/) {
@@ -418,6 +423,17 @@ KDE_NO_EXPORT void MPlayerBase::initProcess () {
             this, SLOT (processStopped (int, QProcess::ExitStatus)));
 }
 
+bool MPlayerBase::removeQueued (const char *cmd) {
+    for (QList<QByteArray>::iterator i = commands.begin ();
+            i != commands.end ();
+            ++i)
+        if (!strncmp ((*i).data (), cmd, strlen (cmd))) {
+            commands.erase (i);
+            return true;
+        }
+    return false;
+}
+
 KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
     if (running ()) {
         commands.push_front (QString (cmd + '\n').toAscii ());
@@ -489,6 +505,7 @@ KDE_NO_CDTOR_EXPORT
 MPlayer::MPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings)
  : MPlayerBase (parent, pinfo, settings, "mplayer"),
    m_widget (0L),
+   m_transition_state (NotRunning),
    aid (-1), sid (-1)
 {}
 
@@ -510,6 +527,8 @@ KDE_NO_EXPORT bool MPlayer::ready () {
 KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     if (running ())
         return sendCommand (QString ("gui_play"));
+
+    m_transition_state = NotRunning;
     if (!m_needs_restarted && running ())
         quit (); // rescheduling of setState will reset state just-in-time
 
@@ -550,15 +569,15 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
 
     QString strVideoDriver = QString (m_settings->videodrivers[m_settings->videodriver].driver);
     if (!strVideoDriver.isEmpty ()) {
-        args << "-vo" << strVideoDriver.lower();
+        args << "-vo" << strVideoDriver.toLower();
         if (view () && view ()->keepSizeRatio () &&
-                strVideoDriver.lower() == QString::fromLatin1 ("x11"))
+                strVideoDriver.toLower() == QString::fromLatin1 ("x11"))
             args << "-zoom";
     }
 
     QString strAudioDriver = QString (m_settings->audiodrivers[m_settings->audiodriver].driver);
     if (!strAudioDriver.isEmpty ())
-        args << "-ao" << strAudioDriver.lower();
+        args << "-ao" << strAudioDriver.toLower();
 
     if (m_settings->framedrop)
         args << "-framedrop";
@@ -604,8 +623,8 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
         if (url.isLocalFile ()) {
             m_url = url.toLocalFile ();
             if (cfg_page->alwaysbuildindex &&
-                    (m_url.lower ().endsWith (".avi") ||
-                     m_url.lower ().endsWith (".divx")))
+                    (m_url.toLower ().endsWith (".avi") ||
+                     m_url.toLower ().endsWith (".divx")))
                 args << "-idx";
         } else {
             int cache = cfg_page->cachesize;
@@ -647,7 +666,21 @@ KDE_NO_EXPORT void MPlayer::stop () {
 }
 
 KDE_NO_EXPORT void MPlayer::pause () {
-    sendCommand (QString ("pause"));
+    if (Paused != m_transition_state) {
+        m_transition_state = Paused;
+        if (!removeQueued ("pause"))
+            sendCommand (QString ("pause"));
+    }
+}
+
+KDE_NO_EXPORT void MPlayer::unpause () {
+    if (m_transition_state == Paused
+            || (Paused == m_state
+                && m_transition_state != Playing)) {
+        m_transition_state = Playing;
+        if (!removeQueued ("pause"))
+            sendCommand (QString ("pause"));
+    }
 }
 
 KDE_NO_EXPORT bool MPlayer::seek (int pos, bool absolute) {
@@ -656,8 +689,7 @@ KDE_NO_EXPORT bool MPlayer::seek (int pos, bool absolute) {
         return false;
     if (m_request_seek >= 0 && commands.size () > 1) {
         QList<QByteArray>::iterator i = commands.begin ();
-        QList<QByteArray>::iterator end ( commands.end () );
-        for (++i; i != end; ++i)
+        for (++i; i != commands.end (); ++i)
             if (!strncmp ((*i).data (), "seek", 4)) {
                 i = commands.erase (i);
                 m_request_seek = -1;
@@ -716,7 +748,7 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
         return false; //FIXME
     initProcess ();
     m_old_state = m_state = Buffering;
-    unlink (file.ascii ());
+    unlink (file.toAscii ().constData ());
     QByteArray ba = file.toLocal8Bit ();
     ba.append ("XXXXXX");
     if (mkdtemp ((char *) ba.constData ())) {
@@ -782,10 +814,16 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
         if (process_stats) {
             QRegExp & m_posRegExp = patterns[MPlayerPreferencesPage::pat_pos];
             QRegExp & m_cacheRegExp = patterns[MPlayerPreferencesPage::pat_cache];
-            if (m_source->hasLength () && m_posRegExp.search (out) > -1) {
-                int pos = int (10.0 * m_posRegExp.cap (1).toFloat ());
-                m_source->setPosition (pos);
-                m_request_seek = -1;
+            if (m_posRegExp.search (out) > -1) {
+                if (m_source->hasLength ()) {
+                    int pos = int (10.0 * m_posRegExp.cap (1).toFloat ());
+                    m_source->setPosition (pos);
+                    m_request_seek = -1;
+                }
+                if (Playing == m_transition_state) {
+                    m_transition_state = NotRunning;
+                    setState (Playing);
+                }
             } else if (m_cacheRegExp.search (out) > -1) {
                 m_source->setLoading (int (m_cacheRegExp.cap(1).toDouble()));
             }
@@ -796,6 +834,11 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                 if (ok && l >= 0) {
                     m_source->setLength (mrl (), 10 * l);
                 }
+            }
+        } else if (out.startsWith ("ID_PAUSED")) {
+            if (Paused == m_transition_state) {
+                m_transition_state = NotRunning;
+                setState (Paused);
             }
         } else if (m_refURLRegExp.search(out) > -1) {
             kDebug () << "Reference mrl " << m_refURLRegExp.cap (1);
@@ -897,6 +940,7 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                     }
                     m_source->setIdentified ();
                     m_source->setLanguages (alanglist, slanglist);
+                    m_source->setLoading (100);
                     setState (IProcess::Playing);
                     m_source->setPosition (0);
                 }
@@ -1359,6 +1403,10 @@ void MasterProcess::pause () {
     }
 }
 
+void MasterProcess::unpause () {
+    pause ();
+}
+
 bool MasterProcess::seek (int pos, bool) {
     if (IProcess::Playing == m_state) {
         MasterProcessInfo *mpi = static_cast<MasterProcessInfo *>(process_info);
@@ -1478,7 +1526,7 @@ KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (NodePtr & d, const QString & t)
     : DarkNode (d, t.toUtf8 ()), w (0L) {}
 
 Node *ConfigDocument::childFromTag (const QString & tag) {
-    if (tag.lower () == QString ("document"))
+    if (tag.toLower () == QString ("document"))
         return new ConfigNode (m_doc, tag);
     return 0L;
 }
@@ -1499,8 +1547,8 @@ Node *SomeNode::childFromTag (const QString & t) {
 }
 
 QWidget * TypeNode::createWidget (QWidget * parent) {
-    QString type_attr = getAttribute (Ids::attr_type);
-    const char * ctype = type_attr.ascii ();
+    QByteArray ba = getAttribute (Ids::attr_type).toAscii ();
+    const char *ctype = ba.constData ();
     QString value = getAttribute (Ids::attr_value);
     if (!strcmp (ctype, "range")) {
         w = new QSlider (getAttribute (QString ("START")).toInt (),
@@ -1527,8 +1575,8 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
 
 void TypeNode::changedXML (QTextStream & out) {
     if (!w) return;
-    QString type_attr = getAttribute (Ids::attr_type);
-    const char * ctype = type_attr.ascii ();
+    QByteArray ba = getAttribute (Ids::attr_type).toAscii ();
+    const char *ctype = ba.constData ();
     QString value = getAttribute (Ids::attr_value);
     QString newvalue;
     if (!strcmp (ctype, "range")) {
@@ -1848,7 +1896,7 @@ KDE_NO_EXPORT void NpPlayer::initProcess () {
         filter = QString ("type='method_call',interface='org.kde.kmplayer.callback'");
         service = QDBusConnection::sessionBus().baseService ();
         //service = QString (dbus_bus_get_unique_name (conn));
-        kDebug() << "using service " << service << " interface " << iface << " filter:" << filter.ascii();
+        kDebug() << "using service " << service << " interface " << iface << " filter:" << filter;
     }
 }
 

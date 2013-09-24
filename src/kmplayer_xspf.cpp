@@ -61,9 +61,9 @@ KDE_NO_EXPORT Node *XSPF::Playlist::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void XSPF::Playlist::closed () {
     for (Node *e = firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_title)
-            title = e->innerText ().simplifyWhiteSpace ();
+            title = e->innerText ().simplified ();
         else if (e->id == id_node_location)
-            src = e->innerText ().stripWhiteSpace ();
+            src = e->innerText ().trimmed ();
     }
     Mrl::closed ();
 }
@@ -78,7 +78,8 @@ void *XSPF::Playlist::role (RoleType msg, void *content)
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT Node *XSPF::Tracklist::childFromTag (const QString & tag) {
-    const char * name = tag.latin1 ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *name = ba.constData ();
     if (!strcasecmp (name, "track"))
         return new XSPF::Track (m_doc);
     return 0L;
@@ -87,7 +88,8 @@ KDE_NO_EXPORT Node *XSPF::Tracklist::childFromTag (const QString & tag) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT Node *XSPF::Track::childFromTag (const QString & tag) {
-    const char * name = tag.latin1 ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *name = ba.constData ();
     if (!strcasecmp (name, "location"))
         return new Location (m_doc);
     else if (!strcasecmp (name, "creator"))
@@ -138,7 +140,7 @@ KDE_NO_EXPORT void XSPF::Track::closed () {
 KDE_NO_EXPORT void XSPF::Track::activate () {
     for (Node *e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_annotation) {
-            QString inf = e->innerText ().stripWhiteSpace ();
+            QString inf = e->innerText ().trimmed ();
             document ()->message (MsgInfoString, &inf);
             break;
         }
@@ -146,6 +148,6 @@ KDE_NO_EXPORT void XSPF::Track::activate () {
 }
 
 void XSPF::Location::closed () {
-    src = innerText ().stripWhiteSpace ();
+    src = innerText ().trimmed ();
     Mrl::closed ();
 }

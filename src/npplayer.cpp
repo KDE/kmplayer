@@ -32,7 +32,7 @@ extern "C" {
 #include <fcntl.h>
 
 #include <glib/gprintf.h>
-#include <glib/gthread.h>
+#include <glib.h>
 #include <gdk/gdkx.h>
 #include <gtk/gtk.h>
 
@@ -76,6 +76,7 @@ static NPNetscapeFuncs ns_funcs;
 static NPPluginFuncs np_funcs;       /* plugin functions              */
 static NPP npp;                      /* single instance of the plugin */
 static NPWindow np_window;
+static NPSetWindowCallbackStruct ws_info;
 static NPObject *js_window;
 static NPSavedData *saved_data;
 static NPClass js_class;
@@ -556,6 +557,12 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
         case NPNVSupportsXEmbedBool:
             *(NPBool*)value = 1;
             break;
+        case NPNVSupportsWindowless:
+            *(NPBool*)value = 0;
+            break;
+        case NPNVprivateModeBool:
+            *(NPBool*)value = 0;
+            break;
         case NPNVWindowNPObject:
             if (!js_window) {
                 JsObject *jo = (JsObject*) nsCreateObject (instance, &js_class);
@@ -571,7 +578,6 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
             break;
         }
         default:
-            *(int*)value = 0;
             print ("unknown value\n");
             return NPERR_GENERIC_ERROR;
     }
@@ -1219,7 +1225,7 @@ static int initPlugin (const char *plugin_lib) {
     NPError np_err;
     char *pname;
 
-    print ("starting %s with %s\n", plugin_lib, object_url);
+    print ("starting %s\n", plugin_lib);
     library = g_module_open (plugin_lib, G_MODULE_BIND_LAZY);
     if (!library) {
         print ("failed to load %s %s\n", plugin_lib, g_module_error ());
@@ -1327,7 +1333,6 @@ static int initPlugin (const char *plugin_lib) {
 }
 
 static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
-    NPSetWindowCallbackStruct ws_info;
     NPError np_err;
     Display *display;
     int screen;
@@ -1797,6 +1802,11 @@ static void pluginAdded (GtkSocket *socket, gpointer d) {
     callFunction (-1, iface_callback, "plugged", DBUS_TYPE_INVALID);
 }
 
+static gboolean pluginRemoved (GtkSocket *socket, gpointer d) {
+    (void)socket; (void)d;
+    return TRUE;
+}
+
 static void windowCreatedEvent (GtkWidget *w, gpointer d) {
     (void)d;
     print ("windowCreatedEvent\n");
@@ -1894,6 +1904,8 @@ static gboolean initPlayer (void * p) {
     xembed = gtk_socket_new();
     g_signal_connect (G_OBJECT (xembed), "plug-added",
             GTK_SIGNAL_FUNC (pluginAdded), NULL);
+    g_signal_connect (G_OBJECT (xembed), "plug-removed",
+            GTK_SIGNAL_FUNC (pluginRemoved), NULL);
 
     color_map = gdk_colormap_get_system();
     gdk_colormap_query_color (color_map, 0, &bg_color);

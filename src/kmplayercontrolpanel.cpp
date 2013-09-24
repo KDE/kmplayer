@@ -604,7 +604,7 @@ KDE_NO_EXPORT void ControlPanel::setupPositionSlider (bool show) {
     setMaximumSize (2500, h + 6);
 }
 
-KDE_NO_EXPORT int ControlPanel::preferedHeight () {
+KDE_NO_EXPORT int ControlPanel::preferredHeight () {
     return m_posSlider->isVisible () ?
         button_height_with_slider + 8 : button_height_only_buttons + 2;
 }

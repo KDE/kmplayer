@@ -1,0 +1,47 @@
+<smil>
+  <head>
+    <layout>
+      <root-layout width="320" height="240" background-color="yellow"/>
+      <region id="reg_outer" left="5" top="15" right="10" height="210" background-color="red">
+        <region id="reg_outer_text" top="2" left="2" height="15" width="100" background-color="white"/>
+        <region id="reg_inner" left="50" top="25" right="5" bottom="5" background-color="orange">
+          <region id="reg_inner_text" top="2" left="2" width="100" height="20" background-color="white"/>
+          <region id="reg_image" left="25" top="50" width="160" bottom="30" background-color="pink">
+            <region id="reg_text_image" left="5" top="45%" width="100" height="15"
+                    backgroundOpacity="70%" background-color="white"/>
+          </region>
+          <region id="reg_image_text" left="25" height="15" width="100" bottom="13" background-color="white"/>
+        </region>
+      </region>
+    </layout>
+  </head>
+  <body>
+    <par>
+      <text id="text_reg_outer" region="reg_outer_text" src="data:,fill%20=%20default" dur="10"/>
+      <text id="text_reg_inner" region="reg_inner_text" src="data:,fill%20=%20default" dur="10"/>
+      <img id="image" src="../icons/hi128-app-kmplayer.png" region="reg_image" dur="10"/>
+      <text id="text_image" region="reg_text_image" src="data:,fill%20=%20default" dur="10"/>
+      <text id="text_reg_image" region="reg_image_text" src="data:,fill%20=%20default" dur="10"/>
+      <seq>
+        <par dur="2"/>
+        <par dur="2">
+          <set target="image" attribute="fit" to="fill"/>
+          <set target="text_image" attribute="src" to="data:,fill%20=%20fill"/>
+        </par>
+        <par dur="2">
+          <set target="reg_image" attribute="fit" to="meet"/>
+          <set target="text_reg_image" attribute="src" to="data:,fill%20=%20meet"/>
+        </par>
+        <par dur="2">
+          <set target="reg_inner" attribute="fit" to="slice"/>
+          <set target="text_reg_inner" attribute="src" to="data:,fill%20=%20slice"/>
+        </par>
+        <par dur="2">
+          <set target="reg_outer" attribute="fit" to="fill"/>
+          <set target="text_reg_outer" attribute="src" to="data:,fill%20=%20fill"/>
+        </par>
+      </seq>
+    </par>
+  </body>
+</smil>
+

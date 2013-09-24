@@ -40,7 +40,7 @@ class KUrl;
 namespace KMPlayer {
 
 class Document;
-class Node;
+class KMPLAYER_EXPORT Node;
 class TextNode;
 class Posting;
 class Mrl;
@@ -609,10 +609,13 @@ inline Node *findChildWithId (const Node *p, const short id) {
 
 class KMPLAYER_EXPORT PlaylistRole {
 public:
+    PlaylistRole () : editable (false) {}
+
     QString caption () const;
     void setCaption (const QString &t);
 
     QString title;
+    bool editable;
 };
 
 /**
@@ -695,11 +698,12 @@ public:
  **/
 class KMPLAYER_EXPORT Posting {
 public:
-    KDE_NO_CDTOR_EXPORT Posting (Node *n, MessageType msg)
-        : source (n), message (msg) {}
+    KDE_NO_CDTOR_EXPORT Posting (Node *n, MessageType msg, VirtualVoid *p=NULL)
+        : source (n), message (msg), payload (p) {}
     KDE_NO_CDTOR_EXPORT virtual ~Posting () {}
     NodePtrW source;
     MessageType message;
+    VirtualVoid *payload;
 };
 
 /**
@@ -829,6 +833,7 @@ namespace SMIL {
     class Brush;
     class SmilText;
     class TextFlow;
+    class TemporalMoment;
     class PriorityClass;
     class Anchor;
     class Area;
@@ -867,6 +872,7 @@ public:
     virtual void visit (SMIL::Brush *);
     virtual void visit (SMIL::SmilText *);
     virtual void visit (SMIL::TextFlow *);
+    virtual void visit (SMIL::TemporalMoment *);
     virtual void visit (SMIL::Anchor *);
     virtual void visit (SMIL::Area *);
     virtual void visit (RP::Imfl *) {}

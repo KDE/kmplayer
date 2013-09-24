@@ -8,8 +8,8 @@ SET(optionalCFlags)
 SET(optionalLinkFlags)
 
 IF (KMPLAYER_WITH_CAIRO)
-    SET(optionalCFlags ${optionalCFlags} ${CAIROCFlags} ${PANGOCFlags})
-    SET(optionalLinkFlags ${optionalLinkFlags} ${CAIROLinkFlags} ${PANGOLinkFlags})
+    SET(optionalCFlags ${optionalCFlags} ${CAIROCFlags})
+    SET(optionalLinkFlags ${optionalLinkFlags} ${CAIROLinkFlags})
     MESSAGE("have cairo cflags:${optionalCFlags} ldflags:${optionalLinkFlags}")
 endif (KMPLAYER_WITH_CAIRO)
 
@@ -21,6 +21,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR} $
 
 set(libkmplayercommon_SRCS
   kmplayerview.cpp
+  playmodel.cpp
   playlistview.cpp
   kmplayercontrolpanel.cpp
   kmplayerconfig.cpp
@@ -33,6 +34,7 @@ set(libkmplayercommon_SRCS
   kmplayer_rp.cpp
   kmplayer_rss.cpp
   kmplayer_atom.cpp
+  kmplayer_opml.cpp
   kmplayer_xspf.cpp
   expression.cpp
   mediaobject.cpp
@@ -61,11 +63,10 @@ kde4_add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
 MESSAGE("extra ${CAIROCflags} ${GLibDBusCflags}  libs ${CAIROLinkFlags} ${GLibDBusLinkFlags}")
 
 SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES COMPILE_FLAGS
-    "${CAIROCflags} ${PANGOCflags} ${GLibDBusCflags}")
+    "${CAIROCflags} ${GLibDBusCflags}")
 
 target_link_libraries(kmplayercommon
   ${CAIROLinkFlags}
-  ${PANGOLinkFlags}
   ${GLibDBusLinkFlags}
   ${KDE4_KPARTS_LIBS}
   ${KDE4_KDEUI_LIBS}
@@ -137,10 +138,10 @@ if (KMPLAYER_WITH_NPP)
     add_executable(knpplayer ${knpplayer_SRCS})
 
     SET_TARGET_PROPERTIES(knpplayer PROPERTIES COMPILE_FLAGS
-        "${GLibDBusCflags} ${GTKCflags} ${GThreadCflags}"
+        "${GLibDBusCflags} ${GTKCflags} ${GThreadCflags} ${GModuleCflags}"
     )
 
-    target_link_libraries(knpplayer ${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags}
+    target_link_libraries(knpplayer ${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags} ${GModuleLinkFlags}
         ${X11_X11_LIB} )
 
     install(TARGETS knpplayer ${INSTALL_TARGETS_DEFAULT_ARGS})

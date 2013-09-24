@@ -42,6 +42,7 @@
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
 #include "kmplayerview.h"
+#include "expression.h"
 #include "viewarea.h"
 
 using namespace KMPlayer;
@@ -94,17 +95,15 @@ MediaManager::MediaManager (PartBase *player) : m_player (player) {
 }
 
 MediaManager::~MediaManager () {
-    const ProcessList::iterator e = m_processes.end ();
     for (ProcessList::iterator i = m_processes.begin ();
-            i != e;
+            i != m_processes.end ();
             i = m_processes.begin () /*~Process removes itself from this list*/)
     {
         kDebug() << "~MediaManager " << *i << endl;
         delete *i;
     }
-    const ProcessList::iterator re = m_recorders.end ();
     for (ProcessList::iterator i = m_recorders.begin ();
-            i != re;
+            i != m_recorders.end ();
             i = m_recorders.begin ())
     {
         kDebug() << "~MediaManager " << *i << endl;
@@ -167,7 +166,7 @@ MediaObject *MediaManager::createAVMedia (Node *node, const QByteArray &) {
 }
 
 static const QString statemap [] = {
-    i18n ("Not Running"), i18n ("Ready"), i18n ("Buffering"), i18n ("Playing")
+    i18n ("Not Running"), i18n ("Ready"), i18n ("Buffering"), i18n ("Playing"),  i18n ("Paused")
 };
 
 void MediaManager::stateChange (AudioVideoMedia *media,
@@ -192,11 +191,8 @@ void MediaManager::stateChange (AudioVideoMedia *media,
     m_player->updateStatus (i18n ("Player %1 %2",
                 media->process->process_info->name, statemap[news]));
     if (IProcess::Playing == news) {
-        if (Element::state_deferred == mrl->state) {
-            media->ignore_pause = true;
+        if (Element::state_deferred == mrl->state)
             mrl->undefer ();
-            media->ignore_pause = false;
-        }
         bool has_video = !is_rec;
         if (is_rec) {
             const ProcessList::iterator i = m_recorders.find (media->process);
@@ -239,7 +235,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
             }
             if (AudioVideoMedia::ask_delete == media->request) {
                 delete media;
-            } else if (olds > IProcess::Ready && mrl->unfinished ()) {
+            } else if (olds > IProcess::Ready) {
                 if (is_rec)
                     mrl->message (MsgMediaFinished, NULL); // FIXME
                 else
@@ -250,9 +246,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
         if (AudioVideoMedia::ask_pause == media->request) {
             media->pause ();
         } else if (mrl->view_mode != Mrl::SingleMode) {
-            media->ignore_pause = true;
             mrl->defer (); // paused the SMIL
-            media->ignore_pause = false;
         }
     }
 }
@@ -288,7 +282,7 @@ void MediaManager::processDestroyed (IProcess *process) {
 //------------------------%<----------------------------------------------------
 
 MediaObject::MediaObject (MediaManager *manager, Node *node)
- : m_manager (manager), m_node (node), paused (false) {
+ : m_manager (manager), m_node (node) {
     manager->medias ().push_back (this);
 }
 
@@ -393,7 +387,8 @@ static QString mimeByContent (const QByteArray &data)
 }
 
 MediaInfo::MediaInfo (Node *n, MediaManager::MediaType t)
- : media (NULL), type (t), node (n), job (NULL), preserve_wait (false) {
+ : media (NULL), type (t), node (n), job (NULL),
+    preserve_wait (false), check_access (false) {
 }
 
 MediaInfo::~MediaInfo () {
@@ -415,7 +410,7 @@ KDE_NO_EXPORT void MediaInfo::killWGet () {
 /**
  * Gets contents from url and puts it in m_data
  */
-KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
+KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
     clearData ();
     url = str;
 
@@ -432,7 +427,8 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
     Mrl *mrl = node->mrl ();
     if (mrl && (MediaManager::Any == type || MediaManager::AudioVideo == type))
     {
-        mime = mrl->mimetype;
+        if (!mrl->mimetype.isEmpty ())
+            setMimetype (mrl->mimetype);
         if (mrl && (MediaManager::Any == type || MediaManager::AudioVideo == type))
             if (mime == "application/x-shockwave-flash" ||
                     mime == "application/futuresplash" ||
@@ -457,7 +453,9 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
 
     bool only_playlist = false;
     bool maybe_playlist = false;
-    if (MediaManager::Audio == type || MediaManager::AudioVideo == type) {
+    if (MediaManager::Audio == type
+            || MediaManager::AudioVideo == type
+            || MediaManager::Any == type) {
         only_playlist = true;
         maybe_playlist = isPlayListMime (mime);
     }
@@ -470,12 +468,14 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
                 if (mrl && mimeptr) {
                     mrl->mimetype = mimeptr->name ();
                     setMimetype (mrl->mimetype);
-                    only_playlist = MediaManager::Audio == type ||
-                        MediaManager::AudioVideo == type;
-                    maybe_playlist = isPlayListMime (mime); // get new mime
                 }
                 kDebug () << "wget2 " << str << " " << mime;
+            } else {
+                setMimetype (mime);
             }
+            only_playlist = MediaManager::Audio == type ||
+                MediaManager::AudioVideo == type;
+            maybe_playlist = isPlayListMime (mime); // get new mime
             if (file.open (IO_ReadOnly)) {
                 if (only_playlist) {
                     maybe_playlist &= file.size () < 2000000;
@@ -501,15 +501,29 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
         return true;
     }
     QString protocol = kurl.protocol ();
-    if (MediaManager::Data != type &&
-            (memory_cache->get (str, mime, data) ||
-             protocol == "mms" || protocol == "rtsp" || protocol == "rtp" ||
-             (only_playlist && !maybe_playlist && !mime.isEmpty ()))) {
-        setMimetype (mime);
-        ready ();
-        return true;
+    if (!domain.isEmpty ()) {
+        QString get_from = protocol + "://" + kurl.host ();
+        if (get_from != domain) {
+            check_access = true;
+            access_from = domain;
+            cross_domain = get_from + "/crossdomain.xml";
+            kurl = KUrl (cross_domain);
+        }
     }
-    if (memory_cache->preserve (str)) {
+    if (!check_access) {
+        if (MediaManager::Data != type &&
+                (memory_cache->get (str, mime, data) ||
+                 protocol == "mms" || protocol == "rtsp" ||
+                 protocol == "rtp" || protocol == "rtmp" ||
+                 (only_playlist && !maybe_playlist && !mime.isEmpty ()))) {
+            setMimetype (mime);
+            if (MediaManager::Any == type)
+                type = MediaManager::AudioVideo;
+            ready ();
+            return true;
+        }
+    }
+    if (check_access || memory_cache->preserve (str)) {
         //kDebug () << "downloading " << str;
         job = KIO::get (kurl, KIO::NoReload, KIO::HideProgressInfo);
         job->addMetaData ("PropagateHttpHeader", "true");
@@ -518,8 +532,9 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str) {
                 this, SLOT (slotData (KIO::Job *, const QByteArray &)));
         connect (job, SIGNAL (result (KJob *)),
                 this, SLOT (slotResult (KJob *)));
-        connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
-                this, SLOT (slotMimetype (KIO::Job *, const QString &)));
+        if (!check_access)
+            connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
+                    this, SLOT (slotMimetype (KIO::Job *, const QString &)));
     } else {
         //kDebug () << "download preserved " << str;
         connect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
@@ -559,7 +574,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                     } else if (pls_groupfound) {
                         int eq_pos = line.indexOf (QChar ('='));
                         if (eq_pos > 0) {
-                            if (line.lower ().startsWith (QString ("numberofentries"))) {
+                            if (line.toLower ().startsWith (QString ("numberofentries"))) {
                                 nr = line.mid (eq_pos + 1).stripWhiteSpace ().toInt ();
                                 kDebug () << "numberofentries : " << nr;
                                 if (nr > 0 && nr < 1024)
@@ -567,7 +582,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                                 else
                                     nr = 0;
                             } else if (nr > 0) {
-                                QString ll = line.lower ();
+                                QString ll = line.toLower ();
                                 if (ll.startsWith (QString ("file"))) {
                                     int i = line.mid (4, eq_pos-4).toInt ();
                                     if (i > 0 && i <= nr)
@@ -593,7 +608,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             readXML (cur_elm, textstream, line);
             //cur_elm->normalize ();
-        } else if (line.lower () != QString ("[reference]")) {
+        } else if (line.toLower () != QString ("[reference]")) {
             bool extm3u = line.startsWith ("#EXTM3U");
             QString title;
             NodePtr doc = node->document ();
@@ -604,7 +619,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                 QString mrl = line.stripWhiteSpace ();
                 if (line == QString ("--stop--"))
                     break;
-                if (mrl.lower ().startsWith (QString ("asf ")))
+                if (mrl.toLower ().startsWith (QString ("asf ")))
                     mrl = mrl.mid (4).stripWhiteSpace ();
                 if (!mrl.isEmpty ()) {
                     if (extm3u && mrl.startsWith (QChar ('#'))) {
@@ -627,6 +642,11 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
 void MediaInfo::setMimetype (const QString &mt)
 {
     mime = mt;
+
+    Mrl *mrl = node ? node->mrl () : NULL;
+    if (mrl && mrl->mimetype.isEmpty ())
+        mrl->mimetype = mt;
+
     if (MediaManager::Any == type) {
         if (mimetype ().startsWith ("image/"))
             type = MediaManager::Image;
@@ -651,6 +671,7 @@ KDE_NO_EXPORT void MediaInfo::clearData () {
     }
     url.truncate (0);
     mime.truncate (0);
+    access_from.truncate (0);
     data.resize (0);
 }
 
@@ -719,20 +740,54 @@ static bool validDataFormat (MediaManager::MediaType type, const QByteArray &ba)
 }
 
 KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
-    if (MediaManager::Data != type && !kjob->error ()) {
-        if (data.size () && data.size () < 512) {
-            setMimetype (mimeByContent (data));
-            if (!validDataFormat (type, data))
+    job = 0L; // signal KIO::Job::result deletes itself
+    if (check_access) {
+        check_access = false;
+
+        bool success = false;
+        if (!kjob->error () && data.size () > 0) {
+            QTextStream ts (data, IO_ReadOnly);
+            NodePtr doc = new Document (QString ());
+            readXML (doc, ts, QString ());
+
+            Expression *expr = evaluateExpr (
+                    "//cross-domain-policy/allow-access-from/@domain");
+            if (expr) {
+                expr->setRoot (doc);
+                Sequence *lst = expr->toSequence ();
+                for (NodeValueItem *i = lst->first(); i; i = i->nextSibling()) {
+                    QRegExp match (i->data.value (), Qt::CaseInsensitive, QRegExp::Wildcard);
+                    if (match.exactMatch (access_from)) {
+                        success = true;
+                        break;
+                    }
+                }
+                delete expr;
+                delete lst;
+            }
+            doc->document ()->dispose ();
+        }
+        if (success) {
+            wget (QString (url));
+        } else {
+            data.resize (0);
+            ready ();
+        }
+    } else {
+        if (MediaManager::Data != type && !kjob->error ()) {
+            if (data.size () && data.size () < 512) {
+                setMimetype (mimeByContent (data));
+                if (!validDataFormat (type, data))
+                    data.resize (0);
+            }
+            memory_cache->add (url, mime, data);
+        } else {
+            memory_cache->unpreserve (url);
+            if (MediaManager::Data != type)
                 data.resize (0);
         }
-        memory_cache->add (url, mime, data);
-    } else {
-        memory_cache->unpreserve (url);
-        if (MediaManager::Data != type)
-            data.resize (0);
+        ready ();
     }
-    job = 0L; // signal KIO::Job::result deletes itself
-    ready ();
 }
 
 KDE_NO_EXPORT void MediaInfo::cachePreserveRemoved (const QString & str) {
@@ -750,7 +805,7 @@ KDE_NO_EXPORT void MediaInfo::slotData (KIO::Job *, const QByteArray &qb) {
         int newsize = old_size + qb.size ();
         data.resize (newsize);
         memcpy (data.data () + old_size, qb.constData (), qb.size ());
-        if (old_size < 512 && newsize >= 512) {
+        if (!check_access && old_size < 512 && newsize >= 512) {
             setMimetype (mimeByContent (data));
             if (!validDataFormat (type, data)) {
                 data.resize (0);
@@ -792,8 +847,7 @@ AudioVideoMedia::AudioVideoMedia (MediaManager *manager, Node *node)
  : MediaObject (manager, node),
    process (NULL),
    m_viewer (NULL),
-   request (ask_nothing),
-   ignore_pause (false) {
+   request (ask_nothing) {
     kDebug() << "AudioVideoMedia::AudioVideoMedia" << endl;
 }
 
@@ -855,9 +909,8 @@ void AudioVideoMedia::stop () {
 }
 
 void AudioVideoMedia::pause () {
-    if (!ignore_pause && !paused && process) {
+    if (process) {
         if (process->state () > IProcess::Ready) {
-            paused = true;
             request = ask_nothing;
             process->pause ();
         } else {
@@ -867,12 +920,11 @@ void AudioVideoMedia::pause () {
 }
 
 void AudioVideoMedia::unpause () {
-    if (!ignore_pause && paused && process) {
+    if (process) {
         if (request == ask_pause) {
             request = ask_nothing;
         } else {
-            paused = false;
-            process->pause ();
+            process->unpause ();
         }
     }
 }

@@ -57,6 +57,7 @@
 
 #include "kmplayerpartbase.h"
 #include "kmplayerview.h"
+#include "playmodel.h"
 #include "playlistview.h"
 #include "kmplayerprocess.h"
 #include "viewarea.h"
@@ -107,6 +108,7 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
    m_view (new View (wparent)),
    m_settings (new Settings (this, config)),
    m_media_manager (new MediaManager (this)),
+   m_play_model (new PlayModel (this, KIconLoader::global ())),
    m_source (0L),
    m_bookmark_menu (0L),
    m_update_tree_timer (0),
@@ -114,7 +116,8 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
    m_noresize (false),
    m_auto_controls (true),
    m_bPosSliderPressed (false),
-   m_in_update_tree (false)
+   m_in_update_tree (false),
+   m_update_tree_full (false)
 {
     m_sources ["urlsource"] = new URLSource (this);
 
@@ -213,16 +216,21 @@ void PartBase::createBookmarkMenu (KMenu *owner, KActionCollection *ac) {
 }
 
 void PartBase::connectPlaylist (PlayListView * playlist) {
+    playlist->setModel (m_play_model);
+    connect (m_play_model, SIGNAL (updating (const QModelIndex &)),
+             playlist, SLOT(modelUpdating (const QModelIndex &)));
+    connect (m_play_model, SIGNAL (updated (const QModelIndex&, const QModelIndex&, bool, bool)),
+             playlist, SLOT(modelUpdated (const QModelIndex&, const QModelIndex&, bool, bool)));
+    connect (playlist->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+             playlist, SLOT(slotCurrentItemChanged(QModelIndex,QModelIndex)));
     connect (playlist, SIGNAL (addBookMark (const QString &, const QString &)),
              this, SLOT (addBookMark (const QString &, const QString &)));
-    connect (playlist, SIGNAL (executed (Q3ListViewItem *)),
-             this, SLOT (playListItemExecuted (Q3ListViewItem *)));
-    connect (playlist, SIGNAL (clicked (Q3ListViewItem *)),
-             this, SLOT (playListItemClicked (Q3ListViewItem *)));
+    connect (playlist, SIGNAL (activated (const QModelIndex &)),
+             this, SLOT (playListItemActivated (const QModelIndex &)));
+    connect (playlist, SIGNAL (clicked (const QModelIndex&)),
+             this, SLOT (playListItemClicked (const QModelIndex&)));
     connect (this, SIGNAL (treeChanged (int, NodePtr, NodePtr, bool, bool)),
-             playlist, SLOT (updateTree (int, NodePtr, NodePtr, bool, bool)));
-    connect (this, SIGNAL (treeUpdated ()),
-             playlist, SLOT (triggerUpdate ()));
+             playlist->model (), SLOT (updateTree (int, NodePtr, NodePtr, bool, bool)));
 }
 
 void PartBase::connectInfoPanel (InfoWindow * infopanel) {
@@ -354,7 +362,7 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int menu) {
         if (!pinfo->supports (srcname))
             continue;
         int menuid = player_menu->idAt (id);
-        player_menu->setItemChecked (menuid, menu == id);
+        player_menu->setItemChecked (menuid, menu == (int) id);
         if (menuid == menu) {
             if (strcmp (pinfo->name, "npp"))
                 m_settings->backends [srcname] = pinfo->name;
@@ -607,32 +615,26 @@ void PartBase::forward () {
     m_source->forward ();
 }
 
-KDE_NO_EXPORT void PartBase::playListItemClicked (Q3ListViewItem * item) {
-    if (!item)
+KDE_NO_EXPORT void PartBase::playListItemClicked (const QModelIndex& index) {
+    if (!index.isValid ())
         return;
-    PlayListItem * vi = static_cast <PlayListItem *> (item);
-    RootPlayListItem * ri = vi->playListView ()->rootItem (item);
-    if (ri == item && vi->node) {
-        QString src = ri->source;
-        //kDebug() << "playListItemClicked " << src << " " << vi->node->nodeName();
-        Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
-        if (vi->node->isPlayable ()) {
-            source->play (vi->node->mrl ()); //may become !isPlayable by lazy loading
-            if (!vi->node->isPlayable ())
-                emit treeChanged (ri->id, vi->node, 0, false, true);
-        } else if (vi->firstChild ())
-            vi->listView ()->setOpen (vi, !vi->isOpen ());
-    } else if (!vi->node && !vi->m_attr)
-        updateTree (); // items already deleted
+    PlayListView *pv = qobject_cast <PlayListView *> (sender ());
+    if (pv->model ()->rowCount ()) {
+        if (pv->isExpanded (index))
+            pv->setExpanded (index, false);
+        else
+            pv->setExpanded (index, true);
+    }
 }
 
-KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
+KDE_NO_EXPORT void PartBase::playListItemActivated(const QModelIndex &index) {
     if (m_in_update_tree) return;
     if (m_view->editMode ()) return;
-    PlayListItem * vi = static_cast <PlayListItem *> (item);
-    RootPlayListItem * ri = vi->playListView ()->rootItem (item);
-    if (ri == item)
-        return; // both null or handled by playListItemClicked
+    PlayListView *pv = qobject_cast <PlayListView *> (sender ());
+    if (!pv->model ()->parent (index).isValid () && index.row ())
+        return; // handled by playListItemClicked
+    PlayItem *vi = static_cast <PlayItem *> (index.internalPointer ());
+    TopPlayItem *ri = vi->rootItem ();
     if (vi->node) {
         QString src = ri->source;
         NodePtrW node = vi->node;
@@ -642,17 +644,16 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
             source->play (node->mrl ()); //may become !isPlayable by lazy loading
             if (node && !node->isPlayable ())
                 emit treeChanged (ri->id, node, 0, false, true);
-        } else if (vi->firstChild ())
-            vi->listView ()->setOpen (vi, !vi->isOpen ());
-    } else if (vi->m_attr) {
-        if (vi->m_attr->name () == Ids::attr_src ||
-                vi->m_attr->name () == Ids::attr_href ||
-                vi->m_attr->name () == Ids::attr_url ||
-                vi->m_attr->name () == Ids::attr_value ||
-                vi->m_attr->name () == "data") {
-            QString src (vi->m_attr->value ());
+        } // else if (vi->childCount ()) {handled by playListItemClicked
+    } else if (vi->attribute) {
+        if (vi->attribute->name () == Ids::attr_src ||
+                vi->attribute->name () == Ids::attr_href ||
+                vi->attribute->name () == Ids::attr_url ||
+                vi->attribute->name () == Ids::attr_value ||
+                vi->attribute->name () == "data") {
+            QString src (vi->attribute->value ());
             if (!src.isEmpty ()) {
-                PlayListItem * pi = static_cast <PlayListItem*>(item->parent());
+                PlayItem *pi = vi->parent ();
                 if (pi) {
                     for (Node *e = pi->node.ptr (); e; e = e->parentNode ()) {
                         Mrl * mrl = e->mrl ();
@@ -677,8 +678,7 @@ void PartBase::updateTree (bool full, bool force) {
         if (m_update_tree_full) {
             if (m_source)
                 emit treeChanged (0, m_source->root (), m_source->current (), true, false);
-        } else
-            emit treeUpdated ();
+        }
         m_in_update_tree = false;
         if (m_update_tree_timer) {
             killTimer (m_update_tree_timer);
@@ -780,16 +780,18 @@ void PartBase::play () {
         m_update_tree_timer = 0;
     }
     if (!playing ()) {
-        PlayListItem *lvi = m_view->playList ()->currentPlayListItem ();
-        if (lvi) { // make sure it's in the first tree
-            Q3ListViewItem * pitem = lvi;
-            while (pitem->parent())
-                pitem = pitem->parent();
-            if (pitem != m_view->playList ()->firstChild ())
+        PlayItem *lvi = m_view->playList ()->selectedItem ();
+        if (lvi) {
+            TopPlayItem *ri = lvi->rootItem ();
+            if (ri->id != 0) // make sure it's in the first tree
                 lvi = 0L;
         }
-        if (!lvi)
-            lvi = static_cast<PlayListItem*>(m_view->playList()->firstChild());
+        if (!lvi) {
+            QModelIndex index = m_view->playList ()->model ()->index (0, 0);
+            lvi = static_cast<PlayItem*>(index.internalPointer ());
+            if (!lvi->node)
+                lvi = NULL;
+        }
         if (lvi) {
             Mrl *mrl = NULL;
             for (Node * n = lvi->node.ptr (); n; n = n->parentNode ()) {
@@ -1082,6 +1084,8 @@ void Source::setAspect (NodePtr node, float a) {
         if (changed && m_player->view ())
             m_player->viewWidget ()->viewArea ()->resizeEvent (NULL);
 
+    } else {
+       mrl->message (MsgSurfaceBoundsUpdate);
     }
     if (changed)
         emit dimensionsChanged ();
@@ -1128,6 +1132,13 @@ void Source::setUrl (const QString &url) {
     }
     if (m_player->source () == this)
         m_player->updateTree ();
+
+    QTimer::singleShot (0, this, SLOT(changedUrl ()));
+}
+
+void Source::changedUrl()
+{
+    emit titleChanged (this->prettyName ());
 }
 
 void Source::setTitle (const QString & title) {
@@ -1517,11 +1528,14 @@ QString URLSource::prettyName () {
     if (m_url.isEmpty ())
         return i18n ("URL");
     if (m_url.url ().size () > 50) {
-        QString newurl = m_url.protocol () + QString ("://");
-        if (m_url.hasHost ())
-            newurl += m_url.host ();
-        if (m_url.port ())
-            newurl += QString (":%1").arg (m_url.port ());
+        QString newurl;
+        if (!m_url.isLocalFile ()) {
+            newurl = m_url.protocol () + QString ("://");
+            if (m_url.hasHost ())
+                newurl += m_url.host ();
+            if (m_url.port () != -1)
+                newurl += QString (":%1").arg (m_url.port ());
+        }
         QString file = m_url.fileName ();
         int len = newurl.size () + file.size ();
         KUrl path = KUrl (m_url.directory ());
@@ -1536,9 +1550,9 @@ QString URLSource::prettyName () {
         if (modified)
             dir += QString (".../");
         newurl += dir + file;
-        return i18n ("Url - ") + newurl;
+        return i18n ("URL - ") + newurl;
     }
-    return i18n ("Url - ") + m_url.prettyUrl ();
+    return i18n ("URL - ") + m_url.prettyUrl ();
 }
 
 bool URLSource::authoriseUrl (const QString &url) {

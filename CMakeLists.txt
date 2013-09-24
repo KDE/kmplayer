@@ -4,7 +4,7 @@ cmake_policy(VERSION 2.6)
 
 SET(KMPLAYER_MAJOR_VERSION "0")
 SET(KMPLAYER_MINOR_VERSION "11")
-SET(KMPLAYER_PATCH_VERSION "2")
+SET(KMPLAYER_PATCH_VERSION "3d")
 
 SET(KMPLAYER_VERSION_STRING
     "${KMPLAYER_MAJOR_VERSION}.${KMPLAYER_MINOR_VERSION}.${KMPLAYER_PATCH_VERSION}")
@@ -14,6 +14,7 @@ include (KDE4Defaults)
 include (MacroLibrary)
 
 add_definitions (${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
+add_definitions(-DQT_USE_FAST_CONCATENATION -DQT_USE_FAST_OPERATOR_PLUS)
 include_directories( ${KDE4_INCLUDES})
 
 if(NOT WIN32)
@@ -25,15 +26,15 @@ if(NOT WIN32)
   if (KMPLAYER_BUILT_WITH_CAIRO)
 
     PKGCONFIG(cairo CAIROIncDir CAIROLinkDir CAIROLinkFlags CAIROCflags)
-    PKGCONFIG(pangocairo PANGOIncDir PANGOLinkDir PANGOLinkFlags PANGOCflags)
 
-    if (CAIROCflags AND PANGOCflags)
+    if (CAIROCflags)
         set(KMPLAYER_WITH_CAIRO 1)
-    endif (CAIROCflags AND PANGOCflags)
+    endif (CAIROCflags)
   endif (KMPLAYER_BUILT_WITH_CAIRO)
 
   if (KMPLAYER_BUILT_WITH_NPP)
     PKGCONFIG(dbus-glib-1 GLibDBusIncDir GLibDBusLinkDir GLibDBusLinkFlags GLibDBusCflags)
+    PKGCONFIG(gmodule-2.0 GModuleIncDir GModuleLinkDir GModuleLinkFlags GModuleCflags)
 
     if (GLibDBusCflags)
       set(KMPLAYER_WITH_GDBUS 1)

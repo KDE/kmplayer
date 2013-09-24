@@ -27,17 +27,19 @@ namespace KMPlayer {
 class NodeValue {
 public:
     NodeValue (Node *n, Attribute *a=NULL) : node (n), attr (a) {}
+    NodeValue (const QString &s) : node (NULL), attr (NULL), string (s) {}
 
     QString value () const;
 
     Node *node;
     Attribute *attr;
+    QString string;
 };
 
 typedef ListNode<NodeValue> NodeValueItem;
 ITEM_AS_POINTER(KMPlayer::NodeValueItem)
 typedef NodeValueItem::SharedType NodeValueItemPtr;
-typedef List <NodeValueItem> NodeValueList;
+typedef List <NodeValueItem> Sequence;
 
 
 class Expression : public VirtualVoid {
@@ -46,7 +48,7 @@ public:
     virtual int toInt () const = 0;
     virtual float toFloat () const = 0;
     virtual QString toString () const = 0;
-    virtual NodeValueList *toNodeList () const = 0;
+    virtual Sequence *toSequence () const = 0;
     virtual void setRoot (Node *root) = 0;
 };
 

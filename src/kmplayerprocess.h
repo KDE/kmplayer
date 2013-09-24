@@ -88,6 +88,7 @@ public:
     virtual void stop ();
     virtual void quit ();
     virtual void pause ();
+    virtual void unpause ();
     /* seek (pos, abs) seek position in deci-seconds */
     virtual bool seek (int pos, bool absolute);
     /* volume from 0 to 100 */
@@ -132,6 +133,7 @@ public:
     virtual void quit ();
 protected:
     bool sendCommand (const QString &);
+    bool removeQueued (const char *cmd);
     QList<QByteArray> commands;
     bool m_needs_restarted;
 protected slots:
@@ -163,6 +165,7 @@ public:
     virtual bool deMediafiedPlay ();
     virtual void stop ();
     virtual void pause ();
+    virtual void unpause ();
     virtual bool seek (int pos, bool absolute);
     virtual void volume (int pos, bool absolute);
     virtual bool saturation (int pos, bool absolute);
@@ -184,6 +187,7 @@ private:
     WeakPtr <Source::LangInfo> alanglist_end;
     Source::LangInfoPtr slanglist;
     WeakPtr <Source::LangInfo> slanglist_end;
+    State m_transition_state;
     int aid, sid;
     int old_volume;
 };
@@ -314,6 +318,7 @@ public:
     void playing ();
     void progress (uint64_t pos);
     void pause ();
+    void unpause ();
     bool seek (int pos, bool absolute);
     void volume (int pos, bool absolute);
     void eof ();

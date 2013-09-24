@@ -21,6 +21,8 @@
 
 #include "config-kmplayer.h"
 
+#include <QModelIndex>
+
 #include <kxmlguiwindow.h>
 #include <kaction.h>
 #include <kurl.h>
@@ -31,7 +33,7 @@ static const int id_status_timer = 2;
 
 class QMenu;
 class QMenuItem;
-class Q3ListViewItem;
+class QTreeWidgetItem;
 class KMPlayerBroadcastConfig;
 class KMPlayerFFServerConfig;
 class KSystemTrayIcon;
@@ -44,7 +46,7 @@ namespace KMPlayer {
     class View;
     class PartBase;
     class Source;
-    class PlayListItem;
+    class PlayItem;
 } // namespace
 
 
@@ -115,8 +117,8 @@ private slots:
     void slotConfigureToolbars ();
     void slotClearHistory ();
     void windowVideoConsoleToggled (bool show);
-    void playListItemSelected (Q3ListViewItem *);
-    void playListItemDropped (QDropEvent * e, Q3ListViewItem * after);
+    void playListItemActivated (const QModelIndex&);
+    void playListItemDropped (QDropEvent *e, KMPlayer::PlayItem *after);
     void playListItemMoved ();
     void menuDropInList ();
     void menuDropInGroup ();
@@ -124,7 +126,7 @@ private slots:
     void menuDeleteNode ();
     void menuMoveUpNode ();
     void menuMoveDownNode ();
-    void preparePlaylistMenu (KMPlayer::PlayListItem *, QMenu *);
+    void preparePlaylistMenu (KMPlayer::PlayItem *, QMenu *);
     void slotGeneratorMenu ();
     void slotGenerator ();
 
@@ -166,7 +168,7 @@ private:
     KMPlayerFFServerConfig * m_ffserverconfig;
     KMPlayerBroadcastConfig * m_broadcastconfig;
     KUrl::List m_drop_list;
-    Q3ListViewItem * m_drop_after;
+    KMPlayer::PlayItem *m_drop_after;
     int edit_tree_id;
     int manip_tree_id;
     int last_time_left;

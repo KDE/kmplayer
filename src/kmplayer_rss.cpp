@@ -24,7 +24,7 @@
 using namespace KMPlayer;
 
 KDE_NO_EXPORT Node *RSS::Rss::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "channel"))
+    if (!strcmp (tag.toLatin1 ().constData (), "channel"))
         return new RSS::Channel (m_doc);
     return 0L;
 }
@@ -37,7 +37,8 @@ void *RSS::Rss::role (RoleType msg, void *content)
 }
 
 KDE_NO_EXPORT Node *RSS::Channel::childFromTag (const QString & tag) {
-    const char *ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "item"))
         return new RSS::Item (m_doc);
     else if (!strcmp (ctag, "title"))
@@ -51,7 +52,7 @@ KDE_NO_EXPORT Node *RSS::Channel::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void RSS::Channel::closed () {
     for (Node *c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
-            title = c->innerText ().simplifyWhiteSpace ();
+            title = c->innerText ().simplified ();
             break;
         }
     Element::closed ();
@@ -66,7 +67,8 @@ void *RSS::Channel::role (RoleType msg, void *content)
 }
 
 KDE_NO_EXPORT Node *RSS::Item::childFromTag (const QString & tag) {
-    const char *ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "enclosure"))
         return new RSS::Enclosure (m_doc);
     else if (!strcmp (ctag, "title"))
@@ -95,7 +97,7 @@ KDE_NO_EXPORT void RSS::Item::closed () {
         for (Node *c = firstChild (); c; c = c->nextSibling ()) {
             switch (c->id) {
                 case id_node_title:
-                    title = c->innerText ().simplifyWhiteSpace ();
+                    title = c->innerText ().simplified ();
                     break;
                 case id_node_enclosure:
                     enclosure = static_cast <Enclosure *> (c);

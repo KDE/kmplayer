@@ -27,6 +27,7 @@
 #include <QPointer>
 #include <qstringlist.h>
 #include <qmap.h>
+#include <QModelIndex>
 
 #include <kmediaplayer/player.h>
 #include <kurl.h>
@@ -41,7 +42,6 @@ class KAboutData;
 class KActionCollection;
 class KBookmarkMenu;
 class KBookmarkManager;
-class Q3ListViewItem;
 class KMenu;
 
 
@@ -51,6 +51,7 @@ class PartBase;
 class Process;
 class MPlayer;
 class BookmarkOwner;
+class PlayModel;
 class Settings;
 class MediaManager;
 
@@ -111,6 +112,7 @@ public:
     void connectInfoPanel (InfoWindow * infopanel);
     void connectSource (Source * old_source, Source * source);
     MediaManager *mediaManager () const { return m_media_manager; }
+    PlayModel *playModel () const { return m_play_model; }
     Source * source () const { return m_source; }
     QMap <QString, Source *> & sources () { return m_sources; }
     KSharedConfigPtr config () const { return m_config; }
@@ -172,7 +174,6 @@ signals:
     void urlChanged (const QString & url);
     void processChanged (const char *);
     void treeChanged (int id, NodePtr root, NodePtr, bool select, bool open);
-    void treeUpdated ();
     void infoUpdated (const QString & msg);
     void statusUpdated (const QString & msg);
     void languagesUpdated(const QStringList & alang, const QStringList & slang);
@@ -195,8 +196,8 @@ protected slots:
     void saturationValueChanged (int val);
     void sourceHasChangedAspects ();
     void fullScreen ();
-    void playListItemClicked (Q3ListViewItem *);
-    void playListItemExecuted (Q3ListViewItem *);
+    void playListItemClicked (const QModelIndex &);
+    void playListItemActivated (const QModelIndex &);
     void slotPlayingStarted ();
     void slotPlayingStopped ();
     void settingsChanged ();
@@ -210,6 +211,7 @@ protected:
     QMap <QString, QString> temp_backends;
     Settings *m_settings;
     MediaManager *m_media_manager;
+    PlayModel *m_play_model;
     Source * m_source;
     QMap <QString, Source *> m_sources;
     KBookmarkManager * m_bookmark_manager;

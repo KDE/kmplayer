@@ -270,7 +270,7 @@ static TrieNode * trieInsert (const char * s) {
 }
 
 TrieString::TrieString (const QString & s)
-  : node (s.isEmpty () ? 0L : trieInsert (s.utf8 ().constData ()))
+  : node (s.isEmpty () ? 0L : trieInsert (s.toUtf8 ().constData ()))
 {}
 
 TrieString::TrieString (const char * utf8)

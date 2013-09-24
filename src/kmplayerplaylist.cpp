@@ -28,6 +28,7 @@
 #include "kmplayerplaylist.h"
 #include "kmplayer_asx.h"
 #include "kmplayer_atom.h"
+#include "kmplayer_opml.h"
 #include "kmplayer_rp.h"
 #include "kmplayer_rss.h"
 #include "kmplayer_smil.h"
@@ -43,7 +44,8 @@ using namespace KMPlayer;
 //-----------------------------------------------------------------------------
 
 Node *KMPlayer::fromXMLDocumentTag (NodePtr & d, const QString & tag) {
-    const char * const name = tag.latin1 ();
+    const QByteArray ba = tag.toAscii ();
+    const char * const name = ba.constData();
     if (!strcmp (name, "smil"))
         return new SMIL::Smil (d);
     else if (!strcasecmp (name, "asx"))
@@ -56,6 +58,8 @@ Node *KMPlayer::fromXMLDocumentTag (NodePtr & d, const QString & tag) {
         return new ATOM::Feed (d);
     else if (!strcasecmp (name, "playlist"))
         return new XSPF::Playlist (d);
+    else if (!strcasecmp (name, "opml"))
+        return new OPML::Opml (d);
     else if (!strcasecmp (name, "url"))
         return new GenericURL (d, QString ());
     else if (!strcasecmp (name, "mrl") ||
@@ -418,7 +422,7 @@ void Node::normalize () {
     while (e) {
         Node *tmp = e->nextSibling ();
         if (!e->isElementNode () && e->id == id_node_text) {
-            QString val = e->nodeValue ().simplifyWhiteSpace ();
+            QString val = e->nodeValue ().simplified ();
             if (val.isEmpty ())
                 removeChild (e);
             else
@@ -429,7 +433,7 @@ void Node::normalize () {
     }
 }
 
-static void getInnerText (const Node *p, QTextOStream & out) {
+static void getInnerText (const Node *p, QTextStream & out) {
     for (Node *e = p->firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_text || e->id == id_node_cdata)
             out << e->nodeValue ();
@@ -440,12 +444,12 @@ static void getInnerText (const Node *p, QTextOStream & out) {
 
 QString Node::innerText () const {
     QString buf;
-    QTextOStream out (&buf);
+    QTextStream out (&buf, QIODevice::WriteOnly);
     getInnerText (this, out);
     return buf;
 }
 
-static void getOuterXML (const Node *p, QTextOStream & out, int depth) {
+static void getOuterXML (const Node *p, QTextStream & out, int depth) {
     if (!p->isElementNode ()) { // #text or #cdata
         if (p->id == id_node_cdata)
             out << "<![CDATA[" << p->nodeValue () << "]]>" << QChar ('\n');
@@ -471,7 +475,7 @@ static void getOuterXML (const Node *p, QTextOStream & out, int depth) {
 
 QString Node::innerXML () const {
     QString buf;
-    QTextOStream out (&buf);
+    QTextStream out (&buf, QIODevice::WriteOnly);
     for (Node *e = firstChild (); e; e = e->nextSibling ())
         getOuterXML (e, out, 0);
     return buf;
@@ -479,7 +483,7 @@ QString Node::innerXML () const {
 
 QString Node::outerXML () const {
     QString buf;
-    QTextOStream out (&buf);
+    QTextStream out (&buf, QIODevice::WriteOnly);
     getOuterXML (this, out, 0);
     return buf;
 }
@@ -733,8 +737,7 @@ Mrl::Mrl (NodePtr & d, short id)
       resolved (false), bookmarkable (true), access_granted (false) {}
 
 Mrl::~Mrl () {
-    if (media_info)
-        delete media_info;
+    delete media_info;
 }
 
 Node::PlayType Mrl::playType () {
@@ -790,8 +793,9 @@ void Mrl::message (MessageType msg, void *content) {
                 !isPlayable () && firstChild ()) {//if backend added child links
             state = state_activated;
             firstChild ()->activate ();
-        } else
+        } else if (unfinished ()) {
             finish ();
+        }
         break;
 
     default:
@@ -870,10 +874,8 @@ void Mrl::undefer () {
 }
 
 void Mrl::deactivate () {
-    if (media_info) {
-        delete media_info;
-        media_info = NULL;
-    }
+    delete media_info;
+    media_info = NULL;
     Node::deactivate ();
 }
 
@@ -977,7 +979,7 @@ Node *Document::childFromTag (const QString & tag) {
     Node * elm = fromXMLDocumentTag (m_doc, tag);
     if (elm)
         return elm;
-    return 0L;
+    return NULL;
 }
 
 void Document::dispose () {
@@ -1448,8 +1450,10 @@ bool DocumentBuilder::startTag(const QString &tag, const AttributeList &attr) {
     if (m_ignore_depth) {
         m_ignore_depth++;
         //kDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth;
+    } else if (!m_node) {
+        return false; // had underflow
     } else {
-        NodePtr n = m_node ? m_node->childFromTag (tag) : NULL;
+        NodePtr n = m_node->childFromTag (tag);
         if (!n) {
             kDebug () << "Warning: unknown tag " << tag.latin1 ();
             NodePtr doc = m_root->document ();
@@ -1477,10 +1481,12 @@ bool DocumentBuilder::endTag (const QString & tag) {
     if (m_ignore_depth) { // endtag to ignore
         m_ignore_depth--;
         kDebug () << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth;
+    } else if (!m_node) {
+        return false; // had underflow
     } else {  // endtag
         NodePtr n = m_node;
         while (n) {
-            if (!strcasecmp (n->nodeName (), tag.local8Bit ().data ()) &&
+            if (!strcasecmp (n->nodeName (), tag.toLocal8Bit ().constData ()) &&
                     (m_root_is_first || n != m_root)) {
                 while (n != m_node) {
                     kWarning() << m_node->nodeName () << " not closed";
@@ -1519,16 +1525,16 @@ bool DocumentBuilder::characterData (const QString & data) {
             m_node->characterData (data);
     }
     //kDebug () << "characterData " << d.latin1();
-    return true;
+    return !!m_node;
 }
 
 bool DocumentBuilder::cdataData (const QString & data) {
-    if (!m_ignore_depth) {
+    if (!m_ignore_depth && m_node) {
         NodePtr d = m_node->document ();
         m_node->appendChild (new CData (d, data));
     }
     //kDebug () << "cdataData " << d.latin1();
-    return true;
+    return !!m_node;
 }
 
 #ifdef KMPLAYER_WITH_EXPAT
@@ -1692,7 +1698,7 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
     SimpleSAXParser parser (builder);
     if (!firstline.isEmpty ()) {
         QString str (firstline + QChar ('\n'));
-        QTextStream fl_in (&str, IO_ReadOnly);
+        QTextStream fl_in (&str, QIODevice::ReadOnly);
         parser.parse (fl_in);
     }
     if (!in.atEnd ())
@@ -1943,13 +1949,13 @@ bool SimpleSAXParser::readAttributes () {
                   kDebug () << "encodeing " << i.data().latin1();*/
         }
     } else {
-        have_error = builder.startTag (tagname, m_attributes);
+        have_error = !builder.startTag (tagname, m_attributes);
         if (closed)
-            have_error &= builder.endTag (tagname);
+            have_error &= !builder.endTag (tagname);
         //kDebug () << "readTag " << tagname << " closed:" << closed << " ok:" << have_error;
     }
     m_state = m_state->next; // pop Node or PI
-    return true;
+    return !have_error;
 }
 
 bool SimpleSAXParser::readPI () {
@@ -2003,7 +2009,7 @@ bool SimpleSAXParser::readCDATA () {
             cdata.truncate (cdata.size () - 2);
             m_state = m_state->next;
             if (m_state->state == InContent)
-                have_error = builder.cdataData (cdata);
+                have_error = !builder.cdataData (cdata);
             else if (m_state->state == InAttributes) {
                 if (equal_seen)
                     attr_value += cdata;
@@ -2039,7 +2045,7 @@ bool SimpleSAXParser::readEndTag () {
         if (!nextToken ()) return false;
     if (token->token != tok_angle_close)
         return false;
-    have_error = builder.endTag (tagname);
+    have_error = !builder.endTag (tagname);
     m_state = m_state->next;
     return true;
 }
@@ -2122,10 +2128,10 @@ bool SimpleSAXParser::parse (QTextStream & d) {
                                 if (pos > -1)
                                     white_space = white_space.mid (pos + 1);
                             }
-                            have_error = builder.characterData (white_space);
+                            have_error = !builder.characterData (white_space);
                             white_space.truncate (0);
                         }
-                        have_error = builder.characterData (token->string);
+                        have_error = !builder.characterData (token->string);
                         in_character_data = true;
                     }
                 }

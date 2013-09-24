@@ -153,7 +153,7 @@ static const char * strHue = "Hue";
 static const char * strSaturation = "Saturation";
 static const char * strURLList = "URL List";
 static const char * strSubURLList = "URL Sub Title List";
-static const char * strPrefBitRate = "Prefered Bitrate";
+static const char * strPrefBitRate = "Preferred Bitrate";
 static const char * strMaxBitRate = "Maximum Bitrate";
 //static const char * strUseArts = "Use aRts";
 static const char * strVoDriver = "Video Driver";
@@ -178,7 +178,7 @@ static const char * strAllowHref = "Allow HREF";
 // postproc thingies
 static const char * strPPGroup = "Post processing options";
 static const char * strPostProcessing = "Post processing";
-static const char * strDisablePPauto = "Automaticly disable post processing";
+static const char * strDisablePPauto = "Automatically disable post processing";
 static const char * strPP_Default = "Default preset";
 static const char * strPP_Fast = "Fast preset";
 static const char * strPP_Custom = "Custom preset";
@@ -212,7 +212,7 @@ static const char * strRecordingGroup = "Recording";
 static const char * strRecorder = "Recorder";
 static const char * strMencoderArgs = "Mencoder Arguments";
 static const char * strFFMpegArgs = "FFMpeg Arguments";
-static const char * strRecordingFile = "Last Recording Ouput File";
+static const char * strRecordingFile = "Last Recording Output File";
 static const char * strAutoPlayAfterRecording = "Auto Play After Recording";
 static const char * strAutoPlayAfterTime = "Auto Play After Recording Time";
 static const char * strRecordingCopy = "Recording Is Copy";
@@ -226,8 +226,8 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
             QPalette palette;
             switch (ColorSetting::Target (i)) {
                 case ColorSetting::playlist_background:
-                   palette.setColor (view->playList()->backgroundRole(), colors[i].color);
-                   view->playList()->setPalette (palette);
+                   palette.setColor (view->playList()->viewport ()->backgroundRole(), colors[i].color);
+                   view->playList()->viewport ()->setPalette (palette);
                    break;
                 case ColorSetting::playlist_foreground:
                    palette.setColor (view->playList()->foregroundRole(), colors[i].color);
@@ -634,7 +634,7 @@ void Settings::okPressed () {
                     urlchanged = false;
                     KMessageBox::error (m_player->view (), i18n ("File %1 does not exist.",url.url ()), i18n ("Error"));
                 } else {
-                    configdialog->m_SourcePageURL->url->setUrl (fi.absFilePath () + xine_directives);
+                    configdialog->m_SourcePageURL->url->setUrl (QString(fi.absFilePath () + xine_directives));
                 }
             }
             if (urlchanged &&

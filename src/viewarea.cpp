@@ -25,7 +25,6 @@
 #include <qapplication.h>
 #include <qslider.h>
 #include <qcursor.h>
-#include <qimage.h>
 #include <qmap.h>
 #include <QPalette>
 #include <QDesktopWidget>
@@ -33,6 +32,10 @@
 #include <QPainter>
 #include <QMainWindow>
 #include <QWidgetAction>
+#include <QtGui/QTextBlock>
+#include <QtGui/QTextDocument>
+#include <QtGui/QAbstractTextDocumentLayout>
+#include <QtGui/QImage>
 
 #include <kactioncollection.h>
 #include <kapplication.h>
@@ -49,7 +52,6 @@
 #ifdef KMPLAYER_WITH_CAIRO
 # include <cairo-xlib.h>
 # include <cairo-xlib-xrender.h>
-# include <pango/pangocairo.h>
 #endif
 #include "mediaobject.h"
 #include "kmplayer_smil.h"
@@ -94,7 +96,7 @@ void ImageData::copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar
         src_sf = surface;
     } else {
         if (image->depth () < 24) {
-            QImage qi = image->convertDepth (32, 0);
+            QImage qi = image->convertToFormat (QImage::Format_RGB32);
             *image = qi;
         }
         src_sf = cairo_image_surface_create_for_data (
@@ -173,16 +175,28 @@ void ImageData::copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar
             1.0 * (((c)) & 0xff) / 255,       \
             1.0 * (((c) >> 24) & 0xff) / 255)
 
-class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
-    IRect clip;
-    cairo_surface_t * cairo_surface;
+struct KMPLAYER_NO_EXPORT PaintContext
+{
+    PaintContext (const Matrix& m, const IRect& c)
+        : matrix (m)
+        , clip (c)
+        , fit (fit_default)
+        , bg_repeat (SMIL::RegionBase::BgRepeat)
+        , bg_image (NULL)
+    {}
     Matrix matrix;
+    IRect clip;
+    Fit fit;
+    SMIL::RegionBase::BackgroundRepeat bg_repeat;
+    ImageData *bg_image;
+};
+
+class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor, public PaintContext {
+    cairo_surface_t * cairo_surface;
     // stack vars need for transitions
     TransitionModule *cur_transition;
     cairo_pattern_t * cur_pat;
     cairo_matrix_t cur_mat;
-    SMIL::RegionBase::BackgroundRepeat bg_repeat;
-    ImageData *bg_image;
     float opacity;
     bool toplevel;
 
@@ -218,10 +232,8 @@ public:
 KDE_NO_CDTOR_EXPORT
 CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
         const IRect & rect, QColor c, bool top)
- : clip (rect), cairo_surface (cs),
-   matrix (m),
-   bg_repeat (SMIL::RegionBase::BgRepeat), bg_image (NULL),
-   toplevel (top) {
+ : PaintContext (m, rect), cairo_surface (cs), toplevel (top)
+{
     cr = cairo_create (cs);
     if (toplevel) {
         cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
@@ -302,12 +314,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         IRect scr = matrix.toScreen (rect);
         if (clip.intersect (scr).isEmpty ())
             return;
-        Matrix m = matrix;
+        PaintContext ctx_save = *(PaintContext *) this;
         matrix = Matrix (rect.x(), rect.y(), s->xscale, s->yscale);
-        matrix.transform (m);
-        IRect clip_save = clip;
+        matrix.transform (ctx_save.matrix);
         clip = clip.intersect (scr);
-        SMIL::RegionBase::BackgroundRepeat bg_repeat_save = bg_repeat;
         if (SMIL::RegionBase::BgInherit != reg->bg_repeat)
             bg_repeat = reg->bg_repeat;
         cairo_save (cr);
@@ -316,11 +326,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         if (!s->virtual_size.isEmpty ())
             matrix.translate (-s->x_scroll, -s->y_scroll);
 
+        if (fit_default != reg->fit)
+            fit = reg->fit;
+
         ImageMedia *im = reg->media_info
             ? (ImageMedia *) reg->media_info->media
             : NULL;
 
-        ImageData *bg_save = bg_image;
         ImageData *bg_img = im && !im->isEmpty() ? im->cached_img.ptr () : NULL;
         if (reg->background_image == "inherit")
             bg_img = bg_image;
@@ -464,10 +476,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
             }
         }
         cairo_restore (cr);
-        bg_image = bg_save;
-        matrix = m;
-        bg_repeat = bg_repeat_save;
-        clip = clip_save;
+        *(PaintContext *) this = ctx_save;
         s->dirty = false;
     }
 }
@@ -659,6 +668,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
     }
     if (!ref->media_info)
         return;
+    if (fit_default != fit
+            && fit_default == ref->fit
+            && fit != ref->effective_fit) {
+        ref->effective_fit = fit;
+        s->resize (ref->calculateBounds(), false);
+    }
     if (ref->media_info->media &&
             ref->media_info->media->type () == MediaManager::Image) {
         if (!s)
@@ -780,29 +795,35 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
     paint (&av->transition, av->media_opacity, s.ptr (), scr.point, clip_rect);
 }
 
-static void calculateTextDimensions (PangoFontDescription *desc,
-        const char *text, Single w, Single h,
-        int *pxw, int *pxh, bool markup_text, int align = -1) {
-    cairo_surface_t *img_surf = cairo_image_surface_create (
-            CAIRO_FORMAT_RGB24, (int) w, h);
-    cairo_t *cr_txt = cairo_create (img_surf);
-    PangoLayout *layout = pango_cairo_create_layout (cr_txt);
-    pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
-    pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
+static void setAlignment (QTextDocument &td, unsigned char align) {
+    QTextOption opt = td.defaultTextOption();
+    if (SmilTextProperties::AlignLeft == align)
+        opt.setAlignment (Qt::AlignLeft);
+    else if (SmilTextProperties::AlignCenter == align)
+        opt.setAlignment (Qt::AlignCenter);
+    else if (SmilTextProperties::AlignRight == align)
+        opt.setAlignment (Qt::AlignRight);
+    td.setDefaultTextOption (opt);
+}
+
+static void calculateTextDimensions (const QFont& font,
+        const QString& text, Single w, Single h, Single maxh,
+        int *pxw, int *pxh, bool markup_text,
+        unsigned char align = SmilTextProperties::AlignLeft) {
+    QTextDocument td;
+    td.setDefaultFont( font );
+    td.setDocumentMargin (0);
+    QImage img (QSize ((int)w, (int)h), QImage::Format_RGB32);
+    td.setPageSize (QSize ((int)w, (int)maxh));
+    td.documentLayout()->setPaintDevice (&img);
     if (markup_text)
-        pango_layout_set_markup (layout, text, -1);
+        td.setHtml( text );
     else
-        pango_layout_set_text (layout, text, -1);
-    if (align > -1)
-        pango_layout_set_alignment (layout, (PangoAlignment) align);
-    pango_layout_set_font_description (layout, desc);
-
-    pango_cairo_show_layout (cr_txt, layout);
-    pango_layout_get_pixel_size (layout, pxw, pxh);
-
-    g_object_unref (layout);
-    cairo_destroy (cr_txt);
-    cairo_surface_destroy (img_surf);
+        td.setPlainText( text );
+    setAlignment (td, align);
+    QRectF r = td.documentLayout()->blockBoundingRect (td.lastBlock());
+    *pxw = (int)td.idealWidth ();
+    *pxh = (int)(r.y() + r.height());
 }
 
 static cairo_t *createContext (cairo_surface_t *similar, Surface *s, int w, int h) {
@@ -846,32 +867,46 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         int w = scr.width ();
         int pxw, pxh;
         Single ft_size = w * txt->font_size / (double)s->bounds.width ();
-        const QByteArray text = tm->text.toUtf8 ();
         bool clear = s->surface;
 
-        PangoFontDescription *desc = pango_font_description_new ();
-        pango_font_description_set_family(desc, txt->font_name.toUtf8().data());
-        pango_font_description_set_size (desc, PANGO_SCALE * ft_size);
+        QFont font (txt->font_name, ft_size);
         if (clear) {
             pxw = scr.width ();
             pxh = scr.height ();
         } else {
-            calculateTextDimensions (desc, text.data (),
-                    w, 2 * ft_size, &pxw, &pxh, false);
+            calculateTextDimensions (font, tm->text,
+                    w, 2 * ft_size, scr.height (), &pxw, &pxh, false);
         }
+        QTextDocument td;
+        td.setDocumentMargin (0);
+        td.setDefaultFont (font);
+        bool have_alpha = (s->background_color & 0xff000000) < 0xff000000;
+        QImage img (QSize (pxw, pxh), have_alpha ? QImage::Format_ARGB32 : QImage::Format_RGB32);
+        img.fill (s->background_color);
+        td.setPageSize (QSize (pxw, pxh + (int)ft_size));
+        td.documentLayout()->setPaintDevice (&img);
+        setAlignment (td, 1 + (int)txt->halign);
+        td.setPlainText (tm->text);
+        QPainter painter;
+        painter.begin (&img);
+        QAbstractTextDocumentLayout::PaintContext ctx;
+        ctx.clip = QRect (0, 0, pxw, pxh);
+        ctx.palette.setColor (QPalette::Text, QColor (QRgb (txt->font_color)));
+        td.documentLayout()->draw (&painter, ctx);
+        painter.end();
+
         cairo_t *cr_txt = createContext (cairo_surface, s, pxw, pxh);
-
-        CAIRO_SET_SOURCE_RGB (cr_txt, txt->font_color);
-        PangoLayout *layout = pango_cairo_create_layout (cr_txt);
-        pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
-        pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-        pango_layout_set_text (layout, text.data (), -1);
-        pango_layout_set_font_description (layout, desc);
-
-        pango_cairo_show_layout (cr_txt, layout);
-
-        pango_font_description_free (desc);
-        g_object_unref (layout);
+        cairo_surface_t *src_sf = cairo_image_surface_create_for_data (
+                img.bits (),
+                have_alpha ? CAIRO_FORMAT_ARGB32:CAIRO_FORMAT_RGB24,
+                img.width(), img.height(), img.bytesPerLine ());
+        cairo_pattern_t *pat = cairo_pattern_create_for_surface (src_sf);
+        cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+        cairo_set_operator (cr_txt, CAIRO_OPERATOR_SOURCE);
+        cairo_set_source (cr_txt, pat);
+        cairo_paint (cr_txt);
+        cairo_pattern_destroy (pat);
+        cairo_surface_destroy (src_sf);
         cairo_destroy (cr_txt);
 
         // update bounds rect
@@ -904,16 +939,23 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
             cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
                     clip_rect.width (), clip_rect.height ());
         }
+        unsigned int color = brush->color.color;
+        if (!color) {
+            color = brush->background_color.color;
+            opacity *= brush->background_color.opacity / 100.0;
+        } else {
+            opacity *= brush->color.opacity / 100.0;
+        }
         opacity *= brush->media_opacity.opacity / 100.0;
         if (opacity < 0.99) {
             cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
             cairo_set_source_rgba (cr,
-                    1.0 * ((brush->color >> 16) & 0xff) / 255,
-                    1.0 * ((brush->color >> 8) & 0xff) / 255,
-                    1.0 * (brush->color & 0xff) / 255,
+                    1.0 * ((color >> 16) & 0xff) / 255,
+                    1.0 * ((color >> 8) & 0xff) / 255,
+                    1.0 * (color & 0xff) / 255,
                     opacity);
         } else {
-            CAIRO_SET_SOURCE_RGB (cr, brush->color);
+            CAIRO_SET_SOURCE_RGB (cr, color);
         }
         cairo_fill (cr);
         if (opacity < 0.99)
@@ -924,17 +966,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
 }
 
 struct SmilTextBlock {
-    SmilTextBlock (PangoFontDescription *d, const QString &t, IRect r, int a)
-        : desc (d), rich_text (t), rect (r), align (a), next (NULL) {}
+    SmilTextBlock (const QFont& f, const QString &t,
+            IRect r, unsigned char a)
+        : font (f), rich_text (t), rect (r), align (a), next (NULL) {}
 
-    ~SmilTextBlock () {
-        pango_font_description_free (desc);
-    }
-
-    PangoFontDescription *desc;
+    QFont font;
     QString rich_text;
     IRect rect;
-    int align;
+    unsigned char align;
 
     SmilTextBlock *next;
 };
@@ -958,6 +997,7 @@ public:
     using Visitor::visit;
     void visit (TextNode *);
     void visit (SMIL::TextFlow *);
+    void visit (SMIL::TemporalMoment *);
 
     void addRichText (const QString &txt);
     void push ();
@@ -974,40 +1014,40 @@ public:
 };
 
 void SmilTextInfo::span (float scale) {
-    QString s = "<span";
-    if (props.font_size > -1)
-        s += " size='" + QString::number ((int)(1024 * scale * props.font_size)) + "'";
-    s += " face='" + props.font_family + "'";
+    QString s = "<span style=\"";
+    if (props.font_size.size () > -1)
+        s += "font-size:" + QString::number ((int)(scale * props.font_size.size ())) + "px;";
+    s += "font-family:" + props.font_family + ";";
     if (props.font_color > -1)
-        s += QString().sprintf (" foreground='#%06x'", props.font_color);
+        s += QString().sprintf ("color:#%06x;", props.font_color);
     if (props.background_color > -1)
-        s += QString().sprintf (" background='#%06x'", props.background_color);
+        s += QString().sprintf ("background-color:#%06x;", props.background_color);
     if (SmilTextProperties::StyleInherit != props.font_style) {
-        s += " style='";
+        s += "font-style:";
         switch (props.font_style) {
             case SmilTextProperties::StyleOblique:
-                s += "oblique'";
+                s += "oblique;";
                 break;
             case SmilTextProperties::StyleItalic:
-                s += "italic'";
+                s += "italic;";
                 break;
             default:
-                s += "normal'";
+                s += "normal;";
                 break;
         }
     }
     if (SmilTextProperties::WeightInherit != props.font_weight) {
-        s += " weight='";
+        s += "font-weight:";
         switch (props.font_weight) {
             case SmilTextProperties::WeightBold:
-                s += "bold'";
+                s += "bold;";
                 break;
             default:
-                s += "normal'";
+                s += "normal;";
                 break;
         }
     }
-    s += ">";
+    s += "\">";
     span_text = s;
 }
 
@@ -1022,7 +1062,7 @@ void SmilTextVisitor::addRichText (const QString &txt) {
 void SmilTextVisitor::push () {
     if (!rich_text.isEmpty ()) {
         int pxw, pxh;
-        float fs = info.props.font_size;
+        float fs = info.props.font_size.size ();
         if (fs < 0)
             fs = TextMedia::defaultFontSize ();
         float maxfs = max_font_size;
@@ -1031,25 +1071,16 @@ void SmilTextVisitor::push () {
         fs *= scale;
         maxfs *= scale;
 
-        int align = -1;
-        if (SmilTextProperties::AlignLeft == info.props.text_align)
-            align = (int) PANGO_ALIGN_LEFT;
-        else if (SmilTextProperties::AlignCenter == info.props.text_align)
-            align = (int) PANGO_ALIGN_CENTER;
-        else if (SmilTextProperties::AlignRight == info.props.text_align)
-            align = (int) PANGO_ALIGN_RIGHT;
-        PangoFontDescription *desc = pango_font_description_new ();
-        pango_font_description_set_family (desc, "Sans");
-        pango_font_description_set_size (desc, PANGO_SCALE * fs);
-        calculateTextDimensions (desc, rich_text.toUtf8 ().data (),
-                width, 2 * maxfs, &pxw, &pxh, true, align);
+        QFont font ("Sans", (int)fs);
+        calculateTextDimensions (font, rich_text.toUtf8 ().constData (),
+                width, 2 * maxfs, 1024, &pxw, &pxh, true, info.props.text_align);
         int x = 0;
         if (SmilTextProperties::AlignCenter == info.props.text_align)
             x = (width - pxw) / 2;
         else if (SmilTextProperties::AlignRight == info.props.text_align)
             x = width - pxw;
-        SmilTextBlock *block = new SmilTextBlock (desc, rich_text,
-                IRect (x, voffset, pxw, pxh), align);
+        SmilTextBlock *block = new SmilTextBlock (font, rich_text,
+                IRect (x, voffset, pxw, pxh), info.props.text_align);
         voffset += pxh;
         max_font_size = 0;
         rich_text.clear();
@@ -1064,7 +1095,7 @@ void SmilTextVisitor::push () {
 
 void SmilTextVisitor::visit (TextNode *text) {
     QString buffer;
-    QTextStream out (&buffer);
+    QTextStream out (&buffer, QIODevice::WriteOnly);
     out << XMLStringlet (text->nodeValue ());
     addRichText (buffer);
     if (text->nextSibling ())
@@ -1072,11 +1103,11 @@ void SmilTextVisitor::visit (TextNode *text) {
 }
 
 void SmilTextVisitor::visit (SMIL::TextFlow *flow) {
-    if (flow->firstChild ()) {
-        bool new_block = SMIL::id_node_p == flow->id ||
-            SMIL::id_node_br == flow->id ||
-            SMIL::id_node_div == flow->id;
-        float fs = info.props.font_size;
+    bool new_block = SMIL::id_node_p == flow->id ||
+        SMIL::id_node_br == flow->id ||
+        SMIL::id_node_div == flow->id;
+    if ((new_block && !rich_text.isEmpty ()) || flow->firstChild ()) {
+        float fs = info.props.font_size.size ();
         if (fs < 0)
             fs = TextMedia::defaultFontSize ();
         int par_extra = SMIL::id_node_p == flow->id
@@ -1088,15 +1119,16 @@ void SmilTextVisitor::visit (SMIL::TextFlow *flow) {
             push ();
 
         info.props.mask (flow->props);
-        if (info.props.font_size > max_font_size)
-            max_font_size = info.props.font_size;
+        if ((float)info.props.font_size.size () > max_font_size)
+            max_font_size = info.props.font_size.size ();
         info.span (scale);
 
-        flow->firstChild ()->accept (this);
+        if (flow->firstChild ())
+            flow->firstChild ()->accept (this);
 
         if (rich_text.isEmpty ())
             par_extra = 0;
-        if (new_block)
+        if (new_block && flow->firstChild ())
             push ();
         voffset += par_extra;
 
@@ -1104,6 +1136,12 @@ void SmilTextVisitor::visit (SMIL::TextFlow *flow) {
     }
     if (flow->nextSibling ())
         flow->nextSibling ()->accept (this);
+}
+
+void SmilTextVisitor::visit (SMIL::TemporalMoment *tm) {
+    if (tm->state >= Node::state_began
+            && tm->nextSibling ())
+        tm->nextSibling ()->accept (this);
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
@@ -1120,8 +1158,16 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
         float scale = 1.0 * w / (double)s->bounds.width ();
         SmilTextVisitor info (w, scale, txt->props);
 
-        if (txt->firstChild ())
-            txt->firstChild ()->accept (&info);
+        Node *first = txt->firstChild ();
+        for (Node *n = first; n; n = n->nextSibling ())
+            if (SMIL::id_node_clear == n->id) {
+                if (n->state >= Node::state_began)
+                    first = n->nextSibling ();
+                else
+                    break;
+            }
+        if (first)
+            first->accept (&info);
 
         info.push ();
         if (info.first) {
@@ -1129,23 +1175,42 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
 
             CAIRO_SET_SOURCE_RGB (cr_txt, 0);
             SmilTextBlock *b = info.first;
+            int hoff = 0;
             int voff = 0;
             while (b) {
-                const QByteArray text = b->rich_text.toUtf8 ();
-                cairo_translate (cr_txt, 0, b->rect.y() - voff);
+                cairo_translate (cr_txt, b->rect.x() - hoff, b->rect.y() - voff);
+                QTextDocument td;
+                td.setDocumentMargin (0);
+                td.setDefaultFont (b->font);
+                bool have_alpha = (s->background_color & 0xff000000) < 0xff000000;
+                QImage img (QSize (b->rect.width(), b->rect.height()), have_alpha ? QImage::Format_ARGB32 : QImage::Format_RGB32);
+                img.fill (s->background_color);
+                td.setPageSize (QSize (b->rect.width(), b->rect.height() + 10));
+                setAlignment (td, b->align);
+                td.documentLayout()->setPaintDevice (&img);
+                td.setHtml (b->rich_text);
+                QPainter painter;
+                painter.begin (&img);
+                QAbstractTextDocumentLayout::PaintContext ctx;
+                ctx.clip = QRect (QPoint (0, 0), img.size ());
+                td.documentLayout()->draw (&painter, ctx);
+                painter.end();
+
+                cairo_surface_t *src_sf = cairo_image_surface_create_for_data (
+                        img.bits (),
+                        have_alpha ? CAIRO_FORMAT_ARGB32:CAIRO_FORMAT_RGB24,
+                        img.width(), img.height(), img.bytesPerLine ());
+                cairo_pattern_t *pat = cairo_pattern_create_for_surface (src_sf);
+                cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+                cairo_set_operator (cr_txt, CAIRO_OPERATOR_SOURCE);
+                cairo_set_source (cr_txt, pat);
+                cairo_rectangle (cr_txt, 0, 0, b->rect.width(), b->rect.height());
+                cairo_fill (cr_txt);
+                cairo_pattern_destroy (pat);
+                cairo_surface_destroy (src_sf);
+
+                hoff = b->rect.x ();
                 voff = b->rect.y ();
-                PangoLayout *layout = pango_cairo_create_layout (cr_txt);
-                pango_layout_set_width (layout, 1.0 * w * PANGO_SCALE);
-                pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-                pango_layout_set_markup (layout, text.data (), -1);
-                pango_layout_set_font_description (layout, b->desc);
-                if (b->align > -1)
-                    pango_layout_set_alignment(layout,(PangoAlignment)b->align);
-
-                pango_cairo_show_layout (cr_txt, layout);
-
-                g_object_unref (layout);
-
                 SmilTextBlock *tmp = b;
                 b = b->next;
                 delete tmp;
@@ -1154,13 +1219,15 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
 
             // update bounds rect
             s->bounds = matrix.toUser (IRect (scr.point, ISize (w, info.voffset)));
+            txt->size = s->bounds.size;
+            txt->updateBounds (false);
 
             // update coord. for painting below
             scr = matrix.toScreen (s->bounds);
         }
     }
     IRect clip_rect = clip.intersect (scr);
-    if (!clip_rect.isEmpty ())
+    if (s->surface && !clip_rect.isEmpty ())
         paint (&txt->transition, txt->media_opacity, s, scr.point, clip_rect);
     s->dirty = false;
 }
@@ -1665,7 +1732,6 @@ void MouseVisitor::surfaceEvent (Node *node, Surface *s) {
     int rx = scr.x(), ry = scr.y(), rw = scr.width(), rh = scr.height();
     const bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
     const bool had_mouse = s->has_mouse;
-    s->has_mouse = inside;
     if (deliverAndForward (node, s, inside, true) &&
             (inside || had_mouse) &&
             s->firstChild () && s->firstChild ()->node) {

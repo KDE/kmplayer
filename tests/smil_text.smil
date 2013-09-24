@@ -1,0 +1,73 @@
+<smil>
+  <head>
+    <layout>
+      <root-layout width="400" height="400" background-color="SlateGray"/>
+      <region left="10" top="10" right="10" bottom="10" background-color="black">
+        <region id="r1" left="1" top="1" right="1" bottom="1" background-color="#475360"/>
+      </region>
+    </layout>
+  </head>
+  <body>
+    <smilText dur="2" region="r1" textFontSize="24px" textAlign="left"  textColor="white">
+      Left align<br/>Second line of text
+      <p>Paragraph</p>
+    </smilText>
+    <smilText dur="2" region="r1" textFontSize="24px" textAlign="center"  textColor="white">
+      Center align
+      <br/>
+      Second line of <span textFontWeight="bold">bold text</span>
+    </smilText>
+    <smilText dur="2" region="r1" textFontSize="24px" textAlign="right"  textColor="white">
+      Right align
+      <div textFontSize="12" textFontStyle="italic">
+      Second line of text 12px italic</div>
+    </smilText>
+    <smilText textBackgroundColor="green" dur="10" region="r1" textFontSize="24px" textColor="white">
+      First line
+      <tev begin="1"/>
+      of text
+      <tev begin="2"/>
+      and <br/>Second line of text
+      <tev begin="3"/>
+      <br/>Third line of text<br/>
+      <tev begin="4"/>
+      Fourth line of text
+      <clear begin="6"/>
+      Round2 First line of text
+      <tev begin="7"/>
+      <br/>Round2 Second line of text
+      <tev begin="8"/>
+      <br/>Round2 Third line of text
+    </smilText>
+    <par>
+      <smilText id="text1" top="10" width="100" region="r1"
+                textFontSize="12px" textColor="black" textFontFamily="serif">
+        <clear begin="0"/>
+        Spline move to 150, change background color to white and then grow font size from 12 to 20
+      </smilText>
+      <animateMotion target="text1" dur="2" by="150,0"
+                     calcMode="spline" keySplines=".5 0 .5 1" fill="freeze"/>
+      <animate target="text1" begin="3" dur="4" attributeName="textFontSize"
+               calcMode="discrete" values="12;14;16;18;20"/>
+      <animateColor target="text1" begin="2" dur="1" to="white" fill="freeze"/>
+    </par>
+    <par>
+      <smilText begin="1.5s" region="r1" textFontSize="24px" textColor="white">
+        Verify the intrinsic timing is 2s
+        <clear begin="1"/>
+        One second to go
+        <clear begin="2"/>
+        Should not be visible
+      </smilText>
+    </par>
+    <par dur="4">
+      <smilText id="text2" region="r1" textFontSize="24px" textColor="white">
+        Verify activate, in and out of bounds events
+      </smilText>
+      <brush region="r1" width="200" height="20" bottom="0" color="green"
+             begin="text2.inBoundsEvent" end="text2.outOfBoundsEvent"/>
+      <brush region="r1" right="0" width="200" height="20" bottom="0" color="red"
+             begin="text2.activateEvent" dur="1"/>
+    </par>
+  </body>
+</smil>

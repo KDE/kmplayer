@@ -44,6 +44,7 @@ public:
     SizeType (const QString & s, bool force_perc=false);
     void reset ();
     SizeType & operator = (const QString & s);
+    SizeType & operator = (Single d);
     SizeType & operator += (const SizeType & s);
     SizeType & operator -= (const SizeType & s);
     SizeType & operator /= (const int i)
@@ -133,9 +134,11 @@ public:
     struct DurationItem {
         DurationItem ();
         DurationItem &operator = (const DurationItem &other);
+        bool matches (const Duration dur, const Posting *post);
         void clear();
         Duration durval;
         int offset;
+        VirtualVoid *payload;
         ConnectionLink connection;
         DurationItem *next;
     } durations [(const int) DurTimeLast];
@@ -223,7 +226,7 @@ public:
     unsigned char text_writing;
     unsigned char text_align;
     unsigned char padding;
-    short font_size;
+    SizeType font_size;
 };
 
 class KMPLAYER_NO_EXPORT SmilColorProperty {
@@ -286,14 +289,17 @@ const short id_node_par = 111;
 const short id_node_seq = 112;
 const short id_node_switch = 113;
 const short id_node_excl = 114;
-const short id_node_text = 122;
-const short id_node_ref = 123;
-const short id_node_brush = 124;
-const short id_node_smil_text = 125;
+const short id_node_text = 120;
+const short id_node_ref = 121;
+const short id_node_brush = 122;
+const short id_node_smil_text = 123;
+const short id_node_tev = 124;
+const short id_node_clear = 125;
 const short id_node_text_styling = 126;
 const short id_node_set_value = 127;
 const short id_node_new_value = 128;
 const short id_node_del_value = 129;
+const short id_node_send = 130;
 const short id_node_set = 132;
 const short id_node_animate = 133;
 const short id_node_animate_color = 134;
@@ -359,6 +365,8 @@ public:
 class KMPLAYER_NO_EXPORT State : public Element {
 public:
     enum Where { before, after, child };
+    enum Method { get, put };
+    enum Replace { all, instance, none };
 
     State (NodePtr & d);
 
@@ -371,13 +379,16 @@ public:
     virtual void *role (RoleType msg, void *content=NULL);
     KDE_NO_EXPORT virtual const char * nodeName () const { return "state"; }
 
+    QString domain ();
     void newValue (Node *ref, Where w, const QString &name, const QString &val);
     void setValue (Node *ref, const QString &value);
     void delValue (Node *ref);
+    void stateChanged (Node *ref);
 
     ConnectionList m_StateChangeListeners;        // setValue changed a value
     PostponePtr postpone_lock;                    // pause while loading src
     MediaInfo *media_info;
+    QString m_url;
 };
 
 /**
@@ -701,11 +712,11 @@ public:
  */
 class KMPLAYER_NO_EXPORT MediaType : public Mrl {
 public:
-    MediaType (NodePtr & d, const QString & t, short id);
+    MediaType (NodePtr & d, const QByteArray& t, short id);
     ~MediaType ();
 
     Node *childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
+    KDE_NO_EXPORT const char * nodeName () const { return m_type.constData (); }
     virtual void closed ();
     virtual void init ();
     virtual void activate ();
@@ -728,10 +739,11 @@ public:
     NodePtrW external_tree; // if src points to playlist, the resolved top node
     TransitionModule transition;
     NodePtrW region_node;
-    QString m_type;
+    QByteArray m_type;
     CalculatedSizer sizes;
     CalculatedSizer *pan_zoom;
     Fit fit;
+    Fit effective_fit;
     SmilColorProperty background_color;
     MediaOpacity media_opacity;
     unsigned int bitrate;
@@ -751,7 +763,7 @@ protected:
 
 class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
-    RefMediaType (NodePtr &doc, const QString &tag);
+    RefMediaType (NodePtr &doc, const QByteArray &tag);
     Node *childFromTag (const QString & tag);
     virtual void activate ();
     virtual void begin ();
@@ -782,9 +794,10 @@ public:
 class KMPLAYER_NO_EXPORT Brush : public MediaType {
 public:
     Brush (NodePtr & d);
+    virtual void init ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
-    unsigned int color;
+    SmilColorProperty color;
 };
 
 class KMPLAYER_NO_EXPORT SmilText : public Element {
@@ -805,6 +818,7 @@ public:
     virtual void accept (Visitor *v) { v->visit (this); }
 
     Surface *surface ();
+    void updateBounds (bool remove);
 
     SmilColorProperty background_color;
     MediaOpacity media_opacity;
@@ -812,6 +826,8 @@ public:
     SmilTextProperties props;
     SurfacePtrW text_surface;
     NodePtrW region_node;
+    CalculatedSizer sizes;
+    SSize size;
     ConnectionLink region_attach;
     ConnectionList media_attached;
     MouseListeners mouse_listeners;
@@ -831,6 +847,25 @@ public:
     virtual void accept (Visitor *v) { v->visit (this); }
 
     SmilTextProperties props;
+    QByteArray tag;
+};
+
+class KMPLAYER_NO_EXPORT TemporalMoment : public Element {
+public:
+    TemporalMoment (NodePtr &doc, short id, const QByteArray &tag);
+    ~TemporalMoment ();
+    virtual void init ();
+    virtual void activate ();
+    virtual void begin ();
+    virtual void deactivate ();
+    KDE_NO_EXPORT const char *nodeName () const { return tag.data (); }
+    Node *childFromTag (const QString & tag);
+    virtual void parseParam (const TrieString &name, const QString &value);
+    virtual void message (MessageType msg, void *content=NULL);
+    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void accept (Visitor *v) { v->visit (this); }
+
+    Runtime *runtime;
     QByteArray tag;
 };
 
@@ -883,6 +918,24 @@ public:
 
     virtual void begin ();
     KDE_NO_EXPORT const char *nodeName () const { return "delvalue"; }
+};
+
+class KMPLAYER_NO_EXPORT Send : public StateValue {
+public:
+    Send (NodePtr &d) : StateValue (d, id_node_send), media_info (NULL) {}
+
+    virtual void init ();
+    virtual void begin ();
+    virtual void deactivate ();
+    virtual void parseParam (const TrieString &name, const QString &value);
+    virtual void message (MessageType msg, void *content=NULL);
+    KDE_NO_EXPORT const char *nodeName () const { return "send"; }
+
+private:
+    QString action;
+    SMIL::State::Replace replace;
+    SMIL::State::Method method;
+    MediaInfo *media_info;
 };
 
 class KMPLAYER_NO_EXPORT AnimateGroup : public Element {

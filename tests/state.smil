@@ -54,6 +54,14 @@
     </par>
     <delvalue ref="//@foo"/>
     <par dur="5">
+      <text src="data:,Title%20&quot;{/data/books/book[2]/title}&quot;"
+            left="10" top="10" width="300" height="20"/>
+      <text src="data:,Has%20{tokenize(/data/books/book[2]/title,&quot;\S+&quot;)}%20words"
+            left="10" top="40" width="300" height="20"/>
+      <text src="data:,First word%20is%20&quot;{tokenize(/data/books/book[2]/title,&quot;\S+&quot;)[1]}&quot;"
+            left="10" top="70" width="300" height="20"/>
+      <text src="data:,First two words%20are%20&quot;{string-join(subsequence(tokenize(/data/books/book[2]/title,&quot;\S+&quot;),1,2), ' ')}&quot;"
+            left="10" top="100" width="300" height="20"/>
       <text src="data:,second%20attribute%20on%20book%20{//book/@*[2]}" left="10" top="160" width="300" height="20"/>
     </par>
     <delvalue ref="//books"/>

@@ -76,6 +76,7 @@ public:
     Single & operator /= (const float f);
     operator int () const { return value >> 8; }
     operator double () const { return 1.0 * value / 256; }
+    operator float () const { return 1.0 * value / 256; }
 };
 
 template <class T>

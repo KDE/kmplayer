@@ -61,7 +61,8 @@ static const unsigned int trans_out_timer_id = (unsigned int) 7;
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT bool KMPlayer::parseTime (const QString & vl, int & dur) {
-    const char * cval = vl.ascii ();
+    QByteArray ba = vl.toLatin1 ();
+    const char *cval = ba.constData ();
     if (!cval) {
         dur = 0;
         return false;
@@ -92,6 +93,9 @@ KDE_NO_EXPORT bool KMPlayer::parseTime (const QString & vl, int & dur) {
         } else if (*p == ' ') {
             if (!num.isEmpty ())
                 break;
+        } else if (*p == ':') {
+            dur = Mrl::parseTimeString (vl);
+            return dur != 0;
         } else
             break;
     }
@@ -188,14 +192,14 @@ static bool parseTransitionParam (Node *n, TransitionModule &m, Runtime *r,
     return true;
 }
 
-static NodeValueList *findParamGroup (Node *n, const QString &id)
+static Sequence *findParamGroup (Node *n, const QString &id)
 {
     Node *head = findHeadNode (SMIL::Smil::findSmilNode (n));
     if (head) {
         Expression *expr = evaluateExpr ("/paramGroup[@id='" + id + "']/param");
         if (expr) {
             expr->setRoot (head);
-            NodeValueList *lst = expr->toNodeList ();
+            Sequence *lst = expr->toSequence ();
             delete expr;
             return lst;
         }
@@ -225,7 +229,7 @@ static Fit parseFit (const char *cval) {
     else if (!strcmp (cval, "slice"))
         fit = fit_slice;
     else
-        fit = fit_hidden;
+        fit = fit_default;
     return fit;
 }
 
@@ -243,13 +247,21 @@ Runtime::DurationItem &
 Runtime::DurationItem::operator = (const Runtime::DurationItem &d) {
     durval = d.durval;
     offset = d.offset;
+    payload = d.payload;
     connection.assign (&d.connection);
     return *this;
+}
+
+bool Runtime::DurationItem::matches (const Duration dur, const Posting *post) {
+    return dur == durval &&
+        connection.signaler () == post->source.ptr () &&
+        ((Duration) MsgStateChanged != durval || post->payload == payload);
 }
 
 void Runtime::DurationItem::clear() {
     durval = DurTimer;
     offset = 0;
+    payload = NULL;
     connection.disconnect ();
     if (next) {
         next->clear ();
@@ -328,10 +340,12 @@ KDE_NO_EXPORT void Runtime::initialize ()
 static
 void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
     int dur = -2; // also 0 for 'media' duration, so it will not update then
-    QString vs = val.stripWhiteSpace ();
-    QString vl = vs.lower ();
-    const char * cval = vl.ascii ();
+    QString vs = val.trimmed ();
+    QString vl = vs.toLower ();
+    QByteArray ba = vl.toLatin1 ();
+    const char *cval = ba.constData ();
     int offset = 0;
+    VirtualVoid *payload = NULL;
     if (cval && cval[0]) {
         QString idref;
         const char * p = cval;
@@ -354,7 +368,6 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
         } else if (!strncmp (cval, "media", 5)) {
             dur = Runtime::DurMedia;
         }
-        VirtualVoid *payload = NULL;
         if (dur == -2) {
             NodePtr target;
             const char * q = p;
@@ -437,6 +450,7 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
     }
     itm->durval = (Runtime::Duration) dur;
     itm->offset = offset;
+    itm->payload = payload;
 }
 
 static
@@ -485,11 +499,6 @@ static bool disabledByExpr (Runtime *rt) {
  * start, or restart in case of re-use, the durations
  */
 KDE_NO_EXPORT void Runtime::start () {
-    if (disabledByExpr (this)) {
-        timingstate = TimingsDisabled;
-        doFinish ();
-        return;
-    }
     if (begin_timer || duration_timer)
         element->init ();
     timingstate = timings_began;
@@ -628,7 +637,7 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
             repeat = repeat_count = val.toInt ();
     } else if (name.startsWith ("expr")) {
         expr = val;
-    } else
+    } else // TODO restart/restartDefault
         return false;
     return true;
 }
@@ -680,29 +689,30 @@ KDE_NO_EXPORT void Runtime::message (MessageType msg, void *content) {
     if ((int) msg >= (int) DurLastDuration)
         return;
 
-    if (!started ()) {
-        Posting *event = static_cast <Posting *> (content);
-        for (DurationItem *dur = beginTime ().next; dur; dur = dur->next)
-            if (dur->durval == (Duration) msg &&
-                    dur->connection.signaler () == event->source.ptr ()) {
+    Posting *event = static_cast <Posting *> (content);
+    for (DurationItem *dur = beginTime ().next; dur; dur = dur->next) {
+        if (dur->matches ((Duration) msg, event)) {
+            if (started ())
+                element->message (MsgStateRewind);
+            else
                 element->activate ();
-                if (element && dur->offset > 0) {
-                    if (begin_timer)
-                        element->document ()->cancelPosting (begin_timer);
-                    begin_timer = element->document ()->post (element,
-                            new TimerPosting(10 * dur->offset, begin_timer_id));
-                } else { //FIXME neg. offsets
-                    propagateStart ();
-                }
-                if (element->state == Node::state_finished)
-                    element->state = Node::state_activated;//rewind to activated
-                break;
+            if (element && dur->offset > 0) {
+                if (begin_timer)
+                    element->document ()->cancelPosting (begin_timer);
+                begin_timer = element->document ()->post (element,
+                        new TimerPosting(10 * dur->offset, begin_timer_id));
+            } else { //FIXME neg. offsets
+                propagateStart ();
             }
-    } else if (started ()) {
+            if (element->state == Node::state_finished)
+                element->state = Node::state_activated;//rewind to activated
+            return;
+        }
+    }
+    if (started ()) {
         Posting *event = static_cast <Posting *> (content);
         for (DurationItem *dur = endTime ().next; dur; dur = dur->next)
-            if (dur->durval == (Duration) msg &&
-                    dur->connection.signaler () == event->source.ptr ()) {
+            if (dur->matches ((Duration) msg, event)) {
                 if (element && dur->offset > 0) {
                     if (duration_timer)
                         element->document ()->cancelPosting (duration_timer);
@@ -777,12 +787,18 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
 }
 
 KDE_NO_EXPORT void Runtime::propagateStart () {
-    timingstate = trans_in_dur ? TimingsTransIn : timings_started;
-    element->deliver (MsgEventStarting, element);
     if (begin_timer) {
         element->document ()->cancelPosting (begin_timer);
         begin_timer = NULL;
     }
+    if (disabledByExpr (this)) {
+        if (timings_freezed == timingstate)
+            element->message (MsgStateFreeze);
+        timingstate = TimingsDisabled;
+        return;
+    }
+    timingstate = trans_in_dur ? TimingsTransIn : timings_started;
+    element->deliver (MsgEventStarting, element);
     started_timer = element->document()->post (
             element, new Posting (element, MsgEventStarted));
 }
@@ -881,6 +897,12 @@ SizeType & SizeType::operator = (const QString & s) {
     return *this;
 }
 
+SizeType & SizeType::operator = (Single d) {
+    reset ();
+    abs_size = d;
+    return *this;
+}
+
 SizeType & SizeType::operator += (const SizeType & s) {
     perc_size += s.perc_size;
     abs_size += s.abs_size;
@@ -935,8 +957,8 @@ KDE_NO_EXPORT void CalculatedSizer::resetSizes () {
 }
 
 static bool regPoints (const QString & str, Single & x, Single & y) {
-    QString lower = str.lower ();
-    const char * rp = lower.ascii ();
+    QByteArray ba = str.toLower ().toLatin1 ();
+    const char *rp = ba.constData ();
     if (!rp)
         return false;
     if (!strcmp (rp, "center")) {
@@ -1130,7 +1152,8 @@ ConnectionList *MouseListeners::receivers (MessageType eid) {
 //-----------------------------------------------------------------------------
 
 static Element * fromScheduleGroup (NodePtr & d, const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "par"))
         return new SMIL::Par (d);
     else if (!strcmp (ctag, "seq"))
@@ -1141,7 +1164,8 @@ static Element * fromScheduleGroup (NodePtr & d, const QString & tag) {
 }
 
 static Element * fromParamGroup (NodePtr & d, const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "param"))
         return new SMIL::Param (d);
     else if (!strcmp (ctag, "area") || !strcmp (ctag, "anchor"))
@@ -1150,7 +1174,8 @@ static Element * fromParamGroup (NodePtr & d, const QString & tag) {
 }
 
 static Element * fromAnimateGroup (NodePtr & d, const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "set"))
         return new SMIL::Set (d);
     else if (!strcmp (ctag, "animate"))
@@ -1165,18 +1190,21 @@ static Element * fromAnimateGroup (NodePtr & d, const QString & tag) {
         return new SMIL::SetValue (d);
     else if (!strcmp (ctag, "delvalue"))
         return new SMIL::DelValue (d);
+    else if (!strcmp (ctag, "send"))
+        return new SMIL::Send (d);
     return NULL;
 }
 
 static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
-    const char * taglatin = tag.latin1 ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *taglatin = ba.constData ();
     if (!strcmp (taglatin, "video") ||
             !strcmp (taglatin, "audio") ||
             !strcmp (taglatin, "img") ||
             !strcmp (taglatin, "animation") ||
             !strcmp (taglatin, "textstream") ||
             !strcmp (taglatin, "ref"))
-        return new SMIL::RefMediaType (d, tag);
+        return new SMIL::RefMediaType (d, ba);
     else if (!strcmp (taglatin, "text"))
         return new SMIL::TextMediaType (d);
     else if (!strcmp (taglatin, "brush"))
@@ -1190,13 +1218,14 @@ static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
 }
 
 static Element * fromContentControlGroup (NodePtr & d, const QString & tag) {
-    if (!strcmp (tag.latin1 (), "switch"))
+    if (!strcmp (tag.toLatin1 ().constData (), "switch"))
         return new SMIL::Switch (d);
     return NULL;
 }
 
 static Element *fromTextFlowGroup (NodePtr &d, const QString &tag) {
-    const char *taglatin = tag.latin1 ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *taglatin = ba.constData ();
     if (!strcmp (taglatin, "div"))
         return new SMIL::TextFlow (d, SMIL::id_node_div, tag.toUtf8 ());
     if (!strcmp (taglatin, "span"))
@@ -1219,10 +1248,19 @@ void SmilColorProperty::init ()
     opacity = 100;
 }
 
+static unsigned int rgbFromValue (const QString& val) {
+    SmilColorProperty p;
+    p.init();
+    p.setColor (val);
+    return 0xffffff & p.color;
+}
+
 void SmilColorProperty::setColor (const QString &val)
 {
     if (val.isEmpty () || val == "transparent")
         color = 0;
+    else if (val.startsWith (QChar ('#')) && val.length() == 9)
+        color = val.mid (1).toUInt (NULL, 16);
     else
         color = setRGBA (QColor (val).rgba (), opacity);
 }
@@ -1362,7 +1400,8 @@ void TransitionModule::finish (Node *n) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT Node *SMIL::Smil::childFromTag (const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "body"))
         return new SMIL::Body (m_doc);
     else if (!strcmp (ctag, "head"))
@@ -1506,7 +1545,8 @@ static void headChildDone (Node *node, Node *child) {
 }
 
 KDE_NO_EXPORT Node *SMIL::Head::childFromTag (const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "layout"))
         return new SMIL::Layout (m_doc);
     else if (!strcmp (ctag, "title"))
@@ -1567,12 +1607,14 @@ void SMIL::State::parseParam (const TrieString &name, const QString &val) {
     if (name == Ids::attr_src) {
         Smil *s = val.isEmpty () ? NULL : SMIL::Smil::findSmilNode (this);
         if (s) {
+            m_url.clear ();
             if (!media_info)
                 media_info = new MediaInfo (this, MediaManager::Text);
             Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : NULL;
             QString url = mrl ? KURL (mrl->absolutePath(), val).url() : val;
             postpone_lock = document ()->postpone ();
-            media_info->wget (url);
+            media_info->wget (url, domain ());
+            m_url = url;
         }
     } else {
         Element::parseParam (name, val);
@@ -1584,19 +1626,38 @@ KDE_NO_EXPORT void SMIL::State::deactivate () {
     media_info = NULL;
     postpone_lock = NULL;
     Element::deactivate ();
+    m_url.clear ();
 }
 
-static void stateChanged (SMIL::State *s, Node *ref) {
-    Connection *c = s->m_StateChangeListeners.first ();
-    for (; c; c = s->m_StateChangeListeners.next ()) {
+QString SMIL::State::domain () {
+    QString s = m_url;
+    if (s.isEmpty ()) {
+        for (Node *p = parentNode (); p; p = p->parentNode ()) {
+            Mrl *m = p->mrl ();
+            if (m && !m->src.isEmpty () && m->src != "Playlist://") {
+                s = m->absolutePath ();
+                break;
+            }
+        }
+    }
+    KUrl url (s);
+    if (url.isLocalFile ())
+        return QString ();
+    return url.protocol () + "://" + url.host ();
+}
+
+void SMIL::State::stateChanged (Node *ref) {
+    Connection *c = m_StateChangeListeners.first ();
+    for (; c; c = m_StateChangeListeners.next ()) {
         if (c->payload && c->connecter) {
             Expression *expr = (Expression *) c->payload;
-            expr->setRoot (s);
-            NodeValueList *lst = expr->toNodeList ();
-            for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling())
+            expr->setRoot (this);
+            Sequence *lst = expr->toSequence ();
+            for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling()) {
                 if (itm->data.node == ref)
-                    s->document()->post (c->connecter,
-                                         new Posting (s, MsgStateChanged));
+                    document()->post (c->connecter,
+                                     new Posting (this, MsgStateChanged, expr));
+            }
             delete lst;
         }
     }
@@ -1609,7 +1670,7 @@ void SMIL::State::setValue (Node *ref, const QString &value) {
     if (!s.isEmpty ())
         ref->appendChild (new TextNode (m_doc, s));
     if (s != old)
-        stateChanged (this, ref);
+        stateChanged (ref);
 }
 
 void SMIL::State::newValue (Node *ref, Where where,
@@ -1628,7 +1689,7 @@ void SMIL::State::newValue (Node *ref, Where where,
     if (!value.isEmpty ()) {
         const QString s = exprStringValue (this, value);
         n->appendChild (new TextNode (m_doc, s));
-        stateChanged (this, ref);
+        stateChanged (ref);
     }
 }
 
@@ -1642,7 +1703,7 @@ void SMIL::State::message (MessageType msg, void *content) {
             QTextStream in (&((TextMedia *)media_info->media)->text);
             readXML (this, in, QString ());
             if (firstChild ())
-                stateChanged (this, firstChild ());
+                stateChanged (firstChild ());
         }
         delete media_info;
         media_info = NULL;
@@ -1667,7 +1728,8 @@ KDE_NO_CDTOR_EXPORT SMIL::Layout::Layout (NodePtr & d)
  : Element (d, id_node_layout) {}
 
 KDE_NO_EXPORT Node *SMIL::Layout::childFromTag (const QString & tag) {
-    const char * ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "root-layout")) {
         Node *e = new SMIL::RootLayout (m_doc);
         root_layout = e;
@@ -1712,10 +1774,8 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
 {}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
-    if (region_surface) {
+    if (region_surface)
         region_surface->remove ();
-        region_surface = NULL;
-    }
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
@@ -1818,10 +1878,13 @@ KDE_NO_EXPORT
 void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
     bool need_repaint = false;
     if (name == Ids::attr_fit) {
-        fit = parseFit (val.ascii ());
-        if (region_surface)
-            region_surface->scroll = fit_scroll == fit;
-        need_repaint = true;
+        Fit ft = parseFit (val.toAscii ().constData ());
+        if (ft != fit) {
+            fit = ft;
+            if (region_surface)
+                region_surface->scroll = fit_scroll == fit;
+            need_repaint = true;
+        }
     } else if (parseBackgroundParam (background_color, name, val) ||
             parseMediaOpacityParam (media_opacity, name, val)) {
     } else if (name == "z-index") {
@@ -1938,14 +2001,16 @@ KDE_NO_EXPORT void SMIL::RootLayout::closed () {
 }
 
 KDE_NO_CDTOR_EXPORT SMIL::RootLayout::~RootLayout() {
-    region_surface = NULL;
 }
 
 KDE_NO_EXPORT void SMIL::RootLayout::deactivate () {
     SMIL::Smil *s = Smil::findSmilNode (this);
     if (s)
         s->role (RoleChildDisplay, NULL);
-    region_surface = NULL;
+    if (region_surface) {
+        region_surface->remove ();
+        region_surface = NULL;
+    }
     RegionBase::deactivate ();
 }
 
@@ -2007,8 +2072,14 @@ void *SMIL::RootLayout::role (RoleType msg, void *content) {
             SMIL::Smil *s = Smil::findSmilNode (this);
             if (s && s->active ()) {
                 Surface *surface = (Surface *)s->role (RoleChildDisplay, s);
-                if (surface)
+                if (surface) {
                     region_surface = surface->createSurface (this, SRect ());
+                    // FIXME, silly heuristic to allow transparency in nesting
+                    if (!background_color.color
+                            && (!s->parentNode ()
+                                || s->parentNode()->id < id_node_smil))
+                        background_color.color = 0xFFFFFAFA; // snow
+                }
             }
         }
         return region_surface.ptr ();
@@ -2025,8 +2096,6 @@ KDE_NO_CDTOR_EXPORT SMIL::Region::Region (NodePtr & d)
  : RegionBase (d, id_node_region) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::Region::~Region () {
-    if (region_surface)
-        region_surface->remove ();
 }
 
 KDE_NO_EXPORT void SMIL::Region::deactivate () {
@@ -2036,7 +2105,7 @@ KDE_NO_EXPORT void SMIL::Region::deactivate () {
 }
 
 KDE_NO_EXPORT Node *SMIL::Region::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "region"))
+    if (!strcmp (tag.toLatin1 ().constData (), "region"))
         return new SMIL::Region (m_doc);
     return NULL;
 }
@@ -2148,7 +2217,7 @@ KDE_NO_EXPORT void SMIL::Transition::activate () {
 KDE_NO_EXPORT
 void SMIL::Transition::parseParam (const TrieString & para, const QString & val) {
     if (para == Ids::attr_type) {
-        type_info = transInfoFromString (val.ascii ());
+        type_info = transInfoFromString (val.toAscii ().constData ());
         if (type_info) {
             type = type_info->type;
             if (SubTransTypeNone != sub_type) {
@@ -2162,7 +2231,7 @@ void SMIL::Transition::parseParam (const TrieString & para, const QString & val)
     } else if (para == Ids::attr_dur) {
         parseTime (val, dur);
     } else if (para == "subtype") {
-        sub_type = subTransInfoFromString (val.ascii ());
+        sub_type = subTransInfoFromString (val.toAscii ().constData ());
         if (type_info) {
             if (SubTransTypeNone != sub_type) {
                 for (int i = 0; i < type_info->sub_types; ++i)
@@ -2475,13 +2544,14 @@ KDE_NO_EXPORT void *SMIL::GroupBase::role (RoleType msg, void *content) {
 
 
 KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
+    bool need_finish (unfinished ());
     setState (state_deactivated); // avoid recurstion through childDone
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->active ())
             e->deactivate ();
         else
             e->message (MsgMediaPrefetch, MsgBool (0));
-    if (unfinished ())
+    if (need_finish)
         finish ();
     runtime->init ();
     Element::deactivate ();
@@ -3012,6 +3082,8 @@ KDE_NO_EXPORT Node *SMIL::Switch::chosenOne () {
                     Element *elm = static_cast <Element *> (e);
                     Runtime *rt = (Runtime *) e->role (RoleTiming);
                     if (rt) {
+                        if (rt->state () < Runtime::TimingsInitialized)
+                            elm->init ();
                         if (!disabledByExpr (rt)) {
                             QString lang = elm->getAttribute ("systemLanguage");
                             if (!lang.isEmpty ()) {
@@ -3020,7 +3092,7 @@ KDE_NO_EXPORT Node *SMIL::Switch::chosenOne () {
                                 if (!clang) {
                                     if (!fallback)
                                         fallback = e;
-                                } else if (QString (clang).lower ().startsWith (lang)) {
+                                } else if (QString (clang).toLower ().startsWith (lang)) {
                                     chosen_one = e;
                                 } else if (!fallback) {
                                     fallback = e->nextSibling ();
@@ -3061,12 +3133,7 @@ KDE_NO_EXPORT void SMIL::Switch::begin () {
 
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {
     chosen_one = NULL;
-    Element::deactivate ();
-    for (Node *e = firstChild (); e; e = e->nextSibling ())
-        if (e->active ()) {
-            e->deactivate ();
-            break; // deactivate only the one running
-        }
+    GroupBase::deactivate ();
 }
 
 KDE_NO_EXPORT void SMIL::Switch::reset () {
@@ -3078,7 +3145,8 @@ KDE_NO_EXPORT void SMIL::Switch::reset () {
 }
 
 KDE_NO_EXPORT void SMIL::Switch::message (MessageType msg, void *content) {
-    if (MsgChildFinished == msg) {
+    switch (msg) {
+    case MsgChildFinished: {
         Posting *post = (Posting *) content;
         if (unfinished () && post->source == chosen_one) {
             runtime->tryFinish ();
@@ -3086,6 +3154,12 @@ KDE_NO_EXPORT void SMIL::Switch::message (MessageType msg, void *content) {
             accept (&visitor);
         }
         return;
+    }
+    case MsgStateRewind:
+        chosen_one = NULL;
+        break;
+    default:
+        break;
     }
     GroupBase::message (msg, content);
 }
@@ -3187,7 +3261,7 @@ KDE_NO_EXPORT
 void SMIL::Area::parseParam (const TrieString & para, const QString & val) {
     if (para == "coords") {
         delete [] coords;
-        QStringList clist = QStringList::split (QString (","), val);
+        QStringList clist = val.split (QChar (','));
         nr_coords = clist.count ();
         coords = new SizeType [nr_coords];
         for (int i = 0; i < nr_coords; ++i)
@@ -3205,7 +3279,7 @@ KDE_NO_EXPORT void *SMIL::Area::role (RoleType msg, void *content) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, short id)
+KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QByteArray &t, short id)
  : Mrl (d, id),
    runtime (new Runtime (this)),
    m_type (t),
@@ -3267,11 +3341,13 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
                 clipStart ();
         }
     } else if (para == Ids::attr_fit) {
-        fit = parseFit (val.ascii ());
+        fit = parseFit (val.toAscii ().constData ());
+        if (fit != effective_fit)
+            message (MsgSurfaceBoundsUpdate);
     } else if (para == Ids::attr_type) {
         mimetype = val;
     } else if (para == "panZoom") {
-        QStringList coords = QStringList::split (QString (","), val);
+        QStringList coords = val.split (QChar (','));
         if (coords.size () < 4) {
             kWarning () << "panZoom less then four nubmers";
             return;
@@ -3309,12 +3385,13 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
 KDE_NO_EXPORT void SMIL::MediaType::init () {
     if (Runtime::TimingsInitialized > runtime->timingstate) {
         fit = fit_default;
+        effective_fit = fit_default;
         background_color.init ();
         media_opacity.init ();
         transition.init ();
         QString pg = getAttribute ("paramGroup");
         if (!pg.isEmpty ()) {
-            NodeValueList *lst = findParamGroup (this, pg);
+            Sequence *lst = findParamGroup (this, pg);
             if (lst) {
                 for (NodeValueItem *i = lst->first(); i; i = i->nextSibling())
                     if (i->data.node->isElementNode ()) {
@@ -3355,25 +3432,20 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
     transition.finish (this);
-    if (unfinished ())
-        finish ();
     runtime->init ();
     Mrl::deactivate ();
     (void) surface ();
     region_node = 0L;
-    if (media_info) {
-        delete media_info;
-        media_info = NULL;
-    }
     postpone_lock = 0L;
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::defer () {
     if (media_info) {
         //media_info->pause ();
-        if (unfinished ())
-            postpone_lock = document ()->postpone ();
+        bool running = unfinished ();
         setState (state_deferred);
+        if (running)
+            postpone_lock = document ()->postpone ();
     }
 }
 
@@ -3444,6 +3516,7 @@ KDE_NO_EXPORT void SMIL::MediaType::finish () {
     transition.transition_updater.disconnect ();
     if (media_info && media_info->media)
         media_info->media->pause ();
+    postpone_lock = 0L;
 
     Surface *s = surface ();
     if (s)
@@ -3462,9 +3535,10 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
         SRect rr = rb->region_surface->bounds;
         Single x, y, w = size.width, h = size.height;
         sizes.calcSizes (this, &rb->sizes, rr.width(), rr.height(), x, y, w, h);
-        Fit ft = fit_default == fit ? rb->fit : fit;
+        if (fit_default != fit)
+            effective_fit = fit;
         ImageMedia *im;
-        switch (ft) {
+        switch (effective_fit) {
             case fit_scroll:
             case fit_default:
             case fit_hidden:
@@ -3474,14 +3548,14 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
                          (im = static_cast <ImageMedia *>(media_info->media)) &&
                          !im->isEmpty () &&
                          im->cached_img->flags & ImageData::ImageScalable)))
-                    ft = fit_meet;
+                    effective_fit = fit_meet;
                 break;
             default:
                 break;
         }
 
         if (!size.isEmpty () && w > 0 && h > 0)
-            switch (ft) {
+            switch (effective_fit) {
                 case fit_meet: {
                     float iasp = 1.0 * size.width / size.height;
                     float rasp = 1.0 * w / h;
@@ -3597,6 +3671,8 @@ void SMIL::MediaType::message (MessageType msg, void *content) {
         }
 
         case MsgMediaFinished:
+            if (state_deferred == state && postpone_lock)
+                state = state_began;
             if (unfinished ()) {
                 if (runtime->durTime ().durval == Runtime::DurMedia)
                     runtime->durTime ().durval = Runtime::DurTimer;
@@ -3690,11 +3766,11 @@ Surface *SMIL::MediaType::surface () {
 
 namespace {
     class SvgElement : public Element {
-        QString tag;
+        QByteArray tag;
         NodePtrW image;
 
     public:
-        SvgElement (NodePtr &doc, Node *img, const QString &t, short id=0)
+        SvgElement (NodePtr &doc, Node *img, const QByteArray &t, short id=0)
             : Element (doc, id), tag (t), image (img) {}
 
         void parseParam (const TrieString &name, const QString &val) {
@@ -3709,24 +3785,26 @@ namespace {
         }
 
         Node *childFromTag (const QString & tag) {
-            return new SvgElement (m_doc, image.ptr (), tag);
+            return new SvgElement (m_doc, image.ptr (), tag.toLatin1());
         }
 
         const char *nodeName () const {
-            return tag.ascii ();
+            return tag.constData ();
         }
     };
 }
 
 KDE_NO_CDTOR_EXPORT
-SMIL::RefMediaType::RefMediaType (NodePtr &d, const QString &t)
+SMIL::RefMediaType::RefMediaType (NodePtr &d, const QByteArray &t)
  : SMIL::MediaType (d, t, id_node_ref) {}
 
 KDE_NO_EXPORT Node *SMIL::RefMediaType::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "imfl"))
+    QByteArray ba = tag.toLatin1 ();
+    const char *taglatin = ba.constData ();
+    if (!strcmp (taglatin, "imfl"))
         return new RP::Imfl (m_doc);
-    else if (!strcmp (tag.latin1 (), "svg"))
-        return new SvgElement (m_doc, this, tag, id_node_svg);
+    else if (!strcmp (taglatin, "svg"))
+        return new SvgElement (m_doc, this, ba, id_node_svg);
     Node *n = fromXMLDocumentTag (m_doc, tag);
     if (n)
         return n;
@@ -3779,12 +3857,12 @@ KDE_NO_EXPORT void SMIL::RefMediaType::finish () {
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::begin () {
+    MediaType::begin ();
     if (media_info && media_info->media &&
             media_info->media->type () != MediaManager::Image &&
             0 == runtime->durTime ().offset &&
             Runtime::DurMedia == runtime->endTime ().durval)
         runtime->durTime ().durval = Runtime::DurMedia; // duration of clip
-    MediaType::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::accept (Visitor * v) {
@@ -3807,11 +3885,6 @@ void SMIL::RefMediaType::message (MessageType msg, void *content) {
                 clipStop ();
             return;
         }
-
-        case MsgMediaFinished:
-            if (state >= Node::state_began)
-                runtime->tryFinish ();
-            return;
 
         case MsgChildFinished:
             if (id_node_svg == ((Posting *) content)->source->id)
@@ -3885,16 +3958,17 @@ KDE_NO_EXPORT void SMIL::TextMediaType::prefetch () {
 void
 SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
     if (name == "color" || name == "fontColor") {
-        font_color = val.isEmpty () ? 0 : QColor (val).rgb ();
+        font_color = val.isEmpty () ? 0 : rgbFromValue (val);
     } else if (name == "fontFace") {
-        if (val.lower ().indexOf ("sans" ) < 0)
+        if (val.toLower ().indexOf ("sans" ) < 0)
             font_name = "serif";
     } else if (name == "font-size" || name == "fontPtSize") {
-        font_size = val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
+        font_size = val.isEmpty() ? TextMedia::defaultFontSize() : (int)SizeType (val).size ();
     } else if (name == "fontSize") {
-        font_size += val.isEmpty() ? TextMedia::defaultFontSize() : val.toInt();
+        font_size += val.isEmpty() ? TextMedia::defaultFontSize() : (int)SizeType (val).size ();
     } else if (name == "hAlign") {
-        const char * cval = val.ascii ();
+        QByteArray ba = val.toLatin1 ();
+        const char *cval = ba.constData ();
         if (!cval)
             halign = align_left;
         else if (!strcmp (cval, "center"))
@@ -3923,13 +3997,19 @@ KDE_NO_EXPORT void SMIL::TextMediaType::accept (Visitor * v) {
 KDE_NO_CDTOR_EXPORT SMIL::Brush::Brush (NodePtr & d)
     : SMIL::MediaType (d, "brush", id_node_brush) {}
 
+KDE_NO_EXPORT void SMIL::Brush::init () {
+    if (Runtime::TimingsInitialized > runtime->timingstate)
+        color.init ();
+    MediaType::init ();
+}
+
 KDE_NO_EXPORT void SMIL::Brush::accept (Visitor * v) {
     v->visit (this);
 }
 
 KDE_NO_EXPORT void SMIL::Brush::parseParam (const TrieString &param, const QString &val) {
     if (param == "color") {
-        color = val.isEmpty () ? 0 : QColor (val).rgb ();
+        color.setColor (val);
         Surface *s = surface ();
         if (s)
             s->repaint ();
@@ -3971,8 +4051,6 @@ void SMIL::SmilText::activate () {
         region_node = r;
     init (); // sets all attributes
     setState (state_activated);
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-        c->activate ();
     runtime->start ();
 }
 
@@ -3984,7 +4062,9 @@ void SMIL::SmilText::begin () {
         rb->repaint ();
         transition.begin (this, runtime);
     }
-    Element::begin ();
+    setState (state_began);
+    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+        c->activate ();
 
 }
 
@@ -4001,6 +4081,7 @@ void SMIL::SmilText::deactivate () {
         text_surface->remove ();
         text_surface = NULL;
     }
+    sizes.resetSizes ();
     runtime->init ();
     Element::deactivate ();
 }
@@ -4011,19 +4092,41 @@ void SMIL::SmilText::reset () {
 }
 
 Node *SMIL::SmilText::childFromTag (const QString &tag) {
-    const char *ctag = tag.ascii ();
+    QByteArray ba = tag.toLatin1 ();
+    const char *ctag = ba.constData ();
     if (!strcmp (ctag, "tev"))
-    {}//return new SMIL::TextTev (m_doc);
+        return new TemporalMoment (m_doc, id_node_tev, ba);
+    if (!strcmp (ctag, "clear"))
+        return new TemporalMoment (m_doc, id_node_clear, ba);
     return fromTextFlowGroup (m_doc, tag);
 }
 
 void SMIL::SmilText::parseParam (const TrieString &name, const QString &value) {
-    if (!props.parseParam (name, value) &&
-            !runtime->parseParam (name, value) &&
-            !parseBackgroundParam (background_color, name, value) &&
-            !parseMediaOpacityParam (media_opacity, name, value) &&
-            !parseTransitionParam (this, transition, runtime, name, value)) {
+    if (props.parseParam (name, value)
+            || sizes.setSizeParam (name, value)
+            || parseBackgroundParam (background_color, name, value)
+            || parseMediaOpacityParam (media_opacity, name, value)) {
+        message (MsgMediaUpdated);
+    } else if (!runtime->parseParam (name, value)
+            && !parseTransitionParam (this, transition, runtime, name, value)) {
         Element::parseParam (name, value);
+    }
+}
+
+void SMIL::SmilText::updateBounds (bool remove) {
+    if (text_surface) {
+        SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (region_node);
+        Surface *rs = (Surface *) region_node->role (RoleDisplay);
+        if (rs) {
+            SRect b = rs->bounds;
+            Single x, y, w = size.width, h = size.height;
+            sizes.calcSizes (this, &rb->sizes, b.width(), b.height(), x, y, w, h);
+            if (!size.isEmpty () && w > 0 && h > 0) {
+                w = size.width;
+                h = size.height;
+            }
+            text_surface->resize (SRect (x, y, w, h), remove);
+        }
     }
 }
 
@@ -4031,8 +4134,7 @@ void SMIL::SmilText::message (MessageType msg, void *content) {
     switch (msg) {
 
         case MsgSurfaceBoundsUpdate:
-            if (content && text_surface)
-                text_surface->resize (text_surface->bounds, true);
+            updateBounds (!!content);
             return;
 
         case MsgStateFreeze:
@@ -4044,6 +4146,16 @@ void SMIL::SmilText::message (MessageType msg, void *content) {
             return;
 
         case MsgChildFinished:
+            if (unfinished ())
+                runtime->tryFinish ();
+            return;
+
+        case MsgMediaUpdated:
+            if (surface ()) {
+                text_surface->parentNode ()->repaint ();
+                text_surface->remove ();
+                text_surface = NULL;
+            }
             return;
 
         default:
@@ -4065,6 +4177,9 @@ void *SMIL::SmilText::role (RoleType msg, void *content) {
 
     case RoleDisplay:
         return surface ();
+
+    case RoleSizer:
+        return &sizes;
 
     case RoleReceivers: {
         MessageType msgt = (MessageType) (long) content;
@@ -4092,18 +4207,13 @@ Surface *SMIL::SmilText::surface () {
             text_surface->remove ();
             text_surface = NULL;
         }
-    } else if (region_node) {
+    } else if (region_node && !text_surface) {
         Surface *rs = (Surface *) region_node->role (RoleDisplay);
         if (rs) {
-            SRect b = rs->bounds;
-            if (!text_surface)
-                text_surface = rs->createSurface (this,
-                        SRect (0, 0, b.width (), b.height ()));
-#ifdef KMPLAYER_WITH_CAIRO
-            else if (!text_surface->surface)
-                text_surface->bounds = SRect (0, 0, b.width (), b.height ());
-#endif
+            text_surface = rs->createSurface (this, SRect ());
             text_surface->setBackgroundColor (background_color.color);
+            size = SSize ();
+            updateBounds (false);
         }
     }
     return text_surface.ptr ();
@@ -4144,9 +4254,9 @@ bool SmilTextProperties::parseParam(const TrieString &name, const QString &val) 
         else
             text_align = AlignInherit;
     } else if (name == "textBackgroundColor") {
-        background_color = 0xffffff & QColor (val).rgb ();
+        background_color = rgbFromValue (val);
     } else if (name == "textColor") {
-        font_color = 0xffffff & QColor (val).rgb ();
+        font_color = rgbFromValue (val);
     } else if (name == "textDirection") {
         if (val == "ltr")
             text_direction = DirLtr;
@@ -4158,7 +4268,7 @@ bool SmilTextProperties::parseParam(const TrieString &name, const QString &val) 
     } else if (name == "textFontFamily") {
         font_family = val;
     } else if (name == "textFontSize") {
-        font_size = val.toInt ();
+        font_size = SizeType (val);
     } else if (name == "textFontStyle") {
         if (val == "normal")
             font_style = StyleNormal;
@@ -4192,7 +4302,7 @@ bool SmilTextProperties::parseParam(const TrieString &name, const QString &val) 
 }
 
 void SmilTextProperties::mask (const SmilTextProperties &props) {
-    if (props.font_size > 0)
+    if ((float)props.font_size.size () > 0.1)
         font_size = props.font_size;
     if (props.font_color > -1)
         font_color = props.font_color;
@@ -4232,6 +4342,63 @@ void SMIL::TextFlow::parseParam(const TrieString &name, const QString &val) {
         Element::parseParam (name, val);
 }
 
+SMIL::TemporalMoment::TemporalMoment (NodePtr &doc, short id, const QByteArray &t)
+ : Element (doc, id),
+   runtime (new Runtime (this)),
+   tag (t) {}
+
+SMIL::TemporalMoment::~TemporalMoment () {
+    delete runtime;
+}
+
+void SMIL::TemporalMoment::init () {
+    if (Runtime::TimingsInitialized > runtime->timingstate) {
+        Element::init ();
+        runtime->initialize ();
+    }
+}
+
+void SMIL::TemporalMoment::activate () {
+    init ();
+    setState (state_activated);
+    runtime->start ();
+}
+
+void SMIL::TemporalMoment::begin () {
+    parentNode ()->message (MsgMediaUpdated);
+    Element::begin ();
+}
+
+void SMIL::TemporalMoment::deactivate () {
+    runtime->init ();
+    Element::deactivate ();
+}
+
+Node *SMIL::TemporalMoment::childFromTag (const QString & tag) {
+    return fromTextFlowGroup (m_doc, tag);
+}
+
+void SMIL::TemporalMoment::parseParam (const TrieString &name, const QString &value) {
+    // TODO: next
+    if (!runtime->parseParam (name, value))
+        Element::parseParam (name, value);
+}
+
+void SMIL::TemporalMoment::message (MessageType msg, void *content) {
+    if ((int) msg >= (int) Runtime::DurLastDuration)
+        Element::message (msg, content);
+    else
+        runtime->message (msg, content);
+}
+
+void *SMIL::TemporalMoment::role (RoleType msg, void *content) {
+    if (RoleTiming == msg)
+        return runtime;
+    void *response = runtime->role (msg, content);
+    if (response == MsgUnhandled)
+        return Element::role (msg, content);
+    return response;
+}
 
 //-----------------------------------------------------------------------------
 
@@ -4257,6 +4424,15 @@ void SMIL::StateValue::init () {
 void SMIL::StateValue::activate () {
     init ();
     setState (state_activated);
+    for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
+        QString v = a->value ();
+        int p = v.indexOf ('{');
+        if (p > -1) {
+            int q = v.indexOf ('}', p + 1);
+            if (q > -1)
+                parseParam (a->name (), applySubstitution (this, v, p, q));
+        }
+    }
     runtime->start ();
 }
 
@@ -4329,9 +4505,9 @@ void SMIL::NewValue::begin () {
         if (!ref)
             ref = evaluateExpr ("/data");
         ref->setRoot (st);
-        NodeValueList *lst = ref->toNodeList ();
+        Sequence *lst = ref->toSequence ();
         NodeValueItem *itm = lst->first ();
-        if (itm) {
+        if (itm && itm->data.node) {
             if (name.startsWith(QChar('@')) && itm->data.node->isElementNode())
                 static_cast <Element *> (itm->data.node)->setAttribute (
                         name.mid (1), value);
@@ -4365,9 +4541,9 @@ void SMIL::SetValue::begin () {
         kWarning () << "ref is empty or no state";
     } else {
         ref->setRoot (st);
-        NodeValueList *lst = ref->toNodeList ();
+        Sequence *lst = ref->toSequence ();
         NodeValueItemPtr itm = lst->first ();
-        if (itm) {
+        if (itm && itm->data.node) {
             if (itm->data.attr && itm->data.node->isElementNode ())
                 static_cast <Element *> (itm->data.node)->setAttribute (
                         itm->data.attr->name (), itm->data.attr->value ());
@@ -4386,7 +4562,7 @@ void SMIL::DelValue::begin () {
         kWarning () << "ref is empty or no state";
     } else {
         ref->setRoot (st);
-        NodeValueList *lst = ref->toNodeList ();
+        Sequence *lst = ref->toSequence ();
         for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling()) {
             if (itm->data.attr && itm->data.node->isElementNode ())
                 static_cast <Element *> (itm->data.node)->setAttribute (
@@ -4396,6 +4572,112 @@ void SMIL::DelValue::begin () {
         }
         delete lst;
     }
+}
+
+//-----------------------------------------------------------------------------
+
+void SMIL::Send::init () {
+    method = SMIL::State::get;
+    replace = SMIL::State::instance;
+    StateValue::init ();
+}
+
+void SMIL::Send::begin () {
+    SMIL::State *st = static_cast <SMIL::State *> (state.ptr ());
+    if (action.isEmpty () || !st) {
+        kWarning () << "action is empty or no state";
+    } else {
+        Smil *s = SMIL::Smil::findSmilNode (this);
+        if (s) {
+            delete media_info;
+            media_info = new MediaInfo (this, MediaManager::Text);
+            Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : NULL;
+            QString url = mrl ? KURL (mrl->absolutePath(), action).url() : action;
+            if (SMIL::State::get == method && replace == SMIL::State::instance) {
+                // TODO compose GET url
+                media_info->wget (url, st->domain ());
+            } else // TODO ..
+                qDebug("unsupported method %d replace %d", method, replace);
+        }
+    }
+}
+
+void SMIL::Send::deactivate () {
+    delete media_info;
+    media_info = NULL;
+    action.clear ();
+    StateValue::deactivate ();
+}
+
+void SMIL::Send::parseParam (const TrieString &para, const QString &val) {
+    if (para == "action") {
+        action = val;
+    } else if (para == "method") {
+        if (val == "put")
+            method = SMIL::State::put;
+        else
+            method = SMIL::State::get;
+    } else if (para == "replace") {
+        if (val == "all")
+            replace = SMIL::State::all;
+        else if (val == "none")
+            replace = SMIL::State::none;
+        else
+            replace = SMIL::State::instance;
+    } else if (para == "target") {
+        delete ref;
+        if (state)
+            ref = evaluateExpr (val, "data");
+        else
+            ref = NULL;
+    } else {
+        StateValue::parseParam (para, val);
+    }
+}
+
+void SMIL::Send::message (MessageType msg, void *content) {
+    SMIL::State *st = static_cast <SMIL::State *> (state.ptr ());
+    switch (msg) {
+
+    case MsgMediaReady: {
+        Node *target = NULL;
+        if (!ref && SMIL::State::instance == replace)
+            ref = evaluateExpr ("/data");
+        if (ref) {
+            ref->setRoot (st);
+            Sequence *lst = ref->toSequence ();
+            NodeValueItem *itm = lst->first ();
+            if (itm)
+                target = itm->data.node;
+            delete lst;
+        }
+        if (target) {
+            Node *parent = target->parentNode ();
+            Node *next = target->nextSibling ();
+            bool changed = target->firstChild ();
+            target->clearChildren ();
+            if (media_info && media_info->media) {
+                QTextStream in (&((TextMedia *)media_info->media)->text);
+                readXML (target, in, QString ());
+                if (target->firstChild ()) {
+                    NodePtr store = target->firstChild ();
+                    parent->removeChild (target);
+                    parent->insertBefore (store, next);
+                    target = store;
+                    changed = true;
+                }
+            }
+            if (changed)
+                st->stateChanged (target);
+        }
+        delete media_info;
+        media_info = NULL;
+        return;
+    }
+    default:
+        break;
+    }
+    StateValue::message (msg, content);
 }
 
 //-----------------------------------------------------------------------------
@@ -4672,9 +4954,9 @@ void SMIL::AnimateBase::parseParam (const TrieString &name, const QString &val) 
     } else if (name == "by" || name == "change_by") {
         change_by = val;
     } else if (name == "values") {
-        values = QStringList::split (QString (";"), val);
+        values = val.split (QChar (';'));
     } else if (name == "keyTimes") {
-        QStringList kts = QStringList::split (QString (";"), val);
+        QStringList kts = val.split (QChar (';'));
         if (keytimes)
             free (keytimes);
         keytime_count = kts.size ();
@@ -4684,11 +4966,11 @@ void SMIL::AnimateBase::parseParam (const TrieString &name, const QString &val) 
         }
         keytimes = (float *) malloc (sizeof (float) * keytime_count);
         for (unsigned int i = 0; i < keytime_count; i++) {
-            keytimes[i] = kts[i].stripWhiteSpace().toDouble();
+            keytimes[i] = kts[i].trimmed().toDouble();
             if (keytimes[i] < 0.0 || keytimes[i] > 1.0)
-                kWarning() << "animateMotion wrong keyTimes values" << endl;
+                kWarning() << "animateMotion wrong keyTimes values";
             else if (i == 0 && keytimes[i] > 0.01)
-                kWarning() << "animateMotion first keyTimes value not 0" << endl;
+                kWarning() << "animateMotion first keyTimes value not 0";
             else
                 continue;
             free (keytimes);
@@ -4697,7 +4979,7 @@ void SMIL::AnimateBase::parseParam (const TrieString &name, const QString &val) 
             return;
         }
     } else if (name == "keySplines") {
-        splines = QStringList::split (QString (";"), val);
+        splines = val.split (QChar (';'));
     } else if (name == "calcMode") {
         if (val == QString::fromLatin1 ("discrete"))
             calcMode = calc_discrete;
@@ -4764,8 +5046,7 @@ bool SMIL::AnimateBase::setInterval () {
             break;
         case calc_spline:
             if (splines.size () > (int)interval) {
-                QStringList kss = QStringList::split (
-                        QString (" "), splines[interval]);
+                QStringList kss = splines[interval].split (QChar (' '));
                 control_point[0] = control_point[1] = 0;
                 control_point[2] = control_point[3] = 1;
                 if (kss.size () == 4) {
@@ -4876,8 +5157,8 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
         return;
     }
     if (calcMode != calc_discrete) {
-        QStringList bnums = QStringList::split (QString (","), values[0]);
-        QStringList enums = QStringList::split (QString (","), values[1]);
+        QStringList bnums = values[0].split (QString (","));
+        QStringList enums = values[1].split (QString (","));
         num_count = bnums.size ();
         if (num_count) {
             begin_ = new SizeType [num_count];
@@ -4955,7 +5236,7 @@ KDE_NO_EXPORT bool SMIL::Animate::timerTick (unsigned int cur_time) {
         if (calc_discrete != calcMode) {
             if (values.size () <= (int) interval + 1)
                 return false;
-            QStringList enums = QStringList::split (QString (","), values[interval+1]);
+            QStringList enums = values[interval+1].split (QString (","));
             for (int i = 0; i < num_count; ++i) {
                 begin_[i] = end[i];
                 if (i < enums.size ())
@@ -4981,8 +5262,8 @@ bool getMotionCoordinates (const QString &coord, SizeType &x, SizeType &y) {
     if (p < 0)
         p = coord.indexOf (QChar (' '));
     if (p > 0) {
-        x = coord.left (p).stripWhiteSpace ();
-        y = coord.mid (p + 1).stripWhiteSpace ();
+        x = coord.left (p).trimmed ();
+        y = coord.mid (p + 1).trimmed ();
         return true;
     }
     return false;
@@ -5134,6 +5415,8 @@ static bool getAnimateColor (unsigned int val, SMIL::AnimateColor::Channels &c) 
 }
 
 static bool getAnimateColor (const QString &val, SMIL::AnimateColor::Channels &c) {
+    if (val.isEmpty ())
+        return getAnimateColor (0, c);
     QColor color (val);
     return getAnimateColor (color.rgba (), c);
 }
@@ -5235,7 +5518,7 @@ KDE_NO_EXPORT void SMIL::AnimateColor::applyStep () {
     Node *target = target_element.ptr ();
     if (target) {
         QString val; // TODO make more efficient
-        val.sprintf ("#%06x", 0xffffff & cur_c.argb ());
+        val.sprintf ("#%08x", cur_c.argb ());
         static_cast <Element *> (target)->setParam (changed_attribute, val);
     }
 }
@@ -5351,6 +5634,10 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::SmilText *n) {
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::TextFlow *n) {
+    visit (static_cast <Element *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::TemporalMoment *n) {
     visit (static_cast <Element *> (n));
 }
 

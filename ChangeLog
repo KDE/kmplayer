@@ -1,3 +1,30 @@
+Changes since version 0.11.3c
+- Fix item activation in double click mode
+- Fix crash on plugin exit in MediaManager destructor
+- Fix GtkWindow destroyed for never libflashplugin
+Changes since version 0.11.3b
+- Include build fixes from Orcan Ogetbil
+- Set codec to utf8 when reading our own lists
+- Fix initial video sizes with SMIL+video
+Changes since version 0.11.3a
+- TV list wasn't saved when editing the items in-place
+- Percentage of stream loading in status bar wasn't cleared on playing
+- Basic support for Outline Processor Markup Language
+- Some SMIL synchronization fixes
+Changes since version 0.11.3
+- Fix crash when NPP player window resizes
+- Don't log in NPP output in /tmp/npp.out
+- Remove configure toolbar menu item
+Changes since version 0.11.2c
+- SMIL-3.0 improvements for smilText and State
+- Remove pango dependency
+- KDE3 porting; replace K3ListView with QTreeView
+Changes since version 0.11.2b
+- Don't show local files with file://, nor percent encoded in recent list
+- Fix replaying a .pls file
+- Fix playlist.xml file can contain trailing XNL fragments when it gets smaller
+- Fix crash when SmilText has no text
+- Reenable item renaming in the playlist
 Changes since version 0.11.2a
 - Fix npp destroy stream
 - Synchronously start npp from kpart to handle immediate JS version calls
@@ -517,7 +544,7 @@ Changes since version 0.8.3-rc3
 Changes since version 0.8.3-rc2
 - All QtoolTips to QWhatsThis and help from Xine for whatsthis by xine options
 - Store xine settings in ~/.kde/share/apps/kmplayer/xine_config and not in
-  ~/.xine/config2. Save the first time if file does not exist (Automaticly
+  ~/.xine/config2. Save the first time if file does not exist (Automatically
   sets the misc.memcpy_method).
 - Added a debian build directory, builds a kmplayer-lib, kmplayer-plugin and a
   kmplayer-app package. Eg. install only kmplayer-lib and kmplayer-plugin if 
