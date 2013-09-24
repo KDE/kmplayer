@@ -31,7 +31,7 @@
                   background-color="white" showBackground="whenActive"/>
           <region top="25" background-color="SlateGray">
             <region height="140">
-              <region id="description"width="175"
+              <region id="description" width="175"
                       background-color="#475360" fit="scroll"/>
               <region id="image" right="0" width="175"
                       background-color="#475360" fit="meet"/>
@@ -68,6 +68,17 @@
        <uri/>
        <video/>
       </vlink>
+      <json>
+       <uri/>
+       <value/>
+       <streamer/>
+       <url/>
+       <tmp/>
+      </json>
+      <guide>
+       <html/>
+      </guide>
+      <image/>
       <swf-player/>
       <movie-sd/>
       <video-uri/>
@@ -126,6 +137,9 @@
             <setvalue ref="/data/vlink/uri" value="'invalid'"/>
             <setvalue ref="/data/vlink/video" value="'empty'"/>
             <setvalue ref="/data/movie-sd" value="'invalid'"/>
+            <setvalue ref="/data/json/value" value="'empty'"/>
+            <setvalue ref="/data/image" value="'invalid'"/>
+            <setvalue ref="/data/swf-player" value="'invalid'"/>
             <setvalue ref="/data/video-uri" value="'invalid'"/>
             <seq/>
             <par>
@@ -141,12 +155,17 @@
                 <setvalue ref="/data/message"
                           value="concat('Could not get HTML ', /data/page/uri)"/>
               </switch>
-              <seq begin="mystate.stateChange(/data/page/html)">
-                <setvalue ref="/data/vref/uri"
-                          value="substring-before(substring-after(tokenize(/data/page/html, 'vars_player.videorefFileUrl *= *&quot;[^&quot;]+&quot;')[1], '&quot;'), '&quot;')"/>
-                <setvalue ref="/data/swf-player"
-                          value="substring-before(substring-after(tokenize(/data/page/html, 'url_player *= *&quot;[^&quot;]+&quot;')[1], '&quot;'), '&quot;')"/>
-              </seq>
+              <switch begin="mystate.stateChange(/data/page/html)">
+                <setvalue ref="/data/json/uri"
+                          expr="count(/data/page/html//div[@arte_vp_url]) &gt; 0"
+                          value="/data/page/html//div[@arte_vp_url][1]/@arte_vp_url"/>
+                <seq>
+                  <setvalue ref="/data/vref/uri"
+                            value="substring-before(substring-after(tokenize(/data/page/html, 'vars_player.videorefFileUrl *= *&quot;[^&quot;]+&quot;')[1], '&quot;'), '&quot;')"/>
+                  <setvalue ref="/data/swf-player"
+                            value="substring-before(substring-after(tokenize(/data/page/html, 'url_player *= *&quot;[^&quot;]+&quot;')[1], '&quot;'), '&quot;')"/>
+                </seq>
+              </switch>
               <switch begin="mystate.stateChange(/data/vref/uri)">
                 <seq expr="starts-with(/data/vref/uri, 'http://')">
                   <setvalue ref="/data/message"
@@ -170,6 +189,10 @@
               <setvalue begin="mystate.stateChange(/data/vlink/video)"
                         ref="/data/movie-sd"
                         value="/data/vlink/video/urls/url[@quality = 'hd']"/>
+              <setvalue begin="mystate.stateChange(/data/vlink/video)"
+                        expr="count(/data/vlink/video/firstThumbnailUrl) &gt; 0"
+                        ref="/data/image"
+                        value="/data/vlink/video/firstThumbnailUrl[1]"/>
               <switch begin="mystate.stateChange(/data/movie-sd)">
                 <seq expr="starts-with(/data/movie-sd, 'rtmp://')">
                   <setvalue ref="/data/message"
@@ -177,13 +200,67 @@
                   <setvalue ref="/data/video-uri"
                   value="concat(/data/movie-sd, ' swfVfy=1 swfUrl=', /data/swf-player)"/>
                 </seq>
-                <seq expr="string-length(/data/movie-sd) &gt 0">
+                <seq expr="string-length(/data/movie-sd) &gt; 0">
                   <setvalue ref="/data/message"
                             value="concat('Found URL ', /data/movie-sd)"/>
                   <setvalue ref="/data/video-uri" value="/data/movie-sd"/>
                 </seq>
                 <setvalue ref="/data/message" value="'Video not available'"/>
               </switch>
+              <switch begin="mystate.stateChange(/data/json/uri)">
+                <seq expr="starts-with(/data/json/uri, 'http')">
+                  <setvalue ref="/data/message"
+                            value="concat('Get ', /data/json/uri)"/>
+                  <send action="{/data/json/uri}"
+                        method="get" replace="instance" target="/data/json/value/*[1]"/>
+                </seq>
+                <setvalue ref="/data/message"
+                          value="concat('Could not get JSON ', /data/json/uri)"/>
+              </switch>
+
+              <seq begin="mystate.stateChange(/data/json/value/*[1])">
+                <setvalue ref="/data/json/tmp"
+                          value="substring-after(/data/json/value, '&quot;programImage&quot;')"/>
+                <setvalue ref="/data/image"
+                          value="substring-before(substring-after(/data/json/tmp, '&quot;'), '&quot;')"/>
+                <setvalue ref="/data/json/value"
+                          value="substring-after(/data/json/value, 'RTMP_SQ_1')"/>
+                <setvalue ref="/data/json/tmp"
+                          value="substring-after(/data/json/value, '&quot;url&quot;')"/>
+                <setvalue ref="/data/json/url"
+                          value="substring-before(substring-after(/data/json/tmp, '&quot;'), '&quot;')"/>
+                <setvalue ref="/data/json/tmp"
+                          value="substring-after(/data/json/value, '&quot;streamer&quot;')"/>
+                <setvalue ref="/data/json/streamer"
+                          value="substring-before(substring-after(/data/json/tmp, '&quot;'), '&quot;')"/>
+                <switch>
+                  <seq expr="starts-with(/data/json/streamer, 'rtmp://')">
+                    <setvalue ref="/data/message"
+                              value="concat('Found URL ', /data/json/streamer, 'mp4:', /data/json/url)"/>
+                    <send action="{concat('http://player.arte.tv/v2/index.php?json_url=', /data/json/uri, '&amp;config=arte_tvguide')}"
+                          method="get" replace="instance" target="/data/guide/html"/>
+                  </seq>
+                  <seq expr="string-length(/data/json/streamer) &gt; 0">
+                    <setvalue ref="/data/message"
+                              value="concat('Found URL ', /data/json/streamer)"/>
+                    <setvalue ref="/data/video-uri" value="/data/json/streamer"/>
+                  </seq>
+                  <setvalue ref="/data/message" value="'Video not available'"/>
+                </switch>
+              </seq>
+              <seq begin="mystate.stateChange(/data/guide/html)">
+                <setvalue ref="/data/swf-player"
+                          value="/data/guide/html/head/meta[@property=&quot;og:video&quot;]/@content"/>
+                <switch>
+                  <setvalue ref="/data/swf-player"
+                            expr="string-length(/data/swf-player) &gt; 1"
+                            value="concat(substring-before(/data/swf-player, 'swf'), 'swf')"/>
+                  <setvalue ref="/data/swf-player"
+                            value="http://www.arte.tv/playerv2/jwplayer5/mediaplayer.5.7.1894.swf"/>
+                </switch>
+                <setvalue ref="/data/video-uri"
+                          value="concat(/data/json/streamer, 'mp4:', /data/json/url, ' swfVfy=1 swfUrl=', /data/swf-player)"/>
+              </seq>
 
               <text region="title"
                     src="data:,{escape-uri(/data/feed/rss/channel/item[number(/data/feed/index)]/title)}"
@@ -202,9 +279,9 @@
                        target="glass" attribute="z-index" to="2"/>
                 </par>
               </par>
-              <img begin="mystate.stateChange(/data/vlink/video)"
-                   expr="count(/data/vlink/video/firstThumbnailUrl) &gt 0"
-                   src="{/data/vlink/video/firstThumbnailUrl[1]}"
+              <img begin="mystate.stateChange(/data/image)"
+                   expr="string-length(/data/image) &gt; 0"
+                   src="{/data/image}"
                    region="image"/>
               <text region="index" src="data:,{escape-uri(/data/feed/index)}"
                     paramGroup="centered-text"/>
