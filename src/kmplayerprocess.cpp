@@ -38,6 +38,7 @@
 #include <QtDBus/QtDBus>
 #include <QtCore/QDir>
 #include <QtCore/QUrl>
+#include <QNetworkCookie>
 
 #include <kdebug.h>
 #include <kprotocolmanager.h>
@@ -48,6 +49,7 @@
 #include <kstandarddirs.h>
 #include <kshell.h>
 #include <kio/job.h>
+#include <kio/accessmanager.h>
 
 #include "kmplayer_def.h"
 #include "kmplayerconfig.h"
@@ -1672,7 +1674,8 @@ KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString
    job (0L), bytes (0),
    stream_id (sid),
    content_length (0),
-   finish_reason (NoReason) {
+   finish_reason (NoReason),
+   received_data (false) {
     data_arrival.tv_sec = 0;
     (void) new StreamAdaptor (this);
     QString objpath = QString ("%1/stream_%2").arg (p->objectPath ()).arg (sid);
@@ -1702,6 +1705,7 @@ KDE_NO_EXPORT void NpStream::open () {
     } else {
         if (!post.size ()) {
             job = KIO::get (KUrl (url), KIO::NoReload, KIO::HideProgressInfo);
+            job->addMetaData ("PropagateHttpHeader", "true");
         } else {
             QStringList name;
             QStringList value;
@@ -1789,6 +1793,12 @@ KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
             kError () << "suspend not supported" << endl;
         if (!sz)
             gettimeofday (&data_arrival, 0L);
+        if (!received_data) {
+            received_data = true;
+            http_headers = job->queryMetaData ("HTTP-Headers");
+            if (!http_headers.isEmpty() && !http_headers.endsWith (QChar ('\n')))
+                http_headers += QChar ('\n');
+        }
         if (sz + qb.size ())
             emit stateChanged ();
     }
@@ -2184,7 +2194,9 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
             QString objpath = QString ("/stream_%1").arg (stream->stream_id);
             QDBusMessage msg = QDBusMessage::createMethodCall (
                     remote_service, objpath, "org.kde.kmplayer.backend", "streamInfo");
-            msg << stream->mimetype << stream->content_length;
+            msg << stream->mimetype
+                << stream->content_length
+                << stream->http_headers;
             msg.setDelayedReply (false);
             QDBusConnection::sessionBus().send (msg);
         }
@@ -2212,6 +2224,21 @@ KDE_NO_EXPORT void NpPlayer::wroteStdin (qint64 sz) {
         if (running ())
             processStreams ();
     }
+}
+
+QString NpPlayer::cookie (const QString &url)
+{
+    QString s;
+    View *v = view ();
+    if (v) {
+        KIO::Integration::CookieJar jar (v);
+        jar.setWindowId (v->topLevelWidget()->winId ());
+        QList<QNetworkCookie> c = jar.cookiesForUrl (url);
+        QList<QNetworkCookie>::const_iterator e = c.end ();
+        for (QList<QNetworkCookie>::const_iterator i = c.begin (); i != e; ++i)
+            s += (s.isEmpty() ? "" : ";") + QString::fromUtf8 ((*i).toRawForm());
+    }
+    return s;
 }
 
 #else

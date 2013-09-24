@@ -97,6 +97,7 @@ typedef struct _StreamInfo {
     char *mimetype;
     char *target;
     char *post;
+    char *headers;
     bool notify;
     bool called_plugin;
     bool destroyed;
@@ -169,6 +170,8 @@ static void freeStream (StreamInfo *si) {
         g_free (si->target);
     if (si->post)
         nsMemFree (si->post);
+    if (si->headers)
+        nsMemFree (si->headers);
     nsMemFree (si);
 }
 
@@ -832,10 +835,38 @@ static bool nsConstruct (NPP npp, NPObject* obj, const NPVariant *args, uint32_t
 }
 
 static NPError nsGetValueForURL (NPP npp, NPNURLVariable variable, const char *url, char **value, uint32_t *len) {
-    (void)npp; (void)url; (void)value;
+    (void)npp;
     print ("NPN_GetValueForURL\n");
     switch (variable) {
     case NPNURLVCookie:
+        if (callback_service) {
+            DBusMessage *rmsg;
+            DBusMessage *msg = dbus_message_new_method_call (
+                    callback_service,
+                    callback_path,
+                    "org.kde.kmplayer.callback",
+                    "cookie");
+            dbus_message_append_args (msg,
+                    DBUS_TYPE_STRING, &url,
+                    DBUS_TYPE_INVALID);
+            rmsg = dbus_connection_send_with_reply_and_block (dbus_connection,
+                    msg, 2000, NULL);
+            if (rmsg) {
+                DBusMessageIter it;
+                if (dbus_message_iter_init (rmsg, &it) &&
+                      DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&it)) {
+                    char *cookies;
+                    dbus_message_iter_get_basic (&it, &cookies);
+                    *value = g_strdup (cookies);
+                    *len = strlen (cookies);
+                    print ("cookie %s => %s\n", url, cookies);
+                }
+                dbus_message_unref (rmsg);
+                break;
+            } else {
+                print ("cookie no reply\n");
+            }
+        }
     case NPNURLVProxy:
     default:
         *value = (char *) nsAlloc (1);
@@ -1450,6 +1481,7 @@ static DBusHandlerResult dbusStreamMessage (DBusConnection *conn,
     } else if (dbus_message_is_method_call (msg, iface, "streamInfo")) {
         const char *mime;
         if (dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &mime, true)) {
+            const char *headers;
             uint32_t length;
             si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
             if (si && *mime) {
@@ -1460,9 +1492,15 @@ static DBusHandlerResult dbusStreamMessage (DBusConnection *conn,
             if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT32, &length, false)) {
                 if (si)
                     si->np_stream.end = length;
+                if (dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &headers, false)) {
+                    if (si && *headers) {
+                        si->headers = g_strdup (headers);
+                        si->np_stream.headers = si->headers;
+                    }
+                }
             }
-            print ("streamInfo %d size:%d mime:%s\n", (long)stream_id, length,
-                    mime ? mime : "");
+            print ("streamInfo %d size:%d mime:%s headers %s\n", (long)stream_id,
+                    length, mime ? mime : "", headers ? headers : "");
         }
         defaultReply (conn, msg);
     }
@@ -1595,7 +1633,8 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         }
         object_url = g_strdup (param);
         print ("play %s\n", object_url);
-        addStream (object_url, mimetype, 0L, 0, NULL, 0L, false);
+        if (mimetype && strncmp (mimetype, "application/x-java", 18))
+            addStream (object_url, mimetype, 0L, 0, NULL, 0L, false);
         defaultReply (conn, msg);
     } else if (dbus_message_is_method_call (msg, iface, "get")) {
         DBusMessage * rmsg;

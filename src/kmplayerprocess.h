@@ -424,6 +424,8 @@ public:
     uint32_t content_length;
     Reason finish_reason;
     QString mimetype;
+    QString http_headers;
+    bool received_data;
 signals:
     void stateChanged ();
     void redirected (uint32_t, const KUrl &);
@@ -460,6 +462,7 @@ public:
     void plugged () KMPLAYER_NO_MBR_EXPORT;
     void request_stream (const QString &path, const QString &url, const QString &target, const QByteArray &post) KMPLAYER_NO_MBR_EXPORT;
     QString evaluate (const QString &script, bool store) KMPLAYER_NO_MBR_EXPORT;
+    QString cookie (const QString &url);
     void dimension (int w, int h) KMPLAYER_NO_MBR_EXPORT;
 
     void destroyStream (uint32_t sid);
