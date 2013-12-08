@@ -58,7 +58,6 @@
 #include <kshortcut.h>
 #include <kfinddialog.h>
 #include <kglobalsettings.h>
-#include <k3staticdeleter.h>
 
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
@@ -88,7 +87,7 @@ KDE_NO_EXPORT void PictureWidget::mousePressEvent (QMouseEvent *) {
 }
 
 KDE_NO_EXPORT void PictureWidget::mouseMoveEvent (QMouseEvent *e) {
-    if (e->state () == Qt::NoButton)
+    if (e->buttons () == Qt::NoButton)
         m_view->mouseMoved (e->x (), e->y ());
 }
 

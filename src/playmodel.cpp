@@ -148,7 +148,7 @@ bool PlayModel::setData (const QModelIndex& i, const QVariant& v, int role)
 
     TopPlayItem *ri = item->rootItem ();
     if (ri->show_all_nodes && item->attribute) {
-        int pos = ntext.find (QChar ('='));
+        int pos = ntext.indexOf (QChar ('='));
         if (pos > -1) {
             item->attribute->setName (ntext.left (pos));
             item->attribute->setValue (ntext.mid (pos + 1));
