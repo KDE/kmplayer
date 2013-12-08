@@ -244,29 +244,30 @@ KDE_NO_EXPORT void PlayListView::contextMenuEvent (QContextMenuEvent *event)
     if (item) {
         if (item->node || item->attribute) {
             TopPlayItem *ritem = item->rootItem ();
-            if (m_itemmenu->count () > 0) {
+            if (m_itemmenu->actions().count () > 0) {
                 m_find->setVisible (false);
                 m_find_next->setVisible (false);
                 m_itemmenu->clear ();
             }
-            m_itemmenu->insertItem (KIcon ("edit-copy"),
+            m_itemmenu->addAction (KIcon ("edit-copy"),
                     i18n ("&Copy to Clipboard"),
-                    this, SLOT (copyToClipboard ()), 0, 0);
+                    this, SLOT (copyToClipboard ()));
             if (item->attribute ||
                     (item->node && (item->node->isPlayable () ||
                                     item->node->isDocument ()) &&
                      item->node->mrl ()->bookmarkable))
-                m_itemmenu->insertItem (KIcon ("bookmark-new"),
+                m_itemmenu->addAction (KIcon ("bookmark-new"),
                         i18n ("&Add Bookmark"),
-                        this, SLOT (addBookMark ()), 0, 1);
+                        this, SLOT (addBookMark ()));
             if (ritem->have_dark_nodes) {
-                m_itemmenu->insertItem (i18n ("&Show all"),
-                        this, SLOT (toggleShowAllNodes ()), 0, 2);
-                m_itemmenu->setItemChecked (2, ritem->show_all_nodes);
+                QAction *act = m_itemmenu->addAction (i18n ("&Show all"),
+                        this, SLOT (toggleShowAllNodes ()));
+                act->setCheckable (true);
+                act->setChecked (ritem->show_all_nodes);
             }
             if (item->item_flags & Qt::ItemIsEditable)
                 m_itemmenu->addAction (m_edit_playlist_item);
-            m_itemmenu->insertSeparator ();
+            m_itemmenu->addSeparator ();
             m_find->setVisible (true);
             m_find_next->setVisible (true);
             emit prepareMenu (item, m_itemmenu);
