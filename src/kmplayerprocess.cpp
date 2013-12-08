@@ -25,7 +25,7 @@
 #include <qfileinfo.h>
 #include <qtimer.h>
 #include <qlayout.h>
-#include <q3table.h>
+#include <qtablewidget.h>
 #include <qlineedit.h>
 #include <qslider.h>
 #include <qcombobox.h>
@@ -38,6 +38,7 @@
 #include <QtDBus/QtDBus>
 #include <QtCore/QDir>
 #include <QtCore/QUrl>
+#include <QHeaderView>
 #include <QNetworkCookie>
 
 #include <kdebug.h>
@@ -1029,7 +1030,7 @@ namespace KMPlayer {
 class KMPLAYER_NO_EXPORT MPlayerPreferencesFrame : public QFrame {
 public:
     MPlayerPreferencesFrame (QWidget * parent);
-    Q3Table * table;
+    QTableWidget * table;
 };
 
 } // namespace
@@ -1037,30 +1038,30 @@ public:
 KDE_NO_CDTOR_EXPORT MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * parent)
  : QFrame (parent) {
     QVBoxLayout * layout = new QVBoxLayout (this);
-    table = new Q3Table (int (MPlayerPreferencesPage::pat_last)+non_patterns, 2, this);
-    table->verticalHeader ()->hide ();
-    table->setLeftMargin (0);
-    table->horizontalHeader ()->hide ();
-    table->setTopMargin (0);
-    table->setColumnReadOnly (0, true);
-    table->setText (0, 0, i18n ("MPlayer command:"));
-    table->setText (1, 0, i18n ("Additional command line arguments:"));
-    table->setText (2, 0, QString("%1 (%2)").arg (i18n ("Cache size:")).arg (i18n ("kB"))); // FIXME for new translations
+    table = new QTableWidget (int (MPlayerPreferencesPage::pat_last)+non_patterns, 2, this);
+    table->verticalHeader ()->setVisible (false);
+    table->horizontalHeader ()->setVisible (false);
+    table->setContentsMargins (0, 0, 0, 0);
+    table->setItem (0, 0, new QTableWidgetItem (i18n ("MPlayer command:")));
+    table->setItem (0, 1, new QTableWidgetItem ());
+    table->setItem (1, 0, new QTableWidgetItem (i18n ("Additional command line arguments:")));
+    table->setItem (1, 1, new QTableWidgetItem ());
+    table->setItem (2, 0, new QTableWidgetItem (QString("%1 (%2)").arg (i18n ("Cache size:")).arg (i18n ("kB")))); // FIXME for new translations
     table->setCellWidget (2, 1, new QSpinBox (0, 32767, 32, table->viewport()));
-    table->setText (3, 0, i18n ("Build new index when possible"));
+    table->setItem (3, 0, new QTableWidgetItem (i18n ("Build new index when possible")));
     table->setCellWidget (3, 1, new QCheckBox (table->viewport()));
     QWhatsThis::add (table->cellWidget (3, 1), i18n ("Allows seeking in indexed files (AVIs)"));
-    for (int i = 0; i < int (MPlayerPreferencesPage::pat_last); i++)
-        table->setText (i+non_patterns, 0, _mplayer_patterns[i].caption);
-    QFontMetrics metrics (table->font ());
-    int first_column_width = 50;
-    for (int i = 0; i < int (MPlayerPreferencesPage::pat_last+non_patterns); i++) {
-        int strwidth = metrics.boundingRect (table->text (i, 0)).width ();
-        if (strwidth > first_column_width)
-            first_column_width = strwidth + 4;
+    for (int i = 0; i < int (MPlayerPreferencesPage::pat_last); i++) {
+        table->setItem (i+non_patterns, 0, new QTableWidgetItem (_mplayer_patterns[i].caption));
+        table->setItem (i+non_patterns, 1, new QTableWidgetItem ());
     }
-    table->setColumnWidth (0, first_column_width);
-    table->setColumnStretchable (1, true);
+    for (int i = 0; i < non_patterns + int (MPlayerPreferencesPage::pat_last); i++) {
+        QTableWidgetItem *item = table->itemAt (i, 0);
+        item->setFlags (item->flags () ^ Qt::ItemIsEditable);
+    }
+    table->horizontalHeader ()->setResizeMode (QHeaderView::ResizeToContents);
+    table->horizontalHeader ()->setStretchLastSection (true);
+    table->resizeRowsToContents ();
     layout->addWidget (table);
 }
 
@@ -1093,21 +1094,21 @@ KDE_NO_EXPORT void MPlayerPreferencesPage::read (KSharedConfigPtr config) {
 }
 
 KDE_NO_EXPORT void MPlayerPreferencesPage::sync (bool fromUI) {
-    Q3Table * table = m_configframe->table;
+    QTableWidget * table = m_configframe->table;
     QSpinBox * cacheSize = static_cast<QSpinBox *>(table->cellWidget (2, 1));
     QCheckBox * buildIndex = static_cast<QCheckBox *>(table->cellWidget (3, 1));
     if (fromUI) {
-        mplayer_path = table->text (0, 1);
-        additionalarguments = table->text (1, 1);
+        mplayer_path = table->item (0, 1)->text ();
+        additionalarguments = table->item (1, 1)->text ();
         for (int i = 0; i < int (pat_last); i++)
-            m_patterns[i].setPattern (table->text (i+non_patterns, 1));
+            m_patterns[i].setPattern (table->item (i+non_patterns, 1)->text ());
         cachesize = cacheSize->value();
         alwaysbuildindex = buildIndex->isChecked ();
     } else {
-        table->setText (0, 1, mplayer_path);
-        table->setText (1, 1, additionalarguments);
+        table->item (0, 1)->setText (mplayer_path);
+        table->item (1, 1)->setText (additionalarguments);
         for (int i = 0; i < int (pat_last); i++)
-            table->setText (i+non_patterns, 1, m_patterns[i].pattern ());
+            table->item (i+non_patterns, 1)->setText (m_patterns[i].pattern ());
         if (cachesize > 0)
             cacheSize->setValue(cachesize);
         buildIndex->setChecked (alwaysbuildindex);
