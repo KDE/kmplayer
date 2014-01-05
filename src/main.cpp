@@ -64,8 +64,8 @@ extern "C" KDE_EXPORT int kdemain (int argc, char *argv[]) {
         if (args->count () > 1)
             for (int i = 0; i < args->count (); i++) {
                 KUrl url = args->url (i);
-                if (url.url ().find ("://") < 0)
-                    url = KUrl (QFileInfo (url.url ()).absFilePath ());
+                if (url.url ().indexOf ("://") < 0)
+                    url = KUrl (QFileInfo (url.url ()).absoluteFilePath ());
                 if (url.isValid ())
                     kmplayer->addUrl (url);
             }

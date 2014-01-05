@@ -74,12 +74,12 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     item->setIcon (KIcon ("kmplayer"));
     QTabWidget *tab = new QTabWidget (page);
     m_GeneralPageGeneral = new PrefGeneralPageGeneral (tab, settings);
-    tab->insertTab (m_GeneralPageGeneral, i18n("General"));
+    tab->addTab (m_GeneralPageGeneral, i18n("General"));
     m_GeneralPageLooks = new PrefGeneralPageLooks (tab, settings);
-    tab->insertTab (m_GeneralPageLooks, i18n("Looks"));
+    tab->addTab (m_GeneralPageLooks, i18n("Looks"));
     m_GeneralPageOutput = new PrefGeneralPageOutput
         (tab, settings->audiodrivers, settings->videodrivers);
-    tab->insertTab (m_GeneralPageOutput, i18n("Output"));
+    tab->addTab (m_GeneralPageOutput, i18n("Output"));
     entries.insert (i18n("General Options"), tab);
 
     page = new KVBox (this);
@@ -87,7 +87,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     m_url_item->setIcon (KIcon ("document-import"));
     tab = new QTabWidget (page);
     m_SourcePageURL = new PrefSourcePageURL (tab);
-    tab->insertTab (m_SourcePageURL, i18n ("URL"));
+    tab->addTab (m_SourcePageURL, i18n ("URL"));
     entries.insert (i18n("Source"), tab);
 
     page = new KVBox (this);
@@ -97,25 +97,25 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 
     int recorders_count = 3;
     m_MEncoderPage = new PrefMEncoderPage (tab, player);
-    tab->insertTab (m_MEncoderPage, i18n ("MEncoder"));
+    tab->addTab (m_MEncoderPage, i18n ("MEncoder"));
     recorders = m_MEncoderPage;
 
     m_FFMpegPage = new PrefFFMpegPage (tab, player);
-    tab->insertTab (m_FFMpegPage, i18n ("FFMpeg"));
+    tab->addTab (m_FFMpegPage, i18n ("FFMpeg"));
     m_MEncoderPage->next = m_FFMpegPage;
 
     m_MPlayerDumpstreamPage = new PrefMPlayerDumpstreamPage (tab, player);
-    // tab->insertTab (m_MPlayerDumpstreamPage, i18n ("MPlayer -dumpstream"));
+    // tab->addTab (m_MPlayerDumpstreamPage, i18n ("MPlayer -dumpstream"));
     m_FFMpegPage->next = m_MPlayerDumpstreamPage;
 #ifdef KMPLAYER_WITH_XINE
     recorders_count = 4;
     m_XinePage = new PrefXinePage (tab, player);
-    // tab->insertTab (m_XinePage, i18n ("Xine"));
+    // tab->addTab (m_XinePage, i18n ("Xine"));
     m_MPlayerDumpstreamPage->next = m_XinePage;
 #endif
     m_RecordPage = new PrefRecordPage (tab, player, recorders, recorders_count);
-    tab->insertTab (m_RecordPage, i18n ("General"), 0);
-    tab->setCurrentPage (0);
+    tab->insertTab (0, m_RecordPage, i18n ("General"));
+    tab->setCurrentIndex (0);
     entries.insert (i18n("Recording"), tab);
 
     page = new KVBox (this);
@@ -123,7 +123,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     item->setIcon (KIcon ("folder-image"));
     tab = new QTabWidget (page);
     m_OPPagePostproc = new PrefOPPagePostProc (tab);
-    tab->insertTab (m_OPPagePostproc, i18n ("Postprocessing"));
+    tab->addTab (m_OPPagePostproc, i18n ("Postprocessing"));
     entries.insert (i18n("Postprocessing"), tab);
 
     for (PreferencesPage * p = settings->pagelist; p; p = p->next)
@@ -149,7 +149,7 @@ KDE_NO_EXPORT void Preferences::setPage (const char * name) {
         if (!w)
             return;
         QTabWidget *t = static_cast <QTabWidget*> (w);
-        t->setCurrentPage (t->indexOf(page));
+        t->setCurrentIndex (t->indexOf(page));
     }
 }
 
@@ -168,9 +168,9 @@ KDE_NO_EXPORT void Preferences::addPrefPage (PreferencesPage * page) {
         tab = new QTabWidget (page);
         entries.insert (item, tab);
     } else
-        tab = en_it.data ();
+        tab = en_it.value ();
     QFrame *frame = page->prefPage (tab);
-    tab->insertTab (frame, subitem);
+    tab->addTab (frame, subitem);
 }
 
 KDE_NO_EXPORT void Preferences::removePrefPage(PreferencesPage * page) {
@@ -181,11 +181,11 @@ KDE_NO_EXPORT void Preferences::removePrefPage(PreferencesPage * page) {
     QMap<QString, QTabWidget *>::iterator en_it = entries.find (item);
     if (en_it == entries.end ())
         return;
-    QTabWidget * tab = en_it.data ();
+    QTabWidget * tab = en_it.value ();
     for (int i = 0; i < tab->count (); i++)
-        if (tab->label (i) == subitem) {
-            QWidget * w = tab->page (i);
-            tab->removePage (w);
+        if (tab->tabText (i) == subitem) {
+            QWidget* w = tab->widget (i);
+            tab->removeTab (i);
             delete w;
             break;
         }
@@ -210,45 +210,45 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     Q3GroupBox *windowbox = new Q3GroupBox(1, Qt::Vertical, i18n("Window"), this);
     QWidget * wbox = new QWidget (windowbox);
     QWidget * bbox = new QWidget (wbox);
-    QGridLayout * gridlayout = new QGridLayout (bbox, 2, 2);
-    keepSizeRatio = new QCheckBox (i18n ("Keep size ratio"), bbox, 0);
-    QWhatsThis::add(keepSizeRatio, i18n("When checked, the movie will keep its aspect ratio\nwhen the window is resized."));
-    dockSysTray = new QCheckBox (i18n ("Dock in system tray"), bbox, 0);
-    QWhatsThis::add (dockSysTray, i18n ("When checked, an icon for KMPlayer will be added to the system tray.\nWhen clicked, it will hide KMPlayer's main window and remove KMPlayer's task bar button."));
+    QGridLayout * gridlayout = new QGridLayout (bbox/*, 2, 2*/);
+    keepSizeRatio = new QCheckBox (i18n ("Keep size ratio"), bbox);
+    keepSizeRatio->setWhatsThis(i18n("When checked, the movie will keep its aspect ratio\nwhen the window is resized."));
+    dockSysTray = new QCheckBox (i18n ("Dock in system tray"), bbox);
+    dockSysTray->setWhatsThis(i18n ("When checked, an icon for KMPlayer will be added to the system tray.\nWhen clicked, it will hide KMPlayer's main window and remove KMPlayer's task bar button."));
     autoResize = new QCheckBox (i18n ("Auto resize to video sizes"), bbox);
-    QWhatsThis::add (autoResize, i18n("When checked, KMPlayer will resize to movie sizes\nwhen video starts."));
+    autoResize->setWhatsThis(i18n("When checked, KMPlayer will resize to movie sizes\nwhen video starts."));
     gridlayout->addWidget (keepSizeRatio, 0, 0);
     gridlayout->addWidget (dockSysTray, 1, 0);
     gridlayout->addWidget (autoResize, 0, 1);
     sizesChoice = new Q3ButtonGroup (2, Qt::Vertical, wbox);
     new QRadioButton (i18n("Remember window size on exit"), sizesChoice);
     new QRadioButton (i18n("Always start with fixed size"), sizesChoice);
-    QVBoxLayout * vbox = new QVBoxLayout (wbox, 2, 2);
+    QVBoxLayout * vbox = new QVBoxLayout (wbox/*, 2, 2*/);
     vbox->addWidget (bbox);
     vbox->addWidget (sizesChoice);
 
     Q3GroupBox *playbox =new Q3GroupBox(4, Qt::Vertical,i18n("Playing"),this);
     loop = new QCheckBox (i18n("Loop"), playbox);
-    QWhatsThis::add(loop, i18n("Makes current movie loop"));
+    loop->setWhatsThis(i18n("Makes current movie loop"));
     framedrop = new QCheckBox (i18n ("Allow frame drops"), playbox);
-    QWhatsThis::add (framedrop, i18n ("Allow dropping frames for better audio and video synchronization"));
+    framedrop->setWhatsThis(i18n ("Allow dropping frames for better audio and video synchronization"));
     adjustvolume = new QCheckBox(i18n("Auto set volume on start"), playbox);
-    QWhatsThis::add (adjustvolume, i18n ("When a new source is selected, the volume will be set according the volume control"));
+    adjustvolume->setWhatsThis(i18n ("When a new source is selected, the volume will be set according the volume control"));
     adjustcolors = new QCheckBox(i18n("Auto set colors on start"), playbox);
-    QWhatsThis::add (adjustcolors, i18n ("When a movie starts, the colors will be set according the sliders for colors"));
+    adjustcolors->setWhatsThis(i18n ("When a movie starts, the colors will be set according the sliders for colors"));
 
     Q3GroupBox * gbox =new Q3GroupBox (1, Qt::Vertical, i18n("Control Panel"), this);
     bbox =new QWidget (gbox);
     //QGroupBox * bbox = gbox;
-    gridlayout = new QGridLayout (bbox, 3, 2);
+    gridlayout = new QGridLayout (bbox/*, 3, 2*/);
     showConfigButton = new QCheckBox(i18n("Show config button"), bbox);
-    QWhatsThis::add (showConfigButton, i18n ("Add a button that will popup a config menu"));
+    showConfigButton->setWhatsThis(i18n ("Add a button that will popup a config menu"));
     showPlaylistButton = new QCheckBox(i18n("Show playlist button"), bbox);
-    QWhatsThis::add (showPlaylistButton, i18n ("Add a playlist button to the control buttons"));
+    showPlaylistButton->setWhatsThis(i18n ("Add a playlist button to the control buttons"));
     showRecordButton = new QCheckBox(i18n("Show record button"), bbox);
-    QWhatsThis::add (showRecordButton, i18n ("Add a record button to the control buttons"));
+    showRecordButton->setWhatsThis(i18n ("Add a record button to the control buttons"));
     showBroadcastButton = new QCheckBox (i18n ("Show broadcast button"), bbox);
-    QWhatsThis::add (showBroadcastButton, i18n ("Add a broadcast button to the control buttons"));
+    showBroadcastButton->setWhatsThis(i18n ("Add a broadcast button to the control buttons"));
     gridlayout->addWidget (showConfigButton, 0, 0);
     gridlayout->addWidget (showPlaylistButton, 0, 1);
     gridlayout->addWidget (showRecordButton, 1, 0);
@@ -265,7 +265,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
 #endif
     seekLayout->addWidget(seekTime);
     seekLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
-    gridlayout->addMultiCellLayout (seekLayout, 2, 2, 0, 1);
+    gridlayout->addLayout (seekLayout, 2, 0, 2, 1);
 
     layout()->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
@@ -278,8 +278,8 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent,
     Q3GroupBox *colorbox= new Q3GroupBox(2, Qt::Horizontal, i18n("Colors"), this);
     colorscombo = new QComboBox (colorbox);
     for (int i = 0; i < int (ColorSetting::last_target); i++)
-        colorscombo->insertItem (colors[i].title);
-    colorscombo->setCurrentItem (0);
+        colorscombo->addItem (colors[i].title);
+    colorscombo->setCurrentIndex (0);
     connect (colorscombo, SIGNAL (activated (int)),
             this, SLOT (colorItemChanged(int)));
     colorbutton = new KColorButton (colorbox);
@@ -290,8 +290,8 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent,
     Q3GroupBox *fontbox = new Q3GroupBox (2,Qt::Horizontal, i18n ("Fonts"), this);
     fontscombo = new QComboBox (fontbox);
     for (int i = 0; i < int (FontSetting::last_target); i++)
-        fontscombo->insertItem (fonts[i].title);
-    fontscombo->setCurrentItem (0);
+        fontscombo->addItem (fonts[i].title);
+    fontscombo->setCurrentIndex (0);
     connect (fontscombo, SIGNAL (activated (int)),
             this, SLOT (fontItemChanged(int)));
     fontbutton = new QPushButton (i18n ("AaBbCc"), fontbox);
@@ -308,8 +308,8 @@ KDE_NO_EXPORT void PrefGeneralPageLooks::colorItemChanged (int c) {
 }
 
 KDE_NO_EXPORT void PrefGeneralPageLooks::colorCanged (const QColor & c) {
-    if (colorscombo->currentItem () < int (ColorSetting::last_target))
-        colors[colorscombo->currentItem ()].newcolor = c;
+    if (colorscombo->currentIndex () < int (ColorSetting::last_target))
+        colors[colorscombo->currentIndex ()].newcolor = c;
 }
 
 KDE_NO_EXPORT void PrefGeneralPageLooks::fontItemChanged (int f) {
@@ -318,11 +318,11 @@ KDE_NO_EXPORT void PrefGeneralPageLooks::fontItemChanged (int f) {
 }
 
 KDE_NO_EXPORT void PrefGeneralPageLooks::fontClicked () {
-    if (fontscombo->currentItem () < int (FontSetting::last_target)) {
-        QFont myfont = fonts [fontscombo->currentItem ()].newfont;
+    if (fontscombo->currentIndex () < int (FontSetting::last_target)) {
+        QFont myfont = fonts [fontscombo->currentIndex ()].newfont;
         int res = KFontDialog::getFont (myfont, KFontChooser::NoDisplayFlags, this);
         if (res == KFontDialog::Accepted) {
-            fonts [fontscombo->currentItem ()].newfont = myfont;
+            fonts [fontscombo->currentIndex ()].newfont = myfont;
             fontbutton->setFont (myfont);
         }
     }
@@ -342,7 +342,7 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     urllist->setMaxCount (20);
     urllist->setDuplicatesEnabled (false); // not that it helps much :(
     url = new KUrlRequester (urllist, this);
-    QWhatsThis::add (url, i18n ("Location of the playable item"));
+    url->setWhatsThis(i18n ("Location of the playable item"));
     //url->setShowLocalProtocol (true);
     url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
     QLabel *sub_urlLabel = new QLabel (i18n ("Sub title:"), this, 0);
@@ -350,13 +350,13 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     sub_urllist->setMaxCount (20);
     sub_urllist->setDuplicatesEnabled (false); // not that it helps much :(
     sub_url = new KUrlRequester (sub_urllist, this);
-    QWhatsThis::add (sub_url, i18n ("Optional location of a file containing the subtitles of the URL above"));
+    sub_url->setWhatsThis(i18n ("Optional location of a file containing the subtitles of the URL above"));
     sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
     backend = new Q3ListBox (this);
     clicktoplay = new QCheckBox (i18n ("Load on demand"), this);
-    QWhatsThis::add (clicktoplay, i18n ("When enabled, all embedded movies will start with a image that needs to be clicked to start the video playback"));
+    clicktoplay->setWhatsThis(i18n ("When enabled, all embedded movies will start with a image that needs to be clicked to start the video playback"));
     grabhref = new QCheckBox (i18n ("Grab image when 'Click to Play' detected"), this);
-    QWhatsThis::add (grabhref, i18n ("When enabled and a HTML object has a HREF attribute, grab and save an image of the first frame of initial link. This image will be shown instead of a default picture."));
+    grabhref->setWhatsThis(i18n ("When enabled and a HTML object has a HREF attribute, grab and save an image of the first frame of initial link. This image will be shown instead of a default picture."));
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
     static_cast <QBoxLayout *>(layout())->addLayout (urllayout);
@@ -364,7 +364,7 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     sub_urllayout->addWidget (sub_url);
     static_cast <QBoxLayout *>(layout())->addLayout (sub_urllayout);
     layout()->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    QGridLayout * gridlayout = new QGridLayout (2, 2);
+    QGridLayout * gridlayout = new QGridLayout (/*2, 2*/);
     QLabel *backendLabel = new QLabel (i18n ("Use movie player:"), this, 0);
     //QWhatsThis::add (allowhref, i18n ("Explain this in a few lines"));
     gridlayout->addWidget (backendLabel, 0, 0);
@@ -372,13 +372,13 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     gridlayout->addMultiCell (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum), 0, 1, 1, 1);
     Q3GroupBox *cbox = new Q3GroupBox(1, Qt::Vertical, i18n("Network bandwidth"), this);
     QWidget * wbox = new QWidget (cbox);
-    QGridLayout * bitratelayout = new QGridLayout (wbox, 2, 3, 5);
+    QGridLayout * bitratelayout = new QGridLayout (wbox/*, 2, 3, 5*/);
     prefBitRate = new QLineEdit (wbox);
     prefBitRate->setValidator( new QIntValidator( prefBitRate ) );
-    QWhatsThis::add (prefBitRate, i18n("Sometimes it is possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you would prefer to allocate to video."));
+    prefBitRate->setWhatsThis(i18n("Sometimes it is possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you would prefer to allocate to video."));
     maxBitRate = new QLineEdit (wbox);
     maxBitRate->setValidator( new QIntValidator( maxBitRate ) );
-    QWhatsThis::add (maxBitRate, i18n("Sometimes it is possible to choose between various streams given a particular bitrate.\nThis option sets the maximum bandwidth you have available for video."));
+    maxBitRate->setWhatsThis(i18n("Sometimes it is possible to choose between various streams given a particular bitrate.\nThis option sets the maximum bandwidth you have available for video."));
     bitratelayout->addWidget(new QLabel(i18n("Preferred bitrate:"), wbox), 0, 0);
     bitratelayout->addWidget (prefBitRate, 0, 1);
     bitratelayout->addWidget (new QLabel (i18n ("kbit/s"), wbox), 0, 2);
@@ -494,7 +494,7 @@ KDE_NO_EXPORT void PrefRecordPage::showEvent (QShowEvent *e) {
 }
 
 KDE_NO_EXPORT void PrefRecordPage::recorderClicked (int id) {
-    bool b = recorder->find(id)->text().find (QString::fromLatin1("Xine")) > -1;
+    bool b = recorder->find(id)->text().indexOf (QString::fromLatin1("Xine")) > -1;
     replay->setEnabled (!b);
     if (b)
         replay->setButton (Settings::ReplayNo);
@@ -545,7 +545,7 @@ KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage (QWidget *parent, PartBas
     new QRadioButton (i18n ("Same as source"), format);
     new QRadioButton (i18n ("Custom"), format);
     QWidget * customopts = new QWidget (format);
-    QGridLayout *gridlayout = new QGridLayout (customopts, 1, 2, 2);
+    QGridLayout *gridlayout = new QGridLayout (customopts/*, 1, 2, 2*/);
     QLabel *argLabel = new QLabel (i18n("Mencoder arguments:"), customopts, 0);
     arguments = new QLineEdit ("", customopts);
     gridlayout->addWidget (argLabel, 0, 0);
@@ -579,7 +579,7 @@ KDE_NO_CDTOR_EXPORT PrefFFMpegPage::PrefFFMpegPage (QWidget *parent, PartBase * 
     setMargin (5);
     setSpacing (2);
 
-    QGridLayout *gridlayout = new QGridLayout (1, 2, 2);
+    QGridLayout *gridlayout = new QGridLayout (/*1, 2, 2*/);
     QLabel *argLabel = new QLabel (i18n("FFMpeg arguments:"), this);
     arguments = new QLineEdit ("", this);
     gridlayout->addWidget (argLabel, 0, 0);
@@ -614,7 +614,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageOutput::PrefGeneralPageOutput(QWidget *parent
     videoDriver = new Q3ListBox (this);
     for (int i = 0; vd[i].driver; i++)
         videoDriver->insertItem (vd[i].description, i);
-    QWhatsThis::add(videoDriver, i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
+    videoDriver->setWhatsThis(i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
 
     audioDriver = new Q3ListBox (this);
     for (int i = 0; ad[i].driver; i++)
@@ -625,7 +625,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageOutput::PrefGeneralPageOutput(QWidget *parent
 KDE_NO_CDTOR_EXPORT PrefOPPageGeneral::PrefOPPageGeneral(QWidget *parent)
 : KVBox(parent)
 {
-    QVBoxLayout *layout = new QVBoxLayout (this, 5);
+    QVBoxLayout *layout = new QVBoxLayout (this/*, 5*/);
     layout->setAutoAdd (true);
 }
 
@@ -648,7 +648,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
     PostprocessingOptions->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)1, PostprocessingOptions->sizePolicy().hasHeightForWidth() ) );
 
     QWidget *presetSelectionWidget = new QWidget( PostprocessingOptions, "presetSelectionWidget" );
-    QGridLayout *presetSelectionWidgetLayout = new QGridLayout( presetSelectionWidget, 1, 1, 1);
+    QGridLayout *presetSelectionWidgetLayout = new QGridLayout( presetSelectionWidget/*, 1, 1, 1*/);
 
     Q3ButtonGroup *presetSelection = new Q3ButtonGroup(3, Qt::Vertical, presetSelectionWidget);
     presetSelection->setInsideSpacing(KDialog::spacingHint());
@@ -664,17 +664,17 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
     presetSelection->insert (fastPreset);
     presetSelection->setRadioButtonExclusive ( true);
     presetSelectionWidgetLayout->addWidget( presetSelection, 0, 0 );
-    PostprocessingOptions->insertTab( presetSelectionWidget, "" );
+    PostprocessingOptions->addTab( presetSelectionWidget, "" );
 
     //
     // SECOND!!!
     //
     /* I JUST WASN'T ABLE TO GET THIS WORKING WITH QGridLayouts */
 
-    QWidget *customFiltersWidget = new QWidget( PostprocessingOptions, "customFiltersWidget" );
+    QWidget *customFiltersWidget = new QWidget( PostprocessingOptions);
     QVBoxLayout *customFiltersWidgetLayout = new QVBoxLayout( customFiltersWidget );
 
-    Q3GroupBox *customFilters = new Q3GroupBox(0, Qt::Vertical, customFiltersWidget, "customFilters" );
+    Q3GroupBox *customFilters = new Q3GroupBox(0, Qt::Vertical, customFiltersWidget);
     customFilters->setSizePolicy(QSizePolicy((QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2));
     customFilters->setFlat(false);
     customFilters->setEnabled( false );
@@ -694,7 +694,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
     customFiltersLayout1->addWidget( HzDeblockAQuality );
     customFiltersLayout1->addWidget( HzDeblockCFiltering );
 
-    QFrame *line1 = new QFrame( customFilters, "line1" );
+    QFrame *line1 = new QFrame( customFilters);
     line1->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2 ) );
     line1->setFrameShape( QFrame::HLine );
     line1->setFrameShadow( QFrame::Sunken );
@@ -713,7 +713,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
     customFiltersLayout2->addWidget( VtDeblockAQuality );
     customFiltersLayout2->addWidget( VtDeblockCFiltering );
 
-    QFrame *line2 = new QFrame( customFilters, "line2" );
+    QFrame *line2 = new QFrame( customFilters);
 
     line2->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2 ) );
     line2->setFrameShape( QFrame::HLine );
@@ -733,7 +733,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
     customFiltersLayout3->addWidget( DeringAQuality );
     customFiltersLayout3->addWidget( DeringCFiltering );
 
-    QFrame *line3 = new QFrame( customFilters, "line3" );
+    QFrame *line3 = new QFrame( customFilters);
     line3->setFrameShape( QFrame::HLine );
     line3->setFrameShadow( QFrame::Sunken );
     line3->setFrameShape( QFrame::HLine );
@@ -770,11 +770,11 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
     customFiltersLayout5->addItem(new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ));
     //customFiltersLayout5->addWidget(TmpNoiseSlider);
     customFiltersWidgetLayout->addWidget( customFilters );
-    PostprocessingOptions->insertTab( customFiltersWidget, "" );
+    PostprocessingOptions->addTab( customFiltersWidget, "" );
     //
     //THIRD!!!
     //
-    QWidget *deintSelectionWidget = new QWidget( PostprocessingOptions, "deintSelectionWidget" );
+    QWidget *deintSelectionWidget = new QWidget( PostprocessingOptions);
     QVBoxLayout *deintSelectionWidgetLayout = new QVBoxLayout( deintSelectionWidget);
     Q3ButtonGroup *deinterlacingGroup = new Q3ButtonGroup(5, Qt::Vertical, deintSelectionWidget, "deinterlacingGroup" );
 
@@ -792,7 +792,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
 
     deintSelectionWidgetLayout->addWidget( deinterlacingGroup, 0, 0 );
 
-    PostprocessingOptions->insertTab( deintSelectionWidget, "" );
+    PostprocessingOptions->addTab( deintSelectionWidget, "" );
 
     PostprocessingOptions->setEnabled(false);
     connect( customPreset, SIGNAL (toggled(bool) ), customFilters, SLOT(setEnabled(bool)));
@@ -807,16 +807,16 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
 
     connect( AutolevelsFilter, SIGNAL( toggled(bool) ), AutolevelsFullrange, SLOT( setEnabled(bool) ) );
 
-    QWhatsThis::add( defaultPreset, i18n( "Enable mplayer's default postprocessing filters" ) );
-    QWhatsThis::add( customPreset, i18n( "Enable custom postprocessing filters (See: Custom preset -tab)" ) );
-    QWhatsThis::add( fastPreset, i18n( "Enable mplayer's fast postprocessing filters" ) );
+    defaultPreset->setWhatsThis(i18n( "Enable mplayer's default postprocessing filters" ) );
+    customPreset->setWhatsThis(i18n( "Enable custom postprocessing filters (See: Custom preset -tab)" ) );
+    fastPreset->setWhatsThis(i18n( "Enable mplayer's fast postprocessing filters" ) );
     PostprocessingOptions->changeTab( presetSelectionWidget, i18n( "General" ) );
     customFilters->setTitle (QString ());
-    QWhatsThis::add( HzDeblockAQuality, i18n( "Filter is used if there is enough CPU" ) );
-    QWhatsThis::add( VtDeblockAQuality, i18n( "Filter is used if there is enough CPU" ) );
-    QWhatsThis::add( DeringAQuality, i18n( "Filter is used if there is enough CPU" ) );
+    HzDeblockAQuality->setWhatsThis(i18n( "Filter is used if there is enough CPU" ) );
+    VtDeblockAQuality->setWhatsThis(i18n( "Filter is used if there is enough CPU" ) );
+    DeringAQuality->setWhatsThis(i18n( "Filter is used if there is enough CPU" ) );
     //QWhatsThis::add( TmpNoiseSlider, i18n( "Strength of the noise reducer" ) );
-    QWhatsThis::add( AutolevelsFullrange, i18n( "Stretches luminance to full range (0..255)" ) );
+    AutolevelsFullrange->setWhatsThis(i18n( "Stretches luminance to full range (0..255)" ) );
     PostprocessingOptions->changeTab( customFiltersWidget, i18n( "Custom Preset" ) );
     deinterlacingGroup->setTitle (QString ());
     PostprocessingOptions->changeTab( deintSelectionWidget, i18n( "Deinterlacing" ) );
@@ -840,7 +840,7 @@ KDE_NO_EXPORT void Preferences::setDefaults() {
 	m_GeneralPageGeneral->seekTime->setValue(10);
 
 	m_GeneralPageOutput->videoDriver->setCurrentItem (0);
-	m_GeneralPageOutput->audioDriver->setCurrentItem(0);
+	m_GeneralPageOutput->audioDriver->setCurrentItem (0);
 
 	m_OPPagePostproc->postProcessing->setChecked(false);
 	m_OPPagePostproc->disablePPauto->setChecked(true);

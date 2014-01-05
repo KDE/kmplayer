@@ -1432,10 +1432,10 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
                 rval = entry->defaultvalue;
             break;
         case canpause:
-            rval = (player->playing () && !player->viewWidget ()->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
+            rval = (player->playing () && !player->viewWidget ()->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isChecked ()) ? "true" : "false";
             break;
         case canplay:
-            rval = (!player->playing () || player->viewWidget ()->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
+            rval = (!player->playing () || player->viewWidget ()->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isChecked ()) ? "true" : "false";
             break;
         case canstop:
             rval = player->playing () ? "true" : "false";

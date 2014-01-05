@@ -112,11 +112,11 @@ MediaManager::~MediaManager () {
     const ProcessInfoMap::iterator ie = m_process_infos.end ();
     for (ProcessInfoMap::iterator i = m_process_infos.begin (); i != ie; ++i)
         if (!m_record_infos.contains (i.key ()))
-            delete i.data ();
+            delete i.value ();
 
     const ProcessInfoMap::iterator rie = m_record_infos.end ();
     for (ProcessInfoMap::iterator i = m_record_infos.begin (); i != rie; ++i)
-        delete i.data ();
+        delete i.value ();
 
     if (m_media_objects.size ()) {
         kError () << "~MediaManager media list not empty " << m_media_objects.size () << endl;
@@ -194,11 +194,8 @@ void MediaManager::stateChange (AudioVideoMedia *media,
         if (Element::state_deferred == mrl->state)
             mrl->undefer ();
         bool has_video = !is_rec;
-        if (is_rec) {
-            const ProcessList::iterator i = m_recorders.find (media->process);
-            if (i != m_recorders.end ())
-                m_player->recorderPlaying ();
-        }
+        if (is_rec && m_recorders.contains(media->process))
+            m_player->recorderPlaying ();
         if (has_video) {
             if (m_player->view ()) {
                 if (media->viewer ()) {
@@ -302,17 +299,17 @@ Mrl *MediaObject::mrl () {
 
 void DataCache::add (const QString & url, const QString &mime, const QByteArray & data) {
     QByteArray bytes;
-    bytes.duplicate (data);
+    bytes = data;
     cache_map.insert (url, qMakePair (mime, bytes));
-    preserve_map.erase (url);
+    preserve_map.remove (url);
     emit preserveRemoved (url);
 }
 
 bool DataCache::get (const QString & url, QString &mime, QByteArray & data) {
     DataMap::const_iterator it = cache_map.constFind (url);
     if (it != cache_map.constEnd ()) {
-        mime = it.data ().first;
-        data = it.data ().second;
+        mime = it.value ().first;
+        data = it.value ().second;
         return true;
     }
     return false;
@@ -344,7 +341,7 @@ bool DataCache::unpreserve (const QString & url) {
 
 static bool isPlayListMime (const QString & mime) {
     QString m (mime);
-    int plugin_pos = m.find ("-plugin");
+    int plugin_pos = m.indexOf ("-plugin");
     if (plugin_pos > 0)
         m.truncate (plugin_pos);
     QByteArray ba = m.toAscii ();
@@ -417,7 +414,7 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
     if (MediaManager::Any == type || MediaManager::Image == type) {
         ImageDataMap::iterator i = image_data_map->find (str);
         if (i != image_data_map->end ()) {
-            media = new ImageMedia (node, i.data ());
+            media = new ImageMedia (node, i.value ());
             type = MediaManager::Image;
             ready ();
             return true;
@@ -476,12 +473,12 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
             only_playlist = MediaManager::Audio == type ||
                 MediaManager::AudioVideo == type;
             maybe_playlist = isPlayListMime (mime); // get new mime
-            if (file.open (IO_ReadOnly)) {
+            if (file.open (QIODevice::ReadOnly)) {
                 if (only_playlist) {
                     maybe_playlist &= file.size () < 2000000;
                     if (maybe_playlist) {
                         char databuf [512];
-                        int nr_bytes = file.readBlock (databuf, 512);
+                        int nr_bytes = file.read (databuf, 512);
                         if (nr_bytes > 3 &&
                                 (KMimeType::isBufferBinaryData (QByteArray (databuf, nr_bytes)) ||
                                  !strncmp (databuf, "RIFF", 4)))
@@ -545,16 +542,16 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
 }
 
 KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
-    QTextStream textstream (data, IO_ReadOnly);
+    QTextStream textstream (data, QIODevice::ReadOnly);
     QString line;
     NodePtr cur_elm = node;
     do {
         line = textstream.readLine ();
-    } while (!line.isNull () && line.stripWhiteSpace ().isEmpty ());
+    } while (!line.isNull () && line.trimmed ().isEmpty ());
     if (!line.isNull ()) {
         bool pls_groupfound =
             line.startsWith ("[") && line.endsWith ("]") &&
-            line.mid (1, line.size () - 2).stripWhiteSpace () == "playlist";
+            line.mid (1, line.size () - 2).trimmed () == "playlist";
         if ((pls_groupfound &&
                     cur_elm->mrl ()->mimetype.startsWith ("audio/")) ||
                 cur_elm->mrl ()->mimetype == QString ("audio/x-scpls")) {
@@ -563,10 +560,10 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                 QString url, title;
             } * entries = 0L;
             do {
-                line = line.stripWhiteSpace ();
+                line = line.trimmed ();
                 if (!line.isEmpty ()) {
                     if (line.startsWith ("[") && line.endsWith ("]")) {
-                        if (line.mid (1, line.size () - 2).stripWhiteSpace () == "playlist")
+                        if (line.mid (1, line.size () - 2).trimmed () == "playlist")
                             pls_groupfound = true;
                         else
                             break;
@@ -575,7 +572,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                         int eq_pos = line.indexOf (QChar ('='));
                         if (eq_pos > 0) {
                             if (line.toLower ().startsWith (QString ("numberofentries"))) {
-                                nr = line.mid (eq_pos + 1).stripWhiteSpace ().toInt ();
+                                nr = line.mid (eq_pos + 1).trimmed ().toInt ();
                                 kDebug () << "numberofentries : " << nr;
                                 if (nr > 0 && nr < 1024)
                                     entries = new Entry[nr];
@@ -586,11 +583,11 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                                 if (ll.startsWith (QString ("file"))) {
                                     int i = line.mid (4, eq_pos-4).toInt ();
                                     if (i > 0 && i <= nr)
-                                        entries[i-1].url = line.mid (eq_pos + 1).stripWhiteSpace ();
+                                        entries[i-1].url = line.mid (eq_pos + 1).trimmed ();
                                 } else if (ll.startsWith (QString ("title"))) {
                                     int i = line.mid (5, eq_pos-5).toInt ();
                                     if (i > 0 && i <= nr)
-                                        entries[i-1].title = line.mid (eq_pos + 1).stripWhiteSpace ();
+                                        entries[i-1].title = line.mid (eq_pos + 1).trimmed ();
                                 }
                             }
                         }
@@ -605,7 +602,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                            QUrl::fromPercentEncoding (entries[i].url.toUtf8 ()),
                            entries[i].title));
             delete [] entries;
-        } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
+        } else if (line.trimmed ().startsWith (QChar ('<'))) {
             readXML (cur_elm, textstream, line);
             //cur_elm->normalize ();
         } else if (line.toLower () != QString ("[reference]")) {
@@ -616,11 +613,11 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                 line = textstream.readLine ();
             while (!line.isNull ()) {
              /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/
-                QString mrl = line.stripWhiteSpace ();
+                QString mrl = line.trimmed ();
                 if (line == QString ("--stop--"))
                     break;
                 if (mrl.toLower ().startsWith (QString ("asf ")))
-                    mrl = mrl.mid (4).stripWhiteSpace ();
+                    mrl = mrl.mid (4).trimmed ();
                 if (!mrl.isEmpty ()) {
                     if (extm3u && mrl.startsWith (QChar ('#'))) {
                         if (line.startsWith ("#EXTINF:"))
@@ -746,7 +743,7 @@ KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
 
         bool success = false;
         if (!kjob->error () && data.size () > 0) {
-            QTextStream ts (data, IO_ReadOnly);
+            QTextStream ts (data, QIODevice::ReadOnly);
             NodePtr doc = new Document (QString ());
             readXML (doc, ts, QString ());
 
@@ -988,7 +985,7 @@ ImageData::ImageData( const QString & img)
 
 ImageData::~ImageData() {
     if (!url.isEmpty ())
-        image_data_map->erase (url);
+        image_data_map->remove (url);
 #ifdef KMPLAYER_WITH_CAIRO
     if (surface)
         cairo_surface_destroy (surface);
@@ -1009,7 +1006,7 @@ void ImageData::setImage (QImage *img) {
         if (img) {
             width = img->width ();
             height = img->height ();
-            has_alpha = img->hasAlphaBuffer ();
+            has_alpha = img->hasAlphaChannel ();
         } else {
             width = height = 0;
         }
@@ -1075,14 +1072,14 @@ void ImageMedia::pause () {
 }
 
 void ImageMedia::unpause () {
-    if (img_movie && img_movie->paused ())
+    if (img_movie && QMovie::Paused == img_movie->state ())
         img_movie->setPaused (false);
 }
 
 KDE_NO_EXPORT void ImageMedia::setupImage (const QString &url) {
     if (isEmpty () && data.size ()) {
-        QImage *pix = new QImage (data);
-        if (!pix->isNull ()) {
+        QImage *pix = new QImage;
+        if (pix->loadFromData((data))) {
             cached_img = ImageDataPtr (new ImageData (url));
             cached_img->setImage (pix);
         } else {
@@ -1175,7 +1172,7 @@ KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
     if (frame_nr++) {
         ASSERT (cached_img && isEmpty ());
         QImage *img = new QImage;
-        *img = img_movie->framePixmap ();
+        *img = img_movie->currentImage ();
         cached_img->setImage (img);
         cached_img->flags = (int)(ImageData::ImagePixmap | ImageData::ImageAnimated); //TODO
         if (m_node)
@@ -1197,10 +1194,10 @@ TextMedia::TextMedia (MediaManager *manager, Node *node, const QByteArray &ba)
     QByteArray data (ba);
     if (!data [data.size () - 1])
         data.resize (data.size () - 1); // strip zero terminate char
-    QTextStream ts (data, IO_ReadOnly);
+    QTextStream ts (data, QIODevice::ReadOnly);
     QString val = convertNode <Element> (node)->getAttribute ("charset");
     if (!val.isEmpty ()) {
-        QTextCodec *codec = QTextCodec::codecForName (val.ascii ());
+        QTextCodec *codec = QTextCodec::codecForName (val.toAscii ());
         if (codec)
             ts.setCodec (codec);
     }
@@ -1211,7 +1208,7 @@ TextMedia::TextMedia (MediaManager *manager, Node *node, const QByteArray &ba)
         text = doc->innerText ();
         doc->dispose ();
     } else {
-        text = ts.read ();
+        text = ts.readAll ();
     }
 }
 

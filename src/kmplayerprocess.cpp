@@ -160,24 +160,22 @@ static void outputToView (View *view, const QByteArray &ba)
         view->addText (QString::fromLocal8Bit (ba.constData ()));
 }
 
-Process::Process (QObject *parent, ProcessInfo *pinfo, Settings *settings, const char * n)
- : QObject (parent, n),
+Process::Process (QObject *parent, ProcessInfo *pinfo, Settings *settings)
+ : QObject (parent),
    IProcess (pinfo),
    m_source (0L),
    m_settings (settings),
    m_old_state (IProcess::NotRunning),
    m_process (0L),
    m_job(0L),
-   m_process_state (QProcess::NotRunning) {
-    kDebug() << "new Process " << name () << endl;
-}
+   m_process_state (QProcess::NotRunning)
+{}
 
 Process::~Process () {
     quit ();
     delete m_process;
     if (user)
         user->processDestroyed (this);
-    kDebug() << "~Process " << name () << endl;
 }
 
 void Process::init () {
@@ -211,9 +209,9 @@ bool Process::running () const {
     return processRunning (m_process);
 }
 
-void Process::setAudioLang (int, const QString &) {}
+void Process::setAudioLang (int) {}
 
-void Process::setSubtitle (int, const QString &) {}
+void Process::setSubtitle (int) {}
 
 void Process::pause () {
 }
@@ -398,8 +396,8 @@ static bool proxyForURL (const KUrl &url, QString &proxy) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT MPlayerBase::MPlayerBase (QObject *parent, ProcessInfo *pinfo, Settings * settings, const char * n)
-    : Process (parent, pinfo, settings, n),
+KDE_NO_CDTOR_EXPORT MPlayerBase::MPlayerBase (QObject *parent, ProcessInfo *pinfo, Settings * settings)
+    : Process (parent, pinfo, settings),
       m_needs_restarted (false) {
     m_process = new QProcess;
 }
@@ -504,7 +502,7 @@ IProcess *MPlayerProcessInfo::create (PartBase *part, ProcessUser *usr) {
 
 KDE_NO_CDTOR_EXPORT
 MPlayer::MPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings)
- : MPlayerBase (parent, pinfo, settings, "mplayer"),
+ : MPlayerBase (parent, pinfo, settings),
    m_widget (0L),
    m_transition_state (NotRunning),
    aid (-1), sid (-1)
@@ -607,7 +605,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
             break;
         QString plops = static_cast<Element *>(n)->getAttribute ("mplayeropts");
         if (!plops.isNull ()) {
-            QStringList sl = QStringList::split (QChar (' '), plops);
+            QStringList sl = plops.split (QChar (' '));
             for (int i = 0; i < sl.size (); ++i)
                 args << sl[i];
             break;
@@ -620,7 +618,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     if (!url.isEmpty ()) {
         if (m_source->url ().isLocalFile ())
             m_process->setWorkingDirectory
-                (QFileInfo (m_source->url ().path ()).dirPath (true));
+                (QFileInfo (m_source->url ().path ()).absolutePath ());
         if (url.isLocalFile ()) {
             m_url = url.toLocalFile ();
             if (cfg_page->alwaysbuildindex &&
@@ -815,7 +813,7 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
         if (process_stats) {
             QRegExp & m_posRegExp = patterns[MPlayerPreferencesPage::pat_pos];
             QRegExp & m_cacheRegExp = patterns[MPlayerPreferencesPage::pat_cache];
-            if (m_posRegExp.search (out) > -1) {
+            if (m_posRegExp.indexIn (out) > -1) {
                 if (m_source->hasLength ()) {
                     int pos = int (10.0 * m_posRegExp.cap (1).toFloat ());
                     m_source->setPosition (pos);
@@ -825,11 +823,11 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                     m_transition_state = NotRunning;
                     setState (Playing);
                 }
-            } else if (m_cacheRegExp.search (out) > -1) {
+            } else if (m_cacheRegExp.indexIn (out) > -1) {
                 m_source->setLoading (int (m_cacheRegExp.cap(1).toDouble()));
             }
         } else if (out.startsWith ("ID_LENGTH")) {
-            int pos = out.find ('=');
+            int pos = out.indexOf ('=');
             if (pos > 0) {
                 int l = (int) out.mid (pos + 1).toDouble (&ok);
                 if (ok && l >= 0) {
@@ -841,7 +839,7 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                 m_transition_state = NotRunning;
                 setState (Paused);
             }
-        } else if (m_refURLRegExp.search(out) > -1) {
+        } else if (m_refURLRegExp.indexIn(out) > -1) {
             kDebug () << "Reference mrl " << m_refURLRegExp.cap (1);
             if (!m_tmpURL.isEmpty () &&
                     (m_url.endsWith (m_tmpURL) || m_tmpURL.endsWith (m_url)))
@@ -851,23 +849,23 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
             if (m_source->url () == m_tmpURL ||
                     m_url.endsWith (m_tmpURL) || m_tmpURL.endsWith (m_url))
                 m_tmpURL.truncate (0);
-        } else if (m_refRegExp.search (out) > -1) {
+        } else if (m_refRegExp.indexIn (out) > -1) {
             kDebug () << "Reference File ";
             m_tmpURL.truncate (0);
         } else if (out.startsWith ("ID_VIDEO_WIDTH")) {
-            int pos = out.find ('=');
+            int pos = out.indexOf ('=');
             if (pos > 0) {
                 int w = out.mid (pos + 1).toInt ();
                 m_source->setDimensions (mrl (), w, m_source->height ());
             }
         } else if (out.startsWith ("ID_VIDEO_HEIGHT")) {
-            int pos = out.find ('=');
+            int pos = out.indexOf ('=');
             if (pos > 0) {
                 int h = out.mid (pos + 1).toInt ();
                 m_source->setDimensions (mrl (), m_source->width (), h);
             }
         } else if (out.startsWith ("ID_VIDEO_ASPECT")) {
-            int pos = out.find ('=');
+            int pos = out.indexOf ('=');
             if (pos > 0) {
                 bool ok;
                 QString val = out.mid (pos + 1);
@@ -880,10 +878,10 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                     m_source->setAspect (mrl (), a);
             }
         } else if (out.startsWith ("ID_AID_")) {
-            int pos = out.find ('_', 7);
+            int pos = out.indexOf ('_', 7);
             if (pos > 0) {
                 int id = out.mid (7, pos - 7).toInt ();
-                pos = out.find ('=', pos);
+                pos = out.indexOf ('=', pos);
                 if (pos > 0) {
                     if (!alanglist_end) {
                         alanglist = new Source::LangInfo (id, out.mid (pos + 1));
@@ -896,10 +894,10 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                 }
             }
         } else if (out.startsWith ("ID_SID_")) {
-            int pos = out.find ('_', 7);
+            int pos = out.indexOf ('_', 7);
             if (pos > 0) {
                 int id = out.mid (7, pos - 7).toInt ();
-                pos = out.find ('=', pos);
+                pos = out.indexOf ('=', pos);
                 if (pos > 0) {
                     if (!slanglist_end) {
                         slanglist = new Source::LangInfo (id, out.mid (pos + 1));
@@ -912,10 +910,10 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
                 }
             }
         } else if (out.startsWith ("ICY Info")) {
-            int p = out.find ("StreamTitle=", 8);
+            int p = out.indexOf ("StreamTitle=", 8);
             if (p > -1) {
                 p += 12;
-                int e = out.find (';', p);
+                int e = out.indexOf (';', p);
                 if (e > -1)
                     e -= p;
                 QString inf = out.mid (p, e);
@@ -927,14 +925,14 @@ KDE_NO_EXPORT void MPlayer::processOutput () {
             v->addText (out, true);
             if (!m_source->processOutput (out)) {
                 // int movie_width = m_source->width ();
-                if (/*movie_width <= 0 &&*/ m_sizeRegExp.search (out) > -1) {
+                if (/*movie_width <= 0 &&*/ m_sizeRegExp.indexIn (out) > -1) {
                     int movie_width = m_sizeRegExp.cap (1).toInt (&ok);
                     int movie_height = ok ? m_sizeRegExp.cap (2).toInt (&ok) : 0;
                     if (ok && movie_width > 0 && movie_height > 0) {
                         m_source->setDimensions(mrl(),movie_width,movie_height);
                         m_source->setAspect (mrl(), 1.0*movie_width/movie_height);
                     }
-                } else if (m_startRegExp.search (out) > -1) {
+                } else if (m_startRegExp.indexIn (out) > -1) {
                     if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
                         m_source->insertURL (mrl (), m_tmpURL);;
                         m_tmpURL.truncate (0);
@@ -987,13 +985,13 @@ KDE_NO_EXPORT void MPlayer::processStopped () {
     setState (IProcess::Ready);
 }
 
-void MPlayer::setAudioLang (int id, const QString &) {
+void MPlayer::setAudioLang (int id) {
     aid = id;
     m_needs_restarted = true;
     sendCommand (QString ("quit"));
 }
 
-void MPlayer::setSubtitle (int id, const QString &) {
+void MPlayer::setSubtitle (int id) {
     sid = id;
     m_needs_restarted = true;
     sendCommand (QString ("quit"));
@@ -1047,10 +1045,13 @@ KDE_NO_CDTOR_EXPORT MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * 
     table->setItem (1, 0, new QTableWidgetItem (i18n ("Additional command line arguments:")));
     table->setItem (1, 1, new QTableWidgetItem ());
     table->setItem (2, 0, new QTableWidgetItem (QString("%1 (%2)").arg (i18n ("Cache size:")).arg (i18n ("kB")))); // FIXME for new translations
-    table->setCellWidget (2, 1, new QSpinBox (0, 32767, 32, table->viewport()));
+    QSpinBox* spin = new QSpinBox(table->viewport());
+    spin->setMaximum(32767);
+    spin->setSingleStep(32);
+    table->setCellWidget (2, 1, spin);
     table->setItem (3, 0, new QTableWidgetItem (i18n ("Build new index when possible")));
     table->setCellWidget (3, 1, new QCheckBox (table->viewport()));
-    QWhatsThis::add (table->cellWidget (3, 1), i18n ("Allows seeking in indexed files (AVIs)"));
+    table->cellWidget (3, 1)->setWhatsThis(i18n ("Allows seeking in indexed files (AVIs)"));
     for (int i = 0; i < int (MPlayerPreferencesPage::pat_last); i++) {
         table->setItem (i+non_patterns, 0, new QTableWidgetItem (_mplayer_patterns[i].caption));
         table->setItem (i+non_patterns, 1, new QTableWidgetItem ());
@@ -1147,7 +1148,7 @@ IProcess *MEncoderProcessInfo::create (PartBase *part, ProcessUser *usr) {
 
 KDE_NO_CDTOR_EXPORT
 MEncoder::MEncoder (QObject * parent, ProcessInfo *pinfo, Settings * settings)
- : MPlayerBase (parent, pinfo, settings, "mencoder") {}
+ : MPlayerBase (parent, pinfo, settings) {}
 
 KDE_NO_CDTOR_EXPORT MEncoder::~MEncoder () {
 }
@@ -1213,7 +1214,7 @@ IProcess *MPlayerDumpProcessInfo::create (PartBase *p, ProcessUser *usr) {
 
 KDE_NO_CDTOR_EXPORT
 MPlayerDumpstream::MPlayerDumpstream (QObject *p, ProcessInfo *pi, Settings *s)
- : MPlayerBase (p, pi, s, "mplayerdumpstream") {}
+ : MPlayerBase (p, pi, s) {}
 
 KDE_NO_CDTOR_EXPORT MPlayerDumpstream::~MPlayerDumpstream () {
 }
@@ -1327,8 +1328,8 @@ void MasterProcessInfo::slaveOutput () {
     outputToView(manager->player()->viewWidget(), m_slave->readAllStandardError ());
 }
 
-MasterProcess::MasterProcess (QObject *parent, ProcessInfo *pinfo, Settings *settings, const char *n)
- : Process (parent, pinfo, settings, n) {}
+MasterProcess::MasterProcess (QObject *parent, ProcessInfo *pinfo, Settings *settings)
+ : Process (parent, pinfo, settings) {}
 
 MasterProcess::~MasterProcess () {
 }
@@ -1486,7 +1487,7 @@ bool PhononProcessInfo::startSlave () {
 }
 
 Phonon::Phonon (QObject *parent, ProcessInfo *pinfo, Settings *settings)
- : MasterProcess (parent, pinfo, settings, "phonon") {}
+ : MasterProcess (parent, pinfo, settings) {}
 
 bool Phonon::ready () {
     if (user && user->viewer ())
@@ -1552,9 +1553,13 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
     const char *ctype = ba.constData ();
     QString value = getAttribute (Ids::attr_value);
     if (!strcmp (ctype, "range")) {
-        w = new QSlider (getAttribute (QString ("START")).toInt (),
-                getAttribute (Ids::attr_end).toInt (),
-                1, value.toInt (), Qt::Horizontal, parent);
+        QSlider* slider = new QSlider (parent);
+        slider->setMinimum(getAttribute (QString ("START")).toInt ());
+        slider->setMaximum(getAttribute (Ids::attr_end).toInt ());
+        slider->setPageStep(1);
+        slider->setOrientation(Qt::Horizontal);
+        slider->setValue(value.toInt ());
+        w = slider;
     } else if (!strcmp (ctype, "num") || !strcmp (ctype,  "string")) {
         w = new QLineEdit (value, parent);
     } else if (!strcmp (ctype, "bool")) {
@@ -1565,8 +1570,8 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
         QComboBox * combo = new QComboBox (parent);
         for (Node *e = firstChild (); e; e = e->nextSibling ())
             if (e->isElementNode () && !strcmp (e->nodeName (), "item"))
-                combo->insertItem (static_cast <Element *> (e)->getAttribute (Ids::attr_value));
-        combo->setCurrentItem (value.toInt ());
+                combo->addItem (static_cast <Element *> (e)->getAttribute (Ids::attr_value));
+        combo->setCurrentIndex (value.toInt ());
         w = combo;
     } else if (!strcmp (ctype, "tree")) {
     } else
@@ -1587,7 +1592,7 @@ void TypeNode::changedXML (QTextStream & out) {
     } else if (!strcmp (ctype, "bool")) {
         newvalue = QString::number (static_cast <QCheckBox *> (w)->isChecked());
     } else if (!strcmp (ctype, "enum")) {
-        newvalue = QString::number (static_cast<QComboBox *>(w)->currentItem());
+        newvalue = QString::number (static_cast<QComboBox *>(w)->currentIndex());
     } else if (!strcmp (ctype, "tree")) {
     } else
         kDebug() << "Unknown type:" << ctype;
@@ -1616,7 +1621,7 @@ IProcess *FFMpegProcessInfo::create (PartBase *p, ProcessUser *usr) {
 }
 
 FFMpeg::FFMpeg (QObject *parent, ProcessInfo *pinfo, Settings * settings)
- : Process (parent, pinfo, settings, "ffmpeg") {
+ : Process (parent, pinfo, settings) {
 }
 
 KDE_NO_CDTOR_EXPORT FFMpeg::~FFMpeg () {
@@ -1868,7 +1873,7 @@ void NpStream::slotTotalSize (KJob *, qulonglong sz) {
 
 KDE_NO_CDTOR_EXPORT
 NpPlayer::NpPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings)
- : Process (parent, pinfo, settings, "npp"),
+ : Process (parent, pinfo, settings),
    write_in_progress (false),
    in_process_stream (false) {
 }
@@ -2012,7 +2017,7 @@ static int getStreamId (const QString &path) {
         return -1;
     }
     bool ok;
-    Q_UINT32 sid = path.mid (p+1).toInt (&ok);
+    qint32 sid = path.mid (p+1).toInt (&ok);
     if (!ok) {
         kError() << "wrong object path suffix " << path.mid (p+1) << endl;
         return -1;
@@ -2029,7 +2034,7 @@ KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString 
         uri = KUrl (base.isEmpty () ? m_url : base, url).url ();
     }
     kDebug () << "NpPlayer::request " << path << " '" << uri << "'" << m_url << "->" << url;
-    Q_UINT32 sid = getStreamId (path);
+    qint32 sid = getStreamId (path);
     if ((int)sid >= 0) {
         if (!target.isEmpty ()) {
             kDebug () << "new page request " << target;
@@ -2082,7 +2087,7 @@ KDE_NO_EXPORT void NpPlayer::destroyStream (uint32_t sid) {
 }
 
 KDE_NO_EXPORT
-void NpPlayer::sendFinish (Q_UINT32 sid, Q_UINT32 bytes, NpStream::Reason because) {
+void NpPlayer::sendFinish (quint32 sid, quint32 bytes, NpStream::Reason because) {
     kDebug() << "NpPlayer::sendFinish " << sid << " bytes:" << bytes;
     if (running ()) {
         uint32_t reason = (int) because;
@@ -2101,7 +2106,7 @@ KDE_NO_EXPORT void NpPlayer::terminateJobs () {
     Process::terminateJobs ();
     const StreamMap::iterator e = streams.end ();
     for (StreamMap::iterator i = streams.begin (); i != e; ++i)
-        delete i.data ();
+        delete i.value ();
     streams.clear ();
 }
 
@@ -2188,7 +2193,7 @@ KDE_NO_EXPORT void NpPlayer::requestCall (const uint32_t id, const QString &func
 
 KDE_NO_EXPORT void NpPlayer::processStreams () {
     NpStream *stream = 0L;
-    Q_UINT32 stream_id;
+    qint32 stream_id;
     timeval tv = { 0x7fffffff, 0 };
     const StreamMap::iterator e = streams.end ();
     int active_count = 0;
@@ -2201,7 +2206,7 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
 
     //kDebug() << "NpPlayer::processStreams " << streams.size ();
     for (StreamMap::iterator i = streams.begin (); i != e;) {
-        NpStream *ns = i.data ();
+        NpStream *ns = i.value ();
         if (ns->job) {
             active_count++;
         } else if (active_count < 5 &&
@@ -2249,11 +2254,11 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
             msg.setDelayedReply (false);
             QDBusConnection::sessionBus().send (msg);
         }
-        const int header_len = 2 * sizeof (Q_UINT32);
-        Q_UINT32 chunk = stream->pending_buf.size ();
+        const int header_len = 2 * sizeof (qint32);
+        qint32 chunk = stream->pending_buf.size ();
         send_buf.resize (chunk + header_len);
-        memcpy (send_buf.data (), &stream_id, sizeof (Q_UINT32));
-        memcpy (send_buf.data() + sizeof (Q_UINT32), &chunk, sizeof (Q_UINT32));
+        memcpy (send_buf.data (), &stream_id, sizeof (qint32));
+        memcpy (send_buf.data() + sizeof (qint32), &chunk, sizeof (qint32));
         memcpy (send_buf.data ()+header_len,
                 stream->pending_buf.constData (), chunk);
         stream->pending_buf = QByteArray ();
@@ -2304,7 +2309,7 @@ void NpStream::slotTotalSize (KJob *, KIO::filesize_t) {}
 
 KDE_NO_CDTOR_EXPORT
 NpPlayer::NpPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings)
- : Process (parent, pinfo, settings, "npp") {}
+ : Process (parent, pinfo, settings) {}
 KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {}
 KDE_NO_EXPORT void NpPlayer::init () {}
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () { return false; }

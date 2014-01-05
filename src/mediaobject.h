@@ -77,8 +77,8 @@ public:
     virtual bool hue (int pos, bool absolute) = 0;
     virtual bool contrast (int pos, bool absolute) = 0;
     virtual bool brightness (int pos, bool absolute) = 0;
-    virtual void setAudioLang (int, const QString &) = 0;
-    virtual void setSubtitle (int, const QString &) = 0;
+    virtual void setAudioLang (int id) = 0;
+    virtual void setSubtitle (int id) = 0;
     virtual bool running () const = 0;
 
     State state () const { return m_state; }

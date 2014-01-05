@@ -3241,7 +3241,7 @@ KDE_NO_EXPORT void *SMIL::Anchor::role (RoleType msg, void *content) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT SMIL::Area::Area (NodePtr & d, const QString & t)
- : LinkingBase (d, id_node_area), coords (0L), nr_coords (0), tag (t) {}
+ : LinkingBase (d, id_node_area), coords (0L), nr_coords (0), tag (t.toUtf8()) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::Area::~Area () {
     delete [] coords;

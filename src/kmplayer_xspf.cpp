@@ -26,7 +26,8 @@ using namespace KMPlayer;
 
 
 KDE_NO_EXPORT Node *XSPF::Playlist::childFromTag (const QString & tag) {
-    const char * name = tag.latin1 ();
+    QByteArray ba = tag.toLatin1();
+    const char * name = ba.constData ();
     if (!strcasecmp (name, "tracklist"))
         return new Tracklist (m_doc);
     else if (!strcasecmp (name, "creator"))
