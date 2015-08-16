@@ -83,7 +83,7 @@ void Slave::streamDestroyed (uint64_t wid) {
         stay_alive_timer = startTimer (5000);
 }
 
-void Slave::timerEvent (QTimerEvent *e) {
+void Slave::timerEvent (QTimerEvent *) {
     quit ();
 }
 
@@ -164,7 +164,7 @@ void Stream::pause () {
 }
 
 void Stream::stop () {
-    qDebug ("stop %ul", video_handle);
+    qDebug() << "stop" << video_handle;
     m_media->stop ();
     delete this;
 }
@@ -227,7 +227,7 @@ void Stream::tick (qint64 t) {
 
 void Stream::stateChanged (Phonon::State newstate, Phonon::State) {
     if (Phonon::PlayingState == newstate) {
-        qDebug ("playing %lu len:%lu", video_handle, m_media->totalTime());
+        qDebug() << "playing" << video_handle << "len:" << m_media->totalTime();
         QDBusMessage msg = QDBusMessage::createMethodCall (
                 control_service, m_master_stream_path,
                 "org.kde.kmplayer.StreamMaster", "streamInfo");

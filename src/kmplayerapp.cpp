@@ -1034,8 +1034,10 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
     // KMPlayerVDRSource has to wait for pending commands like mute and quit
     m_player->stop ();
     //static_cast <KMPlayerVDRSource *> (m_player->sources () ["vdrsource"])->waitForConnectionClose ();
-    if (m_played_exit || m_player->settings ()->no_intro || kapp->sessionSaving() )
+    if (m_played_exit || m_player->settings ()->no_intro || kapp->sessionSaving() ) {
+        aboutToCloseWindow();
         return true;
+    }
     if (m_auto_resize)
         disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
     m_played_exit = true;
@@ -1045,18 +1047,18 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
     m_player->setSource (new ExitSource (m_player));
     return false;
 #else
+    aboutToCloseWindow();
     return true;
 #endif
 }
 
-KDE_NO_EXPORT bool KMPlayerApp::queryExit()
+KDE_NO_EXPORT void KMPlayerApp::aboutToCloseWindow()
 {
     if (!m_minimal_mode)
         saveOptions();
     disconnect (m_player->settings (), SIGNAL (configChanged ()),
                 this, SLOT (configChanged ()));
     m_player->settings ()->writeConfig ();
-    return true;
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotFileNewWindow()
@@ -1185,26 +1187,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileClose()
 
 KDE_NO_EXPORT void KMPlayerApp::slotFileQuit()
 {
-    slotStatusMsg(i18n("Exiting..."));
-
-    // whoever implemented this should fix it too, work around ..
-    if (memberList ().count () > 1)
-        deleteLater ();
-    else
-        qApp->quit ();
-    // close the first window, the list makes the next one the first again.
-    // This ensures that queryClose() is called on each window to ask for closing
-    /*KMainWindow* w;
-    if(memberList)
-    {
-        for(w=memberList->first(); w!=0; w=memberList->first())
-        {
-            // only close the window if the closeEvent is accepted. If the user presses Cancel on the saveModified() dialog,
-            // the window and the application stay open.
-            if(!w->close())
-                break;
-        }
-    }*/
+    close();
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotPreferences () {

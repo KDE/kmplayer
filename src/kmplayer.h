@@ -77,7 +77,6 @@ protected:
     void initStatusBar ();
     void initView ();
     virtual bool queryClose ();
-    virtual bool queryExit ();
 
 public slots:
     void slotFileNewWindow ();
@@ -131,6 +130,7 @@ private slots:
     void slotGenerator ();
 
 private:
+    void aboutToCloseWindow ();
     void menuItemClicked (QMenu * menu, int id);
     void minimalMode (bool deco=true);
     KSystemTrayIcon *m_systray;

@@ -1067,7 +1067,7 @@ KDE_NO_EXPORT void ImageMedia::stop () {
 }
 
 void ImageMedia::pause () {
-    if (img_movie && !img_movie->state () == QMovie::Paused)
+    if (img_movie && img_movie->state () != QMovie::Paused)
         img_movie->setPaused (true);
 }
 
