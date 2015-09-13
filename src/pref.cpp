@@ -20,6 +20,7 @@
 
 #undef Always
 
+#include <QVBoxLayout>
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qpushbutton.h>
@@ -28,18 +29,17 @@
 #include <qstringlist.h>
 #include <qcombobox.h>
 #include <qlineedit.h>
-#include <Q3GroupBox>
 #include <qwhatsthis.h>
 #include <qtabwidget.h>
 #include <qslider.h>
-#include <Q3ButtonGroup>
 #include <qspinbox.h>
 #include <qmessagebox.h>
 #include <qmap.h>
 #include <qtimer.h>
 #include <qfont.h>
-#include <Q3ListBox>
 #include <QAbstractButton>
+#include <QButtonGroup>
+#include <QListWidget>
 
 #include <klocale.h>
 #include <kdebug.h>
@@ -207,9 +207,8 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     setMargin (5);
     setSpacing (2);
 
-    Q3GroupBox *windowbox = new Q3GroupBox(1, Qt::Vertical, i18n("Window"), this);
-    QWidget * wbox = new QWidget (windowbox);
-    QWidget * bbox = new QWidget (wbox);
+    QGroupBox *windowbox = new QGroupBox(i18n("Window"), this);
+    QWidget * bbox = new QWidget (windowbox);
     QGridLayout * gridlayout = new QGridLayout (bbox/*, 2, 2*/);
     keepSizeRatio = new QCheckBox (i18n ("Keep size ratio"), bbox);
     keepSizeRatio->setWhatsThis(i18n("When checked, the movie will keep its aspect ratio\nwhen the window is resized."));
@@ -220,44 +219,51 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     gridlayout->addWidget (keepSizeRatio, 0, 0);
     gridlayout->addWidget (dockSysTray, 1, 0);
     gridlayout->addWidget (autoResize, 0, 1);
-    sizesChoice = new Q3ButtonGroup (2, Qt::Vertical, wbox);
-    new QRadioButton (i18n("Remember window size on exit"), sizesChoice);
-    new QRadioButton (i18n("Always start with fixed size"), sizesChoice);
-    QVBoxLayout * vbox = new QVBoxLayout (wbox/*, 2, 2*/);
-    vbox->addWidget (bbox);
-    vbox->addWidget (sizesChoice);
+    QRadioButton* sizeexit = new QRadioButton(i18n("Remember window size on exit"));
+    QRadioButton* sizefixed = new QRadioButton (i18n("Always start with fixed size"));
+    sizesChoice = new QButtonGroup(windowbox);
+    sizesChoice->addButton(sizeexit, 0);
+    sizesChoice->addButton(sizefixed, 1);
+    QVBoxLayout* vbox = new QVBoxLayout;
+    vbox->addWidget(bbox);
+    vbox->addWidget(sizeexit);
+    vbox->addWidget(sizefixed);
+    windowbox->setLayout(vbox);
 
-    Q3GroupBox *playbox =new Q3GroupBox(4, Qt::Vertical,i18n("Playing"),this);
-    loop = new QCheckBox (i18n("Loop"), playbox);
+    QGroupBox *playbox = new QGroupBox(i18n("Playing"), this);
+    loop = new QCheckBox (i18n("Loop"));
     loop->setWhatsThis(i18n("Makes current movie loop"));
-    framedrop = new QCheckBox (i18n ("Allow frame drops"), playbox);
+    framedrop = new QCheckBox (i18n ("Allow frame drops"));
     framedrop->setWhatsThis(i18n ("Allow dropping frames for better audio and video synchronization"));
-    adjustvolume = new QCheckBox(i18n("Auto set volume on start"), playbox);
+    adjustvolume = new QCheckBox(i18n("Auto set volume on start"));
     adjustvolume->setWhatsThis(i18n ("When a new source is selected, the volume will be set according the volume control"));
-    adjustcolors = new QCheckBox(i18n("Auto set colors on start"), playbox);
+    adjustcolors = new QCheckBox(i18n("Auto set colors on start"));
     adjustcolors->setWhatsThis(i18n ("When a movie starts, the colors will be set according the sliders for colors"));
+    vbox = new QVBoxLayout;
+    vbox->addWidget(loop);
+    vbox->addWidget(framedrop);
+    vbox->addWidget(adjustvolume);
+    vbox->addWidget(adjustcolors);
+    playbox->setLayout(vbox);
 
-    Q3GroupBox * gbox =new Q3GroupBox (1, Qt::Vertical, i18n("Control Panel"), this);
-    bbox =new QWidget (gbox);
-    //QGroupBox * bbox = gbox;
-    gridlayout = new QGridLayout (bbox/*, 3, 2*/);
-    showConfigButton = new QCheckBox(i18n("Show config button"), bbox);
+    QGroupBox* controlbox = new QGroupBox(i18n("Control Panel"), this);
+    showConfigButton = new QCheckBox(i18n("Show config button"));
     showConfigButton->setWhatsThis(i18n ("Add a button that will popup a config menu"));
-    showPlaylistButton = new QCheckBox(i18n("Show playlist button"), bbox);
+    showPlaylistButton = new QCheckBox(i18n("Show playlist button"));
     showPlaylistButton->setWhatsThis(i18n ("Add a playlist button to the control buttons"));
-    showRecordButton = new QCheckBox(i18n("Show record button"), bbox);
+    showRecordButton = new QCheckBox(i18n("Show record button"));
     showRecordButton->setWhatsThis(i18n ("Add a record button to the control buttons"));
-    showBroadcastButton = new QCheckBox (i18n ("Show broadcast button"), bbox);
+    showBroadcastButton = new QCheckBox (i18n ("Show broadcast button"));
     showBroadcastButton->setWhatsThis(i18n ("Add a broadcast button to the control buttons"));
+    gridlayout = new QGridLayout;
     gridlayout->addWidget (showConfigButton, 0, 0);
     gridlayout->addWidget (showPlaylistButton, 0, 1);
     gridlayout->addWidget (showRecordButton, 1, 0);
     gridlayout->addWidget (showBroadcastButton, 1, 1);
-    //QWidget *seekingWidget = new QWidget (bbox);
-    QHBoxLayout *seekLayout = new QHBoxLayout (bbox);
-    seekLayout->addWidget(new QLabel(i18n("Forward/backward seek time:"),bbox));
+    QHBoxLayout *seekLayout = new QHBoxLayout;
+    seekLayout->addWidget(new QLabel(i18n("Forward/backward seek time:")));
     seekLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
-    seekTime = new KIntSpinBox(1, 600, 1, 0, bbox);
+    seekTime = new KIntSpinBox(1, 600, 1, 0, NULL);
 #if KDE_IS_VERSION(4, 2, 80)
     seekTime->setSuffix (ki18np (" second", " seconds"));
 #else
@@ -265,7 +271,8 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
 #endif
     seekLayout->addWidget(seekTime);
     seekLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
-    gridlayout->addLayout (seekLayout, 2, 0, 2, 1);
+    gridlayout->addLayout (seekLayout, 2, 0, 1, 2);
+    controlbox->setLayout(gridlayout);
 
     layout()->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
@@ -275,29 +282,37 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent,
     setMargin (5);
     setSpacing (2);
 
-    Q3GroupBox *colorbox= new Q3GroupBox(2, Qt::Horizontal, i18n("Colors"), this);
-    colorscombo = new QComboBox (colorbox);
+    QGroupBox *colorbox= new QGroupBox(i18n("Colors"), this);
+    colorscombo = new QComboBox;
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         colorscombo->addItem (colors[i].title);
     colorscombo->setCurrentIndex (0);
     connect (colorscombo, SIGNAL (activated (int)),
             this, SLOT (colorItemChanged(int)));
-    colorbutton = new KColorButton (colorbox);
+    colorbutton = new KColorButton;
     colorbutton->setColor (colors[0].color);
     connect (colorbutton, SIGNAL (changed (const QColor &)),
             this, SLOT (colorCanged (const QColor &)));
+    QHBoxLayout* hbox = new QHBoxLayout;
+    hbox->addWidget(colorscombo);
+    hbox->addWidget(colorbutton);
+    colorbox->setLayout(hbox);
 
-    Q3GroupBox *fontbox = new Q3GroupBox (2,Qt::Horizontal, i18n ("Fonts"), this);
-    fontscombo = new QComboBox (fontbox);
+    QGroupBox* fontbox = new QGroupBox(i18n ("Fonts"), this);
+    fontscombo = new QComboBox;
     for (int i = 0; i < int (FontSetting::last_target); i++)
         fontscombo->addItem (fonts[i].title);
     fontscombo->setCurrentIndex (0);
     connect (fontscombo, SIGNAL (activated (int)),
             this, SLOT (fontItemChanged(int)));
-    fontbutton = new QPushButton (i18n ("AaBbCc"), fontbox);
+    fontbutton = new QPushButton(i18n ("AaBbCc"));
     fontbutton->setFlat (true);
     fontbutton->setFont (fonts[0].font);
     connect (fontbutton, SIGNAL (clicked ()), this, SLOT (fontClicked ()));
+    hbox = new QHBoxLayout;
+    hbox->addWidget(fontscombo);
+    hbox->addWidget(fontbutton);
+    fontbox->setLayout(hbox);
 
     layout()->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
@@ -352,7 +367,7 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     sub_url = new KUrlRequester (sub_urllist, this);
     sub_url->setWhatsThis(i18n ("Optional location of a file containing the subtitles of the URL above"));
     sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
-    backend = new Q3ListBox (this);
+    backend = new QListWidget(this);
     clicktoplay = new QCheckBox (i18n ("Load on demand"), this);
     clicktoplay->setWhatsThis(i18n ("When enabled, all embedded movies will start with a image that needs to be clicked to start the video playback"));
     grabhref = new QCheckBox (i18n ("Grab image when 'Click to Play' detected"), this);
@@ -369,22 +384,24 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     //QWhatsThis::add (allowhref, i18n ("Explain this in a few lines"));
     gridlayout->addWidget (backendLabel, 0, 0);
     gridlayout->addWidget (backend, 1, 0);
-    gridlayout->addMultiCell (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum), 0, 1, 1, 1);
-    Q3GroupBox *cbox = new Q3GroupBox(1, Qt::Vertical, i18n("Network bandwidth"), this);
-    QWidget * wbox = new QWidget (cbox);
-    QGridLayout * bitratelayout = new QGridLayout (wbox/*, 2, 3, 5*/);
-    prefBitRate = new QLineEdit (wbox);
+    gridlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum), 0, 1, 1, 1);
+
+    QGroupBox *bandwidthbox = new QGroupBox(i18n("Network bandwidth"), this);
+    prefBitRate = new QLineEdit;
     prefBitRate->setValidator( new QIntValidator( prefBitRate ) );
     prefBitRate->setWhatsThis(i18n("Sometimes it is possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you would prefer to allocate to video."));
-    maxBitRate = new QLineEdit (wbox);
+    maxBitRate = new QLineEdit;
     maxBitRate->setValidator( new QIntValidator( maxBitRate ) );
     maxBitRate->setWhatsThis(i18n("Sometimes it is possible to choose between various streams given a particular bitrate.\nThis option sets the maximum bandwidth you have available for video."));
-    bitratelayout->addWidget(new QLabel(i18n("Preferred bitrate:"), wbox), 0, 0);
+    QGridLayout* bitratelayout = new QGridLayout;
+    bitratelayout->addWidget(new QLabel(i18n("Preferred bitrate:")), 0, 0);
     bitratelayout->addWidget (prefBitRate, 0, 1);
-    bitratelayout->addWidget (new QLabel (i18n ("kbit/s"), wbox), 0, 2);
-    bitratelayout->addWidget (new QLabel(i18n("Maximum bitrate:"), wbox), 1, 0);
+    bitratelayout->addWidget (new QLabel (i18n ("kbit/s")), 0, 2);
+    bitratelayout->addWidget (new QLabel(i18n("Maximum bitrate:")), 1, 0);
     bitratelayout->addWidget (maxBitRate, 1, 1);
-    bitratelayout->addWidget (new QLabel (i18n ("kbit/s"), wbox), 1, 2);
+    bitratelayout->addWidget (new QLabel (i18n ("kbit/s")), 1, 2);
+    bandwidthbox->setLayout(bitratelayout);
+
     static_cast <QBoxLayout *>(layout())->addLayout (gridlayout);
     layout()->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     connect (urllist, SIGNAL(textChanged (const QString &)),
@@ -427,28 +444,46 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *,
     buttonlayout->addWidget (recordButton);
     source = new QLabel (i18n ("Current source: ") +
            (m_player->source () ? m_player->source ()->prettyName () : QString ()), this);
-    recorder = new Q3ButtonGroup (m_recorders_length, Qt::Vertical, i18n ("Recorder"), this);
-    for (RecorderPage * p = m_recorders; p; p = p->next)
-        new QRadioButton (p->name (), recorder);
-    recorder->setButton(0); // for now
+    QGroupBox* group = new QGroupBox(i18n ("Recorder"), this);
+    QVBoxLayout *vbox = new QVBoxLayout;
+    recorder = new QButtonGroup(this);
+    int id = 0;
+    for (RecorderPage* p = m_recorders; p; p = p->next) {
+        QRadioButton* button = new QRadioButton(p->name());
+        vbox->addWidget(button);
+        recorder->addButton(button, id++);
+    }
+    recorder->button(0)->setChecked(true); // for now
+    group->setLayout(vbox);
 
     layout()->addItem(new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
 
-    replay = new Q3ButtonGroup (4, Qt::Vertical, i18n ("Auto Playback"), this);
-    new QRadioButton (i18n ("&No"), replay);
-    new QRadioButton (i18n ("&When recording finished"), replay);
-    new QRadioButton (i18n ("A&fter"), replay);
-    QWidget * customreplay = new QWidget (replay);
+    group = new QGroupBox(i18n ("Auto Playback"), this);
+    vbox = new QVBoxLayout;
+    replay = new QButtonGroup(this);
+    QRadioButton* radio = new QRadioButton (i18n ("&No"));
+    vbox->addWidget(radio);
+    replay->addButton(radio, 0);
+    radio = new QRadioButton (i18n ("&When recording finished"));
+    vbox->addWidget(radio);
+    replay->addButton(radio, 1);
+    radio = new QRadioButton (i18n ("A&fter"));
+    vbox->addWidget(radio);
+    replay->addButton(radio, 2);
+    QWidget* customreplay = new QWidget;
     replaytime = new KIntSpinBox (customreplay);
 #if KDE_IS_VERSION(4, 2, 80)
     replaytime->setSuffix (ki18np (" second", " seconds"));
 #else
     replaytime->setSuffix (i18n (" seconds"));
 #endif
-    QHBoxLayout *replaylayout = new QHBoxLayout (customreplay);
-    replaylayout->addWidget (new QLabel (i18n("Time:"), customreplay));
+    QHBoxLayout *replaylayout = new QHBoxLayout;
+    replaylayout->addWidget(new QLabel(i18n("Time:")));
     replaylayout->addWidget (replaytime);
     replaylayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    customreplay->setLayout(replaylayout);
+    vbox->addWidget(customreplay);
+    group->setLayout(vbox);
     layout()->addItem(new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
 
     static_cast <QBoxLayout *>(layout())->addLayout (buttonlayout);
@@ -456,7 +491,7 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *,
 #ifdef KMPLAYER_WITH_XINE
     connect (recorder, SIGNAL (clicked(int)), this, SLOT(recorderClicked(int)));
 #endif
-    connect (replay, SIGNAL (clicked (int)), this, SLOT (replayClicked (int)));
+    //connect(replay, SIGNAL(buttonClicked (int)), this, SLOT (replayClicked (int)));
     connect (player, SIGNAL (recording (bool)), this, SLOT (recording (bool)));
 }
 
@@ -480,7 +515,7 @@ KDE_NO_EXPORT void PrefRecordPage::showEvent (QShowEvent *e) {
         int id = 0;
         int nr_recs = 0;
         for (RecorderPage * p = m_recorders; p; p = p->next, ++id) {
-            QAbstractButton * radio = recorder->find (id);
+            QAbstractButton * radio = recorder->button(id);
             bool b = m_player->mediaManager ()->recorderInfos ()
                 [p->recorderName ()]->supports (src->name ());
             radio->setEnabled (b);
@@ -493,11 +528,11 @@ KDE_NO_EXPORT void PrefRecordPage::showEvent (QShowEvent *e) {
     KVBox::showEvent (e);
 }
 
-KDE_NO_EXPORT void PrefRecordPage::recorderClicked (int id) {
-    bool b = recorder->find(id)->text().indexOf (QString::fromLatin1("Xine")) > -1;
+KDE_NO_EXPORT void PrefRecordPage::recorderClicked (int /*id*/) {
+    /*bool b = recorder->button(id)->text().indexOf (QString::fromLatin1("Xine")) > -1;
     replay->setEnabled (!b);
     if (b)
-        replay->setButton (Settings::ReplayNo);
+        replay->setButton (Settings::ReplayNo);*/
 
 }
 
@@ -512,18 +547,18 @@ KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
         m_player->source ()->document ()->reset ();
         m_player->settings ()->recordfile = url->lineEdit()->text();
         m_player->settings ()->replaytime = replaytime->value();
-        int id = recorder->selectedId ();
-        int replayid = replay->selectedId ();
+        int id = recorder->checkedId ();
+        int replayid = replay->checkedId ();
         m_player->settings ()->recorder = Settings::Recorder (id);
         m_player->settings ()->replayoption = Settings::ReplayOption (replayid);
         for (RecorderPage * p = m_recorders; p; p = p->next)
             if (id-- == 0) {
                 int start_after = 0;
-                if (replay->selectedId () == Settings::ReplayAfter) {
+                if (replay->checkedId () == Settings::ReplayAfter) {
                     int t = replaytime->value ();
                     if (t > 0)
                         start_after = 1000 * t;
-                } else if (replay->selectedId () != Settings::ReplayNo) {
+                } else if (replay->checkedId () != Settings::ReplayNo) {
                     start_after = -1;
                 }
                 p->startRecording ();
@@ -541,17 +576,24 @@ KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage (QWidget *parent, PartBas
     setMargin (5);
     setSpacing (2);
 
-    format = new Q3ButtonGroup (3, Qt::Vertical, i18n ("Format"), this);
-    new QRadioButton (i18n ("Same as source"), format);
-    new QRadioButton (i18n ("Custom"), format);
-    QWidget * customopts = new QWidget (format);
-    QGridLayout *gridlayout = new QGridLayout (customopts/*, 1, 2, 2*/);
-    QLabel *argLabel = new QLabel (i18n("Mencoder arguments:"), customopts, 0);
-    arguments = new QLineEdit ("", customopts);
+    QGroupBox* formatbox = new QGroupBox(i18n("Format"), this);
+    QVBoxLayout* vbox = new QVBoxLayout;
+    format = new QButtonGroup(this);
+    QRadioButton* radio = new QRadioButton (i18n ("Same as source"));
+    vbox->addWidget(radio);
+    format->addButton(radio, 0);
+    radio = new QRadioButton (i18n ("Custom"));
+    vbox->addWidget(radio);
+    format->addButton(radio, 1);
+    QGridLayout* gridlayout = new QGridLayout;
+    QLabel *argLabel = new QLabel (i18n("Mencoder arguments:"));
+    arguments = new QLineEdit ("");
     gridlayout->addWidget (argLabel, 0, 0);
     gridlayout->addWidget (arguments, 0, 1);
+    vbox->addLayout(gridlayout);
+    formatbox->setLayout(vbox);
     layout()->addItem(new QSpacerItem(0,0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    connect (format, SIGNAL (clicked (int)), this, SLOT (formatClicked (int)));
+    connect (format, SIGNAL (buttonClicked (int)), this, SLOT (formatClicked (int)));
 }
 
 KDE_NO_EXPORT void PrefMEncoderPage::formatClicked (int id) {
@@ -559,7 +601,7 @@ KDE_NO_EXPORT void PrefMEncoderPage::formatClicked (int id) {
 }
 
 KDE_NO_EXPORT void PrefMEncoderPage::startRecording () {
-    m_player->settings ()->recordcopy = !format->selectedId ();
+    m_player->settings ()->recordcopy = !format->checkedId ();
     m_player->settings ()->mencoderarguments = arguments->text ();
 }
 
@@ -611,22 +653,15 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageOutput::PrefGeneralPageOutput(QWidget *parent
     setMargin (5);
     setSpacing (2);
 
-    videoDriver = new Q3ListBox (this);
+    videoDriver = new QListWidget(this);
     for (int i = 0; vd[i].driver; i++)
-        videoDriver->insertItem (vd[i].description, i);
+        videoDriver->addItem(vd[i].description);
     videoDriver->setWhatsThis(i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
 
-    audioDriver = new Q3ListBox (this);
+    audioDriver = new QListWidget(this);
     for (int i = 0; ad[i].driver; i++)
-        audioDriver->insertItem (ad[i].description, i);
+        audioDriver->addItem(ad[i].description);
     layout()->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-}
-
-KDE_NO_CDTOR_EXPORT PrefOPPageGeneral::PrefOPPageGeneral(QWidget *parent)
-: KVBox(parent)
-{
-    QVBoxLayout *layout = new QVBoxLayout (this/*, 5*/);
-    layout->setAutoAdd (true);
 }
 
 KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KVBox(parent)
@@ -640,118 +675,105 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
 
     layout()->addItem (new QSpacerItem(5, 5, QSizePolicy::Minimum, QSizePolicy::Minimum));
 
-    PostprocessingOptions = new QTabWidget( this, "PostprocessingOptions" );
+    PostprocessingOptions = new QTabWidget( this );
     PostprocessingOptions->setEnabled (true);
     //PostprocessingOptions->setAutoMask (false);
-    PostprocessingOptions->setTabPosition( QTabWidget::Top );
     PostprocessingOptions->setTabShape( QTabWidget::Rounded );
-    PostprocessingOptions->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)1, PostprocessingOptions->sizePolicy().hasHeightForWidth() ) );
+    PostprocessingOptions->setSizePolicy( QSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum ));
 
-    QWidget *presetSelectionWidget = new QWidget( PostprocessingOptions, "presetSelectionWidget" );
-    QGridLayout *presetSelectionWidgetLayout = new QGridLayout( presetSelectionWidget/*, 1, 1, 1*/);
-
-    Q3ButtonGroup *presetSelection = new Q3ButtonGroup(3, Qt::Vertical, presetSelectionWidget);
-    presetSelection->setInsideSpacing(KDialog::spacingHint());
-
-    defaultPreset = new QRadioButton (i18n ("Default"), presetSelection);
+    QGroupBox* presetSelection = new QGroupBox;
+    defaultPreset = new QRadioButton (i18n ("Default"));
+    customPreset = new QRadioButton (i18n ("Custom"));
+    fastPreset = new QRadioButton (i18n ("Fast"));
     defaultPreset->setChecked( true );
-    presetSelection->insert (defaultPreset);
-
-    customPreset = new QRadioButton (i18n ("Custom"), presetSelection);
-    presetSelection->insert (customPreset);
-
-    fastPreset = new QRadioButton (i18n ("Fast"), presetSelection);
-    presetSelection->insert (fastPreset);
-    presetSelection->setRadioButtonExclusive ( true);
-    presetSelectionWidgetLayout->addWidget( presetSelection, 0, 0 );
-    PostprocessingOptions->addTab( presetSelectionWidget, "" );
+    QVBoxLayout* vbox = new QVBoxLayout;
+    vbox->addWidget(defaultPreset);
+    vbox->addWidget(customPreset);
+    vbox->addWidget(fastPreset);
+    QButtonGroup* buttongroup = new QButtonGroup(this);
+    buttongroup->addButton(defaultPreset, 0);
+    buttongroup->addButton(customPreset, 1);
+    buttongroup->addButton(fastPreset, 2);
+    vbox->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    presetSelection->setLayout(vbox);
+    PostprocessingOptions->addTab(presetSelection, i18n("General"));
 
     //
     // SECOND!!!
     //
     /* I JUST WASN'T ABLE TO GET THIS WORKING WITH QGridLayouts */
+    QVBoxLayout *customFiltersLayout = new QVBoxLayout;
 
-    QWidget *customFiltersWidget = new QWidget( PostprocessingOptions);
-    QVBoxLayout *customFiltersWidgetLayout = new QVBoxLayout( customFiltersWidget );
-
-    Q3GroupBox *customFilters = new Q3GroupBox(0, Qt::Vertical, customFiltersWidget);
-    customFilters->setSizePolicy(QSizePolicy((QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2));
+    QGroupBox *customFilters = new QGroupBox;
+    customFilters->setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum));
     customFilters->setFlat(false);
     customFilters->setEnabled( false );
-    customFilters->setInsideSpacing(7);
+    //customFilters->setInsideSpacing(7);
 
-    QLayout *customFiltersLayout = customFilters->layout();
-    QHBoxLayout *customFiltersLayout1 = new QHBoxLayout ( customFilters->layout() );
-
-    HzDeblockFilter = new QCheckBox (i18n ("Horizontal deblocking"), customFilters);
-    HzDeblockAQuality = new QCheckBox (i18n ("Auto quality"), customFilters);
+    QHBoxLayout* hbox = new QHBoxLayout;
+    HzDeblockFilter = new QCheckBox (i18n ("Horizontal deblocking"));
+    HzDeblockAQuality = new QCheckBox (i18n ("Auto quality"));
     HzDeblockAQuality->setEnabled (false);
-    HzDeblockCFiltering = new QCheckBox (i18n ("Chrominance filtering"), customFilters);
+    HzDeblockCFiltering = new QCheckBox (i18n ("Chrominance filtering"));
     HzDeblockCFiltering->setEnabled (false);
+    hbox->addWidget( HzDeblockFilter );
+    hbox->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
+    hbox->addWidget( HzDeblockAQuality );
+    hbox->addWidget( HzDeblockCFiltering );
+    customFiltersLayout->addLayout(hbox);
 
-    customFiltersLayout1->addWidget( HzDeblockFilter );
-    customFiltersLayout1->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
-    customFiltersLayout1->addWidget( HzDeblockAQuality );
-    customFiltersLayout1->addWidget( HzDeblockCFiltering );
+    QFrame* line = new QFrame;
+    line->setSizePolicy( QSizePolicy( QSizePolicy::Minimum, QSizePolicy::Maximum ) );
+    line->setFrameShape( QFrame::HLine );
+    line->setFrameShadow( QFrame::Sunken );
+    customFiltersLayout->addWidget(line);
 
-    QFrame *line1 = new QFrame( customFilters);
-    line1->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2 ) );
-    line1->setFrameShape( QFrame::HLine );
-    line1->setFrameShadow( QFrame::Sunken );
-    customFiltersLayout->add(line1);
-
-    QHBoxLayout *customFiltersLayout2 = new QHBoxLayout ( customFilters->layout() );
-
-    VtDeblockFilter = new QCheckBox(i18n("Vertical deblocking"), customFilters);
-    VtDeblockAQuality = new QCheckBox (i18n ("Auto quality"), customFilters);
+    hbox = new QHBoxLayout;
+    VtDeblockFilter = new QCheckBox(i18n("Vertical deblocking"));
+    VtDeblockAQuality = new QCheckBox (i18n ("Auto quality"));
     VtDeblockAQuality->setEnabled (false);
-    VtDeblockCFiltering = new QCheckBox (i18n ("Chrominance filtering"), customFilters);
+    VtDeblockCFiltering = new QCheckBox (i18n ("Chrominance filtering"));
     VtDeblockCFiltering->setEnabled (false);
+    hbox->addWidget( VtDeblockFilter );
+    hbox->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
+    hbox->addWidget( VtDeblockAQuality );
+    hbox->addWidget( VtDeblockCFiltering );
+    customFiltersLayout->addLayout(hbox);
 
-    customFiltersLayout2->addWidget( VtDeblockFilter );
-    customFiltersLayout2->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
-    customFiltersLayout2->addWidget( VtDeblockAQuality );
-    customFiltersLayout2->addWidget( VtDeblockCFiltering );
+    line = new QFrame;
+    line->setSizePolicy( QSizePolicy( QSizePolicy::Minimum, QSizePolicy::Maximum ) );
+    line->setFrameShape( QFrame::HLine );
+    line->setFrameShadow( QFrame::Sunken );
+    customFiltersLayout->addWidget(line);
 
-    QFrame *line2 = new QFrame( customFilters);
-
-    line2->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2 ) );
-    line2->setFrameShape( QFrame::HLine );
-    line2->setFrameShadow( QFrame::Sunken );
-    customFiltersLayout->add(line2);
-
-    QHBoxLayout *customFiltersLayout3  = new QHBoxLayout ( customFilters->layout() );
-
-    DeringFilter = new QCheckBox (i18n ("Dering filter"), customFilters);
-    DeringAQuality = new QCheckBox (i18n ("Auto quality"), customFilters);
+    hbox = new QHBoxLayout;
+    DeringFilter = new QCheckBox (i18n ("Dering filter"));
+    DeringAQuality = new QCheckBox (i18n ("Auto quality"));
     DeringAQuality->setEnabled (false);
-    DeringCFiltering=new QCheckBox(i18n("Chrominance filtering"),customFilters);
+    DeringCFiltering=new QCheckBox(i18n("Chrominance filtering"));
     DeringCFiltering->setEnabled (false);
+    hbox->addWidget( DeringFilter );
+    hbox->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
+    hbox->addWidget( DeringAQuality );
+    hbox->addWidget( DeringCFiltering );
+    customFiltersLayout->addLayout(hbox);
 
-    customFiltersLayout3->addWidget( DeringFilter );
-    customFiltersLayout3->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
-    customFiltersLayout3->addWidget( DeringAQuality );
-    customFiltersLayout3->addWidget( DeringCFiltering );
+    line = new QFrame;
+    line->setFrameShape( QFrame::HLine );
+    line->setFrameShadow( QFrame::Sunken );
+    line->setFrameShape( QFrame::HLine );
+    customFiltersLayout->addWidget(line);
 
-    QFrame *line3 = new QFrame( customFilters);
-    line3->setFrameShape( QFrame::HLine );
-    line3->setFrameShadow( QFrame::Sunken );
-    line3->setFrameShape( QFrame::HLine );
-
-    customFiltersLayout->add(line3);
-
-    QHBoxLayout *customFiltersLayout4 =new QHBoxLayout(customFilters->layout());
-
-    AutolevelsFilter = new QCheckBox (i18n ("Auto brightness/contrast"), customFilters);
-    AutolevelsFullrange = new QCheckBox (i18n ("Stretch luminance to full range"), customFilters);
+    hbox = new QHBoxLayout;
+    AutolevelsFilter = new QCheckBox (i18n ("Auto brightness/contrast"));
+    AutolevelsFullrange = new QCheckBox (i18n ("Stretch luminance to full range"));
     AutolevelsFullrange->setEnabled (false);
+    hbox->addWidget(AutolevelsFilter);
+    hbox->addItem(new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ));
+    hbox->addWidget(AutolevelsFullrange);
+    customFiltersLayout->addLayout(hbox);
 
-    customFiltersLayout4->addWidget(AutolevelsFilter);
-    customFiltersLayout4->addItem(new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ));
-    customFiltersLayout4->addWidget(AutolevelsFullrange);
-
-    QHBoxLayout *customFiltersLayout5 = new QHBoxLayout (customFilters->layout());
-
+    hbox = new QHBoxLayout;
     TmpNoiseFilter =new QCheckBox(i18n("Temporal noise reducer"),customFilters);
     /*	Note: Change TmpNoiseFilter text back to "Label:" if this slider gets reactivated
         TmpNoiseSlider = new QSlider( customFilters, "TmpNoiseSlider" );
@@ -762,37 +784,37 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
         TmpNoiseSlider->setOrientation( QSlider::Horizontal );
         TmpNoiseSlider->setTickmarks( QSlider::Left );
         TmpNoiseSlider->setTickInterval( 1 );
-        TmpNoiseSlider->setSizePolicy(QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)1));*/
+        TmpNoiseSlider->setSizePolicy(QSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum);*/
 
     /*customFiltersLayout->addWidget(TmpNoiseFilter,7,0);
       customFiltersLayout->addWidget(TmpNoiseSlider,7,2);*/
-    customFiltersLayout5->addWidget(TmpNoiseFilter);
-    customFiltersLayout5->addItem(new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ));
-    //customFiltersLayout5->addWidget(TmpNoiseSlider);
-    customFiltersWidgetLayout->addWidget( customFilters );
-    PostprocessingOptions->addTab( customFiltersWidget, "" );
+    hbox->addWidget(TmpNoiseFilter);
+    hbox->addItem(new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ));
+    //hbox->addWidget(TmpNoiseSlider);
+    customFiltersLayout->addLayout(hbox);
+
+    customFiltersLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    customFilters->setLayout(customFiltersLayout);
+
+    PostprocessingOptions->addTab(customFilters, i18n("Custom Preset"));
     //
     //THIRD!!!
     //
-    QWidget *deintSelectionWidget = new QWidget( PostprocessingOptions);
-    QVBoxLayout *deintSelectionWidgetLayout = new QVBoxLayout( deintSelectionWidget);
-    Q3ButtonGroup *deinterlacingGroup = new Q3ButtonGroup(5, Qt::Vertical, deintSelectionWidget, "deinterlacingGroup" );
-
-    LinBlendDeinterlacer = new QCheckBox (i18n ("Linear blend deinterlacer"), deinterlacingGroup);
-    LinIntDeinterlacer = new QCheckBox (i18n ("Linear interpolating deinterlacer"), deinterlacingGroup);
-    CubicIntDeinterlacer = new QCheckBox (i18n ("Cubic interpolating deinterlacer"), deinterlacingGroup);
-    MedianDeinterlacer = new QCheckBox (i18n ("Median deinterlacer"), deinterlacingGroup);
-    FfmpegDeinterlacer = new QCheckBox (i18n ("FFmpeg deinterlacer"), deinterlacingGroup);
-
-    deinterlacingGroup->insert( LinBlendDeinterlacer );
-    deinterlacingGroup->insert( LinIntDeinterlacer );
-    deinterlacingGroup->insert( CubicIntDeinterlacer );
-    deinterlacingGroup->insert( MedianDeinterlacer );
-    deinterlacingGroup->insert( FfmpegDeinterlacer );
-
-    deintSelectionWidgetLayout->addWidget( deinterlacingGroup, 0, 0 );
-
-    PostprocessingOptions->addTab( deintSelectionWidget, "" );
+    QGroupBox* deintSelectionWidget = new QGroupBox;
+    vbox = new QVBoxLayout;
+    LinBlendDeinterlacer = new QCheckBox(i18n ("Linear blend deinterlacer"));
+    LinIntDeinterlacer = new QCheckBox(i18n ("Linear interpolating deinterlacer"));
+    CubicIntDeinterlacer = new QCheckBox(i18n ("Cubic interpolating deinterlacer"));
+    MedianDeinterlacer = new QCheckBox(i18n ("Median deinterlacer"));
+    FfmpegDeinterlacer = new QCheckBox(i18n ("FFmpeg deinterlacer"));
+    vbox->addWidget(LinBlendDeinterlacer);
+    vbox->addWidget(LinIntDeinterlacer);
+    vbox->addWidget(CubicIntDeinterlacer);
+    vbox->addWidget(MedianDeinterlacer);
+    vbox->addWidget(FfmpegDeinterlacer);
+    vbox->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    deintSelectionWidget->setLayout(vbox);
+    PostprocessingOptions->addTab(deintSelectionWidget, i18n( "Deinterlacing"));
 
     PostprocessingOptions->setEnabled(false);
     connect( customPreset, SIGNAL (toggled(bool) ), customFilters, SLOT(setEnabled(bool)));
@@ -810,16 +832,11 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
     defaultPreset->setWhatsThis(i18n( "Enable mplayer's default postprocessing filters" ) );
     customPreset->setWhatsThis(i18n( "Enable custom postprocessing filters (See: Custom preset -tab)" ) );
     fastPreset->setWhatsThis(i18n( "Enable mplayer's fast postprocessing filters" ) );
-    PostprocessingOptions->changeTab( presetSelectionWidget, i18n( "General" ) );
-    customFilters->setTitle (QString ());
     HzDeblockAQuality->setWhatsThis(i18n( "Filter is used if there is enough CPU" ) );
     VtDeblockAQuality->setWhatsThis(i18n( "Filter is used if there is enough CPU" ) );
     DeringAQuality->setWhatsThis(i18n( "Filter is used if there is enough CPU" ) );
     //QWhatsThis::add( TmpNoiseSlider, i18n( "Strength of the noise reducer" ) );
     AutolevelsFullrange->setWhatsThis(i18n( "Stretches luminance to full range (0..255)" ) );
-    PostprocessingOptions->changeTab( customFiltersWidget, i18n( "Custom Preset" ) );
-    deinterlacingGroup->setTitle (QString ());
-    PostprocessingOptions->changeTab( deintSelectionWidget, i18n( "Deinterlacing" ) );
     PostprocessingOptions->adjustSize();
 }
 
@@ -839,8 +856,8 @@ KDE_NO_EXPORT void Preferences::setDefaults() {
 	m_GeneralPageGeneral->loop->setChecked(false);
 	m_GeneralPageGeneral->seekTime->setValue(10);
 
-	m_GeneralPageOutput->videoDriver->setCurrentItem (0);
-	m_GeneralPageOutput->audioDriver->setCurrentItem (0);
+	m_GeneralPageOutput->videoDriver->setCurrentRow(0);
+	m_GeneralPageOutput->audioDriver->setCurrentRow(0);
 
 	m_OPPagePostproc->postProcessing->setChecked(false);
 	m_OPPagePostproc->disablePPauto->setChecked(true);

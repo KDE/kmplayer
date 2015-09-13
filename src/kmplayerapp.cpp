@@ -35,7 +35,6 @@
 #include <qfile.h>
 #include <qmetaobject.h>
 #include <QLabel>
-#include <Q3TextDrag>
 #include <QDockWidget>
 
 // include files for KDE

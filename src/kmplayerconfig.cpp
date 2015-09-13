@@ -28,9 +28,8 @@
 #include <qspinbox.h>
 #include <qlabel.h>
 #include <qfileinfo.h>
-#include <Q3ListBox>
-#include <Q3ButtonGroup>
-#include <Q3ListBox>
+#include <QButtonGroup>
+#include <QListWidget>
 
 #include <kurlrequester.h>
 #include <klineedit.h>
@@ -378,13 +377,12 @@ KDE_NO_EXPORT void Settings::readConfig () {
 KDE_NO_EXPORT bool Settings::createDialog () {
     if (configdialog) return false;
     configdialog = new Preferences (m_player, this);
-    int id = 0;
     const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
     for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().constBegin(); i != e; ++i) {
         ProcessInfo *p = i.value ();
         if (p->supports ("urlsource")) {
             QString lbl = p->label.remove (QChar ('&'));
-            configdialog->m_SourcePageURL->backend->insertItem (lbl, id++);
+            configdialog->m_SourcePageURL->backend->addItem(lbl);
         }
     }
     connect (configdialog, SIGNAL (okClicked ()),
@@ -424,11 +422,18 @@ void Settings::removePage (PreferencesPage * page) {
         }
 }
 
+static void selectItem(QButtonGroup* group, int id) {
+    const QList<QAbstractButton *> buttons = group->buttons();
+    for (int i = 0; i < buttons.size(); ++i)
+        buttons[i]->setChecked(group->id(buttons[i]) == id);
+}
+
 void Settings::show (const char * pagename) {
     bool created = createDialog ();
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
     configdialog->m_GeneralPageGeneral->autoResize->setChecked (autoresize);
-    configdialog->m_GeneralPageGeneral->sizesChoice->setButton (remembersize ? 0 : 1);
+    configdialog->m_GeneralPageGeneral->sizesChoice->button(0)->setChecked(!remembersize);
+    configdialog->m_GeneralPageGeneral->sizesChoice->button(1)->setChecked(remembersize);
     configdialog->m_GeneralPageGeneral->dockSysTray->setChecked (docksystray);
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
     configdialog->m_GeneralPageGeneral->framedrop->setChecked (framedrop);
@@ -454,16 +459,16 @@ void Settings::show (const char * pagename) {
     configdialog->m_SourcePageURL->prefBitRate->setText (QString::number (prefbitrate));
     configdialog->m_SourcePageURL->maxBitRate->setText (QString::number (maxbitrate));
 
-    configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
-    configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
-    configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (backends["urlsource"]));
+    configdialog->m_GeneralPageOutput->videoDriver->setCurrentRow(videodriver);
+    configdialog->m_GeneralPageOutput->audioDriver->setCurrentRow(audiodriver);
+    //configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (backends["urlsource"]));
     int id = 0;
     const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
     for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().constBegin(); i != e; ++i) {
         ProcessInfo *p = i.value ();
         if (p->supports ("urlsource")) {
             if (backends["urlsource"] == QString (p->name))
-                configdialog->m_SourcePageURL->backend->setCurrentItem (id);
+                configdialog->m_SourcePageURL->backend->setCurrentRow(id);
             id++;
         }
     }
@@ -503,13 +508,13 @@ void Settings::show (const char * pagename) {
     configdialog->m_OPPagePostproc->FfmpegDeinterlacer->setChecked (pp_ffmpeg_int);
     // recording
     configdialog->m_RecordPage->url->lineEdit()->setText (recordfile);
-    configdialog->m_RecordPage->replay->setButton (int (replayoption));
-    configdialog->m_RecordPage->recorder->setButton (int (recorder));
+    selectItem(configdialog->m_RecordPage->replay, int (replayoption));
+    selectItem(configdialog->m_RecordPage->recorder, int (recorder));
     configdialog->m_RecordPage->replayClicked (int (replayoption));
     configdialog->m_RecordPage->recorderClicked (int (recorder));
     configdialog->m_RecordPage->replaytime->setValue (replaytime);
     configdialog->m_MEncoderPage->arguments->setText (mencoderarguments);
-    configdialog->m_MEncoderPage->format->setButton (recordcopy ? 0 : 1);
+    selectItem(configdialog->m_MEncoderPage->format, recordcopy ? 0 : 1);
     configdialog->m_MEncoderPage->formatClicked (recordcopy ? 0 : 1);
     configdialog->m_FFMpegPage->arguments->setText (ffmpegarguments);
 
@@ -674,7 +679,7 @@ void Settings::okPressed () {
     maxbitrate = configdialog->m_SourcePageURL->maxBitRate->text ().toInt ();
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
     autoresize = configdialog->m_GeneralPageGeneral->autoResize->isChecked ();
-    remembersize=!configdialog->m_GeneralPageGeneral->sizesChoice->selectedId();
+    remembersize= configdialog->m_GeneralPageGeneral->sizesChoice->checkedId();
     docksystray = configdialog->m_GeneralPageGeneral->dockSysTray->isChecked ();
     loop = configdialog->m_GeneralPageGeneral->loop->isChecked ();
     framedrop = configdialog->m_GeneralPageGeneral->framedrop->isChecked ();
@@ -686,9 +691,9 @@ void Settings::okPressed () {
     showbroadcastbutton = configdialog->m_GeneralPageGeneral->showBroadcastButton->isChecked ();
     seektime = configdialog->m_GeneralPageGeneral->seekTime->value();
 
-    videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
-    audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
-    QString backend_name = configdialog->m_SourcePageURL->backend->currentText ();
+    videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentRow();
+    audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentRow();
+    QString backend_name = configdialog->m_SourcePageURL->backend->currentItem()->text();
     if (!backend_name.isEmpty ()) {
         const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
         for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().constBegin(); i != e; ++i) {
@@ -734,20 +739,12 @@ void Settings::okPressed () {
     pp_med_int = configdialog->m_OPPagePostproc->MedianDeinterlacer->isChecked();
     pp_ffmpeg_int = configdialog->m_OPPagePostproc->FfmpegDeinterlacer->isChecked();
     // recording
-#if (QT_VERSION < 0x030200)
-    recorder = Recorder (configdialog->m_RecordPage->recorder->id (configdialog->m_RecordPage->recorder->selected ()));
-#else
-    recorder = Recorder (configdialog->m_RecordPage->recorder->selectedId ());
-#endif
+    recorder = Recorder (configdialog->m_RecordPage->recorder->checkedId());
     replaytime = configdialog->m_RecordPage->replaytime->value ();
     recordfile = configdialog->m_RecordPage->url->lineEdit()->text ();
     mencoderarguments = configdialog->m_MEncoderPage->arguments->text ();
     ffmpegarguments = configdialog->m_FFMpegPage->arguments->text ();
-#if (QT_VERSION < 0x030200)
-    recordcopy = !configdialog->m_MEncoderPage->format->id (configdialog->m_MEncoderPage->format->selected ());
-#else
-    recordcopy = !configdialog->m_MEncoderPage->format->selectedId ();
-#endif
+    recordcopy = !configdialog->m_MEncoderPage->format->checkedId();
 
     //dynamic stuff
     for (PreferencesPage * p = pagelist; p; p = p->next)

@@ -120,9 +120,9 @@ KDE_NO_CDTOR_EXPORT TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodeP
     QPushButton * delButton = new QPushButton (i18n ("Delete"), this);
     connect (delButton, SIGNAL (clicked ()), this, SLOT (slotDelete ()));
     gridlayout->addWidget (audioLabel, 0, 0);
-    gridlayout->addMultiCellWidget (audiodevice, 0, 0, 1, 3);
+    gridlayout->addWidget (audiodevice, 0, 0, 1, 3);
     gridlayout->addWidget (nameLabel, 1, 0);
-    gridlayout->addMultiCellWidget (name, 1, 1, 1, 3);
+    gridlayout->addWidget (name, 1, 1, 1, 3);
     gridlayout->addWidget (sizewidthLabel, 2, 0);
     gridlayout->addWidget (sizewidth, 2, 1);
     gridlayout->addWidget (sizeheightLabel, 2, 2);
