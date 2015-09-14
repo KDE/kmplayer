@@ -35,20 +35,6 @@ class QMenu;
 class QCheckBox;
 
 /*
- * Base class for sources having a sub menu in the application
- */
-class KMPLAYER_NO_EXPORT KMPlayerMenuSource : public KMPlayer::Source {
-    Q_OBJECT
-public:
-    KMPlayerMenuSource (const QString & n, KMPlayerApp * app, QMenu * m, const char * src);
-    virtual ~KMPlayerMenuSource ();
-protected:
-    void menuItemClicked (QMenu * menu, int id);
-    QMenu * m_menu;
-    KMPlayerApp * m_app;
-};
-
-/*
  * Preference page for DVD
  */
 class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageDVD : public QFrame {
@@ -64,10 +50,10 @@ public:
 /*
  * Source from DVD
  */
-class KMPLAYER_NO_EXPORT KMPlayerDVDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
+class KMPLAYER_NO_EXPORT KMPlayerDVDSource : public KMPlayer::Source, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
-    KMPlayerDVDSource (KMPlayerApp * app, QMenu * m);
+    KMPlayerDVDSource(KMPlayerApp* app);
     virtual ~KMPlayerDVDSource ();
     virtual bool processOutput (const QString & line);
     virtual QString filterOptions ();
@@ -84,10 +70,7 @@ public:
 private:
     void setCurrent (KMPlayer::Mrl *);
     void play (KMPlayer::Mrl *);
-    QMenu * m_dvdtitlemenu;
-    QMenu * m_dvdchaptermenu;
-    QMenu * m_dvdlanguagemenu;
-    QMenu * m_dvdsubtitlemenu;
+    KMPlayerApp* m_app;
     KMPlayer::NodePtr disks;
     KMPlayerPrefSourcePageDVD * m_configpage;
     int m_current_title;
@@ -111,10 +94,10 @@ public:
 /*
  * Source from VCD
  */
-class KMPLAYER_NO_EXPORT KMPlayerVCDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
+class KMPLAYER_NO_EXPORT KMPlayerVCDSource : public KMPlayer::Source, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
-    KMPlayerVCDSource (KMPlayerApp * app, QMenu * m);
+    KMPlayerVCDSource(KMPlayerApp* app);
     virtual ~KMPlayerVCDSource ();
     virtual bool processOutput (const QString & line);
     virtual void setIdentified (bool b = true);
@@ -128,6 +111,7 @@ public:
     virtual void deactivate ();
 private:
     void setCurrent (KMPlayer::Mrl *);
+    KMPlayerApp* m_app;
     KMPlayerPrefSourcePageVCD * m_configpage;
     bool m_start_play;
 };
@@ -136,10 +120,10 @@ private:
 /*
  * Source from AudoCD
  */
-class KMPLAYER_NO_EXPORT KMPlayerAudioCDSource : public KMPlayerMenuSource {
+class KMPLAYER_NO_EXPORT KMPlayerAudioCDSource : public KMPlayer::Source {
     Q_OBJECT
 public:
-    KMPlayerAudioCDSource (KMPlayerApp * app, QMenu * m);
+    KMPlayerAudioCDSource(KMPlayerApp* app);
     virtual ~KMPlayerAudioCDSource ();
     virtual bool processOutput (const QString & line);
     virtual void setIdentified (bool b = true);
@@ -148,6 +132,7 @@ public:
     virtual void deactivate ();
 private:
     void setCurrent (KMPlayer::Mrl *);
+    KMPlayerApp* m_app;
 };
 
 

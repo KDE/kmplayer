@@ -131,7 +131,6 @@ private slots:
 
 private:
     void aboutToCloseWindow ();
-    void menuItemClicked (QMenu * menu, int id);
     void minimalMode (bool deco=true);
     KSystemTrayIcon *m_systray;
     KMPlayer::PartBase * m_player;
@@ -142,6 +141,10 @@ private:
     KMPlayer::NodePtrW current_generator;
     KMPlayer::NodeStoreList generators;
 
+    QAction * dropAdd;
+    QAction * dropAddGroup;
+    QAction * dropCopy;
+    QAction * dropDelete;
     QAction * fileNewWindow;
     QAction * fileOpen;
     KRecentFilesAction * fileOpenRecent;
@@ -158,11 +161,6 @@ private:
     KAction * viewMenuBar;
     KAction * viewKeepRatio;
     QMenuItem * m_sourcemenu;
-    QMenu * m_dvdmenu;
-    QMenu * m_dvdnavmenu;
-    QMenu * m_vcdmenu;
-    QMenu * m_audiocdmenu;
-    QMenu * m_tvmenu;
     QMenu * m_dropmenu;
     QMenu * m_generatormenu;
     KMPlayerFFServerConfig * m_ffserverconfig;

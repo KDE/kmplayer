@@ -34,6 +34,7 @@
 #include <qtimer.h>
 #include <qfile.h>
 #include <qmetaobject.h>
+#include <QDropEvent>
 #include <QLabel>
 #include <QDockWidget>
 
@@ -88,11 +89,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
       m_systray (0L),
       m_player (new KMPlayer::PartBase (this, 0L, KGlobal::config ())),
       m_view (static_cast <KMPlayer::View*> (m_player->view())),
-      m_dvdmenu (new QMenu (this)),
-      m_dvdnavmenu (new QMenu (this)),
-      m_vcdmenu (new QMenu (this)),
-      m_audiocdmenu (new QMenu (this)),
-      m_tvmenu (new QMenu (this)),
       //m_ffserverconfig (new KMPlayerFFServerConfig),
       //m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig)),
       edit_tree_id (-1),
@@ -111,11 +107,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
     //    new XvProcessInfo (m_player->mediaManager ());
     ListsSource * lstsrc = new ListsSource (m_player);
     m_player->sources () ["listssource"] = lstsrc;
-    m_player->sources () ["dvdsource"] = new ::KMPlayerDVDSource(this, m_dvdmenu);
-    m_player->sources () ["vcdsource"] = new KMPlayerVCDSource(this, m_vcdmenu);
-    m_player->sources () ["audiocdsource"] = new KMPlayerAudioCDSource (this, m_audiocdmenu);
+    m_player->sources () ["dvdsource"] = new ::KMPlayerDVDSource(this);
+    m_player->sources () ["vcdsource"] = new KMPlayerVCDSource(this);
+    m_player->sources () ["audiocdsource"] = new KMPlayerAudioCDSource(this);
     m_player->sources () ["pipesource"] = new KMPlayerPipeSource (this);
-    m_player->sources () ["tvsource"] = new KMPlayerTVSource (this, m_tvmenu);
+    m_player->sources () ["tvsource"] = new KMPlayerTVSource(this);
     //m_player->sources () ["vdrsource"] = new KMPlayerVDRSource (this);
     m_player->setSource (m_player->sources () ["urlsource"]);
     initActions();
@@ -257,27 +253,6 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
         m_player->createBookmarkMenu (bookmark_menu, actionCollection ());
     }
 
-    /*QMenu *bookmarkmenu = m_view->controlPanel()->bookmarkMenu;
-    m_view->controlPanel()->bookmarkAction->setVisible (false);
-    menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);
-    m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
-    m_sourcemenu->setText (i18n ("S&ource"));
-    m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("dvd_mount"), K3Icon::Small, 0, true), i18n ("&DVD"), m_dvdmenu, -1, 5);
-    m_dvdmenu->clear ();
-#ifdef KMPLAYER_WITH_XINE
-    m_dvdnavmenu->clear ();
-    m_dvdnavmenu->insertItem (i18n ("&Start"), this, SLOT (dvdNav ()));
-    m_dvdmenu->insertItem (i18n ("&DVD Navigator"), m_dvdnavmenu, -1, 1);
-    m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()), 0,-1, 2);
-#else
-    m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()), 0,-1, 1);
-#endif
-    m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("cdrom_mount"), K3Icon::Small, 0, true), i18n ("V&CD"), m_vcdmenu, -1, 6);
-    m_vcdmenu->clear ();
-    m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("video-television"), K3Icon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 8);
-    m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
-    m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("cdrom_mount"), K3Icon::Small, 0, true), i18n ("&Audio CD"), m_audiocdmenu, -1, 7);
-    m_audiocdmenu->insertItem (i18n ("&Open Audio CD"), this, SLOT(openAudioCD ()), 0,-1, 1);*/
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initView () {
@@ -318,18 +293,18 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
             this, SLOT (playListItemDropped (QDropEvent *, KMPlayer::PlayItem *)));
     connect (m_view->playList(), SIGNAL (prepareMenu (KMPlayer::PlayItem *, QMenu *)), this, SLOT (preparePlaylistMenu (KMPlayer::PlayItem *, QMenu *)));
     m_dropmenu = new QMenu (m_view->playList ());
-    m_dropmenu->insertItem (KIcon ("view-media-playlist"),
-                i18n ("&Add to list"), this, SLOT (menuDropInList ()), 0, 0);
-    m_dropmenu->insertItem (KIcon ("folder-grey"),
-        i18n ("Add in new &Group"), this, SLOT (menuDropInGroup ()), 0, 1);
-    m_dropmenu->insertItem (KIcon ("edit-copy"),
-            i18n ("&Copy here"), this, SLOT (menuCopyDrop ()), 0, 2);
-    m_dropmenu->insertItem (KIcon ("edit-delete"),
-            i18n ("&Delete"), this, SLOT (menuDeleteNode ()), 0, 3);
+    dropAdd = m_dropmenu->addAction(KIcon ("view-media-playlist"),
+                i18n ("&Add to list"), this, SLOT (menuDropInList ()));
+    dropAddGroup = m_dropmenu->addAction(KIcon ("folder-grey"),
+        i18n ("Add in new &Group"), this, SLOT (menuDropInGroup ()));
+    dropCopy = m_dropmenu->addAction(KIcon ("edit-copy"),
+            i18n ("&Copy here"), this, SLOT (menuCopyDrop ()));
+    dropDelete = m_dropmenu->addAction(KIcon ("edit-delete"),
+            i18n ("&Delete"), this, SLOT (menuDeleteNode ()));
     /*QMenu * viewmenu = new QMenu;
-    viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
+    viewmenu->addAction(i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
-    menuBar ()->insertItem (i18n ("&View"), viewmenu, -1, 2);*/
+    menuBar ()->addAction(i18n ("&View"), viewmenu, -1, 2);*/
     //toolBar("mainToolBar")->hide();
     setAcceptDrops (true);
 }
@@ -584,12 +559,12 @@ KDE_NO_EXPORT void IntroSource::activate () {
     m_document = new KMPlayer::SourceDocument (this, QString ());
     QString introfile = KStandardDirs::locate ("data", "kmplayer/intro.xml");
     QFile file (introfile);
-    if (file.exists () && file.open (IO_ReadOnly)) {
+    if (file.exists () && file.open(QIODevice::ReadOnly)) {
         QTextStream ts (&file);
         KMPlayer::readXML (m_document, ts, QString (), false);
     } else {
         QString buf;
-        QTextOStream out (&buf);
+        QTextStream out(&buf, QIODevice::WriteOnly);
         out << "<smil><head><layout>"
             "<root-layout width='320' height='240' background-color='black'/>"
             "<region id='stage1' left='16' top='12' width='288' height='216'/>"
@@ -643,7 +618,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
             "'/></par><seq begin='stage1.activateEvent'/>"
             "</excl></body></smil>";
 
-        QTextStream ts (&buf, QIODevice::ReadOnly);
+        QTextStream ts(&buf, QIODevice::ReadOnly);
         KMPlayer::readXML (m_document, ts, QString (), false);
     }
     //m_document->normalize ();
@@ -817,7 +792,7 @@ KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
         KMPlayer::PlayItem *si = m_view->playList()->selectedItem();
         if (si && si->node) {
             si->node->clearChildren ();
-            QString txt = m_view->infoPanel ()->text ();
+            QString txt = m_view->infoPanel ()->toPlainText();
             QTextStream ts (&txt, QIODevice::ReadOnly);
             KMPlayer::readXML (si->node, ts, QString (), false);
             m_player->playModel()->updateTree (edit_tree_id, si->node->document(), si->node, true, false);
@@ -986,7 +961,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
     m_document = new KMPlayer::SourceDocument (this, QString ());
     QString exitfile = KStandardDirs::locate ("data", "kmplayer/exit.xml");
     QFile file (exitfile);
-    if (file.exists () && file.open (IO_ReadOnly)) {
+    if (file.exists () && file.open (QIODevice::ReadOnly)) {
         QTextStream ts (&file);
         KMPlayer::readXML (m_document, ts, QString (), false);
     } else {
@@ -1093,7 +1068,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
     QString url = KFileDialog::getSaveFileName (QString (), QString (), this, i18n ("Save File"));
     if (!url.isEmpty ()) {
         QFile file (url);
-        if (!file.open (IO_WriteOnly | QIODevice::Truncate)) {
+        if (!file.open (QIODevice::WriteOnly | QIODevice::Truncate)) {
             KMessageBox::error (this, i18n ("Error opening file %1.\n%2.",url,file.errorString ()), i18n("Error"));
             return;
         }
@@ -1101,7 +1076,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
             KMPlayer::NodePtr doc = m_player->source ()->document ();
             if (doc) {
                 QTextStream ts (&file);
-                ts.setEncoding (QTextStream::UnicodeUTF8);
+                ts.setCodec("UTF-8");
                 ts << QString ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
                 if (doc->childNodes ().length () == 1)
                     ts << doc->innerXML ();
@@ -1234,7 +1209,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotViewMenuBar() {
 
 KDE_NO_EXPORT void KMPlayerApp::slotStatusMsg (const QString &text) {
     KStatusBar * sb = statusBar ();
-    sb->clear ();
+    sb->clearMessage();
     sb->changeItem (text, id_status_msg);
 }
 
@@ -1304,10 +1279,9 @@ void KMPlayerApp::playListItemDropped (QDropEvent *de, KMPlayer::PlayItem *item)
         if (after_node->id == KMPlayer::id_node_playlist_document ||
                 after_node->id == KMPlayer::id_node_group_node)
             after_node->defer (); // make sure it has loaded
-        m_dropmenu->changeItem (m_dropmenu->idAt (0),
-                !!manip_node ? i18n ("Move here") : i18n ("&Add to list"));
-        m_dropmenu->setItemVisible (m_dropmenu->idAt (3), !!manip_node);
-        m_dropmenu->setItemVisible (m_dropmenu->idAt (2), (manip_node && manip_node->isPlayable ()));
+        dropAdd->setText(!!manip_node ? i18n ("Move here") : i18n ("&Add to list"));
+        dropDelete->setVisible(!!manip_node);
+        dropCopy->setVisible(manip_node && manip_node->isPlayable ());
         if (manip_node || m_drop_list.size () > 0)
             m_dropmenu->exec (m_view->playList ()->mapToGlobal (de->pos ()));
     }
@@ -1375,7 +1349,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDeleteNode () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuMoveUpNode () {
-    KMPlayer::Node *n = manip_node.ptr ();
+    KMPlayer::NodePtr n = manip_node.ptr ();
     if (n && n->parentNode () && n->previousSibling ()) {
         KMPlayer::Node *prev = n->previousSibling ();
         n->parentNode ()->removeChild (n);
@@ -1385,7 +1359,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuMoveUpNode () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuMoveDownNode () {
-    KMPlayer::Node *n = manip_node.ptr ();
+    KMPlayer::NodePtr n = manip_node.ptr ();
     if (n && n->parentNode () && n->nextSibling ()) {
         KMPlayer::Node *next = n->nextSibling ();
         n->parentNode ()->removeChild (n);
@@ -1412,15 +1386,15 @@ KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayItem * item, 
     if (item->node &&
         ri->item_flags & (KMPlayer::PlayModel::Moveable | KMPlayer::PlayModel::Deleteable)) {
         manip_tree_id = ri->id;
-        pm->insertSeparator ();
+        pm->addSeparator();
         manip_node = item->node;
         if (ri->item_flags & KMPlayer::PlayModel::Deleteable)
-            pm->insertItem (KIcon ("edit-delete"), i18n ("&Delete item"), this, SLOT (menuDeleteNode ()));
+            pm->addAction(KIcon("edit-delete"), i18n("&Delete item"), this, SLOT(menuDeleteNode()));
         if (ri->item_flags & KMPlayer::PlayModel::Moveable) {
             if (manip_node->previousSibling ())
-                pm->insertItem (KIcon ("go-up"), i18n ("&Move up"), this, SLOT (menuMoveUpNode ()));
+                pm->addAction(KIcon("go-up"), i18n("&Move up"), this, SLOT(menuMoveUpNode()));
             if (manip_node->nextSibling ())
-                pm->insertItem (KIcon ("go-down"), i18n ("Move &down"), this, SLOT (menuMoveDownNode ()));
+                pm->addAction(KIcon("go-down"), i18n("Move &down"), this, SLOT(menuMoveDownNode()));
         }
     }
 }
@@ -1439,7 +1413,6 @@ KDE_NO_EXPORT void KMPlayerApp::configChanged () {
     else if (!m_player->settings ()->autoresize && m_auto_resize)
         disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
     m_auto_resize = m_player->settings ()->autoresize;
-    static_cast <KMPlayerTVSource *> (m_player->sources () ["tvsource"])->buildMenu ();
 }
 
 KDE_NO_EXPORT void KMPlayerApp::keepSizeRatio () {
@@ -1450,42 +1423,20 @@ KDE_NO_EXPORT void KMPlayerApp::keepSizeRatio () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerMenuSource::KMPlayerMenuSource (const QString & n, KMPlayerApp * a, QMenu * m, const char * src)
-    : KMPlayer::Source (n, a->player (), src), m_menu (m), m_app (a) {
-}
-
-KDE_NO_CDTOR_EXPORT KMPlayerMenuSource::~KMPlayerMenuSource () {
-}
-
-KDE_NO_EXPORT void KMPlayerMenuSource::menuItemClicked (QMenu * menu, int id) {
-    int unsetmenuid = -1;
-    for (unsigned i = 0; i < menu->count(); i++) {
-        int menuid = menu->idAt (i);
-        if (menu->isItemChecked (menuid)) {
-            menu->setItemChecked (menuid, false);
-            unsetmenuid = menuid;
-            break;
-        }
-    }
-    if (unsetmenuid != id)
-        menu->setItemChecked (id, true);
-}
-
-//-----------------------------------------------------------------------------
-
 KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidget * parent)
  : QFrame(parent) {
-    QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
-    autoPlayDVD = new QCheckBox (i18n ("Auto play after opening DVD"), this, 0);
-    QWhatsThis::add(autoPlayDVD, i18n ("Start playing DVD right after opening DVD"));
-    QLabel *dvdDevicePathLabel = new QLabel (i18n("DVD device:"), this, 0);
-    dvddevice = new KUrlRequester (KUrl ("/dev/dvd"), this);
-    QWhatsThis::add(dvddevice, i18n ("Path to your DVD device, you must have read rights to this device"));
+    QVBoxLayout *layout = new QVBoxLayout;
+    autoPlayDVD = new QCheckBox (i18n ("Auto play after opening DVD"));
+    autoPlayDVD->setWhatsThis(i18n("Start playing DVD right after opening DVD"));
+    QLabel *dvdDevicePathLabel = new QLabel (i18n("DVD device:"));
+    dvddevice = new KUrlRequester (KUrl ("/dev/dvd"));
+    dvddevice->setWhatsThis(i18n("Path to your DVD device, you must have read rights to this device"));
     layout->addWidget (autoPlayDVD);
     layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
     layout->addWidget (dvdDevicePathLabel);
     layout->addWidget (dvddevice);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    setLayout(layout);
 }
 
 //-----------------------------------------------------------------------------
@@ -1537,9 +1488,8 @@ KDE_NO_EXPORT void Disk::activate () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QMenu * m)
-    : KMPlayerMenuSource (i18n ("DVD"), a, m, "dvdsource"), m_configpage (0L) {
-    m_menu->insertTearOffHandle ();
+KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource(KMPlayerApp* a)
+    : KMPlayer::Source(i18n ("DVD"), a->player(), "dvdsource"), m_app(a), m_configpage(0L) {
     // FIXME: these menus are void currently
     setUrl ("dvd://");
     m_player->settings ()->addPage (this);
@@ -1584,10 +1534,6 @@ KDE_NO_EXPORT void KMPlayerDVDSource::setIdentified (bool b) {
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::deactivate () {
-    if (m_player->view ()) {
-        m_menu->removeItemAt (m_menu->count () - 1);
-        m_menu->removeItemAt (m_menu->count () - 1);
-    }
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::setCurrent (KMPlayer::Mrl *cur) {
@@ -1613,7 +1559,7 @@ KDE_NO_EXPORT QString KMPlayerDVDSource::filterOptions () {
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::play (KMPlayer::Mrl *mrl) {
-        KMPlayerMenuSource::play (mrl);
+    KMPlayer::Source::play (mrl);
 }
 
 KDE_NO_EXPORT QString KMPlayerDVDSource::prettyName () {
@@ -1655,23 +1601,24 @@ KDE_NO_EXPORT QFrame * KMPlayerDVDSource::prefPage (QWidget * parent) {
 
 KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidget * parent)
  : QFrame (parent) {
-     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
-     autoPlayVCD = new QCheckBox (i18n ("Auto play after opening a VCD"), this, 0);
-     QWhatsThis::add(autoPlayVCD, i18n ("Start playing VCD right after opening VCD"));
-     QLabel *vcdDevicePathLabel = new QLabel (i18n ("VCD (CDROM) device:"), this, 0);
-     vcddevice= new KUrlRequester (KUrl ("/dev/cdrom"), this);
-     QWhatsThis::add(vcddevice, i18n ("Path to your CDROM/DVD device, you must have read rights to this device"));
+     QVBoxLayout *layout = new QVBoxLayout;
+     autoPlayVCD = new QCheckBox (i18n ("Auto play after opening a VCD"));
+     autoPlayVCD->setWhatsThis(i18n("Start playing VCD right after opening VCD"));
+     QLabel *vcdDevicePathLabel = new QLabel (i18n ("VCD (CDROM) device:"));
+     vcddevice= new KUrlRequester (KUrl ("/dev/cdrom"));
+     vcddevice->setWhatsThis(i18n("Path to your CDROM/DVD device, you must have read rights to this device"));
      layout->addWidget (autoPlayVCD);
      layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
      layout->addWidget (vcdDevicePathLabel);
      layout->addWidget (vcddevice);
      layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+     setLayout(layout);
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QMenu * m)
-    : KMPlayerMenuSource (i18n ("VCD"), a, m, "vcdsource"), m_configpage (0L) {
+KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::KMPlayerVCDSource(KMPlayerApp* a)
+    : KMPlayer::Source(i18n("VCD"), a->player(), "vcdsource"), m_app(a), m_configpage(0L) {
     m_player->settings ()->addPage (this);
     setUrl ("vcd://");
 }
@@ -1687,7 +1634,7 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
     //kDebug () << "scanning " << cstr;
     QRegExp * patterns = static_cast <KMPlayer::MPlayerPreferencesPage *> (m_player->mediaManager ()->processInfos () ["mplayer"]->config_page)->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_vcdtrack];
-    if (trackRegExp.search (str) > -1) {
+    if (trackRegExp.indexIn(str) > -1) {
         m_document->state = KMPlayer::Element::state_deferred;
         m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("vcd://") + trackRegExp.cap (1), i18n ("Track ") + trackRegExp.cap (1)));
         kDebug () << "track " << trackRegExp.cap (1);
@@ -1766,8 +1713,8 @@ KDE_NO_EXPORT QFrame * KMPlayerVCDSource::prefPage (QWidget * parent) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerAudioCDSource::KMPlayerAudioCDSource (KMPlayerApp * a, QMenu * m)
-    : KMPlayerMenuSource (i18n ("Audio CD"), a, m, "audiocdsource") {
+KDE_NO_CDTOR_EXPORT KMPlayerAudioCDSource::KMPlayerAudioCDSource(KMPlayerApp* a)
+    : KMPlayer::Source(i18n("Audio CD"), a->player(), "audiocdsource"), m_app(a) {
     setUrl ("cdda://");
 }
 
@@ -1782,7 +1729,7 @@ KDE_NO_EXPORT bool KMPlayerAudioCDSource::processOutput (const QString & str) {
     //kDebug () << "scanning " << str;
     QRegExp * patterns = static_cast <KMPlayer::MPlayerPreferencesPage *> (m_player->mediaManager ()->processInfos () ["mplayer"]->config_page)->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_cdromtracks];
-    if (trackRegExp.search (str) > -1) {
+    if (trackRegExp.indexIn(str) > -1) {
         //if (m_document->state != KMPlayer::Element::state_deferred)
         //    m_document->defer ();
         int nt = trackRegExp.cap (1).toInt ();

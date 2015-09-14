@@ -13,7 +13,7 @@ IF (KMPLAYER_WITH_CAIRO)
     MESSAGE("have cairo cflags:${optionalCFlags} ldflags:${optionalLinkFlags}")
 endif (KMPLAYER_WITH_CAIRO)
 
-add_definitions(-DQT3_SUPPORT -DKMPLAYER_VERSION_STRING="\\\"${KMPLAYER_VERSION_STRING}\\\"")
+add_definitions(-DKMPLAYER_VERSION_STRING="\\\"${KMPLAYER_VERSION_STRING}\\\"")
 
 ADD_DEFINITIONS(${CAIROCFlags})
 
@@ -71,7 +71,6 @@ target_link_libraries(kmplayercommon
   ${GLibDBusLinkFlags}
   ${KDE4_KPARTS_LIBS}
   ${KDE4_KDEUI_LIBS}
-  ${QT_QT3SUPPORT_LIBRARY}
   ${X11_X11_LIB}
   ${EXPAT_LIBRARIES}
   ${KDE4_SOLID_LIBS}
@@ -91,7 +90,6 @@ target_link_libraries(kmplayerpart
   ${KDE4_TARGET_PREFIX}kmediaplayer
   ${KDE4_KPARTS_LIBS}
   ${KDE4_KDEUI_LIBS}
-  ${QT_QT3SUPPORT_LIBRARY}
 )
 
 install(TARGETS kmplayerpart DESTINATION ${PLUGIN_INSTALL_DIR} )
@@ -115,7 +113,6 @@ target_link_libraries(kdeinit_kmplayer
   kmplayercommon
   ${KDE4_KPARTS_LIBS}
   ${KDE4_KDEUI_LIBS}
-  ${QT_QT3SUPPORT_LIBRARY}
 )
 
 target_link_libraries(kmplayer kdeinit_kmplayer)
@@ -165,7 +162,6 @@ kde4_add_executable(kphononplayer ${kphononplayer_SRCS})
 
 target_link_libraries(kphononplayer
   ${KDE4_KDEUI_LIBS}
-  ${QT_QT3SUPPORT_LIBRARY}
   ${KDE4_PHONON_LIBS}
 )
 
