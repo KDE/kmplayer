@@ -26,7 +26,6 @@
 
 #include "kmplayer_def.h"
 #include "kmplayerplaylist.h"
-#include "kmplayersource.h"
 #include "kmplayerpartbase.h"
 
 static const short id_node_recent_document = 31;

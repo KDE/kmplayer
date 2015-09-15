@@ -21,7 +21,8 @@
 #define KMPLAYER_VIEW_AREA_H
 
 #include <qwidget.h>
-#include <QtGui/QX11EmbedContainer>
+//#include <QX11EmbedContainer>
+typedef QWidget QX11EmbedContainer;
 #include <QList>
 
 #include "mediaobject.h"
@@ -29,6 +30,7 @@
 
 class QPaintEngine;
 class KActionCollection;
+typedef union _XEvent XEvent;
 
 namespace KMPlayer {
 
@@ -130,6 +132,9 @@ public:
     void resetBackgroundColor ();
     void setCurrentBackgroundColor (const QColor & c);
     KDE_NO_EXPORT View * view () const { return m_view; }
+
+    WindowId clientWinId() { return m_plain_window; }
+    void discardClient() {}
 public slots:
     void sendConfigureEvent ();
     void embedded ();

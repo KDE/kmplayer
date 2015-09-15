@@ -45,15 +45,16 @@
 #include <kbookmark.h>
 #include <kconfig.h>
 #include <kconfiggroup.h>
+#include <kiconloader.h>
+#include <klocale.h>
 #include <ksimpleconfig.h>
 #include <kaction.h>
 #include <kstandarddirs.h>
 #include <kmimetype.h>
 #include <kprotocolinfo.h>
-#include <kauthorized.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
-#include <kauthorized.h>
+#include <kurlauthorized.h>
 
 #include "kmplayerpartbase.h"
 #include "kmplayerview.h"
@@ -152,7 +153,7 @@ KDE_NO_EXPORT void PartBase::showPlayListWindow () {
 
 KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url) {
     KBookmarkGroup b = m_bookmark_manager->root ();
-    b.addBookmark (t, KUrl (url));
+    b.addBookmark (t, KUrl (url), KIO::iconNameForUrl(url));
     m_bookmark_manager->emitChanged (b);
 }
 
@@ -1570,7 +1571,7 @@ bool URLSource::authoriseUrl (const QString &url) {
 #else
             dest.isLocalFile () &&
 #endif
-                !KAuthorized::authorizeUrlAction ("redirect", base, dest)) {
+                !KUrlAuthorized::authorizeUrlAction ("redirect", base, dest)) {
             kWarning () << "requestPlayURL from document " << base << " to play " << dest << " is not allowed";
             return false;
         }
@@ -1591,4 +1592,3 @@ void URLSource::setUrl (const QString &url) {
 //-----------------------------------------------------------------------------
 
 #include "kmplayerpartbase.moc"
-#include "kmplayersource.moc"

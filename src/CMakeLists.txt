@@ -43,22 +43,22 @@ set(libkmplayercommon_SRCS
   viewarea.cpp
 )
 
-qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.master.xml
+qt5_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.master.xml
     ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::MasterProcessInfo)
-qt4_add_dbus_adaptor(libkmplayercommon_SRCS
+qt5_add_dbus_adaptor(libkmplayercommon_SRCS
     org.kde.kmplayer.streammaster.xml
     ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::MasterProcess)
-qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.part.xml
+qt5_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.part.xml
     ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerpartbase.h KMPlayer::PartBase)
 
 if (KMPLAYER_WITH_NPP)
-    qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.callback.xml
+    qt5_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.callback.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::NpPlayer)
-    qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.stream.xml
+    qt5_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.stream.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::NpStream)
 endif (KMPLAYER_WITH_NPP)
 
-kde4_add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
+add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
 
 MESSAGE("extra ${CAIROCflags} ${GLibDBusCflags}  libs ${CAIROLinkFlags} ${GLibDBusLinkFlags}")
 
@@ -69,12 +69,13 @@ target_link_libraries(kmplayercommon
    LINK_PRIVATE
   ${CAIROLinkFlags}
   ${GLibDBusLinkFlags}
-  ${KDE4_KPARTS_LIBS}
-  ${KDE4_KDEUI_LIBS}
-  ${X11_X11_LIB}
+  KF5::KDELibs4Support
+  KF5::Parts
+  ${X11_LIBRARIES}
   ${EXPAT_LIBRARIES}
-  ${KDE4_SOLID_LIBS}
-  ${KDE4_TARGET_PREFIX}kmediaplayer
+  KF5::MediaPlayer
+  Qt5::Svg
+  Qt5::X11Extras
 )
 
 install(TARGETS kmplayercommon ${INSTALL_TARGETS_DEFAULT_ARGS} )
@@ -83,13 +84,13 @@ install(TARGETS kmplayercommon ${INSTALL_TARGETS_DEFAULT_ARGS} )
 
 set(kmplayerpart_SRCS kmplayer_part.cpp)
 
-kde4_add_plugin(kmplayerpart WITH_PREFIX ${kmplayerpart_SRCS})
+add_library(kmplayerpart MODULE ${kmplayerpart_SRCS})
 
 target_link_libraries(kmplayerpart
   kmplayercommon
-  ${KDE4_TARGET_PREFIX}kmediaplayer
-  ${KDE4_KPARTS_LIBS}
-  ${KDE4_KDEUI_LIBS}
+  KF5::MediaPlayer
+  KF5::KDELibs4Support
+  KF5::Parts
 )
 
 install(TARGETS kmplayerpart DESTINATION ${PLUGIN_INSTALL_DIR} )
@@ -99,7 +100,7 @@ install( FILES kmplayer_part.desktop  DESTINATION  ${SERVICES_INSTALL_DIR} )
 ########### next target ###############
 
 set(kmplayer_SRCS
-  kmplayerapp.cpp
+  kmplayer.cpp
   kmplayer_lists.cpp
   kmplayertvsource.cpp
 )
@@ -107,12 +108,13 @@ set(kmplayer_SRCS
 #kmplayerbroadcast.cpp
 #kmplayervdr.cpp
 
-kde4_add_kdeinit_executable(kmplayer ${kmplayer_SRCS} main.cpp)
+kf5_add_kdeinit_executable(kmplayer ${kmplayer_SRCS} main.cpp)
 
 target_link_libraries(kdeinit_kmplayer
   kmplayercommon
-  ${KDE4_KPARTS_LIBS}
-  ${KDE4_KDEUI_LIBS}
+  KF5::MediaPlayer
+  KF5::KDELibs4Support
+  KF5::Parts
 )
 
 target_link_libraries(kmplayer kdeinit_kmplayer)
@@ -123,7 +125,7 @@ install(TARGETS kmplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 install(FILES kmplayer.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
 
-#qt4_add_dbus_interface(kmplayer_SRCS org.kde.Konqueror.Main.xml kmplayer_interface)
+#qt5_add_dbus_interface(kmplayer_SRCS org.kde.Konqueror.Main.xml kmplayer_interface)
 
 ########### next target ###############
 
@@ -149,23 +151,20 @@ endif (KMPLAYER_WITH_NPP)
 
 ########### next target ###############
 
-set(kphononplayer_SRCS
-  phononplayer.cpp
-)
-
-qt4_add_dbus_adaptor(kphononplayer_SRCS org.kde.kmplayer.slave.xml
-    ${CMAKE_CURRENT_SOURCE_DIR}/phononplayer.h Slave)
-qt4_add_dbus_adaptor(kphononplayer_SRCS org.kde.kmplayer.streamslave.xml
-    ${CMAKE_CURRENT_SOURCE_DIR}/phononplayer.h Stream)
-
-kde4_add_executable(kphononplayer ${kphononplayer_SRCS})
-
-target_link_libraries(kphononplayer
-  ${KDE4_KDEUI_LIBS}
-  ${KDE4_PHONON_LIBS}
-)
-
-install(TARGETS kphononplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
+#set(kphononplayer_SRCS
+#  phononplayer.cpp
+#)
+#
+#qt5_add_dbus_adaptor(kphononplayer_SRCS org.kde.kmplayer.slave.xml
+#    ${CMAKE_CURRENT_SOURCE_DIR}/phononplayer.h Slave)
+#qt5_add_dbus_adaptor(kphononplayer_SRCS org.kde.kmplayer.streamslave.xml
+#    ${CMAKE_CURRENT_SOURCE_DIR}/phononplayer.h Stream)
+#
+#add_executable(kphononplayer ${kphononplayer_SRCS})
+#
+#target_link_libraries(kphononplayer Phonon::phonon4qt5)
+#
+#install(TARGETS kphononplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 ########### install files ###############
 

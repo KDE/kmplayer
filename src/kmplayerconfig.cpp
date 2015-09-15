@@ -47,7 +47,6 @@
 #include <kglobalsettings.h>
 #include <kcolorscheme.h>
 
-#include "kmplayersource.h"
 #include "kmplayerconfig.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"

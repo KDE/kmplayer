@@ -20,8 +20,8 @@
 #define KMPLAYER_PART_H
 
 #include <kparts/browserextension.h>
+#include <kparts/liveconnectextension.h>
 #include "kmplayerpartbase.h"
-#include "kmplayersource.h"
 #include "config-kmplayer.h"
 
 

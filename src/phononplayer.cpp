@@ -19,13 +19,11 @@
 
 #include <sys/types.h>
 #include <unistd.h>
-#include <X11/Xlib.h>
-#include <fixx11h.h>
 
 #include "phononplayer.h"
 
-#include <QtGui/QApplication>
-#include <QtGui/QBoxLayout>
+#include <QApplication>
+#include <QBoxLayout>
 #include <QtDBus/QtDBus>
 #include <QtCore/QMap>
 #include <QtCore/QTimer>
@@ -38,6 +36,8 @@
 
 #include "slaveadaptor.h"
 #include "streamslaveadaptor.h"
+
+#include <X11/Xlib.h>
 
 static QString control_service;
 static QString control_path;

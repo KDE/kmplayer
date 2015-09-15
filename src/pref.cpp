@@ -39,6 +39,7 @@
 #include <qfont.h>
 #include <QAbstractButton>
 #include <QButtonGroup>
+#include <QGroupBox>
 #include <QListWidget>
 
 #include <klocale.h>
@@ -53,6 +54,7 @@
 #include <kcolorbutton.h>
 #include <kurlrequester.h>
 #include <kfontdialog.h>
+#include <KIcon>
 #include "pref.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
@@ -65,9 +67,9 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 : KPageDialog (player->view ())
 {
     setFaceType (KPageDialog::List);
-    setCaption (i18n ("Preferences"));
-    setButtons (KDialog::Ok | KDialog::Cancel | KDialog::Apply);
-    setDefaultButton (KDialog::Ok);
+    setWindowTitle(i18n("Preferences"));
+    setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Apply);
+    //setDefaultButton (KDialog::Ok);
 
     KVBox *page = new KVBox (this);
     KPageWidgetItem *item = addPage (page, i18n ("General Options"));

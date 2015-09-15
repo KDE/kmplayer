@@ -22,7 +22,8 @@
 
 #include <stdint.h>
 
-#include <QtGui/QX11EmbedWidget>
+//#include <QX11EmbedWidget>
+typedef QWidget QX11EmbedWidget;
 
 #include <phonon/phononnamespace.h>
 

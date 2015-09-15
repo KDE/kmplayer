@@ -30,11 +30,12 @@
 #include <QMetaObject>
 
 class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollection.h does not forward declare KXMLGUIClient
-#include <kaboutdata.h>
+#include <k4aboutdata.h>
 #include <kdebug.h>
 #include <kconfig.h>
 #include <kaction.h>
-#include <kauthorized.h>
+#include <kurlauthorized.h>
+#include <kiconloader.h>
 #include <klocale.h>
 #include <kparts/factory.h>
 #include <kstatusbar.h>
@@ -103,7 +104,7 @@ public:
     virtual KParts::Part *createPartObject (QWidget *wparent=NULL, QObject *parent=NULL,
          const char *className="KParts::Part", const QStringList &args=QStringList());
     static const KComponentData &componentData();
-    static KAboutData *aboutData ();
+    static K4AboutData *aboutData ();
 private:
     static KComponentData *s_instance;
 };
@@ -132,8 +133,8 @@ const KComponentData &KMPlayerFactory::componentData () {
     return *s_instance;
 }
 
-KAboutData *KMPlayerFactory::aboutData () {
-    KAboutData *about = new KAboutData("plugin", 0, ki18n("plugin"), "1.99");
+K4AboutData *KMPlayerFactory::aboutData () {
+    K4AboutData *about = new K4AboutData("plugin", 0, ki18n("plugin"), "1.99");
     return about;
 }
 
@@ -458,7 +459,7 @@ KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
 }
 
 KDE_NO_EXPORT bool KMPlayerPart::allowRedir (const KUrl & url) const {
-    return KAuthorized::authorizeUrlAction ("redirect", m_docbase, url);
+    return KUrlAuthorized::authorizeUrlAction ("redirect", m_docbase, url);
 }
 
 KDE_NO_EXPORT void KMPlayerPart::setAutoControls (bool b) {
@@ -541,7 +542,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
                 }
     }
     if (!m_href_url.isEmpty () &&
-            !KAuthorized::authorizeUrlAction (
+            !KUrlAuthorized::authorizeUrlAction (
                 "redirect", url, KUrl (m_docbase, m_href_url)))
            m_href_url.truncate (0);
     if (m_href_url.isEmpty ())

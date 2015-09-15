@@ -28,14 +28,14 @@
 #include <qmap.h>
 #include <QPalette>
 #include <QDesktopWidget>
-#include <QX11Info>
+#include <QtX11Extras/QX11Info>
 #include <QPainter>
 #include <QMainWindow>
 #include <QWidgetAction>
-#include <QtGui/QTextBlock>
-#include <QtGui/QTextDocument>
-#include <QtGui/QAbstractTextDocumentLayout>
-#include <QtGui/QImage>
+#include <QTextBlock>
+#include <QTextDocument>
+#include <QAbstractTextDocumentLayout>
+#include <QImage>
 
 #include <kactioncollection.h>
 #include <kapplication.h>
@@ -1793,7 +1793,7 @@ public:
         Display * display = QX11Info::display ();
         destroyBackingStore ();
         backing_store = XCreatePixmap (display,
-                m_view_area->winId (), w, h, QX11Info::appDepth ());
+                m_view_area->winId (), w, h, DefaultDepth(display, QX11Info::appScreen()));
         width = w;
         height = h;
         return cairo_xlib_surface_create (display, backing_store,
@@ -2283,8 +2283,8 @@ void ViewArea::setVideoWidgetVisible (bool show) {
         static_cast <VideoOutput *> (*it)->setVisible (show);
 }
 
-static void setXSelectInput (WId wid, long mask) {
-    WId r, p, *c;
+static void setXSelectInput (Window wid, long mask) {
+    Window r, p, *c;
     unsigned int nr;
     XSelectInput (QX11Info::display (), wid, mask);
     if (XQueryTree (QX11Info::display (), wid, &r, &p, &c, &nr)) {
@@ -2343,12 +2343,12 @@ bool ViewArea::x11Event (XEvent *xe) {
             if (!xe->xmap.override_redirect) {
                 const VideoWidgetList::iterator e = video_widgets.end ();
                 for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
-                    WId p = xe->xmap.event;
-                    WId w = xe->xmap.window;
-                    WId v = (*i)->clientHandle ();
-                    WId va = winId ();
-                    WId root = 0;
-                    WId *children;
+                    Window p = xe->xmap.event;
+                    Window w = xe->xmap.window;
+                    Window v = (*i)->clientHandle ();
+                    Window va = winId ();
+                    Window root = 0;
+                    Window *children;
                     unsigned int nr;
                     while (p != v &&
                             XQueryTree (QX11Info::display (), w, &root,
@@ -2550,7 +2550,7 @@ KDE_NO_EXPORT void VideoOutput::dragEnterEvent (QDragEnterEvent* dee) {
 /*
 */
 void VideoOutput::sendKeyEvent (int key) {
-    WId w = clientWinId ();
+    Window w = clientWinId ();
     if (w) {
         char buf[2] = { char (key), '\0' };
         KeySym keysym = XStringToKeysym (buf);
@@ -2566,7 +2566,7 @@ void VideoOutput::sendKeyEvent (int key) {
 }
 
 KDE_NO_EXPORT void VideoOutput::sendConfigureEvent () {
-    WId w = clientWinId ();
+    Window w = clientWinId ();
     kDebug() << "[01;35msendConfigureEvent[00m " << width ();
     if (w) {
         XConfigureEvent c = {
@@ -2599,7 +2599,7 @@ KDE_NO_EXPORT void VideoOutput::setCurrentBackgroundColor (const QColor & c) {
     QPalette palette;
     palette.setColor (backgroundRole(), c);
     setPalette (palette);
-    WId w = clientWinId ();
+    Window w = clientWinId ();
     if (w) {
         XSetWindowBackground (QX11Info::display (), w, c.rgb ());
         XFlush (QX11Info::display ());

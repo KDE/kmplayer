@@ -37,12 +37,14 @@
 #include <QDropEvent>
 #include <QLabel>
 #include <QDockWidget>
+#include <QtX11Extras/QX11Info>
 
 // include files for KDE
 #include <kapplication.h>
 #include <kdeversion.h>
 #include <kstandarddirs.h>
 #include <kiconloader.h>
+#include <kicon.h>
 #include <kmessagebox.h>
 #include <kfiledialog.h>
 #include <kinputdialog.h>
@@ -51,6 +53,7 @@
 #include <ktoolbar.h>
 #include <klocale.h>
 #include <kconfig.h>
+#include <kglobal.h>
 #include <kstandardaction.h>
 #include <kactioncollection.h>
 #include <kdebug.h>
@@ -75,7 +78,6 @@
 #include "kmplayercontrolpanel.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
-#include "kmplayerappsource.h"
 #include "kmplayertvsource.h"
 //#include "kmplayerbroadcast.h"
 //#include "kmplayervdr.h"
@@ -234,11 +236,11 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initStatusBar () {
-    KStatusBar *sb = statusBar ();
+    /*QStatusBar *sb = statusBar ();
     sb->insertItem (i18n ("Ready."), id_status_msg);
     sb->setItemAlignment (id_status_msg, Qt::AlignLeft);
     sb->insertItem (QString ("--:--"), id_status_timer, 0);
-    sb->setItemAlignment (id_status_timer, Qt::AlignRight);
+    sb->setItemAlignment (id_status_timer, Qt::AlignRight);*/
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initMenu () {
@@ -310,10 +312,10 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::loadingProgress (int perc) {
-    if (perc < 100)
+    /*if (perc < 100)
         statusBar ()->changeItem (QString ("%1%").arg (perc), id_status_timer);
     else
-        statusBar ()->changeItem (QString ("--:--"), id_status_timer);
+        statusBar ()->changeItem (QString ("--:--"), id_status_timer);*/
 }
 
 KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
@@ -330,7 +332,7 @@ KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
             else
                 text.sprintf ("%02d:%02d", m, s);
         }
-        statusBar ()->changeItem (text, id_status_timer);
+        //statusBar ()->changeItem (text, id_status_timer);
     }
 }
 
@@ -912,7 +914,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 #undef Bool
 
 KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool by_user) {
-    unsigned long props = NET::WMWindowType;
+    /*unsigned long props = NET::WMWindowType;
     NETWinInfo winfo (QX11Info::display (), winId (), QX11Info::appRootWindow(), props);
     if (m_minimal_mode) {
         winfo.setWindowType (NET::Normal);
@@ -938,7 +940,7 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool by_user) {
         show ();
         move (rect.x (), rect.y ());
     }
-    m_minimal_mode = !m_minimal_mode;
+    m_minimal_mode = !m_minimal_mode;*/
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotMinimalMode () {
@@ -1208,13 +1210,13 @@ KDE_NO_EXPORT void KMPlayerApp::slotViewMenuBar() {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotStatusMsg (const QString &text) {
-    KStatusBar * sb = statusBar ();
+    /*QStatusBar * sb = statusBar ();
     sb->clearMessage();
-    sb->changeItem (text, id_status_msg);
+    sb->changeItem (text, id_status_msg);*/
 }
 
 KDE_NO_EXPORT void KMPlayerApp::fullScreen () {
-    if (qobject_cast <KAction *> (sender ()))
+    if (qobject_cast <QAction *> (sender ()))
         m_view->fullScreen();
     viewFullscreen->setChecked (m_view->isFullScreen ());
     if (m_view->isFullScreen())
@@ -1827,4 +1829,3 @@ KDE_NO_EXPORT void KMPlayerPipeSource::setCommand (const QString & cmd) {
 }
 
 #include "kmplayer.moc"
-#include "kmplayerappsource.moc"

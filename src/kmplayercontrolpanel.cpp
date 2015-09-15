@@ -35,7 +35,6 @@
 
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
-#include "kmplayersource.h"
 
 static const int button_height_with_slider = 16;
 static const int button_height_only_buttons = 16;

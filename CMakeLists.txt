@@ -1,22 +1,36 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 2.8.12)
 project(kmplayer)
 
 cmake_policy(VERSION 2.6)
 
 SET(KMPLAYER_MAJOR_VERSION "0")
-SET(KMPLAYER_MINOR_VERSION "11")
-SET(KMPLAYER_PATCH_VERSION "3d")
+SET(KMPLAYER_MINOR_VERSION "12")
+SET(KMPLAYER_PATCH_VERSION "0")
 
 SET(KMPLAYER_VERSION_STRING
     "${KMPLAYER_MAJOR_VERSION}.${KMPLAYER_MINOR_VERSION}.${KMPLAYER_PATCH_VERSION}")
 
-find_package(KDE4 REQUIRED)
-include (KDE4Defaults)
-include (MacroLibrary)
+find_package(ECM 1.2.0 REQUIRED NO_MODULE)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH} ${ECM_KDE_MODULE_DIR})
 
-add_definitions (${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
+include(KDEInstallDirs)
+include(KDECMakeSettings)
+include(KDECompilerSettings)
+include(ECMInstallIcons)
+#include(ECMSetupVersion)
+include(FeatureSummary)
+Include(CheckIncludeFiles)
+include(ECMSetupVersion)
+
+ecm_setup_version(${KMPLAYER_VERSION_STRING} VARIABLE_PREFIX KMPLAYERPRIVATE
+    SOVERSION ${KMPLAYER_MAJOR_VERSION}
+)
+find_package(Qt5 REQUIRED COMPONENTS Core DBus Widgets Script Svg X11Extras)
+find_package(KF5 REQUIRED COMPONENTS Config CoreAddons Init I18n KDELibs4Support KIO MediaPlayer Parts WidgetsAddons)
+find_package(X11 REQUIRED)
+find_package(Phonon4Qt5 REQUIRED NO_MODULE)
+
 add_definitions(-DQT_USE_FAST_CONCATENATION -DQT_USE_FAST_OPERATOR_PLUS)
-include_directories( ${KDE4_INCLUDES})
 
 if(NOT WIN32)
   OPTION(KMPLAYER_BUILT_WITH_CAIRO "Enable Cairo support" ON)
@@ -69,4 +83,4 @@ add_subdirectory(icons)
 add_subdirectory(data)
 
 #include(MacroOptionalAddSubdirectory)
-#macro_optional_add_subdirectory(po)
+#ecm_optional_add_subdirectory(po)

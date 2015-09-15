@@ -57,7 +57,6 @@
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
 #include "kmplayerprocess.h"
-#include "kmplayersource.h"
 #include "kmplayerpartbase.h"
 #include "masteradaptor.h"
 #include "streammasteradaptor.h"

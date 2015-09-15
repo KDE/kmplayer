@@ -25,6 +25,7 @@
 #include <kstandarddirs.h>
 #include <kinputdialog.h>
 #include <kfiledialog.h>
+#include <kglobal.h>
 #include <klocale.h>
 #include <kdebug.h>
 

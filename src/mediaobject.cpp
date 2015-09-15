@@ -22,7 +22,7 @@
 #include <qmovie.h>
 #include <QBuffer>
 #include <QPainter>
-#include <QSvgRenderer>
+#include <QtSvg/QSvgRenderer>
 #include <qimage.h>
 #include <qfile.h>
 #include <qurl.h>
@@ -35,12 +35,11 @@
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 #include <kmimetype.h>
-#include <kauthorized.h>
+#include <kurlauthorized.h>
 
 #include "mediaobject.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
-#include "kmplayersource.h"
 #include "kmplayerview.h"
 #include "expression.h"
 #include "viewarea.h"
@@ -441,7 +440,7 @@ KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
             Mrl *m = p->mrl ();
             if (m && !m->src.isEmpty () &&
                   m->src != "Playlist://" &&
-                  !KAuthorized::authorizeUrlAction ("redirect", m->src, kurl)) {
+                  !KUrlAuthorized::authorizeUrlAction ("redirect", m->src, kurl)) {
                 kWarning () << "redirect access denied";
                 ready ();
                 return true;

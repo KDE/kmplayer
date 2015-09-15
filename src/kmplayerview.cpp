@@ -30,7 +30,6 @@
 #include <qtextedit.h>
 #include <qtooltip.h>
 #include <qapplication.h>
-#include <qiconset.h>
 #include <qcursor.h>
 #include <qkeysequence.h>
 #include <qslider.h>
@@ -45,6 +44,7 @@
 #include <QTextCursor>
 #include <qcursor.h>
 #include <qclipboard.h>
+#include <kicon.h>
 #include <QMainWindow>
 #include <QDockWidget>
 
@@ -61,7 +61,6 @@
 
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
-#include "kmplayersource.h"
 #include "playlistview.h"
 #include "viewarea.h"
 #include <solid/powermanagement.h>

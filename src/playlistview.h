@@ -21,7 +21,7 @@
 
 #include "config-kmplayer.h"
 
-#include <QtGui/QTreeView>
+#include <QTreeView>
 #include <QModelIndex>
 
 #include "kmplayerplaylist.h"
@@ -31,7 +31,7 @@ class QPainter;
 class QMenu;
 class QDropEvent;
 class QStyleOptionViewItem;
-class KAction;
+class QAction;
 class KActionCollection;
 class KFindDialog;
 
@@ -89,8 +89,8 @@ private slots:
 private:
     View * m_view;
     QMenu * m_itemmenu;
-    KAction * m_find;
-    KAction * m_find_next;
+    QAction * m_find;
+    QAction * m_find_next;
     QAction * m_edit_playlist_item;
     KFindDialog * m_find_dialog;
     QColor m_active_color;

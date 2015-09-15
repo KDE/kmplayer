@@ -27,7 +27,7 @@
 #include <kurl.h>
 #include <kmediaplayer/view.h>
 
-#include "kmplayersource.h"
+#include "kmplayer_def.h"
 
 #define MOUSE_INVISIBLE_DELAY 2000
 

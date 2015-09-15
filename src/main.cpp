@@ -18,7 +18,7 @@ email                :
 
 #include "config-kmplayer.h"
 #include <kcmdlineargs.h>
-#include <kaboutdata.h>
+#include <k4aboutdata.h>
 #include <klocale.h>
 #include <kdemacros.h>
 #include <kapplication.h>
@@ -32,10 +32,10 @@ email                :
 extern "C" KDE_EXPORT int kdemain (int argc, char *argv[]) {
     setsid ();
 
-    KAboutData aboutData ("kmplayer", 0, ki18n("KMPlayer"),
+    K4AboutData aboutData ("kmplayer", 0, ki18n("KMPlayer"),
             KMPLAYER_VERSION_STRING,
             ki18n ("Media player."),
-            KAboutData::License_GPL,
+            K4AboutData::License_GPL,
             ki18n ("(c) 2002-2009, Koos Vriezen"),
             KLocalizedString(),
             I18N_NOOP ("http://kmplayer.kde.org"));

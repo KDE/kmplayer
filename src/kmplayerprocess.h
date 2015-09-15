@@ -34,7 +34,7 @@
 
 #include "kmplayer_def.h"
 #include "kmplayerplaylist.h"
-#include "kmplayersource.h"
+#include "kmplayerpartbase.h"
 #include "mediaobject.h"
 
 class QWidget;

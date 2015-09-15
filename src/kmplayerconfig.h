@@ -27,14 +27,13 @@
 #include <qstringlist.h>
 #include <qmap.h>
 
+#include <ksharedconfig.h>
 #include <kurl.h>
 
 #include "kmplayer_def.h"
 
 class KSharedConfig;
 class QFrame;
-template<class T> class KSharedPtr;
-typedef KSharedPtr<KSharedConfig> KSharedConfigPtr;
 
 namespace KMPlayer {
 

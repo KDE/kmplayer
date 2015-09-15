@@ -23,10 +23,10 @@
 #include <qapplication.h>
 #include <qclipboard.h>
 #include <QMenu>
-#include <QtGui/QIcon>
+#include <QIcon>
 #include <qdrawutil.h>
 #include <qpainter.h>
-#include <qiconset.h>
+#include <KIcon>
 #include <QAbstractItemDelegate>
 #include <QDropEvent>
 #include <qstyle.h>
@@ -35,7 +35,8 @@
 #include <qregexp.h>
 #include <QtCore/QAbstractItemModel>
 #include <QtCore/QList>
-#include <QtGui/QItemSelectionModel>
+#include <QItemSelectionModel>
+#include <QMimeData>
 
 #include <kiconloader.h>
 #include <kstandardaction.h>

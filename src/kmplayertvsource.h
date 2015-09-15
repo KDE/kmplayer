@@ -24,7 +24,7 @@
 #include <qstring.h>
 #include <qframe.h>
 
-#include "kmplayerappsource.h"
+#include "kmplayer.h"
 #include "kmplayerconfig.h"
 #include "mediaobject.h"
 #include "kmplayer_lists.h"
@@ -42,6 +42,7 @@ class KMPlayerApp;
 class QTabWidget;
 class QLineEdit;
 class QCheckBox;
+class QPushButton;
 
 
 class KMPLAYER_NO_EXPORT TVDevicePage : public QFrame {
