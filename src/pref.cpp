@@ -69,7 +69,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     setFaceType (KPageDialog::List);
     setWindowTitle(i18n("Preferences"));
     setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Apply);
-    //setDefaultButton (KDialog::Ok);
+    button(QDialogButtonBox::Ok)->setDefault(true);
 
     KVBox *page = new KVBox (this);
     KPageWidgetItem *item = addPage (page, i18n ("General Options"));
@@ -131,7 +131,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     for (PreferencesPage * p = settings->pagelist; p; p = p->next)
         addPrefPage (p);
 
-    connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
+    //connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
 }
 
 KDE_NO_EXPORT void Preferences::setPage (const char * name) {
@@ -406,9 +406,9 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
 
     static_cast <QBoxLayout *>(layout())->addLayout (gridlayout);
     layout()->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    connect (urllist, SIGNAL(textChanged (const QString &)),
+    connect (urllist, SIGNAL(currentTextChanged (const QString &)),
              this, SLOT (slotTextChanged (const QString &)));
-    connect (sub_urllist, SIGNAL(textChanged (const QString &)),
+    connect (sub_urllist, SIGNAL(currentTextChanged (const QString &)),
              this, SLOT (slotTextChanged (const QString &)));
 }
 

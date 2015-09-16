@@ -88,7 +88,7 @@ protected:
 public slots:
     void slotFileNewWindow ();
     void slotFileOpen ();
-    void slotFileOpenRecent (const KUrl& url);
+    void slotFileOpenRecent(const QUrl& url);
     void slotSaveAs ();
     void slotFileClose ();
     void slotFileQuit ();

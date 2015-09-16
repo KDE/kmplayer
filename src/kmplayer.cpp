@@ -150,7 +150,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     //fileNewWindow->setIcon (KIcon ("window-new"));
     connect (fileNewWindow, SIGNAL (triggered (bool)), this, SLOT (slotFileNewWindow ()));
     fileOpen = KStandardAction::open (this, SLOT (slotFileOpen()), ac);
-    fileOpenRecent = KStandardAction::openRecent(this, SLOT(slotFileOpenRecent(const KUrl&)), ac);
+    fileOpenRecent = KStandardAction::openRecent(this, SLOT(slotFileOpenRecent(const QUrl&)), ac);
     KStandardAction::saveAs (this, SLOT (slotSaveAs ()), ac);
     fileClose = KStandardAction::close (this, SLOT (slotFileClose ()), ac);
     fileQuit = KStandardAction::quit (this, SLOT (slotFileQuit ()), ac);
@@ -1058,7 +1058,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileOpen () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const KUrl& url)
+KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const QUrl& url)
 {
     slotStatusMsg(i18n("Opening file..."));
 

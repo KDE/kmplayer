@@ -384,13 +384,13 @@ KDE_NO_EXPORT bool Settings::createDialog () {
             configdialog->m_SourcePageURL->backend->addItem(lbl);
         }
     }
-    connect (configdialog, SIGNAL (okClicked ()),
+    connect (configdialog, SIGNAL (accepted ()),
             this, SLOT (okPressed ()));
-    connect (configdialog, SIGNAL (applyClicked ()),
+    connect (configdialog->button(QDialogButtonBox::Apply), SIGNAL(clicked ()),
             this, SLOT (okPressed ()));
-    if (KApplication::kApplication())
+    /*if (KApplication::kApplication())
         connect (configdialog, SIGNAL (helpClicked ()),
-                this, SLOT (getHelp ()));
+                this, SLOT (getHelp ()));*/
     return true;
 }
 
