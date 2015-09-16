@@ -36,6 +36,7 @@
 #include <QTextDocument>
 #include <QAbstractTextDocumentLayout>
 #include <QImage>
+#include <QAbstractNativeEventFilter>
 
 #include <kactioncollection.h>
 #include <kapplication.h>
@@ -62,6 +63,7 @@
 #include <X11/keysym.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
+#include <X11/Xlib-xcb.h>
 static const int XKeyPress = KeyPress;
 #undef KeyPress
 #undef Always
@@ -1871,7 +1873,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view, bool paint_bg)
     //new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
     setFocusPolicy (Qt::ClickFocus);
-    kapp->installX11EventFilter (this);
+    kapp->installNativeEventFilter(this);
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
@@ -2283,18 +2285,76 @@ void ViewArea::setVideoWidgetVisible (bool show) {
         static_cast <VideoOutput *> (*it)->setVisible (show);
 }
 
-static void setXSelectInput (Window wid, long mask) {
-    Window r, p, *c;
+static void setXSelectInput (Window wid, uint32_t mask) {
+    const static uint32_t values[] = { mask };
+    xcb_change_window_attributes(XGetXCBConnection(QX11Info::display()), wid, XCB_CW_EVENT_MASK, values);
+    /*Window r, p, *c;
     unsigned int nr;
     XSelectInput (QX11Info::display (), wid, mask);
     if (XQueryTree (QX11Info::display (), wid, &r, &p, &c, &nr)) {
         for (int i = 0; i < nr; ++i)
             setXSelectInput (c[i], mask);
         XFree (c);
-    }
+    }*/
 }
 
-bool ViewArea::x11Event (XEvent *xe) {
+bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, long *result) {
+    if (eventType != "xcb_generic_event_t")
+        return false;
+
+    xcb_generic_event_t* event = (xcb_generic_event_t*)message;
+    switch (event->response_type & ~0x80) {
+    case XCB_UNMAP_NOTIFY: {
+        xcb_unmap_notify_event_t* ev = (xcb_unmap_notify_event_t*)event;
+        break;
+    }
+    case XCB_MAP_NOTIFY: {
+        xcb_map_notify_event_t* ev = (xcb_map_notify_event_t*)event;
+        if (!ev->override_redirect) {
+            const VideoWidgetList::iterator e = video_widgets.end ();
+            for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
+                if (ev->event == (*i)->ownHandle() && ev->window == (*i)->clientHandle()) {
+                    (*i)->embedded();
+                    break;
+                }
+            }
+        }
+        break;
+    }
+    case XCB_MOTION_NOTIFY: {
+        xcb_motion_notify_event_t* ev = (xcb_motion_notify_event_t*)event;
+        if (m_view->controlPanelMode () == View::CP_AutoHide) {
+            const VideoWidgetList::iterator e = video_widgets.end ();
+            for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
+                QPoint p = mapToGlobal (QPoint (0, 0));
+                int x = ev->root_x - p.x ();
+                int y = ev->root_y - p.y ();
+                m_view->mouseMoved (x, y);
+                if (x > 0 && x < width () && y > 0 && y < height ())
+                    mouseMoved ();
+            }
+        }
+        break;
+    }
+    case XCB_KEY_PRESS: {
+        xcb_key_press_event_t* ev = (xcb_key_press_event_t*)event;
+        const VideoWidgetList::iterator e = video_widgets.end ();
+        for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i)
+            if ((*i)->clientHandle () == ev->event &&
+                    static_cast <VideoOutput *>(*i)->inputMask() & KeyPressMask) {
+                if (ev->detail == 41 /*FIXME 'f'*/)
+                    m_view->fullScreen ();
+                break;
+            }
+        break;
+    }
+    default:
+        break;
+    }
+    return false;
+}
+
+/*bool ViewArea::x11Event (XEvent *xe) {
     switch (xe->type) {
         case UnmapNotify: {
             const VideoWidgetList::iterator e = video_widgets.end ();
@@ -2323,9 +2383,6 @@ bool ViewArea::x11Event (XEvent *xe) {
                 }
             break;
         }
-        /*case ColormapNotify:
-            fprintf (stderr, "colormap notify\n");
-            return true;*/
         case MotionNotify:
             if (m_view->controlPanelMode () == View::CP_AutoHide) {
                 const VideoWidgetList::iterator e = video_widgets.end ();
@@ -2363,20 +2420,13 @@ bool ViewArea::x11Event (XEvent *xe) {
                         setXSelectInput (xe->xmap.window,
                                 static_cast <VideoOutput *>(*i)->inputMask ());
                 }
-                /*if (e->xmap.event == m_viewer->clientWinId ()) {
-                  show ();
-                  QTimer::singleShot (10, m_viewer, SLOT (sendConfigureEvent ()));
-                  }*/
             }
             break;
-        /*case ConfigureNotify:
-            break;
-            //return true;*/
         default:
             break;
     }
     return false;
-}
+}*/
 
 //----------------------------------------------------------------------
 
@@ -2395,17 +2445,29 @@ KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setAcceptDrops (true);
-    connect (this, SIGNAL (clientIsEmbedded ()), this, SLOT (embedded ()));
     connect (view->viewArea (), SIGNAL (fullScreenChanged ()),
              this, SLOT (fullScreenChanged ()));
     kDebug() << "VideoOutput::VideoOutput" << endl;
     setMonitoring (MonitorAll);
     setAttribute (Qt::WA_NoSystemBackground, true);
+
+    xcb_connection_t* connection = XGetXCBConnection(QX11Info::display());
+    xcb_get_window_attributes_cookie_t cookie = xcb_get_window_attributes(connection, winId());
+    xcb_get_window_attributes_reply_t* attrs = xcb_get_window_attributes_reply(connection, cookie, NULL);
+    if (!(attrs->your_event_mask & XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY))
+        setXSelectInput(winId(), attrs->your_event_mask | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY);
+    free(attrs);
     //setProtocol (QXEmbed::XPLAIN);
 }
 
 KDE_NO_CDTOR_EXPORT VideoOutput::~VideoOutput () {
     kDebug() << "VideoOutput::~VideoOutput" << endl;
+    if (m_plain_window) {
+        XUnmapWindow (QX11Info::display(), m_plain_window);
+        XFlush (QX11Info::display());
+        XDestroyWindow (QX11Info::display(), m_plain_window);
+        m_plain_window = 0;
+    }
 }
 
 void VideoOutput::useIndirectWidget (bool inderect) {
@@ -2441,7 +2503,6 @@ void VideoOutput::useIndirectWidget (bool inderect) {
 
 KDE_NO_EXPORT void VideoOutput::embedded () {
     kDebug () << "[01;35mwindowChanged[00m " << (int)clientWinId ();
-    //QTimer::singleShot (10, this, SLOT (sendConfigureEvent ()));
     if (clientWinId () && !resized_timer)
          resized_timer = startTimer (50);
     if (clientWinId ())
@@ -2466,6 +2527,10 @@ KDE_NO_EXPORT void VideoOutput::timerEvent (QTimerEvent *e) {
 WindowId VideoOutput::windowHandle () {
     //return m_plain_window ? clientWinId () : winId ();
     return m_plain_window ? m_plain_window : winId ();
+}
+
+WindowId VideoOutput::ownHandle () {
+    return winId ();
 }
 
 WindowId VideoOutput::clientHandle () {
@@ -2512,23 +2577,23 @@ KDE_NO_EXPORT void VideoOutput::setMonitoring (Monitor m) {
         //KeyPressMask | KeyReleaseMask |
         //EnterWindowMask | LeaveWindowMask |
         //FocusChangeMask |
-        ExposureMask |
+        XCB_EVENT_MASK_EXPOSURE |
         //StructureNotifyMask |
-        SubstructureNotifyMask;
+        XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY;
     if (m & MonitorMouse)
-        m_input_mask |= PointerMotionMask;
+        m_input_mask |= XCB_EVENT_MASK_POINTER_MOTION;
     if (m & MonitorKey)
-        m_input_mask |= KeyPressMask;
+        m_input_mask |= XCB_EVENT_MASK_KEY_PRESS;
     if (clientWinId ())
         setXSelectInput (clientWinId (), m_input_mask);
 }
 
 KDE_NO_EXPORT void VideoOutput::fullScreenChanged () {
-    if (!(m_input_mask & KeyPressMask)) { // FIXME: store monitor when needed
+    if (!(m_input_mask & XCB_EVENT_MASK_KEY_PRESS)) { // FIXME: store monitor when needed
         if (m_view->isFullScreen ())
-            m_input_mask |= PointerMotionMask;
+            m_input_mask |= XCB_EVENT_MASK_POINTER_MOTION;
         else
-            m_input_mask &= ~PointerMotionMask;
+            m_input_mask &= ~XCB_EVENT_MASK_POINTER_MOTION;
     }
     if (clientWinId ())
         setXSelectInput (clientWinId (), m_input_mask);
@@ -2561,21 +2626,6 @@ void VideoOutput::sendKeyEvent (int key) {
             0, XKeysymToKeycode (QX11Info::display (), keysym), true
         };
         XSendEvent (QX11Info::display(), w, false, KeyPressMask, (XEvent *) &event);
-        XFlush (QX11Info::display ());
-    }
-}
-
-KDE_NO_EXPORT void VideoOutput::sendConfigureEvent () {
-    Window w = clientWinId ();
-    kDebug() << "[01;35msendConfigureEvent[00m " << width ();
-    if (w) {
-        XConfigureEvent c = {
-            ConfigureNotify, 0UL, True,
-            QX11Info::display (), w, winId (),
-            x (), y (), width (), height (),
-            0, None, False
-        };
-        XSendEvent(QX11Info::display(),c.event,true,StructureNotifyMask,(XEvent*)&c);
         XFlush (QX11Info::display ());
     }
 }

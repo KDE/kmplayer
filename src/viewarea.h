@@ -21,7 +21,7 @@
 #define KMPLAYER_VIEW_AREA_H
 
 #include <qwidget.h>
-//#include <QX11EmbedContainer>
+#include <QAbstractNativeEventFilter>
 typedef QWidget QX11EmbedContainer;
 #include <QList>
 
@@ -30,7 +30,6 @@ typedef QWidget QX11EmbedContainer;
 
 class QPaintEngine;
 class KActionCollection;
-typedef union _XEvent XEvent;
 
 namespace KMPlayer {
 
@@ -41,7 +40,7 @@ class ViewerAreaPrivate;
 /*
  * The area in which the video widget and controlpanel are laid out
  */
-class KMPLAYER_EXPORT ViewArea : public QWidget {
+class KMPLAYER_EXPORT ViewArea : public QWidget, public QAbstractNativeEventFilter {
     Q_OBJECT
 public:
     ViewArea (QWidget *parent, View *view, bool paint_bg);
@@ -78,7 +77,7 @@ protected:
     void paintEvent (QPaintEvent *);
     void timerEvent (QTimerEvent * e);
     void closeEvent (QCloseEvent * e);
-    bool x11Event (XEvent *e);
+    bool nativeEventFilter(const QByteArray& eventType, void * message, long *result);
     QPaintEngine *paintEngine () const;
 private:
     void syncVisual ();
@@ -117,6 +116,7 @@ public:
 
     virtual WindowId windowHandle ();
     virtual WindowId clientHandle ();
+    virtual WindowId ownHandle();
     using QWidget::setGeometry;
     virtual void setGeometry (const IRect &rect);
     virtual void setAspect (float a);
@@ -135,9 +135,8 @@ public:
 
     WindowId clientWinId() { return m_plain_window; }
     void discardClient() {}
+    void embedded();
 public slots:
-    void sendConfigureEvent ();
-    void embedded ();
     void fullScreenChanged ();
 protected:
     void resizeEvent (QResizeEvent *);

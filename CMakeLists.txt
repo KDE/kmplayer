@@ -21,6 +21,8 @@ include(ECMInstallIcons)
 include(FeatureSummary)
 Include(CheckIncludeFiles)
 include(ECMSetupVersion)
+include(FindX11_XCB)
+include(FindXCB)
 
 ecm_setup_version(${KMPLAYER_VERSION_STRING} VARIABLE_PREFIX KMPLAYERPRIVATE
     SOVERSION ${KMPLAYER_MAJOR_VERSION}

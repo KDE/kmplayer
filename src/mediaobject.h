@@ -267,6 +267,7 @@ public:
 
     virtual WindowId windowHandle () = 0;
     virtual WindowId clientHandle () = 0;
+    virtual WindowId ownHandle() = 0;
     virtual void setGeometry (const IRect &rect) = 0;
     virtual void setAspect (float a) = 0;
     virtual float aspect () = 0;
@@ -274,6 +275,7 @@ public:
     virtual void setMonitoring (Monitor) = 0;
     virtual void map () = 0;
     virtual void unmap () = 0;
+    virtual void embedded() = 0;
 private:
     IViewer (const IViewer &);
 };
