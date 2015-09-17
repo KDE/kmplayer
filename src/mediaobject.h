@@ -275,7 +275,7 @@ public:
     virtual void setMonitoring (Monitor) = 0;
     virtual void map () = 0;
     virtual void unmap () = 0;
-    virtual void embedded() = 0;
+    virtual void embedded(WindowId handle) = 0;
 private:
     IViewer (const IViewer &);
 };

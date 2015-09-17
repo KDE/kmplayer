@@ -1802,8 +1802,8 @@ KDE_NO_EXPORT void NpStream::open () {
                 this, SLOT (slotData (KIO::Job *, const QByteArray &)));
         connect (job, SIGNAL (result (KJob *)),
                 this, SLOT (slotResult (KJob *)));
-        connect (job, SIGNAL (redirection (KIO::Job *, const KUrl &)),
-                this, SLOT (redirection (KIO::Job *, const KUrl &)));
+        connect (job, SIGNAL(redirection(KIO::Job*, const QUrl&)),
+                this, SLOT (redirection (KIO::Job *, const QUrl &)));
         connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
                 SLOT (slotMimetype (KIO::Job *, const QString &)));
         connect (job, SIGNAL (totalSize (KJob *, qulonglong)),
@@ -1857,13 +1857,13 @@ KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
     }
 }
 
-KDE_NO_EXPORT void NpStream::redirection (KIO::Job *, const KUrl &kurl) {
+KDE_NO_EXPORT void NpStream::redirection (KIO::Job*, const QUrl& kurl) {
     url = kurl.url ();
     emit redirected (stream_id, kurl);
 }
 
 void NpStream::slotMimetype (KIO::Job *, const QString &mime) {
-    mimetype = mime;
+    mimetype = mime.indexOf("adobe.flash") > -1 ? "application/x-shockwave-flash" : mime;
 }
 
 void NpStream::slotTotalSize (KJob *, qulonglong sz) {
@@ -1975,6 +1975,8 @@ KDE_NO_EXPORT bool NpPlayer::ready () {
                 kDebug() << "search plugin " << mrl->mimetype << "->" << plugin;
                 if (!plugin.isEmpty ()) {
                     mime = mrl->mimetype;
+                    if ( mime.indexOf("adobe.flash") > -1 )
+                        mime = "application/x-shockwave-flash";
                     break;
                 }
             }
@@ -2144,7 +2146,7 @@ KDE_NO_EXPORT void NpPlayer::streamStateChanged () {
         processStreams ();
 }
 
-KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t sid, const KUrl &u) {
+KDE_NO_EXPORT void NpPlayer::streamRedirected(uint32_t sid, const QUrl& u) {
     if (running ()) {
         kDebug() << "redirected " << sid << " to " << u.url();
         QString objpath = QString ("/stream_%1").arg (sid);
@@ -2214,8 +2216,8 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
             ns->open ();
             write_in_progress = false;
             if (ns->job) {
-                connect (ns, SIGNAL (redirected (uint32_t, const KUrl&)),
-                        this, SLOT (streamRedirected (uint32_t, const KUrl&)));
+                connect(ns, SIGNAL(redirected(uint32_t, const QUrl&)),
+                        this, SLOT(streamRedirected(uint32_t, const QUrl&)));
                 active_count++;
             }
         }
@@ -2302,7 +2304,7 @@ KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString
 KDE_NO_CDTOR_EXPORT NpStream::~NpStream () {}
 void NpStream::slotResult (KJob*) {}
 void NpStream::slotData (KIO::Job*, const QByteArray&) {}
-void NpStream::redirection (KIO::Job *, const KUrl &) {}
+void NpStream::redirection(KIO::Job*, const QUrl&) {}
 void NpStream::slotMimetype (KIO::Job *, const QString &) {}
 void NpStream::slotTotalSize (KJob *, KIO::filesize_t) {}
 
@@ -2322,7 +2324,7 @@ KDE_NO_EXPORT void NpPlayer::processOutput () {}
 KDE_NO_EXPORT void NpPlayer::processStopped (int, QProcess::ExitStatus) {}
 KDE_NO_EXPORT void NpPlayer::wroteStdin (qint64) {}
 KDE_NO_EXPORT void NpPlayer::streamStateChanged () {}
-KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t, const KUrl &) {}
+KDE_NO_EXPORT void NpPlayer::streamRedirected(uint32_t, const QUrl&) {}
 KDE_NO_EXPORT void NpPlayer::terminateJobs () {}
 
 #endif

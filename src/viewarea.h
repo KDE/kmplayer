@@ -133,9 +133,9 @@ public:
     void setCurrentBackgroundColor (const QColor & c);
     KDE_NO_EXPORT View * view () const { return m_view; }
 
-    WindowId clientWinId() { return m_plain_window; }
+    WindowId clientWinId() { return m_client_window; }
     void discardClient() {}
-    void embedded();
+    void embedded(WindowId handle);
 public slots:
     void fullScreenChanged ();
 protected:
@@ -147,6 +147,7 @@ protected:
     //virtual void windowChanged( WId w );
 private:
     WId m_plain_window;
+    WId m_client_window;
     int resized_timer;
     unsigned int m_bgcolor;
     float m_aspect;

@@ -433,11 +433,11 @@ public:
     bool received_data;
 signals:
     void stateChanged ();
-    void redirected (uint32_t, const KUrl &);
+    void redirected(uint32_t, const QUrl&);
 private slots:
     void slotResult (KJob*);
     void slotData (KIO::Job*, const QByteArray& qb);
-    void redirection (KIO::Job *, const KUrl &url);
+    void redirection(KIO::Job*, const QUrl& url);
     void slotMimetype (KIO::Job *, const QString &mime);
     void slotTotalSize (KJob *, qulonglong sz);
 };
@@ -489,7 +489,7 @@ private slots:
     void processStopped (int, QProcess::ExitStatus);
     void wroteStdin (qint64);
     void streamStateChanged ();
-    void streamRedirected (uint32_t, const KUrl &);
+    void streamRedirected(uint32_t, const QUrl&);
 protected:
     virtual void terminateJobs ();
 private:

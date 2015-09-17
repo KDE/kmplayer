@@ -1813,18 +1813,18 @@ static void windowCreatedEvent (GtkWidget *w, gpointer d) {
     socket_id = gtk_socket_get_id (GTK_SOCKET (xembed));
     if (parent_id) {
         print ("windowCreatedEvent %p\n", GTK_PLUG (w)->socket_window);
-        if (!GTK_PLUG (w)->socket_window)
+        /*if (!GTK_PLUG (w)->socket_window)
             gtk_plug_construct (GTK_PLUG (w), parent_id);
-        /*gdk_window_reparent( w->window,
+        gdk_window_reparent( w->window,
                 GTK_PLUG (w)->socket_window
                     ? GTK_PLUG (w)->socket_window
                     : gdk_window_foreign_new (parent_id),
                 0, 0);*/
-        gtk_widget_show_all (w);
-        /*XReparentWindow (gdk_x11_drawable_get_xdisplay (w->window),
+        XReparentWindow (gdk_x11_drawable_get_xdisplay (w->window),
                 gdk_x11_drawable_get_xid (w->window),
                 parent_id,
-                0, 0);*/
+                0, 0);
+        gtk_widget_show_all (w);
     }
     if (!callback_service) {
         char *argn[] = { "WIDTH", "HEIGHT", "debug", "SRC" };
@@ -1889,9 +1889,9 @@ static gboolean initPlayer (void * p) {
     GdkColor bg_color;
     (void)p;
 
-    window = callback_service
+    window = /*callback_service
         ? gtk_plug_new (parent_id)
-        : gtk_window_new (GTK_WINDOW_TOPLEVEL);
+        :*/ gtk_window_new (GTK_WINDOW_TOPLEVEL);
     g_signal_connect (G_OBJECT (window), "delete_event",
             G_CALLBACK (windowCloseEvent), NULL);
     g_signal_connect (G_OBJECT (window), "destroy",

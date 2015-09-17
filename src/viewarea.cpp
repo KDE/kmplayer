@@ -2306,6 +2306,13 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
     switch (event->response_type & ~0x80) {
     case XCB_UNMAP_NOTIFY: {
         xcb_unmap_notify_event_t* ev = (xcb_unmap_notify_event_t*)event;
+        const VideoWidgetList::iterator e = video_widgets.end ();
+        for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
+            if (ev->event == (*i)->ownHandle()) {
+                (*i)->embedded(0);
+                break;
+            }
+        }
         break;
     }
     case XCB_MAP_NOTIFY: {
@@ -2313,8 +2320,8 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
         if (!ev->override_redirect) {
             const VideoWidgetList::iterator e = video_widgets.end ();
             for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
-                if (ev->event == (*i)->ownHandle() && ev->window == (*i)->clientHandle()) {
-                    (*i)->embedded();
+                if (ev->event == (*i)->ownHandle()) {
+                    (*i)->embedded(ev->window);
                     break;
                 }
             }
@@ -2432,7 +2439,7 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
 
 KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
   : QX11EmbedContainer (parent),
-    m_plain_window (0), resized_timer (0),
+    m_plain_window(0), m_client_window(0), resized_timer(0),
     m_bgcolor (0), m_aspect (0.0),
     m_view (view) {
     /*XWindowAttributes xwa;
@@ -2501,8 +2508,9 @@ void VideoOutput::useIndirectWidget (bool inderect) {
     }
 }
 
-KDE_NO_EXPORT void VideoOutput::embedded () {
+KDE_NO_EXPORT void VideoOutput::embedded(WindowId handle) {
     kDebug () << "[01;35mwindowChanged[00m " << (int)clientWinId ();
+    m_client_window = handle;
     if (clientWinId () && !resized_timer)
          resized_timer = startTimer (50);
     if (clientWinId ())
