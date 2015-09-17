@@ -153,20 +153,22 @@ endif (KMPLAYER_WITH_NPP)
 
 ########### next target ###############
 
-#set(kphononplayer_SRCS
-#  phononplayer.cpp
-#)
-#
-#qt5_add_dbus_adaptor(kphononplayer_SRCS org.kde.kmplayer.slave.xml
-#    ${CMAKE_CURRENT_SOURCE_DIR}/phononplayer.h Slave)
-#qt5_add_dbus_adaptor(kphononplayer_SRCS org.kde.kmplayer.streamslave.xml
-#    ${CMAKE_CURRENT_SOURCE_DIR}/phononplayer.h Stream)
-#
-#add_executable(kphononplayer ${kphononplayer_SRCS})
-#
-#target_link_libraries(kphononplayer Phonon::phonon4qt5)
-#
-#install(TARGETS kphononplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
+set(kphononplayer_SRCS
+  phononplayer.cpp
+)
+
+qt5_add_dbus_adaptor(kphononplayer_SRCS org.kde.kmplayer.slave.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/phononplayer.h Slave)
+qt5_add_dbus_adaptor(kphononplayer_SRCS org.kde.kmplayer.streamslave.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/phononplayer.h Stream)
+
+add_executable(kphononplayer ${kphononplayer_SRCS})
+
+qt5_use_modules(kphononplayer Core DBus Widgets X11Extras)
+
+target_link_libraries(kphononplayer Phonon::phonon4qt5 ${X11_LIBRARIES})
+
+install(TARGETS kphononplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 ########### install files ###############
 

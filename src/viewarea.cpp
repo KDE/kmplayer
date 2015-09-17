@@ -2286,16 +2286,10 @@ void ViewArea::setVideoWidgetVisible (bool show) {
 }
 
 static void setXSelectInput (Window wid, uint32_t mask) {
+    xcb_connection_t* connection = XGetXCBConnection(QX11Info::display());
     const static uint32_t values[] = { mask };
-    xcb_change_window_attributes(XGetXCBConnection(QX11Info::display()), wid, XCB_CW_EVENT_MASK, values);
-    /*Window r, p, *c;
-    unsigned int nr;
-    XSelectInput (QX11Info::display (), wid, mask);
-    if (XQueryTree (QX11Info::display (), wid, &r, &p, &c, &nr)) {
-        for (int i = 0; i < nr; ++i)
-            setXSelectInput (c[i], mask);
-        XFree (c);
-    }*/
+    xcb_void_cookie_t cookie = xcb_change_window_attributes(connection, wid, XCB_CW_EVENT_MASK, values);
+    xcb_discard_reply(connection, cookie.sequence);
 }
 
 bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, long *result) {
@@ -2306,23 +2300,26 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
     switch (event->response_type & ~0x80) {
     case XCB_UNMAP_NOTIFY: {
         xcb_unmap_notify_event_t* ev = (xcb_unmap_notify_event_t*)event;
-        const VideoWidgetList::iterator e = video_widgets.end ();
-        for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
-            if (ev->event == (*i)->ownHandle()) {
-                (*i)->embedded(0);
-                break;
+        if (ev->event != ev->window) {
+            const VideoWidgetList::iterator e = video_widgets.end ();
+            for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
+                if (ev->event == (*i)->ownHandle()) {
+                    (*i)->embedded(0);
+                    break;
+                }
             }
         }
         break;
     }
     case XCB_MAP_NOTIFY: {
         xcb_map_notify_event_t* ev = (xcb_map_notify_event_t*)event;
-        if (!ev->override_redirect) {
+        if (!ev->override_redirect && ev->event != ev->window) {
+            xcb_connection_t* connection = XGetXCBConnection(QX11Info::display());
             const VideoWidgetList::iterator e = video_widgets.end ();
             for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
                 if (ev->event == (*i)->ownHandle()) {
                     (*i)->embedded(ev->window);
-                    break;
+                    return true;
                 }
             }
         }

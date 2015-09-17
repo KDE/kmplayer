@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 
+#include <QWidget>
 //#include <QX11EmbedWidget>
 typedef QWidget QX11EmbedWidget;
 
@@ -64,8 +65,8 @@ public:
     void seek (uint64_t position, bool absolute);
     void volume (int value);
 
-protected:
-    bool x11Event (XEvent *event);
+//protected:
+//    bool x11Event (XEvent *event);
 
 private Q_SLOTS:
     void init ();

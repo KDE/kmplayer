@@ -27,7 +27,7 @@ include(FindXCB)
 ecm_setup_version(${KMPLAYER_VERSION_STRING} VARIABLE_PREFIX KMPLAYERPRIVATE
     SOVERSION ${KMPLAYER_MAJOR_VERSION}
 )
-find_package(Qt5 REQUIRED COMPONENTS Core DBus Widgets Script Svg X11Extras)
+find_package(Qt5 REQUIRED COMPONENTS Core DBus Widgets Svg X11Extras)
 find_package(KF5 REQUIRED COMPONENTS Config CoreAddons Init I18n KDELibs4Support KIO MediaPlayer Parts WidgetsAddons)
 find_package(X11 REQUIRED)
 find_package(Phonon4Qt5 REQUIRED NO_MODULE)

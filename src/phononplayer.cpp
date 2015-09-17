@@ -28,6 +28,7 @@
 #include <QtCore/QMap>
 #include <QtCore/QTimer>
 #include <QtCore/QUrl>
+#include <QX11Info>
 
 #include <phonon/audiooutput.h>
 #include <phonon/mediaobject.h>
@@ -91,11 +92,15 @@ Stream::Stream (QWidget *parent, const QString &url, unsigned long wid)
     : QX11EmbedWidget (parent), m_url (url), video_handle (wid)
     //: QWidget (parent), video_handle (wid)
 {
-    embedInto (wid);
+    setAttribute(Qt::WA_NativeWindow);
+    setAttribute(Qt::WA_DontCreateNativeAncestors);
+    createWinId();
+    XReparentWindow(QX11Info::display(), winId(), wid, 0, 0);
+    //embedInto (wid);
     show ();
     m_master_stream_path = QString ("%1/stream_%2").arg(control_path).arg (wid);
     QTimer::singleShot (0, this, SLOT (init ()));
-    qDebug ("newStream xembed cont: %lu", containerWinId ());
+    qDebug ("newStream xembed cont: %lu", wid);
 }
 
 void Stream::init () {
@@ -141,13 +146,13 @@ Stream::~Stream () {
     slave->streamDestroyed (video_handle);
 }
 
-bool Stream::x11Event (XEvent *event) {
+/*bool Stream::x11Event (XEvent *event) {
     switch (event->type) {
         case PropertyNotify:
             return QWidget::x11Event (event);
     }
     return QX11EmbedWidget::x11Event (event);
-}
+}*/
 
 void Stream::play () {
     qDebug ("play %s@%lu", qPrintable (m_url), video_handle);
