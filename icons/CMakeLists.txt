@@ -1,8 +1,9 @@
-ecm_install_icons(ICONS hi16-app-kmplayer.png
-    hi32-app-kmplayer.png
-    hi64-app-kmplayer.png
-    hi128-app-kmplayer.png
-    hi22-app-kmplayer.png
-    hi48-app-kmplayer.png
-    hisc-app-kmplayer.svgz
-    DESTINATION ${ICON_INSTALL_DIR} )
+ecm_install_icons(ICONS 16-apps-kmplayer.png
+    32-apps-kmplayer.png
+    64-apps-kmplayer.png
+    128-apps-kmplayer.png
+    22-apps-kmplayer.png
+    48-apps-kmplayer.png
+    sc-apps-kmplayer.svgz
+    DESTINATION ${KDE_INSTALL_ICONDIR}
+    THEME hicolor)
