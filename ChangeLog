@@ -1,3 +1,5 @@
+Changes since version 0.12.0
+- Port to kde5
 Changes since version 0.11.3c
 - Fix item activation in double click mode
 - Fix crash on plugin exit in MediaManager destructor
