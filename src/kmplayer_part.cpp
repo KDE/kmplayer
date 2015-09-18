@@ -30,7 +30,6 @@
 #include <QMetaObject>
 
 class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollection.h does not forward declare KXMLGUIClient
-#include <k4aboutdata.h>
 #include <kdebug.h>
 #include <kconfig.h>
 #include <kaction.h>
@@ -97,45 +96,30 @@ struct KMPLAYER_NO_EXPORT GroupPredicate {
 
 //-----------------------------------------------------------------------------
 
-class KMPLAYER_NO_EXPORT KMPlayerFactory : public KParts::Factory {
-public:
-    KMPlayerFactory ();
-    virtual ~KMPlayerFactory ();
-    virtual KParts::Part *createPartObject (QWidget *wparent=NULL, QObject *parent=NULL,
-         const char *className="KParts::Part", const QStringList &args=QStringList());
-    static const KComponentData &componentData();
-    static K4AboutData *aboutData ();
-private:
-    static KComponentData *s_instance;
-};
-
 K_EXPORT_PLUGIN(KMPlayerFactory)
 
-KComponentData *KMPlayerFactory::s_instance = 0L;
+KAboutData* KMPlayerFactory::s_about = 0L;
 
 KDE_NO_CDTOR_EXPORT KMPlayerFactory::KMPlayerFactory () {
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerFactory::~KMPlayerFactory () {
-    delete s_instance;
 }
 
-KDE_NO_EXPORT KParts::Part *KMPlayerFactory::createPartObject
-  (QWidget *wparent, QObject *parent, const char * cls, const QStringList & args) {
-      kDebug() << "KMPlayerFactory::createPartObject " << cls;
-      return new KMPlayerPart (wparent, parent, args);
+KAboutData& KMPlayerFactory::aboutData() {
+    if (!s_about) {
+        s_about = new KAboutData("kmplayer", i18n("KMPlayer"), QStringLiteral(KMPLAYER_VERSION_STRING),
+                i18n("Embedded MPlayer for KDE"),
+                KAboutLicense::LGPL);
+        s_about->addAuthor(QStringLiteral("Koos Vriezen"), QString(), "koos.vriezen@gmail.com");
+    }
+    return *s_about;
 }
 
-const KComponentData &KMPlayerFactory::componentData () {
-    kDebug () << "KMPlayerFactory::instance";
-    if (!s_instance)
-        s_instance = new KComponentData (aboutData ());
-    return *s_instance;
-}
-
-K4AboutData *KMPlayerFactory::aboutData () {
-    K4AboutData *about = new K4AboutData("plugin", 0, ki18n("plugin"), "1.99");
-    return about;
+QObject* KMPlayerFactory::create(const char *iface, QWidget* parentWidget, QObject* parent,
+        const QVariantList& args, const QString&)
+{
+    return new KMPlayerPart(parentWidget, parent, args);
 }
 
 //-----------------------------------------------------------------------------
@@ -189,7 +173,7 @@ static bool getBoolValue (const QString & value) {
 #define SET_FEAT_OFF(f) { m_features &= ~f; turned_off_features |= f; }
 
 KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
-                    QObject *ppart, const QStringList &args)
+                    QObject* ppart, const QVariantList& args)
  : PartBase (wparent, ppart, KSharedConfig::openConfig ("kmplayerrc")),
    m_master (0L),
    m_browserextension (new KMPlayerBrowserExtension (this)),
@@ -198,14 +182,16 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
    m_expected_view_height (0),
    m_features (Feat_Unknown),
    m_started_emited (false),
-   m_wait_npp_loaded (false) {
+   m_wait_npp_loaded (false)
+{
+    setComponentData(KMPlayerFactory::aboutData());
     kDebug () << "KMPlayerPart(" << this << ")::KMPlayerPart ()";
     bool show_fullscreen = false;
     if (!kmplayerpart_static)
         (void) new KMPlayerPartStatic (&kmplayerpart_static);
     else
         kmplayerpart_static->ref ();
-    setComponentData (KMPlayerFactory::componentData ());
+    setComponentData(KMPlayerFactory::aboutData ());
     init (actionCollection (),
          QString ("/KMPlayerPart%1").arg(kmplayerpart_static->counter++), true);
     createBookmarkMenu (m_view->controlPanel ()->bookmarkMenu, actionCollection ());
@@ -217,14 +203,15 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
     //new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), this, SLOT (decreaseVolume ()), actionCollection (), "edit_volume_down");
     Source *source = m_sources ["urlsource"];
     KMPlayer::ControlPanel * panel = m_view->controlPanel ();
-    QStringList::const_iterator it = args.begin ();
-    QStringList::const_iterator end = args.end ();
+    QVariantList::const_iterator it = args.begin ();
+    QVariantList::const_iterator end = args.end ();
     int turned_off_features = 0;
     for ( ; it != end; ++it) {
-        int equalPos = (*it).indexOf("=");
+        QString arg = (*it).toString();
+        int equalPos = arg.indexOf("=");
         if (equalPos > 0) {
-            QString name = (*it).left (equalPos).toLower ();
-            QString value = (*it).right ((*it).size () - equalPos - 1);
+            QString name = arg.left(equalPos).toLower();
+            QString value = arg.right(arg.size() - equalPos - 1);
             if (value.at(0)=='\"')
                 value = value.right (value.size () - 1);
             if (value.at (value.size () - 1) == '\"')
@@ -492,7 +479,7 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartSourceChanged(Source *o, Source *s) {
     }
 }
 
-KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
+KDE_NO_EXPORT bool KMPlayerPart::openUrl(const QUrl& _url) {
     KUrl url;
     KParts::OpenUrlArguments args = arguments ();
     Source * urlsource = m_sources ["urlsource"];
@@ -518,7 +505,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
         if (!m_file_name.isEmpty() && _url.url().indexOf(m_file_name) < 0) {
             KUrl u (m_file_name);
             if ((u.protocol () == QString ("mms")) ||
-                    _url.protocol ().isEmpty ()) {
+                    KUrl(_url).protocol ().isEmpty ()) {
                 // see if we somehow have to merge these
                 int p = _url.port ();
                 if (p > 0)
@@ -583,7 +570,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
 }
 
 KDE_NO_EXPORT void
-KMPlayerPart::openUrl (const KUrl &u, const QString &t, const QString &srv) {
+KMPlayerPart::openUrl(const QUrl& u, const QString& t, const QString& srv) {
     m_browserextension->requestOpenURL (u, t, srv);
 }
 

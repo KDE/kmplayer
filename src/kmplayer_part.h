@@ -19,8 +19,10 @@
 #ifndef KMPLAYER_PART_H
 #define KMPLAYER_PART_H
 
+#include <kpluginfactory.h>
 #include <kparts/browserextension.h>
 #include <kparts/liveconnectextension.h>
+#include <kaboutdata.h>
 #include "kmplayerpartbase.h"
 #include "config-kmplayer.h"
 
@@ -30,6 +32,21 @@ class JSCommandEntry;
 namespace KMPlayer {
     class PlayListNotify;
 }
+
+class KMPlayerFactory : public KPluginFactory {
+    Q_OBJECT
+    Q_PLUGIN_METADATA(IID "org.kde.KPluginFactory" FILE "")
+    Q_INTERFACES(KPluginFactory)
+public:
+    KMPlayerFactory();
+    virtual ~KMPlayerFactory();
+
+    virtual QObject* create(const char *iface, QWidget* parentWidget, QObject* parent,
+            const QVariantList& args, const QString& keyword) Q_DECL_OVERRIDE;
+    static KAboutData& aboutData();
+private:
+    static KAboutData* s_about;
+};
 
 /*
  * Document to get first frame for streams starting with a picture
@@ -125,7 +142,7 @@ public:
         Feat_InfoPanel = 0x10, Feat_VolumeSlider = 0x20, Feat_PlayList = 0x40,
         Feat_ImageWindow = 0x80, Feat_All = 0xff
     };
-    KMPlayerPart (QWidget *wparent, QObject *parent, const QStringList &args);
+    KMPlayerPart (QWidget *wparent, QObject *parent, const QVariantList &args);
     ~KMPlayerPart ();
 
     KDE_NO_EXPORT KMPlayerBrowserExtension * browserextension() const
@@ -144,8 +161,8 @@ public:
     virtual QString doEvaluate (const QString &script);
 
 public slots:
-    virtual bool openUrl (const KUrl & url);
-    virtual void openUrl (const KUrl &, const QString &t, const QString &srv);
+    virtual bool openUrl(const QUrl& url);
+    virtual void openUrl(const QUrl&, const QString& t, const QString& srv);
     virtual bool closeUrl ();
     void setMenuZoom (int id);
 protected:
