@@ -2406,6 +2406,11 @@ KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
 
 KDE_NO_CDTOR_EXPORT VideoOutput::~VideoOutput () {
     kDebug() << "VideoOutput::~VideoOutput" << endl;
+    if (m_plain_window) {
+        XUnmapWindow (QX11Info::display(), m_plain_window);
+        XDestroyWindow (QX11Info::display(), m_plain_window);
+        m_plain_window = 0;
+    }
 }
 
 void VideoOutput::useIndirectWidget (bool inderect) {
