@@ -1864,7 +1864,7 @@ KDE_NO_EXPORT void NpStream::redirection (KIO::Job *, const KUrl &kurl) {
 }
 
 void NpStream::slotMimetype (KIO::Job *, const QString &mime) {
-    mimetype = mime;
+    mimetype = mime.indexOf("adobe.flash") > -1 ? "application/x-shockwave-flash" : mime;
 }
 
 void NpStream::slotTotalSize (KJob *, qulonglong sz) {
@@ -1976,6 +1976,8 @@ KDE_NO_EXPORT bool NpPlayer::ready () {
                 kDebug() << "search plugin " << mrl->mimetype << "->" << plugin;
                 if (!plugin.isEmpty ()) {
                     mime = mrl->mimetype;
+                    if ( mime.indexOf("adobe.flash") > -1 )
+                        mime = "application/x-shockwave-flash";
                     break;
                 }
             }
