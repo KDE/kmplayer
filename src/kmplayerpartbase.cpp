@@ -194,10 +194,10 @@ void PartBase::connectPanel (ControlPanel * panel) {
     connect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
     connect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));*/
     connect (this, SIGNAL (languagesUpdated(const QStringList &, const QStringList &)), panel, SLOT (setLanguages (const QStringList &, const QStringList &)));
-    connect (panel->audioMenu, SIGNAL (activated (int)), this, SLOT (audioSelected (int)));
-    connect (panel->subtitleMenu, SIGNAL (activated (int)), this, SLOT (subtitleSelected (int)));
-    connect (this, SIGNAL (audioIsSelected (int)), panel, SLOT (selectAudioLanguage (int)));
-    connect (this, SIGNAL (subtitleIsSelected (int)), panel, SLOT (selectSubtitle (int)));
+    connect (panel->audioMenu, SIGNAL (triggered (QAction*)), this, SLOT (audioSelected (QAction*)));
+    connect (panel->subtitleMenu, SIGNAL (triggered (QAction*)), this, SLOT (subtitleSelected (QAction*)));
+    connect (panel->playerMenu, SIGNAL (triggered (QAction*)), this, SLOT (slotPlayerMenu (QAction*)));
+    connect (this, SIGNAL (panelActionToggled (QAction*)), panel, SLOT (actionToggled (QAction*)));
     connect (panel->fullscreenAction, SIGNAL (triggered (bool)),
             this, SLOT (fullScreen ()));
     connect (panel->configureAction, SIGNAL (triggered (bool)),
@@ -330,8 +330,8 @@ QString PartBase::processName (Mrl *mrl) {
         p.truncate (0);
         const MediaManager::ProcessInfoMap::const_iterator e = pinfos.constEnd();
         for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.constBegin(); i != e; ++i)
-            if (i.data ()->supports (m_source->name ())) {
-                p = QString (i.data ()->name);
+            if (i.value ()->supports (m_source->name ())) {
+                p = QString (i.value ()->name);
                 break;
             }
     }
@@ -347,23 +347,23 @@ QString PartBase::processName (Mrl *mrl) {
 
 void PartBase::processCreated (Process*) {}
 
-KDE_NO_EXPORT void PartBase::slotPlayerMenu (int menu) {
+KDE_NO_EXPORT void PartBase::slotPlayerMenu (QAction* act) {
     Mrl *mrl = m_source->current ();
     bool playing = mrl && mrl->active ();
     const char * srcname = m_source->name ();
     QMenu *player_menu = m_view->controlPanel ()->playerMenu;
     MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
     const MediaManager::ProcessInfoMap::const_iterator e = pinfos.constEnd();
-    unsigned id = 0;
+    int id = 0;
     for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.constBegin();
-            id < player_menu->count() && i != e;
+            id < player_menu->actions().count() && i != e;
             ++i) {
-        ProcessInfo *pinfo = i.data ();
+        ProcessInfo *pinfo = i.value ();
         if (!pinfo->supports (srcname))
             continue;
-        int menuid = player_menu->idAt (id);
-        player_menu->setItemChecked (menuid, menu == (int) id);
-        if (menuid == menu) {
+        QAction* menu = player_menu->actions().at (id);
+        menu->setChecked (menu == act);
+        if (menu == act) {
             if (strcmp (pinfo->name, "npp"))
                 m_settings->backends [srcname] = pinfo->name;
             temp_backends [srcname] = pinfo->name;
@@ -381,13 +381,13 @@ void PartBase::updatePlayerMenu (ControlPanel *panel, const QString &backend) {
     menu->clear ();
     MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
     const MediaManager::ProcessInfoMap::const_iterator e = pinfos.constEnd();
-    int id = 0; // if multiple parts, id's should be the same for all menu's
     for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.constBegin(); i != e; ++i) {
-        ProcessInfo *p = i.data ();
+        ProcessInfo *p = i.value ();
         if (p->supports (m_source ? m_source->name () : "urlsource")) {
-            menu->insertItem (p->label, this, SLOT (slotPlayerMenu (int)), 0, id++);
+            QAction* act = menu->addAction (p->label);
+            act->setCheckable(true);
             if (backend == p->name)
-                menu->setItemChecked (id-1, true);
+                act->setChecked (true);
         }
     }
 }
@@ -488,7 +488,7 @@ bool PartBase::openUrl (const KUrl::List & urls) {
         openUrl (KUrl ());
         NodePtr d = m_source->document ();
         if (d)
-            for (unsigned int i = 0; i < urls.size (); i++) {
+            for (int i = 0; i < urls.size (); i++) {
                 const KUrl &url = urls [i];
                 d->appendChild (new GenericURL (d,
                             url.isLocalFile() ? url.toLocalFile() : url.url()));
@@ -639,7 +639,7 @@ KDE_NO_EXPORT void PartBase::playListItemActivated(const QModelIndex &index) {
         QString src = ri->source;
         NodePtrW node = vi->node;
         //kDebug() << src << " " << vi->node->nodeName();
-        Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
+        Source * source = src.isEmpty() ? m_source : m_sources[src.toAscii().constData()];
         if (node->isPlayable () || id_node_playlist_item == node->id) {
             source->play (node->mrl ()); //may become !isPlayable by lazy loading
             if (node && !node->isPlayable ())
@@ -703,12 +703,18 @@ void PartBase::setLanguages (const QStringList & al, const QStringList & sl) {
     emit languagesUpdated (al, sl);
 }
 
-KDE_NO_EXPORT void PartBase::audioSelected (int id) {
-    emit audioIsSelected (id);
+KDE_NO_EXPORT void PartBase::audioSelected (QAction* act) {
+    emit panelActionToggled(act);
+    int i = act->parentWidget()->actions().indexOf(act);
+    if (i >= 0)
+        emit audioIsSelected (i);
 }
 
-KDE_NO_EXPORT void PartBase::subtitleSelected (int id) {
-    emit subtitleIsSelected (id);
+KDE_NO_EXPORT void PartBase::subtitleSelected (QAction* act) {
+    emit panelActionToggled(act);
+    int i = act->parentWidget()->actions().indexOf(act);
+    if (i >= 0)
+        emit subtitleIsSelected (i);
 }
 
 void PartBase::recorderPlaying () {
@@ -743,7 +749,7 @@ bool PartBase::isRecording ()
 
 void PartBase::record () {
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
-    if (!m_view->controlPanel()->button(ControlPanel::button_record)->isOn ()) {
+    if (!m_view->controlPanel()->button(ControlPanel::button_record)->isChecked ()) {
         stopRecording ();
     } else {
         m_settings->show  ("RecordPage");
@@ -771,7 +777,7 @@ void PartBase::play () {
     if (!m_view)
         return;
     QPushButton *pb = ::qobject_cast <QPushButton *> (sender ());
-    if (pb && !pb->isOn ()) {
+    if (pb && !pb->isChecked ()) {
         stop ();
         return;
     }
@@ -817,7 +823,7 @@ bool PartBase::playing () const {
 void PartBase::stop () {
     QPushButton * b = m_view ? m_view->controlPanel ()->button (ControlPanel::button_stop) : 0L;
     if (b) {
-        if (!b->isOn ())
+        if (!b->isChecked ())
             b->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
@@ -826,14 +832,14 @@ void PartBase::stop () {
     MediaManager::ProcessInfoMap &pi = m_media_manager->processInfos ();
     const MediaManager::ProcessInfoMap::const_iterator ie = pi.constEnd();
     for (MediaManager::ProcessInfoMap::const_iterator i = pi.constBegin(); i != ie; ++i)
-        i.data ()->quitProcesses ();
+        i.value ()->quitProcesses ();
     MediaManager::ProcessList &processes = m_media_manager->processes ();
     const MediaManager::ProcessList::const_iterator e = processes.constEnd();
     for (MediaManager::ProcessList::const_iterator i = processes.constBegin(); i != e; ++i)
         (*i)->quit ();
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
-        if (b->isOn ())
+        if (b->isChecked ())
             b->toggle ();
         m_view->controlPanel ()->setPlaying (false);
         setLoaded (100);
@@ -1002,9 +1008,9 @@ void *SourceDocument::role (RoleType msg, void *data) {
 }
 
 
-Source::Source (const QString & name, PartBase * player, const char * n)
- : QObject (player, n),
-   m_name (name), m_player (player),
+Source::Source (const QString&, PartBase * player, const char * n)
+ : QObject (player),
+   m_name (n), m_player (player),
    m_identified (false), m_auto_play (true), m_avoid_redirects (false),
    m_frequency (0), m_xvport (0), m_xvencoding (-1), m_doc_timer (0) {
     init ();
@@ -1151,9 +1157,7 @@ KDE_NO_EXPORT void Source::setAudioLang (int id) {
         id--;
     m_audio_id = li ? li->id : -1;
     if (m_player->view () && m_player->mediaManager ()->processes ().size ())
-        m_player->mediaManager ()->processes ().first ()->setAudioLang (
-             m_audio_id,
-             m_player->viewWidget ()->controlPanel ()->audioMenu->text (id));
+        m_player->mediaManager ()->processes ().first ()->setAudioLang (m_audio_id);
 }
 
 KDE_NO_EXPORT void Source::setSubtitle (int id) {
@@ -1162,9 +1166,7 @@ KDE_NO_EXPORT void Source::setSubtitle (int id) {
         id--;
     m_subtitle_id = li ? li->id : -1;
     if (m_player->view () && m_player->mediaManager ()->processes ().size ())
-        m_player->mediaManager ()->processes ().first ()->setSubtitle (
-             m_subtitle_id,
-             m_player->viewWidget ()->controlPanel ()->subtitleMenu->text (id));
+        m_player->mediaManager ()->processes ().first ()->setSubtitle (m_subtitle_id);
 }
 
 void Source::reset () {

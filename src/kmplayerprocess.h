@@ -66,13 +66,13 @@ class XMLPreferencesFrame;
 class KMPLAYER_EXPORT Process : public QObject, public IProcess {
     Q_OBJECT
 public:
-    Process (QObject *parent, ProcessInfo *, Settings *settings, const char *n);
+    Process (QObject *parent, ProcessInfo *, Settings *settings);
     virtual ~Process ();
 
     virtual void init ();
     virtual void initProcess ();
-    virtual void setAudioLang (int, const QString &);
-    virtual void setSubtitle (int, const QString &);
+    virtual void setAudioLang (int id);
+    virtual void setSubtitle (int id);
     virtual bool running () const;
     KDE_NO_EXPORT QProcess * process () const { return m_process; }
     KDE_NO_EXPORT Source * source () const { return m_source; }
@@ -126,7 +126,7 @@ protected:
 class MPlayerBase : public Process {
     Q_OBJECT
 public:
-    MPlayerBase (QObject *parent, ProcessInfo *, Settings *, const char *);
+    MPlayerBase (QObject *parent, ProcessInfo *, Settings *);
     ~MPlayerBase ();
     void initProcess ();
     virtual void stop ();
@@ -160,8 +160,8 @@ public:
 
     virtual void init ();
     virtual bool grabPicture (const QString &file, int pos);
-    virtual void setAudioLang (int, const QString &);
-    virtual void setSubtitle (int, const QString &);
+    virtual void setAudioLang (int id);
+    virtual void setSubtitle (int id);
     virtual bool deMediafiedPlay ();
     virtual void stop ();
     virtual void pause ();
@@ -305,7 +305,7 @@ protected:
 class KMPLAYER_NO_EXPORT MasterProcess : public Process {
     Q_OBJECT
 public:
-    MasterProcess (QObject *p, ProcessInfo *pi, Settings *s, const char *n);
+    MasterProcess (QObject *p, ProcessInfo *pi, Settings *s);
     ~MasterProcess ();
 
     virtual void init ();

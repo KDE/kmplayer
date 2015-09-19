@@ -144,7 +144,7 @@ public slots:
     bool playing () const;
     void showConfigDialog ();
     void showPlayListWindow ();
-    void slotPlayerMenu (int);
+    void slotPlayerMenu (QAction*);
     void back ();
     void forward ();
     void addBookMark (const QString & title, const QString & url);
@@ -180,6 +180,7 @@ signals:
     void audioIsSelected (int id);
     void subtitleIsSelected (int id);
     void positioned (int pos, int length);
+    void panelActionToggled(QAction*);
     void recording (bool);
 protected:
     bool openFile();
@@ -201,8 +202,8 @@ protected slots:
     void slotPlayingStarted ();
     void slotPlayingStopped ();
     void settingsChanged ();
-    void audioSelected (int);
-    void subtitleSelected (int);
+    void audioSelected (QAction*);
+    void subtitleSelected (QAction*);
 protected:
     KUrl m_docbase;
     NodePtr m_record_doc;

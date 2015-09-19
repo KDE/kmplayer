@@ -183,16 +183,15 @@ private:
 /*
  * Source form TV devices, also implementing preference page for it
  */
-class KMPLAYER_NO_EXPORT KMPlayerTVSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
+class KMPLAYER_NO_EXPORT KMPlayerTVSource : public KMPlayer::Source, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
-    KMPlayerTVSource (KMPlayerApp * app, QMenu * m);
+    KMPlayerTVSource(KMPlayerApp* app);
     virtual ~KMPlayerTVSource ();
     virtual QString filterOptions ();
     virtual bool hasLength ();
     virtual bool isSeekable ();
     virtual KMPlayer::NodePtr root ();
-    void buildMenu ();
     virtual QString prettyName ();
     virtual void write (KSharedConfigPtr);
     virtual void read (KSharedConfigPtr);
@@ -205,7 +204,6 @@ public:
     virtual void deactivate ();
     virtual void play (KMPlayer::Mrl *);
 public slots:
-    void menuAboutToShow ();
     void menuClicked (int id);
 private slots:
     void slotScan ();
@@ -215,6 +213,7 @@ private:
     void addTVDevicePage (TVDevice * dev, bool show=false);
     KMPlayer::NodePtrW m_cur_tvdevice;
     KMPlayer::NodePtrW m_cur_tvinput;
+    KMPlayerApp* m_app;
     QMenu * m_channelmenu;
     QString tvdriver;
     KMPlayerPrefSourcePageTV * m_configpage;

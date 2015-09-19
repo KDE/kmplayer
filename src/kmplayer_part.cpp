@@ -146,7 +146,7 @@ KAboutData *KMPlayerFactory::aboutData () {
 //-----------------------------------------------------------------------------
 
 GrabDocument::GrabDocument (KMPlayerPart *part, const QString &url,
-        const QString &file, PlayListNotify * n)
+        const QString &file, PlayListNotify *)
  : SourceDocument (part->sources () ["urlsource"], url),
    m_grab_file (file),
    m_part (part) {
@@ -230,7 +230,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
     QStringList::const_iterator end = args.end ();
     int turned_off_features = 0;
     for ( ; it != end; ++it) {
-        int equalPos = (*it).find("=");
+        int equalPos = (*it).indexOf("=");
         if (equalPos > 0) {
             QString name = (*it).left (equalPos).toLower ();
             QString value = (*it).right ((*it).size () - equalPos - 1);
@@ -252,7 +252,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
             } else if (name == QString::fromLatin1("controls")) {
                 //http://service.real.com/help/library/guides/production8/realpgd.htm?src=noref,rnhmpg_080301,rnhmtn,nosrc
                 //http://service.real.com/help/library/guides/production8/htmfiles/control.htm
-                QStringList sl = QStringList::split (QChar (','), value);
+                QStringList sl = value.split(QChar (','));
                 QStringList::const_iterator it = sl.constBegin ();
                 const QStringList::const_iterator e = sl.constEnd ();
                 for (QStringList::const_iterator i = sl.constBegin (); i != e; ++i) {
@@ -451,7 +451,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
 
 KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
 #ifdef KMPLAYER_WITH_NPP
-    if (!strcmp (p->name (), "npp")) {
+    if (p->objectName() == "npp") {
         if (m_wait_npp_loaded)
             connect (p, SIGNAL (loaded ()), this, SLOT (nppLoaded ()));
 # if KDE_IS_VERSION(4, 4, 75)
@@ -551,7 +551,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
         url = KUrl (m_docbase, m_file_name); // fix misdetected SRC attr
     } else if (_url != m_docbase) {
         url = _url;
-        if (!m_file_name.isEmpty () && _url.url ().find (m_file_name) < 0) {
+        if (!m_file_name.isEmpty() && _url.url().indexOf(m_file_name) < 0) {
             KUrl u (m_file_name);
             if ((u.protocol () == QString ("mms")) ||
                     _url.protocol ().isEmpty ()) {
@@ -1702,7 +1702,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
         return true;
     }
     if (name.startsWith ("__kmplayer_util_") ||
-            redir_funcs.find (name) != redir_funcs.end ())
+            redir_funcs.indexOf(name) >= 0)
         return false;
     if (name == "__kmplayer_unique_name") {
         rval = QString ("__kmplayer__obj_%1").arg (object_counter);
@@ -1926,10 +1926,10 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
                 rval = entry->defaultvalue;
             break;
         case canpause:
-            rval = (player->playing () && !player->viewWidget ()->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
+            rval = (player->playing () && !player->viewWidget ()->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isChecked ()) ? "true" : "false";
             break;
         case canplay:
-            rval = (!player->playing () || player->viewWidget ()->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
+            rval = (!player->playing () || player->viewWidget ()->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isChecked ()) ? "true" : "false";
             break;
         case canstop:
             rval = player->playing () ? "true" : "false";

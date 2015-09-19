@@ -147,8 +147,7 @@ public:
     KMPlayerPopupMenu *subtitleMenu;
 public slots:
     void setLanguages (const QStringList & al, const QStringList & sl);
-    void selectSubtitle (int id);
-    void selectAudioLanguage (int id);
+    void actionToggled (QAction*);
     void showPopupMenu ();
     void showLanguageMenu ();
     void setPlayingProgress (int position, int length);

@@ -39,8 +39,8 @@ class QRadioButton;
 class QSlider;
 class QSpinBox;
 class QColor;
-class Q3ButtonGroup;
-class Q3ListBox;
+class QButtonGroup;
+class QListWidget;
 class KHistoryCombo;
 class KIntSpinBox;
 class KComboBox;
@@ -60,7 +60,6 @@ class PrefFFMpegPage;           // ffmpeg
 class PrefXinePage;             // xine url:record
 class PrefGeneralPageLooks;     // general, looks
 class PrefGeneralPageOutput;	// general, output
-class PrefOPPageGeneral;	// OP = outputplugins, general
 class PrefOPPagePostProc;	// outputplugins, postproc
 class PartBase;
 class Source;
@@ -90,7 +89,6 @@ public:
     PrefFFMpegPage              *m_FFMpegPage;
     PrefGeneralPageLooks        *m_GeneralPageLooks;
     PrefGeneralPageOutput       *m_GeneralPageOutput;
-    PrefOPPageGeneral           *m_OPPageGeneral;
     PrefOPPagePostProc		*m_OPPagePostproc;
     void setDefaults();
     void setPage (const char *);
@@ -115,7 +113,7 @@ public:
 
     QCheckBox *keepSizeRatio;
     QCheckBox * autoResize;
-    Q3ButtonGroup *sizesChoice;
+    QButtonGroup* sizesChoice;
     QCheckBox *dockSysTray;
     QCheckBox *loop;
     QCheckBox *showConfigButton;
@@ -160,7 +158,7 @@ public:
     KComboBox * urllist;
     KUrlRequester * sub_url;
     KComboBox * sub_urllist;
-    Q3ListBox * backend;
+    QListWidget* backend;
     QCheckBox * clicktoplay;
     QCheckBox * grabhref;
     QLineEdit * prefBitRate;
@@ -180,8 +178,8 @@ public:
     ~PrefRecordPage ();
 
     KUrlRequester * url;
-    Q3ButtonGroup * recorder;
-    Q3ButtonGroup * replay;
+    QButtonGroup* recorder;
+    QButtonGroup* replay;
     KIntSpinBox * replaytime;
     QLabel * source;
 protected:
@@ -226,7 +224,7 @@ public:
     const char * recorderName () { return "mencoder"; }
 
     QLineEdit * arguments;
-    Q3ButtonGroup * format;
+    QButtonGroup* format;
 public slots:
     void formatClicked (int id);
 private:
@@ -264,7 +262,7 @@ public:
     const char * recorderName () { return "ffmpeg"; }
 
     QLineEdit * arguments;
-    Q3ButtonGroup * format;
+    QButtonGroup* format;
 private:
 };
 
@@ -276,16 +274,8 @@ public:
     PrefGeneralPageOutput (QWidget *parent, OutputDriver * ad, OutputDriver * vd);
     ~PrefGeneralPageOutput() {}
 
-    Q3ListBox *videoDriver;
-    Q3ListBox *audioDriver;
-};
-
-class KMPLAYER_NO_EXPORT PrefOPPageGeneral : public KVBox
-{
-    Q_OBJECT
-public:
-    PrefOPPageGeneral(QWidget *parent = 0);
-    ~PrefOPPageGeneral() {}
+    QListWidget* videoDriver;
+    QListWidget* audioDriver;
 };
 
 class KMPLAYER_NO_EXPORT PrefOPPagePostProc : public KVBox

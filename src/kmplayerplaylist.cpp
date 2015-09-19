@@ -582,7 +582,7 @@ KDE_NO_CDTOR_EXPORT ElementPrivate::~ElementPrivate () {
 KDE_NO_EXPORT void ElementPrivate::clear () {
     const ParamMap::iterator e = params.end ();
     for (ParamMap::iterator i = params.begin (); i != e; ++i)
-        delete i.data ();
+        delete i.value ();
     params.clear ();
 }
 
@@ -1455,7 +1455,7 @@ bool DocumentBuilder::startTag(const QString &tag, const AttributeList &attr) {
     } else {
         NodePtr n = m_node->childFromTag (tag);
         if (!n) {
-            kDebug () << "Warning: unknown tag " << tag.latin1 ();
+            kDebug () << "Warning: unknown tag " << tag.toLocal8Bit ().constData();
             NodePtr doc = m_root->document ();
             n = new DarkNode (doc, tag.toUtf8 ());
         }
@@ -1502,7 +1502,7 @@ bool DocumentBuilder::endTag (const QString & tag) {
                     kError () << "m_node == m_doc, stack underflow " << endl;
                     return false;
                 }
-                kWarning () << "endtag: no match " << tag.local8Bit ();
+                kWarning () << "endtag: no match " << tag.toLocal8Bit ().constData();
                 break;
             } else
                  kWarning () << "tag " << tag << " not " << n->nodeName ();

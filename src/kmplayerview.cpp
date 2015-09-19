@@ -37,7 +37,7 @@
 #include <qlabel.h>
 #include <qdatastream.h>
 #include <QContextMenuEvent>
-#include <Q3TextDrag>
+#include <QMimeData>
 #include <QDropEvent>
 #include <QAction>
 #include <QDragEnterEvent>
@@ -141,14 +141,15 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
 {
     setAttribute (Qt::WA_NoSystemBackground, true);
     setAutoFillBackground (false);
+    setAcceptDrops(true);
 }
 
 KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
     KUrl::List uris = KUrl::List::fromMimeData( de->mimeData() );
-    if (uris.isEmpty() && Q3TextDrag::canDecode (de)) {
-        QString text;
-        Q3TextDrag::decode (de, text);
-        uris.push_back (KURL (text));
+    if (uris.isEmpty()) {
+        QString text = de->mimeData()->text();
+        if (!text.isEmpty())
+            uris.push_back (KURL (text));
     }
     if (uris.size () > 0) {
         for (int i = 0; i < uris.size (); i++)

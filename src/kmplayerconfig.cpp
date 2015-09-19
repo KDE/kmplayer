@@ -28,8 +28,8 @@
 #include <qspinbox.h>
 #include <qlabel.h>
 #include <qfileinfo.h>
-#include <Q3ListBox>
-#include <Q3ButtonGroup>
+#include <QButtonGroup>
+#include <QListWidget>
 
 #include <kurlrequester.h>
 #include <klineedit.h>
@@ -299,7 +299,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
     const QMap <QString, Source*>::const_iterator e = m_player->sources ().constEnd ();
     QMap <QString, Source *>::const_iterator i = m_player->sources().constBegin ();
     for (; i != e; ++i)
-        backends[i.data()->name ()] = general.readEntry (i.data()->name ());
+        backends[i.value()->name ()] = general.readEntry (i.value()->name ());
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         colors[i].newcolor = colors[i].color = general.readEntry (colors[i].option, colors[i].color);
     for (int i = 0; i < int (FontSetting::last_target); i++)
@@ -330,7 +330,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
     KConfigGroup rec_cfg (m_config, strRecordingGroup);
     mencoderarguments = rec_cfg.readEntry (strMencoderArgs, QString ("-oac mp3lame -ovc lavc"));
     ffmpegarguments = rec_cfg.readEntry (strFFMpegArgs, QString ("-f avi -acodec mp3 -vcodec mpeg4"));
-    recordfile = rec_cfg.readPathEntry(strRecordingFile, QDir::homeDirPath () + "/record.avi");
+    recordfile = rec_cfg.readPathEntry(strRecordingFile, QDir::homePath () + "/record.avi");
     recorder = Recorder (rec_cfg.readEntry (strRecorder, int (MEncoder)));
     replayoption = ReplayOption (rec_cfg.readEntry (strAutoPlayAfterRecording, int (ReplayFinished)));
     replaytime = rec_cfg.readEntry (strAutoPlayAfterTime, 60);
@@ -377,13 +377,12 @@ KDE_NO_EXPORT void Settings::readConfig () {
 KDE_NO_EXPORT bool Settings::createDialog () {
     if (configdialog) return false;
     configdialog = new Preferences (m_player, this);
-    int id = 0;
     const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
     for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().constBegin(); i != e; ++i) {
-        ProcessInfo *p = i.data ();
+        ProcessInfo *p = i.value ();
         if (p->supports ("urlsource")) {
             QString lbl = p->label.remove (QChar ('&'));
-            configdialog->m_SourcePageURL->backend->insertItem (lbl, id++);
+            configdialog->m_SourcePageURL->backend->addItem(lbl);
         }
     }
     connect (configdialog, SIGNAL (okClicked ()),
@@ -423,11 +422,18 @@ void Settings::removePage (PreferencesPage * page) {
         }
 }
 
+static void selectItem(QButtonGroup* group, int id) {
+    const QList<QAbstractButton *> buttons = group->buttons();
+    for (int i = 0; i < buttons.size(); ++i)
+        buttons[i]->setChecked(group->id(buttons[i]) == id);
+}
+
 void Settings::show (const char * pagename) {
     bool created = createDialog ();
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
     configdialog->m_GeneralPageGeneral->autoResize->setChecked (autoresize);
-    configdialog->m_GeneralPageGeneral->sizesChoice->setButton (remembersize ? 0 : 1);
+    configdialog->m_GeneralPageGeneral->sizesChoice->button(0)->setChecked(!remembersize);
+    configdialog->m_GeneralPageGeneral->sizesChoice->button(1)->setChecked(remembersize);
     configdialog->m_GeneralPageGeneral->dockSysTray->setChecked (docksystray);
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
     configdialog->m_GeneralPageGeneral->framedrop->setChecked (framedrop);
@@ -444,25 +450,25 @@ void Settings::show (const char * pagename) {
     for (int i = 0; i < int (FontSetting::last_target); i++)
         fonts[i].newfont = fonts[i].font;
     configdialog->m_SourcePageURL->urllist->clear ();
-    configdialog->m_SourcePageURL->urllist->insertStringList (urllist);
-    configdialog->m_SourcePageURL->urllist->setCurrentText (m_player->source ()->url ().prettyUrl ());
+    configdialog->m_SourcePageURL->urllist->insertItems (0, urllist);
+    configdialog->m_SourcePageURL->urllist->setCurrentItem (m_player->source ()->url ().prettyUrl ());
     configdialog->m_SourcePageURL->sub_urllist->clear ();
-    configdialog->m_SourcePageURL->sub_urllist->insertStringList (sub_urllist);
-    configdialog->m_SourcePageURL->sub_urllist->setCurrentText (m_player->source ()->subUrl ().prettyUrl ());
+    configdialog->m_SourcePageURL->sub_urllist->insertItems (0, sub_urllist);
+    configdialog->m_SourcePageURL->sub_urllist->setCurrentItem (m_player->source ()->subUrl ().prettyUrl ());
     configdialog->m_SourcePageURL->changed = false;
     configdialog->m_SourcePageURL->prefBitRate->setText (QString::number (prefbitrate));
     configdialog->m_SourcePageURL->maxBitRate->setText (QString::number (maxbitrate));
 
-    configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
-    configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
-    configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (backends["urlsource"]));
+    configdialog->m_GeneralPageOutput->videoDriver->setCurrentRow(videodriver);
+    configdialog->m_GeneralPageOutput->audioDriver->setCurrentRow(audiodriver);
+    //configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (backends["urlsource"]));
     int id = 0;
     const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
     for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().constBegin(); i != e; ++i) {
-        ProcessInfo *p = i.data ();
+        ProcessInfo *p = i.value ();
         if (p->supports ("urlsource")) {
             if (backends["urlsource"] == QString (p->name))
-                configdialog->m_SourcePageURL->backend->setCurrentItem (id);
+                configdialog->m_SourcePageURL->backend->setCurrentRow(id);
             id++;
         }
     }
@@ -502,13 +508,13 @@ void Settings::show (const char * pagename) {
     configdialog->m_OPPagePostproc->FfmpegDeinterlacer->setChecked (pp_ffmpeg_int);
     // recording
     configdialog->m_RecordPage->url->lineEdit()->setText (recordfile);
-    configdialog->m_RecordPage->replay->setButton (int (replayoption));
-    configdialog->m_RecordPage->recorder->setButton (int (recorder));
+    selectItem(configdialog->m_RecordPage->replay, int (replayoption));
+    selectItem(configdialog->m_RecordPage->recorder, int (recorder));
     configdialog->m_RecordPage->replayClicked (int (replayoption));
     configdialog->m_RecordPage->recorderClicked (int (recorder));
     configdialog->m_RecordPage->replaytime->setValue (replaytime);
     configdialog->m_MEncoderPage->arguments->setText (mencoderarguments);
-    configdialog->m_MEncoderPage->format->setButton (recordcopy ? 0 : 1);
+    selectItem(configdialog->m_MEncoderPage->format, recordcopy ? 0 : 1);
     configdialog->m_MEncoderPage->formatClicked (recordcopy ? 0 : 1);
     configdialog->m_FFMpegPage->arguments->setText (ffmpegarguments);
 
@@ -536,7 +542,7 @@ void Settings::writeConfig () {
     gen_cfg.writeEntry (strSaturation, saturation);
     const QMap<QString,QString>::ConstIterator b_end = backends.constEnd ();
     for (QMap<QString,QString>::ConstIterator i = backends.constBegin(); i != b_end; ++i)
-        gen_cfg.writeEntry (i.key (), i.data ());
+        gen_cfg.writeEntry (i.key (), i.value ());
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         gen_cfg.writeEntry (colors[i].option, colors[i].color);
     for (int i = 0; i < int (FontSetting::last_target); i++)
@@ -634,7 +640,7 @@ void Settings::okPressed () {
                     urlchanged = false;
                     KMessageBox::error (m_player->view (), i18n ("File %1 does not exist.",url.url ()), i18n ("Error"));
                 } else {
-                    configdialog->m_SourcePageURL->url->setUrl (QString(fi.absFilePath () + xine_directives));
+                    configdialog->m_SourcePageURL->url->setUrl (QString(fi.absoluteFilePath () + xine_directives));
                 }
             }
             if (urlchanged &&
@@ -646,34 +652,34 @@ void Settings::okPressed () {
                     KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.",sub_url.url ()), i18n ("Error"));
                     configdialog->m_SourcePageURL->sub_url->setUrl (QString ());
                 } else
-                    configdialog->m_SourcePageURL->sub_url->setUrl (sfi.absFilePath ());
+                    configdialog->m_SourcePageURL->sub_url->setUrl (sfi.absoluteFilePath ());
             }
         }
     }
     if (urlchanged) {
         KUrl uri (url.url ());
         m_player->setUrl (uri.url ());
-        if (urllist.find (uri.prettyUrl ()) == urllist.end ())
-            configdialog->m_SourcePageURL->urllist->insertItem (uri.prettyUrl (), 0);
+        if (urllist.indexOf (uri.prettyUrl ()) < 0)
+            configdialog->m_SourcePageURL->urllist->insertItem (0, uri.prettyUrl ());
         KUrl sub_uri (sub_url.url ());
-        if (sub_urllist.find (sub_uri.prettyUrl ()) == sub_urllist.end ())
-            configdialog->m_SourcePageURL->sub_urllist->insertItem (sub_uri.prettyUrl (), 0);
+        if (sub_urllist.indexOf (sub_uri.prettyUrl ()) < 0)
+            configdialog->m_SourcePageURL->sub_urllist->insertItem (0, sub_uri.prettyUrl ());
     }
     urllist.clear ();
     for (int i = 0; i < configdialog->m_SourcePageURL->urllist->count () && i < 20; ++i)
         // damnit why don't maxCount and setDuplicatesEnabled(false) work :(
         // and why can I put a qstringlist in it, but cannot get it out of it again..
-        if (!configdialog->m_SourcePageURL->urllist->text (i).isEmpty ())
-            urllist.push_back (configdialog->m_SourcePageURL->urllist->text (i));
+        if (!configdialog->m_SourcePageURL->urllist->itemText (i).isEmpty ())
+            urllist.push_back (configdialog->m_SourcePageURL->urllist->itemText (i));
     sub_urllist.clear ();
     for (int i = 0; i < configdialog->m_SourcePageURL->sub_urllist->count () && i < 20; ++i)
-        if (!configdialog->m_SourcePageURL->sub_urllist->text (i).isEmpty ())
-            sub_urllist.push_back (configdialog->m_SourcePageURL->sub_urllist->text (i));
+        if (!configdialog->m_SourcePageURL->sub_urllist->itemText (i).isEmpty ())
+            sub_urllist.push_back (configdialog->m_SourcePageURL->sub_urllist->itemText (i));
     prefbitrate = configdialog->m_SourcePageURL->prefBitRate->text ().toInt ();
     maxbitrate = configdialog->m_SourcePageURL->maxBitRate->text ().toInt ();
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
     autoresize = configdialog->m_GeneralPageGeneral->autoResize->isChecked ();
-    remembersize=!configdialog->m_GeneralPageGeneral->sizesChoice->selectedId();
+    remembersize= configdialog->m_GeneralPageGeneral->sizesChoice->checkedId();
     docksystray = configdialog->m_GeneralPageGeneral->dockSysTray->isChecked ();
     loop = configdialog->m_GeneralPageGeneral->loop->isChecked ();
     framedrop = configdialog->m_GeneralPageGeneral->framedrop->isChecked ();
@@ -685,13 +691,13 @@ void Settings::okPressed () {
     showbroadcastbutton = configdialog->m_GeneralPageGeneral->showBroadcastButton->isChecked ();
     seektime = configdialog->m_GeneralPageGeneral->seekTime->value();
 
-    videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
-    audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
-    QString backend_name = configdialog->m_SourcePageURL->backend->currentText ();
+    videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentRow();
+    audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentRow();
+    QString backend_name = configdialog->m_SourcePageURL->backend->currentItem()->text();
     if (!backend_name.isEmpty ()) {
         const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
         for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().constBegin(); i != e; ++i) {
-            ProcessInfo *p = i.data ();
+            ProcessInfo *p = i.value ();
             if (p->supports ("urlsource") &&
                     p->label.remove (QChar ('&')) == backend_name) {
                 backends["urlsource"] = p->name;
@@ -733,20 +739,12 @@ void Settings::okPressed () {
     pp_med_int = configdialog->m_OPPagePostproc->MedianDeinterlacer->isChecked();
     pp_ffmpeg_int = configdialog->m_OPPagePostproc->FfmpegDeinterlacer->isChecked();
     // recording
-#if (QT_VERSION < 0x030200)
-    recorder = Recorder (configdialog->m_RecordPage->recorder->id (configdialog->m_RecordPage->recorder->selected ()));
-#else
-    recorder = Recorder (configdialog->m_RecordPage->recorder->selectedId ());
-#endif
+    recorder = Recorder (configdialog->m_RecordPage->recorder->checkedId());
     replaytime = configdialog->m_RecordPage->replaytime->value ();
     recordfile = configdialog->m_RecordPage->url->lineEdit()->text ();
     mencoderarguments = configdialog->m_MEncoderPage->arguments->text ();
     ffmpegarguments = configdialog->m_FFMpegPage->arguments->text ();
-#if (QT_VERSION < 0x030200)
-    recordcopy = !configdialog->m_MEncoderPage->format->id (configdialog->m_MEncoderPage->format->selected ());
-#else
-    recordcopy = !configdialog->m_MEncoderPage->format->selectedId ();
-#endif
+    recordcopy = !configdialog->m_MEncoderPage->format->checkedId();
 
     //dynamic stuff
     for (PreferencesPage * p = pagelist; p; p = p->next)

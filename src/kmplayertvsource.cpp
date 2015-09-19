@@ -22,7 +22,7 @@
 #include <qtimer.h>
 #include <qpushbutton.h>
 #include <qcheckbox.h>
-#include <Q3Table>
+#include <QTableWidget>
 #include <qstringlist.h>
 #include <qcombobox.h>
 #include <qlineedit.h>
@@ -30,6 +30,7 @@
 #include <qwhatsthis.h>
 #include <qtabwidget.h>
 #include <qmessagebox.h>
+#include <QHeaderView>
 #include <QMenu>
 #include <qfontmetrics.h>
 
@@ -58,75 +59,80 @@ static const char * strTVDriver = "Driver";
 
 
 KDE_NO_CDTOR_EXPORT TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodePtr dev)
-: QFrame (parent, "PageTVDevice"), device_doc (dev) {
+: QFrame (parent), device_doc (dev) {
+    setObjectName("PageTVDevice");
     TVDevice * device = KMPlayer::convertNode <TVDevice> (device_doc);
-    QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
-    QLabel * deviceLabel = new QLabel (i18n ("Video device:") + device->src, this, 0);
-    layout->addWidget (deviceLabel);
-    QGridLayout *gridlayout = new QGridLayout (layout, 3, 4);
-    QLabel * audioLabel = new QLabel (i18n ("Audio device:"), this);
-    audiodevice = new KUrlRequester (KUrl (device->getAttribute ("audio")), this);
-    QLabel * nameLabel = new QLabel (i18n ("Name:"), this, 0);
-    name = new QLineEdit (device->title, this, 0);
-    QLabel *sizewidthLabel = new QLabel (i18n ("Width:"), this, 0);
-    sizewidth = new QLineEdit (device->getAttribute (KMPlayer::Ids::attr_width), this, 0);
-    QLabel *sizeheightLabel = new QLabel (i18n ("Height:"), this, 0);
-    sizeheight = new QLineEdit (device->getAttribute (KMPlayer::Ids::attr_height), this, 0);
-    noplayback = new QCheckBox (i18n ("Do not immediately play"), this);
+    QLabel* deviceLabel = new QLabel(i18n("Video device:") + device->src);
+    QLabel* audioLabel = new QLabel(i18n("Audio device:"));
+    audiodevice = new KUrlRequester (KUrl (device->getAttribute ("audio")));
+    QLabel* nameLabel = new QLabel(i18n("Name:"));
+    name = new QLineEdit(device->title);
+    QLabel *sizewidthLabel = new QLabel(i18n("Width:"));
+    sizewidth = new QLineEdit(device->getAttribute(KMPlayer::Ids::attr_width));
+    QLabel* sizeheightLabel = new QLabel (i18n ("Height:"));
+    sizeheight = new QLineEdit(device->getAttribute(KMPlayer::Ids::attr_height));
+    noplayback = new QCheckBox(i18n("Do not immediately play"));
     noplayback->setChecked (!device->getAttribute ("playback").toInt ());
-    QWhatsThis::add (noplayback, i18n ("Only start playing after clicking the play button"));
-    inputsTab = new QTabWidget (this);
+    noplayback->setWhatsThis(i18n("Only start playing after clicking the play button"));
+    inputsTab = new QTabWidget;
     for (KMPlayer::Node *ip = device->firstChild (); ip; ip = ip->nextSibling ()) {
         if (ip->id != id_node_tv_input)
             continue;
         TVInput * input = KMPlayer::convertNode <TVInput> (ip);
-        QWidget * widget = new QWidget (this);
-        QHBoxLayout *tablayout = new QHBoxLayout (widget, 5, 2);
+        QWidget* widget = new QWidget;
+        QHBoxLayout* tablayout = new QHBoxLayout;
         if (!input->getAttribute ("tuner").isEmpty ()) {
-            QHBoxLayout *horzlayout = new QHBoxLayout ();
-            QVBoxLayout *vertlayout = new QVBoxLayout ();
-            horzlayout->addWidget (new QLabel (i18n ("Norm:"), widget));
-            QComboBox * norms = new QComboBox (widget, "PageTVNorm");
-            norms->insertItem (QString ("NTSC"), 0);
-            norms->insertItem (QString ("PAL"), 1);
-            norms->insertItem (QString ("SECAM"), 2);
-            norms->setCurrentText (input->getAttribute ("norm"));
+            QHBoxLayout* horzlayout = new QHBoxLayout;
+            QVBoxLayout* vertlayout = new QVBoxLayout;
+            horzlayout->addWidget(new QLabel(i18n("Norm:")));
+            QComboBox* norms = new QComboBox;
+            norms->setObjectName("PageTVNorm");
+            norms->addItem(QString("NTSC"));
+            norms->addItem(QString("PAL"));
+            norms->addItem(QString("SECAM"));
+            norms->setCurrentIndex(norms->findText(input->getAttribute ("norm")));
             horzlayout->addWidget (norms);
             vertlayout->addLayout (horzlayout);
             vertlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-            Q3Table * table = new Q3Table (90, 2, widget, "PageTVChannels");
+            QTableWidget* table = new QTableWidget(90, 2);
+            table->setObjectName("PageTVChannels");
+            table->setContentsMargins(0, 0, 0, 0);
             QFontMetrics metrics (table->font ());
-            Q3Header *header = table->horizontalHeader();
-            header->setLabel (0, i18n ("Channel"));
-            header->setLabel (1, i18n ("Frequency (MHz)"));
+            QStringList labels = QStringList() << i18n("Channel") << i18n("Frequency (MHz)");
+            table->setHorizontalHeaderLabels(labels);
             int index = 0;
-            int first_column_width = QFontMetrics (header->font ()).boundingRect (header->label (0)).width () + 20;
+            int first_column_width = QFontMetrics(table->horizontalHeader()->font()).boundingRect(labels[0]).width() + 20;
             for (KMPlayer::Node *c=input->firstChild();c;c=c->nextSibling()) {
                 if (c->id != id_node_tv_channel)
                     continue;
                 int strwid = metrics.boundingRect (c->mrl ()->title).width ();
                 if (strwid > first_column_width)
                     first_column_width = strwid + 4;
-                table->setItem (index, 0, new Q3TableItem (table, Q3TableItem::Always, c->mrl ()->title));
-                table->setItem (index++, 1, new Q3TableItem (table, Q3TableItem::Always, KMPlayer::convertNode<TVChannel>(c)->getAttribute ("frequency")));
+                table->setItem(index, 0, new QTableWidgetItem(c->mrl()->title));
+                table->setItem(index++, 1, new QTableWidgetItem(KMPlayer::convertNode<TVChannel>(c)->getAttribute("frequency")));
             }
             table->setColumnWidth (0, first_column_width);
-            table->setColumnStretchable (1, true);
+            table->horizontalHeader()->setStretchLastSection(true);
             tablayout->addWidget (table);
             tablayout->addLayout (vertlayout);
         }
+        widget->setLayout(tablayout);
         inputsTab->addTab (widget, input->mrl ()->title);
     }
-    QPushButton * delButton = new QPushButton (i18n ("Delete"), this);
+    QPushButton* delButton = new QPushButton(i18n("Delete"));
     connect (delButton, SIGNAL (clicked ()), this, SLOT (slotDelete ()));
+    QGridLayout* gridlayout = new QGridLayout;
     gridlayout->addWidget (audioLabel, 0, 0);
-    gridlayout->addMultiCellWidget (audiodevice, 0, 0, 1, 3);
+    gridlayout->addWidget (audiodevice, 0, 0, 1, 3);
     gridlayout->addWidget (nameLabel, 1, 0);
-    gridlayout->addMultiCellWidget (name, 1, 1, 1, 3);
+    gridlayout->addWidget (name, 1, 1, 1, 3);
     gridlayout->addWidget (sizewidthLabel, 2, 0);
     gridlayout->addWidget (sizewidth, 2, 1);
     gridlayout->addWidget (sizeheightLabel, 2, 2);
     gridlayout->addWidget (sizeheight, 2, 3);
+    QVBoxLayout* layout = new QVBoxLayout;
+    layout->addWidget(deviceLabel);
+    layout->addLayout(gridlayout);
     layout->addWidget (inputsTab);
     layout->addSpacing (5);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
@@ -135,6 +141,7 @@ KDE_NO_CDTOR_EXPORT TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodeP
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
     buttonlayout->addWidget (delButton);
     layout->addLayout (buttonlayout);
+    setLayout(layout);
 }
 
 KDE_NO_EXPORT void TVDevicePage::slotDelete () {
@@ -146,30 +153,33 @@ KDE_NO_EXPORT void TVDevicePage::slotDelete () {
 
 KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerTVSource * tvsource)
 : QFrame (parent), m_tvsource (tvsource) {
-    QVBoxLayout * mainlayout = new QVBoxLayout (this, 5);
-    notebook = new QTabWidget (this);
-    notebook->setTabPosition (QTabWidget::Bottom);
-    mainlayout->addWidget (notebook);
+    notebook = new QTabWidget;
+    notebook->setTabPosition (QTabWidget::South);
     QWidget * general = new QWidget (notebook);
-    QVBoxLayout *layout = new QVBoxLayout (general);
-    QGridLayout *gridlayout = new QGridLayout (layout, 2, 2, 2);
-    QLabel *driverLabel = new QLabel (i18n ("Driver:"), general, 0);
-    driver = new QLineEdit ("", general, 0);
-    QWhatsThis::add (driver, i18n ("dummy, v4l or bsdbt848"));
-    QLabel *deviceLabel = new QLabel (i18n ("Device:"), general, 0);
-    device = new KUrlRequester (KUrl ("/dev/video"), general);
-    QWhatsThis::add(device, i18n("Path to your video device, eg. /dev/video0"));
-    scan = new QPushButton (i18n ("Scan..."), general);
+    QLabel* driverLabel = new QLabel(i18n("Driver:"));
+    driver = new QLineEdit;
+    driver->setWhatsThis(i18n("dummy, v4l or bsdbt848"));
+    QLabel *deviceLabel = new QLabel(i18n("Device:"));
+    device = new KUrlRequester(KUrl("/dev/video"));
+    device->setWhatsThis(i18n("Path to your video device, eg. /dev/video0"));
+    scan = new QPushButton(i18n("Scan..."));
+    QGridLayout *gridlayout = new QGridLayout;
     gridlayout->addWidget (driverLabel, 0, 0);
     gridlayout->addWidget (driver, 0, 1);
     gridlayout->addWidget (deviceLabel, 1, 0);
     gridlayout->addWidget (device, 1, 1);
-    QHBoxLayout *buttonlayout = new QHBoxLayout ();
+    QHBoxLayout *buttonlayout = new QHBoxLayout;
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     buttonlayout->addWidget (scan);
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->addLayout(gridlayout);
     layout->addLayout (buttonlayout);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    notebook->insertTab (general, i18n ("General"));
+    general->setLayout(layout);
+    notebook->addTab(general, i18n("General"));
+    QVBoxLayout* mainlayout = new QVBoxLayout;
+    mainlayout->addWidget(notebook);
+    setLayout(mainlayout);
 }
 
 KDE_NO_EXPORT void KMPlayerPrefSourcePageTV::showEvent (QShowEvent *) {
@@ -312,15 +322,15 @@ KDE_NO_EXPORT void TVDevice::updateDevicePage () {
         TVInput * input = KMPlayer::convertNode <TVInput> (ip);
         bool ok;
         if (input->getAttribute ("tuner").toInt (&ok) && ok) {
-            QWidget * widget = device_page->inputsTab->page (i);
-            Q3Table * table = static_cast <Q3Table *> (widget->child ("PageTVChannels", "Q3Table"));
+            QWidget* widget = device_page->inputsTab->widget(i);
+            QTableWidget* table = static_cast<QTableWidget*>(widget->findChild<QTableWidget*>("PageTVChannels"));
             if (table) {
                 input->clearChildren ();
-                for (int j = 0; j<table->numRows() && table->item (j, 1); ++j) {
+                for (int j = 0; j<table->rowCount() && table->item (j, 1); ++j) {
                     input->appendChild (new TVChannel (m_doc, table->item (j, 0)->text (), table->item (j, 1)->text ().toDouble ()));
                 }
             }
-            QComboBox * norms = static_cast <QComboBox *> (widget->child ("PageTVNorm", "QComboBox"));
+            QComboBox* norms = static_cast<QComboBox*>(widget->findChild<QComboBox*>("PageTVNorm"));
             if (norms) {
                 input->setAttribute ("norm", norms->currentText ());
             }
@@ -359,11 +369,9 @@ KDE_NO_EXPORT void TVDocument::defer () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QMenu * m)
-    : KMPlayerMenuSource (i18n ("TV"), a, m, "tvsource"), m_configpage (0L), scanner (0L), config_read (false) {
+KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource(KMPlayerApp* a)
+    : KMPlayer::Source (i18n ("TV"), a->player(), "tvsource"), m_app(a), m_configpage(0L), scanner(0L), config_read(false) {
     m_url = "tv://";
-    m_menu->insertTearOffHandle ();
-    connect (m_menu, SIGNAL (aboutToShow ()), this, SLOT (menuAboutToShow ()));
     m_document = new TVDocument (this);
     m_player->settings ()->addPage (this);
     tree_id = m_player->playModel()->addTree (m_document, "tvsource", "video-television", KMPlayer::PlayModel::TreeEdit | KMPlayer::PlayModel::Moveable | KMPlayer::PlayModel::Deleteable);
@@ -409,18 +417,6 @@ KDE_NO_EXPORT void KMPlayerTVSource::deactivate () {
     //if (m_player->view () && !m_app->view ()->controlPanel()->broadcastButton ()->isOn ())
     //    m_app->view ()->controlPanel()->broadcastButton ()->hide ();
     reset ();
-}
-
-KDE_NO_EXPORT void KMPlayerTVSource::buildMenu () {
-    m_menu->clear ();
-    int counter = 0;
-    for (KMPlayer::Node *dp = m_document->firstChild (); dp; dp = dp->nextSibling ())
-        if (dp->id == id_node_tv_device)
-            m_menu->insertItem (KMPlayer::convertNode <TVDevice> (dp)->title, this, SLOT (menuClicked (int)), 0, counter++);
-}
-
-KDE_NO_EXPORT void KMPlayerTVSource::menuAboutToShow () {
-    readXML ();
 }
 
 void KMPlayerTVSource::play (KMPlayer::Mrl *mrl) {
@@ -552,7 +548,6 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
     kDebug () << "KMPlayerTVSource::readXML";
     m_document->defer ();
     m_player->playModel()->updateTree (tree_id, m_document, 0, false, false);
-    buildMenu ();
     sync (false);
 }
 
@@ -630,16 +625,16 @@ KDE_NO_EXPORT void KMPlayerTVSource::addTVDevicePage(TVDevice *dev, bool show) {
     if (dev->device_page)
         dev->device_page->deleteLater ();
     dev->device_page = new TVDevicePage (m_configpage->notebook, dev);
-    m_configpage->notebook->insertTab (dev->device_page, dev->title);
+    m_configpage->notebook->addTab(dev->device_page, dev->title);
     connect (dev->device_page, SIGNAL (deleted (TVDevicePage *)),
              this, SLOT (slotDeviceDeleted (TVDevicePage *)));
     if (show)
-        m_configpage->notebook->setCurrentPage (m_configpage->notebook->count ()-1);
+        m_configpage->notebook->setCurrentIndex(m_configpage->notebook->count()-1);
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::slotDeviceDeleted (TVDevicePage *devpage) {
     m_document->removeChild (devpage->device_doc);
-    m_configpage->notebook->setCurrentPage (0);
+    m_configpage->notebook->setCurrentIndex(0);
     m_player->playModel()->updateTree (tree_id, m_document, 0, false, false);
 }
 
@@ -657,11 +652,11 @@ KDE_NO_EXPORT void TVDeviceScannerSource::init () {
 }
 
 KDE_NO_EXPORT bool TVDeviceScannerSource::processOutput (const QString & line) {
-    if (m_nameRegExp.search (line) > -1) {
+    if (m_nameRegExp.indexIn(line) > -1) {
         m_tvdevice->title = m_nameRegExp.cap (1);
         m_tvdevice->setAttribute(KMPlayer::Ids::attr_name,m_tvdevice->title);
         kDebug() << "Name " << m_tvdevice->title;
-    } else if (m_sizesRegExp.search (line) > -1) {
+    } else if (m_sizesRegExp.indexIn(line) > -1) {
         m_tvdevice->setAttribute (KMPlayer::Ids::attr_width,
                 m_sizesRegExp.cap(1));
         m_tvdevice->setAttribute (KMPlayer::Ids::attr_height,
@@ -670,15 +665,15 @@ KDE_NO_EXPORT bool TVDeviceScannerSource::processOutput (const QString & line) {
         m_tvdevice->setAttribute ("minheight", m_sizesRegExp.cap (2));
         m_tvdevice->setAttribute ("maxwidth", m_sizesRegExp.cap (3));
         m_tvdevice->setAttribute ("maxheight", m_sizesRegExp.cap (4));
-    } else if (m_inputRegExp.search (line) > -1) {
+    } else if (m_inputRegExp.indexIn(line) > -1) {
         KMPlayer::NodePtr doc = m_tvsource->document ();
-        TVInput * input = new TVInput (doc, m_inputRegExp.cap (2).stripWhiteSpace (),
+        TVInput * input = new TVInput (doc, m_inputRegExp.cap(2).trimmed(),
                                        m_inputRegExp.cap (1).toInt ());
         if (m_inputRegExp.cap (3).toInt () == 1)
             input->setAttribute ("tuner", "1");
         m_tvdevice->appendChild (input);
         kDebug() << "Input " << input->mrl ()->title;
-    } else if (m_inputRegExpV4l2.search (line) > -1) {
+    } else if (m_inputRegExpV4l2.indexIn(line) > -1) {
         KMPlayer::NodePtr doc = m_tvsource->document ();
         QStringList sl = m_inputRegExpV4l2.cap(1).split (QChar (';'));
         const QStringList::iterator e = sl.end ();

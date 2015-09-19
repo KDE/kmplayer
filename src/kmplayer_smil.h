@@ -697,13 +697,13 @@ public:
     Area (NodePtr & d, const QString & tag);
     ~Area ();
     void activate ();
-    KDE_NO_EXPORT const char * nodeName () const { return tag.ascii (); }
+    KDE_NO_EXPORT const char * nodeName () const { return tag.constData (); }
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     void parseParam (const TrieString & name, const QString & value);
     void *role (RoleType msg, void *content=NULL);
     SizeType * coords;
     int nr_coords;
-    const QString tag;
+    const QByteArray tag;
     MouseListeners mouse_listeners;
 };
 

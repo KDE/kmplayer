@@ -1895,18 +1895,20 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         setWindowState( windowState() & ~Qt::WindowFullScreen ); // reset
         m_view->dockArea ()->setCentralWidget (this);
         m_view->dockArea ()->restoreState (m_dock_state);
-        for (unsigned i = 0; i < m_collection->count (); ++i)
+        for (int i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (false);
-        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (playlist_xpm)));
+        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIcon (QIcon (QPixmap (playlist_xpm)));
         unsetCursor();
     } else {
         m_dock_state = m_view->dockArea ()->saveState ();
         m_topwindow_rect = topLevelWidget ()->geometry ();
-        reparent (0L, 0, qApp->desktop()->screenGeometry(this).topLeft(), true);
+        setParent (0L);
+        move(qApp->desktop()->screenGeometry(this).topLeft());
+        setVisible(true);
         setWindowState( windowState() | Qt::WindowFullScreen ); // set
-        for (unsigned i = 0; i < m_collection->count (); ++i)
+        for (int i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (true);
-        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (normal_window_xpm)));
+        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIcon (QIcon (QPixmap (normal_window_xpm)));
         m_mouse_invisible_timer = startTimer(MOUSE_INVISIBLE_DELAY);
     }
     m_fullscreen = !m_fullscreen;
@@ -1924,11 +1926,11 @@ void ViewArea::minimalMode () {
         m_view->setViewOnly ();
         m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
         m_view->setNoInfoMessages (true);
-        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (normal_window_xpm)));
+        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIcon (QIcon (QPixmap (normal_window_xpm)));
     } else {
         m_view->setControlPanelMode (KMPlayer::View::CP_Show);
         m_view->setNoInfoMessages (false);
-        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (playlist_xpm)));
+        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIcon (QIcon (QPixmap (playlist_xpm)));
     }
     m_topwindow_rect = topLevelWidget ()->geometry ();
 }
@@ -1961,7 +1963,7 @@ KDE_NO_EXPORT void ViewArea::mouseDoubleClickEvent (QMouseEvent *) {
 }
 
 KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
-    if (e->state () == Qt::NoButton)
+    if (e->buttons () == Qt::NoButton)
         m_view->mouseMoved (e->x (), e->y ());
     if (surface->node) {
         MouseVisitor visitor (this, MsgEventPointerMoved,
@@ -2044,7 +2046,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
 #endif
     {
         m_update_rect = IRect ();
-        repaint (QRect(rect.x(), rect.y(), rect.width(), rect.height()), false);
+        repaint (QRect(rect.x(), rect.y(), rect.width(), rect.height()));
     }
 }
 
@@ -2265,11 +2267,11 @@ IViewer *ViewArea::createVideoWidget () {
 }
 
 void ViewArea::destroyVideoWidget (IViewer *widget) {
-    VideoWidgetList::iterator it = video_widgets.find (widget);
-    if (it != video_widgets.end ()) {
-        IViewer *viewer = *it;
+    int i = video_widgets.indexOf(widget);
+    if (i >= 0) {
+        IViewer *viewer = widget;
         delete viewer;
-        video_widgets.erase (it);
+        video_widgets.removeAt(i);
     } else {
         kWarning () << "destroyVideoWidget widget not found" << endl;
     }
@@ -2404,6 +2406,11 @@ KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
 
 KDE_NO_CDTOR_EXPORT VideoOutput::~VideoOutput () {
     kDebug() << "VideoOutput::~VideoOutput" << endl;
+    if (m_plain_window) {
+        XUnmapWindow (QX11Info::display(), m_plain_window);
+        XDestroyWindow (QX11Info::display(), m_plain_window);
+        m_plain_window = 0;
+    }
 }
 
 void VideoOutput::useIndirectWidget (bool inderect) {

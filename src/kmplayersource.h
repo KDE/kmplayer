@@ -79,6 +79,7 @@ public:
     KDE_NO_EXPORT const QString & options () const { return m_options; }
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
     KDE_NO_EXPORT const QString & tuner () const { return m_tuner; }
+    KDE_NO_EXPORT const char* name() const { return m_name; }
     KDE_NO_EXPORT Mrl *current() { return m_current ? m_current->mrl() : NULL;}
     virtual void setCurrent (Mrl *mrl);
     QString plugin (const QString &mime) const;
@@ -143,7 +144,7 @@ protected:
 
     NodePtr m_document;
     NodePtrW m_current;
-    QString m_name;
+    const char* m_name;
     PartBase * m_player;
     QString m_recordcmd;
     bool m_identified;
