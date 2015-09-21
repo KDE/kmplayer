@@ -26,353 +26,405 @@
 # include <config-kmplayer.h>
 # include "kmplayer_def.h"
 #endif
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <vector>
 
 
 #include "triestring.h"
 
 namespace KMPlayer {
 
-struct KMPLAYER_NO_EXPORT TrieNode {
-    TrieNode (const char * s);
-    ~TrieNode ();
-    void unref ();
-    void removeChild (TrieNode *);
-    void dump (int lvl) {
-        QString indent (QString ().fill (QChar ('.'), lvl));
-        printf("%s%s len:%4d rc:%4d\n", indent.toAscii().constData(), str, length, ref_count);
+struct TrieNode
+{
+    enum { MaxPacked = sizeof (void*) };
+
+    TrieNode() : ref_count(0), length(0), parent(NULL), buffer(NULL)
+    {}
+    TrieNode(TrieNode* p, const char* s, size_t len)
+        : ref_count(0), length(0)
+    {
+        update(p, s, len);
     }
-    char * str;
-    unsigned short length;
-    unsigned short ref_count;
-    TrieNode * parent;
-    TrieNode * first_child;
-    TrieNode * next_sibling;
+    ~TrieNode()
+    {
+        if (length > MaxPacked)
+            free(buffer);
+    }
+    void update(TrieNode* p, const char* s, size_t len)
+    {
+        char* old = length > MaxPacked ? buffer : NULL;
+        parent = p;
+        length = len;
+        if (len <= MaxPacked) {
+            if ((unsigned)std::abs(s - packed) > len)
+                memcpy(packed, s, len);
+            else
+                memmove(packed, s, len);
+        } else {
+            buffer = (char*)malloc(len);
+            memcpy(buffer, s, len);
+        }
+        if (old)
+            free(old);
+    }
+
+    int ref_count;
+    unsigned length;
+    TrieNode* parent;
+    std::vector<TrieNode*> children;
+
+    union {
+        char packed[MaxPacked];
+        char* buffer;
+    };
 };
 
 }
 
 using namespace KMPlayer;
 
-static TrieNode * root_trie;
-
-void dump (TrieNode * node, int lvl) {
-    if (!node)
-        return;
-    node->dump (lvl);
-    dump (node->first_child, lvl+2);
-    if (node->next_sibling)
-        dump (node->next_sibling, lvl);
+static char* trieCharPtr(TrieNode* n)
+{
+    return n->length <= TrieNode::MaxPacked ? n->packed : n->buffer;
 }
 
-KDE_NO_CDTOR_EXPORT TrieNode::TrieNode (const char * s)
-  : str (s ? strdup (s) : 0L),
-    length (s ? strlen (s) : 0),
-    ref_count (1),
-    parent (0L),
-    first_child (0L),
-    next_sibling (0L) {}
-
-KDE_NO_CDTOR_EXPORT TrieNode::~TrieNode () {
-    if (str)
-        free (str);
-}
-
-KDE_NO_EXPORT void TrieNode::unref () {
-    if (--ref_count <= 0 && !first_child)
-        parent->removeChild (this);
-}
-
-KDE_NO_EXPORT void TrieNode::removeChild (TrieNode * node) {
-    if (node == first_child) {
-        first_child = node->next_sibling;
-    } else {
-        for (TrieNode *tn = first_child; tn; tn = tn->next_sibling)
-            if (tn->next_sibling == node) {
-                tn->next_sibling = node->next_sibling;
-                break;
-            }
-    }
-    delete node;
-    if (!parent)
-        return;
-    if (!ref_count && !first_child)
-        parent->removeChild (this); // can this happen ?
-    else if (!ref_count && !first_child->next_sibling) { // merge with child
-        char * tmp = first_child->str;
-        first_child->length = first_child->length + length;
-        first_child->str = (char *) malloc (first_child->length + 1);
-        strcpy (first_child->str, str);
-        strcat (first_child->str, tmp);
-        free (tmp);
-        first_child->parent = parent;
-        first_child->next_sibling = next_sibling;
-        if (parent->first_child == this) {
-            parent->first_child = first_child;
-        } else {
-            for (TrieNode *n = parent->first_child; n; n = n->next_sibling)
-                if (n->next_sibling == this) {
-                    n->next_sibling = first_child;
-                    break;
-                }
-        }
-        delete this;
-    }
-}
-
-static char * trieRetrieveString (TrieNode * node, int &len) {
+static char* trieRetrieveString (TrieNode* node, int& len)
+{
     char *buf;
     if (node->parent) {
         len += node->length;
-        buf = trieRetrieveString (node->parent, len);
-        strcat (buf, node->str);
+        int p = len;
+        buf = trieRetrieveString(node->parent, len);
+        memcpy(buf+len-p, trieCharPtr(node), node->length);
     } else {
-        buf = (char *) malloc (len + 1);
-        *buf = 0;
+        buf = (char*)malloc(len + 1);
+        buf[len] = 0;
     }
     return buf;
 }
 
-static int trieStringCompare (TrieNode * node, const char * s, int &len) {
+static TrieNode* trieRoot()
+{
+    static TrieNode* trie_root;
+    if (!trie_root)
+        trie_root = new TrieNode();
+    return trie_root;
+}
+
+static void dump(TrieNode* n, int indent)
+{
+    for (int i =0; i < indent; ++i)
+        fprintf(stderr, " ");
+    fprintf(stderr, "'");
+    for (unsigned i = 0; i < n->length; ++i)
+        fprintf(stderr, "%c", trieCharPtr(n)[i]);
+    fprintf(stderr, "'\n");
+    for (unsigned i = 0; i < n->children.size(); ++i)
+        dump(n->children[i], indent+2);
+}
+
+static int trieSameGenerationCompare(TrieNode* n1, TrieNode* n2)
+{
+    if (n1->parent == n2->parent)
+        return memcmp(trieCharPtr(n1), trieCharPtr(n2), std::min(n1->length, n2->length));
+    return trieSameGenerationCompare(n1->parent, n2->parent);
+}
+
+static int trieCompare(TrieNode* n1, TrieNode* n2)
+{
+    if (n1 == n2)
+        return 0;
+    int depth1 = 0, depth2 = 0;
+    for (TrieNode* n = n1; n; n = n->parent)
+        depth1++;
+    if (!depth1)
+        return n2 ? -1 : 0;
+    for (TrieNode* n = n2; n; n = n->parent)
+        depth2++;
+    if (!depth2)
+        return 1;
+    if (depth1 != depth2) {
+        int dcmp = depth1 > depth2 ? 1 : -1;
+        for (; depth1 > depth2; --depth1)
+            n1 = n1->parent;
+        for (; depth2 > depth1; --depth2)
+            n2 = n2->parent;
+        if (n1 == n2)
+            return dcmp;
+    }
+    return trieSameGenerationCompare(n1, n2);
+}
+
+static int trieStringCompare(TrieNode* node, const char* s, int& pos, int len)
+{
     int cmp = 0;
+    if (node->parent)
+        cmp = trieStringCompare (node->parent, s, pos, len);
+    if (!cmp) {
+        if (pos > len)
+            return 1;
+        if (pos == len)
+            return node->length ? 1 : 0;
+        if (len - pos < node->length) {
+            cmp = memcmp(trieCharPtr(node), s + pos, len - pos);
+            if (!cmp)
+                cmp = 1;
+        } else {
+            cmp = memcmp(trieCharPtr(node), s + pos, node->length);
+        }
+        pos += node->length;
+    }
+    return cmp;
+}
+
+static int trieStringCompare(TrieNode* node, const char* s)
+{
     if (!node)
         return !!s;
-    if (node->parent && node->parent != root_trie)
-        cmp = trieStringCompare (node->parent, s, len);
-    if (!cmp) {
+    if (!s)
+        return 1;
+    int pos = 0;
+    int len = strlen(s);
+    int cmp = trieStringCompare(node, s, pos, len);
 #ifdef TEST_TRIE
-        printf( "compare %s %s %d\n", node->str, s + len, node->length);
+    fprintf(stderr, "== %s -> (%d %d) %d\n", s, pos, len, cmp);
 #endif
-        cmp = s ? strncmp (node->str, s + len, node->length) : 1;
-        len += node->length;
-    }
-    return cmp;
+    if (cmp)
+        return cmp;
+    if (pos == len)
+        return 0;
+    return pos < len ? -1 : 1;
 }
 
-static int trieStringCompare (TrieNode * n1, TrieNode * n2) {
-    // pre n1 && n2 on same depth and not NIL
-    int cmp = 0;
-    if (n1->parent && n1->parent != root_trie)
-        cmp = trieStringCompare (n1->parent, n2->parent);
-    if (!cmp && n1 != n2) {
-#ifdef TEST_TRIE
-        printf( "compare %s %s", n1->str, n2->str);
-#endif
-        if (!n1->str)
-            cmp = n2->str ? 1 : 0;
-        else if (!n2->str)
-            cmp = 1;
-        else
-            cmp = strcmp (n1->str, n2->str);
-#ifdef TEST_TRIE
-        printf( "=> %d\n", cmp);
-#endif
-    }
-    return cmp;
+//first index in range [first,last) which does not compare less than c
+static int trieLowerBound(const TrieNode* n, int begin, int end, char c)
+{
+    if (begin == end)
+        return end;
+    if (begin == end - 1)
+        return trieCharPtr(n->children[begin])[0] >= c ? begin : end;
+    int i = (begin + end)/2;
+    char c1 = trieCharPtr(n->children[i])[0];
+    if (c == c1)
+        return i;
+    if (c < c1)
+        return trieLowerBound(n, begin, i, c);
+    return trieLowerBound(n, i + 1, end, c);
 }
 
-static int trieStringStarts (TrieNode * node, const char * s, int & pos) {
+static TrieNode* trieInsert(TrieNode* parent, const char* s, size_t len)
+{
+    TrieNode* node;
+
+    if (!*s)
+        return parent;
+
+    unsigned idx = trieLowerBound(parent, 0, parent->children.size(), s[0]);
+    if (idx < parent->children.size()) {
+        node = parent->children[idx];
+        char* s2 = trieCharPtr(node);
+        if (s[0] == s2[0]) {
+            if (node->length == len
+                    && !memcmp((void*)s, trieCharPtr(node), len)) {
+                return node;
+            }
+            for (unsigned i = 1; i < node->length; ++i) {
+                if (i == len) {
+                    TrieNode* rep = new TrieNode(parent, s, i);
+                    parent->children[idx] = rep;
+                    node->update(rep, s2 + i, node->length - i);
+                    rep->children.push_back(node);
+                    return rep;
+                } else if (s[i] != s2[i]) {
+                    TrieNode* rep = new TrieNode(parent, s2, i);
+                    TrieNode* child = new TrieNode(rep, s + i, len - i);
+                    bool cmp = s2[i] < s[i];
+                    node->update(rep, s2 + i, node->length - i);
+                    if (cmp) {
+                        rep->children.push_back(node);
+                        rep->children.push_back(child);
+                    } else {
+                        rep->children.push_back(child);
+                        rep->children.push_back(node);
+                    }
+                    parent->children[idx] = rep;
+                    return child;
+                }
+            }
+            return trieInsert(node, s + node->length, len - node->length);
+        } else if (s[0] < s2[0]) {
+            node = new TrieNode(parent, s, len);
+            parent->children.insert(parent->children.begin()+idx, node);
+            return node;
+        }
+    }
+    node = new TrieNode(parent, s, len);
+    parent->children.push_back(node);
+    return node;
+}
+
+static void trieRemove(TrieNode* node)
+{
+    if (node->children.size() > 1)
+        return;
+    TrieNode* parent = node->parent;
+    if (!parent)
+        return;
+    char* s = trieCharPtr(node);
+    assert(*s);
+    unsigned idx = trieLowerBound(parent, 0, parent->children.size(), s[0]);
+    assert(parent->children[idx] == node);
+    if (node->children.size()) {
+        TrieNode* child = node->children[0];
+        char* s1 = (char*)malloc(child->length + node->length);
+        memcpy(s1, s, node->length);
+        memcpy(s1 + node->length, trieCharPtr(child), child->length);
+        child->update(parent, s1, child->length + node->length);
+        free(s1);
+        parent->children[idx] = child;
+        delete node;
+    } else {
+        parent->children.erase(parent->children.begin() + idx);
+        delete node;
+        if (!parent->ref_count)
+            trieRemove(parent);
+    }
+}
+
+static int trieStringStarts(TrieNode* node, const char* s, int& pos)
+{
     int cmp = -1; // -1 still matches, 0 no, 1 yes
-    if (node->parent && node->parent != root_trie)
-        cmp = trieStringStarts (node->parent, s, pos);
+    if (node->parent)
+        cmp = trieStringStarts(node->parent, s, pos);
     if (cmp == -1) {
-        for (int i = 0; i < node->length; i++)
-            if (node->str[i] != s[pos + i])
+        char* s1 = trieCharPtr(node);
+        for (unsigned i = 0; i < node->length; ++i)
+            if (s1[i] != s[pos + i])
                 return !s[pos + i] ? 1 : 0;
         pos += node->length;
     }
     return cmp;
 }
 
-static TrieNode * trieInsert (const char * s) {
-    if (!root_trie)
-        root_trie = new TrieNode (0L);
-    //printf("trieInsert %s\n", s);
-    //dumpTrie();
-    TrieNode * parent = root_trie;
-    for (TrieNode * c = parent->first_child; c; c = c->first_child) {
-        TrieNode * prev = c;
-        for (TrieNode * n = prev; n; n = n->next_sibling) {
-            if (n->str[0] == s[0]) { // insert here
-                int i = 1;
-                for (; i < n->length; i++) {
-                    if (n->str[i] != s[i]) { // break here
-                        // insert new node so strings to n remain valid
-                        bool bigger = n->str[i] < s[i];
-                        char *tmp = n->str;
-                        n->str = strdup (tmp + i);
-                        n->length -= i;
-                        tmp[i] = 0;
-                        TrieNode * node = new TrieNode (tmp);
-                        free (tmp);
-                        node->parent = parent;
-                        node->next_sibling = n->next_sibling;
-                        if (prev != n)
-                            prev->next_sibling = node;
-                        else
-                            parent->first_child = node;
-                        n->parent = node;
-                        TrieNode * snode;
-                        if (!s[i]) {
-                            node->first_child = n;
-                            n->next_sibling = 0L;
-                            snode = node; // s is complete in node
-                        } else {
-                            snode = new TrieNode (s+i);
-                            snode->parent = node;
-                            if (bigger) { // set n before snode
-                                node->first_child = n;
-                                n->next_sibling = snode;
-                            } else {      // set snode before n
-                                node->first_child = snode;
-                                snode->next_sibling = n;
-                                n->next_sibling = 0L;
-                            }
-                            node->ref_count--;
-                        }
-                        return snode;
-                    }
-                }
-                if (s[i]) { // go one level deeper with s+i
-                    s = s + i;
-                    c = n;
-                    prev = 0;
-                    break;
-                } // else n and s are equal
-                n->ref_count++;
-                return n;
-            } else if (n->str[0] > s[0]) { // insert before
-                TrieNode * node = new TrieNode (s);
-                node->parent = parent;
-                node->next_sibling = n;
-                if (prev != n)
-                    prev->next_sibling = node;
-                else
-                    parent->first_child = node;
-                return node;
-            }
-            prev = n;
-        }
-        if (prev) { // insert after
-            TrieNode * node = new TrieNode (s);
-            node->parent = parent;
-            prev->next_sibling = node;
-            return node;
-        }
-        parent = c;
+TrieString::TrieString (const QString& s) : node(NULL)
+{
+    if (!s.isNull()) {
+        const QByteArray ba = s.toUtf8();
+        node = trieInsert(trieRoot(), ba.constData(), ba.length());
+        ++node->ref_count;
     }
-    // hit an empty first_child, add s as first_child
-    TrieNode * node = new TrieNode (s);
-    parent->first_child = node;
-    node->parent = parent;
-    return node;
 }
 
-TrieString::TrieString (const QString & s)
-  : node (s.isEmpty () ? 0L : trieInsert (s.toUtf8 ().constData ()))
-{}
-
-TrieString::TrieString (const char * utf8)
-  : node (!utf8 ? 0L : trieInsert (utf8))
-{}
-
-TrieString::TrieString (const TrieString & s) : node (s.node) {
+TrieString::TrieString(const char* s)
+    : node(!s ? NULL : trieInsert(trieRoot(), s, strlen(s)))
+{
     if (node)
-        node->ref_count++;
+        ++node->ref_count;
 }
 
-TrieString::~TrieString () {
+TrieString::TrieString(const char* s, int len)
+    : node(!s ? NULL : trieInsert(trieRoot(), s, len))
+{
     if (node)
-        node->unref ();
+        ++node->ref_count;
 }
 
-bool TrieString::startsWith (const TrieString & s) const {
-    for (TrieNode * n = node; n; n = n->parent)
-        if (n == s.node)
-            return true;
-    return s.node ? false : true;
-}
-
-bool TrieString::startsWith (const char * str) const {
-    if (!node)
-        return !str ? true : false;
-    if (!str)
-        return true;
-    int pos = 0;
-    return trieStringStarts (node, str, pos) != 0;
-}
-
-void TrieString::clear () {
+TrieString::TrieString(const TrieString& s) : node(s.node)
+{
     if (node)
-        node->unref ();
-    node = 0L;
+        ++node->ref_count;
 }
 
-TrieString & TrieString::operator = (const TrieString & s) {
+TrieString::~TrieString()
+{
+    if (node && !--node->ref_count) {
+#ifdef TEST_TRIE
+        fprintf(stderr, "delete %s\n", qPrintable(toString()));
+#endif
+        trieRemove(node);
+    }
+}
+
+TrieString& TrieString::operator=(const char* s)
+{
+    if (node && !--node->ref_count) {
+#ifdef TEST_TRIE
+        fprintf(stderr, "= delete %s\n", qPrintable(toString()));
+#endif
+        trieRemove(node);
+    }
+    node = !s ? NULL : trieInsert(trieRoot(), s, strlen(s));
+    if (node)
+        ++node->ref_count;
+    return *this;
+}
+
+TrieString& TrieString::operator=(const TrieString& s)
+{
     if (s.node != node) {
         if (s.node)
-            s.node->ref_count++;
-        if (node)
-            node->unref ();
+            ++s.node->ref_count;
+        if (node && !--node->ref_count) {
+#ifdef TEST_TRIE
+            fprintf(stderr, "= delete %s\n", qPrintable(toString()));
+#endif
+            trieRemove(node);
+        }
         node = s.node;
     }
     return *this;
 }
 
-TrieString & TrieString::operator = (const char * utf8) {
-    if (node)
-        node->unref ();
-    node = !utf8 ? 0L : trieInsert (utf8);
-    return *this;
+bool TrieString::operator<(const TrieString& s) const
+{
+    return trieCompare(node, s.node) < 0;
 }
 
-QString TrieString::toString () const {
-    QString s;
-    if (node) {
-        int len = 0;
-        char *utf8 = trieRetrieveString (node, len);
-        s = QString::fromUtf8 (utf8);
-        free (utf8);
-    }
+bool KMPlayer::operator==(const TrieString& t, const char* s)
+{
+    return trieStringCompare(t.node, s) == 0;
+}
+
+bool TrieString::startsWith(const TrieString& s) const
+{
+    for (TrieNode* n = node; n; n = n->parent)
+        if (n == s.node)
+            return true;
+    return s.node ? false : true;
+}
+
+bool TrieString::startsWith(const char* str) const
+{
+    if (!node)
+        return !str ? true : false;
+    if (!str)
+        return true;
+    int pos = 0;
+    return trieStringStarts(node, str, pos) != 0;
+}
+
+QString TrieString::toString() const
+{
+    if (!node)
+        return QString();
+    int len = 0;
+    char* buf = trieRetrieveString(node, len);
+    QString s = QString::fromUtf8(buf);
+    free(buf);
     return s;
 }
 
-bool TrieString::operator < (const TrieString & s) const {
-    if (node == s.node)
-        return false;
-    int depth1 = 0, depth2 = 0;
-    for (TrieNode * n = node; n; n = n->parent)
-        depth1++;
-    if (!depth1)
-        return s.node ? true : false;
-    for (TrieNode * n = s.node; n; n = n->parent)
-        depth2++;
-    if (!depth2)
-        return false;
-    TrieNode * n1 = node;
-    TrieNode * n2 = s.node;
-    while (depth1 > depth2) {
-        if (n1 == n2)
-            return false;
-        n1 = n1->parent;
-        depth1--;
+void TrieString::clear()
+{
+    if (node && !--node->ref_count) {
+#ifdef TEST_TRIE
+        fprintf(stderr, "clear delete %s\n", qPrintable(toString()));
+#endif
+        trieRemove(node);
     }
-    while (depth2 > depth1) {
-        if (n1 == n2)
-            return true;
-        n2 = n2->parent;
-        depth2--;
-    }
-    int cmp = trieStringCompare (n1, n2);
-    if (cmp)
-        return cmp < 0;
-    return depth1 < depth2;
-}
-
-bool KMPlayer::operator == (const TrieString & s1, const char * s2) {
-    int len = 0;
-    return !trieStringCompare (s1.node, s2, len);
+    node = NULL;
 }
 
 
@@ -444,17 +496,17 @@ void Ids::reset() {
     attr_value.clear ();
     attr_fill.clear ();
     attr_fit.clear ();
-    if (root_trie->first_child) {
+    if (trieRoot()->children.size()) {
         qWarning ("Trie not empty");
         dumpTrie ();
-    } else {
-        delete root_trie;
-        root_trie = 0;
+    //} else {
+        //delete root_trie;
+        //root_trie = 0;
     }
 }
 
 void KMPlayer::dumpTrie () {
-    dump (root_trie, 0);
+    dump(trieRoot(), 0);
 }
 
 #ifdef TEST_TRIE

@@ -36,6 +36,7 @@ public:
     TrieString ();
     TrieString (const QString & s);
     TrieString (const char * utf8);
+    TrieString (const char *utf8, int length);
     TrieString (const TrieString & s);
     ~TrieString ();
 
