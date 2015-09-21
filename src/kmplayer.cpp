@@ -236,11 +236,10 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initStatusBar () {
-    /*QStatusBar *sb = statusBar ();
-    sb->insertItem (i18n ("Ready."), id_status_msg);
-    sb->setItemAlignment (id_status_msg, Qt::AlignLeft);
-    sb->insertItem (QString ("--:--"), id_status_timer, 0);
-    sb->setItemAlignment (id_status_timer, Qt::AlignRight);*/
+    QStatusBar *sb = statusBar();
+    playtime_info = new QLabel("--:--");
+    sb->addPermanentWidget(playtime_info);
+    sb->showMessage(i18n ("Ready."));
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initMenu () {
@@ -312,10 +311,10 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::loadingProgress (int perc) {
-    /*if (perc < 100)
-        statusBar ()->changeItem (QString ("%1%").arg (perc), id_status_timer);
+    if (perc < 100)
+        playtime_info->setText(QString ("%1%").arg (perc));
     else
-        statusBar ()->changeItem (QString ("--:--"), id_status_timer);*/
+        playtime_info->setText(QString ("--:--"));
 }
 
 KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
@@ -332,7 +331,7 @@ KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
             else
                 text.sprintf ("%02d:%02d", m, s);
         }
-        //statusBar ()->changeItem (text, id_status_timer);
+        playtime_info->setText(text);
     }
 }
 
@@ -1210,9 +1209,8 @@ KDE_NO_EXPORT void KMPlayerApp::slotViewMenuBar() {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotStatusMsg (const QString &text) {
-    /*QStatusBar * sb = statusBar ();
-    sb->clearMessage();
-    sb->changeItem (text, id_status_msg);*/
+    QStatusBar * sb = statusBar ();
+    sb->showMessage(text);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::fullScreen () {

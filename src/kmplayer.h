@@ -33,12 +33,10 @@
 #include "kmplayerconfig.h"
 
 
-static const int id_status_msg = 1;
-static const int id_status_timer = 2;
-
 class KUrlRequester;
 class QAction;
 class QCheckBox;
+class QLabel;
 class QMenu;
 class QMenuItem;
 class QTreeWidgetItem;
@@ -148,6 +146,7 @@ private:
     KMPlayer::NodePtrW current_generator;
     KMPlayer::NodeStoreList generators;
 
+    QLabel* playtime_info;
     QAction * dropAdd;
     QAction * dropAddGroup;
     QAction * dropCopy;
