@@ -84,7 +84,6 @@ private:
     void updateSurfaceBounds ();
     void stopTimers ();
 
-    QByteArray m_dock_state;
     ConnectionList m_updaters;
     ViewerAreaPrivate *d;
     View * m_view;

@@ -1894,20 +1894,22 @@ KDE_NO_EXPORT void ViewArea::stopTimers () {
 KDE_NO_EXPORT void ViewArea::fullScreen () {
     stopTimers ();
     if (m_fullscreen) {
-        setWindowState( windowState() & ~Qt::WindowFullScreen ); // reset
+        setWindowState( windowState() & ~Qt::WindowFullScreen | Qt::WindowActive ); // reset
         m_view->dockArea ()->setCentralWidget (this);
-        m_view->dockArea ()->restoreState (m_dock_state);
         for (int i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (false);
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIcon (QIcon (QPixmap (playlist_xpm)));
         unsetCursor();
     } else {
-        m_dock_state = m_view->dockArea ()->saveState ();
         m_topwindow_rect = topLevelWidget ()->geometry ();
+#if QT_VERSION >= 0x050200
+        m_view->dockArea()->takeCentralWidget();
+#else
         setParent (0L);
+#endif
         move(qApp->desktop()->screenGeometry(this).topLeft());
         setVisible(true);
-        setWindowState( windowState() | Qt::WindowFullScreen ); // set
+        setWindowState( windowState() ^ Qt::WindowFullScreen ); // set
         for (int i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (true);
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIcon (QIcon (QPixmap (normal_window_xpm)));
@@ -2251,7 +2253,7 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
 KDE_NO_EXPORT void ViewArea::closeEvent (QCloseEvent * e) {
     //kDebug () << "closeEvent";
     if (m_fullscreen) {
-        fullScreen ();
+        m_view->fullScreen();
         if (!m_view->topLevelWidget ()->isVisible ())
             m_view->topLevelWidget ()->setVisible (true);
         e->ignore ();
@@ -2319,7 +2321,7 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
             for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
                 if (ev->event == (*i)->ownHandle()) {
                     (*i)->embedded(ev->window);
-                    return true;
+                    break;
                 }
             }
         }

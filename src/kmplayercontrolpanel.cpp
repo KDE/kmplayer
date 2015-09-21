@@ -259,11 +259,8 @@ static const char * blue_xpm[] = {
 
 //-----------------------------------------------------------------------------
 
-static QPushButton *ctrlButton (QWidget *w, QBoxLayout *l, const char **p, int key = 0) {
-    QPushButton * b = new QPushButton (QIcon (QPixmap(p)), QString (), w);
-#if QT_VERSION > 0x040399
-    b->setAttribute (Qt::WA_NativeWindow);
-#endif
+static QPushButton *ctrlButton(QBoxLayout* l, const char **p, int key = 0) {
+    QPushButton* b = new QPushButton(QIcon(QPixmap(p)), QString());
     b->setFocusPolicy (Qt::NoFocus);
     b->setFlat (true);
     b->setAutoFillBackground (true);
@@ -274,11 +271,8 @@ static QPushButton *ctrlButton (QWidget *w, QBoxLayout *l, const char **p, int k
 }
 
 KDE_NO_CDTOR_EXPORT
-KMPlayerMenuButton::KMPlayerMenuButton (QWidget * parent, QBoxLayout * l, const char ** p, int key)
- : QPushButton (QIcon (QPixmap(p)), QString (), parent) {
-#if QT_VERSION > 0x040399
-    setAttribute (Qt::WA_NativeWindow);
-#endif
+KMPlayerMenuButton::KMPlayerMenuButton(QWidget*, QBoxLayout * l, const char ** p, int key)
+ : QPushButton(QIcon(QPixmap(p)), QString()) {
     setFocusPolicy (Qt::NoFocus);
     setFlat (true);
     setAutoFillBackground (true);
@@ -303,11 +297,8 @@ KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT VolumeBar::VolumeBar (QWidget * parent, View * view)
- : QWidget (parent), m_view (view), m_value (100) {
-#if QT_VERSION > 0x040399
-    setAttribute (Qt::WA_NativeWindow);
-#endif
+KDE_NO_CDTOR_EXPORT VolumeBar::VolumeBar(QWidget*, View * view)
+ : m_view(view), m_value(100) {
     setSizePolicy( QSizePolicy (QSizePolicy::Minimum, QSizePolicy::Fixed));
     setMinimumSize (QSize (51, button_height_only_buttons + 2));
     setToolTip (i18n ("Volume is ") + QString::number (m_value));
@@ -371,6 +362,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
    m_popup_clicked (false) {
 #if QT_VERSION > 0x040399
     setAttribute (Qt::WA_NativeWindow);
+    setAttribute(Qt::WA_DontCreateNativeAncestors);
 #endif
     m_buttonbox = new QHBoxLayout (this);
     m_buttonbox->setSpacing (4);
@@ -380,24 +372,24 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).toAscii().constData(), 31);
     xpm_fg_color[31] = 0;
     m_buttons[button_config] = new KMPlayerMenuButton (this, m_buttonbox, config_xpm);
-    m_buttons[button_playlist] = ctrlButton (this, m_buttonbox, playlist_xpm);
-    m_buttons[button_back] = ctrlButton (this, m_buttonbox, back_xpm);
-    m_buttons[button_play] = ctrlButton(this, m_buttonbox, play_xpm, Qt::Key_R);
-    m_buttons[button_forward] = ctrlButton (this, m_buttonbox, forward_xpm);
-    m_buttons[button_stop] = ctrlButton(this, m_buttonbox, stop_xpm, Qt::Key_S);
-    m_buttons[button_pause]=ctrlButton(this, m_buttonbox, pause_xpm, Qt::Key_P);
-    m_buttons[button_record] = ctrlButton (this, m_buttonbox, record_xpm);
-    m_buttons[button_broadcast] = ctrlButton (this, m_buttonbox, broadcast_xpm);
+    m_buttons[button_playlist] = ctrlButton(m_buttonbox, playlist_xpm);
+    m_buttons[button_back] = ctrlButton(m_buttonbox, back_xpm);
+    m_buttons[button_play] = ctrlButton(m_buttonbox, play_xpm, Qt::Key_R);
+    m_buttons[button_forward] = ctrlButton(m_buttonbox, forward_xpm);
+    m_buttons[button_stop] = ctrlButton(m_buttonbox, stop_xpm, Qt::Key_S);
+    m_buttons[button_pause]=ctrlButton(m_buttonbox, pause_xpm, Qt::Key_P);
+    m_buttons[button_record] = ctrlButton(m_buttonbox, record_xpm);
+    m_buttons[button_broadcast] = ctrlButton(m_buttonbox, broadcast_xpm);
     m_buttons[button_language] = new KMPlayerMenuButton (this, m_buttonbox, language_xpm);
-    m_buttons[button_red] = ctrlButton (this, m_buttonbox, red_xpm);
-    m_buttons[button_green] = ctrlButton (this, m_buttonbox, green_xpm);
-    m_buttons[button_yellow] = ctrlButton (this, m_buttonbox, yellow_xpm);
-    m_buttons[button_blue] = ctrlButton (this, m_buttonbox, blue_xpm);
+    m_buttons[button_red] = ctrlButton(m_buttonbox, red_xpm);
+    m_buttons[button_green] = ctrlButton(m_buttonbox, green_xpm);
+    m_buttons[button_yellow] = ctrlButton(m_buttonbox, yellow_xpm);
+    m_buttons[button_blue] = ctrlButton(m_buttonbox, blue_xpm);
     m_buttons[button_play]->setCheckable (true);
     m_buttons[button_stop]->setCheckable (true);
     m_buttons[button_record]->setCheckable (true);
     m_buttons[button_broadcast]->setCheckable (true);
-    m_posSlider = new QSlider (this);
+    m_posSlider = new QSlider;
     m_posSlider->setOrientation (Qt::Horizontal);
     m_posSlider->setMaximum (100);
     m_posSlider->setPageStep (1);
@@ -467,7 +459,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     scaleLabelAction->setDefaultWidget (new QLabel (i18n ("Scale:")));
     popupMenu->addAction (scaleLabelAction);
     scaleAction = new QWidgetAction (popupMenu);
-    scale_slider = new QSlider ();
+    scale_slider = new QSlider;
     scale_slider->setOrientation (Qt::Horizontal);
     scale_slider->setMinimum (50);
     scale_slider->setMaximum (150);

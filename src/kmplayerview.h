@@ -158,6 +158,7 @@ protected:
     void leaveEvent (QEvent *) KDE_NO_EXPORT;
     void timerEvent (QTimerEvent *) KDE_NO_EXPORT;
 private:
+    QByteArray m_dock_state;
     // console output
     TextEdit * m_multiedit;
     PictureWidget *m_picture;
@@ -179,6 +180,7 @@ private:
     StatusBarMode m_statusbar_mode;
     int controlbar_timer;
     int infopanel_timer;
+    int m_restore_state_timer;
     int m_powerManagerStopSleep;
     bool m_keepsizeratio;
     bool m_playing;

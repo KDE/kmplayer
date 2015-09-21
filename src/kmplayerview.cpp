@@ -95,6 +95,7 @@ KDE_NO_EXPORT void PictureWidget::mouseMoveEvent (QMouseEvent *e) {
 KDE_NO_CDTOR_EXPORT TextEdit::TextEdit (QWidget * parent, View * view) : QTextEdit (parent), m_view (view) {
 #if QT_VERSION > 0x040399
     setAttribute (Qt::WA_NativeWindow);
+    setAttribute(Qt::WA_DontCreateNativeAncestors);
 #endif
     setReadOnly (true);
     QPalette p=palette();
@@ -130,6 +131,7 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
     m_statusbar_mode (SB_Hide),
     controlbar_timer (0),
     infopanel_timer (0),
+    m_restore_state_timer(0),
     m_powerManagerStopSleep( -1 ),
     m_keepsizeratio (false),
     m_playing (false),
@@ -166,6 +168,7 @@ KDE_NO_EXPORT void View::dragEnterEvent (QDragEnterEvent* dee) {
 
 void View::initDock (QWidget *central) {
     m_dockarea = new QMainWindow;
+    m_dockarea->setDockNestingEnabled(true);
     m_dockarea->setCentralWidget (central);
     central->setVisible (true);
 
@@ -453,6 +456,9 @@ KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
             m_dock_infopanel->hide ();
             //m_dock_infopanel->undock ();
         infopanel_timer  = 0;
+    } else if (e->timerId () == m_restore_state_timer) {
+        m_dockarea->restoreState(m_dock_state);
+        m_restore_state_timer = 0;
     }
     killTimer (e->timerId ());
 }
@@ -541,6 +547,10 @@ bool View::isFullScreen () const {
 }
 
 void View::fullScreen () {
+    if (m_restore_state_timer) {
+        killTimer (m_restore_state_timer);
+        m_restore_state_timer = 0;
+    }
     if (!m_view_area->isFullScreen()) {
         m_sreensaver_disabled = false;
         m_powerManagerStopSleep = Solid::PowerManagement::beginSuppressingSleep("KMplayer: watching a film");
@@ -557,6 +567,9 @@ void View::fullScreen () {
         }*/
         //if (m_keepsizeratio && m_viewer->aspect () < 0.01)
         //    m_viewer->setAspect (1.0 * m_viewer->width() / m_viewer->height());
+        m_dock_state = m_dockarea->saveState();
+        m_dock_playlist->hide();
+        m_dock_infopanel->hide();
         m_view_area->fullScreen();
         m_control_panel->zoomAction->setVisible (false);
         //if (m_viewer->isVisible ())
@@ -568,6 +581,7 @@ void View::fullScreen () {
        //         ("kdesktop", "KScreensaverIface", "enable(bool)", "true");
         m_view_area->fullScreen();
         m_control_panel->zoomAction->setVisible (true);
+        m_restore_state_timer = startTimer(100); //dockArea()->restoreState(m_dock_state);
     }
     setControlPanelMode (m_old_controlpanel_mode);
     emit fullScreenChanged ();
