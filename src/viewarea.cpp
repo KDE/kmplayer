@@ -51,8 +51,7 @@
 #include "playlistview.h"
 #include "viewarea.h"
 #ifdef KMPLAYER_WITH_CAIRO
-# include <cairo-xlib.h>
-# include <cairo-xlib-xrender.h>
+# include <cairo-xcb.h>
 #endif
 #include "mediaobject.h"
 #include "kmplayer_smil.h"
@@ -1762,13 +1761,15 @@ namespace KMPlayer {
 class KMPLAYER_NO_EXPORT ViewerAreaPrivate {
 public:
     ViewerAreaPrivate (ViewArea *v)
-        : m_view_area (v), backing_store (0),
-          width (0), height (0), have_gc (false) {
-    }
+        : m_view_area (v), backing_store (0), gc(0),
+          screen(NULL), visual(NULL), width(0), height(0)
+    {}
     ~ViewerAreaPrivate() {
         destroyBackingStore ();
-        if (have_gc)
-            XFreeGC (QX11Info::display (), gc);
+        if (gc) {
+            xcb_connection_t* connection = QX11Info::connection();
+            xcb_discard_reply(connection, xcb_free_gc(connection, gc).sequence);
+        }
     }
     void clearSurface (Surface *s) {
 #ifdef KMPLAYER_WITH_CAIRO
@@ -1792,53 +1793,80 @@ public:
     }
 #ifdef KMPLAYER_WITH_CAIRO
     cairo_surface_t *createSurface (int w, int h) {
-        Display * display = QX11Info::display ();
+        xcb_connection_t* connection = QX11Info::connection();
         destroyBackingStore ();
-        backing_store = XCreatePixmap (display,
-                m_view_area->winId (), w, h, DefaultDepth(display, QX11Info::appScreen()));
-        width = w;
-        height = h;
-        return cairo_xlib_surface_create (display, backing_store,
-                DefaultVisual (display, DefaultScreen (display)), w, h);
-        /*return cairo_xlib_surface_create_with_xrender_format (
-            QX11Info::display (),
-            id,
-            DefaultScreenOfDisplay (QX11Info::display ()),
-            XRenderFindVisualFormat (QX11Info::display (),
-                DefaultVisual (QX11Info::display (),
-                    DefaultScreen (QX11Info::display ()))),
-            w, h);*/
+        xcb_screen_t* scr = screen_of_display(connection, QX11Info::appScreen());
+        backing_store = xcb_generate_id(connection);
+        xcb_void_cookie_t cookie = xcb_create_pixmap_checked(connection, scr->root_depth, backing_store, m_view_area->winId(), w, h);
+        xcb_generic_error_t* error = xcb_request_check(connection, cookie);
+        if (error) {
+            qDebug("failed to create pixmap");
+            return NULL;
+        }
+        return cairo_xcb_surface_create(connection, backing_store, visual_of_screen(connection, scr), w, h);
     }
     void swapBuffer (const IRect &sr, int dx, int dy) {
-        if (!have_gc) {
-            XGCValues values;
-            values.graphics_exposures = false;
-            values.function = GXcopy;
-            values.fill_style = FillSolid;
-            values.subwindow_mode = ClipByChildren;
-            gc = XCreateGC (QX11Info::display (), backing_store,
-                    GCGraphicsExposures | GCFunction |
-                    GCFillStyle | GCSubwindowMode, &values);
-            have_gc = true;
+        xcb_connection_t* connection = QX11Info::connection();
+        if (!gc) {
+            gc = xcb_generate_id(connection);
+            uint32_t values[] = { XCB_GX_COPY, XCB_FILL_STYLE_SOLID,
+                XCB_SUBWINDOW_MODE_CLIP_BY_CHILDREN, 0 };
+            xcb_discard_reply(connection, xcb_create_gc(connection, gc, backing_store,
+                    XCB_GC_FUNCTION | XCB_GC_FILL_STYLE |
+                    XCB_GC_SUBWINDOW_MODE | XCB_GC_GRAPHICS_EXPOSURES, values).sequence);
         }
-        XCopyArea (QX11Info::display(), backing_store, m_view_area->winId(),
-                gc, sr.x(), sr.y(), sr.width (), sr.height (), dx, dy);
-        XFlush (QX11Info::display());
+        xcb_discard_reply(connection, xcb_copy_area(connection, backing_store, m_view_area->winId(),
+                gc, sr.x(), sr.y(), dx, dy, sr.width (), sr.height ()).sequence);
+        xcb_flush(connection);
     }
 #endif
     void destroyBackingStore () {
 #ifdef KMPLAYER_WITH_CAIRO
-        if (backing_store)
-            XFreePixmap (QX11Info::display(), backing_store);
+        if (backing_store) {
+            xcb_connection_t* connection = QX11Info::connection();
+            xcb_discard_reply(connection, xcb_free_pixmap(connection, backing_store).sequence);
+        }
 #endif
         backing_store = 0;
     }
+    xcb_screen_t *screen_of_display(xcb_connection_t* c, int num)
+    {
+        if (!screen) {
+            xcb_screen_iterator_t iter;
+
+            iter = xcb_setup_roots_iterator (xcb_get_setup (c));
+            for (; iter.rem; --num, xcb_screen_next (&iter))
+                if (num == 0) {
+                    screen = iter.data;
+                    break;
+                }
+        }
+        return screen;
+    }
+
+    xcb_visualtype_t* visual_of_screen(xcb_connection_t* c, xcb_screen_t* screen)
+    {
+        if (!visual) {
+            xcb_depth_iterator_t depth_iter = xcb_screen_allowed_depths_iterator (screen);
+            for (; depth_iter.rem; xcb_depth_next (&depth_iter)) {
+                xcb_visualtype_iterator_t visual_iter = xcb_depth_visuals_iterator (depth_iter.data);
+                for (; visual_iter.rem; xcb_visualtype_next (&visual_iter)) {
+                    if (screen->root_visual == visual_iter.data->visual_id) {
+                        visual = visual_iter.data;
+                        break;
+                    }
+                }
+            }
+        }
+        return visual;
+    }
     ViewArea *m_view_area;
-    Drawable backing_store;
-    GC gc;
+    xcb_drawable_t backing_store;
+    xcb_gcontext_t gc;
+    xcb_screen_t* screen;
+    xcb_visualtype_t* visual;
     int width;
     int height;
-    bool have_gc;
 };
 
 class KMPLAYER_NO_EXPORT RepaintUpdater {
