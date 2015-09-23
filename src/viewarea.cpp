@@ -2289,9 +2289,19 @@ void ViewArea::setVideoWidgetVisible (bool show) {
 
 static void setXSelectInput (Window wid, uint32_t mask) {
     xcb_connection_t* connection = XGetXCBConnection(QX11Info::display());
-    const static uint32_t values[] = { mask };
+    const uint32_t values[] = { mask };
     xcb_void_cookie_t cookie = xcb_change_window_attributes(connection, wid, XCB_CW_EVENT_MASK, values);
     xcb_discard_reply(connection, cookie.sequence);
+    xcb_query_tree_cookie_t biscuit = xcb_query_tree(connection, wid);
+    xcb_query_tree_reply_t *reply = xcb_query_tree_reply(connection, biscuit, NULL);
+    if (reply) {
+        xcb_window_t *chlds = xcb_query_tree_children(reply);
+        for (int i = 0; i < xcb_query_tree_children_length(reply); i++)
+            setXSelectInput(chlds[i], mask);
+        free(reply);
+    } else {
+        qDebug("failed to get x children");
+    }
 }
 
 bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, long *result) {
@@ -2321,6 +2331,31 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
             for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
                 if (ev->event == (*i)->ownHandle()) {
                     (*i)->embedded(ev->window);
+                    return false;
+                }
+                Window p = ev->event;
+                Window w = ev->window;
+                Window v = (*i)->clientHandle ();
+                Window va = winId ();
+                Window root = 0;
+                while (p != v) {
+                    xcb_query_tree_cookie_t cookie = xcb_query_tree(connection, w);
+                    xcb_query_tree_reply_t *reply = xcb_query_tree_reply(connection, cookie, NULL);
+                    if (reply) {
+                        p = reply->parent;
+                        root = reply->root;
+                        free(reply);
+                    } else {
+                        qDebug("failed to get x parent");
+                        break;
+                    }
+                    if (p == va || p == v || p == root)
+                        break;
+                    w = p;
+                }
+                if (p == v) {
+                    setXSelectInput (ev->window,
+                            static_cast <VideoOutput *>(*i)->inputMask ());
                     break;
                 }
             }
@@ -2512,7 +2547,7 @@ KDE_NO_EXPORT void VideoOutput::embedded(WindowId handle) {
     m_client_window = handle;
     if (clientWinId () && !resized_timer)
          resized_timer = startTimer (50);
-    if (clientWinId ())
+    if (clientWinId())
         setXSelectInput (clientWinId (), m_input_mask);
 }
 
