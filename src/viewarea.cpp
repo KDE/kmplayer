@@ -63,7 +63,7 @@
 #include <X11/keysym.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
-#include <X11/Xlib-xcb.h>
+#include <xcb/xcb.h>
 static const int XKeyPress = KeyPress;
 #undef KeyPress
 #undef Always
@@ -2288,7 +2288,7 @@ void ViewArea::setVideoWidgetVisible (bool show) {
 }
 
 static void setXSelectInput (Window wid, uint32_t mask) {
-    xcb_connection_t* connection = XGetXCBConnection(QX11Info::display());
+    xcb_connection_t* connection = QX11Info::connection();
     const uint32_t values[] = { mask };
     xcb_void_cookie_t cookie = xcb_change_window_attributes(connection, wid, XCB_CW_EVENT_MASK, values);
     xcb_discard_reply(connection, cookie.sequence);
@@ -2326,7 +2326,7 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
     case XCB_MAP_NOTIFY: {
         xcb_map_notify_event_t* ev = (xcb_map_notify_event_t*)event;
         if (!ev->override_redirect && ev->event != ev->window) {
-            xcb_connection_t* connection = XGetXCBConnection(QX11Info::display());
+            xcb_connection_t* connection = QX11Info::connection();
             const VideoWidgetList::iterator e = video_widgets.end ();
             for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
                 if (ev->event == (*i)->ownHandle()) {
@@ -2492,7 +2492,7 @@ KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
     setMonitoring (MonitorAll);
     setAttribute (Qt::WA_NoSystemBackground, true);
 
-    xcb_connection_t* connection = XGetXCBConnection(QX11Info::display());
+    xcb_connection_t* connection = QX11Info::connection();
     xcb_get_window_attributes_cookie_t cookie = xcb_get_window_attributes(connection, winId());
     xcb_get_window_attributes_reply_t* attrs = xcb_get_window_attributes_reply(connection, cookie, NULL);
     if (!(attrs->your_event_mask & XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY))

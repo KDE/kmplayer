@@ -72,7 +72,6 @@ target_link_libraries(kmplayercommon
   KF5::KDELibs4Support
   KF5::Parts
   ${X11_LIBRARIES}
-  ${X11_XCB_LIBRARIES}
   ${XCB_LIBRARIES}
   ${EXPAT_LIBRARIES}
   KF5::MediaPlayer
