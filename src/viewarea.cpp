@@ -58,18 +58,7 @@
 #include "kmplayer_rp.h"
 #include "mediaobject.h"
 
-#include <X11/Xlib.h>
-#include <X11/keysym.h>
-#include <X11/Intrinsic.h>
-#include <X11/StringDefs.h>
 #include <xcb/xcb.h>
-static const int XKeyPress = KeyPress;
-#undef KeyPress
-#undef Always
-#undef Never
-#undef Status
-#undef Unsorted
-#undef Bool
 
 using namespace KMPlayer;
 
@@ -2315,7 +2304,7 @@ void ViewArea::setVideoWidgetVisible (bool show) {
         static_cast <VideoOutput *> (*it)->setVisible (show);
 }
 
-static void setXSelectInput (Window wid, uint32_t mask) {
+static void setXSelectInput(WId wid, uint32_t mask) {
     xcb_connection_t* connection = QX11Info::connection();
     const uint32_t values[] = { mask };
     xcb_void_cookie_t cookie = xcb_change_window_attributes(connection, wid, XCB_CW_EVENT_MASK, values);
@@ -2361,11 +2350,11 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
                     (*i)->embedded(ev->window);
                     return false;
                 }
-                Window p = ev->event;
-                Window w = ev->window;
-                Window v = (*i)->clientHandle ();
-                Window va = winId ();
-                Window root = 0;
+                xcb_window_t p = ev->event;
+                xcb_window_t w = ev->window;
+                xcb_window_t v = (*i)->clientHandle ();
+                xcb_window_t va = winId ();
+                xcb_window_t root = 0;
                 while (p != v) {
                     xcb_query_tree_cookie_t cookie = xcb_query_tree(connection, w);
                     xcb_query_tree_reply_t *reply = xcb_query_tree_reply(connection, cookie, NULL);
@@ -2410,7 +2399,7 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
         const VideoWidgetList::iterator e = video_widgets.end ();
         for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i)
             if ((*i)->clientHandle () == ev->event &&
-                    static_cast <VideoOutput *>(*i)->inputMask() & KeyPressMask) {
+                    static_cast <VideoOutput *>(*i)->inputMask() & XCB_EVENT_MASK_KEY_PRESS) {
                 if (ev->detail == 41 /*FIXME 'f'*/)
                     m_view->fullScreen ();
                 break;
@@ -2423,96 +2412,14 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
     return false;
 }
 
-/*bool ViewArea::x11Event (XEvent *xe) {
-    switch (xe->type) {
-        case UnmapNotify: {
-            const VideoWidgetList::iterator e = video_widgets.end ();
-            for (VideoWidgetList::iterator it = video_widgets.begin(); it != e; ++it) {
-                if ((*it)->clientHandle () == xe->xunmap.event) {
-                    m_view->videoStart ();
-                    break;
-                }
-            }
-            break;
-        }
-        case XKeyPress: {
-            const VideoWidgetList::iterator e = video_widgets.end ();
-            for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i)
-                if ((*i)->clientHandle () == xe->xkey.window &&
-                        static_cast <VideoOutput *>(*i)->inputMask() & KeyPressMask) {
-                    KeySym ksym;
-                    char kbuf[16];
-                    XLookupString (&xe->xkey, kbuf, sizeof(kbuf), &ksym, NULL);
-                    switch (ksym) {
-                        case XK_f:
-                        case XK_F:
-                            m_view->fullScreen ();
-                            break;
-                    }
-                }
-            break;
-        }
-        case MotionNotify:
-            if (m_view->controlPanelMode () == View::CP_AutoHide) {
-                const VideoWidgetList::iterator e = video_widgets.end ();
-                for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
-                    QPoint p = mapToGlobal (QPoint (0, 0));
-                    int x = xe->xmotion.x_root - p.x ();
-                    int y = xe->xmotion.y_root - p.y ();
-                    m_view->mouseMoved (x, y);
-                    if (x > 0 && x < width () && y > 0 && y < height ())
-                        mouseMoved ();
-                }
-            }
-            break;
-        case MapNotify:
-            if (!xe->xmap.override_redirect) {
-                const VideoWidgetList::iterator e = video_widgets.end ();
-                for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i) {
-                    Window p = xe->xmap.event;
-                    Window w = xe->xmap.window;
-                    Window v = (*i)->clientHandle ();
-                    Window va = winId ();
-                    Window root = 0;
-                    Window *children;
-                    unsigned int nr;
-                    while (p != v &&
-                            XQueryTree (QX11Info::display (), w, &root,
-                                &p, &children, &nr)) {
-                        if (nr)
-                            XFree (children);
-                        if (p == va || p == v || p == root)
-                            break;
-                        w = p;
-                    }
-                    if (p == v)
-                        setXSelectInput (xe->xmap.window,
-                                static_cast <VideoOutput *>(*i)->inputMask ());
-                }
-            }
-            break;
-        default:
-            break;
-    }
-    return false;
-}*/
-
 //----------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
   : QX11EmbedContainer (parent),
     m_plain_window(0), m_client_window(0), resized_timer(0),
     m_bgcolor (0), m_aspect (0.0),
-    m_view (view) {
-    /*XWindowAttributes xwa;
-    XGetWindowAttributes (QX11Info::display(), winId (), &xwa);
-    XSetWindowAttributes xswa;
-    xswa.background_pixel = 0;
-    xswa.border_pixel = 0;
-    xswa.colormap = xwa.colormap;
-    create (XCreateWindow (QX11Info::display()), parent->winId (), 0, 0, 10, 10, 0, 
-                           x11Depth (), InputOutput, (Visual*)x11Visual (),
-                           CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
+    m_view (view)
+{
     setAcceptDrops (true);
     connect (view->viewArea (), SIGNAL (fullScreenChanged ()),
              this, SLOT (fullScreenChanged ()));
@@ -2532,9 +2439,9 @@ KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
 KDE_NO_CDTOR_EXPORT VideoOutput::~VideoOutput () {
     kDebug() << "VideoOutput::~VideoOutput" << endl;
     if (m_plain_window) {
-        XUnmapWindow (QX11Info::display(), m_plain_window);
-        XFlush (QX11Info::display());
-        XDestroyWindow (QX11Info::display(), m_plain_window);
+        xcb_connection_t* connection = QX11Info::connection();
+        xcb_destroy_window(connection, m_plain_window);
+        xcb_flush(connection);
         m_plain_window = 0;
     }
 }
@@ -2542,27 +2449,29 @@ KDE_NO_CDTOR_EXPORT VideoOutput::~VideoOutput () {
 void VideoOutput::useIndirectWidget (bool inderect) {
     kDebug () << "setIntermediateWindow " << !!m_plain_window << "->" << inderect;
     if (!clientWinId () || !!m_plain_window != inderect) {
+        xcb_connection_t* connection = QX11Info::connection();
         if (inderect) {
             if (!m_plain_window) {
-                int scr = DefaultScreen (QX11Info::display ());
-                m_plain_window = XCreateSimpleWindow (
-                        QX11Info::display(),
-                        winId (),
+                xcb_screen_t* scr = m_view->viewArea()->d->screen_of_display(connection, QX11Info::appScreen());
+                m_plain_window = xcb_generate_id(connection);
+                uint32_t values[] = { scr->black_pixel, m_input_mask };
+                xcb_create_window(connection,
+                        XCB_COPY_FROM_PARENT, m_plain_window, winId(),
                         0, 0, width(), height(),
-                        1,
-                        BlackPixel (QX11Info::display(), scr),
-                        BlackPixel (QX11Info::display(), scr));
-                XMapWindow (QX11Info::display(), m_plain_window);
-                XSync (QX11Info::display (), false);
+                        1, XCB_WINDOW_CLASS_INPUT_OUTPUT, XCB_COPY_FROM_PARENT,
+                        XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK, values);
+                xcb_map_window(connection, m_plain_window);
+                xcb_flush(connection);
+                //XSync (QX11Info::display (), false);
                 //embedClient (m_plain_window);
             }
-            XClearWindow (QX11Info::display(), m_plain_window);
+            //XClearWindow (QX11Info::display(), m_plain_window);
         } else {
             if (m_plain_window) {
-                XUnmapWindow (QX11Info::display(), m_plain_window);
-                XFlush (QX11Info::display());
+                xcb_unmap_window(connection, m_plain_window);
                 discardClient ();
-                XDestroyWindow (QX11Info::display(), m_plain_window);
+                xcb_destroy_window(connection, m_plain_window);
+                xcb_flush(connection);
                 m_plain_window = 0;
                 //XSync (QX11Info::display (), false);
             }
@@ -2588,9 +2497,15 @@ KDE_NO_EXPORT void VideoOutput::timerEvent (QTimerEvent *e) {
     if (e->timerId () == resized_timer) {
         killTimer (resized_timer);
         resized_timer = 0;
-        if (clientWinId ())
-            XMoveResizeWindow (QX11Info::display(), clientWinId (),
-                    0, 0, width (), height ());
+        if (clientWinId ()) {
+            xcb_connection_t* connection = QX11Info::connection();
+            uint32_t values[] = { 0, 0, width(), height() };
+            xcb_configure_window(connection, clientWinId(),
+                    XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y |
+                    XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
+                    values);
+            xcb_flush(connection);
+        }
     }
 }
 
@@ -2682,23 +2597,6 @@ KDE_NO_EXPORT void VideoOutput::dropEvent (QDropEvent * de) {
 KDE_NO_EXPORT void VideoOutput::dragEnterEvent (QDragEnterEvent* dee) {
     m_view->dragEnterEvent (dee);
 }
-/*
-*/
-void VideoOutput::sendKeyEvent (int key) {
-    Window w = clientWinId ();
-    if (w) {
-        char buf[2] = { char (key), '\0' };
-        KeySym keysym = XStringToKeysym (buf);
-        XKeyEvent event = {
-            XKeyPress, 0, true,
-            QX11Info::display (), w, QX11Info::appRootWindow(), w,
-            /*time*/ 0, 0, 0, 0, 0,
-            0, XKeysymToKeycode (QX11Info::display (), keysym), true
-        };
-        XSendEvent (QX11Info::display(), w, false, KeyPressMask, (XEvent *) &event);
-        XFlush (QX11Info::display ());
-    }
-}
 
 KDE_NO_EXPORT void VideoOutput::contextMenuEvent (QContextMenuEvent * e) {
     m_view->controlPanel ()->popupMenu->exec (e->globalPos ());
@@ -2719,10 +2617,11 @@ KDE_NO_EXPORT void VideoOutput::setCurrentBackgroundColor (const QColor & c) {
     QPalette palette;
     palette.setColor (backgroundRole(), c);
     setPalette (palette);
-    Window w = clientWinId ();
-    if (w) {
-        XSetWindowBackground (QX11Info::display (), w, c.rgb ());
-        XFlush (QX11Info::display ());
+    if (clientWinId()) {
+        xcb_connection_t* connection = QX11Info::connection();
+        const uint32_t values[] = { c.rgb() };
+        xcb_change_window_attributes(connection, clientWinId(), XCB_CW_BACK_PIXEL, values);
+        xcb_flush(connection);
     }
 }
 

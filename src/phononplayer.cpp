@@ -38,7 +38,7 @@
 #include "slaveadaptor.h"
 #include "streamslaveadaptor.h"
 
-#include <X11/Xlib.h>
+#include <xcb/xcb.h>
 
 static QString control_service;
 static QString control_path;
@@ -95,7 +95,7 @@ Stream::Stream (QWidget *parent, const QString &url, unsigned long wid)
     setAttribute(Qt::WA_NativeWindow);
     setAttribute(Qt::WA_DontCreateNativeAncestors);
     createWinId();
-    XReparentWindow(QX11Info::display(), winId(), wid, 0, 0);
+    xcb_reparent_window(QX11Info::connection(), winId(), wid, 0, 0);
     //embedInto (wid);
     show ();
     m_master_stream_path = QString ("%1/stream_%2").arg(control_path).arg (wid);

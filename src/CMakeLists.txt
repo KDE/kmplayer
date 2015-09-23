@@ -71,7 +71,6 @@ target_link_libraries(kmplayercommon
   ${GLibDBusLinkFlags}
   KF5::KDELibs4Support
   KF5::Parts
-  ${X11_LIBRARIES}
   ${XCB_LIBRARIES}
   ${EXPAT_LIBRARIES}
   KF5::MediaPlayer
@@ -165,7 +164,7 @@ add_executable(kphononplayer ${kphononplayer_SRCS})
 
 qt5_use_modules(kphononplayer Core DBus Widgets X11Extras)
 
-target_link_libraries(kphononplayer Phonon::phonon4qt5 ${X11_LIBRARIES})
+target_link_libraries(kphononplayer Phonon::phonon4qt5 ${XCB_LIBRARIES})
 
 install(TARGETS kphononplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 

@@ -36,11 +36,13 @@ namespace KMPlayer {
 class View;
 class IViewer;
 class ViewerAreaPrivate;
+class VideoOutput;
 
 /*
  * The area in which the video widget and controlpanel are laid out
  */
 class KMPLAYER_EXPORT ViewArea : public QWidget, public QAbstractNativeEventFilter {
+    friend class VideoOutput;
     Q_OBJECT
 public:
     ViewArea (QWidget *parent, View *view, bool paint_bg);
@@ -126,7 +128,6 @@ public:
     virtual void unmap ();
 
     KDE_NO_EXPORT long inputMask () const { return m_input_mask; }
-    void sendKeyEvent (int key);
     void setBackgroundColor (const QColor & c);
     void resetBackgroundColor ();
     void setCurrentBackgroundColor (const QColor & c);
