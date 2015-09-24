@@ -1911,6 +1911,7 @@ KDE_NO_EXPORT void ViewArea::stopTimers () {
 KDE_NO_EXPORT void ViewArea::fullScreen () {
     stopTimers ();
     if (m_fullscreen) {
+        setVisible(false);
         setWindowState( windowState() & ~Qt::WindowFullScreen | Qt::WindowActive ); // reset
         m_view->dockArea ()->setCentralWidget (this);
         for (int i = 0; i < m_collection->count (); ++i)

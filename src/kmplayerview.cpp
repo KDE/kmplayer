@@ -457,6 +457,8 @@ KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
             //m_dock_infopanel->undock ();
         infopanel_timer  = 0;
     } else if (e->timerId () == m_restore_state_timer) {
+        m_view_area->setVisible(true);
+        setControlPanelMode (m_old_controlpanel_mode);
         m_dockarea->restoreState(m_dock_state);
         m_restore_state_timer = 0;
     }
