@@ -22,6 +22,7 @@
 #include <qlabel.h>
 #include <qpainter.h>
 #include <qstringlist.h>
+#include <QCursor>
 #include <QPalette>
 #include <QSlider>
 #include <QLabel>
@@ -525,12 +526,14 @@ KDE_NO_EXPORT void ControlPanel::timerEvent (QTimerEvent * e) {
         }
     } else if (e->timerId () == m_popdown_timer) {
         m_popdown_timer = 0;
+        QPoint mpos = QCursor::pos();
+#define HAS_MOUSE(menu) ((menu)->isVisible() && (menu)->rect().contains((menu)->mapFromGlobal(mpos)))
         if (popupMenu->isVisible () &&
-                !popupMenu->testAttribute(Qt::WA_UnderMouse) &&
-                !playerMenu->testAttribute(Qt::WA_UnderMouse) &&
-                !zoomMenu->testAttribute(Qt::WA_UnderMouse) &&
-                !colorMenu->testAttribute(Qt::WA_UnderMouse) &&
-                !bookmarkMenu->testAttribute(Qt::WA_UnderMouse)) {
+                !popupMenu->underMouse() &&
+                !HAS_MOUSE(playerMenu) &&
+                !HAS_MOUSE(zoomMenu) &&
+                !HAS_MOUSE(colorMenu) &&
+                !HAS_MOUSE(bookmarkMenu)) {
             if (!(bookmarkMenu->isVisible () &&
                         static_cast <QWidget *> (bookmarkMenu) != QWidget::keyboardGrabber ())) {
                 // not if user entered the bookmark sub menu or if I forgot one
@@ -539,13 +542,14 @@ KDE_NO_EXPORT void ControlPanel::timerEvent (QTimerEvent * e) {
                     m_buttons [button_config]->toggle ();
             }
         } else if (languageMenu->isVisible () &&
-                !languageMenu->testAttribute(Qt::WA_UnderMouse) &&
-                !audioMenu->testAttribute(Qt::WA_UnderMouse) &&
-                !subtitleMenu->testAttribute(Qt::WA_UnderMouse)) {
+                !HAS_MOUSE(languageMenu) &&
+                !HAS_MOUSE(audioMenu) &&
+                !HAS_MOUSE(subtitleMenu)) {
             languageMenu->hide ();
             if (m_buttons [button_language]->isChecked ())
                 m_buttons [button_language]->toggle ();
         }
+#undef HAS_MOUSE
     }
     killTimer (e->timerId ());
 }
