@@ -170,7 +170,7 @@ install(TARGETS kphononplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 ########### install files ###############
 
-install(FILES pluginsinfo bookmarks.xml DESTINATION ${DATA_INSTALL_DIR}}/kmplayer)
+install(FILES pluginsinfo bookmarks.xml DESTINATION ${DATA_INSTALL_DIR}/kmplayer)
 install(FILES kmplayerui.rc kmplayerpartui.rc DESTINATION ${KXMLGUI_INSTALL_DIR}/kmplayer)
 install(FILES kmplayerrc DESTINATION ${CONFIG_INSTALL_DIR})
 #install(FILES kmplayer.kcfg  DESTINATION  ${KCFG_INSTALL_DIR})
