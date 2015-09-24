@@ -21,8 +21,8 @@
 #include <qurl.h>
 #include <qtextstream.h>
 #include <qbytearray.h>
+#include <QStandardPaths>
 
-#include <kstandarddirs.h>
 #include <kinputdialog.h>
 #include <kfiledialog.h>
 #include <kglobal.h>
@@ -103,7 +103,7 @@ KDE_NO_EXPORT void Recents::activate () {
 KDE_NO_EXPORT void Recents::defer () {
     if (!resolved) {
         resolved = true;
-        readFromFile (KStandardDirs::locateLocal ("data", "kmplayer/recent.xml"));
+        readFromFile(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kmplayer/recent.xml");
     }
 }
 
@@ -172,7 +172,7 @@ KDE_NO_EXPORT void Playlist::defer () {
         KMPlayer::Document::defer ();
     else if (!resolved) {
         resolved = true;
-        readFromFile (KStandardDirs::locateLocal ("data", "kmplayer/playlist.xml"));
+        readFromFile(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kmplayer/playlist.xml");
     }
 }
 
@@ -506,7 +506,7 @@ QString Generator::genReadString (KMPlayer::Node *n) {
              str += c->nodeValue ().simplified ();
         }
     if (find_resource)
-        str = KStandardDirs().findResource ("data", str);
+        str = QStandardPaths::locate(QStandardPaths::GenericDataLocation, str);
     if (!static_cast <Element *>(n)->getAttribute ("encoding").isEmpty ())
         str = QUrl::toPercentEncoding (str);
     if (need_quote) {

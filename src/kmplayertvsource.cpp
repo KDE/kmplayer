@@ -32,6 +32,7 @@
 #include <qmessagebox.h>
 #include <QHeaderView>
 #include <QMenu>
+#include <QStandardPaths>
 #include <qfontmetrics.h>
 
 #include <klocale.h>
@@ -42,7 +43,6 @@
 #include <kcombobox.h>
 #include <kconfig.h>
 #include <kconfiggroup.h>
-#include <kstandarddirs.h>
 
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
@@ -363,7 +363,7 @@ KDE_NO_EXPORT void TVDocument::message (KMPlayer::MessageType msg, void *data) {
 KDE_NO_EXPORT void TVDocument::defer () {
     if (!resolved) {
         resolved = true;
-        readFromFile (KStandardDirs::locateLocal ("data", "kmplayer/tv.xml"));
+        readFromFile(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kmplayer/tv.xml");
     }
 }
 
@@ -379,7 +379,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource(KMPlayerApp* a)
 
 KDE_NO_CDTOR_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {
     static_cast <TVDocument *> (m_document.ptr ())->sync
-        (KStandardDirs::locateLocal ("data", "kmplayer/tv.xml"));
+        (QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kmplayer/tv.xml");
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::activate () {
@@ -538,7 +538,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::write (KSharedConfigPtr m_config) {
     if (!config_read) return;
     KConfigGroup (m_config, strTV).writeEntry (strTVDriver, tvdriver);
     static_cast <TVDocument *> (m_document.ptr ())->writeToFile
-        (KStandardDirs::locateLocal ("data", "kmplayer/tv.xml"));
+        (QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kmplayer/tv.xml");
     kDebug () << "KMPlayerTVSource::write XML";
 }
 

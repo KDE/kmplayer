@@ -31,6 +31,7 @@
 #include <qpair.h>
 #include <qpushbutton.h>
 #include <QMenu>
+#include <QStandardPaths>
 #include <qslider.h>
 #include <qfile.h>
 #include <qregexp.h>
@@ -49,7 +50,6 @@
 #include <klocale.h>
 #include <ksimpleconfig.h>
 #include <kaction.h>
-#include <kstandarddirs.h>
 #include <kmimetype.h>
 #include <kprotocolinfo.h>
 #include <kio/job.h>
@@ -122,8 +122,8 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
 {
     m_sources ["urlsource"] = new URLSource (this);
 
-    QString bmfile = KStandardDirs::locate ("data", "kmplayer/bookmarks.xml");
-    QString localbmfile = KStandardDirs::locateLocal ("data", "kmplayer/bookmarks.xml");
+    QString bmfile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kmplayer/bookmarks.xml");
+    QString localbmfile = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kmplayer/bookmarks.xml";
     if (localbmfile != bmfile) {
         QProcess p;
         QStringList args;

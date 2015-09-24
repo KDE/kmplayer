@@ -28,6 +28,7 @@
 #include <qslider.h>
 #include <QFile>
 #include <QMetaObject>
+#include <QStandardPaths>
 
 class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollection.h does not forward declare KXMLGUIClient
 #include <kdebug.h>
@@ -38,7 +39,6 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include <klocale.h>
 #include <kparts/factory.h>
 #include <kstatusbar.h>
-#include <kstandarddirs.h>
 
 #include "kmplayer_part.h"
 #include "kmplayerview.h"
@@ -591,7 +591,7 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
         static int counter;
         m_href_url = KUrl (m_docbase, m_href_url).url ();
         m_grab_file = QString ("%1grab-%2-%3.jpg")
-            .arg (KStandardDirs::locateLocal ("data", "kmplayer/"))
+            .arg (QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)+ "kmplayer/")
             .arg (getpid ())
             .arg (counter++);
         Node *n = new GrabDocument (this, url.url (), m_grab_file, src);

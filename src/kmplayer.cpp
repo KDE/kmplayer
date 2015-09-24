@@ -34,15 +34,16 @@
 #include <qtimer.h>
 #include <qfile.h>
 #include <qmetaobject.h>
+#include <QDirIterator>
 #include <QDropEvent>
 #include <QLabel>
 #include <QDockWidget>
+#include <QStandardPaths>
 #include <QtX11Extras/QX11Info>
 
 // include files for KDE
 #include <kapplication.h>
 #include <kdeversion.h>
-#include <kstandarddirs.h>
 #include <kiconloader.h>
 #include <kicon.h>
 #include <kmessagebox.h>
@@ -558,7 +559,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
     if (m_player->settings ()->autoresize)
         m_app->disconnect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
     m_document = new KMPlayer::SourceDocument (this, QString ());
-    QString introfile = KStandardDirs::locate ("data", "kmplayer/intro.xml");
+    QString introfile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kmplayer/intro.xml");
     QFile file (introfile);
     if (file.exists () && file.open(QIODevice::ReadOnly)) {
         QTextStream ts (&file);
@@ -861,11 +862,11 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
     Recents * rc = static_cast <Recents *> (recents.ptr ());
     if (rc && rc->resolved) {
         fileOpenRecent->saveEntries (KConfigGroup (config, "Recent Files"));
-        rc->sync (KStandardDirs::locateLocal ("data", "kmplayer/recent.xml"));
+        rc->sync(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kmplayer/recent.xml");
     }
     Playlist * pl = static_cast <Playlist *> (playlist.ptr ());
     if (pl && pl->resolved)
-        pl->sync (KStandardDirs::locateLocal ("data", "kmplayer/playlist.xml"));
+        pl->sync(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kmplayer/playlist.xml");
 }
 
 
@@ -960,7 +961,7 @@ struct ExitSource : public KMPlayer::Source {
 
 KDE_NO_EXPORT void ExitSource::activate () {
     m_document = new KMPlayer::SourceDocument (this, QString ());
-    QString exitfile = KStandardDirs::locate ("data", "kmplayer/exit.xml");
+    QString exitfile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kmplayer/exit.xml");
     QFile file (exitfile);
     if (file.exists () && file.open (QIODevice::ReadOnly)) {
         QTextStream ts (&file);
@@ -1105,23 +1106,25 @@ KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
 
 KDE_NO_EXPORT void KMPlayerApp::slotGeneratorMenu () {
     if (!generators.first ()) {
-        QStringList files = KStandardDirs().findAllResources ("data",
-                "kmplayer/generators/*.xml");
-        for (int i = 0; i < files.size (); ++i) {
-            qDebug( "gendir %s", files[i].toAscii().data());
-            Generator *gen = new Generator (this);
-            KMPlayer::NodePtr doc = gen;
-            gen->readFromFile (files[i]);
-            KMPlayer::Node *n = gen->firstChild ();
-            if (n && n->isElementNode ()) {
-                QString name = static_cast<KMPlayer::Element*>(n)->getAttribute(
-                        KMPlayer::Ids::attr_name);
-                if (name.isEmpty ())
-                    name = QFile (files[i]).fileName ();
-                generators.append (new KMPlayer::NodeStoreItem (doc));
-                m_generatormenu->addAction (name, this, SLOT(slotGenerator ()));
-            } else {
-                gen->dispose ();
+        const QStringList dirs = QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, "kmplayer/generators", QStandardPaths::LocateDirectory);
+        for (int i = 0; i < dirs.size(); ++i) {
+            QDirIterator it(dirs[i], QStringList() << QStringLiteral("*.xml"));
+            while (it.hasNext()) {
+                QString file = it.next();
+                Generator *gen = new Generator(this);
+                KMPlayer::NodePtr doc = gen;
+                gen->readFromFile(file);
+                KMPlayer::Node *n = gen->firstChild();
+                if (n && n->isElementNode()) {
+                    QString name = static_cast<KMPlayer::Element*>(n)->getAttribute(
+                            KMPlayer::Ids::attr_name);
+                    if (name.isEmpty())
+                        name = QFile(file).fileName();
+                    generators.append(new KMPlayer::NodeStoreItem(doc));
+                    m_generatormenu->addAction(name, this, SLOT(slotGenerator()));
+                } else {
+                    gen->dispose();
+                }
             }
         }
     }
