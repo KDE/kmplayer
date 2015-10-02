@@ -196,7 +196,7 @@ static Sequence *findParamGroup (Node *n, const QString &id)
 {
     Node *head = findHeadNode (SMIL::Smil::findSmilNode (n));
     if (head) {
-        Expression *expr = evaluateExpr ("/paramGroup[@id='" + id + "']/param");
+        Expression *expr = evaluateExpr(("/paramGroup[@id='" + id + "']/param").toUtf8());
         if (expr) {
             expr->setRoot (head);
             Sequence *lst = expr->toSequence ();
@@ -422,7 +422,7 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
                 if (op > -1) {
                     int cp = vl.indexOf (')', op + 1);
                     if (cp > -1) {
-                        payload = evaluateExpr (vl.mid (op + 1, cp - op - 1), "data");
+                        payload = evaluateExpr(vl.mid(op + 1, cp - op - 1).toUtf8(), "data");
                         dur = Runtime::DurStateChanged;
                     }
                 }
@@ -484,7 +484,7 @@ void setDurationItems (Node *n, const QString &s, Runtime::DurationItem *item) {
 static bool disabledByExpr (Runtime *rt) {
     bool b = false;
     if (!rt->expr.isEmpty ()) {
-        Expression *res = evaluateExpr (rt->expr, "data");
+        Expression* res = evaluateExpr(rt->expr.toUtf8(), "data");
         if (res) {
             SMIL::Smil *smil = SMIL::Smil::findSmilNode (rt->element);
             res->setRoot (smil ? smil->state_node.ptr() : NULL);
@@ -1517,7 +1517,7 @@ SMIL::Smil * SMIL::Smil::findSmilNode (Node * node) {
 }
 
 static QString exprStringValue (Node *node, const QString &str) {
-    Expression *res = evaluateExpr (str, "data");
+    Expression* res = evaluateExpr(str.toUtf8(), "data");
     if (res) {
         SMIL::Smil *smil = SMIL::Smil::findSmilNode (node);
         res->setRoot (smil ? smil->state_node.ptr() : NULL);
@@ -4460,7 +4460,7 @@ void SMIL::StateValue::parseParam (const TrieString &para, const QString &val) {
     } else if (para == "ref") {
         delete ref;
         if (state)
-            ref = evaluateExpr (val, "data");
+            ref = evaluateExpr(val.toUtf8(), "data");
         else
             ref = NULL;
     } else if (!runtime->parseParam (para, val)) {
@@ -4627,7 +4627,7 @@ void SMIL::Send::parseParam (const TrieString &para, const QString &val) {
     } else if (para == "target") {
         delete ref;
         if (state)
-            ref = evaluateExpr (val, "data");
+            ref = evaluateExpr(val.toUtf8(), "data");
         else
             ref = NULL;
     } else {

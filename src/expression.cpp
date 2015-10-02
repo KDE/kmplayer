@@ -137,9 +137,8 @@ struct Float : public AST {
 
 struct StringBase : public AST {
     StringBase (EvalState *ev) : AST (ev) {}
-    StringBase (EvalState *ev, const char *s, const char *e)
-     : AST (ev),
-       string (QString::fromUtf8 (e ? QByteArray (s, e - s).data () : s)) {}
+    StringBase (EvalState *ev, const QString& s)
+     : AST (ev), string(s) {}
 
     virtual bool toBool () const;
     virtual int toInt () const;
@@ -151,8 +150,8 @@ struct StringBase : public AST {
 
 struct SequenceBase : public StringBase {
     SequenceBase (EvalState *ev) : StringBase (ev) {}
-    SequenceBase (EvalState *ev, const char *s, const char *e)
-        : StringBase (ev, s, e) {}
+    SequenceBase (EvalState *ev, const QString& s)
+        : StringBase (ev, s) {}
 
     virtual bool toBool () const;
     virtual QString toString () const;
@@ -164,8 +163,8 @@ struct Step : public SequenceBase {
      : SequenceBase (ev),
        any_node (false), context_node (context),
        is_attr (false), recursive (false) {}
-    Step (EvalState *ev, const char *s, const char *e, bool isattr, bool rec)
-     : SequenceBase (ev, s, e),
+    Step (EvalState *ev, const QString &s, bool isattr, bool rec)
+     : SequenceBase (ev, s),
        any_node (string == "*"), context_node (false),
        is_attr (isattr), recursive (rec) {}
 
@@ -187,8 +186,8 @@ struct Step : public SequenceBase {
     bool recursive;
 };
 
-struct Identifier : public SequenceBase {
-    Identifier (EvalState *ev, AST *steps, bool context)
+struct Path : public SequenceBase {
+    Path (EvalState *ev, AST *steps, bool context)
         : SequenceBase (ev), start_contextual (context) {
         first_child = steps;
     }
@@ -196,7 +195,7 @@ struct Identifier : public SequenceBase {
     virtual Sequence *toSequence () const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
-        fprintf (stderr, "Identifier ");
+        fprintf (stderr, "Path ");
         AST::dump();
     }
 #endif
@@ -222,8 +221,8 @@ struct PredicateFilter : public SequenceBase {
 };
 
 struct StringLiteral : public StringBase {
-    StringLiteral (EvalState *ev, const char *s, const char *e)
-     : StringBase (ev, s, e) {}
+    StringLiteral (EvalState *ev, const QString& s)
+     : StringBase (ev, s) {}
 
     virtual QString toString () const;
     virtual Type type () const;
@@ -538,6 +537,12 @@ static void appendASTChild (AST *p, AST *c) {
             }
 }
 
+static AST *releaseASTChildren (AST *p) {
+    AST *child = p->first_child;
+    p->first_child = NULL;
+    return child;
+}
+
 static AST *releaseLastASTChild (AST *p) {
     AST **chldptr = &p->first_child;
     while ((*chldptr)->next_sibling)
@@ -712,7 +717,7 @@ Sequence *Step::toSequence () const {
     return lst;
 }
 
-Sequence *Identifier::toSequence () const {
+Sequence *Path::toSequence () const {
     Sequence *old = eval_state->process_list;
 
     Sequence *lst = new Sequence;
@@ -1049,13 +1054,13 @@ static void sortList (Sequence *lst, Expression *expr) {
 
 Sequence *Sort::toSequence () const {
     if (first_child) {
-        Expression *exp = evaluateExpr (first_child->toString ());
+        Expression* exp = evaluateExpr(first_child->toString().toUtf8());
         if (exp) {
             exp->setRoot (eval_state->root.node);
             Sequence *lst = exp->toSequence ();
             if (lst->first () && first_child->next_sibling) {
                 Expression *sort_exp =
-                    evaluateExpr (first_child->next_sibling->toString ());
+                    evaluateExpr(first_child->next_sibling->toString().toUtf8());
                 if (sort_exp) {
                     sortList (lst, sort_exp);
                     delete sort_exp;
@@ -1328,533 +1333,508 @@ void Comparison::dump () const {
 }
 #endif
 
-static bool parseStatement (const char *str, const char **end, AST *ast);
 
+struct Parser {
+    enum { TEof=-1, TDouble=-2, TLong=-3, TIdentifier=-4 };
 
-static bool parseSpace (const char *str, const char **end) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    *end = NULL;
-    for (const char *s = str; *s; ++s) {
-        switch (*s) {
-            case ' ':
-            case '\t':
-            case '\n':
-            case '\r':
-                *end = s;
-                break;
-        }
-        if (*end != s)
-            break;
+    const char *source;
+    const char *cur;
+
+    int cur_token;
+    long long_value;
+    double double_value;
+    QString str_value;
+    QString error;
+
+    Parser(const char* s) : source(s), cur(source) {}
+    void nextToken();
+    void setError(const char* err) {
+        fprintf(stderr, "Error at %d: %s\n", cur-source, err);
     }
-    if (*end) {
-        ++(*end);
-        return true;
-    }
-    return false;
-}
-
-static bool parseLiteral (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    if (parseSpace (str, end))
-        str = *end;
-    const char *s = str;
-    if (*s == '\'' || *s == '"') {
-        ++s;
-        while (*s && *s != *str)
-            ++s;
-        if (*s) {
-            appendASTChild (ast, new StringLiteral (ast->eval_state, ++str, s));
-            *end = s + 1;
-#ifdef KMPLAYER_EXPR_DEBUG
-            fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
-#endif
-            return true;
-        }
-    } else {
-        bool decimal = false;
-        bool sign = false;
-        *end = NULL;
-        for (; *s; ++s) {
-            if (*s == '.') {
-                if (decimal)
-                    return false;
-                decimal = true;
-            } else if (s == str && (*s == '+' || *s == '-')) {
-                sign = true;
-            } else if (!(*s >= '0' && *s <= '9')) {
-                break;
-            }
-            *end = s;
-        }
-        if (*end && (!sign || *end > str) && *end - str < 64 &&
-                (!decimal || *end > str)) {
-            char buf[64];
-            ++(*end);
-            memcpy (buf, str, *end - str);
-            buf[*end - str] = 0;
-            appendASTChild (ast, decimal
-               ? (AST *) new Float (ast->eval_state, strtof (buf, NULL))
-               : (AST *) new Integer (ast->eval_state, strtol (buf, NULL, 10)));
-#ifdef KMPLAYER_EXPR_DEBUG
-            fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
-#endif
-            return true;
-        }
-    }
-    return false;
-}
-
-static bool parsePredicate (const char *str, const char **end, AST *ast) {
-    if (parseSpace (str, end))
-        str = *end;
-    if (!*str || *str++ != '[')
-        return false;
-    AST pred (new EvalState (ast->eval_state));
-    if (parseStatement (str, end, &pred)) {
-        str = *end;
-        if (parseSpace (str, end))
-            str = *end;
-        if (*str++ != ']')
-            return false;
-        if (pred.first_child) {
-            appendASTChild (ast, pred.first_child);
-            pred.first_child = NULL;
-        }
-    } else {
-        if (parseSpace (str, end))
-            str = *end;
-        if (*str++ != ']')
-            return false;
-    }
-    *end = str;
-    return true;
-}
-
-static bool parseStep (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    AST *entry = NULL;
-    const char *s = str;
-    bool recursive = *s == '/';
-    if (recursive)
-        s = ++str;
-    if (*s == '.') {
-        ++s;
-        if (s && *s == '.') { // TODO
-            entry = new Step (ast->eval_state, true);
-            ++s;
-        } else {
-            entry = new Step (ast->eval_state, true);
-        }
-    } else {
-        bool is_attr = *s == '@';
-        if (is_attr)
-            s = ++str;
-        for (; *s; ++s)
-            if (!((*s >= 'a' && *s <= 'z') ||
-                        (*s >= 'A' && *s <= 'Z') ||
-                        *s == '_' ||
-                        *s == '*' ||
-                        (s > str && (*s == '-' || (*s >= '0' && *s <= '9')))))
-                break;
-        if (str == s)
-            return false;
-        entry = new Step (ast->eval_state, str, s, is_attr, recursive);
-
-        AST fast (ast->eval_state);
-        const char *t = s;
-        if (parsePredicate (t, &t, &fast)) {
-            s = t;
-            while (parsePredicate (t, &t, &fast))
-                s = t;
-            entry->next_sibling = fast.first_child;
-            entry = new PredicateFilter (ast->eval_state, entry);
-            fast.first_child = NULL;
-        }
-
-    }
-    appendASTChild (ast, entry);
-    *end = s;
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
-#endif
-    return true;
-}
-
-static bool parseIdentifier (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    Identifier ident (ast->eval_state, NULL, false);
-    bool has_any = false;
-
-    if (parseSpace (str, end))
-        str = *end;
-    if (!str)
-        return false;
-    bool start_contextual = *str != '/';
-    if (*str == '/')
-        ++str;
-    else if (!ast->eval_state->parent &&
-            !ast->eval_state->def_root_tag.isEmpty ())
-        appendASTChild (&ident, new Step (ast->eval_state,
-                  ast->eval_state->def_root_tag.toAscii ().constData (), NULL,
-                  false, false));
-    if (parseStep (str, end, &ident)) {
-        str = *end;
-        has_any = true;
-        if (*str == '/') {
-            ++str;
-            while (parseStep (str, end, &ident)) {
-                str = *end;
-                if (*str != '/')
-                    break;
-                ++str;
-            }
-        }
-    }
-    *end = str;
-    if (has_any) {
-        appendASTChild (ast, new Identifier (ast->eval_state, ident.first_child, start_contextual));
-        ident.first_child = NULL;
-#ifdef KMPLAYER_EXPR_DEBUG
-        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
-#endif
-        return true;
-    }
-    return false;
-}
-
-static bool parseGroup (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    const char *begin = parseSpace (str, end) ? *end : str;
-    if (!*begin || *begin != '(')
-        return false;
-    if (!parseStatement (begin + 1, end, ast))
-        return false;
-    str = *end;
-    str = parseSpace (str, end) ? *end : str;
-    if (!*str || *str != ')')
-        return false;
-    *end = str + 1;
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
-#endif
-    return true;
-}
-
-static bool parseFunction (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    AST fast (ast->eval_state);
-    const char *begin = parseSpace (str, end) ? *end : str;
-    *end = NULL;
-    for (const char *s = begin; *s; ++s) {
-        if (!(*s >= 'a' && *s <= 'z') &&
-                !(*s >= 'A' && *s <= 'Z') &&
-                *s != '_' &&
-                !(s > begin && (*s == '-' || (*s >= '0' && *s <= '9'))))
-            break;
-        *end = s;
-    }
-    if (*end) {
-        ++(*end);
-        QString name (QByteArray (begin, *end - begin));
-        str = *end;
-        if (parseSpace (str, end))
-            str = *end;
-        if (*str && *(str++) == '(') {
-            if (parseSpace (str, end))
-                str = *end;
-            while (*str != ')' && parseStatement (str, end, &fast)) {
-                str = *end;
-                if (parseSpace (str, end))
-                    str = *end;
-                if (!*str || *str != ',')
-                    break;
-                str++;
-            }
-            if (parseSpace (str, end))
-                str = *end;
-            if (*str && *(str++) == ')') {
-                AST *func = NULL;
-                if (name == "concat")
-                    func = new Concat (ast->eval_state);
-                else if (name == "contains")
-                    func = new Contains (ast->eval_state);
-                else if (name == "count")
-                    func = new Count (ast->eval_state);
-                else if (name == "hours-from-time")
-                    func = new HoursFromTime (ast->eval_state);
-                else if (name == "minutes-from-time")
-                    func = new MinutesFromTime (ast->eval_state);
-                else if (name == "seconds-from-time")
-                    func = new SecondsFromTime (ast->eval_state);
-                else if (name == "current-time")
-                    func = new CurrentTime (ast->eval_state);
-                else if (name == "current-date")
-                    func = new CurrentDate (ast->eval_state);
-                else if (name == "last")
-                    func = new Last (ast->eval_state);
-                else if (name == "not")
-                    func = new Not (ast->eval_state);
-                else if (name == "number")
-                    func = new Number (ast->eval_state);
-                else if (name == "position")
-                    func = new Position (ast->eval_state);
-                else if (name == "sort")
-                    func = new Sort (ast->eval_state);
-                else if (name == "starts-with")
-                    func = new StartsWith (ast->eval_state);
-                else if (name == "string-join")
-                    func = new StringJoin (ast->eval_state);
-                else if (name == "string-length")
-                    func = new StringLength (ast->eval_state);
-                else if (name == "subsequence")
-                    func = new SubSequence (ast->eval_state);
-                else if (name == "substring-after")
-                    func = new SubstringAfter (ast->eval_state);
-                else if (name == "substring-before")
-                    func = new SubstringBefore (ast->eval_state);
-                else if (name == "tokenize")
-                    func = new Tokenize (ast->eval_state);
-                else if (name == "escape-uri")
-                    func = new EscapeUri (ast->eval_state);
-                else
-                    return false;
-                appendASTChild (ast, func);
-                func->first_child = fast.first_child;
-                fast.first_child = NULL;
-                *end = str;
-#ifdef KMPLAYER_EXPR_DEBUG
-                fprintf (stderr, "%s succes str:'%s'\n", __FUNCTION__, *end);
-#endif
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-static bool parseFactor (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    AST fast (ast->eval_state);
-    if (parseGroup (str, end, &fast) ||
-            parseFunction (str, end, &fast) ||
-            parseLiteral (str, end, &fast) ||
-            parseIdentifier (str, end, &fast)) {
-        str = *end;
-        const char *s = *end;
-        if (parsePredicate (s, &s, &fast)) {
-            *end = s;
-            while (parsePredicate (s, &s, &fast))
-                *end = s;
-            appendASTChild (ast,
-                    new PredicateFilter (ast->eval_state, fast.first_child));
-        } else {
-            appendASTChild (ast, fast.first_child);
-        }
-        fast.first_child = NULL;
-        return true;
-    }
-    return false;
-}
-
-struct Keyword {
-    const char *keyword;
-    short length;
-    short id;
 };
 
-static Keyword *parseKeyword (const char *str, const char **end, Keyword *lst) {
-    for (int i = 0; lst[i].keyword; ++i)
-        if (!strncmp (str, lst[i].keyword, lst[i].length)) {
-            if (parseSpace (str + lst[i].length, end))
-                return lst + i;
+void Parser::nextToken() {
+    const char* begin = cur;
+    bool is_num = false;
+    bool is_fractal = false;
+    while (true) {
+        char c = *cur;
+        switch (c) {
+        case 0:
+            if (begin == cur) {
+                cur_token = TEof;
+                return;
+            }
+            goto interp;
+        case ' ':
+        case '\t':
+        case '\n':
+        case '\r':
+            if (begin == cur) {
+                ++begin;
+                break;
+            }
+            goto interp;
+        case '.':
+            if (is_num && !is_fractal) {
+                is_fractal = true;
+                break;
+            }
+            // fall through
+        default:
+            if ((is_num || begin == cur) && c >= '0' && c <= '9') {
+                is_num = true;
+                break;
+            }
+            if (is_num && !(c >= '0' && c <= '9'))
+                goto interp;
+            if (!((c >= 'a' && c <= 'z')
+                        || (c >= 'A' && c <= 'Z')
+                        || (cur != begin && c >= '0' && c <= '9')
+                        || c == '_'
+                        || (cur != begin && c == '-')
+                        || (unsigned char)c > 127)) {
+                if (begin == cur) {
+                    cur_token = c;
+                    ++cur;
+                    return;
+                }
+                goto interp;
+            }
         }
-    return 0;
+        cur++;
+    }
+interp:
+    if (is_num && cur - begin < 63) {
+        char buf[64];
+        memcpy(buf, begin, cur - begin);
+        buf[cur - begin] = 0;
+        if (is_fractal) {
+            cur_token = TDouble;
+            double_value = strtod(buf, NULL);
+        } else {
+            cur_token = TLong;
+            long_value = strtol(buf, NULL, 10);
+        }
+    } else {
+        cur_token = TIdentifier;
+        str_value = QString::fromUtf8(QByteArray(begin, cur-begin));
+    }
 }
 
-static bool parseTerm (const char *str, const char **end, AST *ast) {
+static bool parseStatement (Parser *parser, AST *ast);
+
+
+static bool parsePredicates (Parser *parser, AST *ast) {
+    AST pred (new EvalState (ast->eval_state));
+    while (true) {
+        if (parseStatement (parser, &pred)) {
+            if (']' != parser->cur_token)
+                return false;
+            if (pred.first_child)
+                appendASTChild (ast, releaseASTChildren (&pred));
+        } else if (']' != parser->cur_token) {
+            return false;
+        }
+        parser->nextToken();
+        if ('[' != parser->cur_token)
+            break;
+        parser->nextToken();
+    }
+    return true;
+}
+
+static bool parseStep (Parser *parser, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
 #endif
-    if (parseFactor (str, end, ast)) {
-        char op;
-        str = *end;
+    AST *entry = NULL;
+    bool recursive = '/' == parser->cur_token;
+    if (recursive)
+        parser->nextToken();
+    if ('.' == parser->cur_token) {
+        parser->nextToken();
+        if ('.' == parser->cur_token) { // TODO
+            parser->nextToken();
+            entry = new Step (ast->eval_state, true);
+        } else {
+            entry = new Step (ast->eval_state, true);
+        }
+    } else {
+        bool is_attr = '@' == parser->cur_token;
+        if (is_attr)
+            parser->nextToken();
+        if ('*' == parser->cur_token)
+            entry = new Step (ast->eval_state, "*", is_attr, recursive);
+        else if (Parser::TIdentifier == parser->cur_token)
+            entry = new Step (ast->eval_state, parser->str_value, is_attr, recursive);
+        else
+            return false;
+        parser->nextToken();
+
+        AST fast (ast->eval_state);
+        if ('[' == parser->cur_token) {
+            parser->nextToken();
+            if (!parsePredicates (parser, &fast))
+                return false;
+            entry->next_sibling = releaseASTChildren (&fast);
+            entry = new PredicateFilter (ast->eval_state, entry);
+        }
+    }
+    appendASTChild (ast, entry);
+#ifdef KMPLAYER_EXPR_DEBUG
+    fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+    return true;
+}
+
+static bool parsePath (Parser *parser, AST *ast) {
+#ifdef KMPLAYER_EXPR_DEBUG
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+    Path path (ast->eval_state, NULL, false);
+    bool has_any = false;
+
+    bool start_contextual =  '/' != parser->cur_token;
+    if ('/' == parser->cur_token) {
+        parser->nextToken();
+    } else if (!ast->eval_state->parent
+            && !ast->eval_state->def_root_tag.isEmpty ()) {
+        appendASTChild (&path, new Step (ast->eval_state,
+                    ast->eval_state->def_root_tag,
+                  false, false));
+    }
+    if (parseStep (parser, &path)) {
+        has_any = true;
+        while ('/' == parser->cur_token) {
+            parser->nextToken();
+            if (!parseStep (parser, &path))
+                break;
+        }
+    }
+    if (has_any) {
+        appendASTChild (ast, new Path (ast->eval_state, releaseASTChildren (&path), start_contextual));
+#ifdef KMPLAYER_EXPR_DEBUG
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+        return true;
+    }
+    return false;
+}
+
+static bool parseFunction (Parser *parser, const QString &name, AST *ast) {
+#ifdef KMPLAYER_EXPR_DEBUG
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+    AST fast (ast->eval_state);
+    while (Parser::TEof != parser->cur_token) {
+        switch (parser->cur_token) {
+        case ')': {
+            parser->nextToken();
+            AST *func = NULL;
+            if (name == "concat")
+                func = new Concat (ast->eval_state);
+            else if (name == "contains")
+                func = new Contains (ast->eval_state);
+            else if (name == "count")
+                func = new Count (ast->eval_state);
+            else if (name == "hours-from-time")
+                func = new HoursFromTime (ast->eval_state);
+            else if (name == "minutes-from-time")
+                func = new MinutesFromTime (ast->eval_state);
+            else if (name == "seconds-from-time")
+                func = new SecondsFromTime (ast->eval_state);
+            else if (name == "current-time")
+                func = new CurrentTime (ast->eval_state);
+            else if (name == "current-date")
+                func = new CurrentDate (ast->eval_state);
+            else if (name == "last")
+                func = new Last (ast->eval_state);
+            else if (name == "not")
+                func = new Not (ast->eval_state);
+            else if (name == "number")
+                func = new Number (ast->eval_state);
+            else if (name == "position")
+                func = new Position (ast->eval_state);
+            else if (name == "sort")
+                func = new Sort (ast->eval_state);
+            else if (name == "starts-with")
+                func = new StartsWith (ast->eval_state);
+            else if (name == "string-join")
+                func = new StringJoin (ast->eval_state);
+            else if (name == "string-length")
+                func = new StringLength (ast->eval_state);
+            else if (name == "subsequence")
+                func = new SubSequence (ast->eval_state);
+            else if (name == "substring-after")
+                func = new SubstringAfter (ast->eval_state);
+            else if (name == "substring-before")
+                func = new SubstringBefore (ast->eval_state);
+            else if (name == "tokenize")
+                func = new Tokenize (ast->eval_state);
+            else if (name == "escape-uri")
+                func = new EscapeUri (ast->eval_state);
+            else
+                return false;
+            appendASTChild (ast, func);
+            func->first_child = releaseASTChildren (&fast);
+#ifdef KMPLAYER_EXPR_DEBUG
+            fprintf (stderr, "%s succes str:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+            return true;
+        }
+        case ',':
+            parser->nextToken();
+            break;
+        default:
+            if (!parseStatement (parser, &fast))
+                return false;
+        }
+    }
+    return false;
+}
+
+static bool parseFactor (Parser *parser, AST *ast) {
+#ifdef KMPLAYER_EXPR_DEBUG
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+    AST fast (ast->eval_state);
+    int sign = 1;
+    if ('+' == parser->cur_token || '-' == parser->cur_token) {
+        sign = '-' == parser->cur_token ? -1 : 1;
+        parser->nextToken();
+    }
+    switch (parser->cur_token) {
+    case Parser::TEof:
+        return true;
+    case '(':
+        parser->nextToken();
+        if (!parseStatement (parser, &fast))
+            return false;
+        if (')' != parser->cur_token)
+            return false;
+        parser->nextToken();
+        break;
+    case '.':
+    case '@':
+    case '*':
+    case '/':
+        if (!parsePath (parser, &fast))
+            return false;
+        break;
+    case '\'':
+    case '"': {
+        const char* s = parser->cur;
+        while (*s && *s != parser->cur_token)
+            ++s;
+        if (!*s) {
+            parser->setError("expected string literal");
+            parser->cur = s;
+            parser->cur_token = Parser::TEof;
+            return false;
+        }
+        appendASTChild(&fast, new StringLiteral(ast->eval_state, QString::fromUtf8(QByteArray(parser->cur, s - parser->cur))));
+        parser->cur = ++s;
+        parser->nextToken();
+#ifdef KMPLAYER_EXPR_DEBUG
+        fprintf (stderr, "%s success end:'%s' cur token %c\n", __FUNCTION__, parser->cur, parser->cur_token);
+#endif
+        break;
+    }
+    case Parser::TDouble:
+        appendASTChild (&fast, new Float (ast->eval_state, (float)(sign * parser->double_value)));
+        parser->nextToken();
+        break;
+    case Parser::TLong:
+        appendASTChild (&fast,  new Integer (ast->eval_state, (int)(sign * parser->long_value)));
+        parser->nextToken();
+        break;
+    case Parser::TIdentifier: {
+        QString str = parser->str_value;
+        const char* cur = parser->cur;
+        parser->nextToken();
+        if ('(' == parser->cur_token) {
+            parser->nextToken();
+            if (!parseFunction (parser, str, &fast))
+                return false;
+        } else {
+            parser->cur = cur;
+            parser->cur_token = Parser::TIdentifier;
+            parser->str_value = str;
+            if (!parsePath (parser, &fast))
+                return false;
+        }
+        break;
+    }
+    default:
+        return false;
+    }
+    if ('[' == parser->cur_token) {
+        parser->nextToken();
+        if (!parsePredicates (parser, &fast))
+            return false;
+        appendASTChild (ast,
+                new PredicateFilter (ast->eval_state, releaseASTChildren (&fast)));
+    } else {
+        appendASTChild (ast, releaseASTChildren (&fast));
+    }
+    return true;
+}
+
+static bool parseTerm (Parser *parser, AST *ast) {
+#ifdef KMPLAYER_EXPR_DEBUG
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+    if (parseFactor (parser, ast)) {
         while (true) {
-            str = parseSpace (str, end) ? *end : str;
-            op = 0;
-            if ('*' == *str) {
+            int op = 0;
+            if ('*' == parser->cur_token) {
                 op = '*';
-            } else {
-                Keyword keywords[] = {
-                    { "div", 3, '/' }, { "mod", 3, '%' }, { NULL, 0, 0 }
-                };
-                Keyword *k = parseKeyword (str, end, keywords);
-                if (k) {
-                    op = (char) k->id;
-                    str += k->length;
-                }
+            } else if (Parser::TIdentifier == parser->cur_token) {
+                if ( parser->str_value == "div")
+                    op = '/';
+                else if ( parser->str_value == "mod")
+                    op = '%';
             }
-            if (op) {
-                AST tmp (ast->eval_state);
-                if (parseFactor (str + 1, end, &tmp)) {
-                    AST *chlds = releaseLastASTChild (ast);
-                    chlds->next_sibling = tmp.first_child;
-                    tmp.first_child = NULL;
-                    appendASTChild (ast,
-                            op == '*'
-                            ? (AST *) new Multiply (ast->eval_state, chlds)
-                            : op == '/'
-                            ? (AST *) new Divide (ast->eval_state, chlds)
-                            : (AST *) new Modulus (ast->eval_state, chlds));
-                    str = *end;
-                }
-            } else {
-                *end = str;
+            if (!op)
                 break;
+            parser->nextToken();
+            AST tmp (ast->eval_state);
+            if (parseFactor (parser, &tmp)) {
+                AST *chlds = releaseLastASTChild (ast);
+                chlds->next_sibling = releaseASTChildren (&tmp);
+                appendASTChild (ast,
+                        op == '*'
+                        ? (AST *) new Multiply (ast->eval_state, chlds)
+                        : op == '/'
+                        ? (AST *) new Divide (ast->eval_state, chlds)
+                        : (AST *) new Modulus (ast->eval_state, chlds));
+            } else {
+                parser->setError("expected factor");
+                return false;
             }
         }
 #ifdef KMPLAYER_EXPR_DEBUG
-        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, parser->cur);
 #endif
         return true;
     }
     return false;
 }
 
-static bool parseExpression (const char *str, const char **end, AST *ast) {
+static bool parseExpression (Parser *parser, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
 #endif
-    if (parseTerm (str, end, ast)) {
-        char op;
-        str = *end;
+    if (parseTerm (parser, ast)) {
         while (true) {
-            str = parseSpace (str, end) ? *end : str;
-            op = *str;
-            if (op == '+' || op == '-' || op == '|') {
-                AST tmp (ast->eval_state);
-                if (parseTerm (str + 1, end, &tmp)) {
-                    AST *chlds = releaseLastASTChild (ast);
-                    chlds->next_sibling = tmp.first_child;
-                    tmp.first_child = NULL;
-                    appendASTChild (ast, op == '+'
-                            ? (AST *) new Plus (ast->eval_state, chlds)
-                            :  op == '-'
-                                ? (AST *) new Minus (ast->eval_state, chlds)
-                                : (AST *) new Join (ast->eval_state, chlds));
-                    str = *end;
-                }
-            } else {
-                *end = str;
+            int op = parser->cur_token;
+            if (op != '+' && op != '-' && op != '|')
                 break;
+            parser->nextToken();
+            AST tmp (ast->eval_state);
+            if (parseTerm (parser, &tmp)) {
+                AST *chlds = releaseLastASTChild (ast);
+                chlds->next_sibling = releaseASTChildren (&tmp);
+                appendASTChild (ast, op == '+'
+                        ? (AST *) new Plus (ast->eval_state, chlds)
+                        :  op == '-'
+                        ? (AST *) new Minus (ast->eval_state, chlds)
+                        : (AST *) new Join (ast->eval_state, chlds));
+            } else {
+                parser->setError("expected term");
+                return false;
             }
         }
 #ifdef KMPLAYER_EXPR_DEBUG
-        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, parser->cur);
 #endif
         return true;
     }
     return false;
 }
 
-static bool parseStatement (const char *str, const char **end, AST *ast) {
+static bool parseStatement (Parser *parser, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
 #endif
-    if (parseExpression (str, end, ast)) {
+    if (parseExpression (parser, ast)) {
+        bool skip_next_token = false;
         enum EComparison {
             err=-1, asign,
             lt=Comparison::lt, lteq, eq, noteq, gt, gteq, land, lor
         } comparison = err;
-        str = *end;
-        if (parseSpace (str, end))
-            str = *end;
-        switch (*str) {
+        switch (parser->cur_token) {
         case '<':
-            if (*(++str) && *str == '=') {
+            parser->nextToken();
+            if (parser->cur_token == '=') {
                 comparison = lteq;
-                ++str;
             } else {
+                skip_next_token = true;
                 comparison = lt;
             }
             break;
         case '>':
-            if (*(++str) && *str == '=') {
+            parser->nextToken();
+            if ('=' == parser->cur_token) {
                 comparison = gteq;
-                ++str;
             } else {
+                skip_next_token = true;
                 comparison = gt;
             }
             break;
         case '=':
             comparison = eq;
-            ++str;
             break;
         case '!':
-            if (*(++str) && *str == '=') {
-                comparison = noteq;
-                ++str;
+            parser->nextToken();
+            if ('=' == parser->cur_token) {
+                parser->setError("expected =");
+                return false;
             }
+            comparison = noteq;
             break;
-        default: {
-            Keyword keywords[] = {
-                { "and", 3, (short) land }, { "or", 2, (short) lor },
-                { NULL, 0, 0 }
-            };
-            Keyword *k = parseKeyword (str, end, keywords);
-            if (k) {
-                comparison = (EComparison) k->id;
-                str += k->length;
-            }
+        case Parser::TIdentifier:
+            if (parser->str_value == "and")
+                comparison = land;
+            else if (parser->str_value == "or")
+                comparison = lor;
+            break;
+        default:
+            return true;
         }
+        AST tmp (ast->eval_state);
+        if (!skip_next_token)
+            parser->nextToken();
+        if (parseExpression (parser, &tmp)) {
+            AST *chlds = releaseLastASTChild (ast);
+            chlds->next_sibling = releaseASTChildren (&tmp);
+            appendASTChild (ast, new Comparison (ast->eval_state,
+                        (Comparison::CompType)comparison, chlds));
+        } else {
+            parser->setError("expected epression");
+            return false;
         }
-        if (err != comparison) {
-            AST tmp (ast->eval_state);
-            if (parseExpression (str, end, &tmp)) {
-                AST *chlds = releaseLastASTChild (ast);
-                chlds->next_sibling = tmp.first_child;
-                tmp.first_child = NULL;
-                appendASTChild (ast, new Comparison (ast->eval_state,
-                            (Comparison::CompType)comparison, chlds));
-                str = *end;
-            }
-        }
-        *end = str;
 
 #ifdef KMPLAYER_EXPR_DEBUG
-        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, parser->cur);
 #endif
         return true;
     }
     return false;
 }
 
-Expression *KMPlayer::evaluateExpr (const QString &expr, const QString &root) {
+Expression* KMPlayer::evaluateExpr(const QByteArray& expr, const QString &root) {
     EvalState *eval_state = new EvalState (NULL, root);
     AST ast (eval_state);
-    const char *end;
-    if (parseStatement (expr.toUtf8 ().constData (), &end, &ast)) {
-        AST *res = ast.first_child;
+    Parser parser(expr.constData());
+    parser.nextToken ();
+    if (parseStatement (&parser, &ast)) {
 #ifdef KMPLAYER_EXPR_DEBUG
         ast.dump();
         fprintf (stderr, "\n");
 #endif
-        ast.first_child = NULL;
-
-        return res;
+        return releaseASTChildren (&ast);
     }
     return NULL;
 }
