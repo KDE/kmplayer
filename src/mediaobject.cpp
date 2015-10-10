@@ -751,16 +751,15 @@ KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
                     "//cross-domain-policy/allow-access-from/@domain");
             if (expr) {
                 expr->setRoot (doc);
-                Sequence *lst = expr->toSequence ();
-                for (NodeValueItem *i = lst->first(); i; i = i->nextSibling()) {
-                    QRegExp match (i->data.value (), Qt::CaseInsensitive, QRegExp::Wildcard);
+                Expression::iterator it, e = expr->end();
+                for (it = expr->begin(); it != e; ++it) {
+                    QRegExp match (it->value(), Qt::CaseInsensitive, QRegExp::Wildcard);
                     if (match.exactMatch (access_from)) {
                         success = true;
                         break;
                     }
                 }
                 delete expr;
-                delete lst;
             }
             doc->document ()->dispose ();
         }
