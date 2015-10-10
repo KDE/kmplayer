@@ -192,21 +192,6 @@ static bool parseTransitionParam (Node *n, TransitionModule &m, Runtime *r,
     return true;
 }
 
-static Sequence *findParamGroup (Node *n, const QString &id)
-{
-    Node *head = findHeadNode (SMIL::Smil::findSmilNode (n));
-    if (head) {
-        Expression *expr = evaluateExpr(("/paramGroup[@id='" + id + "']/param").toUtf8());
-        if (expr) {
-            expr->setRoot (head);
-            Sequence *lst = expr->toSequence ();
-            delete expr;
-            return lst;
-        }
-    }
-    return NULL;
-}
-
 static Node *findLocalNodeById (Node *n, const QString & id) {
     SMIL::Smil *s = SMIL::Smil::findSmilNode (n);
     if (s)
@@ -1652,13 +1637,12 @@ void SMIL::State::stateChanged (Node *ref) {
         if (c->payload && c->connecter) {
             Expression *expr = (Expression *) c->payload;
             expr->setRoot (this);
-            Sequence *lst = expr->toSequence ();
-            for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling()) {
-                if (itm->data.node == ref)
+            Expression::iterator it, e = expr->end();
+            for (it = expr->begin(); it != e; ++it) {
+                if (it->node == ref)
                     document()->post (c->connecter,
                                      new Posting (this, MsgStateChanged, expr));
             }
-            delete lst;
         }
     }
 }
@@ -3391,16 +3375,22 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
         transition.init ();
         QString pg = getAttribute ("paramGroup");
         if (!pg.isEmpty ()) {
-            Sequence *lst = findParamGroup (this, pg);
-            if (lst) {
-                for (NodeValueItem *i = lst->first(); i; i = i->nextSibling())
-                    if (i->data.node->isElementNode ()) {
-                        Element *e = static_cast <Element *> (i->data.node);
-                        QString n = e->getAttribute (Ids::attr_name);
-                        if (!n.isEmpty ())
-                            parseParam (n, e->getAttribute (Ids::attr_value));
+            Node *head = findHeadNode (SMIL::Smil::findSmilNode(this));
+            if (head) {
+                Expression *expr = evaluateExpr(("/paramGroup[@id='" + pg + "']/param").toUtf8());
+                if (expr) {
+                    expr->setRoot (head);
+                    Expression::iterator it, e = expr->end();
+                    for (it = expr->begin(); it != e; ++it) {
+                        if (it->node->isElementNode()) {
+                            Element *e = static_cast <Element*>(it->node);
+                            QString n = e->getAttribute (Ids::attr_name);
+                            if (!n.isEmpty ())
+                                parseParam (n, e->getAttribute (Ids::attr_value));
+                        }
                     }
-                delete lst;
+                    delete expr;
+                }
             }
         }
         Mrl::init (); // sets all attributes
@@ -4505,16 +4495,13 @@ void SMIL::NewValue::begin () {
         if (!ref)
             ref = evaluateExpr ("/data");
         ref->setRoot (st);
-        Sequence *lst = ref->toSequence ();
-        NodeValueItem *itm = lst->first ();
-        if (itm && itm->data.node) {
-            if (name.startsWith(QChar('@')) && itm->data.node->isElementNode())
-                static_cast <Element *> (itm->data.node)->setAttribute (
-                        name.mid (1), value);
+        Expression::iterator it = ref->begin(), e = ref->end();
+        if (it != e && it->node) {
+            if (name.startsWith(QChar('@')) && it->node->isElementNode())
+                static_cast<Element*>(it->node)->setAttribute(name.mid(1), value);
             else
-                st->newValue (itm->data.node, where, name, value);
+                st->newValue(it->node, where, name, value);
         }
-        delete lst;
     }
 }
 
@@ -4541,16 +4528,13 @@ void SMIL::SetValue::begin () {
         kWarning () << "ref is empty or no state";
     } else {
         ref->setRoot (st);
-        Sequence *lst = ref->toSequence ();
-        NodeValueItemPtr itm = lst->first ();
-        if (itm && itm->data.node) {
-            if (itm->data.attr && itm->data.node->isElementNode ())
-                static_cast <Element *> (itm->data.node)->setAttribute (
-                        itm->data.attr->name (), itm->data.attr->value ());
+        Expression::iterator it = ref->begin(), e = ref->end();
+        if (it != e && it->node) {
+            if (it->attr && it->node->isElementNode ())
+                static_cast<Element*>(it->node)->setAttribute(it->attr->name(), it->attr->value());
             else
-                st->setValue (itm->data.node, value);
+                st->setValue(it->node, value);
         }
-        delete lst;
     }
 }
 
@@ -4562,15 +4546,13 @@ void SMIL::DelValue::begin () {
         kWarning () << "ref is empty or no state";
     } else {
         ref->setRoot (st);
-        Sequence *lst = ref->toSequence ();
-        for (NodeValueItem *itm = lst->first(); itm; itm = itm->nextSibling()) {
-            if (itm->data.attr && itm->data.node->isElementNode ())
-                static_cast <Element *> (itm->data.node)->setAttribute (
-                        itm->data.attr->name (), QString ());
+        Expression::iterator it, e = ref->end();
+        for (it = ref->begin(); it != e; ++it) {
+            if (it->attr && it->node->isElementNode ())
+                static_cast<Element*>(it->node)->setAttribute(it->attr->name(), QString());
             else
-                itm->data.node->parentNode ()->removeChild (itm->data.node);
+                it->node->parentNode()->removeChild(it->node);
         }
-        delete lst;
     }
 }
 
@@ -4645,11 +4627,9 @@ void SMIL::Send::message (MessageType msg, void *content) {
             ref = evaluateExpr ("/data");
         if (ref) {
             ref->setRoot (st);
-            Sequence *lst = ref->toSequence ();
-            NodeValueItem *itm = lst->first ();
-            if (itm)
-                target = itm->data.node;
-            delete lst;
+            Expression::iterator it = ref->begin(), e = ref->end();
+            if (it != e)
+                target = it->node;
         }
         if (target) {
             Node *parent = target->parentNode ();
