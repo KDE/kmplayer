@@ -36,7 +36,7 @@
     <seq>
       <brush region="region3" dur="1.5" color="gray" transOut="ellipsewipe1" />
       <par>
-        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+        <img src="../icons/64-apps-kmplayer.png" dur="3" region="region1"
              transIn="bowtiewipe1" transOut="bowtiewipe2"/>
         <seq>
           <text src="data:,bowTieWipe%20vertical" region="region2"
@@ -48,7 +48,7 @@
         </seq>
       </par>
       <par>
-        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+        <img src="../icons/64-apps-kmplayer.png" dur="3" region="region1"
              transIn="clockwipe1" transOut="clockwipe2"/>
         <seq>
           <text src="data:,clockWipe%20clockwiseTwelve" region="region2"
@@ -60,7 +60,7 @@
         </seq>
       </par>
       <par>
-        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+        <img src="../icons/64-apps-kmplayer.png" dur="3" region="region1"
              transIn="pushwipe1" transOut="pushwipe2"/>
         <seq>
           <text src="data:,pushWipe%20fromTop" region="region2" dur="1.5"
@@ -72,7 +72,7 @@
         </seq>
       </par>
       <par>
-        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+        <img src="../icons/64-apps-kmplayer.png" dur="3" region="region1"
              transIn="iriswipe1" transOut="iriswipe2"/>
         <seq>
           <text src="data:,irishWipe%20rectangle" region="region2" dur="1.5"
@@ -84,7 +84,7 @@
         </seq>
       </par>
       <par>
-        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+        <img src="../icons/64-apps-kmplayer.png" dur="3" region="region1"
              transIn="barwipe1" transOut="barwipe2"/>
         <seq>
           <text src="data:,barWipe%20leftToRight" region="region2" dur="1.5"
@@ -96,7 +96,7 @@
         </seq>
       </par>
       <par>
-        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+        <img src="../icons/64-apps-kmplayer.png" dur="3" region="region1"
              transIn="barwipe4" transOut="barwipe5"/>
         <seq>
           <text src="data:,barWipe%20leftToRight%2040-60" region="region2"
@@ -109,13 +109,13 @@
       </par>
       <par>
         <seq>
-          <img src="../icons/hi64-app-kmplayer.png" dur="1" region="region1"
+          <img src="../icons/64-apps-kmplayer.png" dur="1" region="region1"
                transIn="fade2" panZoom="0,0,50%,50%" fill="transition"/>
-          <img src="../icons/hi64-app-kmplayer.png" dur="1" region="region1"
+          <img src="../icons/64-apps-kmplayer.png" dur="1" region="region1"
                transIn="fade2" panZoom="0,50%,50%,50%" fill="transition"/>
-          <img src="../icons/hi64-app-kmplayer.png" dur="1" region="region1"
+          <img src="../icons/64-apps-kmplayer.png" dur="1" region="region1"
                transIn="fade2" panZoom="50%,50%,50%,50%" fill="transition"/>
-          <img src="../icons/hi64-app-kmplayer.png" dur="1" region="region1"
+          <img src="../icons/64-apps-kmplayer.png" dur="1" region="region1"
                transIn="fade2" panZoom="50%,0,50%,50%" transOut="fade2"/>
         </seq>
         <seq>
@@ -128,7 +128,7 @@
         </seq>
       </par>
       <par>
-        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+        <img src="../icons/64-apps-kmplayer.png" dur="3" region="region1"
              transIn="ellipsewipe1" transOut="ellipsewipe2"/>
         <seq>
           <text src="data:,ellipseWipe%20vertical" region="region2"

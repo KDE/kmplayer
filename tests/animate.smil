@@ -15,7 +15,7 @@
   </head>
   <body>
     <par>
-      <img dur="40" id="img" src="../icons/hi48-app-kmplayer.png"
+      <img dur="40" id="img" src="../icons/48-apps-kmplayer.png"
            region="regimg1" left="25" top="10" rn:mediaOpacity="40%"
            transIn="fade1" transOut="fade1"/>
       <animateMotion target="img" dur="20" calcMode="spline" repeat="2"
@@ -23,7 +23,7 @@
                      keyTimes="0;.1;.2;.4;.6;.8;.9;1"
                      keySplines=".5 0 .5 1;0 .75 .25 1;0 .75 .25 1;.5 0 .5 1;.5 0 .5 1;0 .75 .25 1;.5 0 .5 1"/>
       <par begin="2">
-        <img dur="40" id="img2" src="../icons/hi48-app-kmplayer.png"
+        <img dur="40" id="img2" src="../icons/48-apps-kmplayer.png"
              region="regimg1" left="25" top="10" rn:mediaOpacity="40%"
              transIn="fade1" transOut="fade1"/>
         <animateMotion target="img2" dur="20" calcMode="spline" repeat="2"
@@ -32,7 +32,7 @@
                        keySplines=".5 0 .5 1;0 .75 .25 1;0 .75 .25 1;.5 0 .5 1;.5 0 .5 1;0 .75 .25 1;.5 0 .5 1"/>
       </par>
       <par begin="4">
-        <img dur="40" id="img3" src="../icons/hi48-app-kmplayer.png"
+        <img dur="40" id="img3" src="../icons/48-apps-kmplayer.png"
              region="regimg1" left="25" top="10" rn:mediaOpacity="40%"
              transIn="fade1" transOut="fade1"/>
         <animateMotion target="img3" dur="20" calcMode="spline" repeat="2"

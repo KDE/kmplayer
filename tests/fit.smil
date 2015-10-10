@@ -19,7 +19,7 @@
     <par>
       <text id="text_reg_outer" region="reg_outer_text" src="data:,fill%20=%20default" dur="10"/>
       <text id="text_reg_inner" region="reg_inner_text" src="data:,fill%20=%20default" dur="10"/>
-      <img id="image" src="../icons/hi128-app-kmplayer.png" region="reg_image" dur="10"/>
+      <img id="image" src="../icons/128-apps-kmplayer.png" region="reg_image" dur="10"/>
       <text id="text_image" region="reg_text_image" src="data:,fill%20=%20default" dur="10"/>
       <text id="text_reg_image" region="reg_image_text" src="data:,fill%20=%20default" dur="10"/>
       <seq>

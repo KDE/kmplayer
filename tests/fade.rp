@@ -1,6 +1,6 @@
 <imfl>
   <head duration="10" width="320" height="240"/>
-  <image handle="1" name="../icons/hi128-app-kmplayer.png"/>
+  <image handle="1" name="../icons/128-apps-kmplayer.png"/>
   <fill start="0" color="yellow"/>
   <fadein start="1" duration="1" target="1" dstx="96" dsty="56"
    dstw="128" dsth="128"/>

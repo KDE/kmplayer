@@ -27,18 +27,18 @@
   </head>
   <body>
     <par dur="10">
-      <img src="../icons/hi48-app-kmplayer.png" region="img1" regPoint="center" regAlign="topLeft" fill="freeze"/>
-      <img src="../icons/hi48-app-kmplayer.png" region="img2" regPoint="center" regAlign="midLeft" fill="freeze"/>
-      <img src="../icons/hi48-app-kmplayer.png" region="img3" regPoint="center" regAlign="bottomLeft" fill="freeze"/>
-      <img src="../icons/hi48-app-kmplayer.png" region="img4" regPoint="center" regAlign="topMid" fill="freeze"/>
-      <img src="../icons/hi48-app-kmplayer.png" region="img5" regPoint="center" regAlign="center" fill="freeze"/>
-      <img src="../icons/hi48-app-kmplayer.png" region="img6" regPoint="center" regAlign="bottomMid" fill="freeze"/>
-      <img src="../icons/hi48-app-kmplayer.png" region="img7" regPoint="center" regAlign="topRight" fill="freeze"/>
-      <img src="../icons/hi48-app-kmplayer.png" region="img8" regPoint="center" regAlign="midRight" fill="freeze"/>
-      <img src="../icons/hi48-app-kmplayer.png" region="img9" regPoint="center" regAlign="bottomRight" fill="freeze"/>
-      <img src="../icons/hi48-app-kmplayer.png" region="img10" regPoint="north_north_west" regAlign="topLeft" fill="freeze"/>
-      <img src="../icons/hi48-app-kmplayer.png" region="img11" regPoint="north_west" fill="freeze"/>
-      <img src="../icons/hi48-app-kmplayer.png" region="img12" regPoint="north_west" regAlign="topLeft" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img1" regPoint="center" regAlign="topLeft" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img2" regPoint="center" regAlign="midLeft" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img3" regPoint="center" regAlign="bottomLeft" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img4" regPoint="center" regAlign="topMid" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img5" regPoint="center" regAlign="center" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img6" regPoint="center" regAlign="bottomMid" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img7" regPoint="center" regAlign="topRight" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img8" regPoint="center" regAlign="midRight" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img9" regPoint="center" regAlign="bottomRight" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img10" regPoint="north_north_west" regAlign="topLeft" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img11" regPoint="north_west" fill="freeze"/>
+      <img src="../icons/48-apps-kmplayer.png" region="img12" regPoint="north_west" regAlign="topLeft" fill="freeze"/>
     </par>
     <par>
       <set target="region_end" attributeName="background-color" to="black" fill="freeze"/>
@@ -47,7 +47,7 @@
         <param name="fontColor" value="green"/>
         <param name="fontSize" value="+2"/>
         <param name="backgroundColor" value="black"/>
-      </text> 
+      </text>
     </par>
   </body>
 </smil>

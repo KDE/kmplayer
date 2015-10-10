@@ -13,7 +13,7 @@
   </head>
   <body>
     <par end="text2.activateEvent">
-      <img src="../icons/hi128-app-kmplayer.png" region="reg_img" fit="fill" fill="freeze"/>
+      <img src="../icons/128-apps-kmplayer.png" region="reg_img" fit="fill" fill="freeze"/>
       <text src="some_text.html" region="reg_text1" begin="3" dur="5">
         <param name="charset" value="iso-8859-1"/>
         <param name="fontFace" value="System"/>
