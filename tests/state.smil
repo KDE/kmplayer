@@ -64,6 +64,12 @@
             left="10" top="100" width="300" height="20"/>
       <text src="data:,second%20attribute%20on%20book%20{//book/@*[2]}" left="10" top="160" width="300" height="20"/>
     </par>
+    <par dur="5">
+      <text src="data:,Before%20&quot;Pygmalion&quot;%20are%20{descendant:book[child:title = &quot;Pygmalion&quot;]/preceding-sibling:*}%20books"
+            left="10" top="10" width="300" height="20"/>
+      <text src="data:,After%20&quot;Pygmalion&quot;%20are%20{descendant:book[child:title = &quot;Pygmalion&quot;]/following-sibling:*}%20books"
+            left="10" top="40" width="300" height="20"/>
+    </par>
     <delvalue ref="//books"/>
   </body>
 </smil>
