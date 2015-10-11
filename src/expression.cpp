@@ -233,31 +233,33 @@ struct SequenceBase : public StringBase {
 };
 
 struct Step : public SequenceBase {
-    Step (EvalState *ev, bool context=false)
-     : SequenceBase (ev),
-       any_node (false), context_node (context),
-       is_attr (false), recursive (false) {}
-    Step (EvalState *ev, const QString &s, bool isattr, bool rec)
-     : SequenceBase (ev, s),
-       any_node (string == "*"), context_node (false),
-       is_attr (isattr), recursive (rec) {}
-
+    enum Axes {
+        AncestorAxis=0x01, AttributeAxis=0x02, ChildAxis=0x04,
+        DescendantAxis=0x08, FollowingAxis=0x10, FollowingSiblingAxis=0x20,
+        NamespaceAxis=0x40, ParentAxis=0x80, PrecedingAxis=0x100,
+        PrecedingSiblingAxis=0x200, SelfAxis=0x400
+    };
+    Step (EvalState *ev, const QString &s, int ax)
+        : SequenceBase (ev, s)
+        , axes(ax)
+        , any_node(string == "*")
+        , context_node(ax == SelfAxis && s.isEmpty())
+    {}
     ExprIterator* exprIterator(ExprIterator* parent) const;
     bool matches (Node *n) const;
     bool matches (Attribute *a) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Step %c%s",
-                is_attr ? '@' : ' ',
+                (axes & AttributeAxis) ? '@' : ' ',
                 context_node ? "." : string.toAscii ().constData ());
         AST::dump();
     }
 #endif
 
+    int axes;
     bool any_node;
     bool context_node;
-    bool is_attr;
-    bool recursive;
 };
 
 struct Path : public SequenceBase {
@@ -730,7 +732,7 @@ QString SequenceBase::toString () const {
                 it->next();
             }
         }
-        if (it->position > 1)
+        if (it->position != 1)
             string = QString::number(it->position);
         sequence = eval_state->sequence;
         delete it;
@@ -774,6 +776,32 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
                 parent->next();
                 pullNext();
             }
+            ++position;
+        }
+    };
+    struct SiblingIterator : public ExprIterator {
+        const bool forward;
+        SiblingIterator(ExprIterator* p, bool fw) : ExprIterator(p), forward(fw) {
+            cur_value = p->cur_value;
+            pullNext();
+        }
+        void pullNext() {
+            while (!parent->atEnd()) {
+                if (forward && cur_value.node->nextSibling()) {
+                    cur_value.node = cur_value.node->nextSibling();
+                    return;
+                } else if (!forward && cur_value.node->previousSibling()) {
+                    cur_value.node = cur_value.node->previousSibling();
+                    return;
+                }
+                parent->next();
+                cur_value = parent->cur_value;
+            }
+            cur_value = NodeValue(NULL, NULL);
+        }
+        virtual void next() {
+            assert(!atEnd());
+            pullNext();
             ++position;
         }
     };
@@ -822,7 +850,7 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
                 assert(n);
                 if (!n)
                     continue; //FIXME
-                if (step->is_attr) {
+                if (step->axes & Step::AttributeAxis) {
                     if (n->isElementNode()) {
                         Element* e = static_cast<Element*>(n);
                         if (nextAttribute(e->attributes().first())) {
@@ -840,7 +868,9 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
         }
         virtual void next() {
             assert(!atEnd());
-            if (step->is_attr && cur_value.attr && nextAttribute(cur_value.attr->nextSibling())) {
+            if ((step->axes & Step::AttributeAxis)
+                    && cur_value.attr
+                    && nextAttribute(cur_value.attr->nextSibling())) {
                 ++position;
                 return;
             }
@@ -852,9 +882,11 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
     if (context_node)
         return parent;
     ExprIterator* it = parent;
-    if (recursive)
+    if (axes & DescendantAxis)
         it = new DescendantIterator(parent);
-    else if (!is_attr)
+    else if (axes & FollowingSiblingAxis || axes & PrecedingSiblingAxis)
+        it = new SiblingIterator(parent, axes & FollowingSiblingAxis);
+    else if (!(axes & AttributeAxis))
         it = new ChildrenIterator(parent);
     return new StepIterator(it, this);
 }
@@ -1678,37 +1710,78 @@ static bool parseStep (Parser *parser, AST *ast) {
     fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
 #endif
     AST *entry = NULL;
-    bool recursive = '/' == parser->cur_token;
-    if (recursive)
+    int axes = Step::ChildAxis;
+    if ('/' == parser->cur_token) {
+        axes = Step::DescendantAxis;
         parser->nextToken();
-    if ('.' == parser->cur_token) {
-        parser->nextToken();
-        if ('.' == parser->cur_token) { // TODO
-            parser->nextToken();
-            entry = new Step (ast->eval_state, true);
-        } else {
-            entry = new Step (ast->eval_state, true);
+    }
+    QString identifier;
+    while (true ) {
+        switch (parser->cur_token) {
+        case '@':
+            axes &= ~Step::ChildAxis;
+            axes |= Step::AttributeAxis;
+            break;
+        case '.':
+            if ( axes & Step::SelfAxis) {
+                axes &= ~Step::SelfAxis;
+                axes |= Step::ParentAxis;
+            } else {
+                axes &= ~Step::ChildAxis;
+                axes |= Step::SelfAxis;
+            }
+            break;
+        case '*':
+            identifier = "*";
+            break;
+        case ':':
+            axes &= ~Step::ChildAxis;
+            if (identifier.startsWith("ancestor")) {
+                axes |= Step::AncestorAxis;
+                if (identifier.endsWith("self"))
+                    axes |= Step::SelfAxis;
+            } else if (identifier == "attribute") {
+                axes |= Step::AttributeAxis;
+            } else if (identifier == "child") {
+                axes |= Step::ChildAxis;
+            } else if (identifier.startsWith("descendant")) {
+                axes |= Step::DescendantAxis;
+                if (identifier.endsWith("self"))
+                    axes |= Step::SelfAxis;
+            } else if (identifier == "following") {
+                axes |= Step::FollowingAxis;
+            } else if (identifier == "following-sibling") {
+                axes |= Step::FollowingSiblingAxis;
+            } else if (identifier == "namespace") {
+                axes |= Step::NamespaceAxis;
+            } else if (identifier == "parent") {
+                axes |= Step::ParentAxis;
+            } else if (identifier == "preceding") {
+                axes |= Step::PrecedingAxis;
+            } else if (identifier == "preceding-sibling") {
+                axes |= Step::PrecedingSiblingAxis;
+            } else if (identifier == "self") {
+                axes |= Step::SelfAxis;
+            }
+            identifier.clear();
+            break;
+        case Parser::TIdentifier:
+            identifier = parser->str_value;
+            break;
+        default:
+            goto location_done;
         }
-    } else {
-        bool is_attr = '@' == parser->cur_token;
-        if (is_attr)
-            parser->nextToken();
-        if ('*' == parser->cur_token)
-            entry = new Step (ast->eval_state, "*", is_attr, recursive);
-        else if (Parser::TIdentifier == parser->cur_token)
-            entry = new Step (ast->eval_state, parser->str_value, is_attr, recursive);
-        else
+        parser->nextToken();
+    }
+location_done:
+    entry = new Step(ast->eval_state, identifier, axes);
+    AST fast (ast->eval_state);
+    if ('[' == parser->cur_token) {
+        parser->nextToken();
+        if (!parsePredicates (parser, &fast))
             return false;
-        parser->nextToken();
-
-        AST fast (ast->eval_state);
-        if ('[' == parser->cur_token) {
-            parser->nextToken();
-            if (!parsePredicates (parser, &fast))
-                return false;
-            entry->next_sibling = releaseASTChildren (&fast);
-            entry = new PredicateFilter (ast->eval_state, entry);
-        }
+        entry->next_sibling = releaseASTChildren (&fast);
+        entry = new PredicateFilter (ast->eval_state, entry);
     }
     appendASTChild (ast, entry);
 #ifdef KMPLAYER_EXPR_DEBUG
@@ -1730,8 +1803,7 @@ static bool parsePath (Parser *parser, AST *ast) {
     } else if (!ast->eval_state->parent
             && !ast->eval_state->def_root_tag.isEmpty ()) {
         appendASTChild (&path, new Step (ast->eval_state,
-                    ast->eval_state->def_root_tag,
-                  false, false));
+                    ast->eval_state->def_root_tag, Step::ChildAxis));
     }
     if (parseStep (parser, &path)) {
         has_any = true;
