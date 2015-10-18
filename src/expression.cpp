@@ -1607,7 +1607,7 @@ void Comparison::dump () const {
 
 
 struct Parser {
-    enum { TEof=-1, TDouble=-2, TLong=-3, TIdentifier=-4 };
+    enum { TEof=-1, TDouble=-2, TLong=-3, TIdentifier=-4, TWhiteSpace=-5 };
 
     const char *source;
     const char *cur;
@@ -1619,13 +1619,13 @@ struct Parser {
     QString error;
 
     Parser(const char* s) : source(s), cur(source) {}
-    void nextToken();
+    void nextToken(bool skip_whitespace=true);
     void setError(const char* err) {
         fprintf(stderr, "Error at %d: %s\n", cur-source, err);
     }
 };
 
-void Parser::nextToken() {
+void Parser::nextToken(bool skip_whitespace) {
     const char* begin = cur;
     bool is_num = false;
     bool is_fractal = false;
@@ -1643,6 +1643,11 @@ void Parser::nextToken() {
         case '\n':
         case '\r':
             if (begin == cur) {
+                if (!skip_whitespace) {
+                    cur_token = TWhiteSpace;
+                    ++cur;
+                    return;
+                }
                 ++begin;
                 break;
             }
@@ -1793,9 +1798,11 @@ static bool parseStep (Parser *parser, AST *ast) {
             goto location_done;
         }
         prev_token = parser->cur_token;
-        parser->nextToken();
+        parser->nextToken(false);
     }
 location_done:
+    if (Parser::TWhiteSpace == parser->cur_token)
+        parser->nextToken();
     if (!ns_identifier.isEmpty() && !(axes & Step::SelfAxis) && identifier != "*")  // FIXME namespace support
         identifier = ns_identifier + ':' + identifier;
     if ('(' == parser->cur_token) {
