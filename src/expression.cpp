@@ -239,10 +239,13 @@ struct Step : public SequenceBase {
         NamespaceAxis=0x40, ParentAxis=0x80, PrecedingAxis=0x100,
         PrecedingSiblingAxis=0x200, SelfAxis=0x400
     };
-    Step (EvalState *ev, const QString &s, int ax)
+    enum NodeType {
+        AnyType, TextType, ElementType
+    };
+    Step (EvalState *ev, const QString &s, int ax, NodeType nt)
         : SequenceBase (ev, s)
         , axes(ax)
-        , any_node(string == "*")
+        , node_type(nt)
         , context_node(ax == SelfAxis && s.isEmpty())
     {}
     ExprIterator* exprIterator(ExprIterator* parent) const;
@@ -258,7 +261,7 @@ struct Step : public SequenceBase {
 #endif
 
     int axes;
-    bool any_node;
+    NodeType node_type;
     bool context_node;
 };
 
@@ -703,11 +706,19 @@ AST::Type StringBase::type () const {
 }
 
 bool Step::matches (Node *n) const {
-    return any_node || string == n->nodeName ();
+    if (string.isEmpty()) {
+        if (AnyType == node_type)
+            return true;
+        if (ElementType == node_type)
+            return n->isElementNode();
+        if (TextType == node_type)
+            return !strcmp("#text", n->nodeName());
+    }
+    return string == n->nodeName ();
 }
 
 bool Step::matches (Attribute *a) const {
-    return any_node || string == a->name ();
+    return string.isEmpty() || string == a->name ();
 }
 
 bool SequenceBase::toBool () const {
@@ -1717,6 +1728,7 @@ static bool parseStep (Parser *parser, AST *ast) {
     }
     QString ns_identifier;
     QString identifier;
+    Step::NodeType node_type = Step::ElementType;
     int prev_token = Parser::TEof;
     while (true ) {
         switch (parser->cur_token) {
@@ -1732,9 +1744,10 @@ static bool parseStep (Parser *parser, AST *ast) {
                 axes &= ~Step::ChildAxis;
                 axes |= Step::SelfAxis;
             }
+            node_type = Step::AnyType;
             break;
         case '*':
-            identifier = "*";
+            //identifier = "*";
             break;
         case ':':
             if (prev_token == ':') {
@@ -1785,7 +1798,24 @@ static bool parseStep (Parser *parser, AST *ast) {
 location_done:
     if (!ns_identifier.isEmpty() && !(axes & Step::SelfAxis) && identifier != "*")  // FIXME namespace support
         identifier = ns_identifier + ':' + identifier;
-    entry = new Step(ast->eval_state, identifier, axes);
+    if ('(' == parser->cur_token) {
+        parser->nextToken();
+        if (')' != parser->cur_token) {
+            parser->setError("Expected )");
+            return false;
+        }
+        parser->nextToken();
+        if (identifier == "text") {
+            node_type = Step::TextType;
+        } else if (identifier == "node") {
+            node_type = Step::AnyType;
+        } else {
+            parser->setError("Expected 'text' or 'node'");
+            return false;
+        }
+        identifier.clear();
+    }
+    entry = new Step(ast->eval_state, identifier, axes, node_type);
     AST fast (ast->eval_state);
     if ('[' == parser->cur_token) {
         parser->nextToken();
@@ -1814,7 +1844,7 @@ static bool parsePath (Parser *parser, AST *ast) {
     } else if (!ast->eval_state->parent
             && !ast->eval_state->def_root_tag.isEmpty ()) {
         appendASTChild (&path, new Step (ast->eval_state,
-                    ast->eval_state->def_root_tag, Step::ChildAxis));
+                    ast->eval_state->def_root_tag, Step::ChildAxis, Step::ElementType));
     }
     if (parseStep (parser, &path)) {
         has_any = true;
