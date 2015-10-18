@@ -1715,7 +1715,9 @@ static bool parseStep (Parser *parser, AST *ast) {
         axes = Step::DescendantAxis;
         parser->nextToken();
     }
+    QString ns_identifier;
     QString identifier;
+    int prev_token = Parser::TEof;
     while (true ) {
         switch (parser->cur_token) {
         case '@':
@@ -1735,35 +1737,41 @@ static bool parseStep (Parser *parser, AST *ast) {
             identifier = "*";
             break;
         case ':':
-            axes &= ~Step::ChildAxis;
-            if (identifier.startsWith("ancestor")) {
-                axes |= Step::AncestorAxis;
-                if (identifier.endsWith("self"))
+            if (prev_token == ':') {
+                axes &= ~(Step::ChildAxis | Step::NamespaceAxis);
+                if (ns_identifier.startsWith("ancestor")) {
+                    axes |= Step::AncestorAxis;
+                    if (ns_identifier.endsWith("self"))
+                        axes |= Step::SelfAxis;
+                } else if (ns_identifier == "attribute") {
+                    axes |= Step::AttributeAxis;
+                } else if (ns_identifier == "child") {
+                    axes |= Step::ChildAxis;
+                } else if (ns_identifier.startsWith("descendant")) {
+                    axes |= Step::DescendantAxis;
+                    if (ns_identifier.endsWith("self"))
+                        axes |= Step::SelfAxis;
+                } else if (ns_identifier == "following") {
+                    axes |= Step::FollowingAxis;
+                } else if (ns_identifier == "following-sibling") {
+                    axes |= Step::FollowingSiblingAxis;
+                } else if (ns_identifier == "namespace") {
+                    axes |= Step::NamespaceAxis;
+                } else if (ns_identifier == "parent") {
+                    axes |= Step::ParentAxis;
+                } else if (ns_identifier == "preceding") {
+                    axes |= Step::PrecedingAxis;
+                } else if (ns_identifier == "preceding-sibling") {
+                    axes |= Step::PrecedingSiblingAxis;
+                } else if (ns_identifier == "self") {
                     axes |= Step::SelfAxis;
-            } else if (identifier == "attribute") {
-                axes |= Step::AttributeAxis;
-            } else if (identifier == "child") {
-                axes |= Step::ChildAxis;
-            } else if (identifier.startsWith("descendant")) {
-                axes |= Step::DescendantAxis;
-                if (identifier.endsWith("self"))
-                    axes |= Step::SelfAxis;
-            } else if (identifier == "following") {
-                axes |= Step::FollowingAxis;
-            } else if (identifier == "following-sibling") {
-                axes |= Step::FollowingSiblingAxis;
-            } else if (identifier == "namespace") {
+                }
+                ns_identifier.clear();
+            } else {
                 axes |= Step::NamespaceAxis;
-            } else if (identifier == "parent") {
-                axes |= Step::ParentAxis;
-            } else if (identifier == "preceding") {
-                axes |= Step::PrecedingAxis;
-            } else if (identifier == "preceding-sibling") {
-                axes |= Step::PrecedingSiblingAxis;
-            } else if (identifier == "self") {
-                axes |= Step::SelfAxis;
+                ns_identifier = identifier;
+                identifier.clear();
             }
-            identifier.clear();
             break;
         case Parser::TIdentifier:
             identifier = parser->str_value;
@@ -1771,9 +1779,12 @@ static bool parseStep (Parser *parser, AST *ast) {
         default:
             goto location_done;
         }
+        prev_token = parser->cur_token;
         parser->nextToken();
     }
 location_done:
+    if (!ns_identifier.isEmpty() && !(axes & Step::SelfAxis) && identifier != "*")  // FIXME namespace support
+        identifier = ns_identifier + ':' + identifier;
     entry = new Step(ast->eval_state, identifier, axes);
     AST fast (ast->eval_state);
     if ('[' == parser->cur_token) {
