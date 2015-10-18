@@ -4546,12 +4546,14 @@ void SMIL::DelValue::begin () {
         kWarning () << "ref is empty or no state";
     } else {
         ref->setRoot (st);
-        Expression::iterator it, e = ref->end();
-        for (it = ref->begin(); it != e; ++it) {
+        Expression::iterator it = ref->begin(), e = ref->end();
+        while (it != e) {
             if (it->attr && it->node->isElementNode ())
                 static_cast<Element*>(it->node)->setAttribute(it->attr->name(), QString());
             else
                 it->node->parentNode()->removeChild(it->node);
+            ref->setRoot (st);
+            it = ref->begin();
         }
     }
 }
