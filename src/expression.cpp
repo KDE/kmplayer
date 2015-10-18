@@ -131,7 +131,7 @@ struct EvalState {
 
 struct AST : public Expression {
     enum Type {
-        TUnknown, TInteger, TBool, TFloat, TString
+        TUnknown, TInteger, TBool, TFloat, TString, TSequence
     };
 
     AST (EvalState *ev);
@@ -144,7 +144,7 @@ struct AST : public Expression {
     virtual ExprIterator* exprIterator(ExprIterator* parent) const;
     virtual iterator begin() const;
     virtual iterator end() const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
     virtual void setRoot (Node *root);
     void setRoot (const NodeValue &value);
 #ifdef KMPLAYER_EXPR_DEBUG
@@ -161,22 +161,16 @@ struct BoolBase : public AST {
     BoolBase (EvalState *ev) : AST (ev), b (false) {}
 
     virtual QString toString () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 
     mutable bool b;
 };
 
-struct NumberBase : public AST {
-    NumberBase (EvalState *ev) : AST (ev) {}
-
-    virtual bool toBool () const;
-};
-
-struct IntegerBase : public NumberBase {
-    IntegerBase (EvalState *ev) : NumberBase (ev), i (0) {}
+struct IntegerBase : public AST {
+    IntegerBase (EvalState *ev) : AST (ev), i (0) {}
 
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 
     mutable int i;
 };
@@ -198,7 +192,7 @@ struct Float : public AST {
     bool toBool () const { return false; }
     int toInt () const { return (int) f; }
     float toFloat () const { return f; }
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Float %f", f);
@@ -217,7 +211,7 @@ struct StringBase : public AST {
     virtual bool toBool () const;
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 
     mutable QString string;
 };
@@ -229,7 +223,7 @@ struct SequenceBase : public StringBase {
 
     virtual bool toBool () const;
     virtual QString toString () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 };
 
 struct Step : public SequenceBase {
@@ -304,13 +298,19 @@ struct StringLiteral : public StringBase {
      : StringBase (ev, s) {}
 
     virtual QString toString () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "StringLiteral %s", string.toAscii ().constData ());
         AST::dump();
     }
 #endif
+};
+
+struct Boolean : public BoolBase {
+    Boolean(EvalState *ev) : BoolBase(ev) {}
+
+    virtual bool toBool() const;
 };
 
 struct Contains : public BoolBase {
@@ -439,66 +439,66 @@ struct Tokenize : public SequenceBase {
     virtual ExprIterator* exprIterator(ExprIterator* parent) const;
 };
 
-struct Multiply : public NumberBase {
-    Multiply (EvalState *ev, AST *children) : NumberBase (ev) {
+struct Multiply : public AST {
+    Multiply (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
 };
 
-struct Divide : public NumberBase {
-    Divide (EvalState *ev, AST *children) : NumberBase (ev) {
+struct Divide : public AST {
+    Divide (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
 };
 
-struct Modulus : public NumberBase {
-    Modulus (EvalState *ev, AST *children) : NumberBase (ev) {
+struct Modulus : public AST {
+    Modulus (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
 };
 
-struct Plus : public NumberBase {
-    Plus (EvalState *ev, AST *children) : NumberBase (ev) {
+struct Plus : public AST {
+    Plus (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
 };
 
-struct Minus : public NumberBase {
-    Minus (EvalState *ev, AST *children) : NumberBase (ev) {
+struct Minus : public AST {
+    Minus (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -563,7 +563,7 @@ float AST::toFloat () const {
 }
 
 QString AST::toString () const {
-    switch (type ()) {
+    switch (type(false)) {
     case TBool:
         return toBool () ? "true" : "false";
     case TInteger:
@@ -593,7 +593,7 @@ Expression::iterator AST::end() const {
     return iterator();
 }
 
-AST::Type AST::type () const {
+AST::Type AST::type(bool) const {
     return TUnknown;
 }
 
@@ -650,22 +650,15 @@ QString BoolBase::toString () const {
     return toBool () ? "true" : "false";
 }
 
-AST::Type BoolBase::type () const {
+AST::Type BoolBase::type(bool) const {
     return TBool;
-}
-
-bool NumberBase::toBool () const {
-    int ii = toInt ();
-    if (eval_state->iterator)
-        return 1 + eval_state->iterator->position == ii;
-    return ii;
 }
 
 float IntegerBase::toFloat () const {
     return toInt ();
 }
 
-AST::Type IntegerBase::type () const {
+AST::Type IntegerBase::type(bool) const {
     return TInteger;
 }
 
@@ -680,7 +673,7 @@ void Integer::dump () const {
 }
 #endif
 
-AST::Type Float::type () const {
+AST::Type Float::type(bool) const {
     return TFloat;
 }
 
@@ -701,7 +694,7 @@ float StringBase::toFloat () const {
     return toString ().toFloat ();
 }
 
-AST::Type StringBase::type () const {
+AST::Type StringBase::type(bool) const {
     return TString;
 }
 
@@ -751,19 +744,22 @@ QString SequenceBase::toString () const {
     return string;
 }
 
-AST::Type SequenceBase::type () const {
-    QString s = toString ();
-    if (s.toLower () == "true" ||
-            s.toLower () == "false")
-        return TBool;
-    bool ok;
-    s.toInt (&ok);
-    if (ok)
-        return TInteger;
-    s.toFloat (&ok);
-    if (ok)
-        return TFloat;
-    return TString;
+AST::Type SequenceBase::type(bool calc) const {
+    if (calc) {
+        QString s = toString ();
+        if (s.toLower () == "true" ||
+                s.toLower () == "false")
+            return TBool;
+        bool ok;
+        s.toInt (&ok);
+        if (ok)
+            return TInteger;
+        s.toFloat (&ok);
+        if (ok)
+            return TFloat;
+        return TString;
+    }
+    return TSequence;
 }
 
 ExprIterator* Step::exprIterator(ExprIterator* parent) const {
@@ -980,8 +976,27 @@ QString StringLiteral::toString () const {
     return string;
 }
 
-AST::Type StringLiteral::type () const {
+AST::Type StringLiteral::type(bool) const {
     return TString;
+}
+
+bool Boolean::toBool() const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        b = false;
+        if (first_child) {
+            switch (first_child->type(false)) {
+            case TInteger:
+            case TFloat:
+                b = first_child->toInt() != 0;
+            case TString:
+                b = !first_child->toString().isEmpty();
+            default:
+                b = first_child->toBool();
+            }
+        }
+    }
+    return b;
 }
 
 bool Contains::toBool () const {
@@ -1365,8 +1380,8 @@ ExprIterator* Tokenize::exprIterator(ExprIterator* parent) const
 
 #define BIN_OP_TO_INT(NAME,OP)                                           \
     AST *second_child = first_child->next_sibling;                       \
-    AST::Type t1 = first_child->type ();                                 \
-    AST::Type t2 = second_child->type ();                                \
+    AST::Type t1 = first_child->type(true);                              \
+    AST::Type t2 = second_child->type(true);                             \
     if (AST::TInteger == t1 && AST::TInteger == t2)                      \
         return first_child->toInt() OP second_child->toInt();            \
     if (AST::TInteger == t1 && AST::TFloat == t2)                        \
@@ -1389,8 +1404,8 @@ float Multiply::toFloat () const {
 }
 
 static AST::Type binaryASTType (const AST *ast) {
-    AST::Type t1 = ast->first_child->type ();
-    AST::Type t2 = ast->first_child->next_sibling->type ();
+    AST::Type t1 = ast->first_child->type(true);
+    AST::Type t2 = ast->first_child->next_sibling->type(true);
     if (t1 == t2 && (AST::TInteger == t1 || AST::TFloat == t1))
         return t1;
     if ((AST::TInteger == t1 && AST::TFloat == t2) ||
@@ -1399,7 +1414,7 @@ static AST::Type binaryASTType (const AST *ast) {
     return AST::TUnknown;
 }
 
-AST::Type Multiply::type () const {
+AST::Type Multiply::type(bool) const {
     return binaryASTType (this);
 }
 
@@ -1419,7 +1434,7 @@ float Divide::toFloat () const {
     return first_child->toFloat () / first_child->next_sibling->toFloat ();
 }
 
-AST::Type Divide::type () const {
+AST::Type Divide::type(bool) const {
     return binaryASTType (this);
 }
 
@@ -1432,8 +1447,8 @@ void Divide::dump () const {
 #endif
 
 int Modulus::toInt () const {
-    AST::Type t1 = first_child->type ();
-    AST::Type t2 = first_child->next_sibling->type ();
+    AST::Type t1 = first_child->type(true);
+    AST::Type t2 = first_child->next_sibling->type(true);
     if (t1 == t2 && (TInteger == t1 || TFloat == t1))
         return first_child->toInt () % first_child->next_sibling->toInt ();
     return 0;
@@ -1443,9 +1458,9 @@ float Modulus::toFloat () const {
     return toInt ();
 }
 
-AST::Type Modulus::type () const {
-    AST::Type t1 = first_child->type ();
-    AST::Type t2 = first_child->next_sibling->type ();
+AST::Type Modulus::type(bool) const {
+    AST::Type t1 = first_child->type(true);
+    AST::Type t2 = first_child->next_sibling->type(true);
     if (t1 == t2 && (TInteger == t1 || TFloat == t1))
         return TInteger;
     return TUnknown;
@@ -1467,7 +1482,7 @@ float Plus::toFloat () const {
     return first_child->toFloat () + first_child->next_sibling->toFloat ();
 }
 
-AST::Type Plus::type () const {
+AST::Type Plus::type(bool) const {
     return binaryASTType (this);
 }
 
@@ -1487,7 +1502,7 @@ float Minus::toFloat () const {
     return first_child->toFloat () - first_child->next_sibling->toFloat ();
 }
 
-AST::Type Minus::type () const {
+AST::Type Minus::type(bool) const {
     return binaryASTType (this);
 }
 
@@ -1546,8 +1561,8 @@ void Join::dump () const {
 #endif
 
 bool Comparison::toBool () const {
-    AST::Type t1 = first_child->type ();
-    AST::Type t2 = first_child->next_sibling->type ();
+    AST::Type t1 = first_child->type(true);
+    AST::Type t2 = first_child->next_sibling->type(true);
     switch (comp_type) {
     case lt:
         return first_child->toFloat () < first_child->next_sibling->toFloat ();
@@ -1708,8 +1723,26 @@ static bool parsePredicates (Parser *parser, AST *ast) {
         if (parseStatement (parser, &pred)) {
             if (']' != parser->cur_token)
                 return false;
-            if (pred.first_child)
-                appendASTChild (ast, releaseASTChildren (&pred));
+            if (pred.first_child) {
+                AST* child = releaseASTChildren(&pred);
+                assert(!child->next_sibling);
+                switch (child->type(false)) {
+                    case AST::TBool:
+                        break;
+                    case AST::TInteger:
+                    case AST::TFloat:
+                        child->next_sibling = new Position(pred.eval_state);
+                        child = new Comparison(pred.eval_state, Comparison::eq, child);
+                        break;
+                    default: {
+                        AST* bfunc = new Boolean(pred.eval_state);
+                        bfunc->first_child = child;
+                        child = bfunc;
+                        break;
+                    }
+                }
+                appendASTChild(ast, child);
+            }
         } else if (']' != parser->cur_token) {
             return false;
         }
@@ -1881,6 +1914,8 @@ static bool parseFunction (Parser *parser, const QString &name, AST *ast) {
         case ')': {
             parser->nextToken();
             AST *func = NULL;
+            if (name == "boolean")
+                func = new Boolean(ast->eval_state);
             if (name == "concat")
                 func = new Concat (ast->eval_state);
             else if (name == "contains")
