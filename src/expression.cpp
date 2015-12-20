@@ -1916,7 +1916,7 @@ static bool parseFunction (Parser *parser, const QString &name, AST *ast) {
             AST *func = NULL;
             if (name == "boolean")
                 func = new Boolean(ast->eval_state);
-            if (name == "concat")
+            else if (name == "concat")
                 func = new Concat (ast->eval_state);
             else if (name == "contains")
                 func = new Contains (ast->eval_state);
