@@ -1302,7 +1302,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {
             pi = new PlaylistItem(playlist, this,false, m_drop_list[i-1].url());
         if (n == playlist || m_view->playList()->isExpanded (m_view->playList()->index(m_drop_after)))
             n->insertBefore (pi, n->firstChild ());
-        else
+        else if (n->parentNode ())
             n->parentNode ()->insertBefore (pi, n->nextSibling ());
     }
     m_player->playModel()->updateTree (playlist_id, playlist, pi, true, false);
