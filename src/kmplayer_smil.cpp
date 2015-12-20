@@ -3377,7 +3377,7 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
         if (!pg.isEmpty ()) {
             Node *head = findHeadNode (SMIL::Smil::findSmilNode(this));
             if (head) {
-                Expression *expr = evaluateExpr(("/paramGroup[@id='" + pg + "']/param").toUtf8());
+                Expression *expr = evaluateExpr(QString("/paramGroup[@id='" + pg + "']/param").toUtf8());
                 if (expr) {
                     expr->setRoot (head);
                     Expression::iterator it, e = expr->end();

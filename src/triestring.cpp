@@ -58,7 +58,7 @@ struct TrieNode
         parent = p;
         length = len;
         if (len <= MaxPacked) {
-            if ((unsigned)std::abs(s - packed) > len)
+            if ((unsigned)::abs(s - packed) > len)
                 memcpy(packed, s, len);
             else
                 memmove(packed, s, len);
