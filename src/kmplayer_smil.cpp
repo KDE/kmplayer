@@ -4531,7 +4531,7 @@ void SMIL::SetValue::begin () {
         Expression::iterator it = ref->begin(), e = ref->end();
         if (it != e && it->node) {
             if (it->attr && it->node->isElementNode ())
-                static_cast<Element*>(it->node)->setAttribute(it->attr->name(), it->attr->value());
+                static_cast<Element*>(it->node)->setAttribute(it->attr->name(), value);
             else
                 st->setValue(it->node, value);
         }
