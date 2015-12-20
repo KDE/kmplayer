@@ -17,9 +17,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 **/
 
-#ifdef KMPLAYER_EXPR_DEBUG
 #include <stdio.h>
-#endif
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -38,12 +37,83 @@ QString NodeValue::value () const {
     return string;
 }
 
+namespace KMPlayer {
+
+struct ExprIterator {
+    ExprIterator(ExprIterator* p) : cur_value(NULL, NULL), parent(p), position(0)
+    {}
+    virtual ~ExprIterator() {
+        delete parent;
+    }
+    bool atEnd() const { return !cur_value.node && cur_value.string.isNull(); }
+    virtual void next();
+    NodeValue& current() { return cur_value; }
+
+    NodeValue cur_value;
+    ExprIterator* parent;
+    int position;
+private:
+    ExprIterator(const ExprIterator& p);
+};
+
+}
+
+Expression::iterator::~iterator() {
+    delete iter;
+}
+
+void ExprIterator::next() {
+    assert(!atEnd());
+    cur_value = NodeValue(NULL, NULL);
+    ++position;
+}
+
+Expression::iterator& Expression::iterator::operator =(const Expression::iterator& it) {
+    if (iter != it.iter) {
+        delete iter;
+        iter = it.iter;
+        it.iter = NULL;
+    }
+    return *this;
+}
+
+bool Expression::iterator::operator ==(const Expression::iterator& it) const {
+    if (iter == it.iter)
+        return true;
+    if (iter && it.iter)
+        return iter->cur_value == it.iter->cur_value;
+    if (!iter)
+        return it.iter->atEnd();
+    if (!it.iter)
+        return iter->atEnd();
+    return false;
+}
+
+Expression::iterator& Expression::iterator::operator ++() {
+    if (iter && !iter->atEnd())
+        iter->next();
+    return *this;
+}
+
+NodeValue& Expression::iterator::operator*() {
+    static NodeValue empty(NULL, NULL);
+    if (iter)
+        return iter->current();
+    return empty;
+}
+
+NodeValue* Expression::iterator::operator->() {
+    if (iter)
+        return &iter->cur_value;
+    return NULL;
+}
+
 namespace {
 
 struct EvalState {
     EvalState (EvalState *p, const QString &root_tag=QString())
      : def_root_tag (root_tag), root (NULL),
-       process_list (NULL), parent (p),
+       iterator(NULL), parent (p),
        sequence (1), ref_count (0) {}
 
     void addRef () { ++ref_count; }
@@ -51,7 +121,7 @@ struct EvalState {
 
     QString def_root_tag;
     NodeValue root;
-    Sequence *process_list;
+    ExprIterator* iterator;
     EvalState *parent;
     int sequence;
     int ref_count;
@@ -59,7 +129,7 @@ struct EvalState {
 
 struct AST : public Expression {
     enum Type {
-        TUnknown, TInteger, TBool, TFloat, TString
+        TUnknown, TInteger, TBool, TFloat, TString, TSequence
     };
 
     AST (EvalState *ev);
@@ -69,8 +139,10 @@ struct AST : public Expression {
     virtual int toInt () const;
     virtual float toFloat () const;
     virtual QString toString () const;
-    virtual Sequence *toSequence () const; // uncachable
-    virtual Type type () const;
+    virtual ExprIterator* exprIterator(ExprIterator* parent) const;
+    virtual iterator begin() const;
+    virtual iterator end() const;
+    virtual Type type(bool calc) const;
     virtual void setRoot (Node *root);
     void setRoot (const NodeValue &value);
 #ifdef KMPLAYER_EXPR_DEBUG
@@ -87,22 +159,16 @@ struct BoolBase : public AST {
     BoolBase (EvalState *ev) : AST (ev), b (false) {}
 
     virtual QString toString () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 
     mutable bool b;
 };
 
-struct NumberBase : public AST {
-    NumberBase (EvalState *ev) : AST (ev) {}
-
-    virtual bool toBool () const;
-};
-
-struct IntegerBase : public NumberBase {
-    IntegerBase (EvalState *ev) : NumberBase (ev), i (0) {}
+struct IntegerBase : public AST {
+    IntegerBase (EvalState *ev) : AST (ev), i (0) {}
 
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 
     mutable int i;
 };
@@ -124,7 +190,7 @@ struct Float : public AST {
     bool toBool () const { return false; }
     int toInt () const { return (int) f; }
     float toFloat () const { return f; }
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Float %f", f);
@@ -137,66 +203,70 @@ struct Float : public AST {
 
 struct StringBase : public AST {
     StringBase (EvalState *ev) : AST (ev) {}
-    StringBase (EvalState *ev, const char *s, const char *e)
-     : AST (ev),
-       string (QString::fromUtf8 (e ? QByteArray (s, e - s).data () : s)) {}
+    StringBase (EvalState *ev, const QString& s)
+     : AST (ev), string(s) {}
 
     virtual bool toBool () const;
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 
     mutable QString string;
 };
 
 struct SequenceBase : public StringBase {
     SequenceBase (EvalState *ev) : StringBase (ev) {}
-    SequenceBase (EvalState *ev, const char *s, const char *e)
-        : StringBase (ev, s, e) {}
+    SequenceBase (EvalState *ev, const QString& s)
+        : StringBase (ev, s) {}
 
     virtual bool toBool () const;
     virtual QString toString () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 };
 
 struct Step : public SequenceBase {
-    Step (EvalState *ev, bool context=false)
-     : SequenceBase (ev),
-       any_node (false), context_node (context),
-       is_attr (false), recursive (false) {}
-    Step (EvalState *ev, const char *s, const char *e, bool isattr, bool rec)
-     : SequenceBase (ev, s, e),
-       any_node (string == "*"), context_node (false),
-       is_attr (isattr), recursive (rec) {}
-
-    Sequence *toSequence () const;
+    enum Axes {
+        AncestorAxis=0x01, AttributeAxis=0x02, ChildAxis=0x04,
+        DescendantAxis=0x08, FollowingAxis=0x10, FollowingSiblingAxis=0x20,
+        NamespaceAxis=0x40, ParentAxis=0x80, PrecedingAxis=0x100,
+        PrecedingSiblingAxis=0x200, SelfAxis=0x400
+    };
+    enum NodeType {
+        AnyType, TextType, ElementType
+    };
+    Step (EvalState *ev, const QString &s, int ax, NodeType nt)
+        : SequenceBase (ev, s)
+        , axes(ax)
+        , node_type(nt)
+        , context_node(ax == SelfAxis && s.isEmpty())
+    {}
+    ExprIterator* exprIterator(ExprIterator* parent) const;
     bool matches (Node *n) const;
     bool matches (Attribute *a) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Step %c%s",
-                is_attr ? '@' : ' ',
+                (axes & AttributeAxis) ? '@' : ' ',
                 context_node ? "." : string.toAscii ().constData ());
         AST::dump();
     }
 #endif
 
-    bool any_node;
+    int axes;
+    NodeType node_type;
     bool context_node;
-    bool is_attr;
-    bool recursive;
 };
 
-struct Identifier : public SequenceBase {
-    Identifier (EvalState *ev, AST *steps, bool context)
+struct Path : public SequenceBase {
+    Path (EvalState *ev, AST *steps, bool context)
         : SequenceBase (ev), start_contextual (context) {
         first_child = steps;
     }
 
-    virtual Sequence *toSequence () const;
+    ExprIterator* exprIterator(ExprIterator* parent) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
-        fprintf (stderr, "Identifier ");
+        fprintf (stderr, "Path ");
         AST::dump();
     }
 #endif
@@ -208,7 +278,7 @@ struct PredicateFilter : public SequenceBase {
         first_child = children;
     }
 
-    virtual Sequence *toSequence () const;
+    virtual ExprIterator* exprIterator(ExprIterator* parent) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Predicate ");
@@ -222,17 +292,23 @@ struct PredicateFilter : public SequenceBase {
 };
 
 struct StringLiteral : public StringBase {
-    StringLiteral (EvalState *ev, const char *s, const char *e)
-     : StringBase (ev, s, e) {}
+    StringLiteral (EvalState *ev, const QString& s)
+     : StringBase (ev, s) {}
 
     virtual QString toString () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "StringLiteral %s", string.toAscii ().constData ());
         AST::dump();
     }
 #endif
+};
+
+struct Boolean : public BoolBase {
+    Boolean(EvalState *ev) : BoolBase(ev) {}
+
+    virtual bool toBool() const;
 };
 
 struct Contains : public BoolBase {
@@ -343,84 +419,84 @@ struct EscapeUri : public StringBase {
     virtual QString toString () const;
 };
 
-struct Sort : public SequenceBase {
+/*struct Sort : public SequenceBase {
     Sort (EvalState *ev) : SequenceBase (ev) {}
 
     virtual Sequence *toSequence () const;
-};
+};*/
 
 struct SubSequence : public SequenceBase {
     SubSequence (EvalState *ev) : SequenceBase (ev) {}
 
-    virtual Sequence *toSequence () const;
+    virtual ExprIterator* exprIterator(ExprIterator* parent) const;
 };
 
 struct Tokenize : public SequenceBase {
     Tokenize (EvalState *ev) : SequenceBase (ev) {}
 
-    virtual Sequence *toSequence () const;
+    virtual ExprIterator* exprIterator(ExprIterator* parent) const;
 };
 
-struct Multiply : public NumberBase {
-    Multiply (EvalState *ev, AST *children) : NumberBase (ev) {
+struct Multiply : public AST {
+    Multiply (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
 };
 
-struct Divide : public NumberBase {
-    Divide (EvalState *ev, AST *children) : NumberBase (ev) {
+struct Divide : public AST {
+    Divide (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
 };
 
-struct Modulus : public NumberBase {
-    Modulus (EvalState *ev, AST *children) : NumberBase (ev) {
+struct Modulus : public AST {
+    Modulus (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
 };
 
-struct Plus : public NumberBase {
-    Plus (EvalState *ev, AST *children) : NumberBase (ev) {
+struct Plus : public AST {
+    Plus (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
 };
 
-struct Minus : public NumberBase {
-    Minus (EvalState *ev, AST *children) : NumberBase (ev) {
+struct Minus : public AST {
+    Minus (EvalState *ev, AST *children) : AST (ev) {
         first_child = children;
     }
 
     virtual int toInt () const;
     virtual float toFloat () const;
-    virtual Type type () const;
+    virtual Type type(bool calc) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -431,7 +507,7 @@ struct Join : public SequenceBase {
         first_child = children;
     }
 
-    virtual Sequence *toSequence () const;
+    virtual ExprIterator* exprIterator(ExprIterator* parent) const;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -456,6 +532,7 @@ struct Comparison : public BoolBase {
 };
 
 }
+
 
 AST::AST (EvalState *ev)
  : sequence (0), eval_state (ev), first_child (NULL), next_sibling (NULL) {
@@ -484,7 +561,7 @@ float AST::toFloat () const {
 }
 
 QString AST::toString () const {
-    switch (type ()) {
+    switch (type(false)) {
     case TBool:
         return toBool () ? "true" : "false";
     case TInteger:
@@ -496,11 +573,25 @@ QString AST::toString () const {
     }
 }
 
-Sequence *AST::toSequence () const {
-    return new Sequence;
+ExprIterator* AST::exprIterator(ExprIterator* parent) const {
+    // beware of recursion w/ toString
+    struct ValueIterator : public ExprIterator {
+        ValueIterator(ExprIterator* p, const QString& s) : ExprIterator(p) {
+            cur_value = NodeValue(s);
+        }
+    };
+    return new ValueIterator(parent, toString());
 }
 
-AST::Type AST::type () const {
+Expression::iterator AST::begin() const {
+    return iterator(exprIterator(NULL));
+}
+
+Expression::iterator AST::end() const {
+    return iterator();
+}
+
+AST::Type AST::type(bool) const {
     return TUnknown;
 }
 
@@ -538,6 +629,12 @@ static void appendASTChild (AST *p, AST *c) {
             }
 }
 
+static AST *releaseASTChildren (AST *p) {
+    AST *child = p->first_child;
+    p->first_child = NULL;
+    return child;
+}
+
 static AST *releaseLastASTChild (AST *p) {
     AST **chldptr = &p->first_child;
     while ((*chldptr)->next_sibling)
@@ -551,33 +648,15 @@ QString BoolBase::toString () const {
     return toBool () ? "true" : "false";
 }
 
-AST::Type BoolBase::type () const {
+AST::Type BoolBase::type(bool) const {
     return TBool;
-}
-
-bool NumberBase::toBool () const {
-    int ii = toInt ();
-    if (eval_state->parent) {
-        Sequence *lst = eval_state->parent->process_list;
-        if (lst) {
-            int count = 0;
-            for (NodeValueItem *n = lst->first (); n; n = n->nextSibling ())
-                if (ii == ++count)
-                    return eval_state->root.node
-                        ? eval_state->root.node == n->data.node &&
-                          eval_state->root.attr == n->data.attr
-                        : eval_state->root.value () == n->data.value ();
-        }
-        return false;
-    }
-    return ii;
 }
 
 float IntegerBase::toFloat () const {
     return toInt ();
 }
 
-AST::Type IntegerBase::type () const {
+AST::Type IntegerBase::type(bool) const {
     return TInteger;
 }
 
@@ -592,7 +671,7 @@ void Integer::dump () const {
 }
 #endif
 
-AST::Type Float::type () const {
+AST::Type Float::type(bool) const {
     return TFloat;
 }
 
@@ -613,25 +692,32 @@ float StringBase::toFloat () const {
     return toString ().toFloat ();
 }
 
-AST::Type StringBase::type () const {
+AST::Type StringBase::type(bool) const {
     return TString;
 }
 
 bool Step::matches (Node *n) const {
-    return any_node || string == n->nodeName ();
+    if (string.isEmpty()) {
+        if (AnyType == node_type)
+            return true;
+        if (ElementType == node_type)
+            return n->isElementNode();
+        if (TextType == node_type)
+            return !strcmp("#text", n->nodeName());
+    }
+    return string == n->nodeName ();
 }
 
 bool Step::matches (Attribute *a) const {
-    return any_node || string == a->name ();
+    return string.isEmpty() || string == a->name ();
 }
 
 bool SequenceBase::toBool () const {
     bool b = false;
-    if (eval_state->parent) {
-        sequence = eval_state->sequence;
-        Sequence *lst = toSequence ();
-        b = lst && lst->first ();
-        delete lst;
+    if (eval_state->iterator) {
+        ExprIterator* it = exprIterator(NULL);
+        b = !it->atEnd();
+        delete it;
     } else {
         b = StringBase::toBool ();
     }
@@ -640,123 +726,275 @@ bool SequenceBase::toBool () const {
 
 QString SequenceBase::toString () const {
     if (eval_state->sequence != sequence) {
-        Sequence *lst = toSequence ();
-        int i = lst->length ();
-        if (i == 1)
-            string = lst->first ()->data.value ();
-        else
-            string = QString::number (i);
-        delete lst;
+        string.clear();
+        ExprIterator* it = exprIterator(NULL);
+        if (!it->atEnd()) {
+            string = it->cur_value.value();
+            while (!it->atEnd()) {
+                it->next();
+            }
+        }
+        if (it->position != 1)
+            string = QString::number(it->position);
         sequence = eval_state->sequence;
+        delete it;
     }
     return string;
 }
 
-AST::Type SequenceBase::type () const {
-    QString s = toString ();
-    if (s.toLower () == "true" ||
-            s.toLower () == "false")
-        return TBool;
-    bool ok;
-    s.toInt (&ok);
-    if (ok)
-        return TInteger;
-    s.toFloat (&ok);
-    if (ok)
-        return TFloat;
-    return TString;
+AST::Type SequenceBase::type(bool calc) const {
+    if (calc) {
+        QString s = toString ();
+        if (s.toLower () == "true" ||
+                s.toLower () == "false")
+            return TBool;
+        bool ok;
+        s.toInt (&ok);
+        if (ok)
+            return TInteger;
+        s.toFloat (&ok);
+        if (ok)
+            return TFloat;
+        return TString;
+    }
+    return TSequence;
 }
 
-Sequence *Step::toSequence () const {
-    Sequence *lst = new Sequence;
-    NodeValueItem *last = eval_state->process_list->last ();
-    Sequence recursive_lst;
-    for (NodeValueItem *itm = eval_state->process_list->first (); itm; ) {
-        NodeValueItem *next = itm == last ? NULL : itm->nextSibling ();
+ExprIterator* Step::exprIterator(ExprIterator* parent) const {
 
-        Node *n = itm->data.node;
-        if (!n)
-            continue; // FIXME
-        if (is_attr) {
-            Element *e = n->isElementNode() ? static_cast<Element *> (n) : NULL;
-            Attribute *a = e ? e->attributes ().first () : NULL;
-            for (; a; a = a->nextSibling ())
-                if (matches (a))
-                    lst->append (new NodeValueItem (NodeValue (n, a)));
-            if (recursive)
-                for (Node *c = n->firstChild(); c; c = c->nextSibling ())
-                    recursive_lst.append (new NodeValueItem (c));
-        } else if (context_node) {
-            if (eval_state->parent)
-                lst->append (new NodeValueItem (eval_state->root));
-        } else {
-            for (Node *c = n->firstChild(); c; c = c->nextSibling ()) {
-                if (matches (c))
-                    lst->append (new NodeValueItem (c));
-                if (recursive)
-                    recursive_lst.append (new NodeValueItem (c));
-            }
+    struct ChildrenIterator : public ExprIterator {
+        ChildrenIterator(ExprIterator* p) : ExprIterator(p) {
+            pullNext();
         }
+        void pullNext() {
+            for (; !parent->atEnd(); parent->next())
+                if (parent->cur_value.node && parent->cur_value.node->firstChild()) {
+                    cur_value = NodeValue(parent->cur_value.node->firstChild());
+                    return;
+                }
+            cur_value = NodeValue(NULL, NULL);
+        }
+        virtual void next() {
+            assert(cur_value.node);
+            cur_value.node = cur_value.node->nextSibling();
+            if (!cur_value.node) {
+                parent->next();
+                pullNext();
+            }
+            ++position;
+        }
+    };
+    struct SiblingIterator : public ExprIterator {
+        const bool forward;
+        SiblingIterator(ExprIterator* p, bool fw) : ExprIterator(p), forward(fw) {
+            cur_value = p->cur_value;
+            pullNext();
+        }
+        void pullNext() {
+            while (!parent->atEnd()) {
+                if (forward && cur_value.node->nextSibling()) {
+                    cur_value.node = cur_value.node->nextSibling();
+                    return;
+                } else if (!forward && cur_value.node->previousSibling()) {
+                    cur_value.node = cur_value.node->previousSibling();
+                    return;
+                }
+                parent->next();
+                cur_value = parent->cur_value;
+            }
+            cur_value = NodeValue(NULL, NULL);
+        }
+        virtual void next() {
+            assert(!atEnd());
+            pullNext();
+            ++position;
+        }
+    };
+    struct DescendantIterator : public ChildrenIterator {
+        DescendantIterator(ExprIterator* p) : ChildrenIterator(p)
+        {}
+        virtual void next() {
+            assert(cur_value.node);
+            if (cur_value.node->firstChild()) {
+                cur_value.node = cur_value.node->firstChild();
+                return;
+            }
+            if (cur_value.node->nextSibling()) {
+                cur_value.node = cur_value.node->nextSibling();
+                return;
+            }
+            for (Node* n = cur_value.node->parentNode(); n && n != parent->cur_value.node; n = n->parentNode())
+                if (n->nextSibling()) {
+                    cur_value.node = n->nextSibling();
+                    return;
+                }
+            parent->next();
+            pullNext();
+            ++position;
+        }
+    };
+    struct StepIterator : public ExprIterator {
+        const Step* step;
 
-        itm = next;
-    }
-    if (recursive && recursive_lst.first ()) {
-        Sequence *old = eval_state->process_list;
-        eval_state->process_list = &recursive_lst;
-        Sequence *rlst = toSequence ();
-        for (NodeValueItem *r = rlst->first (); r; r = r->nextSibling ())
-            lst->append (new NodeValueItem (r->data));
-        delete rlst;
-        eval_state->process_list = old;
-    }
-    return lst;
+        StepIterator(ExprIterator* p, const Step* s)
+         : ExprIterator(p), step(s) {
+            pullNext();
+        }
+        bool nextAttribute(Attribute *a) {
+            for (; a; a = a->nextSibling ())
+                if (step->matches(a)) {
+                    cur_value.attr = a;
+                    return true;
+                }
+            cur_value.attr = NULL;
+            return false;
+        }
+        void pullNext() {
+            while (!parent->atEnd()) {
+                Node* n = parent->cur_value.node;
+                assert(n);
+                if (!n)
+                    continue; //FIXME
+                if (step->axes & Step::AttributeAxis) {
+                    if (n->isElementNode()) {
+                        Element* e = static_cast<Element*>(n);
+                        if (nextAttribute(e->attributes().first())) {
+                            cur_value.node = n;
+                            return;
+                        }
+                    }
+                } else if (step->matches(n)) {
+                    cur_value.node = n;
+                    return;
+                }
+                parent->next();
+            }
+            cur_value.node = NULL;
+        }
+        virtual void next() {
+            assert(!atEnd());
+            if ((step->axes & Step::AttributeAxis)
+                    && cur_value.attr
+                    && nextAttribute(cur_value.attr->nextSibling())) {
+                ++position;
+                return;
+            }
+            parent->next();
+            pullNext();
+            ++position;
+        }
+    };
+    if (context_node)
+        return parent;
+    ExprIterator* it = parent;
+    if (axes & DescendantAxis)
+        it = new DescendantIterator(parent);
+    else if (axes & FollowingSiblingAxis || axes & PrecedingSiblingAxis)
+        it = new SiblingIterator(parent, axes & FollowingSiblingAxis);
+    else if (!(axes & AttributeAxis))
+        it = new ChildrenIterator(parent);
+    return new StepIterator(it, this);
 }
 
-Sequence *Identifier::toSequence () const {
-    Sequence *old = eval_state->process_list;
+ExprIterator* Path::exprIterator(ExprIterator* parent) const {
+    struct PathIterator : public ExprIterator {
+        bool contextual;
+        PathIterator(ExprIterator* parent, NodeValue& c)
+         : ExprIterator(parent), contextual(false) {
+            cur_value = c;
+        }
+        virtual void next() {
+            assert(!atEnd());
+            if (!contextual || parent->atEnd()) {
+                cur_value = NodeValue(NULL, NULL);
+            } else {
+                parent->next();
+                cur_value = parent->cur_value;
+            }
+            ++position;
+        }
+    };
 
-    Sequence *lst = new Sequence;
     EvalState *es = eval_state;
-    if (!start_contextual)
+    if (!start_contextual) {
         while (es->parent)
             es = es->parent;
-    // TODO handle ..
-    lst->append (new NodeValueItem (es->root));
-    for (AST *s = first_child; s; s = s->next_sibling) {
-        eval_state->process_list = lst;
-        lst = s->toSequence ();
-        delete eval_state->process_list;
     }
-
-    eval_state->process_list = old;
-    return lst;
+    ExprIterator* it = new PathIterator(parent, es->root);
+    for (AST *s = first_child; s; s = s->next_sibling) {
+        if (it->atEnd())
+            return it;
+        it = s->exprIterator(it);
+    }
+    return it;
 }
 
-Sequence *PredicateFilter::toSequence () const {
-    Sequence *lst = first_child->toSequence ();
-    Sequence *old = eval_state->process_list;
-
-    for (AST *p = first_child->next_sibling; p; p = p->next_sibling) {
-        eval_state->process_list = lst;
-        lst = new Sequence;
-        for (NodeValueItem *itm = eval_state->process_list->first(); itm; itm = itm->nextSibling()) {
-            p->setRoot (itm->data);
-            if (p->toBool ())
-                lst->append (new NodeValueItem (itm->data));
+ExprIterator* PredicateFilter::exprIterator(ExprIterator* parent) const {
+    struct PredicateIterator : public ExprIterator {
+        AST *ast;
+        PredicateIterator(ExprIterator* parent, AST* a)
+         : ExprIterator(parent), ast(a) {
+            pullNext();
         }
-        delete eval_state->process_list;
-    }
-
-    eval_state->process_list = old;
-    return lst;
+        void pullNext() {
+            while (!parent->atEnd()) {
+                //while (ast) {
+                    ast->setRoot(parent->cur_value);
+                    ast->eval_state->iterator = parent;
+                    cur_value = parent->cur_value;
+                    bool res = ast->toBool();
+                    ast->eval_state->iterator = NULL;
+                    if (res) {
+                        return;
+                    }
+                    //ast = ast->next_sibling;
+               // }
+                if (parent->atEnd())
+                    break;
+                parent->next();
+            }
+            cur_value = NodeValue(NULL, NULL);
+        }
+        virtual void next() {
+            assert(!atEnd());
+            parent->next();
+            pullNext();
+            ++position;
+        }
+    };
+    if (!first_child)
+        return parent;
+    ExprIterator *it = first_child->exprIterator(parent); //step
+    if (!first_child->next_sibling)
+        return it;
+    return new PredicateIterator(it, const_cast<AST*>(first_child)->next_sibling);
 }
 
 QString StringLiteral::toString () const {
     return string;
 }
 
-AST::Type StringLiteral::type () const {
+AST::Type StringLiteral::type(bool) const {
     return TString;
+}
+
+bool Boolean::toBool() const {
+    if (eval_state->sequence != sequence) {
+        sequence = eval_state->sequence;
+        b = false;
+        if (first_child) {
+            switch (first_child->type(false)) {
+            case TInteger:
+            case TFloat:
+                b = first_child->toInt() != 0;
+            case TString:
+                b = !first_child->toString().isEmpty();
+            default:
+                b = first_child->toBool();
+            }
+        }
+    }
+    return b;
 }
 
 bool Contains::toBool () const {
@@ -798,12 +1036,17 @@ bool StartsWith::toBool () const {
 int Count::toInt () const {
     if (eval_state->sequence != sequence) {
         sequence = eval_state->sequence;
+        i = 0;
         if (first_child) {
-            Sequence *lst = first_child->toSequence ();
-            i = lst->length ();
-            delete lst;
-        } else {
-            i = 0;
+            ExprIterator* it = first_child->exprIterator(NULL);
+            while (!it->atEnd())
+                it->next();
+            i = it->position;
+            delete it;
+        } else if (eval_state->iterator) {
+            while (!eval_state->iterator->atEnd())
+                eval_state->iterator->next();
+            i = eval_state->iterator->position;
         }
     }
     return i;
@@ -860,10 +1103,18 @@ int SecondsFromTime::toInt () const {
 int Last::toInt () const {
     if (eval_state->sequence != sequence) {
         sequence = eval_state->sequence;
-        if (eval_state->parent) {
-            Sequence *lst = eval_state->parent->process_list;
-            if (lst)
-                i = lst->length ();
+        if (eval_state->iterator) {
+            const NodeValue& v = eval_state->iterator->cur_value;
+            if (v.node) {
+                if (v.attr) {
+                    if (v.node->isElementNode())
+                        i = static_cast<Element *> (v.node)->attributes().length();
+                } else if (v.node->parentNode()) {
+                    i = 0;
+                    for (Node* n = v.node->parentNode()->firstChild(); n; n = n->nextSibling())
+                        ++i;
+                }
+            }
         }
     }
     return i;
@@ -881,20 +1132,8 @@ int Number::toInt () const {
 int Position::toInt () const {
     if (eval_state->sequence != sequence) {
         sequence = eval_state->sequence;
-        if (eval_state->parent) {
-            Sequence *lst = eval_state->parent->process_list;
-            Node *r = eval_state->root.node;
-            QString str = eval_state->root.string;
-            if (lst) {
-                i = 0;
-                for (NodeValueItem *n = lst->first(); n; n = n->nextSibling()) {
-                    i++;
-                    if ((r && r == n->data.node) ||
-                            (!r && str == n->data.string))
-                        break;
-                }
-            }
-        }
+        if (eval_state->iterator)
+            i = eval_state->iterator->position + 1;
     }
     return i;
 }
@@ -938,17 +1177,17 @@ QString StringJoin::toString () const {
         string.clear ();
         AST *child = first_child;
         if (child) {
-            Sequence *lst = child->toSequence ();
-            NodeValueItem *n = lst->first();
-            if (n) {
+            ExprIterator* it = child->exprIterator(NULL);
+            if (!it->atEnd()) {
                 QString sep;
                 if (child->next_sibling)
-                    sep = child->next_sibling->toString ();
-                string = n->data.value ();
-                for (n = n->nextSibling (); n; n = n->nextSibling ())
-                    string += sep + n->data.value ();
+                    sep = child->next_sibling->toString();
+                string = it->cur_value.value ();
+                it->next();
+                for (; !it->atEnd(); it->next())
+                    string += sep + it->cur_value.value();
             }
-            delete lst;
+            delete it;
         }
     }
     return string;
@@ -1016,7 +1255,7 @@ QString CurrentDate::toString () const {
     return string;
 }
 
-static void sortList (Sequence *lst, Expression *expr) {
+/*static void sortList (Sequence *lst, Expression *expr) {
     NodeValueItem *cur = lst->first ();
     Sequence lt;
     Sequence gt;
@@ -1049,13 +1288,13 @@ static void sortList (Sequence *lst, Expression *expr) {
 
 Sequence *Sort::toSequence () const {
     if (first_child) {
-        Expression *exp = evaluateExpr (first_child->toString ());
+        Expression* exp = evaluateExpr(first_child->toString().toUtf8());
         if (exp) {
             exp->setRoot (eval_state->root.node);
             Sequence *lst = exp->toSequence ();
             if (lst->first () && first_child->next_sibling) {
                 Expression *sort_exp =
-                    evaluateExpr (first_child->next_sibling->toString ());
+                    evaluateExpr(first_child->next_sibling->toString().toUtf8());
                 if (sort_exp) {
                     sortList (lst, sort_exp);
                     delete sort_exp;
@@ -1067,55 +1306,80 @@ Sequence *Sort::toSequence () const {
     }
     return AST::toSequence ();
 }
-
-Sequence *SubSequence::toSequence () const {
-    Sequence *lst = new Sequence;
-    AST *n = first_child;
-    if (n) {
-        Sequence *src = n->toSequence ();
-        n = n->next_sibling;
-        if (n) {
-            int p = n->toInt ();
-            if (p < 1)
-                p = 1;
-            int len = -1;
-            if (n->next_sibling)
-                len = n->next_sibling->toInt ();
-            NodeValueItem *itm = src->first ();
-            for (; itm && --p; itm = itm->nextSibling ())
-            {}
-            for (; itm && len--; itm = itm->nextSibling ())
-                lst->append (new NodeValueItem (itm->data));
-        }
-        delete src;
-    }
-    return lst;
-}
-
-Sequence *Tokenize::toSequence () const {
-    Sequence *lst = new Sequence;
-    if (first_child) {
-        if (first_child->next_sibling) {
-            QString s = first_child->toString ();
-            QRegExp r (first_child->next_sibling->toString ());
-            int p = 0;
-            while (p >= 0) {
-                p = r.indexIn (s, p);
-                if (p >= 0) {
-                    int len = r.matchedLength();
-                    lst->append (new NodeValueItem (s.mid (p, len)));
-                    p += len;
+*/
+ExprIterator* SubSequence::exprIterator(ExprIterator* parent) const
+{
+    struct SubSequenceIterator : public ExprIterator {
+        int start;
+        int length;
+        SubSequenceIterator(ExprIterator* p, const AST* a)
+            : ExprIterator(a ? a->exprIterator(p) : p), length(-1) {
+            if (parent && a->next_sibling) {
+                a = a->next_sibling;
+                start = a->toInt();
+                if (start < 1)
+                    start = 1;
+                if (a->next_sibling)
+                    length = a->next_sibling->toInt();
+                while (!parent->atEnd()) {
+                    if (parent->position + 1 == start)
+                        break;
                 }
+                if (!parent->atEnd())
+                    cur_value = parent->cur_value;
             }
         }
-    }
-    return lst;
+        virtual void next() {
+            assert(!parent->atEnd());
+            parent->next();
+            if (parent->position + 1 < start + length)
+                cur_value = parent->cur_value;
+            else
+                cur_value = NodeValue(NULL, NULL);
+            ++position;
+        }
+    };
+    return new SubSequenceIterator(parent, first_child);
+}
+
+ExprIterator* Tokenize::exprIterator(ExprIterator* parent) const
+{
+    struct TokenizeIterator : public ExprIterator {
+        QString string;
+        QRegExp reg_expr;
+        int reg_pos;
+        TokenizeIterator(ExprIterator* p, const AST* a) : ExprIterator(p), reg_pos(0) {
+            if (a && a->next_sibling) {
+                string = a->toString();
+                reg_expr = QRegExp(a->next_sibling->toString());
+                pullNext();
+            }
+        }
+        void pullNext() {
+            if (reg_pos >= 0) {
+                reg_pos = reg_expr.indexIn(string, reg_pos);
+                if (reg_pos >= 0) {
+                    int len = reg_expr.matchedLength();
+                    cur_value = NodeValue(string.mid (reg_pos, len));
+                    reg_pos += len;
+                }
+            }
+            if (reg_pos < 0)
+                cur_value = NodeValue(NULL, NULL);
+        }
+        virtual void next() {
+            assert(!atEnd());
+            pullNext();
+            ++position;
+        }
+    };
+    return new TokenizeIterator(parent, first_child);
 }
 
 #define BIN_OP_TO_INT(NAME,OP)                                           \
     AST *second_child = first_child->next_sibling;                       \
-    AST::Type t1 = first_child->type ();                                 \
-    AST::Type t2 = second_child->type ();                                \
+    AST::Type t1 = first_child->type(true);                              \
+    AST::Type t2 = second_child->type(true);                             \
     if (AST::TInteger == t1 && AST::TInteger == t2)                      \
         return first_child->toInt() OP second_child->toInt();            \
     if (AST::TInteger == t1 && AST::TFloat == t2)                        \
@@ -1138,8 +1402,8 @@ float Multiply::toFloat () const {
 }
 
 static AST::Type binaryASTType (const AST *ast) {
-    AST::Type t1 = ast->first_child->type ();
-    AST::Type t2 = ast->first_child->next_sibling->type ();
+    AST::Type t1 = ast->first_child->type(true);
+    AST::Type t2 = ast->first_child->next_sibling->type(true);
     if (t1 == t2 && (AST::TInteger == t1 || AST::TFloat == t1))
         return t1;
     if ((AST::TInteger == t1 && AST::TFloat == t2) ||
@@ -1148,7 +1412,7 @@ static AST::Type binaryASTType (const AST *ast) {
     return AST::TUnknown;
 }
 
-AST::Type Multiply::type () const {
+AST::Type Multiply::type(bool) const {
     return binaryASTType (this);
 }
 
@@ -1168,7 +1432,7 @@ float Divide::toFloat () const {
     return first_child->toFloat () / first_child->next_sibling->toFloat ();
 }
 
-AST::Type Divide::type () const {
+AST::Type Divide::type(bool) const {
     return binaryASTType (this);
 }
 
@@ -1181,8 +1445,8 @@ void Divide::dump () const {
 #endif
 
 int Modulus::toInt () const {
-    AST::Type t1 = first_child->type ();
-    AST::Type t2 = first_child->next_sibling->type ();
+    AST::Type t1 = first_child->type(true);
+    AST::Type t2 = first_child->next_sibling->type(true);
     if (t1 == t2 && (TInteger == t1 || TFloat == t1))
         return first_child->toInt () % first_child->next_sibling->toInt ();
     return 0;
@@ -1192,9 +1456,9 @@ float Modulus::toFloat () const {
     return toInt ();
 }
 
-AST::Type Modulus::type () const {
-    AST::Type t1 = first_child->type ();
-    AST::Type t2 = first_child->next_sibling->type ();
+AST::Type Modulus::type(bool) const {
+    AST::Type t1 = first_child->type(true);
+    AST::Type t2 = first_child->next_sibling->type(true);
     if (t1 == t2 && (TInteger == t1 || TFloat == t1))
         return TInteger;
     return TUnknown;
@@ -1216,7 +1480,7 @@ float Plus::toFloat () const {
     return first_child->toFloat () + first_child->next_sibling->toFloat ();
 }
 
-AST::Type Plus::type () const {
+AST::Type Plus::type(bool) const {
     return binaryASTType (this);
 }
 
@@ -1236,7 +1500,7 @@ float Minus::toFloat () const {
     return first_child->toFloat () - first_child->next_sibling->toFloat ();
 }
 
-AST::Type Minus::type () const {
+AST::Type Minus::type(bool) const {
     return binaryASTType (this);
 }
 
@@ -1248,17 +1512,42 @@ void Minus::dump () const {
 }
 #endif
 
-Sequence *Join::toSequence () const {
-    if (first_child) {
-        Sequence *lst = first_child->toSequence ();
-        if (first_child->next_sibling) {
-            Sequence *l2 = first_child->next_sibling->toSequence ();
-            lst->splice (NULL, *l2);
-            delete l2;
+ExprIterator* Join::exprIterator(ExprIterator* parent) const {
+    struct JoinIterator : public ExprIterator {
+        const AST *ast;
+        ExprIterator* it;
+        JoinIterator(ExprIterator* p, const AST* a) : ExprIterator(p), ast(a), it(NULL) {
+            pullNext();
         }
-        return lst;
-    }
-    return AST::toSequence ();
+        ~JoinIterator() {
+            delete it;
+        }
+        void pullNext() {
+            if (it && it->atEnd()) {
+                delete it;
+                it = NULL;
+            }
+            while (!it && ast) {
+                it = ast->exprIterator(NULL);
+                ast = ast->next_sibling;
+                if (it->atEnd()) {
+                    delete it;
+                    it = NULL;
+                }
+            }
+            if (it)
+                cur_value = it->cur_value;
+            else
+                cur_value = NodeValue(NULL, NULL);
+        }
+        virtual void next() {
+            assert(!atEnd());
+            it->next();
+            pullNext();
+            ++position;
+        }
+    };
+    return new JoinIterator(parent, first_child);
 }
 
 #ifdef KMPLAYER_EXPR_DEBUG
@@ -1270,8 +1559,8 @@ void Join::dump () const {
 #endif
 
 bool Comparison::toBool () const {
-    AST::Type t1 = first_child->type ();
-    AST::Type t2 = first_child->next_sibling->type ();
+    AST::Type t1 = first_child->type(true);
+    AST::Type t2 = first_child->next_sibling->type(true);
     switch (comp_type) {
     case lt:
         return first_child->toFloat () < first_child->next_sibling->toFloat ();
@@ -1282,9 +1571,10 @@ bool Comparison::toBool () const {
     case gteq:
         return first_child->toInt () >= first_child->next_sibling->toInt ();
     case eq:
-        if (t1 == AST::TString || t2 == AST::TString)
+        if (t1 == AST::TString || t2 == AST::TString) {
             return first_child->toString () ==
                 first_child->next_sibling->toString ();
+        }
         return first_child->toInt () == first_child->next_sibling->toInt ();
     case noteq:
         return first_child->toInt () != first_child->next_sibling->toInt ();
@@ -1328,533 +1618,605 @@ void Comparison::dump () const {
 }
 #endif
 
-static bool parseStatement (const char *str, const char **end, AST *ast);
 
+struct Parser {
+    enum { TEof=-1, TDouble=-2, TLong=-3, TIdentifier=-4, TWhiteSpace=-5 };
 
-static bool parseSpace (const char *str, const char **end) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    *end = NULL;
-    for (const char *s = str; *s; ++s) {
-        switch (*s) {
-            case ' ':
-            case '\t':
-            case '\n':
-            case '\r':
-                *end = s;
-                break;
-        }
-        if (*end != s)
-            break;
+    const char *source;
+    const char *cur;
+
+    int cur_token;
+    long long_value;
+    double double_value;
+    QString str_value;
+    QString error;
+
+    Parser(const char* s) : source(s), cur(source) {}
+    void nextToken(bool skip_whitespace=true);
+    void setError(const char* err) {
+        fprintf(stderr, "Error at %d: %s\n", cur-source, err);
     }
-    if (*end) {
-        ++(*end);
-        return true;
-    }
-    return false;
-}
-
-static bool parseLiteral (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    if (parseSpace (str, end))
-        str = *end;
-    const char *s = str;
-    if (*s == '\'' || *s == '"') {
-        ++s;
-        while (*s && *s != *str)
-            ++s;
-        if (*s) {
-            appendASTChild (ast, new StringLiteral (ast->eval_state, ++str, s));
-            *end = s + 1;
-#ifdef KMPLAYER_EXPR_DEBUG
-            fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
-#endif
-            return true;
-        }
-    } else {
-        bool decimal = false;
-        bool sign = false;
-        *end = NULL;
-        for (; *s; ++s) {
-            if (*s == '.') {
-                if (decimal)
-                    return false;
-                decimal = true;
-            } else if (s == str && (*s == '+' || *s == '-')) {
-                sign = true;
-            } else if (!(*s >= '0' && *s <= '9')) {
-                break;
-            }
-            *end = s;
-        }
-        if (*end && (!sign || *end > str) && *end - str < 64 &&
-                (!decimal || *end > str)) {
-            char buf[64];
-            ++(*end);
-            memcpy (buf, str, *end - str);
-            buf[*end - str] = 0;
-            appendASTChild (ast, decimal
-               ? (AST *) new Float (ast->eval_state, strtof (buf, NULL))
-               : (AST *) new Integer (ast->eval_state, strtol (buf, NULL, 10)));
-#ifdef KMPLAYER_EXPR_DEBUG
-            fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
-#endif
-            return true;
-        }
-    }
-    return false;
-}
-
-static bool parsePredicate (const char *str, const char **end, AST *ast) {
-    if (parseSpace (str, end))
-        str = *end;
-    if (!*str || *str++ != '[')
-        return false;
-    AST pred (new EvalState (ast->eval_state));
-    if (parseStatement (str, end, &pred)) {
-        str = *end;
-        if (parseSpace (str, end))
-            str = *end;
-        if (*str++ != ']')
-            return false;
-        if (pred.first_child) {
-            appendASTChild (ast, pred.first_child);
-            pred.first_child = NULL;
-        }
-    } else {
-        if (parseSpace (str, end))
-            str = *end;
-        if (*str++ != ']')
-            return false;
-    }
-    *end = str;
-    return true;
-}
-
-static bool parseStep (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    AST *entry = NULL;
-    const char *s = str;
-    bool recursive = *s == '/';
-    if (recursive)
-        s = ++str;
-    if (*s == '.') {
-        ++s;
-        if (s && *s == '.') { // TODO
-            entry = new Step (ast->eval_state, true);
-            ++s;
-        } else {
-            entry = new Step (ast->eval_state, true);
-        }
-    } else {
-        bool is_attr = *s == '@';
-        if (is_attr)
-            s = ++str;
-        for (; *s; ++s)
-            if (!((*s >= 'a' && *s <= 'z') ||
-                        (*s >= 'A' && *s <= 'Z') ||
-                        *s == '_' ||
-                        *s == '*' ||
-                        (s > str && (*s == '-' || (*s >= '0' && *s <= '9')))))
-                break;
-        if (str == s)
-            return false;
-        entry = new Step (ast->eval_state, str, s, is_attr, recursive);
-
-        AST fast (ast->eval_state);
-        const char *t = s;
-        if (parsePredicate (t, &t, &fast)) {
-            s = t;
-            while (parsePredicate (t, &t, &fast))
-                s = t;
-            entry->next_sibling = fast.first_child;
-            entry = new PredicateFilter (ast->eval_state, entry);
-            fast.first_child = NULL;
-        }
-
-    }
-    appendASTChild (ast, entry);
-    *end = s;
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
-#endif
-    return true;
-}
-
-static bool parseIdentifier (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    Identifier ident (ast->eval_state, NULL, false);
-    bool has_any = false;
-
-    if (parseSpace (str, end))
-        str = *end;
-    if (!str)
-        return false;
-    bool start_contextual = *str != '/';
-    if (*str == '/')
-        ++str;
-    else if (!ast->eval_state->parent &&
-            !ast->eval_state->def_root_tag.isEmpty ())
-        appendASTChild (&ident, new Step (ast->eval_state,
-                  ast->eval_state->def_root_tag.toAscii ().constData (), NULL,
-                  false, false));
-    if (parseStep (str, end, &ident)) {
-        str = *end;
-        has_any = true;
-        if (*str == '/') {
-            ++str;
-            while (parseStep (str, end, &ident)) {
-                str = *end;
-                if (*str != '/')
-                    break;
-                ++str;
-            }
-        }
-    }
-    *end = str;
-    if (has_any) {
-        appendASTChild (ast, new Identifier (ast->eval_state, ident.first_child, start_contextual));
-        ident.first_child = NULL;
-#ifdef KMPLAYER_EXPR_DEBUG
-        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
-#endif
-        return true;
-    }
-    return false;
-}
-
-static bool parseGroup (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    const char *begin = parseSpace (str, end) ? *end : str;
-    if (!*begin || *begin != '(')
-        return false;
-    if (!parseStatement (begin + 1, end, ast))
-        return false;
-    str = *end;
-    str = parseSpace (str, end) ? *end : str;
-    if (!*str || *str != ')')
-        return false;
-    *end = str + 1;
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
-#endif
-    return true;
-}
-
-static bool parseFunction (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    AST fast (ast->eval_state);
-    const char *begin = parseSpace (str, end) ? *end : str;
-    *end = NULL;
-    for (const char *s = begin; *s; ++s) {
-        if (!(*s >= 'a' && *s <= 'z') &&
-                !(*s >= 'A' && *s <= 'Z') &&
-                *s != '_' &&
-                !(s > begin && (*s == '-' || (*s >= '0' && *s <= '9'))))
-            break;
-        *end = s;
-    }
-    if (*end) {
-        ++(*end);
-        QString name (QByteArray (begin, *end - begin));
-        str = *end;
-        if (parseSpace (str, end))
-            str = *end;
-        if (*str && *(str++) == '(') {
-            if (parseSpace (str, end))
-                str = *end;
-            while (*str != ')' && parseStatement (str, end, &fast)) {
-                str = *end;
-                if (parseSpace (str, end))
-                    str = *end;
-                if (!*str || *str != ',')
-                    break;
-                str++;
-            }
-            if (parseSpace (str, end))
-                str = *end;
-            if (*str && *(str++) == ')') {
-                AST *func = NULL;
-                if (name == "concat")
-                    func = new Concat (ast->eval_state);
-                else if (name == "contains")
-                    func = new Contains (ast->eval_state);
-                else if (name == "count")
-                    func = new Count (ast->eval_state);
-                else if (name == "hours-from-time")
-                    func = new HoursFromTime (ast->eval_state);
-                else if (name == "minutes-from-time")
-                    func = new MinutesFromTime (ast->eval_state);
-                else if (name == "seconds-from-time")
-                    func = new SecondsFromTime (ast->eval_state);
-                else if (name == "current-time")
-                    func = new CurrentTime (ast->eval_state);
-                else if (name == "current-date")
-                    func = new CurrentDate (ast->eval_state);
-                else if (name == "last")
-                    func = new Last (ast->eval_state);
-                else if (name == "not")
-                    func = new Not (ast->eval_state);
-                else if (name == "number")
-                    func = new Number (ast->eval_state);
-                else if (name == "position")
-                    func = new Position (ast->eval_state);
-                else if (name == "sort")
-                    func = new Sort (ast->eval_state);
-                else if (name == "starts-with")
-                    func = new StartsWith (ast->eval_state);
-                else if (name == "string-join")
-                    func = new StringJoin (ast->eval_state);
-                else if (name == "string-length")
-                    func = new StringLength (ast->eval_state);
-                else if (name == "subsequence")
-                    func = new SubSequence (ast->eval_state);
-                else if (name == "substring-after")
-                    func = new SubstringAfter (ast->eval_state);
-                else if (name == "substring-before")
-                    func = new SubstringBefore (ast->eval_state);
-                else if (name == "tokenize")
-                    func = new Tokenize (ast->eval_state);
-                else if (name == "escape-uri")
-                    func = new EscapeUri (ast->eval_state);
-                else
-                    return false;
-                appendASTChild (ast, func);
-                func->first_child = fast.first_child;
-                fast.first_child = NULL;
-                *end = str;
-#ifdef KMPLAYER_EXPR_DEBUG
-                fprintf (stderr, "%s succes str:'%s'\n", __FUNCTION__, *end);
-#endif
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-static bool parseFactor (const char *str, const char **end, AST *ast) {
-#ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
-#endif
-    AST fast (ast->eval_state);
-    if (parseGroup (str, end, &fast) ||
-            parseFunction (str, end, &fast) ||
-            parseLiteral (str, end, &fast) ||
-            parseIdentifier (str, end, &fast)) {
-        str = *end;
-        const char *s = *end;
-        if (parsePredicate (s, &s, &fast)) {
-            *end = s;
-            while (parsePredicate (s, &s, &fast))
-                *end = s;
-            appendASTChild (ast,
-                    new PredicateFilter (ast->eval_state, fast.first_child));
-        } else {
-            appendASTChild (ast, fast.first_child);
-        }
-        fast.first_child = NULL;
-        return true;
-    }
-    return false;
-}
-
-struct Keyword {
-    const char *keyword;
-    short length;
-    short id;
 };
 
-static Keyword *parseKeyword (const char *str, const char **end, Keyword *lst) {
-    for (int i = 0; lst[i].keyword; ++i)
-        if (!strncmp (str, lst[i].keyword, lst[i].length)) {
-            if (parseSpace (str + lst[i].length, end))
-                return lst + i;
+void Parser::nextToken(bool skip_whitespace) {
+    const char* begin = cur;
+    bool is_num = false;
+    bool is_fractal = false;
+    while (true) {
+        char c = *cur;
+        switch (c) {
+        case 0:
+            if (begin == cur) {
+                cur_token = TEof;
+                return;
+            }
+            goto interp;
+        case ' ':
+        case '\t':
+        case '\n':
+        case '\r':
+            if (begin == cur) {
+                if (!skip_whitespace) {
+                    cur_token = TWhiteSpace;
+                    ++cur;
+                    return;
+                }
+                ++begin;
+                break;
+            }
+            goto interp;
+        case '.':
+            if (is_num && !is_fractal) {
+                is_fractal = true;
+                break;
+            }
+            // fall through
+        default:
+            if ((is_num || begin == cur) && c >= '0' && c <= '9') {
+                is_num = true;
+                break;
+            }
+            if (is_num && !(c >= '0' && c <= '9'))
+                goto interp;
+            if (!((c >= 'a' && c <= 'z')
+                        || (c >= 'A' && c <= 'Z')
+                        || (cur != begin && c >= '0' && c <= '9')
+                        || c == '_'
+                        || (cur != begin && c == '-')
+                        || (unsigned char)c > 127)) {
+                if (begin == cur) {
+                    cur_token = c;
+                    ++cur;
+                    return;
+                }
+                goto interp;
+            }
         }
-    return 0;
+        cur++;
+    }
+interp:
+    if (is_num && cur - begin < 63) {
+        char buf[64];
+        memcpy(buf, begin, cur - begin);
+        buf[cur - begin] = 0;
+        if (is_fractal) {
+            cur_token = TDouble;
+            double_value = strtod(buf, NULL);
+        } else {
+            cur_token = TLong;
+            long_value = strtol(buf, NULL, 10);
+        }
+    } else {
+        cur_token = TIdentifier;
+        str_value = QString::fromUtf8(QByteArray(begin, cur-begin));
+    }
 }
 
-static bool parseTerm (const char *str, const char **end, AST *ast) {
+static bool parseStatement (Parser *parser, AST *ast);
+
+
+static bool parsePredicates (Parser *parser, AST *ast) {
+    AST pred (new EvalState (ast->eval_state));
+    while (true) {
+        if (parseStatement (parser, &pred)) {
+            if (']' != parser->cur_token)
+                return false;
+            if (pred.first_child) {
+                AST* child = releaseASTChildren(&pred);
+                assert(!child->next_sibling);
+                switch (child->type(false)) {
+                    case AST::TBool:
+                        break;
+                    case AST::TInteger:
+                    case AST::TFloat:
+                        child->next_sibling = new Position(pred.eval_state);
+                        child = new Comparison(pred.eval_state, Comparison::eq, child);
+                        break;
+                    default: {
+                        AST* bfunc = new Boolean(pred.eval_state);
+                        bfunc->first_child = child;
+                        child = bfunc;
+                        break;
+                    }
+                }
+                appendASTChild(ast, child);
+            }
+        } else if (']' != parser->cur_token) {
+            return false;
+        }
+        parser->nextToken();
+        if ('[' != parser->cur_token)
+            break;
+        parser->nextToken();
+    }
+    return true;
+}
+
+static bool parseStep (Parser *parser, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
 #endif
-    if (parseFactor (str, end, ast)) {
-        char op;
-        str = *end;
+    AST *entry = NULL;
+    int axes = Step::ChildAxis;
+    if ('/' == parser->cur_token) {
+        axes = Step::DescendantAxis;
+        parser->nextToken();
+    }
+    QString ns_identifier;
+    QString identifier;
+    Step::NodeType node_type = Step::ElementType;
+    int prev_token = Parser::TEof;
+    while (true ) {
+        switch (parser->cur_token) {
+        case '@':
+            axes &= ~Step::ChildAxis;
+            axes |= Step::AttributeAxis;
+            break;
+        case '.':
+            if ( axes & Step::SelfAxis) {
+                axes &= ~Step::SelfAxis;
+                axes |= Step::ParentAxis;
+            } else {
+                axes &= ~Step::ChildAxis;
+                axes |= Step::SelfAxis;
+            }
+            node_type = Step::AnyType;
+            break;
+        case '*':
+            //identifier = "*";
+            break;
+        case ':':
+            if (prev_token == ':') {
+                axes &= ~(Step::ChildAxis | Step::NamespaceAxis);
+                if (ns_identifier.startsWith("ancestor")) {
+                    axes |= Step::AncestorAxis;
+                    if (ns_identifier.endsWith("self"))
+                        axes |= Step::SelfAxis;
+                } else if (ns_identifier == "attribute") {
+                    axes |= Step::AttributeAxis;
+                } else if (ns_identifier == "child") {
+                    axes |= Step::ChildAxis;
+                } else if (ns_identifier.startsWith("descendant")) {
+                    axes |= Step::DescendantAxis;
+                    if (ns_identifier.endsWith("self"))
+                        axes |= Step::SelfAxis;
+                } else if (ns_identifier == "following") {
+                    axes |= Step::FollowingAxis;
+                } else if (ns_identifier == "following-sibling") {
+                    axes |= Step::FollowingSiblingAxis;
+                } else if (ns_identifier == "namespace") {
+                    axes |= Step::NamespaceAxis;
+                } else if (ns_identifier == "parent") {
+                    axes |= Step::ParentAxis;
+                } else if (ns_identifier == "preceding") {
+                    axes |= Step::PrecedingAxis;
+                } else if (ns_identifier == "preceding-sibling") {
+                    axes |= Step::PrecedingSiblingAxis;
+                } else if (ns_identifier == "self") {
+                    axes |= Step::SelfAxis;
+                }
+                ns_identifier.clear();
+            } else {
+                axes |= Step::NamespaceAxis;
+                ns_identifier = identifier;
+                identifier.clear();
+            }
+            break;
+        case Parser::TIdentifier:
+            identifier = parser->str_value;
+            break;
+        default:
+            goto location_done;
+        }
+        prev_token = parser->cur_token;
+        parser->nextToken(false);
+    }
+location_done:
+    if (Parser::TWhiteSpace == parser->cur_token)
+        parser->nextToken();
+    if (!ns_identifier.isEmpty() && !(axes & Step::SelfAxis) && identifier != "*")  // FIXME namespace support
+        identifier = ns_identifier + ':' + identifier;
+    if ('(' == parser->cur_token) {
+        parser->nextToken();
+        if (')' != parser->cur_token) {
+            parser->setError("Expected )");
+            return false;
+        }
+        parser->nextToken();
+        if (identifier == "text") {
+            node_type = Step::TextType;
+        } else if (identifier == "node") {
+            node_type = Step::AnyType;
+        } else {
+            parser->setError("Expected 'text' or 'node'");
+            return false;
+        }
+        identifier.clear();
+    }
+    entry = new Step(ast->eval_state, identifier, axes, node_type);
+    AST fast (ast->eval_state);
+    if ('[' == parser->cur_token) {
+        parser->nextToken();
+        if (!parsePredicates (parser, &fast))
+            return false;
+        entry->next_sibling = releaseASTChildren (&fast);
+        entry = new PredicateFilter (ast->eval_state, entry);
+    }
+    appendASTChild (ast, entry);
+#ifdef KMPLAYER_EXPR_DEBUG
+    fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+    return true;
+}
+
+static bool parsePath (Parser *parser, AST *ast) {
+#ifdef KMPLAYER_EXPR_DEBUG
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+    Path path (ast->eval_state, NULL, false);
+    bool has_any = false;
+
+    bool start_contextual =  '/' != parser->cur_token;
+    if ('/' == parser->cur_token) {
+        parser->nextToken();
+    } else if (!ast->eval_state->parent
+            && !ast->eval_state->def_root_tag.isEmpty ()) {
+        appendASTChild (&path, new Step (ast->eval_state,
+                    ast->eval_state->def_root_tag, Step::ChildAxis, Step::ElementType));
+    }
+    if (parseStep (parser, &path)) {
+        has_any = true;
+        while ('/' == parser->cur_token) {
+            parser->nextToken();
+            if (!parseStep (parser, &path))
+                break;
+        }
+    }
+    if (has_any) {
+        appendASTChild (ast, new Path (ast->eval_state, releaseASTChildren (&path), start_contextual));
+#ifdef KMPLAYER_EXPR_DEBUG
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+        return true;
+    }
+    return false;
+}
+
+static bool parseFunction (Parser *parser, const QString &name, AST *ast) {
+#ifdef KMPLAYER_EXPR_DEBUG
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+    AST fast (ast->eval_state);
+    while (Parser::TEof != parser->cur_token) {
+        switch (parser->cur_token) {
+        case ')': {
+            parser->nextToken();
+            AST *func = NULL;
+            if (name == "boolean")
+                func = new Boolean(ast->eval_state);
+            else if (name == "concat")
+                func = new Concat (ast->eval_state);
+            else if (name == "contains")
+                func = new Contains (ast->eval_state);
+            else if (name == "count")
+                func = new Count (ast->eval_state);
+            else if (name == "hours-from-time")
+                func = new HoursFromTime (ast->eval_state);
+            else if (name == "minutes-from-time")
+                func = new MinutesFromTime (ast->eval_state);
+            else if (name == "seconds-from-time")
+                func = new SecondsFromTime (ast->eval_state);
+            else if (name == "current-time")
+                func = new CurrentTime (ast->eval_state);
+            else if (name == "current-date")
+                func = new CurrentDate (ast->eval_state);
+            else if (name == "last")
+                func = new Last (ast->eval_state);
+            else if (name == "not")
+                func = new Not (ast->eval_state);
+            else if (name == "number")
+                func = new Number (ast->eval_state);
+            else if (name == "position")
+                func = new Position (ast->eval_state);
+            //else if (name == "sort")
+                //func = new Sort (ast->eval_state);
+            else if (name == "starts-with")
+                func = new StartsWith (ast->eval_state);
+            else if (name == "string-join")
+                func = new StringJoin (ast->eval_state);
+            else if (name == "string-length")
+                func = new StringLength (ast->eval_state);
+            else if (name == "subsequence")
+                func = new SubSequence (ast->eval_state);
+            else if (name == "substring-after")
+                func = new SubstringAfter (ast->eval_state);
+            else if (name == "substring-before")
+                func = new SubstringBefore (ast->eval_state);
+            else if (name == "tokenize")
+                func = new Tokenize (ast->eval_state);
+            else if (name == "escape-uri")
+                func = new EscapeUri (ast->eval_state);
+            else
+                return false;
+            appendASTChild (ast, func);
+            func->first_child = releaseASTChildren (&fast);
+#ifdef KMPLAYER_EXPR_DEBUG
+            fprintf (stderr, "%s succes str:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+            return true;
+        }
+        case ',':
+            parser->nextToken();
+            break;
+        default:
+            if (!parseStatement (parser, &fast))
+                return false;
+        }
+    }
+    return false;
+}
+
+static bool parseFactor (Parser *parser, AST *ast) {
+#ifdef KMPLAYER_EXPR_DEBUG
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+    AST fast (ast->eval_state);
+    int sign = 1;
+    if ('+' == parser->cur_token || '-' == parser->cur_token) {
+        sign = '-' == parser->cur_token ? -1 : 1;
+        parser->nextToken();
+    }
+    switch (parser->cur_token) {
+    case Parser::TEof:
+        return true;
+    case '(':
+        parser->nextToken();
+        if (!parseStatement (parser, &fast))
+            return false;
+        if (')' != parser->cur_token)
+            return false;
+        parser->nextToken();
+        break;
+    case '.':
+    case '@':
+    case '*':
+    case '/':
+        if (!parsePath (parser, &fast))
+            return false;
+        break;
+    case '\'':
+    case '"': {
+        const char* s = parser->cur;
+        while (*s && *s != parser->cur_token)
+            ++s;
+        if (!*s) {
+            parser->setError("expected string literal");
+            parser->cur = s;
+            parser->cur_token = Parser::TEof;
+            return false;
+        }
+        appendASTChild(&fast, new StringLiteral(ast->eval_state, QString::fromUtf8(QByteArray(parser->cur, s - parser->cur))));
+        parser->cur = ++s;
+        parser->nextToken();
+#ifdef KMPLAYER_EXPR_DEBUG
+        fprintf (stderr, "%s success end:'%s' cur token %c\n", __FUNCTION__, parser->cur, parser->cur_token);
+#endif
+        break;
+    }
+    case Parser::TDouble:
+        appendASTChild (&fast, new Float (ast->eval_state, (float)(sign * parser->double_value)));
+        parser->nextToken();
+        break;
+    case Parser::TLong:
+        appendASTChild (&fast,  new Integer (ast->eval_state, (int)(sign * parser->long_value)));
+        parser->nextToken();
+        break;
+    case Parser::TIdentifier: {
+        QString str = parser->str_value;
+        const char* cur = parser->cur;
+        parser->nextToken();
+        if ('(' == parser->cur_token) {
+            parser->nextToken();
+            if (!parseFunction (parser, str, &fast))
+                return false;
+        } else {
+            parser->cur = cur;
+            parser->cur_token = Parser::TIdentifier;
+            parser->str_value = str;
+            if (!parsePath (parser, &fast))
+                return false;
+        }
+        break;
+    }
+    default:
+        return false;
+    }
+    if ('[' == parser->cur_token) {
+        parser->nextToken();
+        if (!parsePredicates (parser, &fast))
+            return false;
+        appendASTChild (ast,
+                new PredicateFilter (ast->eval_state, releaseASTChildren (&fast)));
+    } else {
+        appendASTChild (ast, releaseASTChildren (&fast));
+    }
+    return true;
+}
+
+static bool parseTerm (Parser *parser, AST *ast) {
+#ifdef KMPLAYER_EXPR_DEBUG
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
+#endif
+    if (parseFactor (parser, ast)) {
         while (true) {
-            str = parseSpace (str, end) ? *end : str;
-            op = 0;
-            if ('*' == *str) {
+            int op = 0;
+            if ('*' == parser->cur_token) {
                 op = '*';
-            } else {
-                Keyword keywords[] = {
-                    { "div", 3, '/' }, { "mod", 3, '%' }, { NULL, 0, 0 }
-                };
-                Keyword *k = parseKeyword (str, end, keywords);
-                if (k) {
-                    op = (char) k->id;
-                    str += k->length;
-                }
+            } else if (Parser::TIdentifier == parser->cur_token) {
+                if ( parser->str_value == "div")
+                    op = '/';
+                else if ( parser->str_value == "mod")
+                    op = '%';
             }
-            if (op) {
-                AST tmp (ast->eval_state);
-                if (parseFactor (str + 1, end, &tmp)) {
-                    AST *chlds = releaseLastASTChild (ast);
-                    chlds->next_sibling = tmp.first_child;
-                    tmp.first_child = NULL;
-                    appendASTChild (ast,
-                            op == '*'
-                            ? (AST *) new Multiply (ast->eval_state, chlds)
-                            : op == '/'
-                            ? (AST *) new Divide (ast->eval_state, chlds)
-                            : (AST *) new Modulus (ast->eval_state, chlds));
-                    str = *end;
-                }
-            } else {
-                *end = str;
+            if (!op)
                 break;
+            parser->nextToken();
+            AST tmp (ast->eval_state);
+            if (parseFactor (parser, &tmp)) {
+                AST *chlds = releaseLastASTChild (ast);
+                chlds->next_sibling = releaseASTChildren (&tmp);
+                appendASTChild (ast,
+                        op == '*'
+                        ? (AST *) new Multiply (ast->eval_state, chlds)
+                        : op == '/'
+                        ? (AST *) new Divide (ast->eval_state, chlds)
+                        : (AST *) new Modulus (ast->eval_state, chlds));
+            } else {
+                parser->setError("expected factor");
+                return false;
             }
         }
 #ifdef KMPLAYER_EXPR_DEBUG
-        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, parser->cur);
 #endif
         return true;
     }
     return false;
 }
 
-static bool parseExpression (const char *str, const char **end, AST *ast) {
+static bool parseExpression (Parser *parser, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
 #endif
-    if (parseTerm (str, end, ast)) {
-        char op;
-        str = *end;
+    if (parseTerm (parser, ast)) {
         while (true) {
-            str = parseSpace (str, end) ? *end : str;
-            op = *str;
-            if (op == '+' || op == '-' || op == '|') {
-                AST tmp (ast->eval_state);
-                if (parseTerm (str + 1, end, &tmp)) {
-                    AST *chlds = releaseLastASTChild (ast);
-                    chlds->next_sibling = tmp.first_child;
-                    tmp.first_child = NULL;
-                    appendASTChild (ast, op == '+'
-                            ? (AST *) new Plus (ast->eval_state, chlds)
-                            :  op == '-'
-                                ? (AST *) new Minus (ast->eval_state, chlds)
-                                : (AST *) new Join (ast->eval_state, chlds));
-                    str = *end;
-                }
-            } else {
-                *end = str;
+            int op = parser->cur_token;
+            if (op != '+' && op != '-' && op != '|')
                 break;
+            parser->nextToken();
+            AST tmp (ast->eval_state);
+            if (parseTerm (parser, &tmp)) {
+                AST *chlds = releaseLastASTChild (ast);
+                chlds->next_sibling = releaseASTChildren (&tmp);
+                appendASTChild (ast, op == '+'
+                        ? (AST *) new Plus (ast->eval_state, chlds)
+                        :  op == '-'
+                        ? (AST *) new Minus (ast->eval_state, chlds)
+                        : (AST *) new Join (ast->eval_state, chlds));
+            } else {
+                parser->setError("expected term");
+                return false;
             }
         }
 #ifdef KMPLAYER_EXPR_DEBUG
-        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, parser->cur);
 #endif
         return true;
     }
     return false;
 }
 
-static bool parseStatement (const char *str, const char **end, AST *ast) {
+static bool parseStatement (Parser *parser, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
-    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, str);
+    fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
 #endif
-    if (parseExpression (str, end, ast)) {
+    if (parseExpression (parser, ast)) {
+        bool skip_next_token = false;
         enum EComparison {
             err=-1, asign,
             lt=Comparison::lt, lteq, eq, noteq, gt, gteq, land, lor
         } comparison = err;
-        str = *end;
-        if (parseSpace (str, end))
-            str = *end;
-        switch (*str) {
+        switch (parser->cur_token) {
         case '<':
-            if (*(++str) && *str == '=') {
+            parser->nextToken();
+            if (parser->cur_token == '=') {
                 comparison = lteq;
-                ++str;
             } else {
+                skip_next_token = true;
                 comparison = lt;
             }
             break;
         case '>':
-            if (*(++str) && *str == '=') {
+            parser->nextToken();
+            if ('=' == parser->cur_token) {
                 comparison = gteq;
-                ++str;
             } else {
+                skip_next_token = true;
                 comparison = gt;
             }
             break;
         case '=':
             comparison = eq;
-            ++str;
             break;
         case '!':
-            if (*(++str) && *str == '=') {
-                comparison = noteq;
-                ++str;
+            parser->nextToken();
+            if ('=' == parser->cur_token) {
+                parser->setError("expected =");
+                return false;
             }
+            comparison = noteq;
             break;
-        default: {
-            Keyword keywords[] = {
-                { "and", 3, (short) land }, { "or", 2, (short) lor },
-                { NULL, 0, 0 }
-            };
-            Keyword *k = parseKeyword (str, end, keywords);
-            if (k) {
-                comparison = (EComparison) k->id;
-                str += k->length;
-            }
+        case Parser::TIdentifier:
+            if (parser->str_value == "and")
+                comparison = land;
+            else if (parser->str_value == "or")
+                comparison = lor;
+            break;
+        default:
+            return true;
         }
+        AST tmp (ast->eval_state);
+        if (!skip_next_token)
+            parser->nextToken();
+        if (parseExpression (parser, &tmp)) {
+            AST *chlds = releaseLastASTChild (ast);
+            chlds->next_sibling = releaseASTChildren (&tmp);
+            appendASTChild (ast, new Comparison (ast->eval_state,
+                        (Comparison::CompType)comparison, chlds));
+        } else {
+            parser->setError("expected epression");
+            return false;
         }
-        if (err != comparison) {
-            AST tmp (ast->eval_state);
-            if (parseExpression (str, end, &tmp)) {
-                AST *chlds = releaseLastASTChild (ast);
-                chlds->next_sibling = tmp.first_child;
-                tmp.first_child = NULL;
-                appendASTChild (ast, new Comparison (ast->eval_state,
-                            (Comparison::CompType)comparison, chlds));
-                str = *end;
-            }
-        }
-        *end = str;
 
 #ifdef KMPLAYER_EXPR_DEBUG
-        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, *end);
+        fprintf (stderr, "%s success end:'%s'\n", __FUNCTION__, parser->cur);
 #endif
         return true;
     }
     return false;
 }
 
-Expression *KMPlayer::evaluateExpr (const QString &expr, const QString &root) {
+Expression* KMPlayer::evaluateExpr(const QByteArray& expr, const QString &root) {
     EvalState *eval_state = new EvalState (NULL, root);
     AST ast (eval_state);
-    const char *end;
-    if (parseStatement (expr.toUtf8 ().constData (), &end, &ast)) {
-        AST *res = ast.first_child;
+    Parser parser(expr.constData());
+    parser.nextToken ();
+    if (parseStatement (&parser, &ast)) {
 #ifdef KMPLAYER_EXPR_DEBUG
         ast.dump();
         fprintf (stderr, "\n");
 #endif
-        ast.first_child = NULL;
-
-        return res;
+        return releaseASTChildren (&ast);
     }
     return NULL;
 }

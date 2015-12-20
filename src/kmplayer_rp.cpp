@@ -244,7 +244,7 @@ KDE_NO_EXPORT void RP::Image::message (MessageType msg, void *content) {
 KDE_NO_EXPORT void RP::Image::dataArrived () {
     kDebug () << "RP::Image::remoteReady";
     ImageMedia *im = media_info->media ? (ImageMedia *)media_info->media : NULL;
-    if (!im->isEmpty ()) {
+    if (im && !im->isEmpty ()) {
         size.width = im->cached_img->width;
         size.height = im->cached_img->height;
     }

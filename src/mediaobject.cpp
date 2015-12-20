@@ -751,16 +751,15 @@ KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
                     "//cross-domain-policy/allow-access-from/@domain");
             if (expr) {
                 expr->setRoot (doc);
-                Sequence *lst = expr->toSequence ();
-                for (NodeValueItem *i = lst->first(); i; i = i->nextSibling()) {
-                    QRegExp match (i->data.value (), Qt::CaseInsensitive, QRegExp::Wildcard);
+                Expression::iterator it, e = expr->end();
+                for (it = expr->begin(); it != e; ++it) {
+                    QRegExp match (it->value(), Qt::CaseInsensitive, QRegExp::Wildcard);
                     if (match.exactMatch (access_from)) {
                         success = true;
                         break;
                     }
                 }
                 delete expr;
-                delete lst;
             }
             doc->document ()->dispose ();
         }
@@ -1036,6 +1035,9 @@ ImageMedia::ImageMedia (Node *node, ImageDataPtr id)
             if (svg_renderer->isValid ()) {
                 cached_img = new ImageData (QString ());
                 cached_img->flags = ImageData::ImageScalable;
+                if (svg_renderer->animated())
+                    connect(svg_renderer, SIGNAL(repaintNeeded()),
+                            this, SLOT(svgUpdated()));
             } else {
                 delete svg_renderer;
                 svg_renderer = NULL;
@@ -1160,6 +1162,12 @@ KDE_NO_EXPORT void ImageMedia::sizes (SSize &size) {
 
 bool ImageMedia::isEmpty () const {
     return !cached_img || (!svg_renderer && cached_img->isEmpty ());
+}
+
+KDE_NO_EXPORT void ImageMedia::svgUpdated() {
+    cached_img->setImage (NULL);
+    if (m_node)
+        m_node->document ()->post (m_node, new Posting (m_node, MsgMediaUpdated));
 }
 
 KDE_NO_EXPORT void ImageMedia::movieResize (const QSize &) {
