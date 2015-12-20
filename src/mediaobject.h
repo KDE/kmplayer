@@ -379,6 +379,7 @@ public:
     ImageDataPtr cached_img;
 
 private slots:
+    void svgUpdated();
     void movieUpdated (const QRect &);
     void movieStatus (QMovie::MovieState);
     void movieResize (const QSize &);
