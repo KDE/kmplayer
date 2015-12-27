@@ -1832,7 +1832,7 @@ static void updateSurfaceSort (SMIL::RegionBase *rb) {
                     for (; n; n = n->previousSibling())
                         if (n->id == SMIL::id_node_region) {
                             r = static_cast <SMIL::Region *> (n);
-                            if (r->z_order == rb->z_order) {
+                            if (r->region_surface && r->z_order == rb->z_order) {
                                 next = r->region_surface->nextSibling ();
                                 if (rs == next)
                                     next = next->nextSibling ();

@@ -167,9 +167,12 @@ void *Group::role (KMPlayer::RoleType msg, void *content)
 }
 
 KDE_NO_EXPORT void Playlist::defer () {
-    if (playmode)
+    if (playmode) {
         KMPlayer::Document::defer ();
-    else if (!resolved) {
+        // Hack: Node::undefer will restart first item when state=init
+        if (firstChild() && KMPlayer::Node::state_init == firstChild()->state)
+            firstChild()->state = KMPlayer::Node::state_activated;
+    } else if (!resolved) {
         resolved = true;
         readFromFile (KStandardDirs::locateLocal ("data", "kmplayer/playlist.xml"));
     }
