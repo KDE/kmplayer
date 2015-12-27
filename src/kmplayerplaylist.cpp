@@ -371,7 +371,7 @@ void TreeNode<Node>::appendChild (Node *c) {
 }
 
 template <>
-KDE_NO_EXPORT void TreeNode<Node>::insertBefore (Node *c, Node *b) {
+void TreeNode<Node>::insertBefore (Node *c, Node *b) {
     ASSERT (!c->parentNode ());
     static_cast <Node *> (this)->document()->m_tree_version++;
     insertBeforeImpl (c, b);
