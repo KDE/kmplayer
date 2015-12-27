@@ -12,17 +12,17 @@
   </head>
   <body>
     <par dur="5">
-      <img region="car" bottom="0" height="40">
+      <img region="car" bottom="0" height="40" begin="0" dur="5">
         <svg height="40" width="100">
           <line x1="20" y1="20" x2="75" y2="20" style="stroke:black;stroke-width:1" />
           <line x1="25" y1="10" x2="80" y2="10" style="stroke:black;stroke-width:1" />
         </svg>
       </img>
-      <img region="img1" fit="meet" dur="indefinite" src="wheel.svg"/>
-      <img region="img2" fit="meet" dur="indefinite" src="wheel.svg"/>
-      <img region="img3" fit="meet" dur="indefinite" src="wheel.svg"/>
-      <img region="img4" fit="meet" dur="indefinite" src="wheel.svg"/>
-      <animate target="car" attributeName="left" from="5" to="535" begin="0" dur="5" fill="freeze"/>
+      <img region="img1" fit="meet" src="wheel.svg" dur="4" fill="freeze"/>
+      <img region="img2" fit="meet" src="wheel.svg" dur="4" fill="freeze"/>
+      <img region="img3" fit="meet" src="wheel.svg" dur="4" fill="freeze"/>
+      <img region="img4" fit="meet" src="wheel.svg" dur="4" fill="freeze"/>
+      <animate target="car" attributeName="left" from="5" to="535" begin="0" dur="4" fill="freeze"/>
     </par>
   </body>
 </smil>

@@ -1017,7 +1017,8 @@ ImageMedia::ImageMedia (MediaManager *manager, Node *node,
  : MediaObject (manager, node), data (ba), buffer (NULL),
    img_movie (NULL),
    svg_renderer (NULL),
-   update_render (false) {
+   update_render (false),
+   paused (false) {
     setupImage (url);
 }
 
@@ -1069,13 +1070,21 @@ KDE_NO_EXPORT void ImageMedia::stop () {
 }
 
 void ImageMedia::pause () {
+    if (!paused && svg_renderer && svg_renderer->animated())
+        disconnect(svg_renderer, SIGNAL(repaintNeeded()),
+                this, SLOT(svgUpdated()));
     if (img_movie && img_movie->state () != QMovie::Paused)
         img_movie->setPaused (true);
+    paused = true;
 }
 
 void ImageMedia::unpause () {
+    if (paused && svg_renderer && svg_renderer->animated())
+        connect(svg_renderer, SIGNAL(repaintNeeded()),
+                this, SLOT(svgUpdated()));
     if (img_movie && QMovie::Paused == img_movie->state ())
         img_movie->setPaused (false);
+    paused = false;
 }
 
 KDE_NO_EXPORT void ImageMedia::setupImage (const QString &url) {
