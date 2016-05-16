@@ -73,7 +73,6 @@ if(NOT WIN32)
 
 endif(NOT WIN32)
 
-include(CheckIncludeFiles)
 check_include_files(stdint.h HAVE_STDINT_H)
 
 configure_file (config-kmplayer.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kmplayer.h )
