@@ -321,7 +321,7 @@ bool View::setPicture (const QString & path) {
         if (m_image.isNull ())
             kDebug() << "View::setPicture failed " << path;
         else if (m_image.depth () < 24)
-            m_image = m_image.convertDepth (32, 0);
+            m_image = m_image.convertToFormat (QImage::Format_RGB32);
     }
     m_picture->setVisible (!m_image.isNull ());
     if (m_image.isNull ()) {
