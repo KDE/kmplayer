@@ -987,8 +987,10 @@ bool Boolean::toBool() const {
             case TInteger:
             case TFloat:
                 b = first_child->toInt() != 0;
+                break;
             case TString:
                 b = !first_child->toString().isEmpty();
+                break;
             default:
                 b = first_child->toBool();
             }

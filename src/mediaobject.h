@@ -396,6 +396,7 @@ private:
     QSvgRenderer *svg_renderer;
     int frame_nr;
     bool update_render;
+    bool paused;
 };
 
 //------------------------%<----------------------------------------------------

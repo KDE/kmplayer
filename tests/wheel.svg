@@ -7,6 +7,6 @@
                       attributeType="XML"
                       type="rotate"
                       from="0 50 50" to="360 50 50"
-                      dur="2s" repeatCount="indefinite"/>
+                      dur="1.6s" repeatCount="indefinite"/>
   </g>
 </svg>
