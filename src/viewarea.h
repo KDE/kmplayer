@@ -98,6 +98,7 @@ private:
     VideoWidgetList video_widgets;
     int m_mouse_invisible_timer;
     int m_repaint_timer;
+    int m_restore_fullscreen_timer;
     bool m_fullscreen;
     bool m_minimal;
     bool m_updaters_enabled;

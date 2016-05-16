@@ -1877,6 +1877,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view, bool paint_bg)
    surface (new Surface (this)),
    m_mouse_invisible_timer (0),
    m_repaint_timer (0),
+   m_restore_fullscreen_timer (0),
    m_fullscreen (false),
    m_minimal (false),
    m_updaters_enabled (true),
@@ -1912,8 +1913,9 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
     stopTimers ();
     if (m_fullscreen) {
         setVisible(false);
-        setWindowState( windowState() & ~Qt::WindowFullScreen | Qt::WindowActive ); // reset
-        m_view->dockArea ()->setCentralWidget (this);
+        setWindowState(windowState() & ~Qt::WindowFullScreen); // reset
+        if (!m_restore_fullscreen_timer)
+            m_restore_fullscreen_timer = startTimer(25);
         for (int i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (false);
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIcon (QIcon (QPixmap (playlist_xpm)));
@@ -2262,6 +2264,16 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
             killTimer (m_repaint_timer);
             m_repaint_timer = 0;
         }
+    } else if (e->timerId () == m_restore_fullscreen_timer) {
+        xcb_connection_t* connection = QX11Info::connection();
+        xcb_get_window_attributes_cookie_t cookie = xcb_get_window_attributes(connection, winId());
+        xcb_get_window_attributes_reply_t* attrs = xcb_get_window_attributes_reply(connection, cookie, NULL);
+        if (!(attrs->map_state & XCB_MAP_STATE_UNMAPPED)) {
+            m_view->dockArea ()->setCentralWidget (this);
+            killTimer(m_restore_fullscreen_timer);
+            m_restore_fullscreen_timer = 0;
+        }
+        free(attrs);
     } else {
         kError () << "unknown timer " << e->timerId () << " " << m_repaint_timer << endl;
         killTimer (e->timerId ());
