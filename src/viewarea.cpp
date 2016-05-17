@@ -2268,7 +2268,7 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
         xcb_connection_t* connection = QX11Info::connection();
         xcb_get_window_attributes_cookie_t cookie = xcb_get_window_attributes(connection, winId());
         xcb_get_window_attributes_reply_t* attrs = xcb_get_window_attributes_reply(connection, cookie, NULL);
-        if (!(attrs->map_state & XCB_MAP_STATE_UNMAPPED)) {
+        if (attrs->map_state == XCB_MAP_STATE_UNMAPPED) {
             m_view->dockArea ()->setCentralWidget (this);
             killTimer(m_restore_fullscreen_timer);
             m_restore_fullscreen_timer = 0;
