@@ -899,6 +899,8 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
             pipe_cfg.readEntry ("Command1", QString ()));
     // initialize the recent file list
     if (!recents) {
+        QDir dir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+        dir.mkpath(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kmplayer");
         fileOpenRecent->loadEntries (KConfigGroup (config, "Recent Files"));
         recents = new Recents (this);
         recents_id = m_player->playModel()->addTree (recents, "listssource", "view-history", KMPlayer::PlayModel::AllowDrag);
