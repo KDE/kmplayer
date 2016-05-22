@@ -206,7 +206,7 @@ KDE_NO_EXPORT void View::init (KActionCollection *action_collection, bool transp
     m_picture = new PictureWidget (m_view_area, this);
     m_picture->hide ();
     m_control_panel = new ControlPanel (m_view_area, this);
-    m_control_panel->setMaximumSize (2500, controlPanel ()->maximumSize ().height ());
+    m_control_panel->setMaximumHeight(controlPanel ()->maximumSize ().height ());
     m_status_bar = new StatusBar (m_view_area);
     m_status_bar->insertItem (QString (""), 0);
     m_status_bar->setItemAlignment (0, Qt::AlignLeft);
@@ -214,7 +214,7 @@ KDE_NO_EXPORT void View::init (KActionCollection *action_collection, bool transp
     m_status_bar->setAutoFillBackground (true);
     QSize sbsize = m_status_bar->sizeHint ();
     m_status_bar->hide ();
-    m_status_bar->setMaximumSize (2500, sbsize.height ());
+    m_status_bar->setMaximumHeight(sbsize.height ());
     setVideoWidget (m_view_area);
 
     m_multiedit = new TextEdit (m_view_area, this);
@@ -419,7 +419,7 @@ KDE_NO_EXPORT void View::mouseMoved (int, int y) {
 
 KDE_NO_EXPORT void View::updateLayout () {
     if (m_controlpanel_mode == CP_Only)
-        m_control_panel->setMaximumSize (2500, height ());
+        m_control_panel->setMaximumHeight(height());
     m_view_area->resizeEvent (0L);
 }
 
@@ -507,7 +507,7 @@ KDE_NO_EXPORT void View::videoStart () {
         m_dockarea->setCentralWidget (m_view_area);
     }
     if (m_controlpanel_mode == CP_Only) {
-        m_control_panel->setMaximumSize(2500, controlPanel()->preferredHeight());
+        m_control_panel->setMaximumHeight(controlPanel()->preferredHeight());
         setControlPanelMode (CP_Show);
     }
 }

@@ -39,6 +39,7 @@
 
 static const int button_height_with_slider = 16;
 static const int button_height_only_buttons = 16;
+static float dpi_scale = 1.0;
 extern const char * normal_window_xpm[];
 extern const char * playlist_xpm[];
 #include "kmplayerview.h"
@@ -260,8 +261,15 @@ static const char * blue_xpm[] = {
 
 //-----------------------------------------------------------------------------
 
+static QIcon makeIcon(const char** xpm) {
+    QPixmap pix(xpm);
+    if (dpi_scale > 1.01)
+        pix = pix.scaledToHeight(pix.height() * dpi_scale, Qt::SmoothTransformation);
+    return QIcon(pix);
+}
+
 static QPushButton *ctrlButton(QBoxLayout* l, const char **p, int key = 0) {
-    QPushButton* b = new QPushButton(QIcon(QPixmap(p)), QString());
+    QPushButton* b = new QPushButton(makeIcon(p), QString());
     b->setFocusPolicy (Qt::NoFocus);
     b->setFlat (true);
     b->setAutoFillBackground (true);
@@ -273,7 +281,7 @@ static QPushButton *ctrlButton(QBoxLayout* l, const char **p, int key = 0) {
 
 KDE_NO_CDTOR_EXPORT
 KMPlayerMenuButton::KMPlayerMenuButton(QWidget*, QBoxLayout * l, const char ** p, int key)
- : QPushButton(QIcon(QPixmap(p)), QString()) {
+ : QPushButton(makeIcon(p), QString()) {
     setFocusPolicy (Qt::NoFocus);
     setFlat (true);
     setAutoFillBackground (true);
@@ -332,21 +340,21 @@ void VolumeBar::paintEvent (QPaintEvent * e) {
     p.begin (this);
     QColor color = palette ().color (foregroundRole ());
     p.setPen (color);
-    int w = width () - 6;
+    int w = width () - 6 * dpi_scale;
     int vx = m_value * w / 100;
-    p.fillRect (3, 3, vx, 7, color);
-    p.drawRect (vx + 3, 3, w - vx, 7);
+    p.fillRect (3 * dpi_scale, 3 * dpi_scale, vx, 7 * dpi_scale, color);
+    p.drawRect (vx + 3 * dpi_scale, 3 * dpi_scale, w - vx, 7 * dpi_scale);
     p.end ();
     //kDebug () << "w=" << w << " vx=" << vx;
 }
 
 void VolumeBar::mousePressEvent (QMouseEvent * e) {
-    setValue (100 * (e->x () - 3) / (width () - 6));
+    setValue (100 * (e->x () - 3 * dpi_scale) / (width () - 6 * dpi_scale));
     e->accept ();
 }
 
 void VolumeBar::mouseMoveEvent (QMouseEvent * e) {
-    setValue (100 * (e->x () - 3) / (width () - 6));
+    setValue (100 * (e->x () - 3 * dpi_scale) / (width () - 6 * dpi_scale));
     e->accept ();
 }
 
@@ -365,9 +373,10 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     setAttribute (Qt::WA_NativeWindow);
     setAttribute(Qt::WA_DontCreateNativeAncestors);
 #endif
+    dpi_scale = qMax(1.0, logicalDpiX() / 120.0);
     m_buttonbox = new QHBoxLayout (this);
-    m_buttonbox->setSpacing (4);
-    m_buttonbox->setContentsMargins (5, 5, 5, 5);
+    m_buttonbox->setSpacing (4 * dpi_scale);
+    m_buttonbox->setContentsMargins (5 * dpi_scale, 5 * dpi_scale, 5 * dpi_scale, 5 * dpi_scale);
     setAutoFillBackground (true);
     QColor c = palette ().color (foregroundRole ());
     strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).toAscii().constData(), 31);
@@ -495,22 +504,24 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
 KDE_NO_EXPORT void ControlPanel::setPalette (const QPalette & pal) {
     QWidget::setPalette (pal);
     QColor c = palette ().color (foregroundRole ());
+    if (c == Qt::black)
+        return;
     strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).toAscii().constData(), 31);
     xpm_fg_color[31] = 0;
-    m_buttons[button_config]->setIcon (QIcon (QPixmap (config_xpm)));
-    m_buttons[button_playlist]->setIcon (QIcon (QPixmap (playlist_xpm)));
-    m_buttons[button_back]->setIcon (QIcon (QPixmap (back_xpm)));
-    m_buttons[button_play]->setIcon (QIcon (QPixmap (play_xpm)));
-    m_buttons[button_forward]->setIcon (QIcon (QPixmap (forward_xpm)));
-    m_buttons[button_stop]->setIcon (QIcon (QPixmap (stop_xpm)));
-    m_buttons[button_pause]->setIcon (QIcon (QPixmap (pause_xpm)));
-    m_buttons[button_record]->setIcon (QIcon (QPixmap (record_xpm)));
-    m_buttons[button_broadcast]->setIcon (QIcon (QPixmap (broadcast_xpm)));
-    m_buttons[button_language]->setIcon (QIcon (QPixmap (language_xpm)));
-    m_buttons[button_red]->setIcon (QIcon (QPixmap (red_xpm)));
-    m_buttons[button_green]->setIcon (QIcon (QPixmap (green_xpm)));
-    m_buttons[button_yellow]->setIcon (QIcon (QPixmap (yellow_xpm)));
-    m_buttons[button_blue]->setIcon (QIcon (QPixmap (blue_xpm)));
+    m_buttons[button_config]->setIcon(makeIcon(config_xpm));
+    m_buttons[button_playlist]->setIcon(makeIcon(playlist_xpm));
+    m_buttons[button_back]->setIcon(makeIcon(back_xpm));
+    m_buttons[button_play]->setIcon(makeIcon(play_xpm));
+    m_buttons[button_forward]->setIcon(makeIcon(forward_xpm));
+    m_buttons[button_stop]->setIcon(makeIcon(stop_xpm));
+    m_buttons[button_pause]->setIcon(makeIcon(pause_xpm));
+    m_buttons[button_record]->setIcon(makeIcon(record_xpm));
+    m_buttons[button_broadcast]->setIcon(makeIcon(broadcast_xpm));
+    m_buttons[button_language]->setIcon(makeIcon(language_xpm));
+    m_buttons[button_red]->setIcon(makeIcon(red_xpm));
+    m_buttons[button_green]->setIcon(makeIcon(green_xpm));
+    m_buttons[button_yellow]->setIcon(makeIcon(yellow_xpm));
+    m_buttons[button_blue]->setIcon(makeIcon(blue_xpm));
 }
 
 KDE_NO_EXPORT void ControlPanel::timerEvent (QTimerEvent * e) {
@@ -596,15 +607,15 @@ KDE_NO_EXPORT void ControlPanel::setupPositionSlider (bool show) {
     m_posSlider->setValue (0);
     m_posSlider->setVisible (show);
     for (int i = 0; i < (int) button_last; i++) {
-        m_buttons[i]->setMinimumSize (15, h-1);
-        m_buttons[i]->setMaximumSize (750, h);
+        m_buttons[i]->setMinimumSize (15 * dpi_scale, (h-1) * dpi_scale);
+        m_buttons[i]->setMaximumHeight(h * dpi_scale);
     }
-    setMaximumSize (2500, h + 6);
+    setMaximumHeight((h + 6) * dpi_scale);
 }
 
 KDE_NO_EXPORT int ControlPanel::preferredHeight () {
-    return m_posSlider->isVisible () ?
-        button_height_with_slider + 8 : button_height_only_buttons + 2;
+    return dpi_scale * (m_posSlider->isVisible () ?
+            button_height_with_slider + 8 : button_height_only_buttons + 2);
 }
 
 void ControlPanel::enableSeekButtons (bool enable) {
