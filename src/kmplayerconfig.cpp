@@ -18,6 +18,8 @@
 
 #include <algorithm>
 #include <functional>
+#include <assert.h>
+
 #include "config-kmplayer.h"
 #include <qcheckbox.h>
 #include <qtextedit.h>
@@ -384,6 +386,7 @@ KDE_NO_EXPORT bool Settings::createDialog () {
             configdialog->m_SourcePageURL->backend->addItem(lbl);
         }
     }
+    assert(configdialog->m_SourcePageURL->backend->count() > 0);
     connect (configdialog, SIGNAL (accepted ()),
             this, SLOT (okPressed ()));
     connect (configdialog->button(QDialogButtonBox::Apply), SIGNAL(clicked ()),
@@ -460,7 +463,7 @@ void Settings::show (const char * pagename) {
 
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentRow(videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentRow(audiodriver);
-    //configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (backends["urlsource"]));
+    configdialog->m_SourcePageURL->backend->setCurrentItem(configdialog->m_SourcePageURL->backend->findItems(backends["urlsource"], Qt::MatchFixedString).first());
     int id = 0;
     const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
     for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().constBegin(); i != e; ++i) {
