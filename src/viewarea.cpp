@@ -62,9 +62,6 @@
 
 using namespace KMPlayer;
 
-extern const char * normal_window_xpm[];
-extern const char * playlist_xpm[];
-
 //-------------------------------------------------------------------------
 
 #ifdef KMPLAYER_WITH_CAIRO
@@ -1918,7 +1915,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
             m_restore_fullscreen_timer = startTimer(25);
         for (int i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (false);
-        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIcon (QIcon (QPixmap (playlist_xpm)));
+        m_view->controlPanel()->enableFullscreenButton(false);
         unsetCursor();
     } else {
         m_topwindow_rect = topLevelWidget ()->geometry ();
@@ -1932,7 +1929,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         setWindowState( windowState() ^ Qt::WindowFullScreen ); // set
         for (int i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (true);
-        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIcon (QIcon (QPixmap (normal_window_xpm)));
+        m_view->controlPanel()->enableFullscreenButton(true);
         m_mouse_invisible_timer = startTimer(MOUSE_INVISIBLE_DELAY);
     }
     m_fullscreen = !m_fullscreen;
@@ -1950,11 +1947,11 @@ void ViewArea::minimalMode () {
         m_view->setViewOnly ();
         m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
         m_view->setNoInfoMessages (true);
-        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIcon (QIcon (QPixmap (normal_window_xpm)));
+        m_view->controlPanel()->enableFullscreenButton(true);
     } else {
         m_view->setControlPanelMode (KMPlayer::View::CP_Show);
         m_view->setNoInfoMessages (false);
-        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIcon (QIcon (QPixmap (playlist_xpm)));
+        m_view->controlPanel()->enableFullscreenButton(false);
     }
     m_topwindow_rect = topLevelWidget ()->geometry ();
 }

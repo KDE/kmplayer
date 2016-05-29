@@ -107,6 +107,7 @@ public:
     void showPositionSlider (bool show);
     void enableSeekButtons (bool enable);
     void enableRecordButtons (bool enable);
+    void enableFullscreenButton(bool enable);
     void setPlaying (bool play);
     void setRecording (bool record);
     void setAutoControls (bool b);

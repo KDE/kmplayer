@@ -65,10 +65,6 @@
 #include "viewarea.h"
 #include <solid/powermanagement.h>
 
-extern const char * normal_window_xpm[];
-extern const char * playlist_xpm[];
-
-
 /* mouse invisible: define the time (in 1/1000 seconds) before mouse goes invisible */
 
 

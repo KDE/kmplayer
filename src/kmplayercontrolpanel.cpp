@@ -40,8 +40,6 @@
 static const int button_height_with_slider = 16;
 static const int button_height_only_buttons = 16;
 static float dpi_scale = 1.0;
-extern const char * normal_window_xpm[];
-extern const char * playlist_xpm[];
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
 
@@ -130,7 +128,7 @@ static const char * config_xpm[] = {
     "    ...    ",
     "     .     "};
 
-const char * playlist_xpm[] = {
+static const char *playlist_xpm[] = {
     "8 9 2 1",
     "       c None",
     xpm_fg_color,
@@ -144,7 +142,7 @@ const char * playlist_xpm[] = {
     "........",
     "        "};
 
-const char * normal_window_xpm[] = {
+static const char *normal_window_xpm[] = {
     "7 9 2 1",
     "       c None",
     xpm_fg_color,
@@ -635,6 +633,10 @@ void ControlPanel::enableRecordButtons (bool enable) {
         m_buttons[button_record]->show ();
     else
         m_buttons[button_record]->hide ();
+}
+
+void ControlPanel::enableFullscreenButton(bool enable) {
+    m_buttons[button_playlist]->setIcon(makeIcon(enable ? normal_window_xpm : playlist_xpm));
 }
 
 void ControlPanel::setPlaying (bool play) {
