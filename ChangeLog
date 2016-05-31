@@ -1,3 +1,7 @@
+Changes since version 0.11.5
+- Crash fix when okaying the configuration dialog
+- Unpausing fix jumping to first item in list
+- Compile fixes
 Changes since version 0.11.4
 - Rewrite big part of expression support
 - Support animated SVG as far supported in Qt
