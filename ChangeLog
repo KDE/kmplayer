@@ -1,17 +1,19 @@
-Changes since version 0.12.0
+Changes since version 0.11.5a
+- Port to kde5
+Changes since version 0.11.5
 - Crash fix when okaying the configuration dialog
 - Unpausing fix jumping to first item in list
 - Compile fixes
+Changes since version 0.11.4
 - Rewrite big part of expression support
 - Support animated SVG as far supported in Qt
 - Crash fix in RealPix for img when img not found
 - Crash fix in playlist DnD
+Changes since version 0.11.3d
 - Port away from Qt3 support
 - Fix crash in playlist context menup move up/down
 - Fix possible XWindow leak when using MPlayer
 - Hardcode to shockwave flash for application/vnd.adobe.flash.movie mime
-Changes since version 0.11.3d
-- Port to kde5
 Changes since version 0.11.3c
 - Fix item activation in double click mode
 - Fix crash on plugin exit in MediaManager destructor
