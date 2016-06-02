@@ -48,7 +48,6 @@
 #include <kconfiggroup.h>
 #include <kiconloader.h>
 #include <klocale.h>
-#include <ksimpleconfig.h>
 #include <kaction.h>
 #include <kmimetype.h>
 #include <kprotocolinfo.h>

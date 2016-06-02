@@ -41,7 +41,6 @@
 #include <kactioncollection.h>
 #include <kapplication.h>
 #include <kstatusbar.h>
-#include <kstdaction.h>
 #include <kshortcut.h>
 #include <klocale.h>
 #include <kdebug.h>
