@@ -43,7 +43,6 @@
 #include <kurl.h>
 #include <kdebug.h>
 #include <klocale.h>
-#include <knuminput.h>
 #include <kcombobox.h>
 #include <kmessagebox.h>
 #include <kglobalsettings.h>

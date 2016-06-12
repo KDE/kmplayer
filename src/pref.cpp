@@ -20,6 +20,7 @@
 
 #undef Always
 
+#include <QIcon>
 #include <QVBoxLayout>
 #include <qlayout.h>
 #include <qlabel.h>
@@ -47,14 +48,14 @@
 #include <kfiledialog.h>
 #include <kmessagebox.h>
 #include <klineedit.h>
-#include <knuminput.h>
 #include <kiconloader.h>
 #include <kdeversion.h>
 #include <kcombobox.h>
 #include <kcolorbutton.h>
 #include <kurlrequester.h>
 #include <kfontdialog.h>
-#include <KIcon>
+#include <kvbox.h>
+#include <KTextWidgets/kpluralhandlingspinbox.h>
 #include "pref.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
@@ -73,7 +74,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 
     KVBox *page = new KVBox (this);
     KPageWidgetItem *item = addPage (page, i18n ("General Options"));
-    item->setIcon (KIcon ("kmplayer"));
+    item->setIcon(QIcon::fromTheme("kmplayer"));
     QTabWidget *tab = new QTabWidget (page);
     m_GeneralPageGeneral = new PrefGeneralPageGeneral (tab, settings);
     tab->addTab (m_GeneralPageGeneral, i18n("General"));
@@ -86,7 +87,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 
     page = new KVBox (this);
     m_url_item = addPage (page, i18n ("Source"));
-    m_url_item->setIcon (KIcon ("document-import"));
+    m_url_item->setIcon(QIcon::fromTheme("document-import"));
     tab = new QTabWidget (page);
     m_SourcePageURL = new PrefSourcePageURL (tab);
     tab->addTab (m_SourcePageURL, i18n ("URL"));
@@ -94,7 +95,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 
     page = new KVBox (this);
     m_record_item = addPage (page, i18n ("Recording"));
-    m_record_item->setIcon (KIcon ("folder-video"));
+    m_record_item->setIcon(QIcon::fromTheme("folder-video"));
     tab = new QTabWidget (page);
 
     int recorders_count = 3;
@@ -122,7 +123,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 
     page = new KVBox (this);
     item = addPage (page, i18n ("Output Plugins"));
-    item->setIcon (KIcon ("folder-image"));
+    item->setIcon(QIcon::fromTheme("folder-image"));
     tab = new QTabWidget (page);
     m_OPPagePostproc = new PrefOPPagePostProc (tab);
     tab->addTab (m_OPPagePostproc, i18n ("Postprocessing"));
@@ -142,7 +143,7 @@ KDE_NO_EXPORT void Preferences::setPage (const char * name) {
         item = m_url_item;
     if (item) {
         setCurrentPage (item);
-        KVBox *page = findChild <KVBox *> (name);
+        QWidget* page = findChild<QWidget*>(name);
         if (!page)
             return;
         QWidget * w = page->parentWidget ();
@@ -166,7 +167,7 @@ KDE_NO_EXPORT void Preferences::addPrefPage (PreferencesPage * page) {
     if (en_it == entries.end ()) {
         KVBox *page = new KVBox (this);
         witem = addPage (page, item);
-        witem->setIcon (KIcon (icon));
+        witem->setIcon(QIcon::fromTheme(icon));
         tab = new QTabWidget (page);
         entries.insert (item, tab);
     } else
@@ -204,12 +205,9 @@ KDE_NO_CDTOR_EXPORT Preferences::~Preferences() {
 }
 
 KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *parent, Settings *)
-: KVBox (parent)
+: QWidget(parent)
 {
-    setMargin (5);
-    setSpacing (2);
-
-    QGroupBox *windowbox = new QGroupBox(i18n("Window"), this);
+    QGroupBox *windowbox = new QGroupBox(i18n("Window"));
     QWidget * bbox = new QWidget (windowbox);
     QGridLayout * gridlayout = new QGridLayout (bbox/*, 2, 2*/);
     keepSizeRatio = new QCheckBox (i18n ("Keep size ratio"), bbox);
@@ -232,7 +230,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     vbox->addWidget(sizefixed);
     windowbox->setLayout(vbox);
 
-    QGroupBox *playbox = new QGroupBox(i18n("Playing"), this);
+    QGroupBox *playbox = new QGroupBox(i18n("Playing"));
     loop = new QCheckBox (i18n("Loop"));
     loop->setWhatsThis(i18n("Makes current movie loop"));
     framedrop = new QCheckBox (i18n ("Allow frame drops"));
@@ -248,7 +246,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     vbox->addWidget(adjustcolors);
     playbox->setLayout(vbox);
 
-    QGroupBox* controlbox = new QGroupBox(i18n("Control Panel"), this);
+    QGroupBox* controlbox = new QGroupBox(i18n("Control Panel"));
     showConfigButton = new QCheckBox(i18n("Show config button"));
     showConfigButton->setWhatsThis(i18n ("Add a button that will popup a config menu"));
     showPlaylistButton = new QCheckBox(i18n("Show playlist button"));
@@ -265,26 +263,35 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     QHBoxLayout *seekLayout = new QHBoxLayout;
     seekLayout->addWidget(new QLabel(i18n("Forward/backward seek time:")));
     seekLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
-    seekTime = new KIntSpinBox(1, 600, 1, 0, NULL);
+    KPluralHandlingSpinBox* pluralSeekBox = new KPluralHandlingSpinBox;
+    pluralSeekBox->setRange(1, 600);
+    pluralSeekBox->setSingleStep(1);
+    pluralSeekBox->setValue(10);
 #if KDE_IS_VERSION(4, 2, 80)
-    seekTime->setSuffix (ki18np (" second", " seconds"));
+    pluralSeekBox->setSuffix(ki18np(" second", " seconds"));
 #else
-    seekTime->setSuffix (i18n (" seconds"));
+    pluralSeekBox->setSuffix(i18n(" seconds"));
 #endif
+    seekTime = pluralSeekBox;
     seekLayout->addWidget(seekTime);
-    seekLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
+    seekLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     gridlayout->addLayout (seekLayout, 2, 0, 1, 2);
     controlbox->setLayout(gridlayout);
 
-    layout()->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    QVBoxLayout* pagelayout = new QVBoxLayout;
+    pagelayout->setMargin(5);
+    pagelayout->setSpacing(2);
+    pagelayout->addWidget(windowbox);
+    pagelayout->addWidget(playbox);
+    pagelayout->addWidget(controlbox);
+    pagelayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    setLayout(pagelayout);
 }
 
 KDE_NO_CDTOR_EXPORT PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent, Settings * settings)
- : KVBox (parent), colors (settings->colors), fonts (settings->fonts) {
-    setMargin (5);
-    setSpacing (2);
-
-    QGroupBox *colorbox= new QGroupBox(i18n("Colors"), this);
+ : QWidget(parent), colors (settings->colors), fonts (settings->fonts)
+{
+    QGroupBox *colorbox= new QGroupBox(i18n("Colors"));
     colorscombo = new QComboBox;
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         colorscombo->addItem (colors[i].title);
@@ -300,7 +307,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent,
     hbox->addWidget(colorbutton);
     colorbox->setLayout(hbox);
 
-    QGroupBox* fontbox = new QGroupBox(i18n ("Fonts"), this);
+    QGroupBox* fontbox = new QGroupBox(i18n ("Fonts"));
     fontscombo = new QComboBox;
     for (int i = 0; i < int (FontSetting::last_target); i++)
         fontscombo->addItem (fonts[i].title);
@@ -316,7 +323,13 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent,
     hbox->addWidget(fontbutton);
     fontbox->setLayout(hbox);
 
-    layout()->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    QVBoxLayout* vbox = new QVBoxLayout;
+    vbox->setMargin (5);
+    vbox->setSpacing (2);
+    vbox->addWidget(colorbox);
+    vbox->addWidget(fontbox);
+    vbox->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    setLayout(vbox);
 }
 
 KDE_NO_EXPORT void PrefGeneralPageLooks::colorItemChanged (int c) {
@@ -346,49 +359,44 @@ KDE_NO_EXPORT void PrefGeneralPageLooks::fontClicked () {
 }
 
 KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
-: KVBox (parent)
+: QWidget(parent)
 {
     setObjectName ("URLPage");
-    setMargin (5);
-    setSpacing (2);
-
-    QHBoxLayout * urllayout = new QHBoxLayout ();
-    QHBoxLayout * sub_urllayout = new QHBoxLayout ();
-    QLabel *urlLabel = new QLabel (i18n ("Location:"), this, 0);
-    urllist = new KComboBox (true, this);
+    QHBoxLayout* urllayout = new QHBoxLayout;
+    QHBoxLayout* sub_urllayout = new QHBoxLayout;
+    QLabel *urlLabel = new QLabel(i18n("Location:"));
+    urllist = new KComboBox (true);
     urllist->setMaxCount (20);
     urllist->setDuplicatesEnabled (false); // not that it helps much :(
-    url = new KUrlRequester (urllist, this);
+    url = new KUrlRequester(urllist);
     url->setWhatsThis(i18n ("Location of the playable item"));
     //url->setShowLocalProtocol (true);
     url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
-    QLabel *sub_urlLabel = new QLabel (i18n ("Sub title:"), this, 0);
-    sub_urllist = new KComboBox (true, this);
+    QLabel *sub_urlLabel = new QLabel(i18n("Sub title:"));
+    sub_urllist = new KComboBox(true);
     sub_urllist->setMaxCount (20);
     sub_urllist->setDuplicatesEnabled (false); // not that it helps much :(
-    sub_url = new KUrlRequester (sub_urllist, this);
+    sub_url = new KUrlRequester(sub_urllist);
     sub_url->setWhatsThis(i18n ("Optional location of a file containing the subtitles of the URL above"));
     sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
-    backend = new QListWidget(this);
-    clicktoplay = new QCheckBox (i18n ("Load on demand"), this);
+    backend = new QListWidget;
+    clicktoplay = new QCheckBox(i18n("Load on demand"));
     clicktoplay->setWhatsThis(i18n ("When enabled, all embedded movies will start with a image that needs to be clicked to start the video playback"));
-    grabhref = new QCheckBox (i18n ("Grab image when 'Click to Play' detected"), this);
+    grabhref = new QCheckBox(i18n("Grab image when 'Click to Play' detected"));
     grabhref->setWhatsThis(i18n ("When enabled and a HTML object has a HREF attribute, grab and save an image of the first frame of initial link. This image will be shown instead of a default picture."));
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
-    static_cast <QBoxLayout *>(layout())->addLayout (urllayout);
     sub_urllayout->addWidget (sub_urlLabel);
     sub_urllayout->addWidget (sub_url);
-    static_cast <QBoxLayout *>(layout())->addLayout (sub_urllayout);
-    layout()->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
+
     QGridLayout * gridlayout = new QGridLayout (/*2, 2*/);
-    QLabel *backendLabel = new QLabel (i18n ("Use movie player:"), this, 0);
+    QLabel *backendLabel = new QLabel(i18n ("Use movie player:"));
     //QWhatsThis::add (allowhref, i18n ("Explain this in a few lines"));
     gridlayout->addWidget (backendLabel, 0, 0);
     gridlayout->addWidget (backend, 1, 0);
     gridlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum), 0, 1, 1, 1);
 
-    QGroupBox *bandwidthbox = new QGroupBox(i18n("Network bandwidth"), this);
+    QGroupBox *bandwidthbox = new QGroupBox(i18n("Network bandwidth"));
     prefBitRate = new QLineEdit;
     prefBitRate->setValidator( new QIntValidator( prefBitRate ) );
     prefBitRate->setWhatsThis(i18n("Sometimes it is possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you would prefer to allocate to video."));
@@ -404,8 +412,21 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     bitratelayout->addWidget (new QLabel (i18n ("kbit/s")), 1, 2);
     bandwidthbox->setLayout(bitratelayout);
 
-    static_cast <QBoxLayout *>(layout())->addLayout (gridlayout);
-    layout()->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    QVBoxLayout* vbox = new QVBoxLayout;
+    vbox->setMargin(5);
+    vbox->setSpacing(2);
+    vbox->addLayout(urllayout);
+    vbox->addLayout(sub_urllayout);
+    vbox->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    vbox->addWidget(clicktoplay);
+    vbox->addWidget(grabhref);
+    vbox->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    vbox->addWidget(bandwidthbox);
+    vbox->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    vbox->addLayout(gridlayout);
+    vbox->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    setLayout(vbox);
+
     connect (urllist, SIGNAL(currentTextChanged (const QString &)),
              this, SLOT (slotTextChanged (const QString &)));
     connect (sub_urllist, SIGNAL(currentTextChanged (const QString &)),
@@ -419,36 +440,25 @@ KDE_NO_EXPORT void PrefSourcePageURL::slotTextChanged (const QString &) {
     changed = true;
 }
 
-KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *,
+KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage(QWidget* parent,
         PartBase * player, RecorderPage * rl, int rec_len)
- : KVBox (player->view ()),
+ : QWidget(parent),
    m_player (player),
    m_recorders (rl),
-   m_recorders_length (rec_len) {
+   m_recorders_length (rec_len)
+{
     setObjectName ("RecordPage");
-    setMargin (5);
-    setSpacing (2);
-
-    layout()->addItem(new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-
     QHBoxLayout * urllayout = new QHBoxLayout ();
-    QLabel *urlLabel = new QLabel (i18n ("Output file:"), this);
-    url = new KUrlRequester (this);
+    QLabel* urlLabel = new QLabel(i18n("Output file:"));
+    url = new KUrlRequester;
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
-    static_cast <QBoxLayout *>(layout())->addLayout (urllayout);
 
-    layout()->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    recordButton = new QPushButton (i18n ("Start &Recording"), this);
-    connect (recordButton, SIGNAL (clicked ()), this, SLOT (slotRecord ()));
-    QHBoxLayout *buttonlayout = new QHBoxLayout;
-    buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    buttonlayout->addWidget (recordButton);
     source = new QLabel (i18n ("Current source: ") +
-           (m_player->source () ? m_player->source ()->prettyName () : QString ()), this);
-    QGroupBox* group = new QGroupBox(i18n ("Recorder"), this);
+           (m_player->source () ? m_player->source ()->prettyName () : QString ()));
+    QGroupBox* group = new QGroupBox(i18n("Recorder"));
     QVBoxLayout *vbox = new QVBoxLayout;
-    recorder = new QButtonGroup(this);
+    recorder = new QButtonGroup;
     int id = 0;
     for (RecorderPage* p = m_recorders; p; p = p->next) {
         QRadioButton* button = new QRadioButton(p->name());
@@ -458,11 +468,9 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *,
     recorder->button(0)->setChecked(true); // for now
     group->setLayout(vbox);
 
-    layout()->addItem(new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-
-    group = new QGroupBox(i18n ("Auto Playback"), this);
+    QGroupBox* autogroup = new QGroupBox(i18n("Auto Playback"));
     vbox = new QVBoxLayout;
-    replay = new QButtonGroup(this);
+    replay = new QButtonGroup;
     QRadioButton* radio = new QRadioButton (i18n ("&No"));
     vbox->addWidget(radio);
     replay->addButton(radio, 0);
@@ -473,28 +481,47 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *,
     vbox->addWidget(radio);
     replay->addButton(radio, 2);
     QWidget* customreplay = new QWidget;
-    replaytime = new KIntSpinBox (customreplay);
+    KPluralHandlingSpinBox* pluralReplayBox = new KPluralHandlingSpinBox;
+    pluralReplayBox = new KPluralHandlingSpinBox;
 #if KDE_IS_VERSION(4, 2, 80)
-    replaytime->setSuffix (ki18np (" second", " seconds"));
+    pluralReplayBox->setSuffix(ki18np(" second", " seconds"));
 #else
-    replaytime->setSuffix (i18n (" seconds"));
+    pluralReplayBox->setSuffix(i18n(" seconds"));
 #endif
+    replaytime = pluralReplayBox;
     QHBoxLayout *replaylayout = new QHBoxLayout;
     replaylayout->addWidget(new QLabel(i18n("Time:")));
     replaylayout->addWidget (replaytime);
     replaylayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
     customreplay->setLayout(replaylayout);
     vbox->addWidget(customreplay);
-    group->setLayout(vbox);
-    layout()->addItem(new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    autogroup->setLayout(vbox);
 
-    static_cast <QBoxLayout *>(layout())->addLayout (buttonlayout);
-    layout()->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    recordButton = new QPushButton (i18n ("Start &Recording"));
+    QHBoxLayout *buttonlayout = new QHBoxLayout;
+    buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    buttonlayout->addWidget (recordButton);
 #ifdef KMPLAYER_WITH_XINE
     connect (recorder, SIGNAL (clicked(int)), this, SLOT(recorderClicked(int)));
 #endif
     //connect(replay, SIGNAL(buttonClicked (int)), this, SLOT (replayClicked (int)));
     connect (player, SIGNAL (recording (bool)), this, SLOT (recording (bool)));
+    connect(recordButton, SIGNAL(clicked()), this, SLOT(slotRecord()));
+
+    QVBoxLayout* pagelayout = new QVBoxLayout;
+    pagelayout->setMargin(5);
+    pagelayout->setSpacing(2);
+    pagelayout->addItem(new QSpacerItem(5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    pagelayout->addLayout(urllayout);
+    pagelayout->addItem(new QSpacerItem(5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    pagelayout->addWidget(source);
+    pagelayout->addItem(new QSpacerItem(5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    pagelayout->addWidget(group);
+    pagelayout->addItem(new QSpacerItem(5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    pagelayout->addWidget(autogroup);
+    pagelayout->addLayout(buttonlayout);
+    pagelayout->addItem(new QSpacerItem(5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    setLayout(pagelayout);
 }
 
 PrefRecordPage::~PrefRecordPage () {
@@ -527,7 +554,7 @@ KDE_NO_EXPORT void PrefRecordPage::showEvent (QShowEvent *e) {
         source->setText (i18n ("Current Source: ") + source_url);
         recordButton->setEnabled (nr_recs > 0);
     }
-    KVBox::showEvent (e);
+    QWidget::showEvent (e);
 }
 
 KDE_NO_EXPORT void PrefRecordPage::recorderClicked (int /*id*/) {
@@ -572,13 +599,12 @@ KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
 }
 
 KDE_NO_CDTOR_EXPORT RecorderPage::RecorderPage (QWidget *parent, PartBase * player)
- : KVBox (parent), next (0L), m_player (player) {}
+ : QWidget(parent), next(0L), m_player(player) {}
 
-KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
-    setMargin (5);
-    setSpacing (2);
-
-    QGroupBox* formatbox = new QGroupBox(i18n("Format"), this);
+KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage(QWidget* parent, PartBase* player)
+    : RecorderPage (parent, player)
+{
+    QGroupBox* formatbox = new QGroupBox(i18n("Format"));
     QVBoxLayout* vbox = new QVBoxLayout;
     format = new QButtonGroup(this);
     QRadioButton* radio = new QRadioButton (i18n ("Same as source"));
@@ -594,8 +620,14 @@ KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage (QWidget *parent, PartBas
     gridlayout->addWidget (arguments, 0, 1);
     vbox->addLayout(gridlayout);
     formatbox->setLayout(vbox);
-    layout()->addItem(new QSpacerItem(0,0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     connect (format, SIGNAL (buttonClicked (int)), this, SLOT (formatClicked (int)));
+
+    QVBoxLayout* pagelayout = new QVBoxLayout;
+    pagelayout->setMargin(5);
+    pagelayout->setSpacing(2);
+    pagelayout->addWidget(formatbox);
+    pagelayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    setLayout(pagelayout);
 }
 
 KDE_NO_EXPORT void PrefMEncoderPage::formatClicked (int id) {
@@ -619,17 +651,21 @@ KDE_NO_EXPORT QString PrefMPlayerDumpstreamPage::name () {
     return i18n ("MPlayer -&dumpstream");
 }
 
-KDE_NO_CDTOR_EXPORT PrefFFMpegPage::PrefFFMpegPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
-    setMargin (5);
-    setSpacing (2);
-
+KDE_NO_CDTOR_EXPORT PrefFFMpegPage::PrefFFMpegPage(QWidget* parent, PartBase* player)
+    : RecorderPage(parent, player)
+{
     QGridLayout *gridlayout = new QGridLayout (/*1, 2, 2*/);
-    QLabel *argLabel = new QLabel (i18n("FFMpeg arguments:"), this);
-    arguments = new QLineEdit ("", this);
+    QLabel *argLabel = new QLabel (i18n("FFMpeg arguments:"));
+    arguments = new QLineEdit ("");
     gridlayout->addWidget (argLabel, 0, 0);
     gridlayout->addWidget (arguments, 0, 1);
-    static_cast <QBoxLayout *>(layout())->addLayout (gridlayout);
-    layout()->addItem(new QSpacerItem(0,0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+    QVBoxLayout* pagelayout = new QVBoxLayout;
+    pagelayout->setMargin(5);
+    pagelayout->setSpacing(2);
+    pagelayout->addLayout (gridlayout);
+    pagelayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    setLayout(pagelayout);
 }
 
 KDE_NO_EXPORT void PrefFFMpegPage::startRecording () {
@@ -651,33 +687,34 @@ KDE_NO_EXPORT QString PrefXinePage::name () {
 #endif
 
 KDE_NO_CDTOR_EXPORT PrefGeneralPageOutput::PrefGeneralPageOutput(QWidget *parent, OutputDriver * ad, OutputDriver * vd)
- : KVBox (parent) {
-    setMargin (5);
-    setSpacing (2);
-
-    videoDriver = new QListWidget(this);
+ : QWidget(parent)
+{
+    videoDriver = new QListWidget;
     for (int i = 0; vd[i].driver; i++)
         videoDriver->addItem(vd[i].description);
     videoDriver->setWhatsThis(i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
 
-    audioDriver = new QListWidget(this);
+    audioDriver = new QListWidget;
     for (int i = 0; ad[i].driver; i++)
         audioDriver->addItem(ad[i].description);
-    layout()->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+    QVBoxLayout* pagelayout = new QVBoxLayout;
+    pagelayout->setMargin(5);
+    pagelayout->setSpacing(2);
+    pagelayout->addWidget(videoDriver);
+    pagelayout->addWidget(audioDriver);
+    pagelayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    setLayout(pagelayout);
 }
 
-KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KVBox(parent)
+KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent)
+    : QWidget(parent)
 {
-    setMargin (5);
-    setSpacing (2);
-
-    postProcessing = new QCheckBox (i18n ("Enable use of postprocessing filters"), this);
+    postProcessing = new QCheckBox(i18n("Enable use of postprocessing filters"));
     postProcessing->setEnabled( true );
-    disablePPauto = new QCheckBox (i18n ("Disable use of postprocessing when watching TV/DVD"), this);
+    disablePPauto = new QCheckBox(i18n("Disable use of postprocessing when watching TV/DVD"));
 
-    layout()->addItem (new QSpacerItem(5, 5, QSizePolicy::Minimum, QSizePolicy::Minimum));
-
-    PostprocessingOptions = new QTabWidget( this );
+    PostprocessingOptions = new QTabWidget;
     PostprocessingOptions->setEnabled (true);
     //PostprocessingOptions->setAutoMask (false);
     PostprocessingOptions->setTabShape( QTabWidget::Rounded );
@@ -692,7 +729,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
     vbox->addWidget(defaultPreset);
     vbox->addWidget(customPreset);
     vbox->addWidget(fastPreset);
-    QButtonGroup* buttongroup = new QButtonGroup(this);
+    QButtonGroup* buttongroup = new QButtonGroup(presetSelection);
     buttongroup->addButton(defaultPreset, 0);
     buttongroup->addButton(customPreset, 1);
     buttongroup->addButton(fastPreset, 2);
@@ -817,6 +854,16 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : KV
     vbox->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     deintSelectionWidget->setLayout(vbox);
     PostprocessingOptions->addTab(deintSelectionWidget, i18n( "Deinterlacing"));
+
+    QVBoxLayout* pagelayout = new QVBoxLayout;
+    pagelayout->setMargin(5);
+    pagelayout->setSpacing(2);
+    pagelayout->addWidget(postProcessing);
+    pagelayout->addWidget(disablePPauto);
+    pagelayout->addItem(new QSpacerItem(5, 5, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    pagelayout->addWidget(PostprocessingOptions);
+    pagelayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    setLayout(pagelayout);
 
     PostprocessingOptions->setEnabled(false);
     connect( customPreset, SIGNAL (toggled(bool) ), customFilters, SLOT(setEnabled(bool)));

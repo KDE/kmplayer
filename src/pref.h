@@ -26,7 +26,6 @@
 #include "kmplayer_def.h"
 
 #include <kpagedialog.h>
-#include <kvbox.h>
 #include <qmap.h>
 
 #include "kmplayerplaylist.h"
@@ -43,7 +42,6 @@ class QColor;
 class QButtonGroup;
 class QListWidget;
 class KHistoryCombo;
-class KIntSpinBox;
 class KComboBox;
 class KUrlRequester;
 class KColorButton;
@@ -105,7 +103,7 @@ private:
     KPageWidgetItem *m_url_item;
 };
 
-class KMPLAYER_NO_EXPORT PrefGeneralPageGeneral : public KVBox
+class KMPLAYER_NO_EXPORT PrefGeneralPageGeneral : public QWidget
 {
     Q_OBJECT
 public:
@@ -125,10 +123,10 @@ public:
     QCheckBox *adjustvolume;
     QCheckBox *adjustcolors;
 
-    KIntSpinBox *seekTime;
+    QSpinBox *seekTime;
 };
 
-class KMPLAYER_NO_EXPORT PrefGeneralPageLooks : public KVBox {
+class KMPLAYER_NO_EXPORT PrefGeneralPageLooks : public QWidget {
     Q_OBJECT
 public:
     PrefGeneralPageLooks (QWidget *parent, Settings *);
@@ -147,7 +145,7 @@ private:
     FontSetting * fonts;
 };
 
-class KMPLAYER_NO_EXPORT PrefSourcePageURL : public KVBox
+class KMPLAYER_NO_EXPORT PrefSourcePageURL : public QWidget
 {
     Q_OBJECT
 public:
@@ -171,7 +169,7 @@ private slots:
 };
 
 
-class KMPLAYER_NO_EXPORT PrefRecordPage : public KVBox
+class KMPLAYER_NO_EXPORT PrefRecordPage : public QWidget
 {
     Q_OBJECT
 public:
@@ -181,7 +179,7 @@ public:
     KUrlRequester * url;
     QButtonGroup* recorder;
     QButtonGroup* replay;
-    KIntSpinBox * replaytime;
+    QSpinBox* replaytime;
     QLabel * source;
 protected:
     void showEvent (QShowEvent *);
@@ -199,7 +197,7 @@ private:
     int m_recorders_length;
 };
 
-class KMPLAYER_NO_EXPORT RecorderPage : public KVBox
+class KMPLAYER_NO_EXPORT RecorderPage : public QWidget
 {
     Q_OBJECT
 public:
@@ -268,7 +266,7 @@ private:
 };
 
 
-class KMPLAYER_NO_EXPORT PrefGeneralPageOutput : public KVBox
+class KMPLAYER_NO_EXPORT PrefGeneralPageOutput : public QWidget
 {
     Q_OBJECT
 public:
@@ -279,7 +277,7 @@ public:
     QListWidget* audioDriver;
 };
 
-class KMPLAYER_NO_EXPORT PrefOPPagePostProc : public KVBox
+class KMPLAYER_NO_EXPORT PrefOPPagePostProc : public QWidget
 {
     Q_OBJECT
 public:
