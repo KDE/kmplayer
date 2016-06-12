@@ -855,7 +855,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         Single ft_size = w * txt->font_size / (double)s->bounds.width ();
         bool clear = s->surface;
 
-        QFont font (txt->font_name, ft_size);
+        QFont font (txt->font_name);
+        font.setPixelSize(ft_size);
         if (clear) {
             pxw = scr.width ();
             pxh = scr.height ();
@@ -1057,7 +1058,8 @@ void SmilTextVisitor::push () {
         fs *= scale;
         maxfs *= scale;
 
-        QFont font ("Sans", (int)fs);
+        QFont font ("Sans");
+        font.setPixelSize((int)fs);
         calculateTextDimensions (font, rich_text.toUtf8 ().constData (),
                 width, 2 * maxfs, 1024, &pxw, &pxh, true, info.props.text_align);
         int x = 0;
