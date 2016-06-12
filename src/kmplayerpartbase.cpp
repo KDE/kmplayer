@@ -162,7 +162,7 @@ void PartBase::init (KActionCollection * action_collection, const QString &objna
     connect(m_settings, SIGNAL(configChanged()), this, SLOT(settingsChanged()));
     m_settings->readConfig ();
     m_settings->applyColorSetting (false);
-    connect (m_view, SIGNAL (urlDropped (const KUrl::List &)), this, SLOT (openUrl (const KUrl::List &)));
+    connect (m_view, SIGNAL(urlDropped(const QList<QUrl>&)), this, SLOT(openUrl(const QList<QUrl>&)));
     connectPlaylist (m_view->playList ());
     connectInfoPanel (m_view->infoPanel ());
 
@@ -481,9 +481,9 @@ bool PartBase::openUrl (const KUrl &url) {
     return true;
 }
 
-bool PartBase::openUrl (const KUrl::List & urls) {
+bool PartBase::openUrl(const QList<QUrl>& urls) {
     if (urls.size () == 1) {
-        openUrl (urls[0]);
+        openUrl(KUrl(urls[0].toString()));
     } else {
         openUrl (KUrl ());
         NodePtr d = m_source->document ();
@@ -491,7 +491,7 @@ bool PartBase::openUrl (const KUrl::List & urls) {
             for (int i = 0; i < urls.size (); i++) {
                 const KUrl &url = urls [i];
                 d->appendChild (new GenericURL (d,
-                            url.isLocalFile() ? url.toLocalFile() : url.url()));
+                            url.isLocalFile() ? url.toLocalFile() : url.toString()));
             }
     }
     return true;

@@ -23,6 +23,8 @@
 #include <qwidget.h>
 #include <qtextedit.h>
 #include <QImage>
+#include <QList>
+#include <QUrl>
 
 #include <kurl.h>
 #include <kmediaplayer/view.h>
@@ -150,7 +152,7 @@ public slots:
     void setInfoMessage (const QString & msg);
     void setStatusMessage (const QString & msg);
 signals:
-    void urlDropped (const KUrl::List & urls);
+    void urlDropped (const QList<QUrl>& urls);
     void pictureClicked ();
     void fullScreenChanged ();
     void windowVideoConsoleToggled (bool show);

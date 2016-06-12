@@ -141,15 +141,13 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
 }
 
 KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
-    KUrl::List uris = KUrl::List::fromMimeData( de->mimeData() );
-    if (uris.isEmpty()) {
+    QList<QUrl> uris = de->mimeData()->urls();
+    if (uris.isEmpty() || !uris[0].isValid()) {
         QString text = de->mimeData()->text();
         if (!text.isEmpty())
-            uris.push_back (KURL (text));
+            uris.push_back(QUrl::fromUserInput(text));
     }
     if (uris.size () > 0) {
-        for (int i = 0; i < uris.size (); i++)
-            uris [i] = QUrl::fromPercentEncoding (uris [i].url ().toUtf8 ());
         //m_widgetstack->currentWidget ()->setFocus ();
         emit urlDropped (uris);
         de->accept ();

@@ -24,7 +24,9 @@
 #include "kmplayer_def.h"
 
 #include <qobject.h>
+#include <QList>
 #include <QPointer>
+#include <QUrl>
 #include <qstringlist.h>
 #include <qmap.h>
 #include <QModelIndex>
@@ -286,8 +288,8 @@ public:
     bool isRecording ();
 public slots:
     virtual bool openUrl (const KUrl & url);
-    virtual bool openUrl (const KUrl::List & urls);
     virtual void openUrl (const KUrl &, const QString &t, const QString &srv);
+    virtual bool openUrl(const QList<QUrl>& urls);
     virtual bool closeUrl ();
     virtual void pause (void);
     virtual void play (void);
