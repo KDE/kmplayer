@@ -344,6 +344,7 @@ KDE_NO_CDTOR_EXPORT
 TVDocument::TVDocument (KMPlayerTVSource * source)
     : FileDocument (id_node_tv_document, "tv://", source), m_source (source) {
     title = i18n ("Television");
+    bookmarkable = false;
 }
 
 KDE_NO_EXPORT KMPlayer::Node *TVDocument::childFromTag (const QString & tag) {

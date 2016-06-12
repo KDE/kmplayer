@@ -1388,8 +1388,9 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
 
 KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayItem * item, QMenu * pm) {
     KMPlayer::TopPlayItem *ri = item->rootItem ();
-    if (item->node &&
-        ri->item_flags & (KMPlayer::PlayModel::Moveable | KMPlayer::PlayModel::Deleteable)) {
+    if (ri != item
+            && item->node
+            && ri->item_flags & (KMPlayer::PlayModel::Moveable | KMPlayer::PlayModel::Deleteable)) {
         manip_tree_id = ri->id;
         pm->addSeparator();
         manip_node = item->node;
@@ -1464,6 +1465,7 @@ KDE_NO_CDTOR_EXPORT Disks::Disks (KMPlayerApp * a)
                 : KMPlayer::Document ("disks://", 0L), app (a) {
     id = id_node_disk_document;
     resolved = true;
+    bookmarkable = false;
     title = i18n ("Optical Disks");
 }
 
@@ -1478,6 +1480,7 @@ KDE_NO_CDTOR_EXPORT Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const 
   : KMPlayer::Mrl (doc, id_node_disk_node), app (a) {
     src = url;
     title = pn;
+    bookmarkable = false;
 }
 
 KDE_NO_EXPORT void Disk::activate () {
