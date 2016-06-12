@@ -1409,7 +1409,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
         entry = getJSCommandEntry (ascii.constData ());
     if (!entry)
         return false;
-    for (unsigned int i = 0; i < args.size (); ++i)
+    for (QStringList::size_type i = 0; i < args.size (); ++i)
         kDebug () << "      " << args[i];
     if (!player->view ())
         return false;
