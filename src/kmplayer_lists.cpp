@@ -92,6 +92,7 @@ KDE_NO_CDTOR_EXPORT Recents::Recents (KMPlayerApp *a)
     : FileDocument (id_node_recent_document, "recents://"),
       app(a) {
     title = i18n ("Most Recent");
+    bookmarkable = false;
 }
 
 KDE_NO_EXPORT void Recents::activate () {
@@ -190,6 +191,7 @@ KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::Source *s, boo
       app(a),
       playmode (plmode) {
     title = i18n ("Persistent Playlists");
+    bookmarkable = false;
 }
 
 KDE_NO_EXPORT KMPlayer::Node *Playlist::childFromTag (const QString & tag) {
