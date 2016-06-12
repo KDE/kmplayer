@@ -1383,8 +1383,9 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
 
 KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayItem * item, QMenu * pm) {
     KMPlayer::TopPlayItem *ri = item->rootItem ();
-    if (item->node &&
-        ri->item_flags & (KMPlayer::PlayModel::Moveable | KMPlayer::PlayModel::Deleteable)) {
+    if (ri != item
+            && item->node
+            && ri->item_flags & (KMPlayer::PlayModel::Moveable | KMPlayer::PlayModel::Deleteable)) {
         manip_tree_id = ri->id;
         pm->addSeparator();
         manip_node = item->node;
