@@ -308,6 +308,7 @@ KDE_NO_CDTOR_EXPORT
 PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn)
   : KMPlayer::Element (doc, KMPlayer::id_node_group_node), app (a), playmode (false) {
     title = pn;
+    editable = true;
     if (!pn.isEmpty ())
         setAttribute (KMPlayer::Ids::attr_title, pn);
 }
