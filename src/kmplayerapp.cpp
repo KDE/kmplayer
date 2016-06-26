@@ -1297,10 +1297,13 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {
             pi->parentNode ()->removeChild (pi);
         } else
             pi = new PlaylistItem(playlist, this,false, m_drop_list[i-1].url());
-        if (n == playlist || m_view->playList()->isExpanded (m_view->playList()->index(m_drop_after)))
+        if (n == playlist
+                || (KMPlayer::id_node_playlist_item != n->id
+                    && m_view->playList()->isExpanded (m_view->playList()->index(m_drop_after)))) {
             n->insertBefore (pi, n->firstChild ());
-        else if (n->parentNode ())
+        } else if (n->parentNode ()) {
             n->parentNode ()->insertBefore (pi, n->nextSibling ());
+        }
     }
     m_player->playModel()->updateTree (playlist_id, playlist, pi, true, false);
 }
@@ -1310,10 +1313,13 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
     if (!n)
         return;
     KMPlayer::NodePtr g = new PlaylistGroup (playlist, this, i18n("New group"));
-    if (n == playlist || m_view->playList()->isExpanded (m_view->playList()->index(m_drop_after)))
+    if (n == playlist
+            || (KMPlayer::id_node_playlist_item != n->id
+                && m_view->playList()->isExpanded (m_view->playList()->index(m_drop_after)))) {
         n->insertBefore (g, n->firstChild ());
-    else
+    } else {
         n->parentNode ()->insertBefore (g, n->nextSibling ());
+    }
     KMPlayer::NodePtr pi;
     for (int i = 0; i < m_drop_list.size () || manip_node; ++i) {
         if (manip_node && manip_node->parentNode ()) {
@@ -1331,10 +1337,13 @@ KDE_NO_EXPORT void KMPlayerApp::menuCopyDrop () {
     KMPlayer::NodePtr n = m_drop_after->node;
     if (n && manip_node) {
         KMPlayer::NodePtr pi = new PlaylistItem (playlist, this, false, manip_node->mrl ()->src);
-        if (n == playlist || m_view->playList()->isExpanded (m_view->playList()->index(m_drop_after)))
+        if (n == playlist
+                || (KMPlayer::id_node_playlist_item != n->id
+                    && m_view->playList()->isExpanded (m_view->playList()->index(m_drop_after)))) {
             n->insertBefore (pi, n->firstChild ());
-        else
+        } else {
             n->parentNode ()->insertBefore (pi, n->nextSibling ());
+        }
         m_player->playModel()->updateTree (playlist_id, playlist, pi, true, false);
     }
 }
