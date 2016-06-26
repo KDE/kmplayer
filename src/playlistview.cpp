@@ -206,7 +206,7 @@ QModelIndex PlayListView::index (PlayItem *item) const
     return playModel ()->indexFromItem (item);
 }
 
-void PlayListView::selectItem (const QString & txt) {
+void PlayListView::selectItem(const QString&) {
     /*QTreeWidgetItem * item = selectedItem ();
     if (item && item->text (0) == txt)
         return;

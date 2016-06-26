@@ -1042,7 +1042,7 @@ static bool windowClassInvoke (NPObject *npobj, NPIdentifier method,
     createJsName (jo, (char **)&str.utf8characters, &str.utf8length);
     pos = snprintf (buf, sizeof (buf), "%s.%s(", str.utf8characters, id);
     nsMemFree ((char *) str.utf8characters);
-    for (i = 0; i < arg_count; i++) {
+    for (i = 0; i < (int)arg_count; i++) {
         char *arg = nsVariant2Str (args + i);
         pos += snprintf (buf + pos,
                 sizeof (buf) - pos, i ? ",%s" : "%s", *arg ? arg : "undefined");
@@ -1054,7 +1054,7 @@ static bool windowClassInvoke (NPObject *npobj, NPIdentifier method,
     str.utf8length = pos;
     res = doEvaluate (npp, npobj, &str, result);
 
-    return true;
+    return res;
 }
 
 static bool windowClassInvokeDefault (NPObject *npobj,
@@ -1827,8 +1827,8 @@ static void windowCreatedEvent (GtkWidget *w, gpointer d) {
                 0, 0);*/
     }
     if (!callback_service) {
-        char *argn[] = { "WIDTH", "HEIGHT", "debug", "SRC" };
-        char *argv[] = { "440", "330", g_strdup("yes"), g_strdup(object_url) };
+        char *argn[] = { g_strdup("WIDTH"), g_strdup("HEIGHT"), g_strdup("debug"), g_strdup("SRC") };
+        char *argv[] = { g_strdup("440"), g_strdup("330"), g_strdup("yes"), g_strdup(object_url) };
         if (startPlugin (mimetype, 4, argn, argv))
             addStream (object_url, mimetype, 0L, 0, NULL, 0L, false);
     }
@@ -1842,7 +1842,7 @@ static void embeddedEvent (GtkPlug *plug, gpointer d) {
 static gboolean updateDimension (void * p) {
     (void)p;
     if (np_window.window) {
-        if (np_window.width != top_w || np_window.height != top_h) {
+        if ((int)np_window.width != top_w || (int)np_window.height != top_h) {
             np_window.width = top_w;
             np_window.height = top_h;
             np_funcs.setwindow (npp, &np_window);

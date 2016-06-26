@@ -169,7 +169,7 @@ void Stream::stop () {
     delete this;
 }
 
-void Stream::seek (uint64_t position, bool absolute) {
+void Stream::seek (uint64_t position, bool /*absolute*/) {
     m_media->seek (position * 100);
 }
 
