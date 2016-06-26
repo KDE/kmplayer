@@ -38,11 +38,11 @@
 #include <kurlauthorized.h>
 
 #include "mediaobject.h"
-#include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
 #include "kmplayerview.h"
 #include "expression.h"
 #include "viewarea.h"
+#include "kmplayerpartbase.h"
 
 using namespace KMPlayer;
 

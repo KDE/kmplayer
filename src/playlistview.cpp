@@ -26,7 +26,6 @@
 #include <QIcon>
 #include <qdrawutil.h>
 #include <qpainter.h>
-#include <KIcon>
 #include <QAbstractItemDelegate>
 #include <QDropEvent>
 #include <qstyle.h>
@@ -51,6 +50,8 @@
 #include "playmodel.h"
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
+
+#include <kurl.h>
 
 using namespace KMPlayer;
 
@@ -250,14 +251,14 @@ KDE_NO_EXPORT void PlayListView::contextMenuEvent (QContextMenuEvent *event)
                 m_find_next->setVisible (false);
                 m_itemmenu->clear ();
             }
-            m_itemmenu->addAction (KIcon ("edit-copy"),
+            m_itemmenu->addAction (QIcon::fromTheme("edit-copy"),
                     i18n ("&Copy to Clipboard"),
                     this, SLOT (copyToClipboard ()));
             if (item->attribute ||
                     (item->node && (item->node->isPlayable () ||
                                     item->node->isDocument ()) &&
                      item->node->mrl ()->bookmarkable))
-                m_itemmenu->addAction (KIcon ("bookmark-new"),
+                m_itemmenu->addAction (QIcon::fromTheme("bookmark-new"),
                         i18n ("&Add Bookmark"),
                         this, SLOT (addBookMark ()));
             if (ritem->have_dark_nodes) {

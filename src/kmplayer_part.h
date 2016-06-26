@@ -27,6 +27,7 @@
 #include "config-kmplayer.h"
 
 
+class QLabel;
 class KMPlayerPart;
 class JSCommandEntry;
 namespace KMPlayer {
@@ -160,6 +161,7 @@ public:
 
     virtual QString doEvaluate (const QString &script);
 
+    using KMPlayer::PartBase::openUrl;
 public slots:
     virtual bool openUrl(const QUrl& url);
     virtual void openUrl(const QUrl&, const QString& t, const QString& srv);
@@ -184,6 +186,7 @@ private:
     KMPlayerPart * m_master;
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
+    QLabel* m_playtime_info;
     QString m_group;
     QString m_src_url;
     QString m_href_url;

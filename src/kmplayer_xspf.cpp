@@ -18,7 +18,6 @@
 
 #include "config-kmplayer.h"
 #include <kdebug.h>
-#include <kurl.h>
 
 #include "kmplayer_xspf.h"
 

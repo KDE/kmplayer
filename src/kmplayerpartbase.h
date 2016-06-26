@@ -39,12 +39,12 @@
 #include "kmplayerview.h"
 #include "kmplayerplaylist.h"
 
+class QMenu;
 
 class KAboutData;
 class KActionCollection;
 class KBookmarkMenu;
 class KBookmarkManager;
-class KMenu;
 
 
 namespace KMPlayer {
@@ -263,7 +263,7 @@ public:
      * calls init() and reschedules an activate() on the source
      * */
     void setSource (Source * source);
-    void createBookmarkMenu (KMenu *owner, KActionCollection *ac);
+    void createBookmarkMenu(QMenu *owner, KActionCollection *ac);
     void connectPanel (ControlPanel * panel);
     void connectPlaylist (PlayListView * playlist);
     void connectInfoPanel (InfoWindow * infopanel);
@@ -287,6 +287,7 @@ public:
     void stopRecording ();
     bool isRecording ();
 public slots:
+    virtual bool openUrl (const QUrl & url);
     virtual bool openUrl (const KUrl & url);
     virtual void openUrl (const KUrl &, const QString &t, const QString &srv);
     virtual bool openUrl(const QList<QUrl>& urls);

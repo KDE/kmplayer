@@ -25,12 +25,10 @@
 #include <qframe.h>
 
 #include <kxmlguiwindow.h>
-#include <kurl.h>
-#include "kmplayerpartbase.h"
 #include <ksharedconfig.h>
 
-#include "kmplayerpartbase.h"
 #include "kmplayerconfig.h"
+#include "kmplayerpartbase.h"
 
 
 class KUrlRequester;
@@ -171,7 +169,7 @@ private:
     QMenu * m_generatormenu;
     KMPlayerFFServerConfig * m_ffserverconfig;
     KMPlayerBroadcastConfig * m_broadcastconfig;
-    KUrl::List m_drop_list;
+    QList<QUrl> m_drop_list;
     KMPlayer::PlayItem *m_drop_after;
     int edit_tree_id;
     int manip_tree_id;

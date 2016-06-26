@@ -22,9 +22,8 @@
 #include "config-kmplayer.h"
 
 #include <qwidget.h>
+#include <qmenu.h>
 #include <qpushbutton.h>
-
-#include <kmenu.h>
 
 class QSlider;
 //class QPushButton;
@@ -32,7 +31,6 @@ class QAction;
 class QWidgetAction;
 class QBoxLayout;
 class QStringList;
-class KMenu;
 
 namespace KMPlayer {
 
@@ -55,7 +53,7 @@ protected:
 /*
  * The pop down menu from the controlpanel
  */
-class KMPLAYER_EXPORT KMPlayerPopupMenu : public KMenu {
+class KMPLAYER_EXPORT KMPlayerPopupMenu : public QMenu {
     Q_OBJECT
 public:
     KMPlayerPopupMenu (QWidget *, const QString &title);

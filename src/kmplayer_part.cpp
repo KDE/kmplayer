@@ -22,6 +22,7 @@
 #include <list>
 #include <algorithm>
 
+#include <qlabel.h>
 #include <qmenu.h>
 #include <qtimer.h>
 #include <qpushbutton.h>
@@ -178,6 +179,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
    m_master (0L),
    m_browserextension (new KMPlayerBrowserExtension (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
+   m_playtime_info(0),
    m_expected_view_width (0),
    m_expected_view_height (0),
    m_features (Feat_Unknown),
@@ -383,8 +385,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
             last_time_left = 0;
             connect (this, SIGNAL (positioned (int, int)),
                      this, SLOT (statusPosition (int, int)));
-            m_view->statusBar ()->insertItem (QString ("--:--"), 1, 0);
-            m_view->statusBar ()->setItemAlignment (1, Qt::AlignRight);
+            m_playtime_info = new QLabel("--:--");
+            m_view->statusBar()->addPermanentWidget(m_playtime_info);
         }
     }
     if (group_member) {
@@ -753,7 +755,8 @@ KDE_NO_EXPORT void KMPlayerPart::connectToPart (KMPlayerPart * m) {
         last_time_left = 0;
         connect (m, SIGNAL (positioned (int, int)),
                  this, SLOT (statusPosition (int, int)));
-        m_view->statusBar ()->insertItem (QString ("--:--"), 1, 0);
+        m_playtime_info = new QLabel("--:--");
+        m_view->statusBar()->addPermanentWidget(m_playtime_info);
     }
 }
 
@@ -843,7 +846,7 @@ KDE_NO_EXPORT void KMPlayerPart::statusPosition (int pos, int length) {
             else
                 text.sprintf ("%02d:%02d", m, s);
         }
-        m_view->statusBar ()->changeItem (text, 1);
+        m_playtime_info->setText(text);
     }
 }
 

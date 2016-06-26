@@ -40,6 +40,7 @@
 #include <QDropEvent>
 #include <QAction>
 #include <QDragEnterEvent>
+#include <QFontDatabase>
 #include <QTextDocument>
 #include <QTextCursor>
 #include <qcursor.h>
@@ -56,7 +57,6 @@
 #include <kactioncollection.h>
 #include <kshortcut.h>
 #include <kfinddialog.h>
-#include <kglobalsettings.h>
 
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
@@ -201,9 +201,7 @@ KDE_NO_EXPORT void View::init (KActionCollection *action_collection, bool transp
     m_control_panel = new ControlPanel (m_view_area, this);
     m_control_panel->setMaximumHeight(controlPanel ()->maximumSize ().height ());
     m_status_bar = new StatusBar (m_view_area);
-    m_status_bar->insertItem (QString (""), 0);
-    m_status_bar->setItemAlignment (0, Qt::AlignLeft);
-    m_status_bar->setSizeGripEnabled (false);
+    m_status_bar->clearMessage();
     m_status_bar->setAutoFillBackground (true);
     QSize sbsize = m_status_bar->sizeHint ();
     m_status_bar->hide ();
@@ -211,7 +209,7 @@ KDE_NO_EXPORT void View::init (KActionCollection *action_collection, bool transp
     setVideoWidget (m_view_area);
 
     m_multiedit = new TextEdit (m_view_area, this);
-    QFont fnt = KGlobalSettings::fixedFont ();
+    QFont fnt = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     m_multiedit->setFont (fnt);
     m_multiedit->hide ();
 
@@ -255,7 +253,7 @@ void View::setInfoMessage (const QString & msg) {
 
 void View::setStatusMessage (const QString & msg) {
     if (m_statusbar_mode != SB_Hide)
-        m_status_bar->changeItem (msg, 0);
+        m_status_bar->showMessage(msg);
 }
 
 void View::toggleShowPlaylist () {
@@ -336,11 +334,11 @@ void View::toggleVideoConsoleWindow () {
     if (m_multiedit->isVisible ()) {
         m_multiedit->hide ();
         m_view_area->setVideoWidgetVisible (true);
-        m_control_panel->videoConsoleAction->setIcon (KIcon (("konsole")));
+        m_control_panel->videoConsoleAction->setIcon(QIcon::fromTheme(("konsole")));
         m_control_panel->videoConsoleAction->setText (i18n ("Con&sole"));
         delayedShowButtons (false);
     } else {
-        m_control_panel->videoConsoleAction->setIcon (KIcon ("video"));
+        m_control_panel->videoConsoleAction->setIcon(QIcon::fromTheme("video"));
         m_control_panel->videoConsoleAction->setText (i18n ("V&ideo"));
         m_multiedit->show ();
         m_multiedit->raise ();

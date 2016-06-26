@@ -21,7 +21,6 @@
 
 #include <qtextstream.h>
 #include <kdebug.h>
-#include <kurl.h>
 #ifdef KMPLAYER_WITH_EXPAT
 #include <expat.h>
 #endif
@@ -34,6 +33,8 @@
 #include "kmplayer_smil.h"
 #include "kmplayer_xspf.h"
 #include "mediaobject.h"
+
+#include <kurl.h>
 
 #ifdef SHAREDPTR_DEBUG
 KMPLAYER_EXPORT int shared_data_count;

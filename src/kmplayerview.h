@@ -26,7 +26,6 @@
 #include <QList>
 #include <QUrl>
 
-#include <kurl.h>
 #include <kmediaplayer/view.h>
 
 #include "kmplayer_def.h"
@@ -34,11 +33,11 @@
 #define MOUSE_INVISIBLE_DELAY 2000
 
 class QSlider;
+class QStatusBar;
 class QMainWindow;
 class QDockWidget;
 class KActionCollection;
 class KAction;
-class KStatusBar;
 
 namespace KMPlayer {
 
@@ -50,7 +49,7 @@ class PlayListView;
 class PlayListView;
 class TopPlayItem;
 
-typedef KStatusBar StatusBar;
+typedef QStatusBar StatusBar;
 
 /*
  * The console GUI

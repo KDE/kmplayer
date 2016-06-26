@@ -29,7 +29,6 @@
 #include <qregexp.h>
 #include <qprocess.h>
 
-#include <kurl.h>
 #include <kio/global.h>
 
 #include "kmplayer_def.h"

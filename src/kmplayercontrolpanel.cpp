@@ -16,6 +16,7 @@
  *  Boston, MA 02110-1301, USA.
  **/
 
+#include <qicon.h>
 #include <qlayout.h>
 #include <qpixmap.h>
 #include <qslider.h>
@@ -30,7 +31,6 @@
 #include <QWidgetAction>
 
 #include <kiconloader.h>
-#include <kicon.h>
 #include <klocale.h>
 #include <kdebug.h>
 
@@ -296,7 +296,7 @@ KDE_NO_EXPORT void KMPlayerMenuButton::enterEvent (QEvent *) {
 
 KDE_NO_CDTOR_EXPORT
 KMPlayerPopupMenu::KMPlayerPopupMenu (QWidget *parent, const QString &title)
- : KMenu (title, parent) {}
+ : QMenu(title, parent) {}
 
 KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
     emit mouseLeft ();
@@ -412,25 +412,25 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     playerMenu = new KMPlayerPopupMenu (this, i18n ("&Play with"));
     playersAction = popupMenu->addMenu (playerMenu);
 
-    videoConsoleAction = popupMenu->addAction (KIcon ("utilities-terminal"), i18n ("Con&sole"));
+    videoConsoleAction = popupMenu->addAction(QIcon::fromTheme("utilities-terminal"), i18n("Con&sole"));
 
-    playlistAction = popupMenu->addAction (KIcon ("view-media-playlist"), i18n ("Play&list"));
+    playlistAction = popupMenu->addAction(QIcon::fromTheme("view-media-playlist"), i18n("Play&list"));
 
     zoomMenu = new KMPlayerPopupMenu (this, i18n ("&Zoom"));
     zoomAction = popupMenu->addMenu (zoomMenu);
-    zoomAction->setIcon (KIcon ("zoom-fit-best"));
+    zoomAction->setIcon(QIcon::fromTheme("zoom-fit-best"));
     zoom50Action = zoomMenu->addAction (i18n ("50%"));
     zoom100Action = zoomMenu->addAction (i18n ("100%"));
     zoom150Action = zoomMenu->addAction (i18n ("150%"));
 
-    fullscreenAction = popupMenu->addAction (KIcon ("view-fullscreen"), i18n ("&Full Screen"));
+    fullscreenAction = popupMenu->addAction(QIcon::fromTheme("view-fullscreen"), i18n("&Full Screen"));
     fullscreenAction->setShortcut (QKeySequence (Qt::Key_F));
 
     popupMenu->addSeparator ();
 
     colorMenu = new KMPlayerPopupMenu (this, i18n ("Co&lors"));
     colorAction = popupMenu->addMenu (colorMenu);
-    colorAction->setIcon (KIcon ("format-fill-color"));
+    colorAction->setIcon(QIcon::fromTheme("format-fill-color"));
     /*QLabel * label = new QLabel (i18n ("Contrast:"), colorMenu);
     colorMenu->insertItem (label);
     m_contrastSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
@@ -459,8 +459,8 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     subtitleMenu = new KMPlayerPopupMenu (this, i18n ("&Subtitles"));
     QAction *audioAction = languageMenu->addMenu (audioMenu);
     QAction *subtitleAction = languageMenu->addMenu (subtitleMenu);
-    audioAction->setIcon (KIcon ("audio-x-generic"));
-    subtitleAction->setIcon (KIcon ("view-list-text"));
+    audioAction->setIcon(QIcon::fromTheme("audio-x-generic"));
+    subtitleAction->setIcon(QIcon::fromTheme("view-list-text"));
     languageAction->setVisible (false);
 
     scaleLabelAction = new QWidgetAction (popupMenu);
@@ -476,7 +476,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     scaleAction->setDefaultWidget (scale_slider);
     popupMenu->addAction (scaleAction);
 
-    configureAction = popupMenu->addAction (KIcon ("configure"), i18n ("&Configure KMPlayer..."));
+    configureAction = popupMenu->addAction(QIcon::fromTheme("configure"), i18n("&Configure KMPlayer..."));
 
     QPalette pal = palette ();
     pal.setColor(backgroundRole(), view->palette().color(QPalette::Background));

@@ -28,7 +28,6 @@
 #include <qmap.h>
 
 #include <ksharedconfig.h>
-#include <kurl.h>
 
 #include "kmplayer_def.h"
 

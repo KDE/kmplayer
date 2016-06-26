@@ -20,6 +20,8 @@
 // include files for QT
 #include <qdatastream.h>
 #include <qregexp.h>
+#include <qicon.h>
+#include <qinputdialog.h>
 #include <qiodevice.h>
 #include <qprinter.h>
 #include <qcursor.h>
@@ -30,6 +32,8 @@
 #include <qapplication.h>
 #include <qslider.h>
 #include <qlayout.h>
+#include <qmenu.h>
+#include <qmimedata.h>
 #include <qwhatsthis.h>
 #include <qtimer.h>
 #include <qfile.h>
@@ -45,21 +49,17 @@
 #include <kapplication.h>
 #include <kdeversion.h>
 #include <kiconloader.h>
-#include <kicon.h>
 #include <kmessagebox.h>
 #include <kfiledialog.h>
-#include <kinputdialog.h>
 #include <kmenubar.h>
 #include <kstatusbar.h>
 #include <ktoolbar.h>
 #include <klocale.h>
 #include <kconfig.h>
-#include <kglobal.h>
+#include <ksharedconfig.h>
 #include <kstandardaction.h>
 #include <kactioncollection.h>
 #include <kdebug.h>
-#include <kmenu.h>
-#include <kurlrequester.h>
 #include <klineedit.h>
 #include <kshortcutsdialog.h>
 #include <ksystemtrayicon.h>
@@ -84,13 +84,15 @@
 //#include "kmplayervdr.h"
 #include "kmplayerconfig.h"
 
+#include <kurlrequester.h>
+
 extern const char * strMPlayerGroup;
 
 
 KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
     : KXmlGuiWindow (NULL),
       m_systray (0L),
-      m_player (new KMPlayer::PartBase (this, 0L, KGlobal::config ())),
+      m_player (new KMPlayer::PartBase (this, 0L, KSharedConfig::openConfig ())),
       m_view (static_cast <KMPlayer::View*> (m_player->view())),
       //m_ffserverconfig (new KMPlayerFFServerConfig),
       //m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig)),
@@ -148,7 +150,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     KActionCollection * ac = actionCollection ();
     fileNewWindow = ac->addAction ("new_window");
     fileNewWindow->setText( i18n( "New window" ) );
-    //fileNewWindow->setIcon (KIcon ("window-new"));
+    //fileNewWindow->setIcon (QIcon::fromTheme("window-new"));
     connect (fileNewWindow, SIGNAL (triggered (bool)), this, SLOT (slotFileNewWindow ()));
     fileOpen = KStandardAction::open (this, SLOT (slotFileOpen()), ac);
     fileOpenRecent = KStandardAction::openRecent(this, SLOT(slotFileOpenRecent(const QUrl&)), ac);
@@ -161,7 +163,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     connect (viewEditMode, SIGNAL (triggered (bool)), this, SLOT (editMode ()));
     QAction *viewplaylist = ac->addAction ( "view_playlist");
     viewplaylist->setText (i18n ("Pla&y List"));
-    //viewplaylist->setIcon (KIcon ("media-playlist"));
+    //viewplaylist->setIcon (QIcon::fromTheme("media-playlist"));
     connect (viewplaylist, SIGNAL(triggered(bool)), m_player, SLOT(showPlayListWindow()));
     KStandardAction::preferences (m_player, SLOT (showConfigDialog ()), ac);
     QAction *playmedia = ac->addAction ("play");
@@ -181,12 +183,12 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     connect (viewFullscreen, SIGNAL (triggered (bool)), this, SLOT (fullScreen ()));
     toggleView = ac->addAction ("view_video");
     toggleView->setText (i18n ("C&onsole"));
-    toggleView->setIcon (KIcon ("utilities-terminal"));
+    toggleView->setIcon (QIcon::fromTheme("utilities-terminal"));
     connect (toggleView, SIGNAL (triggered (bool)),
             m_player->view (), SLOT (toggleVideoConsoleWindow ()));
     viewSyncEditMode = ac->addAction ("sync_edit_mode");
     viewSyncEditMode->setText (i18n ("Reload"));
-    viewSyncEditMode->setIcon (KIcon ("view-refresh"));
+    viewSyncEditMode->setIcon (QIcon::fromTheme("view-refresh"));
     connect (viewSyncEditMode, SIGNAL (triggered (bool)), this, SLOT (syncEditMode ()));
     viewSyncEditMode->setEnabled (false);
     viewToolBar = KStandardAction::create (KStandardAction::ShowToolbar,
@@ -249,7 +251,7 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
     //QAction *bookmark_action = actionCollection ()->addAction ("bookmarks");
     QList<QAction *> acts = menuBar()->actions();
     if (acts.size () > 2) {
-        KMenu *bookmark_menu = new KMenu (this);
+        QMenu *bookmark_menu = new QMenu(this);
         QAction *bookmark_action = menuBar()->insertMenu (acts.at(2), bookmark_menu);
         bookmark_action->setText (i18n( "&Bookmarks"));
         m_player->createBookmarkMenu (bookmark_menu, actionCollection ());
@@ -258,7 +260,7 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initView () {
-    KSharedConfigPtr config = KGlobal::config ();
+    KSharedConfigPtr config = KSharedConfig::openConfig ();
     //m_view->docArea ()->readDockConfig (config.data (), QString ("Window Layout"));
     m_player->connectPanel (m_view->controlPanel ());
     initMenu ();
@@ -295,13 +297,13 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
             this, SLOT (playListItemDropped (QDropEvent *, KMPlayer::PlayItem *)));
     connect (m_view->playList(), SIGNAL (prepareMenu (KMPlayer::PlayItem *, QMenu *)), this, SLOT (preparePlaylistMenu (KMPlayer::PlayItem *, QMenu *)));
     m_dropmenu = new QMenu (m_view->playList ());
-    dropAdd = m_dropmenu->addAction(KIcon ("view-media-playlist"),
+    dropAdd = m_dropmenu->addAction(QIcon::fromTheme("view-media-playlist"),
                 i18n ("&Add to list"), this, SLOT (menuDropInList ()));
-    dropAddGroup = m_dropmenu->addAction(KIcon ("folder-grey"),
+    dropAddGroup = m_dropmenu->addAction(QIcon::fromTheme("folder-grey"),
         i18n ("Add in new &Group"), this, SLOT (menuDropInGroup ()));
-    dropCopy = m_dropmenu->addAction(KIcon ("edit-copy"),
+    dropCopy = m_dropmenu->addAction(QIcon::fromTheme("edit-copy"),
             i18n ("&Copy here"), this, SLOT (menuCopyDrop ()));
-    dropDelete = m_dropmenu->addAction(KIcon ("edit-delete"),
+    dropDelete = m_dropmenu->addAction(QIcon::fromTheme("edit-delete"),
             i18n ("&Delete"), this, SLOT (menuDeleteNode ()));
     /*QMenu * viewmenu = new QMenu;
     viewmenu->addAction(i18n ("Full Screen"), this, SLOT(fullScreen ()),
@@ -339,10 +341,10 @@ KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
 KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (bool show) {
     if (show) {
         toggleView->setText (i18n ("V&ideo"));
-        toggleView->setIcon (KIcon ("video-display"));
+        toggleView->setIcon (QIcon::fromTheme("video-display"));
     } else {
         toggleView->setText (i18n ("C&onsole"));
-        toggleView->setIcon (KIcon ("utilities-terminal"));
+        toggleView->setIcon (QIcon::fromTheme("utilities-terminal"));
     }
 }
 
@@ -445,8 +447,8 @@ KDE_NO_EXPORT void KMPlayerApp::openAudioCD () {
 KDE_NO_EXPORT void KMPlayerApp::openPipe () {
     slotStatusMsg(i18n("Opening pipe..."));
     bool ok;
-    QString cmd = KInputDialog::getText (i18n("Read From Pipe"),
-      i18n ("Enter a command that will output an audio/video stream\nto the stdout. This will be piped to a player's stdin.\n\nCommand:"), m_player->sources () ["pipesource"]->pipeCmd (), &ok, m_player->view());
+    QString cmd = QInputDialog::getText(m_player->view(), i18n("Read From Pipe"),
+      i18n ("Enter a command that will output an audio/video stream\nto the stdout. This will be piped to a player's stdin.\n\nCommand:"), QLineEdit::Normal, m_player->sources() ["pipesource"]->pipeCmd(), &ok);
     if (!ok) {
         slotStatusMsg (i18n ("Ready."));
         return;
@@ -662,7 +664,7 @@ KDE_NO_EXPORT void IntroSource::deactivate () {
 KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
     if (m_player->view ()) {
         m_view->dockArea ()->hide ();
-        KConfigGroup dock_cfg (KGlobal::config(), "Window Layout");
+        KConfigGroup dock_cfg (KSharedConfig::openConfig(), "Window Layout");
         m_view->dockArea ()->restoreState (dock_cfg.readEntry ("Layout", QByteArray ()));
         m_view->dockPlaylist ()->setVisible (dock_cfg.readEntry ("Show playlist", false));
         m_view->dockArea ()->show ();
@@ -842,7 +844,7 @@ KDE_NO_EXPORT bool KMPlayerApp::broadcasting () const {
 
 KDE_NO_EXPORT void KMPlayerApp::saveOptions()
 {
-    KSharedConfigPtr config = KGlobal::config ();
+    KSharedConfigPtr config = KSharedConfig::openConfig ();
     KConfigGroup general (config, "General Options");
     if (m_player->settings ()->remembersize)
         general.writeEntry ("Geometry", size ());
@@ -854,10 +856,10 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
                 "Command1", m_player->sources () ["pipesource"]->pipeCmd ());
     }
     m_view->setInfoMessage (QString ());
-    KConfigGroup dock_cfg (KGlobal::config(), "Window Layout");
+    KConfigGroup dock_cfg (KSharedConfig::openConfig(), "Window Layout");
     dock_cfg.writeEntry ("Layout", m_view->dockArea ()->saveState ());
     dock_cfg.writeEntry ("Show playlist", m_view->dockPlaylist ()->isVisible ());
-    KConfigGroup toolbar_cfg (KGlobal::config(), "Main Toolbar");
+    KConfigGroup toolbar_cfg (KSharedConfig::openConfig(), "Main Toolbar");
     toolBar("mainToolBar")->saveSettings (toolbar_cfg);
     Recents * rc = static_cast <Recents *> (recents.ptr ());
     if (rc && rc->resolved) {
@@ -871,7 +873,7 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
 
 
 KDE_NO_EXPORT void KMPlayerApp::readOptions() {
-    KSharedConfigPtr config = KGlobal::config ();
+    KSharedConfigPtr config = KSharedConfig::openConfig ();
 
     KConfigGroup gen_cfg (config, "General Options");
 
@@ -892,7 +894,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     else if (m_player->settings ()->remembersize)
         resize (QSize (640, 480));
 
-    KConfigGroup toolbar_cfg (KGlobal::config(), "Main Toolbar");
+    KConfigGroup toolbar_cfg (KSharedConfig::openConfig(), "Main Toolbar");
     toolBar("mainToolBar")->applySettings (toolbar_cfg);
     KConfigGroup pipe_cfg (config, "Pipe Command");
     static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (
@@ -1250,7 +1252,7 @@ void KMPlayerApp::playListItemDropped (QDropEvent *de, KMPlayer::PlayItem *item)
     m_drop_list.clear ();
 
     if (de->mimeData()->hasFormat ("text/uri-list")) {
-        m_drop_list = KUrl::List::fromMimeData (de->mimeData());
+        m_drop_list = de->mimeData()->urls();
     } else if (de->mimeData ()->hasFormat ("application/x-qabstractitemmodeldatalist")) {
         KMPlayer::PlayItem* pli = m_view->playList()->selectedItem ();
         if (pli && pli->node) {
@@ -1395,12 +1397,12 @@ KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayItem * item, 
         pm->addSeparator();
         manip_node = item->node;
         if (ri->item_flags & KMPlayer::PlayModel::Deleteable)
-            pm->addAction(KIcon("edit-delete"), i18n("&Delete item"), this, SLOT(menuDeleteNode()));
+            pm->addAction(QIcon::fromTheme("edit-delete"), i18n("&Delete item"), this, SLOT(menuDeleteNode()));
         if (ri->item_flags & KMPlayer::PlayModel::Moveable) {
             if (manip_node->previousSibling ())
-                pm->addAction(KIcon("go-up"), i18n("&Move up"), this, SLOT(menuMoveUpNode()));
+                pm->addAction(QIcon::fromTheme("go-up"), i18n("&Move up"), this, SLOT(menuMoveUpNode()));
             if (manip_node->nextSibling ())
-                pm->addAction(KIcon("go-down"), i18n("Move &down"), this, SLOT(menuMoveDownNode()));
+                pm->addAction(QIcon::fromTheme("go-down"), i18n("Move &down"), this, SLOT(menuMoveDownNode()));
         }
     }
 }
@@ -1408,7 +1410,7 @@ KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayItem * item, 
 KDE_NO_EXPORT void KMPlayerApp::configChanged () {
     //viewKeepRatio->setChecked (m_player->settings ()->sizeratio);
     if (m_player->settings ()->docksystray && !m_systray) {
-        m_systray = new KSystemTrayIcon (KIcon ("kmplayer"), this);
+        m_systray = new KSystemTrayIcon (QIcon::fromTheme("kmplayer"), this);
         m_systray->show ();
     } else if (!m_player->settings ()->docksystray && m_systray) {
         delete m_systray;

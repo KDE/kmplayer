@@ -30,7 +30,6 @@
 #include <qtimer.h>
 #include <qpair.h>
 #include <qpushbutton.h>
-#include <QMenu>
 #include <QStandardPaths>
 #include <qslider.h>
 #include <qfile.h>
@@ -211,7 +210,7 @@ void PartBase::connectPanel (ControlPanel * panel) {
     //connect (panel (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
 
-void PartBase::createBookmarkMenu (KMenu *owner, KActionCollection *ac) {
+void PartBase::createBookmarkMenu(QMenu *owner, KActionCollection *ac) {
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner, owner, ac);
 }
 
@@ -468,6 +467,10 @@ qlonglong PartBase::length () const {
     return m_source ? m_source->length () : 0;
 }
 
+bool PartBase::openUrl (const QUrl &url) {
+    return openUrl(KUrl(url));
+}
+
 bool PartBase::openUrl (const KUrl &url) {
     kDebug () << "PartBase::openUrl " << url.url() << url.isValid ();
     if (!m_view) return false;
@@ -532,7 +535,7 @@ void PartBase::timerEvent (QTimerEvent * e) {
     } else if (e->timerId () == m_rec_timer) {
         m_rec_timer = 0;
         if (m_record_doc)
-            openUrl (convertNode <RecordDocument> (m_record_doc)->record_file);
+            openUrl(KUrl(convertNode <RecordDocument> (m_record_doc)->record_file));
     }
     killTimer (e->timerId ());
 }
@@ -726,7 +729,7 @@ void PartBase::recorderPlaying () {
 void PartBase::recorderStopped () {
     stopRecording ();
     if (m_view && m_rec_timer < 0 && m_record_doc)
-        openUrl (convertNode <RecordDocument> (m_record_doc)->record_file);
+        openUrl(KUrl(convertNode <RecordDocument> (m_record_doc)->record_file));
 }
 
 void PartBase::stopRecording () {

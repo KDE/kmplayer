@@ -21,11 +21,11 @@
 #include <qurl.h>
 #include <qtextstream.h>
 #include <qbytearray.h>
+#include <qinputdialog.h>
 #include <QStandardPaths>
 
-#include <kinputdialog.h>
 #include <kfiledialog.h>
-#include <kglobal.h>
+#include <ksharedconfig.h>
 #include <klocale.h>
 #include <kdebug.h>
 
@@ -416,7 +416,7 @@ QString Generator::genReadAsk (KMPlayer::Node *n) {
     QString key = static_cast<Element*>(n)->getAttribute ("key");
     QString def = static_cast<Element*>(n)->getAttribute ("default");
     QString input;
-    KConfigGroup cfg (KGlobal::config(), "Generator Defaults");
+    KConfigGroup cfg(KSharedConfig::openConfig(), "Generator Defaults");
     if (!key.isEmpty ())
         def = cfg.readEntry (key, def);
     if (type == "file") {
@@ -435,7 +435,7 @@ QString Generator::genReadAsk (KMPlayer::Node *n) {
                     desc = c->innerText ().simplified ();
                     break;
             }
-        input = KInputDialog::getText (title, desc, def);
+        input = QInputDialog::getText(0, title, desc, QLineEdit::Normal, def);
     }
     if (input.isNull ())
         canceled = true;
