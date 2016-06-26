@@ -1908,7 +1908,6 @@ KDE_NO_EXPORT void NpPlayer::initProcess () {
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     kDebug() << "NpPlayer::play '" << m_url << "' state " << m_state;
     // if we change from XPLAIN to XEMBED, the DestroyNotify may come later
-    Mrl *node = mrl ();
     if (!view ())
         return false;
     if (!m_url.isEmpty () && m_url != "about:empty") {
@@ -2273,7 +2272,7 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
     in_process_stream = false;
 }
 
-KDE_NO_EXPORT void NpPlayer::wroteStdin (qint64 sz) {
+KDE_NO_EXPORT void NpPlayer::wroteStdin (qint64) {
     if (!m_process->bytesToWrite ()) {
         write_in_progress = false;
         if (running ())

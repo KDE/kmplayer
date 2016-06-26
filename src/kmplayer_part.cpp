@@ -233,7 +233,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                 //http://service.real.com/help/library/guides/production8/realpgd.htm?src=noref,rnhmpg_080301,rnhmtn,nosrc
                 //http://service.real.com/help/library/guides/production8/htmfiles/control.htm
                 QStringList sl = value.split(QChar (','));
-                QStringList::const_iterator it = sl.constBegin ();
                 const QStringList::const_iterator e = sl.constEnd ();
                 for (QStringList::const_iterator i = sl.constBegin (); i != e; ++i) {
                     QString val_lower ((*i).toLower ());
@@ -1118,7 +1117,7 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::evaluate (
             int p = scr.indexOf ("=null", 21);
             if (p > -1) {
                 int i = scr.mid (21, p - 21).toInt ();
-                if (i == object_counter-1)
+                if (i == (int)object_counter-1)
                     object_counter--; // works most of the time :-)
             }
         }
