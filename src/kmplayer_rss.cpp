@@ -79,6 +79,8 @@ KDE_NO_EXPORT Node *RSS::Item::childFromTag (const QString & tag) {
         return new DarkNode (m_doc, ctag, id_node_category);
     else if (!strcmp (ctag, "media:group"))
         return new ATOM::MediaGroup (m_doc);
+    else if (!strcmp (ctag, "media:thumbnail"))
+        return new DarkNode (m_doc, ctag, id_node_thumbnail);
     else if (!strncmp (ctag, "itunes", 6) ||
             !strncmp (ctag, "feedburner", 10) ||
             !strcmp (ctag, "link") ||
@@ -94,6 +96,8 @@ KDE_NO_EXPORT void RSS::Item::closed () {
         ATOM::MediaGroup *group = NULL;
         Enclosure *enclosure = NULL;
         QString description;
+        QString thumbnail;
+        int width = 0, height = 0;
         for (Node *c = firstChild (); c; c = c->nextSibling ()) {
             switch (c->id) {
                 case id_node_title:
@@ -108,10 +112,15 @@ KDE_NO_EXPORT void RSS::Item::closed () {
                 case ATOM::id_node_media_group:
                     group = static_cast <ATOM::MediaGroup *> (c);
                     break;
+                case id_node_thumbnail:
+                    thumbnail = static_cast<Element*>(c)->getAttribute(Ids::attr_url);
+                    width = static_cast<Element*>(c)->getAttribute(Ids::attr_width).toInt();
+                    height = static_cast<Element*>(c)->getAttribute(Ids::attr_height).toInt();
+                    break;
             }
         }
         if (group)
-            group->addSummary (this, NULL);
+            group->addSummary (this, NULL, title, description, thumbnail, width, height);
         if (enclosure) {
             enclosure->setCaption (title);
             enclosure->description = description;
