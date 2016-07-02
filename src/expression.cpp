@@ -1323,7 +1323,7 @@ ExprIterator* SubSequence::exprIterator(ExprIterator* parent) const
                     start = 1;
                 if (a->next_sibling)
                     length = a->next_sibling->toInt();
-                while (!parent->atEnd()) {
+                for (; !parent->atEnd(); parent->next()) {
                     if (parent->position + 1 == start)
                         break;
                 }
@@ -1334,7 +1334,7 @@ ExprIterator* SubSequence::exprIterator(ExprIterator* parent) const
         virtual void next() {
             assert(!parent->atEnd());
             parent->next();
-            if (parent->position + 1 < start + length)
+            if (length < 0 || parent->position + 1 < start + length)
                 cur_value = parent->cur_value;
             else
                 cur_value = NodeValue(NULL, NULL);
