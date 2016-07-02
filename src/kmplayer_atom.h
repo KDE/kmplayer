@@ -87,7 +87,8 @@ public:
     Node *childFromTag (const QString &tag);
     void message (MessageType msg, void *content=NULL);
     KDE_NO_EXPORT const char *nodeName () const { return "media:group"; }
-    void addSummary (Node *parent, Node *ratings);
+    void addSummary (Node *parent, Node *ratings, const QString& alt_title, const QString& alt_desc,
+                     const QString& alt_img, int width, int height);
 };
 
 class KMPLAYER_NO_EXPORT MediaContent : public Mrl {

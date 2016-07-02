@@ -90,7 +90,7 @@ void ATOM::Entry::closed () {
             group = static_cast <MediaGroup *> (c);
         }
     if (group)
-        group->addSummary (this, rating);
+        group->addSummary (this, rating, QString(), QString(), QString(), 0, 0);
     Element::closed ();
 }
 
@@ -194,8 +194,18 @@ static QString makeStar (int x, bool fill) {
     return path;
 }
 
+static QString makeImage(const QString& url, int width, int height) {
+    QString str = QString ("<img region=\"image\" src=\"") + url + QChar ('"');
+    if (width && height) {
+        str += QString(" width=\"%1\" height=\"%2\"").arg(width).arg(height);
+    }
+    str += QString (" dur=\"20\" transIn=\"fade\" fill=\"transition\" fit=\"meet\"/>");
+    return str;
+}
+
 //http://code.google.com/apis/youtube/2.0/developers_guide_protocol.html
-void ATOM::MediaGroup::addSummary (Node *p, Node *rating_node) {
+void ATOM::MediaGroup::addSummary(Node *p, Node *rating_node,
+        const QString& alt_title, const QString& alt_desc, const QString& alt_img, int width, int height) {
     QString images;
     QString desc;
     QString title;
@@ -230,19 +240,21 @@ void ATOM::MediaGroup::addSummary (Node *p, Node *rating_node) {
             Element *e = static_cast <Element *> (c);
             QString url = e->getAttribute (Ids::attr_url);
             if (!url.isEmpty ()) {
-                images += QString ("<img region=\"image\" src=\"") + url + QChar ('"');
-                QString w = e->getAttribute (Ids::attr_width);
-                if (!w.isEmpty ())
-                    images += QString (" width=\"") + w + QChar ('"');
-                QString h = e->getAttribute (Ids::attr_height);
-                if (!h.isEmpty ())
-                    images += QString (" height=\"") + h + QChar ('"');
-                images += QString (" dur=\"20\" transIn=\"fade\" fill=\"transition\" fit=\"meet\"/>");
+                images += makeImage(url, e->getAttribute (Ids::attr_width).toInt(),
+                                         e->getAttribute (Ids::attr_height).toInt());
                 img_count++;
             }
             break;
         }
         }
+    }
+    if (title.isEmpty())
+        title = alt_title;
+    if (desc.isEmpty())
+        desc = alt_desc;
+    if (!img_count && !alt_img.isEmpty()) {
+        images = makeImage(alt_img, width, height);
+        ++img_count;
     }
     if (img_count) {
         QString buf;
@@ -290,7 +302,9 @@ void ATOM::MediaGroup::addSummary (Node *p, Node *rating_node) {
 
 void ATOM::MediaContent::closed () {
     unsigned fsize = 0;
+    unsigned bitrate = 0;
     TrieString fs ("fileSize");
+    TrieString rate ("bitrate");
     for (Attribute *a = attributes ().first (); a; a = a->nextSibling ()) {
         if (a->name () == Ids::attr_url)
             src = a->value();
@@ -304,6 +318,8 @@ void ATOM::MediaContent::closed () {
             size.width = a->value ().toInt ();
         else if (a->name () == fs)
             fsize = a->value ().toInt ();
+        else if (a->name () == rate)
+            bitrate = a->value ().toInt ();
     }
     if (!mimetype.isEmpty ()) {
         title = mimetype;
@@ -312,6 +328,11 @@ void ATOM::MediaContent::closed () {
                 title += QString (" (%1 Mb)").arg (fsize / (1024 * 1024));
             else
                 title += QString (" (%1 kb)").arg (fsize / 1024);
+        } else if (bitrate > 0) {
+            if (bitrate > 10 * 1024)
+                title += QString(" (%1 Mbit/s)").arg(bitrate / 1024);
+            else
+                title += QString(" (%1 kbit/s)").arg(bitrate);
         }
     }
     Mrl::closed ();
