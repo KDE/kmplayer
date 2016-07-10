@@ -1,3 +1,8 @@
+Changes since version 0.11.5a
+- Add media:group summary for RSS in more cases
+- Kill some build warnings
+- Fix XPath expression sub-sequence stuck in endless loop
+- Don't show delete item and create bookmark for top playlist items
 Changes since version 0.11.5
 - Crash fix when okaying the configuration dialog
 - Unpausing fix jumping to first item in list
