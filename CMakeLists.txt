@@ -79,8 +79,11 @@ configure_file (config-kmplayer.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kmpla
 
 add_subdirectory(src)
 add_subdirectory(icons)
-#add_subdirectory(doc)
+if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/doc" AND KF5DocTools_VERSION)
+  add_subdirectory(doc)
+endif(KF5DocTools_VERSION)
 add_subdirectory(data)
 
-#include(MacroOptionalAddSubdirectory)
-#ecm_optional_add_subdirectory(po)
+if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/po")
+  ki18n_install(po)
+endif()
