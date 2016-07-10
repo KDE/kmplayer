@@ -1,5 +1,16 @@
-Changes since version 0.11.5a
+Changes since version 0.12.0
+- Fix drag&drop into playlist on an item
+- Get rid of more KDE4 support classes
+- Fix huge text in SMIL animations on HiDPI displays
+- Fix build, don't include kstdaction.h and ksimpleconfig.h KDE4 headers
+- Merge changes for 0.11.5b
+Changes since version 0.11.5b
 - Port to kde5
+Changes since version 0.11.5a
+- Add media:group summary for RSS in more cases
+- Kill some build warnings
+- Fix XPath expression sub-sequence stuck in endless loop
+- Don't show delete item and create bookmark for top playlist items
 Changes since version 0.11.5
 - Crash fix when okaying the configuration dialog
 - Unpausing fix jumping to first item in list
