@@ -31,7 +31,8 @@ email                :
 
 extern "C" KDE_EXPORT int kdemain (int argc, char *argv[]) {
     setsid ();
-
+    
+    KLocalizedString::setApplicationDomain("kmplayer");
     K4AboutData aboutData ("kmplayer", 0, ki18n("KMPlayer"),
             KMPLAYER_VERSION_STRING,
             ki18n ("Media player."),
