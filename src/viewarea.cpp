@@ -815,6 +815,9 @@ static void calculateTextDimensions (const QFont& font,
     QRectF r = td.documentLayout()->blockBoundingRect (td.lastBlock());
     *pxw = (int)td.idealWidth ();
     *pxh = (int)(r.y() + r.height());
+#if QT_VERSION >= 0x050600
+    *pxw = qMin( (int)(*pxw + pixel_device_ratio), (int)w);
+#endif
 }
 
 static cairo_t *createContext (cairo_surface_t *similar, Surface *s, int w, int h) {
@@ -875,19 +878,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         bool have_alpha = (s->background_color & 0xff000000) < 0xff000000;
         QImage img (QSize (pxw, pxh), have_alpha ? QImage::Format_ARGB32 : QImage::Format_RGB32);
         img.fill (s->background_color);
-        td.setPageSize (QSize (pxw * pixel_device_ratio, pxh + (int)ft_size));
+        td.setPageSize (QSize (pxw, pxh + (int)ft_size));
         td.documentLayout()->setPaintDevice (&img);
         setAlignment (td, 1 + (int)txt->halign);
         td.setPlainText (tm->text);
         QPainter painter;
         painter.begin (&img);
         QAbstractTextDocumentLayout::PaintContext ctx;
-#if QT_VERSION >= 0x050600
-        // FIXME no idea why
-        ctx.clip = QRect (0, 0, pxw * pixel_device_ratio, pxh * pixel_device_ratio);
-#else
         ctx.clip = QRect (0, 0, pxw, pxh);
-#endif
         ctx.palette.setColor (QPalette::Text, QColor (QRgb (txt->font_color)));
         td.documentLayout()->draw (&painter, ctx);
         painter.end();
@@ -1190,12 +1188,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
                 QPainter painter;
                 painter.begin (&img);
                 QAbstractTextDocumentLayout::PaintContext ctx;
-#if QT_VERSION >= 0x050600
-                // FIXME no idea why
-                ctx.clip = QRect(0, 0, img.width() * pixel_device_ratio, img.height() * pixel_device_ratio);
-#else
                 ctx.clip = QRect (QPoint (0, 0), img.size ());
-#endif
                 td.documentLayout()->draw (&painter, ctx);
                 painter.end();
 
