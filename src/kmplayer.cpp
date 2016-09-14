@@ -50,7 +50,6 @@
 #include <kdeversion.h>
 #include <kiconloader.h>
 #include <kmessagebox.h>
-#include <kfiledialog.h>
 #include <kmenubar.h>
 #include <kstatusbar.h>
 #include <ktoolbar.h>
@@ -85,6 +84,7 @@
 #include "kmplayerconfig.h"
 
 #include <kurlrequester.h>
+#include <QFileDialog>
 
 extern const char * strMPlayerGroup;
 
@@ -1051,8 +1051,28 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileNewWindow()
     slotStatusMsg(i18n("Ready."));
 }
 
+static bool findOpenLocation(QStandardPaths::StandardLocation type, QString* dir)
+{
+    QStringList dirs = QStandardPaths::standardLocations(type);
+    for (int i = 0; i < dirs.size(); ++i) {
+        if (QDir(dirs[i]).exists()) {
+            *dir = dirs[i];
+            return true;
+        }
+    }
+    return false;
+}
+
 KDE_NO_EXPORT void KMPlayerApp::slotFileOpen () {
-    KUrl::List urls = KFileDialog::getOpenUrls (QString (), i18n ("*|All Files"), this, i18n ("Open File"));
+    QString dir;
+    if (!(findOpenLocation(QStandardPaths::MoviesLocation, &dir)
+                || findOpenLocation(QStandardPaths::MusicLocation, &dir)
+                || findOpenLocation(QStandardPaths::DesktopLocation, &dir)
+                || findOpenLocation(QStandardPaths::HomeLocation, &dir))) {
+        dir = QString("/");
+    }
+    QList<QUrl> urls = QFileDialog::getOpenFileUrls(this, i18n("Open File"),
+            QUrl::fromLocalFile(dir), i18n ("*|All Files"));
     if (urls.size () == 1) {
         openDocumentFile (urls [0]);
     } else if (urls.size () > 1) {
@@ -1070,8 +1090,21 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const QUrl& url)
 
 }
 
+static bool findSaveLocation(QStandardPaths::StandardLocation type, QString* dir)
+{
+    *dir = QStandardPaths::writableLocation(type);
+    return !dir->isEmpty() && QDir(*dir).exists();
+}
+
 KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
-    QString url = KFileDialog::getSaveFileName (QString (), QString (), this, i18n ("Save File"));
+    QString dir;
+    if (!(findSaveLocation(QStandardPaths::MoviesLocation, &dir)
+                || findSaveLocation(QStandardPaths::MusicLocation, &dir)
+                || findSaveLocation(QStandardPaths::DesktopLocation, &dir)
+                || findSaveLocation(QStandardPaths::HomeLocation, &dir))) {
+        dir = QString("/tmp");
+    }
+    QString url = QFileDialog::getSaveFileName(this, i18n("Save File"), dir + QChar('/'));
     if (!url.isEmpty ()) {
         QFile file (url);
         if (!file.open (QIODevice::WriteOnly | QIODevice::Truncate)) {
