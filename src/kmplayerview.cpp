@@ -53,7 +53,6 @@
 #include <kstatusbar.h>
 #include <kdebug.h>
 #include <klocale.h>
-#include <kapplication.h>
 #include <kactioncollection.h>
 #include <kshortcut.h>
 #include <kfinddialog.h>

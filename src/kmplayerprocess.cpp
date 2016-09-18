@@ -46,7 +46,6 @@
 #include <kfiledialog.h>
 #include <kmessagebox.h>
 #include <klocale.h>
-#include <kapplication.h>
 #include <kstandarddirs.h>
 #include <kshell.h>
 #include <kio/job.h>

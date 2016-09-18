@@ -39,7 +39,6 @@
 
 #include <kconfig.h>
 #include <kconfiggroup.h>
-#include <kapplication.h>
 #include <kurl.h>
 #include <kdebug.h>
 #include <klocale.h>

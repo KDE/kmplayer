@@ -46,7 +46,6 @@
 #include <QtX11Extras/QX11Info>
 
 // include files for KDE
-#include <kapplication.h>
 #include <kdeversion.h>
 #include <kiconloader.h>
 #include <kmessagebox.h>
@@ -1014,7 +1013,7 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
     // KMPlayerVDRSource has to wait for pending commands like mute and quit
     m_player->stop ();
     //static_cast <KMPlayerVDRSource *> (m_player->sources () ["vdrsource"])->waitForConnectionClose ();
-    if (m_played_exit || m_player->settings ()->no_intro || kapp->sessionSaving() ) {
+    if (m_played_exit || m_player->settings ()->no_intro || qApp->isSavingSession()) {
         aboutToCloseWindow();
         return true;
     }

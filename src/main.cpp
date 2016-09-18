@@ -17,38 +17,58 @@ email                :
 #include <unistd.h>
 
 #include "config-kmplayer.h"
-#include <kcmdlineargs.h>
-#include <k4aboutdata.h>
-#include <klocale.h>
-#include <kdemacros.h>
-#include <kapplication.h>
+#include <KAboutData>
+#include <KLocalizedString>
+#if KCrash_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+ #include <KCrash>
+#endif
 
+#include <QCommandLineParser>
+#include <QApplication>
 #include <QPointer>
 #include <qfileinfo.h>
 
 #include "kmplayer.h"
 
 
-extern "C" KDE_EXPORT int kdemain (int argc, char *argv[]) {
+extern "C" Q_DECL_EXPORT int kdemain(int argc, char **argv)
+{
     setsid ();
-    
+
+    QApplication app(argc, argv);
+    app.setApplicationName(QStringLiteral("kwrite"));
+#if KCrash_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    KCrash::initialize();
+#endif
     KLocalizedString::setApplicationDomain("kmplayer");
-    K4AboutData aboutData ("kmplayer", 0, ki18n("KMPlayer"),
-            KMPLAYER_VERSION_STRING,
-            ki18n ("Media player."),
-            K4AboutData::License_GPL,
-            ki18n ("(c) 2002-2009, Koos Vriezen"),
-            KLocalizedString(),
-            I18N_NOOP ("http://kmplayer.kde.org"));
-    aboutData.addAuthor(ki18n("Koos Vriezen"), ki18n("Maintainer"),"koos.vriezen@gmail.com");
-    KCmdLineArgs::init (argc, argv, &aboutData);
-    KCmdLineOptions options;
-    options.add ("+[File]", ki18n ("file to open"));
-    KCmdLineArgs::addCmdLineOptions (options);
+
+    KAboutData aboutData(QStringLiteral("kmplayer"),
+            i18n("KMPlayer"),
+            QStringLiteral(KMPLAYER_VERSION_STRING),
+            i18n("Media player"), KAboutLicense::GPL,
+            i18n("(c) 2002-2016, Koos Vriezen"), QString(), QStringLiteral("http://kmplayer.kde.org"));
+    aboutData.addAuthor(i18n("Koos Vriezen"), i18n("Maintainer"), QStringLiteral("koos.vriezen@gmail.com"));
+    aboutData.setProductName(QByteArray("kmplayer"));
+    KAboutData::setApplicationData(aboutData);
+
+    app.setApplicationName(aboutData.componentName());
+    app.setApplicationDisplayName(aboutData.displayName());
+    app.setOrganizationDomain(aboutData.organizationDomain());
+    app.setApplicationVersion(aboutData.version());
+    QApplication::setWindowIcon(QIcon::fromTheme(QLatin1String("kmplayer")));
+
+    QCommandLineParser parser;
+    aboutData.setupCommandLine(&parser);
+    parser.setApplicationDescription(aboutData.shortDescription());
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.addPositionalArgument(QStringLiteral("File"), i18n("file to open"), i18n("+[File]"));
+    parser.process(app);
+
+    aboutData.processCommandLine(&parser);
 
     KMPlayer::Ids::init();
 
-    KApplication app;
     QPointer <KMPlayerApp> kmplayer;
 
     if (app.isSessionRestored ()) {
@@ -57,21 +77,19 @@ extern "C" KDE_EXPORT int kdemain (int argc, char *argv[]) {
         kmplayer = new KMPlayerApp ();
         kmplayer->show();
 
-        KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
-
-        KUrl url;
-        if (args->count () == 1)
-            url = args->url (0);
-        if (args->count () > 1)
-            for (int i = 0; i < args->count (); i++) {
-                KUrl url = args->url (i);
+        QUrl url;
+        QStringList args = parser.positionalArguments();
+        if (args.size() == 1)
+            url = KUrl(args[0]);
+        if (args.size() > 1)
+            for (int i = 0; i < args.size(); i++) {
+                KUrl url = KUrl(args[i]);
                 if (url.url ().indexOf ("://") < 0)
                     url = KUrl (QFileInfo (url.url ()).absoluteFilePath ());
                 if (url.isValid ())
                     kmplayer->addUrl (url);
             }
         kmplayer->openDocumentFile (url);
-        args->clear ();
     }
     int retvalue = app.exec ();
 

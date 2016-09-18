@@ -39,7 +39,6 @@
 #include <QAbstractNativeEventFilter>
 
 #include <kactioncollection.h>
-#include <kapplication.h>
 #include <kstatusbar.h>
 #include <kshortcut.h>
 #include <klocale.h>
@@ -1905,7 +1904,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view, bool paint_bg)
     //new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
     setFocusPolicy (Qt::ClickFocus);
-    kapp->installNativeEventFilter(this);
+    QCoreApplication::instance()->installNativeEventFilter(this);
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
