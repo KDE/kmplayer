@@ -406,7 +406,7 @@ KDE_NO_EXPORT void MediaInfo::killWGet () {
 /**
  * Gets contents from url and puts it in m_data
  */
-KDE_NO_EXPORT bool MediaInfo::wget (const QString &str, const QString &domain) {
+bool MediaInfo::wget(const QString& str, const QString& domain) {
     clearData ();
     url = str;
 

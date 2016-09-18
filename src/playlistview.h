@@ -48,18 +48,18 @@ class TopPlayItem;
 class KMPLAYER_EXPORT PlayListView : public QTreeView {
     Q_OBJECT
 public:
-    PlayListView (QWidget * parent, View * view, KActionCollection * ac);
-    ~PlayListView ();
+    PlayListView(QWidget* parent, View* view, KActionCollection* ac) KDE_NO_CDTOR_EXPORT;
+    ~PlayListView() KDE_NO_CDTOR_EXPORT;
     void selectItem (const QString & txt);
-    void showAllNodes (TopPlayItem *, bool show=true);
+    void showAllNodes(TopPlayItem*, bool show=true) KDE_NO_EXPORT;
     void setActiveForegroundColor (const QColor & c) { m_active_color = c; }
     const QColor & activeColor () const { return m_active_color; }
     TopPlayItem *rootItem (int id) const;
-    void setFont (const QFont &);
+    void setFont(const QFont&) KDE_NO_EXPORT;
     PlayItem *selectedItem () const;
     NodePtr lastDragNode () const { return m_last_drag; }
     int lastDragTreeId () const { return last_drag_tree_id; }
-    bool isDragValid (QDropEvent *de);
+    bool isDragValid(QDropEvent* de) KDE_NO_EXPORT;
     void paintCell (const QAbstractItemDelegate *,
                     QPainter *, const QStyleOptionViewItem&, const QModelIndex);
     QModelIndex index (PlayItem *item) const;
@@ -69,23 +69,23 @@ signals:
     void prepareMenu (KMPlayer::PlayItem * item, QMenu * menu);
     void dropped (QDropEvent *event, KMPlayer::PlayItem *item);
 protected:
-    void dragEnterEvent (QDragEnterEvent *event);
-    void dropEvent (QDropEvent *event);
-    void dragMoveEvent (QDragMoveEvent *event);
-    void drawBranches(QPainter *, const QRect &, const QModelIndex &) const {}
-    void contextMenuEvent (QContextMenuEvent *event);
+    void dragEnterEvent(QDragEnterEvent* event) KDE_NO_EXPORT;
+    void dropEvent(QDropEvent* event) KDE_NO_EXPORT;
+    void dragMoveEvent(QDragMoveEvent* event) KDE_NO_EXPORT;
+    void drawBranches(QPainter*, const QRect&, const QModelIndex&) const KDE_NO_EXPORT {}
+    void contextMenuEvent(QContextMenuEvent* event) KDE_NO_EXPORT;
 private slots:
-    void slotItemExpanded (const QModelIndex&);
-    void copyToClipboard ();
-    void addBookMark ();
-    void toggleShowAllNodes ();
-    void slotCurrentItemChanged (QModelIndex, QModelIndex);
-    void modelUpdating (const QModelIndex &);
-    void modelUpdated (const QModelIndex&, const QModelIndex&, bool, bool);
-    void renameSelected ();
-    void slotFind ();
-    void slotFindOk ();
-    void slotFindNext ();
+    void slotItemExpanded(const QModelIndex&) KDE_NO_EXPORT;
+    void copyToClipboard() KDE_NO_EXPORT;
+    void addBookMark() KDE_NO_EXPORT;
+    void toggleShowAllNodes() KDE_NO_EXPORT;
+    void slotCurrentItemChanged(QModelIndex, QModelIndex) KDE_NO_EXPORT;
+    void modelUpdating(const QModelIndex&) KDE_NO_EXPORT;
+    void modelUpdated(const QModelIndex&, const QModelIndex&, bool, bool) KDE_NO_EXPORT;
+    void renameSelected() KDE_NO_EXPORT;
+    void slotFind() KDE_NO_EXPORT;
+    void slotFindOk() KDE_NO_EXPORT;
+    void slotFindNext() KDE_NO_EXPORT;
 private:
     View * m_view;
     QMenu * m_itemmenu;

@@ -40,13 +40,13 @@ class PartBase;
 class Preferences;
 class View;
 
-class OutputDriver {
+class KDE_NO_EXPORT OutputDriver {
 public:
     const char * driver;
     const QString description;
 };
 
-class ColorSetting {
+class KDE_NO_EXPORT ColorSetting {
 public:
     QString title;
     QString option;
@@ -61,7 +61,7 @@ public:
     } target;
 };
 
-class FontSetting {
+class KDE_NO_EXPORT FontSetting {
 public:
     QString title;
     QString option; // for ini file
@@ -99,13 +99,13 @@ public:
 class KMPLAYER_EXPORT Settings : public QObject {
     Q_OBJECT
 public:
-    Settings (PartBase *, KSharedConfigPtr part);
-    ~Settings ();
+    Settings (PartBase *, KSharedConfigPtr part) KDE_NO_CDTOR_EXPORT;
+    ~Settings () KDE_NO_CDTOR_EXPORT;
     bool createDialog () KDE_NO_EXPORT;
     void show (const char * pagename = 0L);
     void addPage (PreferencesPage *);
     void removePage (PreferencesPage *);
-    void applyColorSetting (bool only_changed_ones);
+    void applyColorSetting (bool only_changed_ones) KDE_NO_EXPORT;
     Preferences *configDialog() const { return configdialog; }
     View * defaultView ();
     KSharedConfigPtr kconfig () { return m_config; }
@@ -194,8 +194,8 @@ public slots:
     void readConfig () KDE_NO_EXPORT;
     void writeConfig ();
 private slots:
-    void okPressed ();
-    void getHelp ();
+    void okPressed () KDE_NO_EXPORT;
+    void getHelp () KDE_NO_EXPORT;
 private:
     Preferences * configdialog;
     KSharedConfigPtr m_config;
