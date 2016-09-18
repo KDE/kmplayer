@@ -435,7 +435,7 @@ public:
     Document * document ();
     virtual Mrl * mrl ();
     virtual Node *childFromTag (const QString & tag);
-    void characterData (const QString & s);
+    void characterData(const QString& s) KDE_NO_EXPORT;
     QString innerText () const;
     QString innerXML () const;
     QString outerXML () const;
@@ -466,7 +466,7 @@ public:
     /*
      * Dispatch Event to all connectors of MessageType
      */
-    void deliver (MessageType msg, void *content);
+    void deliver(MessageType msg, void *content) KDE_NO_EXPORT;
     /**
      * Alternative to event handling is the Visitor pattern
      */
@@ -516,14 +516,14 @@ public:
     virtual void reset ();
     virtual void clear ();
     void clearChildren ();
-    void replaceChild (NodePtr _new, NodePtr old);
+    void replaceChild(NodePtr _new, NodePtr old) KDE_NO_EXPORT;
     /*
      * Get rid of whitespace only text nodes
      */
     void normalize ();
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
 
-    NodeList childNodes () const;
+    NodeList childNodes() const KDE_NO_EXPORT;
     void setState (State nstate);
     /*
      * Open tag is found by parser, attributes are set
@@ -534,7 +534,7 @@ public:
      */
     virtual void closed ();
 protected:
-    Node (NodePtr & d, short _id=0);
+    Node(NodePtr& d, short _id=0) KDE_NO_CDTOR_EXPORT;
     NodePtr m_doc;
 public:
     State state;
@@ -890,7 +890,7 @@ public:
  */
 class KMPLAYER_EXPORT TextNode : public Node {
 public:
-    TextNode (NodePtr & d, const QString & s, short _id = id_node_text);
+    TextNode(NodePtr& d, const QString& s, short _id = id_node_text) KDE_NO_CDTOR_EXPORT;
     KDE_NO_CDTOR_EXPORT ~TextNode () {}
     void appendText (const QString & s);
     void setText (const QString & txt) { text = txt; }
@@ -906,7 +906,7 @@ protected:
  */
 class KMPLAYER_EXPORT CData : public TextNode {
 public:
-    CData (NodePtr & d, const QString & s);
+    CData(NodePtr& d, const QString& s) KDE_NO_CDTOR_EXPORT;
     KDE_NO_CDTOR_EXPORT ~CData () {}
     const char * nodeName () const { return "#cdata"; }
 };
@@ -933,7 +933,7 @@ class KMPLAYER_EXPORT GenericURL : public Mrl {
 public:
     GenericURL(NodePtr &d, const QString &s, const QString &n=QString ());
     KDE_NO_EXPORT const char * nodeName () const { return "url"; }
-    void closed ();
+    void closed() KDE_NO_EXPORT;
 };
 
 /**

@@ -194,7 +194,7 @@ public:
     virtual void pause () {}
     virtual void unpause () {}
     virtual void stop () {}
-    virtual void destroy ();
+    virtual void destroy() KDE_NO_EXPORT;
 
     Mrl *mrl ();
 
@@ -214,11 +214,11 @@ public:
     MediaInfo (Node *node, MediaManager::MediaType type);
     ~MediaInfo ();
 
-    bool wget (const QString &url, const QString &from_domain=QString ());
-    void killWGet ();
-    void clearData ();
-    QString mimetype ();
-    bool downloading () const;
+    bool wget(const QString& url, const QString& from_domain=QString());
+    void killWGet() KDE_NO_EXPORT;
+    void clearData() KDE_NO_EXPORT;
+    QString mimetype() KDE_NO_EXPORT;
+    bool downloading() const KDE_NO_EXPORT;
     void create ();
 
     QByteArray &rawData () { return data; }
@@ -229,15 +229,15 @@ public:
     MediaManager::MediaType type;
 
 private slots:
-    void slotResult (KJob *);
-    void slotData (KIO::Job *, const QByteArray &qb);
-    void slotMimetype (KIO::Job *job, const QString &mimestr);
-    void cachePreserveRemoved (const QString &);
+    void slotResult(KJob*) KDE_NO_EXPORT;
+    void slotData(KIO::Job*, const QByteArray& qb) KDE_NO_EXPORT;
+    void slotMimetype (KIO::Job* job, const QString& mimestr) KDE_NO_EXPORT;
+    void cachePreserveRemoved(const QString&) KDE_NO_EXPORT;
 
 private:
-    void ready ();
-    bool readChildDoc ();
-    void setMimetype (const QString &);
+    void ready() KDE_NO_EXPORT;
+    bool readChildDoc() KDE_NO_EXPORT;
+    void setMimetype(const QString&) KDE_NO_EXPORT;
 
     Node *node;
     KIO::Job *job;

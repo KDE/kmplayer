@@ -71,7 +71,7 @@ public:
     virtual void setUrl (const QString &url);
     virtual bool authoriseUrl (const QString &url);
     virtual void init ();
-    virtual void activate ();
+    virtual void activate () KDE_NO_EXPORT;
     virtual void deactivate ();
     virtual void forward ();
     virtual void backward ();
@@ -122,9 +122,9 @@ public:
     void updateStatus (const QString & msg);
 
     // these are called from Process
-    void changeURL (const QString & url);
+    void changeURL (const QString & url) KDE_NO_EXPORT;
     void updateTree (bool full=true, bool force=false);
-    void setLanguages (const QStringList & alang, const QStringList & slang);
+    void setLanguages(const QStringList& alang, const QStringList& slang) KDE_NO_EXPORT;
     void recorderPlaying ();
     void recorderStopped ();
     void stopRecording ();
@@ -143,15 +143,15 @@ public slots:
     void adjustVolume (int incdec);
     bool playing () const;
     void showConfigDialog ();
-    void showPlayListWindow ();
-    void slotPlayerMenu (QAction*);
+    void showPlayListWindow () KDE_NO_EXPORT;
+    void slotPlayerMenu (QAction*) KDE_NO_EXPORT;
     void back ();
     void forward ();
-    void addBookMark (const QString & title, const QString & url);
-    void volumeChanged (int);
+    void addBookMark (const QString & title, const QString & url) KDE_NO_EXPORT;
+    void volumeChanged (int) KDE_NO_EXPORT;
     void increaseVolume ();
     void decreaseVolume ();
-    void setPosition (int position, int length);
+    void setPosition(int position, int length) KDE_NO_EXPORT;
     virtual void setLoaded (int percentage);
     virtual void processCreated (Process *);
 public:
@@ -160,11 +160,11 @@ public:
     virtual bool hasLength (void) const;
     virtual qlonglong length (void) const;
     virtual void seek (qlonglong);
-    void toggleFullScreen ();
-    bool isPlaying ();
+    void toggleFullScreen () KDE_NO_EXPORT;
+    bool isPlaying () KDE_NO_EXPORT;
 
     virtual QString doEvaluate (const QString &script);
-    void showControls (bool show);
+    void showControls (bool show) KDE_NO_EXPORT;
     QString getStatus ();
 signals:
     void sourceChanged (KMPlayer::Source * old, KMPlayer::Source * nw);
@@ -188,22 +188,22 @@ protected:
     virtual void playingStarted ();
     virtual void playingStopped ();
 protected slots:
-    void posSliderPressed ();
-    void posSliderReleased ();
-    void positionValueChanged (int val);
-    void contrastValueChanged (int val);
-    void brightnessValueChanged (int val);
-    void hueValueChanged (int val);
-    void saturationValueChanged (int val);
-    void sourceHasChangedAspects ();
-    void fullScreen ();
-    void playListItemClicked (const QModelIndex &);
-    void playListItemActivated (const QModelIndex &);
+    void posSliderPressed () KDE_NO_EXPORT;
+    void posSliderReleased () KDE_NO_EXPORT;
+    void positionValueChanged (int val) KDE_NO_EXPORT;
+    void contrastValueChanged (int val) KDE_NO_EXPORT;
+    void brightnessValueChanged (int val) KDE_NO_EXPORT;
+    void hueValueChanged (int val) KDE_NO_EXPORT;
+    void saturationValueChanged (int val) KDE_NO_EXPORT;
+    void sourceHasChangedAspects () KDE_NO_EXPORT;
+    void fullScreen () KDE_NO_EXPORT;
+    void playListItemClicked (const QModelIndex &) KDE_NO_EXPORT;
+    void playListItemActivated (const QModelIndex &) KDE_NO_EXPORT;
     void slotPlayingStarted ();
     void slotPlayingStopped ();
     void settingsChanged ();
-    void audioSelected (QAction*);
-    void subtitleSelected (QAction*);
+    void audioSelected (QAction*) KDE_NO_EXPORT;
+    void subtitleSelected (QAction*) KDE_NO_EXPORT;
 protected:
     KUrl m_docbase;
     NodePtr m_record_doc;

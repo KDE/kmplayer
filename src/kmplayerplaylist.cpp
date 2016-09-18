@@ -570,7 +570,7 @@ namespace KMPlayer {
     };
 }
 
-KDE_NO_EXPORT QString ParamValue::value () {
+QString ParamValue::value() {
     return modifications && modifications->size ()
         ? modifications->back () : val;
 }

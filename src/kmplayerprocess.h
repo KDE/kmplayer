@@ -80,7 +80,7 @@ public:
     WId widget ();
     void setSource (Source * src) { m_source = src; }
     void setState (IProcess::State newstate);
-    virtual bool grabPicture (const QString &file, int frame);
+    virtual bool grabPicture (const QString &file, int frame) KDE_NO_EXPORT;
     Mrl *mrl () const;
 
     virtual bool ready ();
@@ -101,7 +101,7 @@ public:
 signals:
     void grabReady (const QString & path);
 protected slots:
-    void rescheduledStateChanged ();
+    void rescheduledStateChanged () KDE_NO_EXPORT;
     void result (KJob *);
     void processStateChanged (QProcess::ProcessState);
 protected:
@@ -128,19 +128,19 @@ class MPlayerBase : public Process {
 public:
     MPlayerBase (QObject *parent, ProcessInfo *, Settings *);
     ~MPlayerBase ();
-    void initProcess ();
-    virtual void stop ();
-    virtual void quit ();
+    void initProcess () KDE_NO_EXPORT;
+    virtual void stop () KDE_NO_EXPORT;
+    virtual void quit () KDE_NO_EXPORT;
 protected:
-    bool sendCommand (const QString &);
+    bool sendCommand (const QString &) KDE_NO_EXPORT;
     bool removeQueued (const char *cmd);
     QList<QByteArray> commands;
     bool m_needs_restarted;
 protected slots:
-    virtual void processStopped ();
+    virtual void processStopped () KDE_NO_EXPORT;
 private slots:
-    void dataWritten (qint64);
-    void processStopped (int, QProcess::ExitStatus);
+    void dataWritten (qint64) KDE_NO_EXPORT;
+    void processStopped (int, QProcess::ExitStatus) KDE_NO_EXPORT;
 };
 
 /*
@@ -155,28 +155,28 @@ public:
 class KDE_EXPORT MPlayer : public MPlayerBase {
     Q_OBJECT
 public:
-    MPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings);
-    ~MPlayer ();
+    MPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings) KDE_NO_CDTOR_EXPORT;
+    ~MPlayer () KDE_NO_CDTOR_EXPORT;
 
-    virtual void init ();
-    virtual bool grabPicture (const QString &file, int pos);
+    virtual void init () KDE_NO_EXPORT;
+    virtual bool grabPicture (const QString &file, int pos) KDE_NO_EXPORT;
     virtual void setAudioLang (int id);
     virtual void setSubtitle (int id);
-    virtual bool deMediafiedPlay ();
-    virtual void stop ();
-    virtual void pause ();
-    virtual void unpause ();
-    virtual bool seek (int pos, bool absolute);
-    virtual void volume (int pos, bool absolute);
-    virtual bool saturation (int pos, bool absolute);
-    virtual bool hue (int pos, bool absolute);
-    virtual bool contrast (int pos, bool absolute);
-    virtual bool brightness (int pos, bool absolute);
-    bool ready ();
+    virtual bool deMediafiedPlay () KDE_NO_EXPORT;
+    virtual void stop () KDE_NO_EXPORT;
+    virtual void pause () KDE_NO_EXPORT;
+    virtual void unpause () KDE_NO_EXPORT;
+    virtual bool seek (int pos, bool absolute) KDE_NO_EXPORT;
+    virtual void volume (int pos, bool absolute) KDE_NO_EXPORT;
+    virtual bool saturation (int pos, bool absolute) KDE_NO_EXPORT;
+    virtual bool hue (int pos, bool absolute) KDE_NO_EXPORT;
+    virtual bool contrast (int pos, bool absolute) KDE_NO_EXPORT;
+    virtual bool brightness (int pos, bool absolute) KDE_NO_EXPORT;
+    bool ready () KDE_NO_EXPORT;
 protected:
-    void processStopped ();
+    void processStopped () KDE_NO_EXPORT;
 private slots:
-    void processOutput ();
+    void processOutput () KDE_NO_EXPORT;
 private:
     QString m_process_output;
     QString m_grab_file;
@@ -389,14 +389,14 @@ public:
 class KMPLAYER_EXPORT FFMpeg : public Process {
     Q_OBJECT
 public:
-    FFMpeg (QObject *parent, ProcessInfo *pinfo, Settings *settings);
-    ~FFMpeg ();
-    virtual void init ();
+    FFMpeg (QObject *parent, ProcessInfo *pinfo, Settings *settings) KDE_NO_CDTOR_EXPORT;
+    ~FFMpeg () KDE_NO_CDTOR_EXPORT;
+    virtual void init () KDE_NO_EXPORT;
     virtual bool deMediafiedPlay ();
-    virtual void stop ();
-    virtual void quit ();
+    virtual void stop () KDE_NO_EXPORT;
+    virtual void quit () KDE_NO_EXPORT;
 private slots:
-    void processStopped (int, QProcess::ExitStatus);
+    void processStopped (int, QProcess::ExitStatus) KDE_NO_EXPORT;
 };
 
 /*

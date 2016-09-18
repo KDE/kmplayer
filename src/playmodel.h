@@ -112,24 +112,24 @@ public:
         Moveable = 0x10, Deleteable = 0x20
     };
 
-    PlayModel (QObject *parent, KIconLoader *);
-    ~PlayModel ();
+    PlayModel(QObject *parent, KIconLoader *) KDE_NO_CDTOR_EXPORT;
+    ~PlayModel() KDE_NO_CDTOR_EXPORT;
 
-    QVariant data (const QModelIndex &index, int role) const;
-    bool setData (const QModelIndex&, const QVariant& v, int role);
-    Qt::ItemFlags flags (const QModelIndex &index) const;
+    QVariant data (const QModelIndex &index, int role) const KMPLAYER_NO_EXPORT;
+    bool setData (const QModelIndex&, const QVariant& v, int role) KMPLAYER_NO_EXPORT;
+    Qt::ItemFlags flags (const QModelIndex &index) const KMPLAYER_NO_EXPORT;
     QVariant headerData (int section, Qt::Orientation orientation,
-            int role = Qt::DisplayRole) const;
+            int role = Qt::DisplayRole) const KMPLAYER_NO_EXPORT;
     QModelIndex index (int row, int column,
-            const QModelIndex &parent = QModelIndex()) const;
-    QModelIndex parent (const QModelIndex &index) const;
-    bool hasChildren (const QModelIndex& parent = QModelIndex ()) const;
-    int rowCount (const QModelIndex &parent = QModelIndex()) const;
-    int columnCount (const QModelIndex &parent = QModelIndex()) const;
+            const QModelIndex &parent = QModelIndex()) const KMPLAYER_NO_EXPORT;
+    QModelIndex parent (const QModelIndex &index) const KMPLAYER_NO_EXPORT;
+    bool hasChildren (const QModelIndex& parent = QModelIndex ()) const KMPLAYER_NO_EXPORT;
+    int rowCount (const QModelIndex &parent = QModelIndex()) const KMPLAYER_NO_EXPORT;
+    int columnCount (const QModelIndex &parent = QModelIndex()) const KMPLAYER_NO_EXPORT;
 
-    PlayItem *rootItem () const { return root_item; }
-    QModelIndex indexFromItem (PlayItem *item) const;
-    PlayItem *itemFromIndex (const QModelIndex& index) const;
+    PlayItem *rootItem () const KMPLAYER_NO_EXPORT { return root_item; }
+    QModelIndex indexFromItem (PlayItem *item) const KMPLAYER_NO_EXPORT;
+    PlayItem *itemFromIndex (const QModelIndex& index) const KMPLAYER_NO_EXPORT;
 
     int addTree (NodePtr r, const QString &src, const QString &ico, int flgs);
     PlayItem *updateTree (TopPlayItem *ritem, NodePtr active);
@@ -141,12 +141,12 @@ public slots:
     void updateTree (int id, NodePtr root, NodePtr active, bool sel, bool open);
 
 private slots:
-    void updateTrees ();
+    void updateTrees() KMPLAYER_NO_EXPORT;
 
 private:
     PlayItem *populate (Node *e, Node *focus,
             TopPlayItem *root, PlayItem *item,
-            PlayItem **curitem);
+            PlayItem **curitem) KMPLAYER_NO_EXPORT;
     SharedPtr <TreeUpdate> tree_update;
     QPixmap auxiliary_pix;
     QPixmap config_pix;

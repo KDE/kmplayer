@@ -92,7 +92,7 @@ public:
     virtual void setUrl (const QString &url);
     void insertURL (NodePtr mrl, const QString & url, const QString & title=QString());
     KDE_NO_EXPORT void setSubURL (const KUrl & url) { m_sub_url = url; }
-    void setLanguages (LangInfoPtr alang, LangInfoPtr slang);
+    void setLanguages(LangInfoPtr alang, LangInfoPtr slang) KDE_NO_EXPORT;
     KDE_NO_EXPORT void setWidth (int w) { m_width = w; }
     KDE_NO_EXPORT void setHeight (int h) { m_height = h; }
     virtual void setDimensions (NodePtr, int w, int h);
@@ -100,14 +100,14 @@ public:
     /* setLength (len) set length in deci-seconds */
     void setLength (NodePtr, int len);
     /* setPosition (pos) set position in deci-seconds */
-    void setPosition (int pos);
+    void setPosition(int pos) KDE_NO_EXPORT;
     virtual void setIdentified (bool b = true);
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
     KDE_NO_EXPORT bool autoPlay () const { return m_auto_play; }
     KDE_NO_EXPORT void setAvoidRedirects (bool b) { m_avoid_redirects = b; }
     KDE_NO_EXPORT bool avoidRedirects () const { return m_avoid_redirects; }
     void setTitle (const QString & title);
-    void setLoading (int percentage);
+    void setLoading(int percentage) KDE_NO_EXPORT;
 
     virtual QString prettyName ();
     virtual void activate () = 0;
@@ -129,8 +129,8 @@ signals:
     void titleChanged (const QString & title);
 public slots:
     void slotActivate ();
-    void setAudioLang (int);
-    void setSubtitle (int);
+    void setAudioLang(int) KDE_NO_EXPORT;
+    void setSubtitle(int) KDE_NO_EXPORT;
 protected:
     void timerEvent (QTimerEvent *);
     /**

@@ -53,7 +53,7 @@ typedef KStatusBar StatusBar;
 /*
  * The console GUI
  */
-class TextEdit : public QTextEdit {
+class KDE_NO_EXPORT TextEdit : public QTextEdit {
 public:
     TextEdit (QWidget * parent, View * view);
 protected:
@@ -65,7 +65,7 @@ private:
 /*
  * The infowindow GUI
  */
-class InfoWindow : public QTextEdit {
+class KDE_NO_EXPORT InfoWindow : public QTextEdit {
 public:
     InfoWindow (QWidget * parent, View * view);
     KDE_NO_EXPORT View * view () const { return m_view; }
@@ -98,13 +98,13 @@ public:
         SB_Hide, SB_Show, SB_Only /* no video widget */
     };
 
-    View (QWidget *parent);
-    ~View();
+    View(QWidget* parent) KDE_NO_CDTOR_EXPORT;
+    ~View() KDE_NO_CDTOR_EXPORT;
 
     void addText (const QString &, bool eol=false);
-    void init (KActionCollection * ac, bool transparent);
+    void init(KActionCollection* ac, bool transparent) KDE_NO_EXPORT;
     void initDock (QWidget *central);
-    void reset ();
+    void reset() KDE_NO_EXPORT;
     //void print(QPrinter *pPrinter);
 
     TextEdit * console () const { return m_multiedit; }
@@ -120,12 +120,12 @@ public:
     void setKeepSizeRatio (bool b);
     void setControlPanelMode (ControlPanelMode m);
     void setStatusBarMode (StatusBarMode m);
-    void setEraseColor (const QColor &);
+    void setEraseColor(const QColor&) KDE_NO_EXPORT;
     KDE_NO_EXPORT ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
     KDE_NO_EXPORT StatusBarMode statusBarMode () const { return m_statusbar_mode; }
-    void delayedShowButtons (bool show);
+    void delayedShowButtons(bool show) KDE_NO_EXPORT;
     bool isFullScreen () const;
-    int statusBarHeight () const KMPLAYER_NO_MBR_EXPORT;
+    int statusBarHeight() const KMPLAYER_NO_EXPORT;
     KDE_NO_EXPORT bool editMode () const { return m_edit_mode; }
 #ifndef KMPLAYER_WITH_CAIRO
     bool setPicture (const QString & path);
@@ -133,18 +133,18 @@ public:
     void setNoInfoMessages (bool b) { m_no_info = b; }
     void setViewOnly ();
     void setEditMode (TopPlayItem *, bool enable=true);
-    void dragEnterEvent (QDragEnterEvent *);
-    void dropEvent (QDropEvent *);
+    void dragEnterEvent(QDragEnterEvent*) KDE_NO_EXPORT;
+    void dropEvent(QDropEvent*) KDE_NO_EXPORT;
     KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
     /* raise video widget, might (auto) hides panel */
-    void videoStart ();
-    void playingStart ();
+    void videoStart() KDE_NO_EXPORT;
+    void playingStart() KDE_NO_EXPORT;
     /* shows panel */
-    void playingStop ();
-    void mouseMoved (int x, int y) KMPLAYER_NO_MBR_EXPORT;
+    void playingStop() KDE_NO_EXPORT;
+    void mouseMoved(int x, int y) KMPLAYER_NO_EXPORT;
 public slots:
     void fullScreen ();
-    void updateLayout ();
+    void updateLayout() KDE_NO_EXPORT;
     void toggleShowPlaylist ();
     void toggleVideoConsoleWindow ();
     void setInfoMessage (const QString & msg);
@@ -156,7 +156,7 @@ signals:
     void windowVideoConsoleToggled (bool show);
 protected:
     void leaveEvent (QEvent *) KDE_NO_EXPORT;
-    void timerEvent (QTimerEvent *) KDE_NO_EXPORT;
+    void timerEvent(QTimerEvent*) KDE_NO_EXPORT;
 private:
     // console output
     TextEdit * m_multiedit;
