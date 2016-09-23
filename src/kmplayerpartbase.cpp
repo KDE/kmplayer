@@ -1558,6 +1558,8 @@ QString URLSource::prettyName () {
         newurl += dir + file;
         return i18n ("URL - ") + newurl;
     }
+    if (m_url.isLocalFile())
+        return i18n ("URL - ") + m_url.toLocalFile();
     return i18n ("URL - ") + m_url.prettyUrl ();
 }
 

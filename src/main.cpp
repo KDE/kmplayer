@@ -30,6 +30,13 @@ email                :
 
 #include "kmplayer.h"
 
+static QUrl makeUrl(const QString& link)
+{
+    QFileInfo info(link);
+    if (info.exists())
+        return QUrl::fromLocalFile(info.absoluteFilePath());
+    return QUrl::fromUserInput(link);
+}
 
 extern "C" Q_DECL_EXPORT int kdemain(int argc, char **argv)
 {
@@ -80,15 +87,14 @@ extern "C" Q_DECL_EXPORT int kdemain(int argc, char **argv)
         QUrl url;
         QStringList args = parser.positionalArguments();
         if (args.size() == 1)
-            url = KUrl(args[0]);
-        if (args.size() > 1)
+            url = makeUrl(args[0]);
+        if (args.size() > 1) {
             for (int i = 0; i < args.size(); i++) {
-                KUrl url = KUrl(args[i]);
-                if (url.url ().indexOf ("://") < 0)
-                    url = KUrl (QFileInfo (url.url ()).absoluteFilePath ());
-                if (url.isValid ())
-                    kmplayer->addUrl (url);
+                QUrl url1 = makeUrl(args[i]);
+                if (url1.isValid())
+                    kmplayer->addUrl(url1);
             }
+        }
         kmplayer->openDocumentFile (url);
     }
     int retvalue = app.exec ();
