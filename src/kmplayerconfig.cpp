@@ -449,13 +449,27 @@ void Settings::show (const char * pagename) {
         colors[i].newcolor = colors[i].color;
     for (int i = 0; i < int (FontSetting::last_target); i++)
         fonts[i].newfont = fonts[i].font;
+
+    QString current = m_player->source()->url().prettyUrl();
+    if (!current.isEmpty() && !urllist.contains(current))
+        urllist.push_front(current);
     configdialog->m_SourcePageURL->urllist->clear ();
     configdialog->m_SourcePageURL->urllist->insertItems (0, urllist);
-    configdialog->m_SourcePageURL->urllist->setCurrentItem (m_player->source ()->url ().prettyUrl ());
+    if (!current.isEmpty())
+        configdialog->m_SourcePageURL->urllist->setCurrentText(current);
+    else
+        configdialog->m_SourcePageURL->urllist->setCurrentIndex(-1);
+    current = m_player->source()->subUrl().prettyUrl();
+    if (!current.isEmpty() && !sub_urllist.contains(current))
+        sub_urllist.push_front(current);
     configdialog->m_SourcePageURL->sub_urllist->clear ();
     configdialog->m_SourcePageURL->sub_urllist->insertItems (0, sub_urllist);
-    configdialog->m_SourcePageURL->sub_urllist->setCurrentItem (m_player->source ()->subUrl ().prettyUrl ());
+    if (!current.isEmpty())
+        configdialog->m_SourcePageURL->sub_urllist->setCurrentText(current);
+    else
+        configdialog->m_SourcePageURL->sub_urllist->setCurrentIndex(-1);
     configdialog->m_SourcePageURL->changed = false;
+
     configdialog->m_SourcePageURL->prefBitRate->setText (QString::number (prefbitrate));
     configdialog->m_SourcePageURL->maxBitRate->setText (QString::number (maxbitrate));
 

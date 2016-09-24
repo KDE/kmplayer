@@ -368,7 +368,7 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     urllist = new KComboBox (true);
     urllist->setMaxCount (20);
     urllist->setDuplicatesEnabled (false); // not that it helps much :(
-    url = new KUrlRequester(urllist);
+    url = new KUrlRequester(urllist, NULL);
     url->setWhatsThis(i18n ("Location of the playable item"));
     //url->setShowLocalProtocol (true);
     url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
@@ -376,7 +376,7 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     sub_urllist = new KComboBox(true);
     sub_urllist->setMaxCount (20);
     sub_urllist->setDuplicatesEnabled (false); // not that it helps much :(
-    sub_url = new KUrlRequester(sub_urllist);
+    sub_url = new KUrlRequester(sub_urllist, NULL);
     sub_url->setWhatsThis(i18n ("Optional location of a file containing the subtitles of the URL above"));
     sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
     backend = new QListWidget;
@@ -427,9 +427,9 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     vbox->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     setLayout(vbox);
 
-    connect (urllist, SIGNAL(currentTextChanged (const QString &)),
+    connect (url, SIGNAL(textChanged(const QString&)),
              this, SLOT (slotTextChanged (const QString &)));
-    connect (sub_urllist, SIGNAL(currentTextChanged (const QString &)),
+    connect (sub_url, SIGNAL(textChanged(const QString&)),
              this, SLOT (slotTextChanged (const QString &)));
 }
 
