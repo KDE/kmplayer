@@ -19,9 +19,6 @@ email                :
 #include "config-kmplayer.h"
 #include <KAboutData>
 #include <KLocalizedString>
-#if KCrash_VERSION >= QT_VERSION_CHECK(5, 15, 0)
- #include <KCrash>
-#endif
 
 #include <QCommandLineParser>
 #include <QApplication>
@@ -44,9 +41,6 @@ extern "C" Q_DECL_EXPORT int kdemain(int argc, char **argv)
 
     QApplication app(argc, argv);
     app.setApplicationName(QStringLiteral("kwrite"));
-#if KCrash_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-    KCrash::initialize();
-#endif
     KLocalizedString::setApplicationDomain("kmplayer");
 
     KAboutData aboutData(QStringLiteral("kmplayer"),
