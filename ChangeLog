@@ -1,3 +1,8 @@
+Changes since version 0.12.0a
+- Fix url links update in config dialog
+- Open file now defaults to Videos or Music user directory
+- Fix gcc-6 warnings about export mismatch
+- Support QT_SCREEN_SCALE_FACTORS for HiPDI
 Changes since version 0.12.0
 - Fix drag&drop into playlist on an item
 - Get rid of more KDE4 support classes
