@@ -63,12 +63,11 @@ add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
 MESSAGE("extra ${CAIROCflags} ${GLibDBusCflags}  libs ${CAIROLinkFlags} ${GLibDBusLinkFlags}")
 
 SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES COMPILE_FLAGS
-    "${CAIROCflags} ${GLibDBusCflags}")
+    "${CAIROCflags}")
 
 target_link_libraries(kmplayercommon
    LINK_PRIVATE
   ${CAIROLinkFlags}
-  ${GLibDBusLinkFlags}
   KF5::KDELibs4Support
   KF5::Parts
   ${XCB_LIBRARIES}
