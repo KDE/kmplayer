@@ -473,7 +473,6 @@ bool PartBase::openUrl (const QUrl &url) {
 
 bool PartBase::openUrl (const KUrl &url) {
     kDebug () << "PartBase::openUrl " << url.url() << url.isValid ();
-    fprintf(stderr, "PartBase::openUrl %s pretty %s valid %d\n", qPrintable(url.url()), qPrintable(url.prettyUrl()), url.isValid ());
     if (!m_view) return false;
     stop ();
     Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
