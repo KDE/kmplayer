@@ -1762,7 +1762,7 @@ public:
         destroyBackingStore ();
         if (gc) {
             xcb_connection_t* connection = QX11Info::connection();
-            xcb_discard_reply(connection, xcb_free_gc(connection, gc).sequence);
+            xcb_free_gc(connection, gc);
         }
     }
     void clearSurface (Surface *s) {
@@ -1810,12 +1810,12 @@ public:
             gc = xcb_generate_id(connection);
             uint32_t values[] = { XCB_GX_COPY, XCB_FILL_STYLE_SOLID,
                 XCB_SUBWINDOW_MODE_CLIP_BY_CHILDREN, 0 };
-            xcb_discard_reply(connection, xcb_create_gc(connection, gc, backing_store,
+            xcb_create_gc(connection, gc, backing_store,
                     XCB_GC_FUNCTION | XCB_GC_FILL_STYLE |
-                    XCB_GC_SUBWINDOW_MODE | XCB_GC_GRAPHICS_EXPOSURES, values).sequence);
+                    XCB_GC_SUBWINDOW_MODE | XCB_GC_GRAPHICS_EXPOSURES, values);
         }
-        xcb_discard_reply(connection, xcb_copy_area(connection, backing_store, m_view_area->winId(),
-                gc, sr.x(), sr.y(), dx, dy, sr.width (), sr.height ()).sequence);
+        xcb_copy_area(connection, backing_store, m_view_area->winId(),
+                gc, sr.x(), sr.y(), dx, dy, sr.width (), sr.height ());
         xcb_flush(connection);
     }
 #endif
@@ -1823,7 +1823,7 @@ public:
 #ifdef KMPLAYER_WITH_CAIRO
         if (backing_store) {
             xcb_connection_t* connection = QX11Info::connection();
-            xcb_discard_reply(connection, xcb_free_pixmap(connection, backing_store).sequence);
+            xcb_free_pixmap(connection, backing_store);
         }
 #endif
         backing_store = 0;
@@ -2391,8 +2391,7 @@ void ViewArea::setVideoWidgetVisible (bool show) {
 static void setXSelectInput(WId wid, uint32_t mask) {
     xcb_connection_t* connection = QX11Info::connection();
     const uint32_t values[] = { mask };
-    xcb_void_cookie_t cookie = xcb_change_window_attributes(connection, wid, XCB_CW_EVENT_MASK, values);
-    xcb_discard_reply(connection, cookie.sequence);
+    xcb_change_window_attributes(connection, wid, XCB_CW_EVENT_MASK, values);
     xcb_query_tree_cookie_t biscuit = xcb_query_tree(connection, wid);
     xcb_query_tree_reply_t *reply = xcb_query_tree_reply(connection, biscuit, NULL);
     if (reply) {
