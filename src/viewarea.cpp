@@ -1892,9 +1892,6 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view, bool paint_bg)
    m_minimal (false),
    m_updaters_enabled (true),
    m_paint_background (paint_bg) {
-#if QT_VERSION >= 0x050600
-    pixel_device_ratio = devicePixelRatioF();
-#endif
     if (!paint_bg)
         setAttribute (Qt::WA_NoSystemBackground, true);
     QPalette palette;
@@ -2030,6 +2027,7 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
 
 KDE_NO_EXPORT void ViewArea::syncVisual () {
 #if QT_VERSION >= 0x050600
+    pixel_device_ratio = devicePixelRatioF();
     int w = (int)(width() * devicePixelRatioF());
     int h = (int)(height() * devicePixelRatioF());
 #else
