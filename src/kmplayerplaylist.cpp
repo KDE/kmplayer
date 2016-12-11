@@ -1599,14 +1599,14 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
     XML_SetCdataSectionHandler (parser, cdataStart, cdataEnd);
     if (!firstline.isEmpty ()) {
         QString str (firstline + QChar ('\n'));
-        QByteArray ba = str.utf8 ();
+        QByteArray ba = str.toUtf8();
         char *buf = ba.data();
         ok = XML_Parse(parser, buf, strlen (buf), false) != XML_STATUS_ERROR;
         if (!ok)
             kWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser);
     }
     if (ok && !in.atEnd ()) {
-        QByteArray ba = in.read ().utf8 ();
+        QByteArray ba = in.read().toUtf8();
         char *buf = ba.data();
         ok = XML_Parse(parser, buf, strlen (buf), true) != XML_STATUS_ERROR;
         if (!ok)
