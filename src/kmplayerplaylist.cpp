@@ -1606,7 +1606,7 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
             kWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser);
     }
     if (ok && !in.atEnd ()) {
-        QByteArray ba = in.read().toUtf8();
+        QByteArray ba = in.readAll().toUtf8();
         char *buf = ba.data();
         ok = XML_Parse(parser, buf, strlen (buf), true) != XML_STATUS_ERROR;
         if (!ok)
