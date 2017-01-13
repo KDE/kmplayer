@@ -1005,19 +1005,19 @@ static const char * strAlwaysBuildIndex = "Always build index";
 static const int non_patterns = 4;
 
 static struct MPlayerPattern {
-    QString caption;
+    KLocalizedString caption;
     const char * name;
     const char * pattern;
 } _mplayer_patterns [] = {
-    { i18n ("Size pattern"), "Movie Size", "VO:.*[^0-9]([0-9]+)x([0-9]+)" },
-    { i18n ("Cache pattern"), "Cache Fill", "Cache fill:[^0-9]*([0-9\\.]+)%" },
-    { i18n ("Position pattern"), "Movie Position", "[AV]:\\s*([0-9\\.]+)" },
-    { i18n ("Index pattern"), "Index Pattern", "Generating Index: +([0-9]+)%" },
-    { i18n ("Reference URL pattern"), "Reference URL Pattern", "Playing\\s+(.*[^\\.])\\.?\\s*$" },
-    { i18n ("Reference pattern"), "Reference Pattern", "Reference Media file" },
-    { i18n ("Start pattern"), "Start Playing", "Start[^ ]* play" },
-    { i18n ("VCD track pattern"), "VCD Tracks", "track ([0-9]+):" },
-    { i18n ("Audio CD tracks pattern"), "CDROM Tracks", "[Aa]udio CD[^0-9]+([0-9]+)[^0-9]tracks" }
+    { ki18n ("Size pattern"), "Movie Size", "VO:.*[^0-9]([0-9]+)x([0-9]+)" },
+    { ki18n ("Cache pattern"), "Cache Fill", "Cache fill:[^0-9]*([0-9\\.]+)%" },
+    { ki18n ("Position pattern"), "Movie Position", "[AV]:\\s*([0-9\\.]+)" },
+    { ki18n ("Index pattern"), "Index Pattern", "Generating Index: +([0-9]+)%" },
+    { ki18n ("Reference URL pattern"), "Reference URL Pattern", "Playing\\s+(.*[^\\.])\\.?\\s*$" },
+    { ki18n ("Reference pattern"), "Reference Pattern", "Reference Media file" },
+    { ki18n ("Start pattern"), "Start Playing", "Start[^ ]* play" },
+    { ki18n ("VCD track pattern"), "VCD Tracks", "track ([0-9]+):" },
+    { ki18n ("Audio CD tracks pattern"), "CDROM Tracks", "[Aa]udio CD[^0-9]+([0-9]+)[^0-9]tracks" }
 };
 
 namespace KMPlayer {
@@ -1050,7 +1050,7 @@ KDE_NO_CDTOR_EXPORT MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * 
     table->setCellWidget (3, 1, new QCheckBox (table->viewport()));
     table->cellWidget (3, 1)->setWhatsThis(i18n ("Allows seeking in indexed files (AVIs)"));
     for (int i = 0; i < int (MPlayerPreferencesPage::pat_last); i++) {
-        table->setItem (i+non_patterns, 0, new QTableWidgetItem (_mplayer_patterns[i].caption));
+        table->setItem (i+non_patterns, 0, new QTableWidgetItem (_mplayer_patterns[i].caption.toString()));
         table->setItem (i+non_patterns, 1, new QTableWidgetItem ());
     }
     for (int i = 0; i < non_patterns + int (MPlayerPreferencesPage::pat_last); i++) {
