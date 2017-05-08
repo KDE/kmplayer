@@ -124,12 +124,8 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
     QString bmfile = KStandardDirs::locate ("data", "kmplayer/bookmarks.xml");
     QString localbmfile = KStandardDirs::locateLocal ("data", "kmplayer/bookmarks.xml");
     if (localbmfile != bmfile) {
-        QProcess p;
-        QStringList args;
-        args << QFile::encodeName (bmfile) << QFile::encodeName (localbmfile);
-        p.start ("/bin/cp", args);
-        kDebug () << "cp " << args.join (" ");
-        p.waitForFinished ();
+        bool bmfileCopied = QFile(bmfile).copy(localbmfile);
+        kDebug() << "bookmarks.xml copied successfully?" << bmfileCopied;
     }
     m_bookmark_manager = KBookmarkManager::managerForFile (localbmfile, "kmplayer");
     m_bookmark_owner = new BookmarkOwner (this);
