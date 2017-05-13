@@ -40,7 +40,6 @@ extern "C" Q_DECL_EXPORT int kdemain(int argc, char **argv)
     setsid ();
 
     QApplication app(argc, argv);
-    app.setApplicationName(QStringLiteral("kwrite"));
     KLocalizedString::setApplicationDomain("kmplayer");
 
     KAboutData aboutData(QStringLiteral("kmplayer"),
@@ -50,12 +49,10 @@ extern "C" Q_DECL_EXPORT int kdemain(int argc, char **argv)
             i18n("(c) 2002-2016, Koos Vriezen"), QString(), QStringLiteral("http://kmplayer.kde.org"));
     aboutData.addAuthor(i18n("Koos Vriezen"), i18n("Maintainer"), QStringLiteral("koos.vriezen@gmail.com"));
     aboutData.setProductName(QByteArray("kmplayer"));
+    aboutData.setOrganizationDomain(QByteArray("kde.org"));
+    aboutData.setDesktopFileName(QStringLiteral("org.kde.kmplayer"));
     KAboutData::setApplicationData(aboutData);
 
-    app.setApplicationName(aboutData.componentName());
-    app.setApplicationDisplayName(aboutData.displayName());
-    app.setOrganizationDomain(aboutData.organizationDomain());
-    app.setApplicationVersion(aboutData.version());
     QApplication::setWindowIcon(QIcon::fromTheme(QLatin1String("kmplayer")));
 
     QCommandLineParser parser;
