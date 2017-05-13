@@ -22,7 +22,7 @@
 #include <qpixmap.h>
 #include <qtimer.h>
 
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kiconloader.h>
 
 using namespace KMPlayer;

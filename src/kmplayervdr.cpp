@@ -40,7 +40,7 @@
 #include <qsocket.h>
 #include <qeventloop.h>
 
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kdebug.h>
 #include <kmessagebox.h>
 #include <klineedit.h>

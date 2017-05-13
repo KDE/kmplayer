@@ -42,7 +42,7 @@
 #include <QGroupBox>
 #include <QListWidget>
 
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kdebug.h>
 #include <kfiledialog.h>
 #include <kmessagebox.h>

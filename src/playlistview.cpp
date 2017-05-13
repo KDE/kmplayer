@@ -42,7 +42,7 @@
 #include <kfinddialog.h>
 #include <kfind.h>
 #include <kaction.h>
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kdebug.h>
 #include <KActionCollection>
 

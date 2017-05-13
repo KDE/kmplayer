@@ -31,7 +31,7 @@
 
 #include <kdebug.h>
 #include <kmimetype.h>
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 #include <kmimetype.h>

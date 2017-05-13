@@ -26,7 +26,7 @@
 
 #include <kfiledialog.h>
 #include <ksharedconfig.h>
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kdebug.h>
 
 #include "kmplayer_lists.h"

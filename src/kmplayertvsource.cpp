@@ -35,7 +35,7 @@
 #include <QStandardPaths>
 #include <qfontmetrics.h>
 
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kdebug.h>
 #include <kmessagebox.h>
 #include <klineedit.h>

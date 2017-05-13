@@ -31,7 +31,7 @@
 #include <QWidgetAction>
 
 #include <kiconloader.h>
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kdebug.h>
 
 #include "kmplayerview.h"
