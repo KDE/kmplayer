@@ -28,6 +28,7 @@ ecm_setup_version(${KMPLAYER_VERSION_STRING} VARIABLE_PREFIX KMPLAYERPRIVATE
 )
 find_package(Qt5 REQUIRED COMPONENTS Core DBus Widgets Svg X11Extras)
 find_package(KF5 REQUIRED COMPONENTS Config CoreAddons Init I18n KDELibs4Support KIO MediaPlayer Parts WidgetsAddons)
+find_package(KF5DocTools)
 find_package(X11 REQUIRED)
 find_package(Phonon4Qt5 REQUIRED NO_MODULE)
 
@@ -79,11 +80,10 @@ configure_file (config-kmplayer.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kmpla
 
 add_subdirectory(src)
 add_subdirectory(icons)
-if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/doc" AND KF5DocTools_VERSION)
+if (KF5DocTools_FOUND)
   add_subdirectory(doc)
+  kdoctools_install(po)
 endif()
 add_subdirectory(data)
 
-if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/po")
-  ki18n_install(po)
-endif()
+ki18n_install(po)
