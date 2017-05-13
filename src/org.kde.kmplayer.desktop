@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Exec=kmplayer -caption %c %i %U
+Exec=kmplayer -qwindowtitle %c %i %U
 Icon=kmplayer
 X-DocPath=kmplayer/index.html
 Comment=KDE interface for MPlayer
