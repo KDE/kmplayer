@@ -43,7 +43,6 @@
 
 #include <kdebug.h>
 #include <kprotocolmanager.h>
-#include <kfiledialog.h>
 #include <kmessagebox.h>
 #include <klocalizedstring.h>
 #include <kstandarddirs.h>
