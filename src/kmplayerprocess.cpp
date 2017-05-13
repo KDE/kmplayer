@@ -43,9 +43,8 @@
 
 #include <kdebug.h>
 #include <kprotocolmanager.h>
-#include <kfiledialog.h>
 #include <kmessagebox.h>
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kstandarddirs.h>
 #include <kshell.h>
 #include <kio/job.h>

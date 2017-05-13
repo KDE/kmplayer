@@ -52,7 +52,7 @@
 #include <kmenubar.h>
 #include <kstatusbar.h>
 #include <ktoolbar.h>
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kconfig.h>
 #include <ksharedconfig.h>
 #include <kstandardaction.h>

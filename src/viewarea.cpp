@@ -41,7 +41,7 @@
 #include <kactioncollection.h>
 #include <kstatusbar.h>
 #include <kshortcut.h>
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kdebug.h>
 
 #include "kmplayerview.h"

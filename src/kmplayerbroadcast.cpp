@@ -33,7 +33,7 @@
 #include <qfile.h>
 #include <qtimer.h>
 
-#include <klocale.h>
+#include <klocalizedstring.h>
 #include <kdebug.h>
 #include <kled.h>
 #include <kconfig.h>
