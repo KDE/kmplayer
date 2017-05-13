@@ -15,7 +15,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH} ${ECM_KDE_MODULE_D
 
 include(KDEInstallDirs)
 include(KDECMakeSettings)
-include(KDECompilerSettings)
+include(KDECompilerSettings NO_POLICY_SCOPE)
 include(ECMInstallIcons)
 #include(ECMSetupVersion)
 include(FeatureSummary)
@@ -81,7 +81,7 @@ add_subdirectory(src)
 add_subdirectory(icons)
 if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/doc" AND KF5DocTools_VERSION)
   add_subdirectory(doc)
-endif(KF5DocTools_VERSION)
+endif()
 add_subdirectory(data)
 
 if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/po")

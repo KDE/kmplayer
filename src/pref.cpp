@@ -34,7 +34,6 @@
 #include <qtabwidget.h>
 #include <qslider.h>
 #include <qspinbox.h>
-#include <qmessagebox.h>
 #include <qmap.h>
 #include <qtimer.h>
 #include <qfont.h>
@@ -890,13 +889,15 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent)
 }
 
 KDE_NO_EXPORT void Preferences::confirmDefaults() {
-    // TODO: Switch to KMessageBox
-    switch( QMessageBox::warning( this, i18n("Reset Settings?"),
+    switch( KMessageBox::warningContinueCancel( this,
                 i18n("You are about to have all your settings overwritten with defaults.\nPlease confirm.\n"),
-                i18n ("&OK"), i18n ("&Cancel"), QString (), 0, 1)) {
-        case 0:	Preferences::setDefaults();
+                i18n("Reset Settings?"))) {
+        case KMessageBox::Continue:
+                Preferences::setDefaults();
                 break;
-        case 1:	break;
+        case KMessageBox::Cancel:
+        default: // avoid warnings for the unhandled enum values
+                break;
     }
 }
 
