@@ -2,6 +2,7 @@
 Encoding=UTF-8
 Name=Embedded MPlayer for KDE
 Name[ar]=برنامج MPlayer المضمَّن في كدي
+Name[ast]=MPlayer empotrao pa KDE
 Name[be]=Убудаваны MPlayer для KDE
 Name[bg]=Вграден MPlayer за KDE
 Name[bs]=Ugniježđeni M‑plejer za KDE
@@ -54,6 +55,7 @@ Name[zh_CN]=KDE 嵌入式 MPlayer
 Name[zh_TW]=KDE 嵌入式 MPlayer
 Comment=Video player plugin (QuickTime, XMovie, Windows Media and RealPlayer compatible)
 Comment[ar]=ملحق مشغل الفيديو (متوافِق مع QuickTime، وXMovie، وWindows Media، وRealPlayer)
+Comment[ast]=Complementu de reproductor de videu (compatible con QuickTime, XMovie, Windows Media y RealPlayer)
 Comment[be]=Утулка прайгравання відэа (сумяшчальны з QuickTime, XMovie, Windows Media і RealPlayer)
 Comment[bg]=Приставка за видео плеър (QuickTime, XMovie, Windows Media и RealPlayer съвместима)
 Comment[bs]=Priključak za puštanje videa (saglasan sa Kviktajmom, Iks‑filmom, Vindouz medijom i Rilplejerom)
