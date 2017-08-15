@@ -110,7 +110,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerFactory::~KMPlayerFactory () {
 KAboutData& KMPlayerFactory::aboutData() {
     if (!s_about) {
         s_about = new KAboutData("kmplayer", i18n("KMPlayer"), QStringLiteral(KMPLAYER_VERSION_STRING),
-                i18n("Embedded MPlayer for KDE"),
+                i18n("Embedded MPlayer by KDE"),
                 KAboutLicense::LGPL);
         s_about->addAuthor(QStringLiteral("Koos Vriezen"), QString(), "koos.vriezen@gmail.com");
     }
