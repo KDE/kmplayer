@@ -1,9 +1,12 @@
 [Desktop Entry]
 Encoding=UTF-8
 Name=Embedded MPlayer by KDE
+Name[de]=Eingebetteter MPlayer von KDE
 Name[it]=MPlayer integrato di KDE
 Name[nl]=Ingebedde MPlayer door KDE
 Name[pt]=MPlayer Incorporado do KDE
+Name[sk]=Vstavaný MPlayer od KDE
+Name[sv]=Inbäddad Mplayer av KDE
 Name[uk]=Вбудований MPlayer від KDE
 Name[x-test]=xxEmbedded MPlayer by KDExx
 Comment=Video player plugin (QuickTime, XMovie, Windows Media and RealPlayer compatible)
