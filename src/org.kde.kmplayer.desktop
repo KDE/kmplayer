@@ -5,6 +5,7 @@ Icon=kmplayer
 X-DocPath=kmplayer/index.html
 Comment=Interface for MPlayer by KDE
 Comment[ca]=Interfície pel MPlayer creat per la comunitat KDE
+Comment[ca@valencia]=Interfície pel MPlayer creat per la comunitat KDE
 Comment[de]=Oberfläche für MPlayer
 Comment[it]=Interfaccia per MPlayer di KDE
 Comment[nl]=Interface voor MPlayer door KDE
