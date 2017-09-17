@@ -22,6 +22,7 @@ Comment[sr@latin]=Sučelje za MPlayer iz KDE‑a
 Comment[sv]=Gränssnitt för Mplayer av KDE
 Comment[uk]=Інтерфейс для MPlayer від KDE
 Comment[x-test]=xxInterface for MPlayer by KDExx
+Comment[zh_CN]=KDE 的 MPlayer 界面
 Terminal=false
 Name=KMPlayer
 Name[ar]=KMPlayer
