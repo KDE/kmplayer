@@ -161,9 +161,9 @@ qt5_add_dbus_adaptor(kphononplayer_SRCS org.kde.kmplayer.streamslave.xml
 
 add_executable(kphononplayer ${kphononplayer_SRCS})
 
-qt5_use_modules(kphononplayer Core DBus Widgets X11Extras)
-
-target_link_libraries(kphononplayer Phonon::phonon4qt5 ${XCB_LIBRARIES})
+target_link_libraries(kphononplayer Phonon::phonon4qt5 ${XCB_LIBRARIES}
+    Qt5::Core Qt5::DBus Qt5::Widgets Qt5::X11Extras
+)
 
 install(TARGETS kphononplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
 
