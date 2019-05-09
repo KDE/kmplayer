@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component type="desktop-application">
+  <id>org.kde.kmplayer</id>
+  <metadata_license>FSFAP</metadata_license>
+  <project_license>GPL-2.0-or-later</project_license>
+  <name>KMPlayer</name>
+  <summary>Interface for MPlayer by KDE</summary>
+  <description>
+    <p>KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
+    <p>Some features:</p>
+    <ul>
+      <li>play DVD/VCD movies (from file or url and from a video device)</li>
+      <li>embed inside konqueror (movie is played inside konqueror)</li>
+      <li>embed inside khtml (movie playback inside a html page)</li>
+      <li>Movie recording using mencoder (part of the mplayer package)</li>
+      <li>No video during recording, but you can always open a new window and play it</li>
+      <li>Broadcasting, http streaming, using ffserver/ffmpeg</li>
+      <li>For TV sources, you need v4lctl (part of the xawtv package)</li>
+    </ul>
+  </description>
+  <url type="homepage">https://www.kde.org</url>
+  <url type="bugtracker">https://bugs.kde.org/enter_bug.cgi?format=guided&amp;product=kmplayer</url>
+  <url type="donation">https://www.kde.org/community/donations/?app=kmplayer</url>
+  <launchable type="desktop-id">org.kde.kmplayer</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://cdn.kde.org/screenshots/kmplayer/kmplayer.png</image>
+    </screenshot>
+  </screenshots>
+  <provides>
+    <binary>kmplayer</binary>
+  </provides>
+  <project_group>KDE</project_group>
+</component>
