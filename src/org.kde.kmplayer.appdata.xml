@@ -4,18 +4,73 @@
   <metadata_license>FSFAP</metadata_license>
   <project_license>GPL-2.0-or-later</project_license>
   <name>KMPlayer</name>
+  <name xml:lang="ca">KMPlayer</name>
+  <name xml:lang="ca-valencia">KMPlayer</name>
+  <name xml:lang="es">KMPlayer</name>
+  <name xml:lang="uk">KMPlayer</name>
+  <name xml:lang="x-test">xxKMPlayerxx</name>
   <summary>Interface for MPlayer by KDE</summary>
+  <summary xml:lang="ca">Interfície pel MPlayer per al KDE</summary>
+  <summary xml:lang="ca-valencia">Interfície pel MPlayer per al KDE</summary>
+  <summary xml:lang="es">Interfaz para MPlayer creada por KDE</summary>
+  <summary xml:lang="uk">Інтерфейс для MPlayer від KDE</summary>
+  <summary xml:lang="x-test">xxInterface for MPlayer by KDExx</summary>
   <description>
     <p>KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="ca">El KMPlayer és un frontal senzill per al MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="ca-valencia">El KMPlayer és un frontal senzill per al MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="es">KMPlayer es una sencilla interfaz para MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="uk">KMPlayer є простим інтерфейсом до MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="x-test">xxKMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.xx</p>
     <p>Some features:</p>
+    <p xml:lang="ca">Algunes característiques:</p>
+    <p xml:lang="ca-valencia">Algunes característiques:</p>
+    <p xml:lang="es">Algunas funcionalidades:</p>
+    <p xml:lang="uk">Деякі з можливостей:</p>
+    <p xml:lang="x-test">xxSome features:xx</p>
     <ul>
       <li>play DVD/VCD movies (from file or url and from a video device)</li>
+      <li xml:lang="ca">reprodueix pel·lícules en DVD/VCD (des d'un fitxer o URL i des d'un dispositiu de vídeo)</li>
+      <li xml:lang="ca-valencia">reprodueix pel·lícules en DVD/VCD (des d'un fitxer o URL i des d'un dispositiu de vídeo)</li>
+      <li xml:lang="es">Reproducir películas de DVD/VCD (desde archivos, URL o dispositivos de vídeo).</li>
+      <li xml:lang="uk">відтворення відео з DVD/VCD (з файла або адреси та з пристрою для читання носіїв відео)</li>
+      <li xml:lang="x-test">xxplay DVD/VCD movies (from file or url and from a video device)xx</li>
       <li>embed inside konqueror (movie is played inside konqueror)</li>
+      <li xml:lang="ca">incrustat dins el Konqueror (la pel·lícula es reprodueix dins el Konqueror)</li>
+      <li xml:lang="ca-valencia">incrustat dins el Konqueror (la pel·lícula es reprodueix dins el Konqueror)</li>
+      <li xml:lang="es">Integración con Konqueror (las películas se reproducen desde dentro de Konqueror).</li>
+      <li xml:lang="uk">вбудовування до kKnqueror (відтворення відео безпосередньо у вікні Konqueror)</li>
+      <li xml:lang="x-test">xxembed inside konqueror (movie is played inside konqueror)xx</li>
       <li>embed inside khtml (movie playback inside a html page)</li>
+      <li xml:lang="ca">incrustat dins el «khtml» (la pel·lícula es reprodueix dins una pàgina HTML)</li>
+      <li xml:lang="ca-valencia">incrustat dins el «khtml» (la pel·lícula es reprodueix dins una pàgina HTML)</li>
+      <li xml:lang="es">Integración con khtml (las películas se reproducen dentro de las páginas HTML).</li>
+      <li xml:lang="uk">вбудовування до khtml (відтворення відео на сторінках HTML)</li>
+      <li xml:lang="x-test">xxembed inside khtml (movie playback inside a html page)xx</li>
       <li>Movie recording using mencoder (part of the mplayer package)</li>
+      <li xml:lang="ca">Enregistrament de pel·lícules usant el «mencoder» (part del paquet «mplayer»)</li>
+      <li xml:lang="ca-valencia">Enregistrament de pel·lícules usant el «mencoder» (part del paquet «mplayer»)</li>
+      <li xml:lang="es">Grabación de películas mediante mencoder (que es parte del paquete mplayer).</li>
+      <li xml:lang="uk">запис відео за допомогою mencoder (є частиною пакунка з mplayer)</li>
+      <li xml:lang="x-test">xxMovie recording using mencoder (part of the mplayer package)xx</li>
       <li>No video during recording, but you can always open a new window and play it</li>
+      <li xml:lang="ca">No hi ha vídeo durant l'enregistrament, però sempre es pot obrir una finestra nova i reproduir-lo</li>
+      <li xml:lang="ca-valencia">No hi ha vídeo durant l'enregistrament, però sempre es pot obrir una finestra nova i reproduir-lo</li>
+      <li xml:lang="es">Sin vídeo durante la grabación, aunque siempre se puede abrir una nueva ventana para reproducirlo.</li>
+      <li xml:lang="uk">вимикання показу відео на час запису, але ви завжди можете відкрити нове вікно і відтворити його</li>
+      <li xml:lang="x-test">xxNo video during recording, but you can always open a new window and play itxx</li>
       <li>Broadcasting, http streaming, using ffserver/ffmpeg</li>
+      <li xml:lang="ca">Difusió, flux de dades per «http», usa «ffserver»/«ffmpeg»</li>
+      <li xml:lang="ca-valencia">Difusió, flux de dades per «http», usa «ffserver»/«ffmpeg»</li>
+      <li xml:lang="es">Emisión y retransmisión HTTP, mediante el uso de ffserver/ffmpeg.</li>
+      <li xml:lang="uk">трансляція відео, потоків відеоданих http за допомогою ffserver/ffmpeg</li>
+      <li xml:lang="x-test">xxBroadcasting, http streaming, using ffserver/ffmpegxx</li>
       <li>For TV sources, you need v4lctl (part of the xawtv package)</li>
+      <li xml:lang="ca">Per a les fonts de TV, cal «v4lctl» (part del paquet «xawtv»)</li>
+      <li xml:lang="ca-valencia">Per a les fonts de TV, cal «v4lctl» (part del paquet «xawtv»)</li>
+      <li xml:lang="es">Para las fuentes de TV necesita v4lctl (que es parte del paquete xawtv).</li>
+      <li xml:lang="uk">для джерел телевізійного сигналу вам знадобиться v4lctl (частина пакунка xawtv)</li>
+      <li xml:lang="x-test">xxFor TV sources, you need v4lctl (part of the xawtv package)xx</li>
     </ul>
   </description>
   <url type="homepage">https://www.kde.org</url>
