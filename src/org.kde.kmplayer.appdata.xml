@@ -18,6 +18,7 @@
   <summary xml:lang="es">Interfaz para MPlayer creada por KDE</summary>
   <summary xml:lang="nl">Interface voor MPlayer door KDE</summary>
   <summary xml:lang="pt">Interface para o MPlayer do KDE</summary>
+  <summary xml:lang="sk">Rozhranie pre MPlayer od KDE</summary>
   <summary xml:lang="uk">Інтерфейс для MPlayer від KDE</summary>
   <summary xml:lang="x-test">xxInterface for MPlayer by KDExx</summary>
   <summary xml:lang="zh-TW">來自 KDE 的 MPlayer 介面</summary>
@@ -37,6 +38,7 @@
     <p xml:lang="es">Algunas funcionalidades:</p>
     <p xml:lang="nl">Enkele mogelijkheden:</p>
     <p xml:lang="pt">Algumas funcionalidades:</p>
+    <p xml:lang="sk">Niektoré funkcie:</p>
     <p xml:lang="uk">Деякі з можливостей:</p>
     <p xml:lang="x-test">xxSome features:xx</p>
     <p xml:lang="zh-TW">部份功能：</p>
