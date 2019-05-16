@@ -9,6 +9,7 @@
   <name xml:lang="es">KMPlayer</name>
   <name xml:lang="nl">KMPlayer</name>
   <name xml:lang="pt">KMPlayer</name>
+  <name xml:lang="pt-BR">KMPlayer</name>
   <name xml:lang="uk">KMPlayer</name>
   <name xml:lang="x-test">xxKMPlayerxx</name>
   <name xml:lang="zh-TW">KMPlayer</name>
@@ -18,6 +19,7 @@
   <summary xml:lang="es">Interfaz para MPlayer creada por KDE</summary>
   <summary xml:lang="nl">Interface voor MPlayer door KDE</summary>
   <summary xml:lang="pt">Interface para o MPlayer do KDE</summary>
+  <summary xml:lang="pt-BR">Interface do KDE para o MPlayer</summary>
   <summary xml:lang="sk">Rozhranie pre MPlayer od KDE</summary>
   <summary xml:lang="uk">Інтерфейс для MPlayer від KDE</summary>
   <summary xml:lang="x-test">xxInterface for MPlayer by KDExx</summary>
@@ -38,6 +40,7 @@
     <p xml:lang="es">Algunas funcionalidades:</p>
     <p xml:lang="nl">Enkele mogelijkheden:</p>
     <p xml:lang="pt">Algumas funcionalidades:</p>
+    <p xml:lang="pt-BR">Alguns recursos:</p>
     <p xml:lang="sk">Niektoré funkcie:</p>
     <p xml:lang="uk">Деякі з можливостей:</p>
     <p xml:lang="x-test">xxSome features:xx</p>
