@@ -9,6 +9,7 @@
   <name xml:lang="en-GB">KMPlayer</name>
   <name xml:lang="es">KMPlayer</name>
   <name xml:lang="fr">KMPlayer</name>
+  <name xml:lang="it">KMPlayer</name>
   <name xml:lang="nl">KMPlayer</name>
   <name xml:lang="pt">KMPlayer</name>
   <name xml:lang="pt-BR">KMPlayer</name>
@@ -20,6 +21,7 @@
   <summary xml:lang="ca-valencia">Interfície pel MPlayer per al KDE</summary>
   <summary xml:lang="en-GB">Interface for MPlayer by KDE</summary>
   <summary xml:lang="es">Interfaz para MPlayer creada por KDE</summary>
+  <summary xml:lang="it">Interfaccia per MPlayer di KDE</summary>
   <summary xml:lang="nl">Interface voor MPlayer door KDE</summary>
   <summary xml:lang="pt">Interface para o MPlayer do KDE</summary>
   <summary xml:lang="pt-BR">Interface do KDE para o MPlayer</summary>
@@ -33,8 +35,10 @@
     <p xml:lang="ca-valencia">El KMPlayer és un frontal senzill per al MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="en-GB">KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="es">KMPlayer es una sencilla interfaz para MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="it">KMPlayer è una semplice interfaccia per MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="nl">KMPlayer is een eenvoudige frontend voor MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="pt">O KMPlayer é uma interface simples para o MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="pt-BR">O KMPlayer é uma interface simples para o MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="uk">KMPlayer є простим інтерфейсом до MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="x-test">xxKMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.xx</p>
     <p xml:lang="zh-TW">KMPlayer 是個 MPlayer/FFMpeg/Phonon 的簡易前端。</p>
@@ -43,6 +47,7 @@
     <p xml:lang="ca-valencia">Algunes característiques:</p>
     <p xml:lang="en-GB">Some features:</p>
     <p xml:lang="es">Algunas funcionalidades:</p>
+    <p xml:lang="it">Alcune funzionalità:</p>
     <p xml:lang="nl">Enkele mogelijkheden:</p>
     <p xml:lang="pt">Algumas funcionalidades:</p>
     <p xml:lang="pt-BR">Alguns recursos:</p>
@@ -56,8 +61,10 @@
       <li xml:lang="ca-valencia">reprodueix pel·lícules en DVD/VCD (des d'un fitxer o URL i des d'un dispositiu de vídeo)</li>
       <li xml:lang="en-GB">play DVD/VCD movies (from file or URL and from a video device)</li>
       <li xml:lang="es">Reproducir películas de DVD/VCD (desde archivos, URL o dispositivos de vídeo).</li>
+      <li xml:lang="it">riproduci film su DVD/VCD (da file o URL o da un dispositivo video)</li>
       <li xml:lang="nl">dvd/vcd films afspelen (uit bestand of URL en vanaf een videoapparaat)</li>
       <li xml:lang="pt">reproduzir filmes em DVD/VCD (de ficheiros, URL's ou de um dispositivo de vídeo)</li>
+      <li xml:lang="pt-BR">reproduz filmes em DVD/VCD (a partir do arquivo ou URL e de um dispositivo de vídeo)</li>
       <li xml:lang="uk">відтворення відео з DVD/VCD (з файла або адреси та з пристрою для читання носіїв відео)</li>
       <li xml:lang="x-test">xxplay DVD/VCD movies (from file or url and from a video device)xx</li>
       <li xml:lang="zh-TW">播放 DVD/VCD 影片（從檔案或網址，及從影片裝置）</li>
@@ -66,8 +73,10 @@
       <li xml:lang="ca-valencia">incrustat dins el Konqueror (la pel·lícula es reprodueix dins el Konqueror)</li>
       <li xml:lang="en-GB">embed inside konqueror (movie is played inside konqueror)</li>
       <li xml:lang="es">Integración con Konqueror (las películas se reproducen desde dentro de Konqueror).</li>
+      <li xml:lang="it">integrato in konqueror (il film viene riprodotto dentro konqueror)</li>
       <li xml:lang="nl">ingebed in konqueror (film wordt afgespeeld binnen konqueror)</li>
       <li xml:lang="pt">pode ser incorporado dentro do Konqueror (o vídeo é reproduzido dentro do mesmo)</li>
+      <li xml:lang="pt-BR">embutido no Konqueror (o filme é reproduzido dentro do Konqueror)</li>
       <li xml:lang="uk">вбудовування до kKnqueror (відтворення відео безпосередньо у вікні Konqueror)</li>
       <li xml:lang="x-test">xxembed inside konqueror (movie is played inside konqueror)xx</li>
       <li xml:lang="zh-TW">在 Konqueror 嵌入（在 Konqueror 中播放影片）</li>
@@ -76,8 +85,10 @@
       <li xml:lang="ca-valencia">incrustat dins el «khtml» (la pel·lícula es reprodueix dins una pàgina HTML)</li>
       <li xml:lang="en-GB">embed inside khtml (movie playback inside a html page)</li>
       <li xml:lang="es">Integración con khtml (las películas se reproducen dentro de las páginas HTML).</li>
+      <li xml:lang="it">integrato in khtml (il film viene riprodotto in una pagina html)</li>
       <li xml:lang="nl">ingebed in khtml ( film afspelen binnen een html-pagina)</li>
       <li xml:lang="pt">pode ser incorporado dentro do khtml (reprodução do vídeo dentro de uma página HTML)</li>
+      <li xml:lang="pt-BR">embutido dentro do KHTML (o filme é reproduzido dentro de uma página HTML)</li>
       <li xml:lang="uk">вбудовування до khtml (відтворення відео на сторінках HTML)</li>
       <li xml:lang="x-test">xxembed inside khtml (movie playback inside a html page)xx</li>
       <li xml:lang="zh-TW">在 khtml 中嵌入（在 html 頁面中播放影片）</li>
@@ -86,8 +97,10 @@
       <li xml:lang="ca-valencia">Enregistrament de pel·lícules usant el «mencoder» (part del paquet «mplayer»)</li>
       <li xml:lang="en-GB">Movie recording using mencoder (part of the mplayer package)</li>
       <li xml:lang="es">Grabación de películas mediante mencoder (que es parte del paquete mplayer).</li>
+      <li xml:lang="it">Registrazione dei file utilizzando mencoder (parte del pacchetto mplayer)</li>
       <li xml:lang="nl">Film opnemen met mencoder (onderdeel van het pakket mplayer)</li>
       <li xml:lang="pt">Gravação de filmes com o 'mencoder' (parte do pacote 'mplayer')</li>
+      <li xml:lang="pt-BR">Gravação de filme usando o mencoder (parte do pacote mplayer)</li>
       <li xml:lang="uk">запис відео за допомогою mencoder (є частиною пакунка з mplayer)</li>
       <li xml:lang="x-test">xxMovie recording using mencoder (part of the mplayer package)xx</li>
       <li xml:lang="zh-TW">使用 memcoder 錄製影片（mplayer 軟體包的一部分）</li>
@@ -96,6 +109,7 @@
       <li xml:lang="ca-valencia">No hi ha vídeo durant l'enregistrament, però sempre es pot obrir una finestra nova i reproduir-lo</li>
       <li xml:lang="en-GB">No video during recording, but you can always open a new window and play it</li>
       <li xml:lang="es">Sin vídeo durante la grabación, aunque siempre se puede abrir una nueva ventana para reproducirlo.</li>
+      <li xml:lang="it">Nessun video durante la registrazione, ma puoi sempre aprire una nuova finestra e riprodurlo</li>
       <li xml:lang="nl">Geen video gedurende opnemen, maar u kunt altijd een nieuw venster openen en het afspelen</li>
       <li xml:lang="pt">Não há vídeo durante a gravação, mas poderá abrir uma nova janela e reproduzi-lo</li>
       <li xml:lang="uk">вимикання показу відео на час запису, але ви завжди можете відкрити нове вікно і відтворити його</li>
@@ -106,6 +120,7 @@
       <li xml:lang="ca-valencia">Difusió, flux de dades per «http», usa «ffserver»/«ffmpeg»</li>
       <li xml:lang="en-GB">Broadcasting, http streaming, using ffserver/ffmpeg</li>
       <li xml:lang="es">Emisión y retransmisión HTTP, mediante el uso de ffserver/ffmpeg.</li>
+      <li xml:lang="it">Trasmissione, trasmissione http, utilizzando ffserver/ffmpeg</li>
       <li xml:lang="nl">Uitzending, http-streaming, met ffserver/ffmpeg</li>
       <li xml:lang="pt">Difusão, transmissão por HTTP, usando o 'ffserver/ffmpeg'</li>
       <li xml:lang="uk">трансляція відео, потоків відеоданих http за допомогою ffserver/ffmpeg</li>
@@ -116,6 +131,7 @@
       <li xml:lang="ca-valencia">Per a les fonts de TV, cal «v4lctl» (part del paquet «xawtv»)</li>
       <li xml:lang="en-GB">For TV sources, you need v4lctl (part of the xawtv package)</li>
       <li xml:lang="es">Para las fuentes de TV necesita v4lctl (que es parte del paquete xawtv).</li>
+      <li xml:lang="it">Per le sorgenti TV, hai bisogno di v4lctl (parte del pacchetto xawtv)</li>
       <li xml:lang="nl">Voor tv-bronnen, u hebt v4lctl nodig (onderdeel van het pakket xawtv)</li>
       <li xml:lang="pt">Para fontes de TV, precisa do 'v4lctl' (parte do pacote 'xawtv')</li>
       <li xml:lang="uk">для джерел телевізійного сигналу вам знадобиться v4lctl (частина пакунка xawtv)</li>
