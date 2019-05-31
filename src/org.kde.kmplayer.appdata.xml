@@ -10,9 +10,11 @@
   <name xml:lang="es">KMPlayer</name>
   <name xml:lang="fr">KMPlayer</name>
   <name xml:lang="it">KMPlayer</name>
+  <name xml:lang="ko">KMPlayer</name>
   <name xml:lang="nl">KMPlayer</name>
   <name xml:lang="pt">KMPlayer</name>
   <name xml:lang="pt-BR">KMPlayer</name>
+  <name xml:lang="ru">KMPlayer</name>
   <name xml:lang="sv">KMplayer</name>
   <name xml:lang="uk">KMPlayer</name>
   <name xml:lang="x-test">xxKMPlayerxx</name>
@@ -23,9 +25,11 @@
   <summary xml:lang="en-GB">Interface for MPlayer by KDE</summary>
   <summary xml:lang="es">Interfaz para MPlayer creada por KDE</summary>
   <summary xml:lang="it">Interfaccia per MPlayer di KDE</summary>
+  <summary xml:lang="ko">KDE MPlayer 인터페이스</summary>
   <summary xml:lang="nl">Interface voor MPlayer door KDE</summary>
   <summary xml:lang="pt">Interface para o MPlayer do KDE</summary>
   <summary xml:lang="pt-BR">Interface do KDE para o MPlayer</summary>
+  <summary xml:lang="ru">Интерфейс к MPlayer от KDE</summary>
   <summary xml:lang="sk">Rozhranie pre MPlayer od KDE</summary>
   <summary xml:lang="sv">Gränssnitt för Mplayer av KDE</summary>
   <summary xml:lang="uk">Інтерфейс для MPlayer від KDE</summary>
@@ -38,6 +42,7 @@
     <p xml:lang="en-GB">KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="es">KMPlayer es una sencilla interfaz para MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="it">KMPlayer è una semplice interfaccia per MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="ko">KMPlayer는 MPlayer/FFmpeg/Phonon 프론트엔드입니다.</p>
     <p xml:lang="nl">KMPlayer is een eenvoudige frontend voor MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="pt">O KMPlayer é uma interface simples para o MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="pt-BR">O KMPlayer é uma interface simples para o MPlayer/FFMpeg/Phonon.</p>
@@ -51,6 +56,7 @@
     <p xml:lang="en-GB">Some features:</p>
     <p xml:lang="es">Algunas funcionalidades:</p>
     <p xml:lang="it">Alcune funzionalità:</p>
+    <p xml:lang="ko">주요 기능:</p>
     <p xml:lang="nl">Enkele mogelijkheden:</p>
     <p xml:lang="pt">Algumas funcionalidades:</p>
     <p xml:lang="pt-BR">Alguns recursos:</p>
@@ -66,6 +72,7 @@
       <li xml:lang="en-GB">play DVD/VCD movies (from file or URL and from a video device)</li>
       <li xml:lang="es">Reproducir películas de DVD/VCD (desde archivos, URL o dispositivos de vídeo).</li>
       <li xml:lang="it">riproduci film su DVD/VCD (da file o URL o da un dispositivo video)</li>
+      <li xml:lang="ko">DVD/VCD 재생(파일이나 비디오 장치 URL에서)</li>
       <li xml:lang="nl">dvd/vcd films afspelen (uit bestand of URL en vanaf een videoapparaat)</li>
       <li xml:lang="pt">reproduzir filmes em DVD/VCD (de ficheiros, URL's ou de um dispositivo de vídeo)</li>
       <li xml:lang="pt-BR">reproduz filmes em DVD/VCD (a partir do arquivo ou URL e de um dispositivo de vídeo)</li>
@@ -79,6 +86,7 @@
       <li xml:lang="en-GB">embed inside konqueror (movie is played inside konqueror)</li>
       <li xml:lang="es">Integración con Konqueror (las películas se reproducen desde dentro de Konqueror).</li>
       <li xml:lang="it">integrato in konqueror (il film viene riprodotto dentro konqueror)</li>
+      <li xml:lang="ko">Konqueror 내장(Konqueror 내에서 동영상 재생)</li>
       <li xml:lang="nl">ingebed in konqueror (film wordt afgespeeld binnen konqueror)</li>
       <li xml:lang="pt">pode ser incorporado dentro do Konqueror (o vídeo é reproduzido dentro do mesmo)</li>
       <li xml:lang="pt-BR">embutido no Konqueror (o filme é reproduzido dentro do Konqueror)</li>
@@ -92,6 +100,7 @@
       <li xml:lang="en-GB">embed inside khtml (movie playback inside a html page)</li>
       <li xml:lang="es">Integración con khtml (las películas se reproducen dentro de las páginas HTML).</li>
       <li xml:lang="it">integrato in khtml (il film viene riprodotto in una pagina html)</li>
+      <li xml:lang="ko">KHTML 내장(HTML 페이지 내에서 동영상 재생)</li>
       <li xml:lang="nl">ingebed in khtml ( film afspelen binnen een html-pagina)</li>
       <li xml:lang="pt">pode ser incorporado dentro do khtml (reprodução do vídeo dentro de uma página HTML)</li>
       <li xml:lang="pt-BR">embutido dentro do KHTML (o filme é reproduzido dentro de uma página HTML)</li>
@@ -105,6 +114,7 @@
       <li xml:lang="en-GB">Movie recording using mencoder (part of the mplayer package)</li>
       <li xml:lang="es">Grabación de películas mediante mencoder (que es parte del paquete mplayer).</li>
       <li xml:lang="it">Registrazione dei file utilizzando mencoder (parte del pacchetto mplayer)</li>
+      <li xml:lang="ko">mencoder로 동영상 녹화(mplayer 패키지의 일부)</li>
       <li xml:lang="nl">Film opnemen met mencoder (onderdeel van het pakket mplayer)</li>
       <li xml:lang="pt">Gravação de filmes com o 'mencoder' (parte do pacote 'mplayer')</li>
       <li xml:lang="pt-BR">Gravação de filme usando o mencoder (parte do pacote mplayer)</li>
@@ -118,6 +128,7 @@
       <li xml:lang="en-GB">No video during recording, but you can always open a new window and play it</li>
       <li xml:lang="es">Sin vídeo durante la grabación, aunque siempre se puede abrir una nueva ventana para reproducirlo.</li>
       <li xml:lang="it">Nessun video durante la registrazione, ma puoi sempre aprire una nuova finestra e riprodurlo</li>
+      <li xml:lang="ko">녹화 중에는 영상을 자동으로 재생하지 않지만 새 창으로 영상을 볼 수 있습니다</li>
       <li xml:lang="nl">Geen video gedurende opnemen, maar u kunt altijd een nieuw venster openen en het afspelen</li>
       <li xml:lang="pt">Não há vídeo durante a gravação, mas poderá abrir uma nova janela e reproduzi-lo</li>
       <li xml:lang="sv">Ingen video under inspelning, men det går alltid att öppna ett nytt fönster och spela upp den</li>
@@ -130,6 +141,7 @@
       <li xml:lang="en-GB">Broadcasting, http streaming, using ffserver/ffmpeg</li>
       <li xml:lang="es">Emisión y retransmisión HTTP, mediante el uso de ffserver/ffmpeg.</li>
       <li xml:lang="it">Trasmissione, trasmissione http, utilizzando ffserver/ffmpeg</li>
+      <li xml:lang="ko">ffserver/ffmpeg를 사용한 방송 및 HTTP 스트리밍</li>
       <li xml:lang="nl">Uitzending, http-streaming, met ffserver/ffmpeg</li>
       <li xml:lang="pt">Difusão, transmissão por HTTP, usando o 'ffserver/ffmpeg'</li>
       <li xml:lang="sv">Utsändning, HTTP-strömning med användning av ffserver och ffmpeg</li>
@@ -142,6 +154,7 @@
       <li xml:lang="en-GB">For TV sources, you need v4lctl (part of the xawtv package)</li>
       <li xml:lang="es">Para las fuentes de TV necesita v4lctl (que es parte del paquete xawtv).</li>
       <li xml:lang="it">Per le sorgenti TV, hai bisogno di v4lctl (parte del pacchetto xawtv)</li>
+      <li xml:lang="ko">TV를 보려면 v4lctl이 필요합니다(xawtv 패키지에 포함됨)</li>
       <li xml:lang="nl">Voor tv-bronnen, u hebt v4lctl nodig (onderdeel van het pakket xawtv)</li>
       <li xml:lang="pt">Para fontes de TV, precisa do 'v4lctl' (parte do pacote 'xawtv')</li>
       <li xml:lang="sv">För tv-källor behövs v4lctl (som ingår i xawtv-paketet)</li>
