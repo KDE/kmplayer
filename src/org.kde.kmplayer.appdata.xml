@@ -31,6 +31,7 @@
   <summary xml:lang="el">Περιβάλλον χρήσης για το MPlayer από το KDE</summary>
   <summary xml:lang="en-GB">Interface for MPlayer by KDE</summary>
   <summary xml:lang="es">Interfaz para MPlayer creada por KDE</summary>
+  <summary xml:lang="fr">Interface pour MPlayer par KDE</summary>
   <summary xml:lang="gl">Interface para MPlayer de KDE</summary>
   <summary xml:lang="id">Antarmuka untuk MPlayer oleh KDE</summary>
   <summary xml:lang="it">Interfaccia per MPlayer di KDE</summary>
@@ -52,6 +53,7 @@
     <p xml:lang="el">Το KMPlayer είναι ένα απλό περιβάλλον χρήσης για τα MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="en-GB">KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="es">KMPlayer es una sencilla interfaz para MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="fr">KMPlayer est une interface simple pour MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="gl">KMPlayer é unha interface sinxela para MPlayer, FFMpeg e Phonon.</p>
     <p xml:lang="id">KMPlayer adalah sebuah frontend sederhana untuk MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="it">KMPlayer è una semplice interfaccia per MPlayer/FFMpeg/Phonon.</p>
@@ -70,6 +72,7 @@
     <p xml:lang="el">Ορισμένες λειτουργίες</p>
     <p xml:lang="en-GB">Some features:</p>
     <p xml:lang="es">Algunas funcionalidades:</p>
+    <p xml:lang="fr">Quelques fonctionnalités :</p>
     <p xml:lang="gl">Algunhas funcionalidades:</p>
     <p xml:lang="id">Beberapa fitur:</p>
     <p xml:lang="it">Alcune funzionalità:</p>
@@ -90,6 +93,7 @@
       <li xml:lang="el">αναπαραγωγή ταινιών DVD/VCD (από αρχείο ή url και από συσκευή βίντεο)</li>
       <li xml:lang="en-GB">play DVD/VCD movies (from file or URL and from a video device)</li>
       <li xml:lang="es">Reproducir películas de DVD/VCD (desde archivos, URL o dispositivos de vídeo).</li>
+      <li xml:lang="fr">lecture de films DVD/VCD (depuis un fichier ou une url et depuis un lecteur vidéo)</li>
       <li xml:lang="gl">reproducir películas de DVD ou VCD (desde un ficheiro, URL ou dispositivo de vídeo)</li>
       <li xml:lang="id">putar film DVD/VCD (dari file atau url dan dari perangkat video)</li>
       <li xml:lang="it">riproduci film su DVD/VCD (da file o URL o da un dispositivo video)</li>
@@ -108,6 +112,7 @@
       <li xml:lang="el">ενσωμάτωση στον konqueror (η ταινία αναπαράγεται μέσα στον konqueror)</li>
       <li xml:lang="en-GB">embed inside konqueror (movie is played inside konqueror)</li>
       <li xml:lang="es">Integración con Konqueror (las películas se reproducen desde dentro de Konqueror).</li>
+      <li xml:lang="fr">intégration au sein de konqueror (lecture du film au sein de konqueror)</li>
       <li xml:lang="gl">incrustar en konqueror (a película reprodúcese dentro de konqueror)</li>
       <li xml:lang="id">tertanam di dalam konqueror (film diputar di dalam konqueror)</li>
       <li xml:lang="it">integrato in konqueror (il film viene riprodotto dentro konqueror)</li>
@@ -126,6 +131,7 @@
       <li xml:lang="el">ενσωμάτωση σε khtml (η ταινία αναπαράγεται μέσα σε σελίδα html)</li>
       <li xml:lang="en-GB">embed inside khtml (movie playback inside a html page)</li>
       <li xml:lang="es">Integración con khtml (las películas se reproducen dentro de las páginas HTML).</li>
+      <li xml:lang="fr">intégration au sein de khtml (lecture du film au sein d'une page html)</li>
       <li xml:lang="gl">incrustar en khtml (reprodución da película nunha páxina html)</li>
       <li xml:lang="id">tertanam di dalam khtml (film diputar di dalam halaman khtml)</li>
       <li xml:lang="it">integrato in khtml (il film viene riprodotto in una pagina html)</li>
@@ -144,6 +150,7 @@
       <li xml:lang="el">Η εγγραφή της ταινίας γίνεται με mencoder (τμήμα του πακέτου mplayer)</li>
       <li xml:lang="en-GB">Movie recording using mencoder (part of the mplayer package)</li>
       <li xml:lang="es">Grabación de películas mediante mencoder (que es parte del paquete mplayer).</li>
+      <li xml:lang="fr">Enregistrement de films à l'aide de mencode (faisant partie du paquet mplayer)</li>
       <li xml:lang="gl">Gravación de películas con mencoder (parte do paquete mplayer)</li>
       <li xml:lang="id">Perekaman film menggunakan mencoder (bagian dari paket mplayer)</li>
       <li xml:lang="it">Registrazione dei file utilizzando mencoder (parte del pacchetto mplayer)</li>
@@ -162,6 +169,7 @@
       <li xml:lang="el">Δεν υπάρχει βίντεο κατά την εγγραφή, αλλά μπορείτε πάντα να ανοίξετε ένα νέο παράθυρο για αναπαραγωγή</li>
       <li xml:lang="en-GB">No video during recording, but you can always open a new window and play it</li>
       <li xml:lang="es">Sin vídeo durante la grabación, aunque siempre se puede abrir una nueva ventana para reproducirlo.</li>
+      <li xml:lang="fr">Pas de vidéo durant l'enregistrement, mais vous pouvez toujours ouvrir une nouvelle fenêtre et le jouer</li>
       <li xml:lang="gl">Non hai vídeo mentres se grava, pero pode abrir unha nova xanela e reproducilo</li>
       <li xml:lang="id">Tidak ada video selagi merekam, tetapi kamu selalu bisa membuka window baru dan memutarnya</li>
       <li xml:lang="it">Nessun video durante la registrazione, ma puoi sempre aprire una nuova finestra e riprodurlo</li>
@@ -180,6 +188,7 @@
       <li xml:lang="el">Μετάδοση, ροή http, με χρήση ffserver/ffmpeg</li>
       <li xml:lang="en-GB">Broadcasting, http streaming, using ffserver/ffmpeg</li>
       <li xml:lang="es">Emisión y retransmisión HTTP, mediante el uso de ffserver/ffmpeg.</li>
+      <li xml:lang="fr">Diffusion, streaming http, grâce à ffserver / ffmpeg</li>
       <li xml:lang="gl">Emisión regular e por https usando ffserver ou ffmpeg</li>
       <li xml:lang="id">Menyiarkan, http streaming, menggunakan ffserver/ffmpeg</li>
       <li xml:lang="it">Trasmissione, trasmissione http, utilizzando ffserver/ffmpeg</li>
@@ -198,6 +207,7 @@
       <li xml:lang="el">Για πηγές TV, χρειάζεστε v4lctl (τμήμα του πακέτου xmltv)</li>
       <li xml:lang="en-GB">For TV sources, you need v4lctl (part of the xawtv package)</li>
       <li xml:lang="es">Para las fuentes de TV necesita v4lctl (que es parte del paquete xawtv).</li>
+      <li xml:lang="fr">Pour les sources TV, vous aurez besoin de v4lctl (qui fait partie du paquet xawtv)</li>
       <li xml:lang="gl">Para fontes de TV necesita v4lctl (parte do paquete xawtv)</li>
       <li xml:lang="id">Untuk sumber TV, kamu perlu v4lctl (bagian dari paket xawtv)</li>
       <li xml:lang="it">Per le sorgenti TV, hai bisogno di v4lctl (parte del pacchetto xawtv)</li>
