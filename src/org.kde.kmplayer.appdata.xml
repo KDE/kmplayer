@@ -50,6 +50,7 @@
     <p>KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="ca">El KMPlayer és un frontal senzill per al MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="ca-valencia">El KMPlayer és un frontal senzill per al MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="de">KMPlayer ist eine einfache Benutzeroberfläche für MPlayer, FFMpeg oder Phonon.</p>
     <p xml:lang="el">Το KMPlayer είναι ένα απλό περιβάλλον χρήσης για τα MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="en-GB">KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="es">KMPlayer es una sencilla interfaz para MPlayer/FFMpeg/Phonon.</p>
@@ -69,6 +70,7 @@
     <p>Some features:</p>
     <p xml:lang="ca">Algunes característiques:</p>
     <p xml:lang="ca-valencia">Algunes característiques:</p>
+    <p xml:lang="de">Einige Funktionen:</p>
     <p xml:lang="el">Ορισμένες λειτουργίες</p>
     <p xml:lang="en-GB">Some features:</p>
     <p xml:lang="es">Algunas funcionalidades:</p>
@@ -109,6 +111,7 @@
       <li>embed inside konqueror (movie is played inside konqueror)</li>
       <li xml:lang="ca">incrustat dins el Konqueror (la pel·lícula es reprodueix dins el Konqueror)</li>
       <li xml:lang="ca-valencia">incrustat dins el Konqueror (la pel·lícula es reprodueix dins el Konqueror)</li>
+      <li xml:lang="de">Eingebettet in Konqueror, der Film wird in Konqueror abgespielt</li>
       <li xml:lang="el">ενσωμάτωση στον konqueror (η ταινία αναπαράγεται μέσα στον konqueror)</li>
       <li xml:lang="en-GB">embed inside konqueror (movie is played inside konqueror)</li>
       <li xml:lang="es">Integración con Konqueror (las películas se reproducen desde dentro de Konqueror).</li>
@@ -128,6 +131,7 @@
       <li>embed inside khtml (movie playback inside a html page)</li>
       <li xml:lang="ca">incrustat dins el «khtml» (la pel·lícula es reprodueix dins una pàgina HTML)</li>
       <li xml:lang="ca-valencia">incrustat dins el «khtml» (la pel·lícula es reprodueix dins una pàgina HTML)</li>
+      <li xml:lang="de">Eingebettet in KHTML, der Film wird in einer HTML-Seite abgespielt</li>
       <li xml:lang="el">ενσωμάτωση σε khtml (η ταινία αναπαράγεται μέσα σε σελίδα html)</li>
       <li xml:lang="en-GB">embed inside khtml (movie playback inside a html page)</li>
       <li xml:lang="es">Integración con khtml (las películas se reproducen dentro de las páginas HTML).</li>
@@ -147,6 +151,7 @@
       <li>Movie recording using mencoder (part of the mplayer package)</li>
       <li xml:lang="ca">Enregistrament de pel·lícules usant el «mencoder» (part del paquet «mplayer»)</li>
       <li xml:lang="ca-valencia">Enregistrament de pel·lícules usant el «mencoder» (part del paquet «mplayer»)</li>
+      <li xml:lang="de">Filmaufnahme mit dem Programm mencoder, einem Bestandteil des Pakets MPlayer</li>
       <li xml:lang="el">Η εγγραφή της ταινίας γίνεται με mencoder (τμήμα του πακέτου mplayer)</li>
       <li xml:lang="en-GB">Movie recording using mencoder (part of the mplayer package)</li>
       <li xml:lang="es">Grabación de películas mediante mencoder (que es parte del paquete mplayer).</li>
