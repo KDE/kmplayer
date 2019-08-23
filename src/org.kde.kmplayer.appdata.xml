@@ -6,6 +6,7 @@
   <name>KMPlayer</name>
   <name xml:lang="ca">KMPlayer</name>
   <name xml:lang="ca-valencia">KMPlayer</name>
+  <name xml:lang="cs">KMPlayer</name>
   <name xml:lang="de">KMPlayer</name>
   <name xml:lang="el">KMPlayer</name>
   <name xml:lang="en-GB">KMPlayer</name>
@@ -28,6 +29,7 @@
   <summary>Interface for MPlayer by KDE</summary>
   <summary xml:lang="ca">Interfície pel MPlayer per al KDE</summary>
   <summary xml:lang="ca-valencia">Interfície pel MPlayer per al KDE</summary>
+  <summary xml:lang="cs">Rozhraní pro MPlayer od KDE</summary>
   <summary xml:lang="de">Oberfläche für MPlayer</summary>
   <summary xml:lang="el">Περιβάλλον χρήσης για το MPlayer από το KDE</summary>
   <summary xml:lang="en-GB">Interface for MPlayer by KDE</summary>
