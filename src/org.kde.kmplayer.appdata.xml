@@ -12,6 +12,7 @@
   <name xml:lang="en-GB">KMPlayer</name>
   <name xml:lang="es">KMPlayer</name>
   <name xml:lang="eu">KMPlayer</name>
+  <name xml:lang="fi">KMPlayer</name>
   <name xml:lang="fr">KMPlayer</name>
   <name xml:lang="gl">KMPlayer</name>
   <name xml:lang="id">KMPlayer</name>
@@ -35,6 +36,7 @@
   <summary xml:lang="en-GB">Interface for MPlayer by KDE</summary>
   <summary xml:lang="es">Interfaz para MPlayer creada por KDE</summary>
   <summary xml:lang="eu">KDEk egindako MPlayer-rentzako interfazea</summary>
+  <summary xml:lang="fi">KDE:n MPlayer-käyttöliittymä</summary>
   <summary xml:lang="fr">Interface pour MPlayer par KDE</summary>
   <summary xml:lang="gl">Interface para MPlayer de KDE</summary>
   <summary xml:lang="id">Antarmuka untuk MPlayer oleh KDE</summary>
@@ -59,6 +61,7 @@
     <p xml:lang="en-GB">KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="es">KMPlayer es una sencilla interfaz para MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="eu">KMPlayer MPlayer/FFMpeg/Phonon-entzako aurrealdeko erraz bat da.</p>
+    <p xml:lang="fi">KMPlayer on yksinkertainen MPlayer/FFMpeg/Phonon-käyttöliittymä.</p>
     <p xml:lang="fr">KMPlayer est une interface simple pour MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="gl">KMPlayer é unha interface sinxela para MPlayer, FFMpeg e Phonon.</p>
     <p xml:lang="id">KMPlayer adalah sebuah frontend sederhana untuk MPlayer/FFMpeg/Phonon.</p>
@@ -80,6 +83,7 @@
     <p xml:lang="en-GB">Some features:</p>
     <p xml:lang="es">Algunas funcionalidades:</p>
     <p xml:lang="eu">Eginbide batzuk:</p>
+    <p xml:lang="fi">Joitakin ominaisuuksia:</p>
     <p xml:lang="fr">Quelques fonctionnalités :</p>
     <p xml:lang="gl">Algunhas funcionalidades:</p>
     <p xml:lang="id">Beberapa fitur:</p>
@@ -102,6 +106,7 @@
       <li xml:lang="en-GB">play DVD/VCD movies (from file or URL and from a video device)</li>
       <li xml:lang="es">Reproducir películas de DVD/VCD (desde archivos, URL o dispositivos de vídeo).</li>
       <li xml:lang="eu">DVD/VCD filmak jotzea (fitxategi edo URL-tik eta bideo gailu batetik)</li>
+      <li xml:lang="fi">DVD/VCD-toisto (tiedostosta, verkko-osoitteesta tai videolaitteelta)</li>
       <li xml:lang="fr">lecture de films DVD/VCD (depuis un fichier ou une url et depuis un lecteur vidéo)</li>
       <li xml:lang="gl">reproducir películas de DVD ou VCD (desde un ficheiro, URL ou dispositivo de vídeo)</li>
       <li xml:lang="id">putar film DVD/VCD (dari file atau url dan dari perangkat video)</li>
@@ -123,6 +128,7 @@
       <li xml:lang="en-GB">embed inside konqueror (movie is played inside konqueror)</li>
       <li xml:lang="es">Integración con Konqueror (las películas se reproducen desde dentro de Konqueror).</li>
       <li xml:lang="eu">Konqueror-ren barruan txertatua (filma Konqueror-ren barruan jotzen da)</li>
+      <li xml:lang="fi">upotus Konqueroriin (videotoisto Konqueror-ikkunassa)</li>
       <li xml:lang="fr">intégration au sein de konqueror (lecture du film au sein de konqueror)</li>
       <li xml:lang="gl">incrustar en konqueror (a película reprodúcese dentro de konqueror)</li>
       <li xml:lang="id">tertanam di dalam konqueror (film diputar di dalam konqueror)</li>
@@ -144,6 +150,7 @@
       <li xml:lang="en-GB">embed inside khtml (movie playback inside a html page)</li>
       <li xml:lang="es">Integración con khtml (las películas se reproducen dentro de las páginas HTML).</li>
       <li xml:lang="eu">khtml barruan txertatua (filma atzera-jotzea html orri baten barruan)</li>
+      <li xml:lang="fi">upotus khtml:ään (videotoisto HTML-sivulla)</li>
       <li xml:lang="fr">intégration au sein de khtml (lecture du film au sein d'une page html)</li>
       <li xml:lang="gl">incrustar en khtml (reprodución da película nunha páxina html)</li>
       <li xml:lang="id">tertanam di dalam khtml (film diputar di dalam halaman khtml)</li>
@@ -165,6 +172,7 @@
       <li xml:lang="en-GB">Movie recording using mencoder (part of the mplayer package)</li>
       <li xml:lang="es">Grabación de películas mediante mencoder (que es parte del paquete mplayer).</li>
       <li xml:lang="eu">Filma-grabatzea mencoder erabiliz (mplayer paketearen zati bat da)</li>
+      <li xml:lang="fi">videotallennus mencoderilla (osa mplayer-pakettia)</li>
       <li xml:lang="fr">Enregistrement de films à l'aide de mencode (faisant partie du paquet mplayer)</li>
       <li xml:lang="gl">Gravación de películas con mencoder (parte do paquete mplayer)</li>
       <li xml:lang="id">Perekaman film menggunakan mencoder (bagian dari paket mplayer)</li>
@@ -185,6 +193,7 @@
       <li xml:lang="en-GB">No video during recording, but you can always open a new window and play it</li>
       <li xml:lang="es">Sin vídeo durante la grabación, aunque siempre se puede abrir una nueva ventana para reproducirlo.</li>
       <li xml:lang="eu">Bideorik ez grabatu bitartean, baino beti ireki dezakezu leiho berri bat eta hura jo</li>
+      <li xml:lang="fi">ei tallennuksen aikaista videota, mutta toistoa varten voi avata uuden ikkunan</li>
       <li xml:lang="fr">Pas de vidéo durant l'enregistrement, mais vous pouvez toujours ouvrir une nouvelle fenêtre et le jouer</li>
       <li xml:lang="gl">Non hai vídeo mentres se grava, pero pode abrir unha nova xanela e reproducilo</li>
       <li xml:lang="id">Tidak ada video selagi merekam, tetapi kamu selalu bisa membuka window baru dan memutarnya</li>
@@ -205,6 +214,7 @@
       <li xml:lang="en-GB">Broadcasting, http streaming, using ffserver/ffmpeg</li>
       <li xml:lang="es">Emisión y retransmisión HTTP, mediante el uso de ffserver/ffmpeg.</li>
       <li xml:lang="eu">Emankizunak, http korronteak, ffserver/ffmpeg erabiliz</li>
+      <li xml:lang="fi">lähetys ja HTTP-suoratoisto ffserverillä/ffmpegillä</li>
       <li xml:lang="fr">Diffusion, streaming http, grâce à ffserver / ffmpeg</li>
       <li xml:lang="gl">Emisión regular e por https usando ffserver ou ffmpeg</li>
       <li xml:lang="id">Menyiarkan, http streaming, menggunakan ffserver/ffmpeg</li>
@@ -225,6 +235,7 @@
       <li xml:lang="en-GB">For TV sources, you need v4lctl (part of the xawtv package)</li>
       <li xml:lang="es">Para las fuentes de TV necesita v4lctl (que es parte del paquete xawtv).</li>
       <li xml:lang="eu">TB iturrietarako, v4lctl behar duzu (xawtv paketearen zati bat da)</li>
+      <li xml:lang="fi">TV-lähteisiin tarvitaan v4lctl (osa xawtv-pakettia)</li>
       <li xml:lang="fr">Pour les sources TV, vous aurez besoin de v4lctl (qui fait partie du paquet xawtv)</li>
       <li xml:lang="gl">Para fontes de TV necesita v4lctl (parte do paquete xawtv)</li>
       <li xml:lang="id">Untuk sumber TV, kamu perlu v4lctl (bagian dari paket xawtv)</li>
