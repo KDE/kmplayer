@@ -4,20 +4,9 @@ set(CMAKE_CXX_FLAGS_PROFILE "-DDEBUG ${CMAKE_CXX_FLAGS_PROFILE}")
 
 ########### next target ###############
 
-SET(optionalCFlags)
-SET(optionalLinkFlags)
-
-IF (KMPLAYER_WITH_CAIRO)
-    SET(optionalCFlags ${optionalCFlags} ${CAIROCFlags})
-    SET(optionalLinkFlags ${optionalLinkFlags} ${CAIROLinkFlags})
-    MESSAGE("have cairo cflags:${optionalCFlags} ldflags:${optionalLinkFlags}")
-endif (KMPLAYER_WITH_CAIRO)
-
 add_definitions(-DKMPLAYER_VERSION_STRING="\\\"${KMPLAYER_VERSION_STRING}\\\"")
 
-ADD_DEFINITIONS(${CAIROCFlags})
-
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR} ${CAIROIncDir} ${EXPAT_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR} ${CAIRO_INCLUDE_DIRS} ${EXPAT_INCLUDE_DIRS})
 
 set(libkmplayercommon_SRCS
   kmplayerview.cpp
@@ -60,14 +49,9 @@ endif (KMPLAYER_WITH_NPP)
 
 add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
 
-MESSAGE("extra ${CAIROCflags} ${GLibDBusCflags}  libs ${CAIROLinkFlags} ${GLibDBusLinkFlags}")
-
-SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES COMPILE_FLAGS
-    "${CAIROCflags}")
-
 target_link_libraries(kmplayercommon
    LINK_PRIVATE
-  ${CAIROLinkFlags}
+  ${CAIRO_LIBRARIES}
   KF5::KDELibs4Support
   KF5::Parts
   ${XCB_LIBRARIES}
@@ -135,11 +119,9 @@ if (KMPLAYER_WITH_NPP)
 
     add_executable(knpplayer ${knpplayer_SRCS})
 
-    SET_TARGET_PROPERTIES(knpplayer PROPERTIES COMPILE_FLAGS
-        "${GLibDBusCflags} ${GTKCflags} ${GThreadCflags} ${GModuleCflags}"
-    )
+    include_directories(${GLibDBus_INCLUDE_DIRS} ${GTK_INCLUDE_DIRS} ${GThread_INCLUDE_DIRS} ${GModule_INCLUDE_DIRS})
 
-    target_link_libraries(knpplayer ${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags} ${GModuleLinkFlags}
+    target_link_libraries(knpplayer ${GLibDBus_LIBRARIES} ${GTK_LIBRARIES} ${GThread_LIBRARIES} ${GModule_LIBRARIES}
         ${X11_X11_LIB} )
 
     install(TARGETS knpplayer ${INSTALL_TARGETS_DEFAULT_ARGS})
