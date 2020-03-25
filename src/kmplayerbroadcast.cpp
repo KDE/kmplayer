@@ -252,11 +252,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormat
     connect (save, SIGNAL (clicked ()), this, SLOT (slotSave ()));
     connect (del, SIGNAL (clicked ()), this, SLOT (slotDelete ()));
     profileslayout->addWidget (profile, 0, 0);
-#if (QT_VERSION < 0x030200)
-    profileslayout->addRowSpacing (4, 60);
-#else
     profileslayout->setRowSpacing (4, 60);
-#endif
     profileslayout->addMultiCellWidget (profilelist, 1, 4, 0, 0);
     profileslayout->addWidget (load, 1, 1);
     profileslayout->addWidget (save, 2, 1);

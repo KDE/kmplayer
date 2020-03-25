@@ -62,9 +62,8 @@
 
 using namespace KMPlayer;
 
-#if QT_VERSION >= 0x050600
 static qreal pixel_device_ratio;
-#endif
+
 //-------------------------------------------------------------------------
 
 #ifdef KMPLAYER_WITH_CAIRO
@@ -814,9 +813,7 @@ static void calculateTextDimensions (const QFont& font,
     QRectF r = td.documentLayout()->blockBoundingRect (td.lastBlock());
     *pxw = (int)td.idealWidth ();
     *pxh = (int)(r.y() + r.height());
-#if QT_VERSION >= 0x050600
     *pxw = qMin( (int)(*pxw + pixel_device_ratio), (int)w);
-#endif
 }
 
 static cairo_t *createContext (cairo_surface_t *similar, Surface *s, int w, int h) {
@@ -1776,13 +1773,8 @@ public:
     }
     void resizeSurface (Surface *s) {
 #ifdef KMPLAYER_WITH_CAIRO
-#if QT_VERSION >= 0x050600
         int w = (int)(m_view_area->width() * m_view_area->devicePixelRatioF());
         int h = (int)(m_view_area->height() * m_view_area->devicePixelRatioF());
-#else
-        int w = m_view_area->width ();
-        int h = m_view_area->height ();
-#endif
         if ((w != width || h != height) && s->surface) {
             clearSurface (s);
             width = w;
@@ -1932,11 +1924,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         unsetCursor();
     } else {
         m_topwindow_rect = topLevelWidget ()->geometry ();
-#if QT_VERSION >= 0x050200
         m_view->dockArea()->takeCentralWidget();
-#else
-        setParent (0L);
-#endif
         move(qApp->desktop()->screenGeometry(this).topLeft());
         setVisible(true);
         setWindowState( windowState() ^ Qt::WindowFullScreen ); // set
@@ -1983,13 +1971,8 @@ KDE_NO_EXPORT void ViewArea::keyPressEvent (QKeyEvent *e) {
 }
 
 KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
-#if QT_VERSION >= 0x050600
     int devicex = (int)(e->x() * devicePixelRatioF());
     int devicey = (int)(e->y() * devicePixelRatioF());
-#else
-    int devicex = e->x();
-    int devicey = e->y();
-#endif
     if (surface->node) {
         MouseVisitor visitor (this, MsgEventClicked,
                 Matrix (surface->bounds.x (), surface->bounds.y (),
@@ -2007,13 +1990,8 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     if (e->buttons () == Qt::NoButton)
         m_view->mouseMoved (e->x (), e->y ());
     if (surface->node) {
-#if QT_VERSION >= 0x050600
         int devicex = (int)(e->x() * devicePixelRatioF());
         int devicey = (int)(e->y() * devicePixelRatioF());
-#else
-        int devicex = e->x();
-        int devicey = e->y();
-#endif
         MouseVisitor visitor (this, MsgEventPointerMoved,
                 Matrix (surface->bounds.x (), surface->bounds.y (),
                     surface->xscale, surface->yscale),
@@ -2026,14 +2004,9 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
 }
 
 KDE_NO_EXPORT void ViewArea::syncVisual () {
-#if QT_VERSION >= 0x050600
     pixel_device_ratio = devicePixelRatioF();
     int w = (int)(width() * devicePixelRatioF());
     int h = (int)(height() * devicePixelRatioF());
-#else
-    int w = width();
-    int h = heigth();
-#endif
     IRect rect = m_repaint_rect.intersect (IRect (0, 0, w, h));
 #ifdef KMPLAYER_WITH_CAIRO
     if (surface->node) {
@@ -2102,31 +2075,20 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
 #endif
     {
         m_update_rect = IRect ();
-#if QT_VERSION >= 0x050600
         repaint(QRect(rect.x() / devicePixelRatioF(),
                       rect.y() / devicePixelRatioF(),
                       rect.width() / devicePixelRatioF(),
                       rect.height() / devicePixelRatioF()));
-#else
-        repaint (QRect(rect.x(), rect.y(), rect.width(), rect.height()));
-#endif
     }
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
 #ifdef KMPLAYER_WITH_CAIRO
     if (surface->node) {
-#if QT_VERSION >= 0x050600
         int x = (int)(pe->rect().x() * devicePixelRatioF());
         int y = (int)(pe->rect().y() * devicePixelRatioF());
         int w = (int)(pe->rect().width() * devicePixelRatioF());
         int h = (int)(pe->rect().height() * devicePixelRatioF());
-#else
-        int x = pe->rect().x();
-        int y = pe->rect().y();
-        int w = pe->rect().width();
-        int h = pe->rect().height();
-#endif
         scheduleRepaint(IRect(x, y, w, h));
     } else
 #endif
@@ -2152,12 +2114,8 @@ KDE_NO_EXPORT void ViewArea::scale (int) {
 }
 
 KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
-#if QT_VERSION >= 0x050600
     int devicew = (int)(width() * devicePixelRatioF());
     int deviceh = (int)(height() * devicePixelRatioF());
-#else
-    int devicew = width, deviceh = height()
-#endif
     Single x, y, w = devicew, h = deviceh;
     h -= m_view->statusBarHeight ();
     h -= m_view->controlPanel ()->isVisible () && !m_fullscreen
@@ -2211,12 +2169,10 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     m_view->console ()->setGeometry (0, 0, w, h);
     m_view->picture ()->setGeometry (0, 0, w, h);
     if (!surface->node && video_widgets.size () == 1) {
-#if QT_VERSION >= 0x050600
         x *= devicePixelRatioF();
         y *= devicePixelRatioF();
         ws *= devicePixelRatioF();
         hs *= devicePixelRatioF();
-#endif
         video_widgets.first ()->setGeometry (IRect (x, y, ws, hs));
     }
 }
@@ -2240,13 +2196,9 @@ KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
         d->clearSurface (surface.ptr ());
 #endif
     }
-#if QT_VERSION >= 0x050600
     int devicew = (int)(width() * devicePixelRatioF());
     int deviceh = (int)(height() * devicePixelRatioF());
     scheduleRepaint (IRect (0, 0, devicew, deviceh));
-#else
-    scheduleRepaint (IRect (0, 0, width (), height ()));
-#endif
     return 0L;
 }
 
@@ -2468,15 +2420,9 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
                 QPoint p = mapToGlobal (QPoint (0, 0));
                 int x = ev->root_x - p.x ();
                 int y = ev->root_y - p.y ();
-#if QT_VERSION >= 0x050600
                 m_view->mouseMoved(x / devicePixelRatioF(), y / devicePixelRatioF());
                 int devicew = (int)(width() * devicePixelRatioF());
                 int deviceh = (int)(height() * devicePixelRatioF());
-#else
-                m_view->mouseMoved (x, y);
-                int devicew = width();
-                int deviceh = height();
-#endif
                 if (x > 0 && x < devicew && y > 0 && y < deviceh)
                     mouseMoved ();
             }
@@ -2544,13 +2490,8 @@ void VideoOutput::useIndirectWidget (bool inderect) {
                 xcb_screen_t* scr = m_view->viewArea()->d->screen_of_display(connection, QX11Info::appScreen());
                 m_plain_window = xcb_generate_id(connection);
                 uint32_t values[] = { scr->black_pixel, m_input_mask };
-#if QT_VERSION >= 0x050600
                 int devicew = (int)(width() * devicePixelRatioF());
                 int deviceh = (int)(height() * devicePixelRatioF());
-#else
-                int devicew = width();
-                int deviceh = height();
-#endif
                 xcb_create_window(connection,
                         XCB_COPY_FROM_PARENT, m_plain_window, winId(),
                         0, 0, devicew, deviceh,
@@ -2595,13 +2536,8 @@ KDE_NO_EXPORT void VideoOutput::timerEvent (QTimerEvent *e) {
         resized_timer = 0;
         if (clientWinId ()) {
             xcb_connection_t* connection = QX11Info::connection();
-#if QT_VERSION >= 0x050600
             uint32_t devicew = (uint32_t)(width() * devicePixelRatioF());
             uint32_t deviceh = (uint32_t)(height() * devicePixelRatioF());
-#else
-            uint32_t devicew = width();
-            uint32_t deviceh = height();
-#endif
             uint32_t values[] = { 0, 0, devicew, deviceh };
             xcb_configure_window(connection, clientWinId(),
                     XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y |
@@ -2626,14 +2562,10 @@ WindowId VideoOutput::clientHandle () {
 }
 
 void VideoOutput::setGeometry (const IRect &rect) {
-#if QT_VERSION >= 0x050600
     int x = (int)(rect.x() / devicePixelRatioF());
     int y = (int)(rect.y() / devicePixelRatioF());
     int w = (int)(rect.width() / devicePixelRatioF());
     int h = (int)(rect.height() / devicePixelRatioF());
-#else
-    int x = rect.x (), y = rect.y (), w = rect.width (), h = rect.height ();
-#endif
     if (m_view->keepSizeRatio ()) {
         // scale video widget inside region
         int hfw = heightForWidth (w);
@@ -2655,17 +2587,10 @@ void VideoOutput::setGeometry (const IRect &rect) {
 void VideoOutput::setAspect (float a) {
     m_aspect = a;
     QRect r = geometry ();
-#if QT_VERSION >= 0x050600
     int x = (int)(r.x() * devicePixelRatioF());
     int y = (int)(r.y() * devicePixelRatioF());
     int w = (int)(r.width() * devicePixelRatioF());
     int h = (int)(r.height() * devicePixelRatioF());
-#else
-    int x = r.x();
-    int y = r.y();
-    int w = r.width();
-    int h = r.height();
-#endif
     m_view->viewArea()->scheduleRepaint(IRect(x, y, w, h));
 }
 

@@ -35,12 +35,8 @@ using namespace KMPlayer;
 
 KDE_NO_CDTOR_EXPORT Surface::Surface (ViewArea *widget)
   : bounds(SRect(0, 0,
-#if QT_VERSION >= 0x050600
                  widget->width() * widget->devicePixelRatioF(),
                  widget->height() * widget->devicePixelRatioF()
-#else
-                 widget->width(), widget->height()
-#endif
     )),
     xscale (1.0), yscale (1.0),
     background_color (0),

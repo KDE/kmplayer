@@ -367,10 +367,8 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
    m_view (view),
    m_auto_controls (true),
    m_popup_clicked (false) {
-#if QT_VERSION > 0x040399
     setAttribute (Qt::WA_NativeWindow);
     setAttribute(Qt::WA_DontCreateNativeAncestors);
-#endif
     dpi_scale = qMax(1.0, logicalDpiX() / 120.0);
     m_buttonbox = new QHBoxLayout (this);
     m_buttonbox->setSpacing (4 * dpi_scale);

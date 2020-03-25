@@ -10,7 +10,10 @@ SET(KMPLAYER_PATCH_VERSION "0b")
 SET(KMPLAYER_VERSION_STRING
     "${KMPLAYER_MAJOR_VERSION}.${KMPLAYER_MINOR_VERSION}.${KMPLAYER_PATCH_VERSION}")
 
-find_package(ECM 1.2.0 REQUIRED NO_MODULE)
+set(QT_MIN_VERSION "5.6.0")
+set(KF5_MIN_VERSION "5.25.0")
+
+find_package(ECM ${KF5_MIN_VERSION} REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH} ${ECM_KDE_MODULE_DIR})
 
 include(KDEInstallDirs)
@@ -26,9 +29,9 @@ include(FindXCB)
 ecm_setup_version(${KMPLAYER_VERSION_STRING} VARIABLE_PREFIX KMPLAYERPRIVATE
     SOVERSION ${KMPLAYER_MAJOR_VERSION}
 )
-find_package(Qt5 REQUIRED COMPONENTS Core DBus Widgets Svg X11Extras)
-find_package(KF5 REQUIRED COMPONENTS Config CoreAddons Init I18n KDELibs4Support KIO MediaPlayer Parts WidgetsAddons)
-find_package(KF5DocTools)
+find_package(Qt5 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core DBus Widgets Svg X11Extras)
+find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS Config CoreAddons Init I18n KDELibs4Support KIO MediaPlayer Parts WidgetsAddons)
+find_package(KF5DocTools ${KF5_MIN_VERSION})
 find_package(X11 REQUIRED)
 find_package(Phonon4Qt5 REQUIRED NO_MODULE)
 

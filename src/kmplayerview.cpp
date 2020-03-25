@@ -87,10 +87,8 @@ KDE_NO_EXPORT void PictureWidget::mouseMoveEvent (QMouseEvent *e) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT TextEdit::TextEdit (QWidget * parent, View * view) : QTextEdit (parent), m_view (view) {
-#if QT_VERSION > 0x040399
     setAttribute (Qt::WA_NativeWindow);
     setAttribute(Qt::WA_DontCreateNativeAncestors);
-#endif
     setReadOnly (true);
     QPalette p=palette();
     p.setColor (QPalette::Active, QPalette::Base, QColor (Qt::black));

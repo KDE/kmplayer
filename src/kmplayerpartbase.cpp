@@ -873,11 +873,7 @@ KDE_NO_EXPORT void PartBase::posSliderPressed () {
 
 KDE_NO_EXPORT void PartBase::posSliderReleased () {
     m_bPosSliderPressed=false;
-#if (QT_VERSION < 0x030200)
-    const QSlider * posSlider = dynamic_cast <const QSlider *> (sender ());
-#else
     const QSlider * posSlider = ::qobject_cast<const QSlider *> (sender ());
-#endif
     if (m_media_manager->processes ().size () == 1)
         m_media_manager->processes ().first ()->seek (posSlider->value(), true);
 }
