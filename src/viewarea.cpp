@@ -2032,7 +2032,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
     int h = (int)(height() * devicePixelRatioF());
 #else
     int w = width();
-    int h = heigth();
+    int h = height();
 #endif
     IRect rect = m_repaint_rect.intersect (IRect (0, 0, w, h));
 #ifdef KMPLAYER_WITH_CAIRO
@@ -2156,7 +2156,7 @@ KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
     int devicew = (int)(width() * devicePixelRatioF());
     int deviceh = (int)(height() * devicePixelRatioF());
 #else
-    int devicew = width, deviceh = height()
+    int devicew = width(), deviceh = height();
 #endif
     Single x, y, w = devicew, h = deviceh;
     h -= m_view->statusBarHeight ();
