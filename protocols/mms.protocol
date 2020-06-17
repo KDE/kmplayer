@@ -56,7 +56,6 @@ Description[th]=โพรโตคอลระบบเซิร์ฟเวอ�
 Description[tr]=Microsoft Medya Sunucu Protokolü
 Description[ug]=مىكروسوفت ۋاسىتە مۇلازىمېتىر كېلىشىمى
 Description[uk]=Протокол сервера Microsoft Media
-Description[x-test]=xxMicrosoft Media Server Protocolxx
 Description[zh_CN]=Microsoft 媒体服务协议
 Description[zh_TW]=Microsoft Media Server 協定
 exec=kmplayer "%u"
