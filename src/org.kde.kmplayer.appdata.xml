@@ -28,7 +28,6 @@
   <name xml:lang="sl">KMPlayer</name>
   <name xml:lang="sv">KMplayer</name>
   <name xml:lang="uk">KMPlayer</name>
-  <name xml:lang="x-test">xxKMPlayerxx</name>
   <name xml:lang="zh-TW">KMPlayer</name>
   <summary>Interface for MPlayer by KDE</summary>
   <summary xml:lang="ca">Interfície pel MPlayer per al KDE</summary>
@@ -56,7 +55,6 @@
   <summary xml:lang="sl">KDE vmesnik za MPlayer</summary>
   <summary xml:lang="sv">Gränssnitt för Mplayer av KDE</summary>
   <summary xml:lang="uk">Інтерфейс для MPlayer від KDE</summary>
-  <summary xml:lang="x-test">xxInterface for MPlayer by KDExx</summary>
   <summary xml:lang="zh-TW">來自 KDE 的 MPlayer 介面</summary>
   <description>
     <p>KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
@@ -82,7 +80,6 @@
     <p xml:lang="sl">KMPlayer je preprosto začelje za MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="sv">KMplayer är ett enkelt gränssnitt för Mplayer, FFMpeg och Phonon.</p>
     <p xml:lang="uk">KMPlayer є простим інтерфейсом до MPlayer/FFMpeg/Phonon.</p>
-    <p xml:lang="x-test">xxKMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.xx</p>
     <p xml:lang="zh-TW">KMPlayer 是個 MPlayer/FFMpeg/Phonon 的簡易前端。</p>
     <p>Some features:</p>
     <p xml:lang="ca">Algunes característiques:</p>
@@ -108,7 +105,6 @@
     <p xml:lang="sl">Nekaj zmožnosti:</p>
     <p xml:lang="sv">Några funktioner:</p>
     <p xml:lang="uk">Деякі з можливостей:</p>
-    <p xml:lang="x-test">xxSome features:xx</p>
     <p xml:lang="zh-TW">部份功能：</p>
     <ul>
       <li>play DVD/VCD movies (from file or url and from a video device)</li>
@@ -133,7 +129,6 @@
       <li xml:lang="sl">predvaja filme DVD/VCD (iz datoteke ali spletnega naslova in iz video naprave)</li>
       <li xml:lang="sv">Spela DVD- och VCD-filmer (från fil eller webbadress, och från videoenhet)</li>
       <li xml:lang="uk">відтворення відео з DVD/VCD (з файла або адреси та з пристрою для читання носіїв відео)</li>
-      <li xml:lang="x-test">xxplay DVD/VCD movies (from file or url and from a video device)xx</li>
       <li xml:lang="zh-TW">播放 DVD/VCD 影片（從檔案或網址，及從影片裝置）</li>
       <li>embed inside konqueror (movie is played inside konqueror)</li>
       <li xml:lang="ca">incrustat dins el Konqueror (la pel·lícula es reprodueix dins el Konqueror)</li>
@@ -158,7 +153,6 @@
       <li xml:lang="sl">vdelan v konqueror (film se predvaja v konquerorju)</li>
       <li xml:lang="sv">Inbäddning inne i Konqueror (filmen spelas inne i Konqueror)</li>
       <li xml:lang="uk">вбудовування до kKnqueror (відтворення відео безпосередньо у вікні Konqueror)</li>
-      <li xml:lang="x-test">xxembed inside konqueror (movie is played inside konqueror)xx</li>
       <li xml:lang="zh-TW">在 Konqueror 嵌入（在 Konqueror 中播放影片）</li>
       <li>embed inside khtml (movie playback inside a html page)</li>
       <li xml:lang="ca">incrustat dins el «khtml» (la pel·lícula es reprodueix dins una pàgina HTML)</li>
@@ -183,7 +177,6 @@
       <li xml:lang="sl">vdelan v khtml (film predvaja znotraj strani html)</li>
       <li xml:lang="sv">Inbäddning inne i KHTML (uppspelning av fil på en HTML-sida)</li>
       <li xml:lang="uk">вбудовування до khtml (відтворення відео на сторінках HTML)</li>
-      <li xml:lang="x-test">xxembed inside khtml (movie playback inside a html page)xx</li>
       <li xml:lang="zh-TW">在 khtml 中嵌入（在 html 頁面中播放影片）</li>
       <li>Movie recording using mencoder (part of the mplayer package)</li>
       <li xml:lang="ca">Enregistrament de pel·lícules usant el «mencoder» (part del paquet «mplayer»)</li>
@@ -208,7 +201,6 @@
       <li xml:lang="sl">Snemanje filma s programom mencoder (del paketa mplayer)</li>
       <li xml:lang="sv">Filminspelning med användning av Mencoder (som ingår i Mplayer-paketet)</li>
       <li xml:lang="uk">запис відео за допомогою mencoder (є частиною пакунка з mplayer)</li>
-      <li xml:lang="x-test">xxMovie recording using mencoder (part of the mplayer package)xx</li>
       <li xml:lang="zh-TW">使用 memcoder 錄製影片（mplayer 軟體包的一部分）</li>
       <li>No video during recording, but you can always open a new window and play it</li>
       <li xml:lang="ca">No hi ha vídeo durant l'enregistrament, però sempre es pot obrir una finestra nova i reproduir-lo</li>
@@ -232,7 +224,6 @@
       <li xml:lang="sl">Med snemanjem sicer ni videoposnetka, a vedno lahko odprete novo okno in ga predvajate</li>
       <li xml:lang="sv">Ingen video under inspelning, men det går alltid att öppna ett nytt fönster och spela upp den</li>
       <li xml:lang="uk">вимикання показу відео на час запису, але ви завжди можете відкрити нове вікно і відтворити його</li>
-      <li xml:lang="x-test">xxNo video during recording, but you can always open a new window and play itxx</li>
       <li xml:lang="zh-TW">錄影途中不會有影片，但你永遠皆可開啟新視窗播放</li>
       <li>Broadcasting, http streaming, using ffserver/ffmpeg</li>
       <li xml:lang="ca">Difusió, flux de dades per «http», usa «ffserver»/«ffmpeg»</li>
@@ -256,7 +247,6 @@
       <li xml:lang="sl">Oddajanje, pretakanje http, z uporabo programov ffserver/ffmpeg</li>
       <li xml:lang="sv">Utsändning, HTTP-strömning med användning av ffserver och ffmpeg</li>
       <li xml:lang="uk">трансляція відео, потоків відеоданих http за допомогою ffserver/ffmpeg</li>
-      <li xml:lang="x-test">xxBroadcasting, http streaming, using ffserver/ffmpegxx</li>
       <li xml:lang="zh-TW">使用 ffserver 或 ffmpeg 廣播和 HTTP 串流</li>
       <li>For TV sources, you need v4lctl (part of the xawtv package)</li>
       <li xml:lang="ca">Per a les fonts de TV, cal «v4lctl» (part del paquet «xawtv»)</li>
@@ -280,7 +270,6 @@
       <li xml:lang="sl">Za TV vire potrebujete program v4lctl (del paketa xawtv)</li>
       <li xml:lang="sv">För tv-källor behövs v4lctl (som ingår i xawtv-paketet)</li>
       <li xml:lang="uk">для джерел телевізійного сигналу вам знадобиться v4lctl (частина пакунка xawtv)</li>
-      <li xml:lang="x-test">xxFor TV sources, you need v4lctl (part of the xawtv package)xx</li>
       <li xml:lang="zh-TW">若為 TV 來源，則需要 v4lctl（xawtv 軟體包的一部分）</li>
     </ul>
   </description>
