@@ -319,7 +319,7 @@ void PlayListView::addBookMark () {
     if (item->node) {
         Mrl * mrl = item->node->mrl ();
         KURL url (mrl ? mrl->src : QString (item->node->nodeName ()));
-        emit addBookMark (mrl->title.isEmpty () ? url.prettyUrl () : mrl->title, url.url ());
+        emit addBookMark (mrl->title.isEmpty () ? url.toDisplayString() : mrl->title, url.url ());
     }
 }
 

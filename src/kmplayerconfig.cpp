@@ -450,7 +450,7 @@ void Settings::show (const char * pagename) {
     for (int i = 0; i < int (FontSetting::last_target); i++)
         fonts[i].newfont = fonts[i].font;
 
-    QString current = m_player->source()->url().prettyUrl();
+    QString current = m_player->source()->url().toDisplayString();
     if (!current.isEmpty() && !urllist.contains(current))
         urllist.push_front(current);
     configdialog->m_SourcePageURL->urllist->clear ();
@@ -459,7 +459,7 @@ void Settings::show (const char * pagename) {
         configdialog->m_SourcePageURL->urllist->setCurrentText(current);
     else
         configdialog->m_SourcePageURL->urllist->setCurrentIndex(-1);
-    current = m_player->source()->subUrl().prettyUrl();
+    current = m_player->source()->subUrl().toDisplayString();
     if (!current.isEmpty() && !sub_urllist.contains(current))
         sub_urllist.push_front(current);
     configdialog->m_SourcePageURL->sub_urllist->clear ();
@@ -673,11 +673,11 @@ void Settings::okPressed () {
     if (urlchanged) {
         KUrl uri (url.url ());
         m_player->setUrl (uri.url ());
-        if (urllist.indexOf (uri.prettyUrl ()) < 0)
-            configdialog->m_SourcePageURL->urllist->insertItem (0, uri.prettyUrl ());
+        if (urllist.indexOf (uri.toDisplayString()) < 0)
+            configdialog->m_SourcePageURL->urllist->insertItem (0, uri.toDisplayString());
         KUrl sub_uri (sub_url.url ());
-        if (sub_urllist.indexOf (sub_uri.prettyUrl ()) < 0)
-            configdialog->m_SourcePageURL->sub_urllist->insertItem (0, sub_uri.prettyUrl ());
+        if (sub_urllist.indexOf (sub_uri.toDisplayString()) < 0)
+            configdialog->m_SourcePageURL->sub_urllist->insertItem (0, sub_uri.toDisplayString());
     }
     urllist.clear ();
     for (int i = 0; i < configdialog->m_SourcePageURL->urllist->count () && i < 20; ++i)

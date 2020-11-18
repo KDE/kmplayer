@@ -1551,7 +1551,7 @@ QString URLSource::prettyName () {
     }
     if (m_url.isLocalFile())
         return i18n ("URL - ") + m_url.toLocalFile();
-    return i18n ("URL - ") + m_url.prettyUrl ();
+    return i18n ("URL - ") + m_url.toDisplayString();
 }
 
 bool URLSource::authoriseUrl (const QString &url) {
