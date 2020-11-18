@@ -1516,8 +1516,8 @@ namespace KMPlayer {
     struct KMPLAYER_NO_EXPORT SomeNode : public ConfigNode {
         KDE_NO_CDTOR_EXPORT SomeNode (NodePtr & d, const QString & t)
             : ConfigNode (d, t) {}
-        KDE_NO_CDTOR_EXPORT ~SomeNode () {}
-        Node *childFromTag (const QString & t);
+        KDE_NO_CDTOR_EXPORT ~SomeNode () override {}
+        Node *childFromTag (const QString & t) override;
     };
 } // namespace
 

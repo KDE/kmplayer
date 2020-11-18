@@ -71,7 +71,7 @@ public:
     typedef SharedPtr <LangInfo> LangInfoPtr;
 
     Source (const QString & name, PartBase * player, const char * src);
-    virtual ~Source ();
+    ~Source () override;
     virtual void init ();
     virtual bool processOutput (const QString & line);
 
@@ -157,15 +157,15 @@ public slots:
     void setAudioLang (int) KDE_NO_EXPORT;
     void setSubtitle (int) KDE_NO_EXPORT;
 protected:
-    void timerEvent (QTimerEvent *);
+    void timerEvent (QTimerEvent *) override;
     /**
      * PlayListNotify implementation
      */
-    void stateElementChanged (Node * element, Node::State os, Node::State ns);
-    void bitRates (int & preferred, int & maximal);
-    void setTimeout (int ms);
-    void openUrl (const KUrl &url, const QString &target, const QString &srv);
-    void enableRepaintUpdaters (bool enable, unsigned int off_time);
+    void stateElementChanged (Node * element, Node::State os, Node::State ns) override;
+    void bitRates (int & preferred, int & maximal) override;
+    void setTimeout (int ms) override;
+    void openUrl (const KUrl &url, const QString &target, const QString &srv) override;
+    void enableRepaintUpdaters (bool enable, unsigned int off_time) override;
 
     NodePtr m_document;
     NodePtrW m_current;
@@ -206,8 +206,8 @@ class KMPLAYER_EXPORT SourceDocument : public Document {
 public:
     SourceDocument (Source *s, const QString &url);
 
-    void message (MessageType msg, void *data=nullptr);
-    void *role (RoleType msg, void *data=nullptr);
+    void message (MessageType msg, void *data=nullptr) override;
+    void *role (RoleType msg, void *data=nullptr) override;
 protected:
     Source *m_source;
     ConnectionList m_KeyListeners;
@@ -219,20 +219,20 @@ class KMPLAYER_EXPORT URLSource : public Source {
     Q_OBJECT
 public:
     URLSource (PartBase * player, const KUrl & url = KUrl ());
-    virtual ~URLSource ();
+    ~URLSource () override;
 
-    virtual void dimensions (int & w, int & h);
-    virtual bool hasLength ();
-    virtual QString prettyName ();
-    virtual void reset ();
-    virtual void setUrl (const QString &url);
-    virtual bool authoriseUrl (const QString &url);
-    virtual void init ();
-    virtual void activate () KDE_NO_EXPORT;
-    virtual void deactivate ();
-    virtual void forward ();
-    virtual void backward ();
-    virtual void play (Mrl *);
+    void dimensions (int & w, int & h) override;
+    bool hasLength () override;
+    QString prettyName () override;
+    void reset () override;
+    void setUrl (const QString &url) override;
+    bool authoriseUrl (const QString &url) override;
+    void init () override;
+    void activate () override KDE_NO_EXPORT;
+    void deactivate () override;
+    void forward () override;
+    void backward () override;
+    void play (Mrl *) override;
 protected:
     bool activated; // 'solve' an singleShot race w/ cmdline url's
 };
@@ -244,9 +244,9 @@ class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
     Q_OBJECT
 public:
     PartBase (QWidget *parent, QObject *objParent, KSharedConfigPtr);
-    ~PartBase ();
+    ~PartBase () override;
     void init (KActionCollection *ac, const QString &objname, bool transparent);
-    virtual KMediaPlayer::View* view ();
+    KMediaPlayer::View* view () override;
     View* viewWidget () const { return m_view; }
     static KAboutData* createAboutData ();
 
@@ -287,14 +287,14 @@ public:
     void stopRecording ();
     bool isRecording ();
 public slots:
-    virtual bool openUrl (const QUrl & url);
+    bool openUrl (const QUrl & url) override;
     virtual bool openUrl (const KUrl & url);
     virtual void openUrl (const KUrl &, const QString &t, const QString &srv);
     virtual bool openUrl(const QList<QUrl>& urls);
-    virtual bool closeUrl ();
-    virtual void pause (void);
-    virtual void play (void);
-    virtual void stop (void);
+    bool closeUrl () override;
+    void pause (void) override;
+    void play (void) override;
+    void stop (void) override;
     void record ();
     void record (const QString &src, const QString &file,
                  const QString &recorder, int auto_start);
@@ -313,11 +313,11 @@ public slots:
     virtual void setLoaded (int percentage);
     virtual void processCreated (Process *);
 public:
-    virtual bool isSeekable (void) const;
-    virtual qlonglong position (void) const;
-    virtual bool hasLength (void) const;
-    virtual qlonglong length (void) const;
-    virtual void seek (qlonglong);
+    bool isSeekable (void) const override;
+    qlonglong position (void) const override;
+    bool hasLength (void) const override;
+    qlonglong length (void) const override;
+    void seek (qlonglong) override;
     void toggleFullScreen () KDE_NO_EXPORT;
     bool isPlaying () KDE_NO_EXPORT;
 
@@ -341,8 +341,8 @@ signals:
     void panelActionToggled(QAction*);
     void recording (bool);
 protected:
-    bool openFile();
-    virtual void timerEvent (QTimerEvent *);
+    bool openFile() override;
+    void timerEvent (QTimerEvent *) override;
     virtual void playingStarted ();
     virtual void playingStopped ();
 protected slots:

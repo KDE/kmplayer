@@ -113,19 +113,19 @@ public:
     };
 
     PlayModel(QObject *parent, KIconLoader *) KDE_NO_CDTOR_EXPORT;
-    ~PlayModel() KDE_NO_CDTOR_EXPORT;
+    ~PlayModel() override KDE_NO_CDTOR_EXPORT;
 
-    QVariant data (const QModelIndex &index, int role) const KMPLAYER_NO_EXPORT;
-    bool setData (const QModelIndex&, const QVariant& v, int role) KMPLAYER_NO_EXPORT;
-    Qt::ItemFlags flags (const QModelIndex &index) const KMPLAYER_NO_EXPORT;
+    QVariant data (const QModelIndex &index, int role) const override KMPLAYER_NO_EXPORT;
+    bool setData (const QModelIndex&, const QVariant& v, int role) override KMPLAYER_NO_EXPORT;
+    Qt::ItemFlags flags (const QModelIndex &index) const override KMPLAYER_NO_EXPORT;
     QVariant headerData (int section, Qt::Orientation orientation,
-            int role = Qt::DisplayRole) const KMPLAYER_NO_EXPORT;
+            int role = Qt::DisplayRole) const override KMPLAYER_NO_EXPORT;
     QModelIndex index (int row, int column,
-            const QModelIndex &parent = QModelIndex()) const KMPLAYER_NO_EXPORT;
-    QModelIndex parent (const QModelIndex &index) const KMPLAYER_NO_EXPORT;
-    bool hasChildren (const QModelIndex& parent = QModelIndex ()) const KMPLAYER_NO_EXPORT;
-    int rowCount (const QModelIndex &parent = QModelIndex()) const KMPLAYER_NO_EXPORT;
-    int columnCount (const QModelIndex &parent = QModelIndex()) const KMPLAYER_NO_EXPORT;
+            const QModelIndex &parent = QModelIndex()) const override KMPLAYER_NO_EXPORT;
+    QModelIndex parent (const QModelIndex &index) const override KMPLAYER_NO_EXPORT;
+    bool hasChildren (const QModelIndex& parent = QModelIndex ()) const override KMPLAYER_NO_EXPORT;
+    int rowCount (const QModelIndex &parent = QModelIndex()) const override KMPLAYER_NO_EXPORT;
+    int columnCount (const QModelIndex &parent = QModelIndex()) const override KMPLAYER_NO_EXPORT;
 
     PlayItem *rootItem () const KMPLAYER_NO_EXPORT { return root_item; }
     QModelIndex indexFromItem (PlayItem *item) const KMPLAYER_NO_EXPORT;

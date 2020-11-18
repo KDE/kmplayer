@@ -2307,14 +2307,14 @@ public:
     GroupBaseInitVisitor () : ready (true) {
     }
 
-    void visit (Node *node) {
+    void visit (Node *node) override {
         node->message (MsgMediaPrefetch, MsgBool (1));
     }
-    void visit (SMIL::PriorityClass *pc) {
+    void visit (SMIL::PriorityClass *pc) override {
         for (NodePtr n = pc->firstChild (); n; n = n->nextSibling ())
             n->accept (this);
     }
-    void visit (SMIL::Seq *seq) {
+    void visit (SMIL::Seq *seq) override {
         for (Node *n = seq->firstChild (); n; n = n->nextSibling ())
             if (n->role (RoleTiming)) {
                 seq->firstChild ()->accept (this);
@@ -2322,16 +2322,16 @@ public:
                 break;
             }
     }
-    void visit (SMIL::Switch *s) {
+    void visit (SMIL::Switch *s) override {
         Node *n = s->chosenOne ();
         if (n)
              n->accept (this);
     }
-    void visit (SMIL::Anchor *a) {
+    void visit (SMIL::Anchor *a) override {
         if (a->firstChild ())
              a->firstChild ()->accept (this);
     }
-    void visit (SMIL::Par *par) {
+    void visit (SMIL::Par *par) override {
         for (NodePtr n = par->firstChild (); n; n = n->nextSibling ()) {
             n->accept (this);
             if (ready)
@@ -2377,14 +2377,14 @@ public:
 
     FreezeStateUpdater () : initial_node (true), freeze (true) {}
 
-    void visit (Element *elm) {
+    void visit (Element *elm) override {
         updateNode (elm);
     }
-    void visit (SMIL::PriorityClass *pc) {
+    void visit (SMIL::PriorityClass *pc) override {
         for (NodePtr n = pc->firstChild (); n; n = n->nextSibling ())
             n->accept (this);
     }
-    void visit (SMIL::Seq *seq) {
+    void visit (SMIL::Seq *seq) override {
         bool old_freeze = freeze;
 
         updateNode (seq);
@@ -2423,11 +2423,11 @@ public:
 
         freeze = old_freeze;
     }
-    void visit (SMIL::Anchor *a) {
+    void visit (SMIL::Anchor *a) override {
         if (a->firstChild ())
             a->firstChild ()->accept (this);
     }
-    void visit (SMIL::Par *par) {
+    void visit (SMIL::Par *par) override {
         bool old_freeze = freeze;
 
         updateNode (par);
@@ -2438,7 +2438,7 @@ public:
 
         freeze = old_freeze;
     }
-    void visit (SMIL::Excl *excl) {
+    void visit (SMIL::Excl *excl) override {
         bool old_freeze = freeze;
 
         updateNode (excl);
@@ -2452,7 +2452,7 @@ public:
 
         freeze = old_freeze;
     }
-    void visit (SMIL::Switch *s) {
+    void visit (SMIL::Switch *s) override {
         bool old_freeze = freeze;
 
         updateNode (s);
@@ -2769,12 +2769,12 @@ public:
 
     using Visitor::visit;
 
-    void visit (Node *n) {
+    void visit (Node *n) override {
         Node *s = n->nextSibling ();
         if (s)
             s->accept (this);
     }
-    void visit (Element *elm) {
+    void visit (Element *elm) override {
         if (elm->role (RoleTiming)) {
             // make aboutToStart connection with Timing
             excl->started_event_list =
@@ -2784,7 +2784,7 @@ public:
         }
         visit (static_cast <Node *> (elm));
     }
-    void visit (SMIL::PriorityClass *pc) {
+    void visit (SMIL::PriorityClass *pc) override {
         pc->init ();
         pc->state = Node::state_activated;
         Node *n = pc->firstChild ();
@@ -2823,17 +2823,17 @@ class KMPLAYER_NO_EXPORT ExclPauseVisitor : public Visitor {
 public:
     ExclPauseVisitor (bool p, Node *pb, unsigned int pt)
         : pause(p), paused_by (pb), cur_time (pt) {}
-    ~ExclPauseVisitor () {
+    ~ExclPauseVisitor () override {
         paused_by->document ()->updateTimeout ();
     }
 
     using Visitor::visit;
 
-    void visit (Node *node) {
+    void visit (Node *node) override {
         for (Node *c = node->firstChild (); c; c = c->nextSibling ())
             c->accept (this);
     }
-    void visit (Element *elm) {
+    void visit (Element *elm) override {
         if (!elm->active ())
             return; // nothing to do
         Runtime *rt = (Runtime *) elm->role (RoleTiming);
@@ -2852,7 +2852,7 @@ public:
         }
         visit (static_cast <Node *> (elm));
     }
-    void visit (SMIL::MediaType *mt) {
+    void visit (SMIL::MediaType *mt) override {
         if (mt->media_info && mt->media_info->media) {
             if (pause)
                 mt->media_info->media->pause ();
@@ -2870,11 +2870,11 @@ public:
 
         visit (static_cast <Element *> (mt));
     }
-    void visit (SMIL::AnimateBase *an) {
+    void visit (SMIL::AnimateBase *an) override {
         updatePauseStateEvent(an->anim_timer, an->runtime->paused_time);
         visit (static_cast <Element *> (an));
     }
-    void visit (SMIL::Smil *s) {
+    void visit (SMIL::Smil *s) override {
         for (Node *c = s->firstChild (); c; c = c->nextSibling ())
             if (SMIL::id_node_body == c->id)
                 c->accept (this);
@@ -3763,7 +3763,7 @@ namespace {
         SvgElement (NodePtr &doc, Node *img, const QByteArray &t, short id=0)
             : Element (doc, id), tag (t), image (img) {}
 
-        void parseParam (const TrieString &name, const QString &val) {
+        void parseParam (const TrieString &name, const QString &val) override {
             setAttribute (name, val);
             Mrl *mrl = image ? image->mrl () : nullptr;
             if (mrl && mrl->media_info &&
@@ -3774,11 +3774,11 @@ namespace {
             }
         }
 
-        Node *childFromTag (const QString & tag) {
+        Node *childFromTag (const QString & tag) override {
             return new SvgElement (m_doc, image.ptr (), tag.toLatin1());
         }
 
-        const char *nodeName () const {
+        const char *nodeName () const override {
             return tag.constData ();
         }
     };

@@ -58,7 +58,7 @@ class KDE_NO_EXPORT TextEdit : public QTextEdit {
 public:
     TextEdit (QWidget * parent, View * view);
 protected:
-    void contextMenuEvent (QContextMenuEvent * e);
+    void contextMenuEvent (QContextMenuEvent * e) override;
 private:
     View * m_view;
 };
@@ -71,7 +71,7 @@ public:
     InfoWindow (QWidget * parent, View * view);
     KDE_NO_EXPORT View * view () const { return m_view; }
 protected:
-    void contextMenuEvent (QContextMenuEvent * e);
+    void contextMenuEvent (QContextMenuEvent * e) override;
 private:
     View * m_view;
 };
@@ -80,10 +80,10 @@ class KMPLAYER_NO_EXPORT PictureWidget : public QWidget {
     View * m_view;
 public:
     PictureWidget (QWidget * parent, View * view);
-    KDE_NO_CDTOR_EXPORT ~PictureWidget () {}
+    KDE_NO_CDTOR_EXPORT ~PictureWidget () override {}
 protected:
-    void mousePressEvent (QMouseEvent *);
-    void mouseMoveEvent (QMouseEvent *);
+    void mousePressEvent (QMouseEvent *) override;
+    void mouseMoveEvent (QMouseEvent *) override;
 };
 
 /*
@@ -100,7 +100,7 @@ public:
     };
 
     View(QWidget* parent) KDE_NO_CDTOR_EXPORT;
-    ~View() KDE_NO_CDTOR_EXPORT;
+    ~View() override KDE_NO_CDTOR_EXPORT;
 
     void addText (const QString &, bool eol=false);
     void init(KActionCollection* ac, bool transparent) KDE_NO_EXPORT;
@@ -134,8 +134,8 @@ public:
     void setNoInfoMessages (bool b) { m_no_info = b; }
     void setViewOnly ();
     void setEditMode (TopPlayItem *, bool enable=true);
-    void dragEnterEvent(QDragEnterEvent*) KDE_NO_EXPORT;
-    void dropEvent(QDropEvent*) KDE_NO_EXPORT;
+    void dragEnterEvent(QDragEnterEvent*) override KDE_NO_EXPORT;
+    void dropEvent(QDropEvent*) override KDE_NO_EXPORT;
     KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
     /* raise video widget, might (auto) hides panel */
     void videoStart() KDE_NO_EXPORT;
@@ -156,8 +156,8 @@ signals:
     void fullScreenChanged ();
     void windowVideoConsoleToggled (bool show);
 protected:
-    void leaveEvent (QEvent *) KDE_NO_EXPORT;
-    void timerEvent(QTimerEvent*) KDE_NO_EXPORT;
+    void leaveEvent (QEvent *) override KDE_NO_EXPORT;
+    void timerEvent(QTimerEvent*) override KDE_NO_EXPORT;
 private:
     QByteArray m_dock_state;
     // console output

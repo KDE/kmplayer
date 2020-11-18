@@ -47,7 +47,7 @@ public:
     void streamDestroyed (uint64_t wid);
 
 protected:
-    void timerEvent (QTimerEvent *e);
+    void timerEvent (QTimerEvent *e) override;
 
 private:
     int stay_alive_timer;
@@ -57,7 +57,7 @@ class Stream : public QX11EmbedWidget { // QWidget {
     Q_OBJECT
 public:
     Stream (QWidget *parent, const QString &url, unsigned long wid);
-    ~Stream ();
+    ~Stream () override;
 
     void play ();
     void pause ();

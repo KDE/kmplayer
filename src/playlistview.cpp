@@ -67,36 +67,36 @@ public:
           default_item_delegate (def),
           playlist_view (v)
     {}
-    QWidget *createEditor (QWidget *w, const QStyleOptionViewItem &o, const QModelIndex &i) const
+    QWidget *createEditor (QWidget *w, const QStyleOptionViewItem &o, const QModelIndex &i) const override
     {
         return default_item_delegate->createEditor (w, o, i);
     }
-    bool editorEvent (QEvent *e, QAbstractItemModel *m, const QStyleOptionViewItem &o, const QModelIndex &i)
+    bool editorEvent (QEvent *e, QAbstractItemModel *m, const QStyleOptionViewItem &o, const QModelIndex &i) override
     {
         return default_item_delegate->editorEvent (e, m, o, i);
     }
-    bool eventFilter (QObject *editor, QEvent *event)
+    bool eventFilter (QObject *editor, QEvent *event) override
     {
         return default_item_delegate->eventFilter (editor, event);
     }
-    void paint (QPainter *p, const QStyleOptionViewItem &o, const QModelIndex &i) const
+    void paint (QPainter *p, const QStyleOptionViewItem &o, const QModelIndex &i) const override
     {
         playlist_view->paintCell (default_item_delegate, p, o, i);
     }
-    void setEditorData (QWidget *e, const QModelIndex &i) const
+    void setEditorData (QWidget *e, const QModelIndex &i) const override
     {
         default_item_delegate->setEditorData (e, i);
     }
-    void setModelData (QWidget *e, QAbstractItemModel *m, const QModelIndex &i) const
+    void setModelData (QWidget *e, QAbstractItemModel *m, const QModelIndex &i) const override
     {
         default_item_delegate->setModelData (e, m, i);
     }
-    QSize sizeHint (const QStyleOptionViewItem &o, const QModelIndex &i) const
+    QSize sizeHint (const QStyleOptionViewItem &o, const QModelIndex &i) const override
     {
         QSize size = default_item_delegate->sizeHint (o, i);
         return QSize (size.width (), size.height () + 2);
     }
-    void updateEditorGeometry (QWidget *e, const QStyleOptionViewItem &o, const QModelIndex &i) const
+    void updateEditorGeometry (QWidget *e, const QStyleOptionViewItem &o, const QModelIndex &i) const override
     {
         default_item_delegate->updateEditorGeometry (e, o, i);
     }

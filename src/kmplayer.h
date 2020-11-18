@@ -57,7 +57,7 @@ class KMPlayerApp : public KXmlGuiWindow {
     Q_OBJECT
 public:
     KMPlayerApp (QWidget* parent=nullptr);
-    ~KMPlayerApp ();
+    ~KMPlayerApp () override;
     void openDocumentFile (const KUrl& url=KUrl());
     void addUrl (const KUrl& url);
     KMPlayer::PartBase * player () const { return m_player; }
@@ -74,12 +74,12 @@ public:
 protected:
     void saveOptions ();
     void readOptions ();
-    void saveProperties (KConfigGroup&);
-    void readProperties (const KConfigGroup&);
+    void saveProperties (KConfigGroup&) override;
+    void readProperties (const KConfigGroup&) override;
     void initActions ();
     void initStatusBar ();
     void initView ();
-    virtual bool queryClose ();
+    bool queryClose () override;
 
 public slots:
     void slotFileNewWindow ();
@@ -193,7 +193,7 @@ class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageDVD : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageDVD (QWidget * parent);
-    ~KMPlayerPrefSourcePageDVD () {}
+    ~KMPlayerPrefSourcePageDVD () override {}
 
     QCheckBox * autoPlayDVD;
     KUrlRequester * dvddevice;
@@ -206,22 +206,22 @@ class KMPLAYER_NO_EXPORT KMPlayerDVDSource : public KMPlayer::Source, public KMP
     Q_OBJECT
 public:
     KMPlayerDVDSource(KMPlayerApp* app);
-    virtual ~KMPlayerDVDSource ();
-    virtual bool processOutput (const QString & line);
-    virtual QString filterOptions ();
-    virtual void setIdentified (bool b = true);
-    virtual QString prettyName ();
-    virtual void write (KSharedConfigPtr);
-    virtual void read (KSharedConfigPtr);
-    virtual void sync (bool);
-    virtual void prefLocation (QString & item, QString & icon, QString & tab);
-    virtual QFrame * prefPage (QWidget * parent);
-    virtual void activate ();
-    virtual void deactivate ();
+    ~KMPlayerDVDSource () override;
+    bool processOutput (const QString & line) override;
+    QString filterOptions () override;
+    void setIdentified (bool b = true) override;
+    QString prettyName () override;
+    void write (KSharedConfigPtr) override;
+    void read (KSharedConfigPtr) override;
+    void sync (bool) override;
+    void prefLocation (QString & item, QString & icon, QString & tab) override;
+    QFrame * prefPage (QWidget * parent) override;
+    void activate () override;
+    void deactivate () override;
 
 private:
-    void setCurrent (KMPlayer::Mrl *);
-    void play (KMPlayer::Mrl *);
+    void setCurrent (KMPlayer::Mrl *) override;
+    void play (KMPlayer::Mrl *) override;
     KMPlayerApp* m_app;
     KMPlayer::NodePtr disks;
     KMPlayerPrefSourcePageDVD * m_configpage;
@@ -237,7 +237,7 @@ class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageVCD : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageVCD (QWidget * parent);
-    ~KMPlayerPrefSourcePageVCD () {}
+    ~KMPlayerPrefSourcePageVCD () override {}
     KUrlRequester * vcddevice;
     QCheckBox *autoPlayVCD;
 };
@@ -250,19 +250,19 @@ class KMPLAYER_NO_EXPORT KMPlayerVCDSource : public KMPlayer::Source, public KMP
     Q_OBJECT
 public:
     KMPlayerVCDSource(KMPlayerApp* app);
-    virtual ~KMPlayerVCDSource ();
-    virtual bool processOutput (const QString & line);
-    virtual void setIdentified (bool b = true);
-    virtual QString prettyName ();
-    virtual void write (KSharedConfigPtr);
-    virtual void read (KSharedConfigPtr);
-    virtual void sync (bool);
-    virtual void prefLocation (QString & item, QString & icon, QString & tab);
-    virtual QFrame * prefPage (QWidget * parent);
-    virtual void activate ();
-    virtual void deactivate ();
+    ~KMPlayerVCDSource () override;
+    bool processOutput (const QString & line) override;
+    void setIdentified (bool b = true) override;
+    QString prettyName () override;
+    void write (KSharedConfigPtr) override;
+    void read (KSharedConfigPtr) override;
+    void sync (bool) override;
+    void prefLocation (QString & item, QString & icon, QString & tab) override;
+    QFrame * prefPage (QWidget * parent) override;
+    void activate () override;
+    void deactivate () override;
 private:
-    void setCurrent (KMPlayer::Mrl *);
+    void setCurrent (KMPlayer::Mrl *) override;
     KMPlayerApp* m_app;
     KMPlayerPrefSourcePageVCD * m_configpage;
     bool m_start_play;
@@ -276,14 +276,14 @@ class KMPLAYER_NO_EXPORT KMPlayerAudioCDSource : public KMPlayer::Source {
     Q_OBJECT
 public:
     KMPlayerAudioCDSource(KMPlayerApp* app);
-    virtual ~KMPlayerAudioCDSource ();
-    virtual bool processOutput (const QString & line);
-    virtual void setIdentified (bool b = true);
-    virtual QString prettyName ();
-    virtual void activate ();
-    virtual void deactivate ();
+    ~KMPlayerAudioCDSource () override;
+    bool processOutput (const QString & line) override;
+    void setIdentified (bool b = true) override;
+    QString prettyName () override;
+    void activate () override;
+    void deactivate () override;
 private:
-    void setCurrent (KMPlayer::Mrl *);
+    void setCurrent (KMPlayer::Mrl *) override;
     KMPlayerApp* m_app;
 };
 
@@ -295,13 +295,13 @@ class KMPLAYER_NO_EXPORT KMPlayerPipeSource : public KMPlayer::Source {
     Q_OBJECT
 public:
     KMPlayerPipeSource (KMPlayerApp * app);
-    virtual ~KMPlayerPipeSource ();
-    virtual bool hasLength ();
-    virtual bool isSeekable ();
+    ~KMPlayerPipeSource () override;
+    bool hasLength () override;
+    bool isSeekable () override;
     void setCommand (const QString & cmd);
-    virtual QString prettyName ();
-    virtual void activate ();
-    virtual void deactivate ();
+    QString prettyName () override;
+    void activate () override;
+    void deactivate () override;
 private:
     KMPlayerApp * m_app;
 };

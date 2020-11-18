@@ -198,24 +198,24 @@ public:
     cairo_t * cr;
     CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
             const IRect & rect, QColor c=QColor(), bool toplevel=false);
-    ~CairoPaintVisitor ();
+    ~CairoPaintVisitor () override;
     using Visitor::visit;
-    void visit (Node *);
-    void visit (SMIL::Smil *);
-    void visit (SMIL::Layout *);
-    void visit (SMIL::RegionBase *);
-    void visit (SMIL::Transition *);
-    void visit (SMIL::TextMediaType *);
-    void visit (SMIL::Brush *);
-    void visit (SMIL::SmilText *);
-    void visit (SMIL::RefMediaType *);
-    void visit (RP::Imfl *);
-    void visit (RP::Fill *);
-    void visit (RP::Fadein *);
-    void visit (RP::Fadeout *);
-    void visit (RP::Crossfade *);
-    void visit (RP::Wipe *);
-    void visit (RP::ViewChange *);
+    void visit (Node *) override;
+    void visit (SMIL::Smil *) override;
+    void visit (SMIL::Layout *) override;
+    void visit (SMIL::RegionBase *) override;
+    void visit (SMIL::Transition *) override;
+    void visit (SMIL::TextMediaType *) override;
+    void visit (SMIL::Brush *) override;
+    void visit (SMIL::SmilText *) override;
+    void visit (SMIL::RefMediaType *) override;
+    void visit (RP::Imfl *) override;
+    void visit (RP::Fill *) override;
+    void visit (RP::Fadein *) override;
+    void visit (RP::Fadeout *) override;
+    void visit (RP::Crossfade *) override;
+    void visit (RP::Wipe *) override;
+    void visit (RP::ViewChange *) override;
 };
 
 KDE_NO_CDTOR_EXPORT
@@ -986,9 +986,9 @@ public:
          info.span (scale);
     }
     using Visitor::visit;
-    void visit (TextNode *);
-    void visit (SMIL::TextFlow *);
-    void visit (SMIL::TemporalMoment *);
+    void visit (TextNode *) override;
+    void visit (SMIL::TextFlow *) override;
+    void visit (SMIL::TemporalMoment *) override;
 
     void addRichText (const QString &txt);
     void push ();
@@ -1474,17 +1474,17 @@ class KMPLAYER_NO_EXPORT MouseVisitor : public Visitor {
     void surfaceEvent (Node *mt, Surface *s);
 public:
     MouseVisitor (ViewArea *v, MessageType evt, Matrix m, int x, int y);
-    KDE_NO_CDTOR_EXPORT ~MouseVisitor () {}
+    KDE_NO_CDTOR_EXPORT ~MouseVisitor () override {}
     using Visitor::visit;
-    void visit (Node * n);
-    void visit (Element *);
-    void visit (SMIL::Smil *);
-    void visit (SMIL::Layout *);
-    void visit (SMIL::RegionBase *);
-    void visit (SMIL::MediaType * n);
-    void visit (SMIL::SmilText * n);
-    void visit (SMIL::Anchor *);
-    void visit (SMIL::Area *);
+    void visit (Node * n) override;
+    void visit (Element *) override;
+    void visit (SMIL::Smil *) override;
+    void visit (SMIL::Layout *) override;
+    void visit (SMIL::RegionBase *) override;
+    void visit (SMIL::MediaType * n) override;
+    void visit (SMIL::SmilText * n) override;
+    void visit (SMIL::Anchor *) override;
+    void visit (SMIL::Area *) override;
     QCursor cursor;
 };
 

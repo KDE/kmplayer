@@ -330,15 +330,15 @@ const short id_node_last = 200; // reserve 100 ids
 class Smil : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Smil (NodePtr & d) : Mrl (d, id_node_smil) {}
-    Node *childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
-    PlayType playType () { return play_type_video; }
-    void activate ();
-    void deactivate ();
-    void closed ();
-    void *role (RoleType msg, void *content=nullptr);
-    void message (MessageType msg, void *content=nullptr);
-    void accept (Visitor *v) { v->visit (this); }
+    Node *childFromTag (const QString & tag) override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "smil"; }
+    PlayType playType () override { return play_type_video; }
+    void activate () override;
+    void deactivate () override;
+    void closed () override;
+    void *role (RoleType msg, void *content=nullptr) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void accept (Visitor *v) override { v->visit (this); }
     void jump (const QString & id);
     static Smil * findSmilNode (Node * node);
 
@@ -353,10 +353,10 @@ public:
 class KMPLAYER_NO_EXPORT Head : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Head (NodePtr & d) : Element (d, id_node_head) {}
-    Node *childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "head"; }
-    void closed ();
-    void message (MessageType msg, void *content=nullptr);
+    Node *childFromTag (const QString & tag) override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "head"; }
+    void closed () override;
+    void message (MessageType msg, void *content=nullptr) override;
 };
 
 /**
@@ -370,14 +370,14 @@ public:
 
     State (NodePtr & d);
 
-    virtual Node *childFromTag (const QString & tag);
-    virtual void closed ();
-    virtual void activate ();
-    virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void deactivate ();
-    virtual void message (MessageType msg, void *content=nullptr);
-    virtual void *role (RoleType msg, void *content=nullptr);
-    KDE_NO_EXPORT virtual const char * nodeName () const { return "state"; }
+    Node *childFromTag (const QString & tag) override;
+    void closed () override;
+    void activate () override;
+    void parseParam (const TrieString & name, const QString & value) override;
+    void deactivate () override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "state"; }
 
     QString domain ();
     void newValue (Node *ref, Where w, const QString &name, const QString &val);
@@ -397,11 +397,11 @@ public:
 class KMPLAYER_NO_EXPORT Layout : public Element {
 public:
     Layout (NodePtr & d);
-    Node *childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
-    void closed ();
-    void message (MessageType msg, void *content=nullptr);
-    void accept (Visitor *v) { v->visit (this); }
+    Node *childFromTag (const QString & tag) override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "layout"; }
+    void closed () override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void accept (Visitor *v) override { v->visit (this); }
 
     NodePtrW root_layout;
 };
@@ -413,13 +413,13 @@ class KMPLAYER_NO_EXPORT RegionBase : public Element {
 public:
     enum ShowBackground { ShowAlways, ShowWhenActive };
 
-    ~RegionBase ();
-    virtual void activate ();
-    virtual void deactivate ();
-    virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void message (MessageType msg, void *content=nullptr);
-    virtual void *role (RoleType msg, void *content=nullptr);
-    virtual void accept (Visitor *v) { v->visit (this); }
+    ~RegionBase () override;
+    void activate () override;
+    void deactivate () override;
+    void parseParam (const TrieString & name, const QString & value) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
+    void accept (Visitor *v) override { v->visit (this); }
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
      */
@@ -454,12 +454,12 @@ class KMPLAYER_NO_EXPORT RootLayout : public RegionBase {
 public:
     KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d)
         : RegionBase (d, id_node_root_layout) {}
-    ~RootLayout ();
-    void closed ();
-    void deactivate ();
-    void message (MessageType msg, void *content=nullptr);
-    void *role (RoleType msg, void *content=nullptr);
-    KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
+    ~RootLayout () override;
+    void closed () override;
+    void deactivate () override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "root-layout"; }
 };
 
 /**
@@ -468,12 +468,12 @@ public:
 class KMPLAYER_NO_EXPORT Region : public RegionBase {
 public:
     Region (NodePtr & d);
-    ~Region ();
-    void deactivate ();
-    KDE_NO_EXPORT const char * nodeName () const { return "region"; }
-    Node *childFromTag (const QString & tag);
-    void message (MessageType msg, void *content=nullptr);
-    void *role (RoleType msg, void *content=nullptr);
+    ~Region () override;
+    void deactivate () override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "region"; }
+    Node *childFromTag (const QString & tag) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
 private:
     MouseListeners mouse_listeners;
 };
@@ -484,9 +484,9 @@ private:
 class KMPLAYER_NO_EXPORT RegPoint : public Element {
 public:
     KDE_NO_CDTOR_EXPORT RegPoint (NodePtr & d) : Element(d, id_node_regpoint) {}
-    KDE_NO_CDTOR_EXPORT ~RegPoint () {}
-    KDE_NO_EXPORT const char * nodeName () const { return "regPoint"; }
-    void parseParam (const TrieString & name, const QString & value);
+    KDE_NO_CDTOR_EXPORT ~RegPoint () override {}
+    KDE_NO_EXPORT const char * nodeName () const override { return "regPoint"; }
+    void parseParam (const TrieString & name, const QString & value) override;
     CalculatedSizer sizes;
 };
 
@@ -524,11 +524,11 @@ public:
         SubTransLast
     };
     Transition (NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~Transition () {}
-    void activate ();
-    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
-    KDE_NO_EXPORT const char * nodeName () const { return "transition"; }
-    void parseParam (const TrieString & name, const QString & value);
+    KDE_NO_CDTOR_EXPORT ~Transition () override {}
+    void activate () override;
+    KDE_NO_EXPORT void accept (Visitor * v) override { v->visit (this); }
+    KDE_NO_EXPORT const char * nodeName () const override { return "transition"; }
+    void parseParam (const TrieString & name, const QString & value) override;
     bool supported ();
     TransType type;
     TransSubType sub_type;
@@ -544,17 +544,17 @@ public:
  */
 class KMPLAYER_NO_EXPORT GroupBase : public Element {
 public:
-    ~GroupBase ();
-    Node *childFromTag (const QString & tag);
-    PlayType playType () { return play_type_none; }
-    void parseParam (const TrieString &name, const QString &value);
-    void init ();
-    void finish ();
-    void activate ();
-    void deactivate ();
-    void reset ();
-    void message (MessageType msg, void *content=nullptr);
-    void *role (RoleType msg, void *content=nullptr);
+    ~GroupBase () override;
+    Node *childFromTag (const QString & tag) override;
+    PlayType playType () override { return play_type_none; }
+    void parseParam (const TrieString &name, const QString &value) override;
+    void init () override;
+    void finish () override;
+    void activate () override;
+    void deactivate () override;
+    void reset () override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
     void setJumpNode (NodePtr);
     Runtime *runtime;
 protected:
@@ -568,12 +568,12 @@ protected:
 class KMPLAYER_NO_EXPORT Par : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Par (NodePtr & d) : GroupBase (d, id_node_par) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "par"; }
-    void begin ();
-    void reset ();
-    void message (MessageType msg, void *content=nullptr);
-    void *role (RoleType msg, void *content=nullptr);
-    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+    KDE_NO_EXPORT const char * nodeName () const override { return "par"; }
+    void begin () override;
+    void reset () override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
+    KDE_NO_EXPORT void accept (Visitor * v) override { v->visit (this); }
 };
 
 /**
@@ -582,11 +582,11 @@ public:
 class KMPLAYER_NO_EXPORT Seq : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d) : GroupBase(d, id_node_seq) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
-    void begin ();
-    void message (MessageType msg, void *content=nullptr);
-    void *role (RoleType msg, void *content=nullptr);
-    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+    KDE_NO_EXPORT const char * nodeName () const override { return "seq"; }
+    void begin () override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
+    KDE_NO_EXPORT void accept (Visitor * v) override { v->visit (this); }
     ConnectionLink starting_connection;
     ConnectionLink trans_connection;
 protected:
@@ -600,7 +600,7 @@ protected:
 class KMPLAYER_NO_EXPORT Body : public Seq {
 public:
     KDE_NO_CDTOR_EXPORT Body (NodePtr & d) : Seq (d, id_node_body) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "body"; }
+    KDE_NO_EXPORT const char * nodeName () const override { return "body"; }
 };
 
 /**
@@ -609,13 +609,13 @@ public:
 class KMPLAYER_NO_EXPORT Excl : public GroupBase {
 public:
     Excl (NodePtr & d);
-    ~Excl ();
-    KDE_NO_EXPORT const char * nodeName () const { return "excl"; }
-    Node *childFromTag (const QString & tag);
-    void begin ();
-    void deactivate ();
-    void message (MessageType msg, void *content=nullptr);
-    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+    ~Excl () override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "excl"; }
+    Node *childFromTag (const QString & tag) override;
+    void begin () override;
+    void deactivate () override;
+    void message (MessageType msg, void *content=nullptr) override;
+    KDE_NO_EXPORT void accept (Visitor * v) override { v->visit (this); }
 
     struct ConnectionItem {
         ConnectionItem (ConnectionItem *n) : next (n) {}
@@ -634,12 +634,12 @@ class KMPLAYER_NO_EXPORT PriorityClass : public Element {
 public:
     KDE_NO_CDTOR_EXPORT PriorityClass (NodePtr &d)
         : Element (d, id_node_priorityclass) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "priorityClass"; }
-    Node *childFromTag (const QString & tag);
-    void init ();
-    void parseParam (const TrieString &, const QString &);
-    void message (MessageType msg, void *content=nullptr);
-    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+    KDE_NO_EXPORT const char * nodeName () const override { return "priorityClass"; }
+    Node *childFromTag (const QString & tag) override;
+    void init () override;
+    void parseParam (const TrieString &, const QString &) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    KDE_NO_EXPORT void accept (Visitor * v) override { v->visit (this); }
 
     enum { PeersStop, PeersPause, PeersDefer, PeersNever } peers;
     enum { HigherStop, HigherPause } higher;
@@ -653,14 +653,14 @@ public:
 class KMPLAYER_NO_EXPORT Switch : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Switch (NodePtr &d) : GroupBase (d, id_node_switch) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
+    KDE_NO_EXPORT const char * nodeName () const override { return "switch"; }
     // Condition
-    void begin ();
-    void init ();
-    void deactivate ();
-    void reset ();
-    void message (MessageType msg, void *content=nullptr);
-    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+    void begin () override;
+    void init () override;
+    void deactivate () override;
+    void reset () override;
+    void message (MessageType msg, void *content=nullptr) override;
+    KDE_NO_EXPORT void accept (Visitor * v) override { v->visit (this); }
 
     Node *chosenOne ();
 private:
@@ -669,9 +669,9 @@ private:
 
 class KMPLAYER_NO_EXPORT LinkingBase : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT ~LinkingBase () {}
-    void deactivate ();
-    void parseParam (const TrieString & name, const QString & value);
+    KDE_NO_CDTOR_EXPORT ~LinkingBase () override {}
+    void deactivate () override;
+    void parseParam (const TrieString & name, const QString & value) override;
     ConnectionLink mediatype_attach;
     QString href;
     QString target;
@@ -683,24 +683,24 @@ protected:
 class KMPLAYER_NO_EXPORT Anchor : public LinkingBase {
 public:
     Anchor (NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~Anchor () {}
-    void activate ();
-    void message (MessageType msg, void *content=nullptr);
-    void *role (RoleType msg, void *content=nullptr);
-    KDE_NO_EXPORT const char * nodeName () const { return "a"; }
-    Node *childFromTag (const QString & tag);
-    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+    KDE_NO_CDTOR_EXPORT ~Anchor () override {}
+    void activate () override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "a"; }
+    Node *childFromTag (const QString & tag) override;
+    KDE_NO_EXPORT void accept (Visitor * v) override { v->visit (this); }
 };
 
 class KMPLAYER_NO_EXPORT Area : public LinkingBase {
 public:
     Area (NodePtr & d, const QString & tag);
-    ~Area ();
-    void activate ();
-    KDE_NO_EXPORT const char * nodeName () const { return tag.constData (); }
-    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
-    void parseParam (const TrieString & name, const QString & value);
-    void *role (RoleType msg, void *content=nullptr);
+    ~Area () override;
+    void activate () override;
+    KDE_NO_EXPORT const char * nodeName () const override { return tag.constData (); }
+    KDE_NO_EXPORT void accept (Visitor * v) override { v->visit (this); }
+    void parseParam (const TrieString & name, const QString & value) override;
+    void *role (RoleType msg, void *content=nullptr) override;
     SizeType * coords;
     int nr_coords;
     const QByteArray tag;
@@ -713,24 +713,24 @@ public:
 class KMPLAYER_NO_EXPORT MediaType : public Mrl {
 public:
     MediaType (NodePtr & d, const QByteArray& t, short id);
-    ~MediaType ();
+    ~MediaType () override;
 
-    Node *childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return m_type.constData (); }
-    virtual void closed ();
-    virtual void init ();
-    virtual void activate ();
-    virtual void deactivate ();
-    virtual void defer ();
-    virtual void undefer ();
-    virtual void begin ();
-    virtual void finish ();
-    virtual void reset ();
+    Node *childFromTag (const QString & tag) override;
+    KDE_NO_EXPORT const char * nodeName () const override { return m_type.constData (); }
+    void closed () override;
+    void init () override;
+    void activate () override;
+    void deactivate () override;
+    void defer () override;
+    void undefer () override;
+    void begin () override;
+    void finish () override;
+    void reset () override;
     SRect calculateBounds ();
-    virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void message (MessageType msg, void *content=nullptr);
-    virtual void *role (RoleType msg, void *content=nullptr);
-    virtual void accept (Visitor *v) { v->visit (this); }
+    void parseParam (const TrieString & name, const QString & value) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
+    void accept (Visitor *v) override { v->visit (this); }
 
     Surface *surface ();
 
@@ -764,26 +764,26 @@ protected:
 class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
     RefMediaType (NodePtr &doc, const QByteArray &tag);
-    Node *childFromTag (const QString & tag);
-    virtual void activate ();
-    virtual void begin ();
-    virtual void finish ();
-    virtual PlayType playType ();
-    virtual void accept (Visitor *);
-    virtual void message (MessageType msg, void *content=nullptr);
-    virtual void *role (RoleType msg, void *content=nullptr);
-    virtual void prefetch ();
-    virtual void clipStart ();
+    Node *childFromTag (const QString & tag) override;
+    void activate () override;
+    void begin () override;
+    void finish () override;
+    PlayType playType () override;
+    void accept (Visitor *) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
+    void prefetch () override;
+    void clipStart () override;
 };
 
 class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {
 public:
     TextMediaType (NodePtr & d);
-    PlayType playType () { return play_type_info; }
-    virtual void init ();
-    virtual void accept (Visitor *);
-    virtual void parseParam (const TrieString &, const QString &);
-    virtual void prefetch ();
+    PlayType playType () override { return play_type_info; }
+    void init () override;
+    void accept (Visitor *) override;
+    void parseParam (const TrieString &, const QString &) override;
+    void prefetch () override;
 
     QString font_name;
     int font_size;
@@ -794,28 +794,28 @@ public:
 class KMPLAYER_NO_EXPORT Brush : public MediaType {
 public:
     Brush (NodePtr & d);
-    virtual void init ();
-    virtual void accept (Visitor *);
-    virtual void parseParam (const TrieString &, const QString &);
+    void init () override;
+    void accept (Visitor *) override;
+    void parseParam (const TrieString &, const QString &) override;
     SmilColorProperty color;
 };
 
 class KMPLAYER_NO_EXPORT SmilText : public Element {
 public:
     SmilText (NodePtr &doc);
-    ~SmilText ();
-    virtual void init ();
-    virtual void activate ();
-    virtual void begin ();
-    virtual void finish ();
-    virtual void deactivate ();
-    virtual void reset ();
-    KDE_NO_EXPORT const char *nodeName () const { return "smilText"; }
-    Node *childFromTag (const QString & tag);
-    virtual void parseParam (const TrieString &name, const QString &value);
-    virtual void message (MessageType msg, void *content=nullptr);
-    virtual void *role (RoleType msg, void *content=nullptr);
-    virtual void accept (Visitor *v) { v->visit (this); }
+    ~SmilText () override;
+    void init () override;
+    void activate () override;
+    void begin () override;
+    void finish () override;
+    void deactivate () override;
+    void reset () override;
+    KDE_NO_EXPORT const char *nodeName () const override { return "smilText"; }
+    Node *childFromTag (const QString & tag) override;
+    void parseParam (const TrieString &name, const QString &value) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
+    void accept (Visitor *v) override { v->visit (this); }
 
     Surface *surface ();
     void updateBounds (bool remove);
@@ -837,14 +837,14 @@ public:
 class KMPLAYER_NO_EXPORT TextFlow : public Element {
 public:
     TextFlow (NodePtr &doc, short id, const QByteArray &tag);
-    ~TextFlow ();
+    ~TextFlow () override;
 
-    virtual void init ();
-    virtual void activate ();
-    KDE_NO_EXPORT const char *nodeName () const { return tag.data (); }
-    Node *childFromTag (const QString &tag);
-    virtual void parseParam (const TrieString &name, const QString &value);
-    virtual void accept (Visitor *v) { v->visit (this); }
+    void init () override;
+    void activate () override;
+    KDE_NO_EXPORT const char *nodeName () const override { return tag.data (); }
+    Node *childFromTag (const QString &tag) override;
+    void parseParam (const TrieString &name, const QString &value) override;
+    void accept (Visitor *v) override { v->visit (this); }
 
     SmilTextProperties props;
     QByteArray tag;
@@ -853,17 +853,17 @@ public:
 class KMPLAYER_NO_EXPORT TemporalMoment : public Element {
 public:
     TemporalMoment (NodePtr &doc, short id, const QByteArray &tag);
-    ~TemporalMoment ();
-    virtual void init ();
-    virtual void activate ();
-    virtual void begin ();
-    virtual void deactivate ();
-    KDE_NO_EXPORT const char *nodeName () const { return tag.data (); }
-    Node *childFromTag (const QString & tag);
-    virtual void parseParam (const TrieString &name, const QString &value);
-    virtual void message (MessageType msg, void *content=nullptr);
-    virtual void *role (RoleType msg, void *content=nullptr);
-    virtual void accept (Visitor *v) { v->visit (this); }
+    ~TemporalMoment () override;
+    void init () override;
+    void activate () override;
+    void begin () override;
+    void deactivate () override;
+    KDE_NO_EXPORT const char *nodeName () const override { return tag.data (); }
+    Node *childFromTag (const QString & tag) override;
+    void parseParam (const TrieString &name, const QString &value) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
+    void accept (Visitor *v) override { v->visit (this); }
 
     Runtime *runtime;
     QByteArray tag;
@@ -871,16 +871,16 @@ public:
 
 class KMPLAYER_NO_EXPORT StateValue : public Element {
 public:
-    ~StateValue ();
+    ~StateValue () override;
 
-    virtual void init ();
-    virtual void activate ();
-    virtual void finish ();
-    virtual void deactivate ();
-    virtual void reset ();
-    virtual void parseParam (const TrieString &name, const QString &value);
-    virtual void message (MessageType msg, void *content=nullptr);
-    virtual void *role (RoleType msg, void *content=nullptr);
+    void init () override;
+    void activate () override;
+    void finish () override;
+    void deactivate () override;
+    void reset () override;
+    void parseParam (const TrieString &name, const QString &value) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
 protected:
     StateValue (NodePtr &d, short _id);
 
@@ -894,10 +894,10 @@ class KMPLAYER_NO_EXPORT NewValue : public StateValue {
 public:
     NewValue (NodePtr &d) : StateValue (d, id_node_new_value) {}
 
-    virtual void init ();
-    virtual void begin ();
-    virtual void parseParam (const TrieString &name, const QString &value);
-    KDE_NO_EXPORT const char *nodeName () const { return "newvalue"; }
+    void init () override;
+    void begin () override;
+    void parseParam (const TrieString &name, const QString &value) override;
+    KDE_NO_EXPORT const char *nodeName () const override { return "newvalue"; }
 
 private:
     QString name;
@@ -908,28 +908,28 @@ class KMPLAYER_NO_EXPORT SetValue : public StateValue {
 public:
     SetValue (NodePtr &d) : StateValue (d, id_node_set_value) {}
 
-    virtual void begin ();
-    KDE_NO_EXPORT const char *nodeName () const { return "setvalue"; }
+    void begin () override;
+    KDE_NO_EXPORT const char *nodeName () const override { return "setvalue"; }
 };
 
 class KMPLAYER_NO_EXPORT DelValue : public StateValue {
 public:
     DelValue (NodePtr &d) : StateValue (d, id_node_del_value) {}
 
-    virtual void begin ();
-    KDE_NO_EXPORT const char *nodeName () const { return "delvalue"; }
+    void begin () override;
+    KDE_NO_EXPORT const char *nodeName () const override { return "delvalue"; }
 };
 
 class KMPLAYER_NO_EXPORT Send : public StateValue {
 public:
     Send (NodePtr &d) : StateValue (d, id_node_send), media_info (nullptr) {}
 
-    virtual void init ();
-    virtual void begin ();
-    virtual void deactivate ();
-    virtual void parseParam (const TrieString &name, const QString &value);
-    virtual void message (MessageType msg, void *content=nullptr);
-    KDE_NO_EXPORT const char *nodeName () const { return "send"; }
+    void init () override;
+    void begin () override;
+    void deactivate () override;
+    void parseParam (const TrieString &name, const QString &value) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    KDE_NO_EXPORT const char *nodeName () const override { return "send"; }
 
 private:
     QString action;
@@ -940,15 +940,15 @@ private:
 
 class KMPLAYER_NO_EXPORT AnimateGroup : public Element {
 public:
-    ~AnimateGroup ();
-    virtual void init ();
-    virtual void activate ();
-    virtual void finish ();
-    virtual void deactivate ();
-    virtual void reset ();
-    virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void message (MessageType msg, void *content=nullptr);
-    virtual void *role (RoleType msg, void *content=nullptr);
+    ~AnimateGroup () override;
+    void init () override;
+    void activate () override;
+    void finish () override;
+    void deactivate () override;
+    void reset () override;
+    void parseParam (const TrieString & name, const QString & value) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
     Runtime *runtime;
 protected:
     virtual void restoreModification ();
@@ -964,9 +964,9 @@ protected:
 class KMPLAYER_NO_EXPORT Set : public AnimateGroup {
 public:
     KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : AnimateGroup (d, id_node_set) {}
-    virtual void begin ();
-    KDE_NO_EXPORT const char * nodeName () const { return "set"; }
-    PlayType playType () { return play_type_none; }
+    void begin () override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "set"; }
+    PlayType playType () override { return play_type_none; }
 };
 
 class KMPLAYER_NO_EXPORT AnimateBase : public AnimateGroup {
@@ -976,16 +976,16 @@ public:
         float y;
     };
     AnimateBase (NodePtr &d, short id);
-    ~AnimateBase ();
+    ~AnimateBase () override;
 
-    virtual void init ();
-    virtual void begin ();
-    virtual void finish ();
-    virtual void deactivate ();
-    virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void message (MessageType msg, void *content=nullptr);
-    virtual void accept (Visitor *v) { v->visit (this); }
-    PlayType playType () { return play_type_none; }
+    void init () override;
+    void begin () override;
+    void finish () override;
+    void deactivate () override;
+    void parseParam (const TrieString & name, const QString & value) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void accept (Visitor *v) override { v->visit (this); }
+    PlayType playType () override { return play_type_none; }
 
     Posting *anim_timer;
 protected:
@@ -1016,16 +1016,16 @@ class KMPLAYER_NO_EXPORT Animate : public AnimateBase {
 public:
     Animate (NodePtr &doc);
 
-    virtual void init ();
-    virtual void begin ();
-    virtual void finish ();
-    virtual void deactivate ();
+    void init () override;
+    void begin () override;
+    void finish () override;
+    void deactivate () override;
     //virtual void accept (Visitor *v) { v->visit (this); }
-    KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
+    KDE_NO_EXPORT const char * nodeName () const override { return "animate"; }
 
 private:
-    virtual bool timerTick (unsigned int cur_time);
-    virtual void applyStep ();
+    bool timerTick (unsigned int cur_time) override;
+    void applyStep () override;
 
     void cleanUp ();
 
@@ -1040,16 +1040,16 @@ class KMPLAYER_NO_EXPORT AnimateMotion : public AnimateBase {
 public:
     AnimateMotion (NodePtr &d) : AnimateBase (d, id_node_animate_motion) {}
 
-    virtual void init ();
-    virtual void begin ();
-    virtual void finish ();
+    void init () override;
+    void begin () override;
+    void finish () override;
     //virtual void accept (Visitor *v) { v->visit (this); }
-    KDE_NO_EXPORT const char * nodeName () const { return "animateMotion"; }
+    KDE_NO_EXPORT const char * nodeName () const override { return "animateMotion"; }
 
 private:
-    virtual void restoreModification ();
-    virtual bool timerTick (unsigned int cur_time);
-    virtual void applyStep ();
+    void restoreModification () override;
+    bool timerTick (unsigned int cur_time) override;
+    void applyStep () override;
 
     CalculatedSizer old_sizes;
     SizeType begin_x, begin_y;
@@ -1074,15 +1074,15 @@ public:
 
     AnimateColor (NodePtr &d) : AnimateBase (d, id_node_animate_color) {}
 
-    virtual void init ();
-    virtual void begin ();
-    virtual void finish ();
+    void init () override;
+    void begin () override;
+    void finish () override;
     //virtual void accept (Visitor *v) { v->visit (this); }
-    KDE_NO_EXPORT const char * nodeName () const { return "animateColor"; }
+    KDE_NO_EXPORT const char * nodeName () const override { return "animateColor"; }
 
 private:
-    virtual bool timerTick (unsigned int cur_time);
-    virtual void applyStep ();
+    bool timerTick (unsigned int cur_time) override;
+    void applyStep () override;
 
     Channels begin_c;
     Channels cur_c;
@@ -1095,8 +1095,8 @@ private:
 class KMPLAYER_NO_EXPORT Param : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Param (NodePtr & d) : Element (d, id_node_param) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "param"; }
-    void activate ();
+    KDE_NO_EXPORT const char * nodeName () const override { return "param"; }
+    void activate () override;
 };
 
 } // SMIL namespace

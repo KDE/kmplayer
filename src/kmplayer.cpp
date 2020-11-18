@@ -536,12 +536,12 @@ struct IntroSource : public KMPlayer::Source {
     KMPlayerApp * m_app;
     IntroSource (KMPlayer::PartBase *p, KMPlayerApp * a)
         : KMPlayer::Source (i18n ("Intro"), p, "introsource"), m_app (a) {}
-    KDE_NO_EXPORT bool hasLength () { return false; }
-    KDE_NO_EXPORT bool isSeekable () { return false; }
-    KDE_NO_EXPORT QString prettyName () { return i18n ("Intro"); }
-    void activate ();
-    void deactivate ();
-    void stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State os, KMPlayer::Node::State ns);
+    KDE_NO_EXPORT bool hasLength () override { return false; }
+    KDE_NO_EXPORT bool isSeekable () override { return false; }
+    KDE_NO_EXPORT QString prettyName () override { return i18n ("Intro"); }
+    void activate () override;
+    void deactivate () override;
+    void stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State os, KMPlayer::Node::State ns) override;
     bool deactivated;
     bool finished;
 };
@@ -954,12 +954,12 @@ KDE_NO_EXPORT void KMPlayerApp::slotMinimalMode () {
 struct ExitSource : public KMPlayer::Source {
     KDE_NO_CDTOR_EXPORT ExitSource (KMPlayer::PartBase *p)
         : KMPlayer::Source (i18n ("Exit"), p, "exitsource") {}
-    KDE_NO_EXPORT QString prettyName () { return i18n ("Exit"); }
-    KDE_NO_EXPORT bool hasLength () { return false; }
-    KDE_NO_EXPORT bool isSeekable () { return false; }
-    void activate ();
-    KDE_NO_EXPORT void deactivate () {}
-    void stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State os, KMPlayer::Node::State ns);
+    KDE_NO_EXPORT QString prettyName () override { return i18n ("Exit"); }
+    KDE_NO_EXPORT bool hasLength () override { return false; }
+    KDE_NO_EXPORT bool isSeekable () override { return false; }
+    void activate () override;
+    KDE_NO_EXPORT void deactivate () override {}
+    void stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State os, KMPlayer::Node::State ns) override;
 };
 
 KDE_NO_EXPORT void ExitSource::activate () {
@@ -1493,14 +1493,14 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidge
 class KMPLAYER_NO_EXPORT Disks : public KMPlayer::Document {
 public:
     Disks (KMPlayerApp * a);
-    void message (KMPlayer::MessageType msg, void *data);
+    void message (KMPlayer::MessageType msg, void *data) override;
     KMPlayerApp * app;
 };
 
 class KMPLAYER_NO_EXPORT Disk : public KMPlayer::Mrl {
 public:
     Disk (KMPlayer::NodePtr & doc, KMPlayerApp *a, const QString &url, const QString &pn);
-    void activate ();
+    void activate () override;
     KMPlayerApp * app;
 };
 

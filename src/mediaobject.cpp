@@ -59,7 +59,7 @@ namespace {
             memory_cache = new DataCache;
             image_data_map = new ImageDataMap;
         }
-        ~GlobalMediaData ();
+        ~GlobalMediaData () override;
     };
 
     static GlobalMediaData *global_media;

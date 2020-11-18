@@ -133,17 +133,17 @@ struct AST : public Expression {
     };
 
     AST (EvalState *ev);
-    virtual ~AST ();
+    ~AST () override;
 
-    virtual bool toBool () const;
-    virtual int toInt () const;
-    virtual float toFloat () const;
-    virtual QString toString () const;
+    bool toBool () const override;
+    int toInt () const override;
+    float toFloat () const override;
+    QString toString () const override;
     virtual ExprIterator* exprIterator(ExprIterator* parent) const;
-    virtual iterator begin() const;
-    virtual iterator end() const;
+    iterator begin() const override;
+    iterator end() const override;
     virtual Type type(bool calc) const;
-    virtual void setRoot (Node *root);
+    void setRoot (Node *root) override;
     void setRoot (const NodeValue &value);
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
@@ -158,8 +158,8 @@ struct AST : public Expression {
 struct BoolBase : public AST {
     BoolBase (EvalState *ev) : AST (ev), b (false) {}
 
-    virtual QString toString () const;
-    virtual Type type(bool calc) const;
+    QString toString () const override;
+    Type type(bool calc) const override;
 
     mutable bool b;
 };
@@ -167,8 +167,8 @@ struct BoolBase : public AST {
 struct IntegerBase : public AST {
     IntegerBase (EvalState *ev) : AST (ev), i (0) {}
 
-    virtual float toFloat () const;
-    virtual Type type(bool calc) const;
+    float toFloat () const override;
+    Type type(bool calc) const override;
 
     mutable int i;
 };
@@ -178,7 +178,7 @@ struct Integer : public IntegerBase {
         i = i_;
     }
 
-    virtual int toInt () const;
+    int toInt () const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -187,10 +187,10 @@ struct Integer : public IntegerBase {
 struct Float : public AST {
     Float (EvalState *ev, float f_) : AST (ev), f (f_) {}
 
-    bool toBool () const { return false; }
-    int toInt () const { return (int) f; }
-    float toFloat () const { return f; }
-    virtual Type type(bool calc) const;
+    bool toBool () const override { return false; }
+    int toInt () const override { return (int) f; }
+    float toFloat () const override { return f; }
+    Type type(bool calc) const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Float %f", f);
@@ -206,10 +206,10 @@ struct StringBase : public AST {
     StringBase (EvalState *ev, const QString& s)
      : AST (ev), string(s) {}
 
-    virtual bool toBool () const;
-    virtual int toInt () const;
-    virtual float toFloat () const;
-    virtual Type type(bool calc) const;
+    bool toBool () const override;
+    int toInt () const override;
+    float toFloat () const override;
+    Type type(bool calc) const override;
 
     mutable QString string;
 };
@@ -219,9 +219,9 @@ struct SequenceBase : public StringBase {
     SequenceBase (EvalState *ev, const QString& s)
         : StringBase (ev, s) {}
 
-    virtual bool toBool () const;
-    virtual QString toString () const;
-    virtual Type type(bool calc) const;
+    bool toBool () const override;
+    QString toString () const override;
+    Type type(bool calc) const override;
 };
 
 struct Step : public SequenceBase {
@@ -240,7 +240,7 @@ struct Step : public SequenceBase {
         , node_type(nt)
         , context_node(ax == SelfAxis && s.isEmpty())
     {}
-    ExprIterator* exprIterator(ExprIterator* parent) const;
+    ExprIterator* exprIterator(ExprIterator* parent) const override;
     bool matches (Node *n) const;
     bool matches (Attribute *a) const;
 #ifdef KMPLAYER_EXPR_DEBUG
@@ -263,7 +263,7 @@ struct Path : public SequenceBase {
         first_child = steps;
     }
 
-    ExprIterator* exprIterator(ExprIterator* parent) const;
+    ExprIterator* exprIterator(ExprIterator* parent) const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Path ");
@@ -278,7 +278,7 @@ struct PredicateFilter : public SequenceBase {
         first_child = children;
     }
 
-    virtual ExprIterator* exprIterator(ExprIterator* parent) const;
+    ExprIterator* exprIterator(ExprIterator* parent) const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "Predicate ");
@@ -295,8 +295,8 @@ struct StringLiteral : public StringBase {
     StringLiteral (EvalState *ev, const QString& s)
      : StringBase (ev, s) {}
 
-    virtual QString toString () const;
-    virtual Type type(bool calc) const;
+    QString toString () const override;
+    Type type(bool calc) const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
         fprintf (stderr, "StringLiteral %s", string.toAscii ().constData ());
@@ -308,115 +308,115 @@ struct StringLiteral : public StringBase {
 struct Boolean : public BoolBase {
     Boolean(EvalState *ev) : BoolBase(ev) {}
 
-    virtual bool toBool() const;
+    bool toBool() const override;
 };
 
 struct Contains : public BoolBase {
     Contains (EvalState *ev) : BoolBase (ev) {}
 
-    virtual bool toBool () const;
+    bool toBool () const override;
 };
 
 struct Not : public BoolBase {
     Not (EvalState *ev) : BoolBase (ev) {}
 
-    virtual bool toBool () const;
+    bool toBool () const override;
 };
 
 struct StartsWith: public BoolBase {
     StartsWith (EvalState *ev) : BoolBase (ev) {}
 
-    virtual bool toBool () const;
+    bool toBool () const override;
 };
 
 struct Count : public IntegerBase {
     Count (EvalState *ev) : IntegerBase (ev) {}
 
-    virtual int toInt () const;
+    int toInt () const override;
 };
 
 struct HoursFromTime : public IntegerBase {
     HoursFromTime (EvalState *ev) : IntegerBase (ev) {}
 
-    virtual int toInt () const;
+    int toInt () const override;
 };
 
 struct MinutesFromTime : public IntegerBase {
     MinutesFromTime (EvalState *ev) : IntegerBase (ev) {}
 
-    virtual int toInt () const;
+    int toInt () const override;
 };
 
 struct SecondsFromTime : public IntegerBase {
     SecondsFromTime (EvalState *ev) : IntegerBase (ev) {}
 
-    virtual int toInt () const;
+    int toInt () const override;
 };
 
 struct Last : public IntegerBase {
     Last (EvalState *ev) : IntegerBase (ev) {}
 
-    virtual int toInt () const;
+    int toInt () const override;
 };
 
 struct Number : public IntegerBase {
     Number (EvalState *ev) : IntegerBase (ev) {}
 
-    virtual int toInt () const;
+    int toInt () const override;
 };
 
 struct Position : public IntegerBase {
     Position (EvalState *ev) : IntegerBase (ev) {}
 
-    virtual int toInt () const;
+    int toInt () const override;
 };
 
 struct StringLength : public IntegerBase {
     StringLength (EvalState *ev) : IntegerBase (ev) {}
 
-    virtual int toInt () const;
+    int toInt () const override;
 };
 
 struct Concat : public StringBase {
     Concat (EvalState *ev) : StringBase (ev) {}
 
-    virtual QString toString () const;
+    QString toString () const override;
 };
 
 struct StringJoin : public StringBase {
     StringJoin (EvalState *ev) : StringBase (ev) {}
 
-    virtual QString toString () const;
+    QString toString () const override;
 };
 
 struct SubstringAfter : public StringBase {
     SubstringAfter (EvalState *ev) : StringBase (ev) {}
 
-    virtual QString toString () const;
+    QString toString () const override;
 };
 
 struct SubstringBefore : public StringBase {
     SubstringBefore (EvalState *ev) : StringBase (ev) {}
 
-    virtual QString toString () const;
+    QString toString () const override;
 };
 
 struct CurrentTime : public StringBase {
     CurrentTime (EvalState *ev) : StringBase (ev) {}
 
-    virtual QString toString () const;
+    QString toString () const override;
 };
 
 struct CurrentDate : public StringBase {
     CurrentDate (EvalState *ev) : StringBase (ev) {}
 
-    virtual QString toString () const;
+    QString toString () const override;
 };
 
 struct EscapeUri : public StringBase {
     EscapeUri (EvalState *ev) : StringBase (ev) {}
 
-    virtual QString toString () const;
+    QString toString () const override;
 };
 
 /*struct Sort : public SequenceBase {
@@ -428,13 +428,13 @@ struct EscapeUri : public StringBase {
 struct SubSequence : public SequenceBase {
     SubSequence (EvalState *ev) : SequenceBase (ev) {}
 
-    virtual ExprIterator* exprIterator(ExprIterator* parent) const;
+    ExprIterator* exprIterator(ExprIterator* parent) const override;
 };
 
 struct Tokenize : public SequenceBase {
     Tokenize (EvalState *ev) : SequenceBase (ev) {}
 
-    virtual ExprIterator* exprIterator(ExprIterator* parent) const;
+    ExprIterator* exprIterator(ExprIterator* parent) const override;
 };
 
 struct Multiply : public AST {
@@ -442,9 +442,9 @@ struct Multiply : public AST {
         first_child = children;
     }
 
-    virtual int toInt () const;
-    virtual float toFloat () const;
-    virtual Type type(bool calc) const;
+    int toInt () const override;
+    float toFloat () const override;
+    Type type(bool calc) const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -455,9 +455,9 @@ struct Divide : public AST {
         first_child = children;
     }
 
-    virtual int toInt () const;
-    virtual float toFloat () const;
-    virtual Type type(bool calc) const;
+    int toInt () const override;
+    float toFloat () const override;
+    Type type(bool calc) const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -468,9 +468,9 @@ struct Modulus : public AST {
         first_child = children;
     }
 
-    virtual int toInt () const;
-    virtual float toFloat () const;
-    virtual Type type(bool calc) const;
+    int toInt () const override;
+    float toFloat () const override;
+    Type type(bool calc) const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -481,9 +481,9 @@ struct Plus : public AST {
         first_child = children;
     }
 
-    virtual int toInt () const;
-    virtual float toFloat () const;
-    virtual Type type(bool calc) const;
+    int toInt () const override;
+    float toFloat () const override;
+    Type type(bool calc) const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -494,9 +494,9 @@ struct Minus : public AST {
         first_child = children;
     }
 
-    virtual int toInt () const;
-    virtual float toFloat () const;
-    virtual Type type(bool calc) const;
+    int toInt () const override;
+    float toFloat () const override;
+    Type type(bool calc) const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -507,7 +507,7 @@ struct Join : public SequenceBase {
         first_child = children;
     }
 
-    virtual ExprIterator* exprIterator(ExprIterator* parent) const;
+    ExprIterator* exprIterator(ExprIterator* parent) const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -523,7 +523,7 @@ struct Comparison : public BoolBase {
         first_child = children;
     }
 
-    virtual bool toBool () const;
+    bool toBool () const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const;
 #endif
@@ -774,7 +774,7 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
                 }
             cur_value = NodeValue(nullptr, nullptr);
         }
-        virtual void next() {
+        void next() override {
             assert(cur_value.node);
             cur_value.node = cur_value.node->nextSibling();
             if (!cur_value.node) {
@@ -804,7 +804,7 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
             }
             cur_value = NodeValue(nullptr, nullptr);
         }
-        virtual void next() {
+        void next() override {
             assert(!atEnd());
             pullNext();
             ++position;
@@ -813,7 +813,7 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
     struct DescendantIterator : public ChildrenIterator {
         DescendantIterator(ExprIterator* p) : ChildrenIterator(p)
         {}
-        virtual void next() {
+        void next() override {
             assert(cur_value.node);
             if (cur_value.node->firstChild()) {
                 cur_value.node = cur_value.node->firstChild();
@@ -871,7 +871,7 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
             }
             cur_value.node = nullptr;
         }
-        virtual void next() {
+        void next() override {
             assert(!atEnd());
             if ((step->axes & Step::AttributeAxis)
                     && cur_value.attr
@@ -903,7 +903,7 @@ ExprIterator* Path::exprIterator(ExprIterator* parent) const {
          : ExprIterator(parent), contextual(false) {
             cur_value = c;
         }
-        virtual void next() {
+        void next() override {
             assert(!atEnd());
             if (!contextual || parent->atEnd()) {
                 cur_value = NodeValue(nullptr, nullptr);
@@ -955,7 +955,7 @@ ExprIterator* PredicateFilter::exprIterator(ExprIterator* parent) const {
             }
             cur_value = NodeValue(nullptr, nullptr);
         }
-        virtual void next() {
+        void next() override {
             assert(!atEnd());
             parent->next();
             pullNext();
@@ -1331,7 +1331,7 @@ ExprIterator* SubSequence::exprIterator(ExprIterator* parent) const
                     cur_value = parent->cur_value;
             }
         }
-        virtual void next() {
+        void next() override {
             assert(!parent->atEnd());
             parent->next();
             if (length < 0 || parent->position + 1 < start + length)
@@ -1369,7 +1369,7 @@ ExprIterator* Tokenize::exprIterator(ExprIterator* parent) const
             if (reg_pos < 0)
                 cur_value = NodeValue(nullptr, nullptr);
         }
-        virtual void next() {
+        void next() override {
             assert(!atEnd());
             pullNext();
             ++position;
@@ -1521,7 +1521,7 @@ ExprIterator* Join::exprIterator(ExprIterator* parent) const {
         JoinIterator(ExprIterator* p, const AST* a) : ExprIterator(p), ast(a), it(nullptr) {
             pullNext();
         }
-        ~JoinIterator() {
+        ~JoinIterator() override {
             delete it;
         }
         void pullNext() {
@@ -1542,7 +1542,7 @@ ExprIterator* Join::exprIterator(ExprIterator* parent) const {
             else
                 cur_value = NodeValue(nullptr, nullptr);
         }
-        virtual void next() {
+        void next() override {
             assert(!atEnd());
             it->next();
             pullNext();

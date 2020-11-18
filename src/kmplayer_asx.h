@@ -45,10 +45,10 @@ const short id_node_duration = 408;
 class KMPLAYER_NO_EXPORT Asx : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d, id_node_asx) {}
-    Node *childFromTag (const QString & tag);
-    void closed ();
-    KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
-    void *role (RoleType msg, void *content=nullptr);
+    Node *childFromTag (const QString & tag) override;
+    void closed () override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "ASX"; }
+    void *role (RoleType msg, void *content=nullptr) override;
 };
 
 /**
@@ -58,17 +58,17 @@ class KMPLAYER_NO_EXPORT Entry : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Entry (NodePtr & d)
         : Mrl (d, id_node_entry), duration_timer (nullptr), ref_child_count (0) {}
-    Node *childFromTag (const QString & tag);
-    void message (MessageType msg, void *content=nullptr);
-    KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
-    void closed ();
-    void activate ();
-    void deactivate ();
+    Node *childFromTag (const QString & tag) override;
+    void message (MessageType msg, void *content=nullptr) override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "Entry"; }
+    void closed () override;
+    void activate () override;
+    void deactivate () override;
     /**
      * False, but since we might have a 'base' child, we can have a rel. src
      */
-    PlayType playType ();
-    void *role (RoleType msg, void *content=nullptr);
+    PlayType playType () override;
+    void *role (RoleType msg, void *content=nullptr) override;
 
     Posting *duration_timer;
     int ref_child_count;
@@ -81,8 +81,8 @@ class KMPLAYER_NO_EXPORT Ref : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Ref (NodePtr & d) : Mrl (d, id_node_ref) {}
     //Node *childFromTag (const QString & tag);
-    void opened ();
-    KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
+    void opened () override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "Ref"; }
 };
 
 /**
@@ -92,8 +92,8 @@ class KMPLAYER_NO_EXPORT EntryRef : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT EntryRef (NodePtr & d) : Mrl (d, id_node_entryref) {}
     //Node *childFromTag (const QString & tag);
-    void opened ();
-    KDE_NO_EXPORT const char * nodeName () const { return "EntryRef"; }
+    void opened () override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "EntryRef"; }
 };
 
 } //namespace ASX

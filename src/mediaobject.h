@@ -174,7 +174,7 @@ class KMPLAYER_NO_EXPORT DataCache : public QObject {
     PreserveMap preserve_map;
 public:
     DataCache () {}
-    ~DataCache () {}
+    ~DataCache () override {}
     void add (const QString &, const QString &, const QByteArray &);
     bool get (const QString &, QString &, QByteArray &);
     bool preserve (const QString &);
@@ -200,7 +200,7 @@ public:
 
 protected:
     MediaObject (MediaManager *manager, Node *node);
-    virtual ~MediaObject ();
+    ~MediaObject () override;
 
     MediaManager *m_manager;
     NodePtrW m_node;
@@ -212,7 +212,7 @@ class KMPLAYER_EXPORT MediaInfo : public QObject {
     Q_OBJECT
 public:
     MediaInfo (Node *node, MediaManager::MediaType type);
-    ~MediaInfo ();
+    ~MediaInfo () override;
 
     bool wget(const QString& url, const QString& from_domain=QString());
     void killWGet() KDE_NO_EXPORT;
@@ -289,20 +289,20 @@ public:
 
     AudioVideoMedia (MediaManager *manager, Node *node);
 
-    MediaManager::MediaType type () const { return MediaManager::AudioVideo; }
+    MediaManager::MediaType type () const override { return MediaManager::AudioVideo; }
 
-    virtual bool play ();
+    bool play () override;
     virtual bool grabPicture (const QString &file, int frame);
-    virtual void stop ();
-    virtual void pause ();
-    virtual void unpause ();
-    virtual void destroy ();
+    void stop () override;
+    void pause () override;
+    void unpause () override;
+    void destroy () override;
 
-    virtual void starting (IProcess *);
-    virtual void stateChange (IProcess *, IProcess::State, IProcess::State);
-    virtual void processDestroyed (IProcess *p);
-    virtual IViewer *viewer ();
-    virtual Mrl *getMrl ();
+    void starting (IProcess *) override;
+    void stateChange (IProcess *, IProcess::State, IProcess::State) override;
+    void processDestroyed (IProcess *p) override;
+    IViewer *viewer () override;
+    Mrl *getMrl () override;
 
     void setViewer (IViewer *v) { m_viewer = v; }
 
@@ -313,7 +313,7 @@ public:
     Request request;
 
 protected:
-    ~AudioVideoMedia ();
+    ~AudioVideoMedia () override;
 };
 
 
@@ -363,12 +363,12 @@ public:
             const QString &url, const QByteArray &data);
     ImageMedia (Node *node, ImageDataPtr id = nullptr);
 
-    MediaManager::MediaType type () const { return MediaManager::Image; }
+    MediaManager::MediaType type () const override { return MediaManager::Image; }
 
-    bool play ();
-    void stop ();
-    void pause ();
-    void unpause ();
+    bool play () override;
+    void stop () override;
+    void pause () override;
+    void unpause () override;
 
     bool wget (const QString &url);
     bool isEmpty () const;
@@ -385,7 +385,7 @@ private slots:
     void movieResize (const QSize &);
 
 protected:
-    ~ImageMedia ();
+    ~ImageMedia () override;
 
 private:
     void setupImage (const QString &url);
@@ -408,15 +408,15 @@ class KMPLAYER_NO_EXPORT TextMedia : public MediaObject {
 public:
     TextMedia (MediaManager *manager, Node *node, const QByteArray &ba);
 
-    MediaManager::MediaType type () const { return MediaManager::Text; }
+    MediaManager::MediaType type () const override { return MediaManager::Text; }
 
-    bool play ();
+    bool play () override;
 
     QString text;
     static int defaultFontSize ();
 
 protected:
-    ~TextMedia ();
+    ~TextMedia () override;
 };
 
 } // namespace

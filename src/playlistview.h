@@ -49,7 +49,7 @@ class KMPLAYER_EXPORT PlayListView : public QTreeView {
     Q_OBJECT
 public:
     PlayListView(QWidget* parent, View* view, KActionCollection* ac) KDE_NO_CDTOR_EXPORT;
-    ~PlayListView() KDE_NO_CDTOR_EXPORT;
+    ~PlayListView() override KDE_NO_CDTOR_EXPORT;
     void selectItem (const QString & txt);
     void showAllNodes(TopPlayItem*, bool show=true) KDE_NO_EXPORT;
     void setActiveForegroundColor (const QColor & c) { m_active_color = c; }
@@ -69,11 +69,11 @@ signals:
     void prepareMenu (KMPlayer::PlayItem * item, QMenu * menu);
     void dropped (QDropEvent *event, KMPlayer::PlayItem *item);
 protected:
-    void dragEnterEvent(QDragEnterEvent* event) KDE_NO_EXPORT;
-    void dropEvent(QDropEvent* event) KDE_NO_EXPORT;
-    void dragMoveEvent(QDragMoveEvent* event) KDE_NO_EXPORT;
-    void drawBranches(QPainter*, const QRect&, const QModelIndex&) const KDE_NO_EXPORT {}
-    void contextMenuEvent(QContextMenuEvent* event) KDE_NO_EXPORT;
+    void dragEnterEvent(QDragEnterEvent* event) override KDE_NO_EXPORT;
+    void dropEvent(QDropEvent* event) override KDE_NO_EXPORT;
+    void dragMoveEvent(QDragMoveEvent* event) override KDE_NO_EXPORT;
+    void drawBranches(QPainter*, const QRect&, const QModelIndex&) const KDE_NO_EXPORT override {}
+    void contextMenuEvent(QContextMenuEvent* event) override KDE_NO_EXPORT;
 private slots:
     void slotItemExpanded(const QModelIndex&) KDE_NO_EXPORT;
     void copyToClipboard() KDE_NO_EXPORT;

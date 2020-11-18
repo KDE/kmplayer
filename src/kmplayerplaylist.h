@@ -564,17 +564,17 @@ const short id_node_svg = 31;
  */
 class KMPLAYER_EXPORT Element : public Node {
 public:
-    ~Element ();
+    ~Element () override;
     void setAttributes (const AttributeList &attrs);
     void setAttribute (const TrieString & name, const QString & value);
     QString getAttribute (const TrieString & name);
     KDE_NO_EXPORT AttributeList &attributes () { return m_attributes; }
     KDE_NO_EXPORT AttributeList attributes () const { return m_attributes; }
     virtual void init ();
-    virtual void reset ();
-    virtual void clear ();
-    virtual bool isElementNode () const { return true; }
-    virtual void accept (Visitor * v);
+    void reset () override;
+    void clear () override;
+    bool isElementNode () const override { return true; }
+    void accept (Visitor * v) override;
     /**
      * Params are like attributes, but meant to be set dynamically. Caller may
      * pass a modification id, that it can use to restore the old value.
@@ -625,26 +625,26 @@ class KMPLAYER_EXPORT Mrl : public Element, public PlaylistRole
 {
 protected:
     Mrl (NodePtr & d, short id=0);
-    Node *childFromTag (const QString & tag);
-    void parseParam (const TrieString &, const QString &);
+    Node *childFromTag (const QString & tag) override;
+    void parseParam (const TrieString &, const QString &) override;
     unsigned int cached_ismrl_version;
     PlayType cached_play_type;
 
 public:
     enum { SingleMode = 0, WindowMode };
 
-    ~Mrl ();
-    PlayType playType ();
-    virtual Mrl * mrl ();
+    ~Mrl () override;
+    PlayType playType () override;
+    Mrl * mrl () override;
     QString absolutePath ();
 
-    virtual void activate ();
-    virtual void begin ();
-    virtual void defer ();
-    virtual void undefer ();
-    virtual void deactivate ();
-    virtual void message (MessageType msg, void *content=nullptr);
-    virtual void *role (RoleType msg, void *content=nullptr);
+    void activate () override;
+    void begin () override;
+    void defer () override;
+    void undefer () override;
+    void deactivate () override;
+    void message (MessageType msg, void *content=nullptr) override;
+    void *role (RoleType msg, void *content=nullptr) override;
 
     static unsigned int parseTimeString (const QString &s);
 
@@ -767,19 +767,19 @@ class KMPLAYER_EXPORT Document : public Mrl {
     friend class Postpone;
 public:
     Document (const QString &, PlayListNotify * notify = nullptr);
-    ~Document ();
+    ~Document () override;
     Node *getElementById (const QString & id);
     Node *getElementById (Node *start, const QString & id, bool inter_doc);
     /** All nodes have shared pointers to Document,
      * so explicitly dispose it (calls clear and set m_doc to 0L)
      * */
     void dispose ();
-    virtual Node *childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "document"; }
-    virtual void activate ();
-    virtual void defer ();
-    virtual void undefer ();
-    virtual void reset ();
+    Node *childFromTag (const QString & tag) override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "document"; }
+    void activate () override;
+    void defer () override;
+    void undefer () override;
+    void reset () override;
 
     Posting *post (Node *n, Posting *event);
     void cancelPosting (Posting *event);
@@ -797,7 +797,7 @@ public:
     /**
      * Document has list of postponed receivers, eg. for running (gif)movies
      */
-    virtual void *role (RoleType msg, void *content=nullptr);
+    void *role (RoleType msg, void *content=nullptr) override;
 
     PlayListNotify *notify_listener;
     unsigned int m_tree_version;
@@ -891,12 +891,12 @@ public:
 class KMPLAYER_EXPORT TextNode : public Node {
 public:
     TextNode(NodePtr& d, const QString& s, short _id = id_node_text) KDE_NO_CDTOR_EXPORT;
-    KDE_NO_CDTOR_EXPORT ~TextNode () {}
+    KDE_NO_CDTOR_EXPORT ~TextNode () override {}
     void appendText (const QString & s);
     void setText (const QString & txt) { text = txt; }
-    const char * nodeName () const { return "#text"; }
-    void accept (Visitor *v) { v->visit (this); }
-    QString nodeValue () const;
+    const char * nodeName () const override { return "#text"; }
+    void accept (Visitor *v) override { v->visit (this); }
+    QString nodeValue () const override;
 protected:
     QString text;
 };
@@ -907,8 +907,8 @@ protected:
 class KMPLAYER_EXPORT CData : public TextNode {
 public:
     CData(NodePtr& d, const QString& s) KDE_NO_CDTOR_EXPORT;
-    KDE_NO_CDTOR_EXPORT ~CData () {}
-    const char * nodeName () const { return "#cdata"; }
+    KDE_NO_CDTOR_EXPORT ~CData () override {}
+    const char * nodeName () const override { return "#cdata"; }
 };
 
 /**
@@ -917,9 +917,9 @@ public:
 class KMPLAYER_EXPORT DarkNode : public Element {
 public:
     DarkNode (NodePtr & d, const QByteArray &n, short id=0);
-    KDE_NO_CDTOR_EXPORT ~DarkNode () {}
-    const char * nodeName () const { return name.data (); }
-    Node *childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT ~DarkNode () override {}
+    const char * nodeName () const override { return name.data (); }
+    Node *childFromTag (const QString & tag) override;
 protected:
     QByteArray name;
 };
@@ -932,8 +932,8 @@ protected:
 class KMPLAYER_EXPORT GenericURL : public Mrl {
 public:
     GenericURL(NodePtr &d, const QString &s, const QString &n=QString ());
-    KDE_NO_EXPORT const char * nodeName () const { return "url"; }
-    void closed() KDE_NO_EXPORT;
+    KDE_NO_EXPORT const char * nodeName () const override { return "url"; }
+    void closed() override KDE_NO_EXPORT;
 };
 
 /**
@@ -943,9 +943,9 @@ class KMPLAYER_EXPORT GenericMrl : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d), node_name ("mrl") {}
     GenericMrl(NodePtr &d, const QString &s, const QString &name=QString (), const QByteArray &tag=QByteArray ("mrl"));
-    KDE_NO_EXPORT const char * nodeName () const { return node_name.data (); }
-    void closed ();
-    void *role (RoleType msg, void *content=nullptr);
+    KDE_NO_EXPORT const char * nodeName () const override { return node_name.data (); }
+    void closed () override;
+    void *role (RoleType msg, void *content=nullptr) override;
     QByteArray node_name;
 };
 

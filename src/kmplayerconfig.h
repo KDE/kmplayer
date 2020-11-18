@@ -100,7 +100,7 @@ class KMPLAYER_EXPORT Settings : public QObject {
     Q_OBJECT
 public:
     Settings (PartBase *, KSharedConfigPtr part) KDE_NO_CDTOR_EXPORT;
-    ~Settings () KDE_NO_CDTOR_EXPORT;
+    ~Settings () override KDE_NO_CDTOR_EXPORT;
     bool createDialog () KDE_NO_EXPORT;
     void show (const char * pagename = nullptr);
     void addPage (PreferencesPage *);

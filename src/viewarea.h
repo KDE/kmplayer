@@ -46,7 +46,7 @@ class KMPLAYER_EXPORT ViewArea : public QWidget, public QAbstractNativeEventFilt
     Q_OBJECT
 public:
     ViewArea(QWidget* parent, View *view, bool paint_bg) KDE_NO_CDTOR_EXPORT;
-    ~ViewArea() KDE_NO_CDTOR_EXPORT;
+    ~ViewArea() override KDE_NO_CDTOR_EXPORT;
     KDE_NO_EXPORT bool isFullScreen () const { return m_fullscreen; }
     KDE_NO_EXPORT bool isMinimalMode () const { return m_minimal; }
     KDE_NO_EXPORT KActionCollection * actionCollection () const { return m_collection; }
@@ -55,7 +55,7 @@ public:
     void mouseMoved() KDE_NO_EXPORT;
     void scheduleRepaint(const IRect& rect) KDE_NO_EXPORT;
     ConnectionList* updaters() KDE_NO_EXPORT;
-    void resizeEvent(QResizeEvent*) KDE_NO_EXPORT;
+    void resizeEvent(QResizeEvent*) override KDE_NO_EXPORT;
     void enableUpdaters(bool enable, unsigned int off_time) KDE_NO_EXPORT;
     void minimalMode ();
     IViewer *createVideoWidget ();
@@ -68,19 +68,19 @@ public slots:
     void accelActivated() KDE_NO_EXPORT;
     void scale(int) KDE_NO_EXPORT;
 protected:
-    void showEvent(QShowEvent*) KDE_NO_EXPORT;
-    void keyPressEvent(QKeyEvent*) KDE_NO_EXPORT;
-    void mouseMoveEvent(QMouseEvent*) KDE_NO_EXPORT;
-    void mousePressEvent(QMouseEvent*) KDE_NO_EXPORT;
-    void mouseDoubleClickEvent(QMouseEvent*) KDE_NO_EXPORT;
-    void dragEnterEvent(QDragEnterEvent*) KDE_NO_EXPORT;
-    void dropEvent(QDropEvent*) KDE_NO_EXPORT;
-    void contextMenuEvent(QContextMenuEvent* e) KDE_NO_EXPORT;
-    void paintEvent(QPaintEvent*) KDE_NO_EXPORT;
-    void timerEvent(QTimerEvent* e) KDE_NO_EXPORT;
-    void closeEvent(QCloseEvent* e) KDE_NO_EXPORT;
-    bool nativeEventFilter(const QByteArray& eventType, void * message, long *result);
-    QPaintEngine *paintEngine () const;
+    void showEvent(QShowEvent*) override KDE_NO_EXPORT;
+    void keyPressEvent(QKeyEvent*) override KDE_NO_EXPORT;
+    void mouseMoveEvent(QMouseEvent*) override KDE_NO_EXPORT;
+    void mousePressEvent(QMouseEvent*) override KDE_NO_EXPORT;
+    void mouseDoubleClickEvent(QMouseEvent*) override KDE_NO_EXPORT;
+    void dragEnterEvent(QDragEnterEvent*) override KDE_NO_EXPORT;
+    void dropEvent(QDropEvent*) override KDE_NO_EXPORT;
+    void contextMenuEvent(QContextMenuEvent* e) override KDE_NO_EXPORT;
+    void paintEvent(QPaintEvent*) override KDE_NO_EXPORT;
+    void timerEvent(QTimerEvent* e) override KDE_NO_EXPORT;
+    void closeEvent(QCloseEvent* e) override KDE_NO_EXPORT;
+    bool nativeEventFilter(const QByteArray& eventType, void * message, long *result) override;
+    QPaintEngine *paintEngine () const override;
 private:
     void syncVisual() KDE_NO_EXPORT;
     void updateSurfaceBounds() KDE_NO_EXPORT;
@@ -112,21 +112,21 @@ class KMPLAYER_NO_EXPORT VideoOutput : public QX11EmbedContainer, public IViewer
     Q_OBJECT
 public:
     VideoOutput(QWidget* parent, View* view) KDE_NO_CDTOR_EXPORT;
-    ~VideoOutput() KDE_NO_CDTOR_EXPORT;
+    ~VideoOutput() override KDE_NO_CDTOR_EXPORT;
 
-    int heightForWidth(int w) const KDE_NO_EXPORT;
+    int heightForWidth(int w) const override KDE_NO_EXPORT;
 
-    virtual WindowId windowHandle ();
-    virtual WindowId clientHandle ();
-    virtual WindowId ownHandle();
+    WindowId windowHandle () override;
+    WindowId clientHandle () override;
+    WindowId ownHandle() override;
     using QWidget::setGeometry;
-    virtual void setGeometry (const IRect &rect);
-    virtual void setAspect (float a);
-    virtual float aspect () { return m_aspect; }
-    virtual void useIndirectWidget (bool);
-    virtual void setMonitoring(Monitor m) KDE_NO_EXPORT;
-    virtual void map() KDE_NO_EXPORT;
-    virtual void unmap() KDE_NO_EXPORT;
+    void setGeometry (const IRect &rect) override;
+    void setAspect (float a) override;
+    float aspect () override { return m_aspect; }
+    void useIndirectWidget (bool) override;
+    void setMonitoring(Monitor m) override KDE_NO_EXPORT;
+    void map() override KDE_NO_EXPORT;
+    void unmap() override KDE_NO_EXPORT;
 
     KDE_NO_EXPORT long inputMask () const { return m_input_mask; }
     void setBackgroundColor(const QColor& c) KDE_NO_EXPORT;
@@ -136,15 +136,15 @@ public:
 
     WindowId clientWinId() { return m_client_window; }
     void discardClient() {}
-    void embedded(WindowId handle) KDE_NO_EXPORT;
+    void embedded(WindowId handle) override KDE_NO_EXPORT;
 public slots:
     void fullScreenChanged() KDE_NO_EXPORT;
 protected:
-    void resizeEvent(QResizeEvent*) KDE_NO_EXPORT;
-    void timerEvent(QTimerEvent*) KDE_NO_EXPORT;
-    void dragEnterEvent(QDragEnterEvent*) KDE_NO_EXPORT;
-    void dropEvent(QDropEvent*) KDE_NO_EXPORT;
-    void contextMenuEvent(QContextMenuEvent* e) KDE_NO_EXPORT;
+    void resizeEvent(QResizeEvent*) override KDE_NO_EXPORT;
+    void timerEvent(QTimerEvent*) override KDE_NO_EXPORT;
+    void dragEnterEvent(QDragEnterEvent*) override KDE_NO_EXPORT;
+    void dropEvent(QDropEvent*) override KDE_NO_EXPORT;
+    void contextMenuEvent(QContextMenuEvent* e) override KDE_NO_EXPORT;
     //virtual void windowChanged( WId w );
 private:
     WId m_plain_window;

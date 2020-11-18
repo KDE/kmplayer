@@ -40,9 +40,9 @@ class KMPlayerFactory : public KPluginFactory {
     Q_INTERFACES(KPluginFactory)
 public:
     KMPlayerFactory();
-    virtual ~KMPlayerFactory();
+    ~KMPlayerFactory() override;
 
-    virtual QObject* create(const char *iface, QWidget* parentWidget, QObject* parent,
+    QObject* create(const char *iface, QWidget* parentWidget, QObject* parent,
             const QVariantList& args, const QString& keyword) Q_DECL_OVERRIDE;
     static KAboutData& aboutData();
 private:
@@ -57,10 +57,10 @@ public:
     GrabDocument (KMPlayerPart *part, const QString &url, const QString &file,
             KMPlayer::PlayListNotify *);
 
-    virtual void activate ();
-    virtual void undefer ();
-    virtual void begin ();
-    virtual void message (KMPlayer::MessageType msg, void *content);
+    void activate () override;
+    void undefer () override;
+    void begin () override;
+    void message (KMPlayer::MessageType msg, void *content) override;
 
     QString m_grab_file;
     KMPlayerPart *m_part;
@@ -73,12 +73,12 @@ class KMPLAYER_NO_EXPORT KMPlayerBrowserExtension : public KParts::BrowserExtens
     Q_OBJECT
 public:
     KMPlayerBrowserExtension(KMPlayerPart *parent);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerBrowserExtension () {}
+    KDE_NO_CDTOR_EXPORT ~KMPlayerBrowserExtension () override {}
     void urlChanged (const QString & url);
     void setLoadingProgress (int percentage);
 
-    void saveState (QDataStream & stream);
-    void restoreState (QDataStream & stream);
+    void saveState (QDataStream & stream) override;
+    void restoreState (QDataStream & stream) override;
     void requestOpenURL (const KUrl & url, const QString & target, const QString & service);
 };
 
@@ -89,16 +89,16 @@ class KMPLAYER_NO_EXPORT KMPlayerLiveConnectExtension : public KParts::LiveConne
     Q_OBJECT
 public:
     KMPlayerLiveConnectExtension (KMPlayerPart * parent);
-    ~KMPlayerLiveConnectExtension ();
+    ~KMPlayerLiveConnectExtension () override;
 
     // LiveConnect interface
     bool get (const unsigned long, const QString &,
-            KParts::LiveConnectExtension::Type &, unsigned long &, QString &);
-    bool put (const unsigned long, const QString &, const QString &);
+            KParts::LiveConnectExtension::Type &, unsigned long &, QString &) override;
+    bool put (const unsigned long, const QString &, const QString &) override;
     bool call (const unsigned long, const QString &,
             const QStringList &, KParts::LiveConnectExtension::Type &, 
-            unsigned long &, QString &);
-    void unregister (const unsigned long);
+            unsigned long &, QString &) override;
+    void unregister (const unsigned long) override;
     void sendEvent(const unsigned long objid, const QString & event, const KParts::LiveConnectExtension::ArgList & args ) {
         emit partEvent(objid, event, args);
     }
@@ -144,7 +144,7 @@ public:
         Feat_ImageWindow = 0x80, Feat_All = 0xff
     };
     KMPlayerPart (QWidget *wparent, QObject *parent, const QVariantList &args);
-    ~KMPlayerPart ();
+    ~KMPlayerPart () override;
 
     KDE_NO_EXPORT KMPlayerBrowserExtension * browserextension() const
         { return m_browserextension; }
@@ -155,22 +155,22 @@ public:
     void connectToPart (KMPlayerPart *);
     KMPlayerPart * master () const { return m_master; }
     void setMaster (KMPlayerPart * m) { m_master = m; }
-    virtual void setLoaded (int percentage);
+    void setLoaded (int percentage) override;
     bool openNewURL (const KUrl & url); // for JS interface
     bool startUrl (const KUrl &url, const QString &pic=QString ());//clickToPlay
 
-    virtual QString doEvaluate (const QString &script);
+    QString doEvaluate (const QString &script) override;
 
     using KMPlayer::PartBase::openUrl;
 public slots:
-    virtual bool openUrl(const QUrl& url);
+    bool openUrl(const QUrl& url) override;
     virtual void openUrl(const QUrl&, const QString& t, const QString& srv);
-    virtual bool closeUrl ();
+    bool closeUrl () override;
     void setMenuZoom (int id);
 protected:
-    virtual void processCreated (KMPlayer::Process *);
-    virtual void playingStarted ();
-    virtual void playingStopped ();
+    void processCreated (KMPlayer::Process *) override;
+    void playingStarted () override;
+    void playingStopped () override;
 protected slots:
     void viewerPartDestroyed (QObject *);
     void viewerPartProcessChanged (const char *);

@@ -59,7 +59,7 @@ typedef std::list <KMPlayerPart *> KMPlayerPartList;
 class KMPLAYER_NO_EXPORT KMPlayerPartStatic : public GlobalShared<KMPlayerPartStatic> {
 public:
     KMPlayerPartStatic (KMPlayerPartStatic **);
-    ~KMPlayerPartStatic ();
+    ~KMPlayerPartStatic () override;
     KMPlayerPartList partlist;
     int counter;
 };

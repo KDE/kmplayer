@@ -71,9 +71,9 @@ namespace KMPlayer {
 class KMPLAYER_NO_EXPORT BookmarkOwner : public KBookmarkOwner {
 public:
     BookmarkOwner (PartBase *);
-    KDE_NO_CDTOR_EXPORT virtual ~BookmarkOwner () {}
-    void openBookmark(const KBookmark &bm, Qt::MouseButtons mb, Qt::KeyboardModifiers km);
-    QString currentTitle() const;
+    KDE_NO_CDTOR_EXPORT ~BookmarkOwner () override {}
+    void openBookmark(const KBookmark &bm, Qt::MouseButtons mb, Qt::KeyboardModifiers km) override;
+    QString currentTitle() const override;
     QString currentURL() const;
 private:
     PartBase * m_player;

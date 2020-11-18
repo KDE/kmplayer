@@ -39,31 +39,31 @@ const short id_node_ignore = 555;
 class KMPLAYER_NO_EXPORT Opml : public Element, public PlaylistRole {
 public:
     Opml (NodePtr& d) : Element (d, id_node_opml) {}
-    Node *childFromTag (const QString& tag);
-    const char *nodeName () const { return "opml"; }
-    void *role (RoleType msg, void *content=nullptr);
-    void closed ();
+    Node *childFromTag (const QString& tag) override;
+    const char *nodeName () const override { return "opml"; }
+    void *role (RoleType msg, void *content=nullptr) override;
+    void closed () override;
 };
 
 class KMPLAYER_NO_EXPORT Head : public Element {
 public:
     Head (NodePtr& d) : Element (d, id_node_head) {}
-    Node *childFromTag (const QString& tag);
-    const char *nodeName () const { return "head"; }
+    Node *childFromTag (const QString& tag) override;
+    const char *nodeName () const override { return "head"; }
 };
 
 class KMPLAYER_NO_EXPORT Body : public Element {
 public:
     Body (NodePtr& d) : Element (d, id_node_body) {}
-    const char *nodeName () const { return "body"; }
-    Node *childFromTag (const QString& tag);
+    const char *nodeName () const override { return "body"; }
+    Node *childFromTag (const QString& tag) override;
 };
 
 class KMPLAYER_NO_EXPORT Outline : public Mrl {
 public:
     Outline (NodePtr& d) : Mrl (d, id_node_outline) {}
-    const char *nodeName () const { return "outline"; }
-    void closed ();
+    const char *nodeName () const override { return "outline"; }
+    void closed () override;
 };
 
 } //namespace OPML

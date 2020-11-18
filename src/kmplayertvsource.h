@@ -49,7 +49,7 @@ class KMPLAYER_NO_EXPORT TVDevicePage : public QFrame {
     Q_OBJECT
 public:
     TVDevicePage (QWidget *parent, KMPlayer::NodePtr dev);
-    KDE_NO_CDTOR_EXPORT ~TVDevicePage () {}
+    KDE_NO_CDTOR_EXPORT ~TVDevicePage () override {}
 
     QLineEdit * name;
     KUrlRequester * audiodevice;
@@ -68,20 +68,20 @@ class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageTV : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerTVSource *);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTV () {}
+    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTV () override {}
     QLineEdit * driver;
     KUrlRequester * device;
     QPushButton * scan;
     QTabWidget * notebook;
 protected:
-    void showEvent (QShowEvent *);
+    void showEvent (QShowEvent *) override;
     KMPlayerTVSource * m_tvsource;
 };
 
 class KMPLAYER_NO_EXPORT TVNode : public KMPlayer::GenericMrl {
 public:
     TVNode (KMPlayer::NodePtr &d, const QString &s, const char * t, short id, const QString &n=QString ());
-    virtual void setNodeName (const QString &);
+    void setNodeName (const QString &) override;
 };
 
 /*
@@ -91,8 +91,8 @@ class KMPLAYER_NO_EXPORT TVChannel : public TVNode {
 public:
     TVChannel (KMPlayer::NodePtr & d, const QString & n, double f);
     TVChannel (KMPlayer::NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~TVChannel () {}
-    void closed ();
+    KDE_NO_CDTOR_EXPORT ~TVChannel () override {}
+    void closed () override;
 };
 
 /*
@@ -102,10 +102,10 @@ class KMPLAYER_NO_EXPORT TVInput : public TVNode {
 public:
     TVInput (KMPlayer::NodePtr & d, const QString & n, int id);
     TVInput (KMPlayer::NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~TVInput () {}
-    KMPlayer::Node *childFromTag (const QString &);
-    void setNodeName (const QString &);
-    void closed ();
+    KDE_NO_CDTOR_EXPORT ~TVInput () override {}
+    KMPlayer::Node *childFromTag (const QString &) override;
+    void setNodeName (const QString &) override;
+    void closed () override;
 };
 
 /*
@@ -115,12 +115,12 @@ class KMPLAYER_NO_EXPORT TVDevice : public TVNode {
 public:
     TVDevice (KMPlayer::NodePtr & d, const QString & s);
     TVDevice (KMPlayer::NodePtr & d);
-    ~TVDevice ();
-    KMPlayer::Node *childFromTag (const QString &);
-    void closed ();
-    void message (KMPlayer::MessageType msg, void *content=nullptr);
-    void *role (KMPlayer::RoleType msg, void *content=nullptr);
-    void setNodeName (const QString &);
+    ~TVDevice () override;
+    KMPlayer::Node *childFromTag (const QString &) override;
+    void closed () override;
+    void message (KMPlayer::MessageType msg, void *content=nullptr) override;
+    void *role (KMPlayer::RoleType msg, void *content=nullptr) override;
+    void setNodeName (const QString &) override;
     void updateNodeName ();
     void updateDevicePage ();
     bool zombie;
@@ -131,10 +131,10 @@ class KMPLAYER_NO_EXPORT TVDocument : public FileDocument {
     KMPlayerTVSource * m_source;
 public:
     TVDocument (KMPlayerTVSource *);
-    KMPlayer::Node *childFromTag (const QString &);
-    void defer ();
-    KDE_NO_EXPORT const char * nodeName () const { return "tvdevices"; }
-    void message (KMPlayer::MessageType msg, void *content=nullptr);
+    KMPlayer::Node *childFromTag (const QString &) override;
+    void defer () override;
+    KDE_NO_EXPORT const char * nodeName () const override { return "tvdevices"; }
+    void message (KMPlayer::MessageType msg, void *content=nullptr) override;
 };
 
 
@@ -146,23 +146,23 @@ class KMPLAYER_NO_EXPORT TVDeviceScannerSource
     Q_OBJECT
 public:
     TVDeviceScannerSource (KMPlayerTVSource * src);
-    KDE_NO_CDTOR_EXPORT ~TVDeviceScannerSource () {};
-    virtual void init ();
-    virtual bool processOutput (const QString & line);
-    virtual QString filterOptions ();
-    virtual bool hasLength ();
-    virtual bool isSeekable ();
+    KDE_NO_CDTOR_EXPORT ~TVDeviceScannerSource () override {};
+    void init () override;
+    bool processOutput (const QString & line) override;
+    QString filterOptions () override;
+    bool hasLength () override;
+    bool isSeekable () override;
     virtual bool scan (const QString & device, const QString & driver);
 
-    virtual void starting (KMPlayer::IProcess *) {}
-    virtual void stateChange (KMPlayer::IProcess *, KMPlayer::IProcess::State, KMPlayer::IProcess::State);
-    virtual void processDestroyed (KMPlayer::IProcess *p);
-    virtual KMPlayer::IViewer *viewer ();
-    virtual KMPlayer::Mrl *getMrl ();
+    void starting (KMPlayer::IProcess *) override {}
+    void stateChange (KMPlayer::IProcess *, KMPlayer::IProcess::State, KMPlayer::IProcess::State) override;
+    void processDestroyed (KMPlayer::IProcess *p) override;
+    KMPlayer::IViewer *viewer () override;
+    KMPlayer::Mrl *getMrl () override;
 
-    virtual void activate ();
-    virtual void deactivate ();
-    virtual void play (KMPlayer::Mrl *);
+    void activate () override;
+    void deactivate () override;
+    void play (KMPlayer::Mrl *) override;
 public slots:
     void scanningFinished ();
 signals:
@@ -188,22 +188,22 @@ class KMPLAYER_NO_EXPORT KMPlayerTVSource : public KMPlayer::Source, public KMPl
     Q_OBJECT
 public:
     KMPlayerTVSource(KMPlayerApp* app);
-    virtual ~KMPlayerTVSource ();
-    virtual QString filterOptions ();
-    virtual bool hasLength ();
-    virtual bool isSeekable ();
-    virtual KMPlayer::NodePtr root ();
-    virtual QString prettyName ();
-    virtual void write (KSharedConfigPtr);
-    virtual void read (KSharedConfigPtr);
-    virtual void sync (bool);
-    virtual void prefLocation (QString & item, QString & icon, QString & tab);
-    virtual QFrame * prefPage (QWidget * parent);
+    ~KMPlayerTVSource () override;
+    QString filterOptions () override;
+    bool hasLength () override;
+    bool isSeekable () override;
+    KMPlayer::NodePtr root () override;
+    QString prettyName () override;
+    void write (KSharedConfigPtr) override;
+    void read (KSharedConfigPtr) override;
+    void sync (bool) override;
+    void prefLocation (QString & item, QString & icon, QString & tab) override;
+    QFrame * prefPage (QWidget * parent) override;
     void readXML ();
-    void setCurrent (KMPlayer::Mrl *);
-    virtual void activate ();
-    virtual void deactivate ();
-    virtual void play (KMPlayer::Mrl *);
+    void setCurrent (KMPlayer::Mrl *) override;
+    void activate () override;
+    void deactivate () override;
+    void play (KMPlayer::Mrl *) override;
 public slots:
     void menuClicked (int id);
 private slots:

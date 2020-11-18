@@ -74,7 +74,7 @@ class KMPLAYER_NO_EXPORT Preferences : public KPageDialog
 public:
 
     Preferences(PartBase *, Settings *);
-    ~Preferences();
+    ~Preferences() override;
 
     PrefGeneralPageGeneral      *m_GeneralPageGeneral;
     PrefSourcePageURL           *m_SourcePageURL;
@@ -108,7 +108,7 @@ class KMPLAYER_NO_EXPORT PrefGeneralPageGeneral : public QWidget
     Q_OBJECT
 public:
     PrefGeneralPageGeneral(QWidget *parent, Settings *);
-    ~PrefGeneralPageGeneral() {}
+    ~PrefGeneralPageGeneral() override {}
 
     QCheckBox *keepSizeRatio;
     QCheckBox * autoResize;
@@ -130,7 +130,7 @@ class KMPLAYER_NO_EXPORT PrefGeneralPageLooks : public QWidget {
     Q_OBJECT
 public:
     PrefGeneralPageLooks (QWidget *parent, Settings *);
-    ~PrefGeneralPageLooks () {}
+    ~PrefGeneralPageLooks () override {}
     QComboBox *colorscombo;
     KColorButton *colorbutton;
     QComboBox *fontscombo;
@@ -150,7 +150,7 @@ class KMPLAYER_NO_EXPORT PrefSourcePageURL : public QWidget
     Q_OBJECT
 public:
     PrefSourcePageURL (QWidget *parent);
-    ~PrefSourcePageURL () {}
+    ~PrefSourcePageURL () override {}
 
     KUrlRequester * url;
     //KHistoryCombo * url;
@@ -174,7 +174,7 @@ class KMPLAYER_NO_EXPORT PrefRecordPage : public QWidget
     Q_OBJECT
 public:
     PrefRecordPage (QWidget *parent, PartBase *, RecorderPage *, int len);
-    ~PrefRecordPage ();
+    ~PrefRecordPage () override;
 
     KUrlRequester * url;
     QButtonGroup* recorder;
@@ -182,7 +182,7 @@ public:
     QSpinBox* replaytime;
     QLabel * source;
 protected:
-    void showEvent (QShowEvent *);
+    void showEvent (QShowEvent *) override;
 public slots:
     void replayClicked (int id);
     void recorderClicked (int id);
@@ -202,7 +202,7 @@ class KMPLAYER_NO_EXPORT RecorderPage : public QWidget
     Q_OBJECT
 public:
     RecorderPage (QWidget *parent, PartBase *);
-    virtual ~RecorderPage () {}
+    ~RecorderPage () override {}
     virtual void startRecording () {}
     virtual QString name () = 0;
     virtual const char * recorderName () = 0;
@@ -216,11 +216,11 @@ class KMPLAYER_NO_EXPORT PrefMEncoderPage : public RecorderPage
     Q_OBJECT
 public:
     PrefMEncoderPage (QWidget *parent, PartBase *);
-    ~PrefMEncoderPage () {}
+    ~PrefMEncoderPage () override {}
 
-    virtual void startRecording ();
-    QString name ();
-    const char * recorderName () { return "mencoder"; }
+    void startRecording () override;
+    QString name () override;
+    const char * recorderName () override { return "mencoder"; }
 
     QLineEdit * arguments;
     QButtonGroup* format;
@@ -232,10 +232,10 @@ private:
 class KMPLAYER_NO_EXPORT PrefMPlayerDumpstreamPage : public RecorderPage {
 public:
     PrefMPlayerDumpstreamPage (QWidget *parent, PartBase *);
-    ~PrefMPlayerDumpstreamPage () {}
+    ~PrefMPlayerDumpstreamPage () override {}
 
-    QString name ();
-    const char * recorderName () { return "mplayerdumpstream"; }
+    QString name () override;
+    const char * recorderName () override { return "mplayerdumpstream"; }
 };
 
 #ifdef KMPLAYER_WITH_XINE
@@ -254,11 +254,11 @@ class KMPLAYER_NO_EXPORT PrefFFMpegPage : public RecorderPage
     Q_OBJECT
 public:
     PrefFFMpegPage (QWidget *parent, PartBase *);
-    ~PrefFFMpegPage () {}
+    ~PrefFFMpegPage () override {}
 
-    virtual void startRecording ();
-    QString name ();
-    const char * recorderName () { return "ffmpeg"; }
+    void startRecording () override;
+    QString name () override;
+    const char * recorderName () override { return "ffmpeg"; }
 
     QLineEdit * arguments;
     QButtonGroup* format;
@@ -271,7 +271,7 @@ class KMPLAYER_NO_EXPORT PrefGeneralPageOutput : public QWidget
     Q_OBJECT
 public:
     PrefGeneralPageOutput (QWidget *parent, OutputDriver * ad, OutputDriver * vd);
-    ~PrefGeneralPageOutput() {}
+    ~PrefGeneralPageOutput() override {}
 
     QListWidget* videoDriver;
     QListWidget* audioDriver;
@@ -282,7 +282,7 @@ class KMPLAYER_NO_EXPORT PrefOPPagePostProc : public QWidget
     Q_OBJECT
 public:
     PrefOPPagePostProc(QWidget *parent = nullptr);
-    ~PrefOPPagePostProc() {}
+    ~PrefOPPagePostProc() override {}
 
     QCheckBox* postProcessing;
     QCheckBox* disablePPauto;
