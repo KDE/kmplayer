@@ -42,13 +42,13 @@
 #include <QDropEvent>
 #include <QLabel>
 #include <QDockWidget>
+#include <QMenuBar>
 #include <QStandardPaths>
 #include <QtX11Extras/QX11Info>
 
 // include files for KDE
 #include <kiconloader.h>
 #include <kmessagebox.h>
-#include <kmenubar.h>
 #include <kstatusbar.h>
 #include <ktoolbar.h>
 #include <klocalizedstring.h>
