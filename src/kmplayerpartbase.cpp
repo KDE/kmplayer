@@ -464,10 +464,6 @@ qlonglong PartBase::length () const {
 }
 
 bool PartBase::openUrl (const QUrl &url) {
-    return openUrl(KUrl(url));
-}
-
-bool PartBase::openUrl (const KUrl &url) {
     qCDebug(LOG_KMPLAYER_COMMON) << "PartBase::openUrl " << url.url() << url.isValid ();
     if (!m_view) return false;
     stop ();

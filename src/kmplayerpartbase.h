@@ -288,7 +288,6 @@ public:
     bool isRecording ();
 public slots:
     bool openUrl (const QUrl & url) override;
-    virtual bool openUrl (const KUrl & url);
     virtual void openUrl (const KUrl &, const QString &t, const QString &srv);
     virtual bool openUrl(const QList<QUrl>& urls);
     bool closeUrl () override;
