@@ -36,6 +36,8 @@
 #include <qregexp.h>
 #include <qprocess.h>
 #include <QtDBus/QtDBus>
+#include <QMimeDatabase>
+#include <QMimeType>
 
 #include <kmessagebox.h>
 #include <kaboutdata.h>
@@ -48,7 +50,6 @@
 #include <kiconloader.h>
 #include <klocalizedstring.h>
 #include <kaction.h>
-#include <kmimetype.h>
 #include <kprotocolinfo.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
@@ -1579,9 +1580,9 @@ void URLSource::setUrl (const QString &url) {
     Source::setUrl (url);
     Mrl *mrl = document ()->mrl ();
     if (!url.isEmpty () && m_url.isLocalFile () && mrl->mimetype.isEmpty ()) {
-        KMimeType::Ptr mimeptr = KMimeType::findByUrl (m_url);
-        if (mimeptr)
-            mrl->mimetype = mimeptr->name ();
+        const QMimeType mimeType = QMimeDatabase().mimeTypeForUrl(m_url);
+        if (mimeType.isValid())
+            mrl->mimetype = mimeType.name();
     }
 }
 

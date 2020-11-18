@@ -28,13 +28,13 @@
 #include <qurl.h>
 #include <qtextcodec.h>
 #include <qtextstream.h>
+#include <QMimeDatabase>
+#include <QMimeType>
 
 #include <kdebug.h>
-#include <kmimetype.h>
 #include <klocalizedstring.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
-#include <kmimetype.h>
 #include <kurlauthorized.h>
 
 #include "mediaobject.h"
@@ -69,6 +69,20 @@ namespace {
         delete image_data_map;
         global_media = nullptr;
     }
+
+    bool isBufferBinaryData(const QByteArray &data)
+    {
+        // Check the first 32 bytes (see shared-mime spec)
+        const char *p = data.data();
+        const int end = qMin(32, data.size());
+        for (int i = 0; i < end; ++i) {
+            if ((unsigned char)(p[i]) < 32 && p[i] != 9 && p[i] != 10 && p[i] != 13) { // ASCII control character
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
 
 //------------------------%<----------------------------------------------------
@@ -375,10 +389,9 @@ static bool isPlayListMime (const QString & mime) {
 
 static QString mimeByContent (const QByteArray &data)
 {
-    int accuraty;
-    KMimeType::Ptr mimep = KMimeType::findByContent (data, &accuraty);
-    if (mimep)
-        return mimep->name ();
+    const QMimeType mimeType = QMimeDatabase().mimeTypeForData(data);
+    if (mimeType.isValid())
+        return mimeType.name ();
     return QString ();
 }
 
@@ -460,9 +473,9 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
         QFile file (kurl.path ());
         if (file.exists ()) {
             if (MediaManager::Data != type && mime.isEmpty ()) {
-                KMimeType::Ptr mimeptr = KMimeType::findByUrl (kurl);
-                if (mrl && mimeptr) {
-                    mrl->mimetype = mimeptr->name ();
+                const QMimeType mimeTyoe = QMimeDatabase().mimeTypeForUrl (kurl);
+                if (mrl && mimeTyoe.isValid()) {
+                    mrl->mimetype = mimeTyoe.name ();
                     setMimetype (mrl->mimetype);
                 }
                 kDebug () << "wget2 " << str << " " << mime;
@@ -479,7 +492,7 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
                         char databuf [512];
                         int nr_bytes = file.read (databuf, 512);
                         if (nr_bytes > 3 &&
-                                (KMimeType::isBufferBinaryData (QByteArray (databuf, nr_bytes)) ||
+                                (::isBufferBinaryData (QByteArray (databuf, nr_bytes)) ||
                                  !strncmp (databuf, "RIFF", 4)))
                             maybe_playlist = false;
                     }
@@ -728,7 +741,7 @@ static bool validDataFormat (MediaManager::MediaType type, const QByteArray &ba)
         case MediaManager::Audio:
         case MediaManager::AudioVideo:
             return !(ba.size () > 2000000 || ba.size () < 4 ||
-                    KMimeType::isBufferBinaryData (ba) ||
+                    ::isBufferBinaryData (ba) ||
                      !strncmp (ba.data (), "RIFF", 4));
         default:
             return true;

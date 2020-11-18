@@ -30,7 +30,6 @@
 
 #include <kdebug.h>
 #include <kurl.h>
-#include <kmimetype.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 
