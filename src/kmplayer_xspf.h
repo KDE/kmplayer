@@ -54,7 +54,7 @@ public:
     KDE_NO_CDTOR_EXPORT Playlist (NodePtr & d) : Mrl (d, id_node_playlist) {}
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
-    void *role (RoleType msg, void *content=NULL);
+    void *role (RoleType msg, void *content=nullptr);
     void closed ();
 };
 

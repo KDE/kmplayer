@@ -66,7 +66,7 @@ inline GlobalShared<T>::GlobalShared (T **glob) : global (glob), refcount (1) {
 
 template <class T> inline void GlobalShared<T>::unref() {
     if (--refcount <= 0) {
-        *global = NULL;
+        *global = nullptr;
         delete this;
     }
 }
@@ -101,7 +101,7 @@ private:
  */
 #define ITEM_AS_POINTER(CLASS)                                         \
  template <> inline SharedPtr<CLASS>::SharedPtr (CLASS * t)            \
- : data (t ? t->m_self.data : 0L) {                                    \
+ : data (t ? t->m_self.data : nullptr) {                               \
     if (data)                                                          \
         data->addRef ();                                               \
  }                                                                     \
@@ -112,13 +112,13 @@ private:
         operator = (t->m_self);                                        \
     } else if (data) {                                                 \
         data->release ();                                              \
-        data = 0L;                                                     \
+        data = nullptr;                                                \
     }                                                                  \
     return *this;                                                      \
  }                                                                     \
                                                                        \
  template <> inline WeakPtr<CLASS>::WeakPtr (CLASS * t)                \
- : data (t ? t->m_self.data : 0L) {                                    \
+ : data (t ? t->m_self.data : nullptr) {                               \
     if (data)                                                          \
         data->addWeakRef ();                                           \
  }                                                                     \
@@ -129,7 +129,7 @@ private:
         operator = (t->m_self);                                        \
     } else if (data) {                                                 \
         data->releaseWeak ();                                          \
-        data = 0L;                                                     \
+        data = nullptr;                                                \
     }                                                                  \
     return *this;                                                      \
  }
@@ -197,7 +197,7 @@ public:
     void appendChild (T *c);
     void removeChild (typename Item<T>::SharedType c);
 
-    bool hasChildNodes () const { return m_first_child != 0L; }
+    bool hasChildNodes () const { return m_first_child != nullptr; }
     T* parentNode () const { return m_parent.ptr (); }
     T* firstChild () const { return m_first_child.ptr (); }
     T* lastChild () const { return m_last_child.ptr (); }
@@ -361,7 +361,7 @@ public:
     ~ConnectionLink ();
 
     bool connect (Node *signaler, MessageType msg, Node *receiver,
-            VirtualVoid *payload=NULL);
+            VirtualVoid *payload=nullptr);
     void disconnect () const;
     void assign (const ConnectionLink *link) const;
 
@@ -384,12 +384,12 @@ public:
     ~ConnectionList () KMPLAYER_EXPORT;
 
     Connection *first () {
-        link_next = link_first ? link_first->next : NULL;
+        link_next = link_first ? link_first->next : nullptr;
         return link_first;
     }
     Connection *next () {
         Connection *tmp = link_next;
-        link_next = link_next ? link_next->next : NULL;
+        link_next = link_next ? link_next->next : nullptr;
         return tmp;
     }
     void clear ();
@@ -458,11 +458,11 @@ public:
     /*
      * Message send to this node
      */
-    virtual void message (MessageType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
     /*
      * Query a role this Node may fulfill
      */
-    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void *role (RoleType msg, void *content=nullptr);
     /*
      * Dispatch Event to all connectors of MessageType
      */
@@ -580,7 +580,7 @@ public:
      * pass a modification id, that it can use to restore the old value.
      * Param will be auto removed on deactivate
      */
-    void setParam (const TrieString &para, const QString &val, int *mod_id=0L);
+    void setParam (const TrieString &para, const QString &val, int *mod_id=nullptr);
     QString param (const TrieString & para);
     void resetParam (const TrieString & para, int mod_id);
     /**
@@ -604,7 +604,7 @@ inline Node *findChildWithId (const Node *p, const short id) {
     for (Node *c = p->firstChild (); c; c = c->nextSibling ())
         if (id == c->id)
             return c;
-    return NULL;
+    return nullptr;
 }
 
 class KMPLAYER_EXPORT PlaylistRole {
@@ -643,8 +643,8 @@ public:
     virtual void defer ();
     virtual void undefer ();
     virtual void deactivate ();
-    virtual void message (MessageType msg, void *content=NULL);
-    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
+    virtual void *role (RoleType msg, void *content=nullptr);
 
     static unsigned int parseTimeString (const QString &s);
 
@@ -698,7 +698,7 @@ public:
  **/
 class KMPLAYER_EXPORT Posting {
 public:
-    KDE_NO_CDTOR_EXPORT Posting (Node *n, MessageType msg, VirtualVoid *p=NULL)
+    KDE_NO_CDTOR_EXPORT Posting (Node *n, MessageType msg, VirtualVoid *p=nullptr)
         : source (n), message (msg), payload (p) {}
     KDE_NO_CDTOR_EXPORT virtual ~Posting () {}
     NodePtrW source;
@@ -766,7 +766,7 @@ struct KMPLAYER_NO_EXPORT EventData {
 class KMPLAYER_EXPORT Document : public Mrl {
     friend class Postpone;
 public:
-    Document (const QString &, PlayListNotify * notify = 0L);
+    Document (const QString &, PlayListNotify * notify = nullptr);
     ~Document ();
     Node *getElementById (const QString & id);
     Node *getElementById (Node *start, const QString & id, bool inter_doc);
@@ -797,7 +797,7 @@ public:
     /**
      * Document has list of postponed receivers, eg. for running (gif)movies
      */
-    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void *role (RoleType msg, void *content=nullptr);
 
     PlayListNotify *notify_listener;
     unsigned int m_tree_version;
@@ -945,7 +945,7 @@ public:
     GenericMrl(NodePtr &d, const QString &s, const QString &name=QString (), const QByteArray &tag=QByteArray ("mrl"));
     KDE_NO_EXPORT const char * nodeName () const { return node_name.data (); }
     void closed ();
-    void *role (RoleType msg, void *content=NULL);
+    void *role (RoleType msg, void *content=nullptr);
     QByteArray node_name;
 };
 
@@ -996,7 +996,7 @@ template <class T> inline void List<T>::insertBefore (T *c, T *b) {
             b->m_prev->m_next = c->m_self;
             c->m_prev = b->m_prev;
         } else {
-            c->m_prev = 0L;
+            c->m_prev = nullptr;
             m_first = c->m_self;
         }
         b->m_prev = c->m_self;
@@ -1011,11 +1011,11 @@ template <class T> inline void List<T>::remove (T *c) {
         m_first = c->m_next;
     if (c->m_next) {
         c->m_next->m_prev = c->m_prev;
-        c->m_next = 0L;
+        c->m_next = nullptr;
     } else {
         m_last = c->m_prev;
     }
-    c->m_prev = 0L;
+    c->m_prev = nullptr;
 }
 
 template <class T> inline unsigned int List<T>::length () const {
@@ -1026,7 +1026,7 @@ template <class T> inline unsigned int List<T>::length () const {
 }
 
 template <class T> inline void List<T>::clear () {
-    m_first = m_last = 0L;
+    m_first = m_last = nullptr;
 }
 
 template <class T>
@@ -1060,7 +1060,7 @@ inline void TreeNode<T>::insertBeforeImpl (T *c, T *b) {
             b->m_prev->m_next = c->m_self;
             c->m_prev = b->m_prev;
         } else {
-            c->m_prev = 0L;
+            c->m_prev = nullptr;
             m_first_child = c->m_self;
         }
         b->m_prev = c->m_self;
@@ -1076,11 +1076,11 @@ inline void TreeNode<T>::removeChildImpl (typename Item<T>::SharedType c) {
         m_first_child = c->m_next;
     if (c->m_next) {
         c->m_next->m_prev = c->m_prev;
-        c->m_next = 0L;
+        c->m_next = nullptr;
     } else
         m_last_child = c->m_prev;
-    c->m_prev = 0L;
-    c->m_parent = 0L;
+    c->m_prev = nullptr;
+    c->m_parent = nullptr;
 }
 
 inline KDE_NO_EXPORT NodeList Node::childNodes () const {

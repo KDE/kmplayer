@@ -102,7 +102,7 @@ public:
     Settings (PartBase *, KSharedConfigPtr part) KDE_NO_CDTOR_EXPORT;
     ~Settings () KDE_NO_CDTOR_EXPORT;
     bool createDialog () KDE_NO_EXPORT;
-    void show (const char * pagename = 0L);
+    void show (const char * pagename = nullptr);
     void addPage (PreferencesPage *);
     void removePage (PreferencesPage *);
     void applyColorSetting (bool only_changed_ones) KDE_NO_EXPORT;

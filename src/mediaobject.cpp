@@ -67,7 +67,7 @@ namespace {
     GlobalMediaData::~GlobalMediaData () {
         delete memory_cache;
         delete image_data_map;
-        global_media = NULL;
+        global_media = nullptr;
     }
 }
 
@@ -139,10 +139,10 @@ MediaManager::~MediaManager () {
 MediaObject *MediaManager::createAVMedia (Node *node, const QByteArray &) {
     RecordDocument *rec = id_node_record_document == node->id
         ? convertNode <RecordDocument> (node)
-        : NULL;
+        : nullptr;
     if (!rec && !m_player->source()->authoriseUrl (
                 node->mrl()->absolutePath ()))
-        return NULL;
+        return nullptr;
 
     AudioVideoMedia *av = new AudioVideoMedia (this, node);
     if (rec) {
@@ -157,7 +157,7 @@ MediaObject *MediaManager::createAVMedia (Node *node, const QByteArray &) {
     av->process->user = av;
     av->setViewer (!rec
         ? m_player->viewWidget ()->viewArea ()->createVideoWidget ()
-        : NULL);
+        : nullptr);
 
     if (av->process->state () <= IProcess::Ready)
         av->process->ready ();
@@ -202,7 +202,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
                     media->viewer ()->map ();
                 }
                 if (Mrl::SingleMode == mrl->view_mode)
-                    m_player->viewWidget ()->viewArea ()->resizeEvent (NULL);
+                    m_player->viewWidget ()->viewArea ()->resizeEvent (nullptr);
             }
         }
     } else if (IProcess::NotRunning == news) {
@@ -233,7 +233,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
                 delete media;
             } else if (olds > IProcess::Ready) {
                 if (is_rec)
-                    mrl->message (MsgMediaFinished, NULL); // FIXME
+                    mrl->message (MsgMediaFinished, nullptr); // FIXME
                 else
                     mrl->document()->post(mrl, new Posting (mrl, MsgMediaFinished));
             }
@@ -291,7 +291,7 @@ KDE_NO_EXPORT void MediaObject::destroy () {
 }
 
 Mrl *MediaObject::mrl () {
-    return m_node ? m_node->mrl () : NULL;
+    return m_node ? m_node->mrl () : nullptr;
 }
 
 //------------------------%<----------------------------------------------------
@@ -383,7 +383,7 @@ static QString mimeByContent (const QByteArray &data)
 }
 
 MediaInfo::MediaInfo (Node *n, MediaManager::MediaType t)
- : media (NULL), type (t), node (n), job (NULL),
+ : media (nullptr), type (t), node (n), job (nullptr),
     preserve_wait (false), check_access (false) {
 }
 
@@ -394,7 +394,7 @@ MediaInfo::~MediaInfo () {
 KDE_NO_EXPORT void MediaInfo::killWGet () {
     if (job) {
         job->kill (); // quiet, no result signal
-        job = 0L;
+        job = nullptr;
         memory_cache->unpreserve (url);
     } else if (preserve_wait) {
         disconnect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
@@ -557,7 +557,7 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
             int nr = -1;
             struct Entry {
                 QString url, title;
-            } * entries = 0L;
+            } * entries = nullptr;
             do {
                 line = line.trimmed ();
                 if (!line.isEmpty ()) {
@@ -639,7 +639,7 @@ void MediaInfo::setMimetype (const QString &mt)
 {
     mime = mt;
 
-    Mrl *mrl = node ? node->mrl () : NULL;
+    Mrl *mrl = node ? node->mrl () : nullptr;
     if (mrl && mrl->mimetype.isEmpty ())
         mrl->mimetype = mt;
 
@@ -663,7 +663,7 @@ KDE_NO_EXPORT void MediaInfo::clearData () {
     killWGet ();
     if (media) {
         media->destroy ();
-        media = NULL;
+        media = nullptr;
     }
     url.truncate (0);
     mime.truncate (0);
@@ -736,7 +736,7 @@ static bool validDataFormat (MediaManager::MediaType type, const QByteArray &ba)
 }
 
 KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
-    job = 0L; // signal KIO::Job::result deletes itself
+    job = nullptr; // signal KIO::Job::result deletes itself
     if (check_access) {
         check_access = false;
 
@@ -834,14 +834,14 @@ KDE_NO_EXPORT void MediaInfo::slotMimetype (KIO::Job *, const QString & m) {
 //------------------------%<----------------------------------------------------
 
 IProcess::IProcess (ProcessInfo *pinfo) :
-    user (NULL),
+    user (nullptr),
     process_info (pinfo),
     m_state (NotRunning) {}
 
 AudioVideoMedia::AudioVideoMedia (MediaManager *manager, Node *node)
  : MediaObject (manager, node),
-   process (NULL),
-   m_viewer (NULL),
+   process (nullptr),
+   m_viewer (nullptr),
    request (ask_nothing) {
     kDebug() << "AudioVideoMedia::AudioVideoMedia" << endl;
 }
@@ -946,7 +946,7 @@ void AudioVideoMedia::stateChange (IProcess *,
 
 void AudioVideoMedia::processDestroyed (IProcess *p) {
     m_manager->processDestroyed (p);
-    process = NULL;
+    process = nullptr;
     if (ask_delete == request)
         delete this;
 }
@@ -970,9 +970,9 @@ ImageData::ImageData( const QString & img)
    height (0),
    flags (0),
    has_alpha (false),
-   image (0L),
+   image (nullptr),
 #ifdef KMPLAYER_WITH_CAIRO
-   surface (NULL),
+   surface (nullptr),
 #endif
    url (img) {
     //if (img.isEmpty ())
@@ -997,7 +997,7 @@ void ImageData::setImage (QImage *img) {
 #ifdef KMPLAYER_WITH_CAIRO
         if (surface) {
             cairo_surface_destroy (surface);
-            surface = NULL;
+            surface = nullptr;
         }
 #endif
         image = img;
@@ -1013,9 +1013,9 @@ void ImageData::setImage (QImage *img) {
 
 ImageMedia::ImageMedia (MediaManager *manager, Node *node,
         const QString &url, const QByteArray &ba)
- : MediaObject (manager, node), data (ba), buffer (NULL),
-   img_movie (NULL),
-   svg_renderer (NULL),
+ : MediaObject (manager, node), data (ba), buffer (nullptr),
+   img_movie (nullptr),
+   svg_renderer (nullptr),
    update_render (false),
    paused (false) {
     setupImage (url);
@@ -1024,9 +1024,9 @@ ImageMedia::ImageMedia (MediaManager *manager, Node *node,
 ImageMedia::ImageMedia (Node *node, ImageDataPtr id)
  : MediaObject ((MediaManager *)node->document()->role (RoleMediaManager),
          node),
-   buffer (NULL),
-   img_movie (NULL),
-   svg_renderer (NULL),
+   buffer (nullptr),
+   img_movie (nullptr),
+   svg_renderer (nullptr),
    update_render (false) {
     if (!id) {
         Node *c = findChildWithId (node, id_node_svg);
@@ -1040,7 +1040,7 @@ ImageMedia::ImageMedia (Node *node, ImageDataPtr id)
                             this, SLOT(svgUpdated()));
             } else {
                 delete svg_renderer;
-                svg_renderer = NULL;
+                svg_renderer = nullptr;
             }
         }
     } else {
@@ -1110,9 +1110,9 @@ KDE_NO_EXPORT void ImageMedia::setupImage (const QString &url) {
                     this, SLOT (movieResize (const QSize &)));
         } else {
             delete img_movie;
-            img_movie = 0L;
+            img_movie = nullptr;
             delete buffer;
-            buffer = 0L;
+            buffer = nullptr;
             frame_nr = 0;
             cached_img->flags |= (short)ImageData::ImagePixmap;
             image_data_map->insert (url, ImageDataPtrW (cached_img));
@@ -1123,12 +1123,12 @@ KDE_NO_EXPORT void ImageMedia::setupImage (const QString &url) {
 KDE_NO_EXPORT void ImageMedia::render (const ISize &sz) {
     if (svg_renderer && update_render) {
         delete svg_renderer;
-        svg_renderer = NULL;
+        svg_renderer = nullptr;
         Node *c = findChildWithId (m_node, id_node_svg);
         if (c) {
             QSvgRenderer *r = new QSvgRenderer (c->outerXML().toUtf8 ());
             if (r->isValid ()) {
-                cached_img->setImage (NULL);
+                cached_img->setImage (nullptr);
                 svg_renderer = r;
             } else {
                 delete r;
@@ -1173,7 +1173,7 @@ bool ImageMedia::isEmpty () const {
 }
 
 KDE_NO_EXPORT void ImageMedia::svgUpdated() {
-    cached_img->setImage (NULL);
+    cached_img->setImage (nullptr);
     if (m_node)
         m_node->document ()->post (m_node, new Posting (m_node, MsgMediaUpdated));
 }

@@ -126,8 +126,8 @@ public:
     void initialize ();
     bool parseParam (const TrieString & name, const QString & value);
     TimingState state () const { return timingstate; }
-    void message (MessageType msg, void *content=NULL);
-    void *role (RoleType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
+    void *role (RoleType msg, void *content=nullptr);
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
@@ -251,7 +251,7 @@ class KMPLAYER_NO_EXPORT TransitionModule {
 public:
     TransitionModule ()
      : trans_start_time (0),
-       trans_out_timer (NULL),
+       trans_out_timer (nullptr),
        trans_out_active (false) {}
 
     void init ();
@@ -336,8 +336,8 @@ public:
     void activate ();
     void deactivate ();
     void closed ();
-    void *role (RoleType msg, void *content=NULL);
-    void message (MessageType msg, void *content=NULL);
+    void *role (RoleType msg, void *content=nullptr);
+    void message (MessageType msg, void *content=nullptr);
     void accept (Visitor *v) { v->visit (this); }
     void jump (const QString & id);
     static Smil * findSmilNode (Node * node);
@@ -356,7 +356,7 @@ public:
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "head"; }
     void closed ();
-    void message (MessageType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
 };
 
 /**
@@ -375,8 +375,8 @@ public:
     virtual void activate ();
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual void deactivate ();
-    virtual void message (MessageType msg, void *content=NULL);
-    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
+    virtual void *role (RoleType msg, void *content=nullptr);
     KDE_NO_EXPORT virtual const char * nodeName () const { return "state"; }
 
     QString domain ();
@@ -400,7 +400,7 @@ public:
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
     void closed ();
-    void message (MessageType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
     void accept (Visitor *v) { v->visit (this); }
 
     NodePtrW root_layout;
@@ -417,8 +417,8 @@ public:
     virtual void activate ();
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void message (MessageType msg, void *content=NULL);
-    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
+    virtual void *role (RoleType msg, void *content=nullptr);
     virtual void accept (Visitor *v) { v->visit (this); }
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
@@ -457,8 +457,8 @@ public:
     ~RootLayout ();
     void closed ();
     void deactivate ();
-    void message (MessageType msg, void *content=NULL);
-    void *role (RoleType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
+    void *role (RoleType msg, void *content=nullptr);
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
 };
 
@@ -472,8 +472,8 @@ public:
     void deactivate ();
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     Node *childFromTag (const QString & tag);
-    void message (MessageType msg, void *content=NULL);
-    void *role (RoleType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
+    void *role (RoleType msg, void *content=nullptr);
 private:
     MouseListeners mouse_listeners;
 };
@@ -553,8 +553,8 @@ public:
     void activate ();
     void deactivate ();
     void reset ();
-    void message (MessageType msg, void *content=NULL);
-    void *role (RoleType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
+    void *role (RoleType msg, void *content=nullptr);
     void setJumpNode (NodePtr);
     Runtime *runtime;
 protected:
@@ -571,8 +571,8 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
     void begin ();
     void reset ();
-    void message (MessageType msg, void *content=NULL);
-    void *role (RoleType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
+    void *role (RoleType msg, void *content=nullptr);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
 };
 
@@ -584,8 +584,8 @@ public:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d) : GroupBase(d, id_node_seq) {}
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
     void begin ();
-    void message (MessageType msg, void *content=NULL);
-    void *role (RoleType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
+    void *role (RoleType msg, void *content=nullptr);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     ConnectionLink starting_connection;
     ConnectionLink trans_connection;
@@ -614,7 +614,7 @@ public:
     Node *childFromTag (const QString & tag);
     void begin ();
     void deactivate ();
-    void message (MessageType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
 
     struct ConnectionItem {
@@ -638,7 +638,7 @@ public:
     Node *childFromTag (const QString & tag);
     void init ();
     void parseParam (const TrieString &, const QString &);
-    void message (MessageType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
 
     enum { PeersStop, PeersPause, PeersDefer, PeersNever } peers;
@@ -659,7 +659,7 @@ public:
     void init ();
     void deactivate ();
     void reset ();
-    void message (MessageType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
 
     Node *chosenOne ();
@@ -685,8 +685,8 @@ public:
     Anchor (NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~Anchor () {}
     void activate ();
-    void message (MessageType msg, void *content=NULL);
-    void *role (RoleType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
+    void *role (RoleType msg, void *content=nullptr);
     KDE_NO_EXPORT const char * nodeName () const { return "a"; }
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
@@ -700,7 +700,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return tag.constData (); }
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     void parseParam (const TrieString & name, const QString & value);
-    void *role (RoleType msg, void *content=NULL);
+    void *role (RoleType msg, void *content=nullptr);
     SizeType * coords;
     int nr_coords;
     const QByteArray tag;
@@ -728,8 +728,8 @@ public:
     virtual void reset ();
     SRect calculateBounds ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void message (MessageType msg, void *content=NULL);
-    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
+    virtual void *role (RoleType msg, void *content=nullptr);
     virtual void accept (Visitor *v) { v->visit (this); }
 
     Surface *surface ();
@@ -770,8 +770,8 @@ public:
     virtual void finish ();
     virtual PlayType playType ();
     virtual void accept (Visitor *);
-    virtual void message (MessageType msg, void *content=NULL);
-    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
+    virtual void *role (RoleType msg, void *content=nullptr);
     virtual void prefetch ();
     virtual void clipStart ();
 };
@@ -813,8 +813,8 @@ public:
     KDE_NO_EXPORT const char *nodeName () const { return "smilText"; }
     Node *childFromTag (const QString & tag);
     virtual void parseParam (const TrieString &name, const QString &value);
-    virtual void message (MessageType msg, void *content=NULL);
-    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
+    virtual void *role (RoleType msg, void *content=nullptr);
     virtual void accept (Visitor *v) { v->visit (this); }
 
     Surface *surface ();
@@ -861,8 +861,8 @@ public:
     KDE_NO_EXPORT const char *nodeName () const { return tag.data (); }
     Node *childFromTag (const QString & tag);
     virtual void parseParam (const TrieString &name, const QString &value);
-    virtual void message (MessageType msg, void *content=NULL);
-    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
+    virtual void *role (RoleType msg, void *content=nullptr);
     virtual void accept (Visitor *v) { v->visit (this); }
 
     Runtime *runtime;
@@ -879,8 +879,8 @@ public:
     virtual void deactivate ();
     virtual void reset ();
     virtual void parseParam (const TrieString &name, const QString &value);
-    virtual void message (MessageType msg, void *content=NULL);
-    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
+    virtual void *role (RoleType msg, void *content=nullptr);
 protected:
     StateValue (NodePtr &d, short _id);
 
@@ -922,13 +922,13 @@ public:
 
 class KMPLAYER_NO_EXPORT Send : public StateValue {
 public:
-    Send (NodePtr &d) : StateValue (d, id_node_send), media_info (NULL) {}
+    Send (NodePtr &d) : StateValue (d, id_node_send), media_info (nullptr) {}
 
     virtual void init ();
     virtual void begin ();
     virtual void deactivate ();
     virtual void parseParam (const TrieString &name, const QString &value);
-    virtual void message (MessageType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
     KDE_NO_EXPORT const char *nodeName () const { return "send"; }
 
 private:
@@ -947,8 +947,8 @@ public:
     virtual void deactivate ();
     virtual void reset ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void message (MessageType msg, void *content=NULL);
-    virtual void *role (RoleType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
+    virtual void *role (RoleType msg, void *content=nullptr);
     Runtime *runtime;
 protected:
     virtual void restoreModification ();
@@ -983,7 +983,7 @@ public:
     virtual void finish ();
     virtual void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual void message (MessageType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
     virtual void accept (Visitor *v) { v->visit (this); }
     PlayType playType () { return play_type_none; }
 

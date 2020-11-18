@@ -34,7 +34,7 @@ KDE_NO_CDTOR_EXPORT RP::Imfl::Imfl (NodePtr & d)
   : Mrl (d, id_node_imfl),
     fit (fit_hidden),
     duration (0),
-    duration_timer (NULL),
+    duration_timer (nullptr),
     needs_scene_img (0) {}
 
 KDE_NO_CDTOR_EXPORT RP::Imfl::~Imfl () {
@@ -100,7 +100,7 @@ KDE_NO_EXPORT void RP::Imfl::finish () {
     Mrl::finish ();
     if (duration_timer) {
         document ()->cancelPosting (duration_timer);
-        duration_timer = 0;
+        duration_timer = nullptr;
     }
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         if (n->unfinished ())
@@ -113,7 +113,7 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
         finish ();
     else if (duration_timer) {
         document ()->cancelPosting (duration_timer);
-        duration_timer = 0;
+        duration_timer = nullptr;
     }
     if (!active ())
         return; // calling finish might call deactivate() as well
@@ -121,13 +121,13 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         if (n->active ())
             n->deactivate ();
-    rp_surface = (Surface *) role (RoleChildDisplay, NULL);
+    rp_surface = (Surface *) role (RoleChildDisplay, nullptr);
 }
 
 KDE_NO_EXPORT void RP::Imfl::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgEventTimer:
-            duration_timer = 0;
+            duration_timer = nullptr;
             if (unfinished ())
                 finish ();
             return;
@@ -183,7 +183,7 @@ KDE_NO_EXPORT Node *RP::Imfl::childFromTag (const QString & tag) {
         return new RP::Fadein (m_doc);
     else if (!strcmp (ctag, "fadeout"))
         return new RP::Fadeout (m_doc);
-    return NULL;
+    return nullptr;
 }
 
 KDE_NO_EXPORT void RP::Imfl::repaint () {
@@ -224,12 +224,12 @@ KDE_NO_EXPORT void RP::Image::begin () {
 KDE_NO_EXPORT void RP::Image::deactivate () {
     if (img_surface) {
         img_surface->remove ();
-        img_surface = NULL;
+        img_surface = nullptr;
     }
     setState (state_deactivated);
-    postpone_lock = 0L;
+    postpone_lock = nullptr;
     delete media_info;
-    media_info = NULL;
+    media_info = nullptr;
 }
 
 KDE_NO_EXPORT void RP::Image::message (MessageType msg, void *content) {
@@ -243,12 +243,12 @@ KDE_NO_EXPORT void RP::Image::message (MessageType msg, void *content) {
 
 KDE_NO_EXPORT void RP::Image::dataArrived () {
     kDebug () << "RP::Image::remoteReady";
-    ImageMedia *im = media_info->media ? (ImageMedia *)media_info->media : NULL;
+    ImageMedia *im = media_info->media ? (ImageMedia *)media_info->media : nullptr;
     if (im && !im->isEmpty ()) {
         size.width = im->cached_img->width;
         size.height = im->cached_img->height;
     }
-    postpone_lock = 0L;
+    postpone_lock = nullptr;
 }
 
 KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
@@ -259,7 +259,7 @@ KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
 
 KDE_NO_EXPORT Surface *RP::Image::surface () {
     ImageMedia *im = media_info && media_info->media
-        ? (ImageMedia *)media_info->media : NULL;
+        ? (ImageMedia *)media_info->media : nullptr;
     if (im && !img_surface && !im->isEmpty ()) {
         Node * p = parentNode ();
         if (p && p->id == RP::id_node_imfl) {
@@ -274,7 +274,7 @@ KDE_NO_EXPORT Surface *RP::Image::surface () {
 
 KDE_NO_CDTOR_EXPORT RP::TimingsBase::TimingsBase (NodePtr & d, const short i)
  : Element (d, i), x (0), y (0), w (0), h (0), start (0), duration (0),
-   start_timer (NULL), duration_timer (NULL), update_timer (NULL) {}
+   start_timer (nullptr), duration_timer (nullptr), update_timer (nullptr) {}
 
 KDE_NO_EXPORT void RP::TimingsBase::activate () {
     setState (state_activated);
@@ -331,12 +331,12 @@ KDE_NO_EXPORT void RP::TimingsBase::message (MessageType msg, void *content) {
                 update (100 * 10 * ++curr_step / duration);
                 te->interval = true;
             } else if (te == start_timer) {
-                start_timer = 0;
+                start_timer = nullptr;
                 duration_timer = document()->post (this,
                         new TimerPosting (duration * 10));
                 begin ();
             } else if (te == duration_timer) {
-                duration_timer = 0;
+                duration_timer = nullptr;
                 update (100);
                 finish ();
             }
@@ -384,14 +384,14 @@ KDE_NO_EXPORT void RP::TimingsBase::finish () {
 KDE_NO_EXPORT void RP::TimingsBase::cancelTimers () {
     if (start_timer) {
         document ()->cancelPosting (start_timer);
-        start_timer = 0;
+        start_timer = nullptr;
     } else if (duration_timer) {
         document ()->cancelPosting (duration_timer);
-        duration_timer = 0;
+        duration_timer = nullptr;
     }
     if (update_timer) {
         document ()->cancelPosting (update_timer);
-        update_timer = 0;
+        update_timer = nullptr;
     }
 }
 

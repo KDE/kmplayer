@@ -229,7 +229,7 @@ KDE_NO_EXPORT KMPlayer::Node *TVInput::childFromTag (const QString & tag) {
     if (tag == QString::fromLatin1 ("channel")) {
         return new TVChannel (m_doc);
     } else
-        return 0L;
+        return nullptr;
 }
 
 KDE_NO_EXPORT void TVInput::closed () {
@@ -268,7 +268,7 @@ KDE_NO_EXPORT KMPlayer::Node *TVDevice::childFromTag (const QString & tag) {
     // kDebug () << nodeName () << " childFromTag " << tag;
     if (tag == QString::fromLatin1 ("input"))
         return new TVInput (m_doc);
-    return 0L;
+    return nullptr;
 }
 
 KDE_NO_EXPORT void TVDevice::closed () {
@@ -286,7 +286,7 @@ KDE_NO_EXPORT void TVDevice::message (KMPlayer::MessageType msg, void *data) {
 void *TVDevice::role (KMPlayer::RoleType msg, void *content)
 {
     if (KMPlayer::RolePlaylist == msg)
-        return NULL;
+        return nullptr;
     return TVNode::role (msg, content);
 }
 
@@ -371,7 +371,7 @@ KDE_NO_EXPORT void TVDocument::defer () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource(KMPlayerApp* a)
-    : KMPlayer::Source (i18n ("TV"), a->player(), "tvsource"), m_app(a), m_configpage(0L), scanner(0L), config_read(false) {
+    : KMPlayer::Source (i18n ("TV"), a->player(), "tvsource"), m_app(a), m_configpage(nullptr), scanner(nullptr), config_read(false) {
     m_url = "tv://";
     m_document = new TVDocument (this);
     m_player->settings ()->addPage (this);
@@ -454,8 +454,8 @@ KDE_NO_EXPORT KMPlayer::NodePtr KMPlayerTVSource::root () {
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::setCurrent (KMPlayer::Mrl *mrl) {
-    TVChannel * channel = 0L;
-    TVInput * input = 0L;
+    TVChannel * channel = nullptr;
+    TVInput * input = nullptr;
     m_current = mrl;
     KMPlayer::NodePtr elm = m_current;
     if (elm && elm->id == id_node_tv_channel) {
@@ -510,7 +510,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::menuClicked (int id) {
         ;
     m_cur_tvdevice = elm;
     m_cur_tvinput = elm->firstChild (); // FIXME
-    m_current = 0L;
+    m_current = nullptr;
     m_player->setSource (this);
 }
 
@@ -548,7 +548,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
     config_read = true;
     kDebug () << "KMPlayerTVSource::readXML";
     m_document->defer ();
-    m_player->playModel()->updateTree (tree_id, m_document, 0, false, false);
+    m_player->playModel()->updateTree (tree_id, m_document, nullptr, false, false);
     sync (false);
 }
 
@@ -568,7 +568,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::sync (bool fromUI) {
         for (KMPlayer::Node *d=m_document->firstChild();d; d=d->nextSibling())
             if (d->id == id_node_tv_device)
                 static_cast <TVDevice *> (d)->updateDevicePage ();
-        m_player->playModel()->updateTree(tree_id, m_document, 0, false, false);
+        m_player->playModel()->updateTree(tree_id, m_document, nullptr, false, false);
     } else {
         m_configpage->driver->setText (tvdriver);
         for (KMPlayer::Node *dp = m_document->firstChild (); dp; dp = dp->nextSibling ())
@@ -617,7 +617,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::slotScanFinished (TVDevice * tvdevice) {
     if (tvdevice) {
         tvdevice->zombie = false;
         addTVDevicePage (tvdevice, true);
-        m_player->playModel()->updateTree(tree_id, m_document, 0, false, false);
+        m_player->playModel()->updateTree(tree_id, m_document, nullptr, false, false);
     } else
         KMessageBox::error(m_configpage,i18n("No device found."),i18n("Error"));
 }
@@ -636,7 +636,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::addTVDevicePage(TVDevice *dev, bool show) {
 KDE_NO_EXPORT void KMPlayerTVSource::slotDeviceDeleted (TVDevicePage *devpage) {
     m_document->removeChild (devpage->device_doc);
     m_configpage->notebook->setCurrentIndex(0);
-    m_player->playModel()->updateTree (tree_id, m_document, 0, false, false);
+    m_player->playModel()->updateTree (tree_id, m_document, nullptr, false, false);
 }
 
 //-----------------------------------------------------------------------------
@@ -644,9 +644,9 @@ KDE_NO_EXPORT void KMPlayerTVSource::slotDeviceDeleted (TVDevicePage *devpage) {
 KDE_NO_CDTOR_EXPORT TVDeviceScannerSource::TVDeviceScannerSource (KMPlayerTVSource * src)
  : KMPlayer::Source (i18n ("TVScanner"), src->player (), "tvscanner"),
    m_tvsource (src),
-   m_tvdevice (0L),
-   m_process (NULL),
-   m_viewer (NULL) {
+   m_tvdevice (nullptr),
+   m_process (nullptr),
+   m_viewer (nullptr) {
 }
 
 KDE_NO_EXPORT void TVDeviceScannerSource::init () {
@@ -737,7 +737,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::deactivate () {
     if (m_tvdevice) {
         if (m_tvdevice->parentNode ())
             m_tvdevice->parentNode ()->removeChild (m_tvdevice);
-        m_tvdevice = 0L;
+        m_tvdevice = nullptr;
         delete m_process;
         emit scanFinished (m_tvdevice);
     }
@@ -756,7 +756,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::play (KMPlayer::Mrl *) {
 }
 
 KDE_NO_EXPORT void TVDeviceScannerSource::scanningFinished () {
-    TVDevice * dev = 0L;
+    TVDevice * dev = nullptr;
     delete m_process;
     kDebug () << "scanning done " << m_tvdevice->hasChildNodes ();
     if (!m_tvdevice->hasChildNodes ()) {
@@ -770,7 +770,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::scanningFinished () {
                     QString::number (height ()));
         }
     }
-    m_tvdevice = 0L;
+    m_tvdevice = nullptr;
     m_player->setSource (m_old_source);
     emit scanFinished (dev);
 }
@@ -786,11 +786,11 @@ void TVDeviceScannerSource::stateChange (KMPlayer::IProcess *,
 }
 
 void TVDeviceScannerSource::processDestroyed (KMPlayer::IProcess *) {
-    m_process = NULL;
+    m_process = nullptr;
     KMPlayer::View *view = m_player->viewWidget ();
     if (view)
         view->viewArea ()->destroyVideoWidget (m_viewer);
-    m_viewer = NULL;
+    m_viewer = nullptr;
 }
 
 KMPlayer::IViewer *TVDeviceScannerSource::viewer () {

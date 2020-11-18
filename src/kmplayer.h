@@ -56,7 +56,7 @@ namespace KMPlayer {
 class KMPlayerApp : public KXmlGuiWindow {
     Q_OBJECT
 public:
-    KMPlayerApp (QWidget* parent=NULL);
+    KMPlayerApp (QWidget* parent=nullptr);
     ~KMPlayerApp ();
     void openDocumentFile (const KUrl& url=KUrl());
     void addUrl (const KUrl& url);

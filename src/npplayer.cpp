@@ -184,7 +184,7 @@ static gboolean requestStream (void * p) {
         if (!callback_service)
             current_stream_id = p;
         if (!stdin_read_watch)
-            stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
+            stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, nullptr);
         createPath ((int)(long)p, path, 64);
 
         char cb_path[64];
@@ -207,7 +207,7 @@ static gboolean requestStream (void * p) {
                         DBUS_TYPE_BYTE, &si->post, si->post_len);
             dbus_message_iter_close_container(&it, &ait);
             dbus_message_set_no_reply (msg, TRUE);
-            dbus_connection_send (dbus_connection, msg, NULL);
+            dbus_connection_send (dbus_connection, msg, nullptr);
             dbus_message_unref (msg);
             dbus_connection_flush (dbus_connection);
         }
@@ -423,7 +423,7 @@ static void nsReleaseObject (NPObject *obj) {
 static NPError nsGetURL (NPP instance, const char* url, const char* target) {
     (void)instance;
     print ("nsGetURL %s %s\n", url, target ? target : "");
-    addStream (url, 0L, target, 0, NULL, 0L, false);
+    addStream (url, nullptr, target, 0, nullptr, nullptr, false);
     return NPERR_NO_ERROR;
 }
 
@@ -431,7 +431,7 @@ static NPError nsPostURL (NPP instance, const char *url,
         const char *target, uint32 len, const char *buf, NPBool file) {
     (void)instance; (void)file;
     print ("nsPostURL %s %s\n", url, target ? target : "");
-    addStream (url, 0L, target, len, buf, 0L, false);
+    addStream (url, nullptr, target, len, buf, nullptr, false);
     return NPERR_NO_ERROR;
 }
 
@@ -496,7 +496,7 @@ static void nsReloadPlugins (NPBool reloadPages) {
 
 static void *nsGetJavaEnv () {
     print ("NPN_GetJavaEnv\n");
-    return NULL;
+    return nullptr;
 }
 
 /*static jref nsGetJavaPeer (NPP instance) {
@@ -508,20 +508,20 @@ static void *nsGetJavaEnv () {
 static void *nsGetJavaPeer (NPP instance) {
     (void)instance;
     print ("NPN_GetJavaPeer\n");
-    return NULL;
+    return nullptr;
 }
 
 static NPError nsGetURLNotify (NPP instance, const char* url, const char* target, void *notify) {
     (void)instance;
     print ("NPN_GetURLNotify %s %s\n", url, target ? target : "");
-    addStream (url, 0L, target, 0, NULL, notify, true);
+    addStream (url, nullptr, target, 0, nullptr, notify, true);
     return NPERR_NO_ERROR;
 }
 
 static NPError nsPostURLNotify (NPP instance, const char* url, const char* target, uint32 len, const char* buf, NPBool file, void *notify) {
     (void)instance; (void)file;
     print ("NPN_PostURLNotify\n");
-    addStream (url, 0L, target, len, buf, notify, true);
+    addStream (url, nullptr, target, len, buf, notify, true);
     return NPERR_NO_ERROR;
 }
 
@@ -532,7 +532,7 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
             *(void**)value = (void*)(long) gdk_x11_get_default_xdisplay ();
             break;
         case NPNVxtAppContext:
-            *(void**)value = NULL;
+            *(void**)value = nullptr;
             break;
         case NPNVnetscapeWindow:
             print ("NPNVnetscapeWindow\n");
@@ -547,7 +547,7 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
             *(NPBool*)value = 0;
             break;
         case NPNVserviceManager:
-            *(void**)value = NULL;
+            *(void**)value = nullptr;
             return NPERR_GENERIC_ERROR;
             /* *(int*)value = 0;*/
             break;
@@ -637,7 +637,7 @@ static NPUTF8 * nsUTF8FromIdentifier (NPIdentifier name) {
     print ("NPN_UTF8FromIdentifier %s\n", str ? str : "not found");
     if (str)
         return strdup (str);
-    return NULL;
+    return nullptr;
 }
 
 static int32_t nsIntFromIdentifier (NPIdentifier identifier) {
@@ -680,7 +680,7 @@ static bool str2NPVariant (NPP instance, const char *str, NPVariant *result) {
         long l = strtol (str + 2, &eptr, 10);
         if (*eptr && *eptr == '.') {
             result->type = NPVariantType_Double;
-            result->value.doubleValue = strtod (str + 2, NULL);
+            result->value.doubleValue = strtod (str + 2, nullptr);
             print ("double %f\n", result->value.doubleValue);
         } else if (eptr != str + 2) {
             result->type = NPVariantType_Int32;
@@ -856,7 +856,7 @@ static NPError nsGetValueForURL (NPP npp, NPNURLVariable variable, const char *u
                     DBUS_TYPE_STRING, &url,
                     DBUS_TYPE_INVALID);
             rmsg = dbus_connection_send_with_reply_and_block (dbus_connection,
-                    msg, 2000, NULL);
+                    msg, 2000, nullptr);
             if (rmsg) {
                 DBusMessageIter it;
                 if (dbus_message_iter_init (rmsg, &it) &&
@@ -892,9 +892,9 @@ static NPError nsGetAuthenticationInfo (NPP npp, const char *protocol, const cha
     (void)npp;
     (void)protocol; (void)host; (void)port; (void)scheme; (void)realm;
     print ("NPN_GetAuthenticationInfo\n");
-    *username = NULL;
+    *username = nullptr;
     *ulen = 0;
-    *password = NULL;
+    *password = nullptr;
     *plen = 0;
     return NPERR_NO_ERROR;
 }
@@ -905,9 +905,9 @@ static bool doInvoke (uint32_t obj, const char *func, GSList *arglst,
         uint32_t arg_count, char **resultstring) {
     NPObject *npobj;
     NPVariant result;
-    NPVariant *args = NULL;
+    NPVariant *args = nullptr;
 
-    *resultstring = NULL;
+    *resultstring = nullptr;
     if (!obj && npp) { /*TODO NPObject tracking */
         NPError np_err = np_funcs.getvalue (npp,
                 NPPVpluginScriptableNPObject, (void*)&npobj);
@@ -952,7 +952,7 @@ static bool doGet (uint32_t obj, const char *prop, char **resultstring) {
     NPObject *npobj;
     NPVariant result;
 
-    *resultstring = NULL;
+    *resultstring = nullptr;
     if (!obj && npp) { /*TODO NPObject tracking */
         NPError np_err = np_funcs.getvalue (npp,
                 NPPVpluginScriptableNPObject, (void*)&npobj);
@@ -1005,7 +1005,7 @@ static void windowClassDeallocate (NPObject *npobj) {
         g_free (jo->name);
     if (npobj == js_window) {
         print ("WARNING deleting window object\n");
-        js_window = NULL;
+        js_window = nullptr;
     }
     nsMemFree (npobj);
 }
@@ -1024,7 +1024,7 @@ static bool windowClassHasMethod (NPObject *npobj, NPIdentifier name) {
 static bool windowClassInvoke (NPObject *npobj, NPIdentifier method,
         const NPVariant *args, uint32_t arg_count, NPVariant *result) {
     JsObject * jo = (JsObject *) npobj;
-    NPString str = { NULL, 0 };
+    NPString str = { nullptr, 0 };
     char buf[4096];
     int pos, i;
     bool res;
@@ -1032,7 +1032,7 @@ static bool windowClassInvoke (NPObject *npobj, NPIdentifier method,
     /*print ("windowClassInvoke\n");*/
 
     result->type = NPVariantType_Null;
-    result->value.objectValue = NULL;
+    result->value.objectValue = nullptr;
 
     if (!id) {
         print ("Invoke invalid id\n");
@@ -1074,12 +1074,12 @@ static bool windowClassGetProperty (NPObject *npobj, NPIdentifier property,
         NPVariant *result) {
     char * id = (char *) g_tree_lookup (identifiers, property);
     JsObject jo;
-    NPString fullname = { NULL, 0 };
+    NPString fullname = { nullptr, 0 };
     bool res;
 
     print ("GetProperty %s\n", id);
     result->type = NPVariantType_Null;
-    result->value.objectValue = NULL;
+    result->value.objectValue = nullptr;
 
     if (!id)
         return false;
@@ -1146,10 +1146,10 @@ static void shutDownPlugin() {
         if (npp) {
             np_funcs.destroy (npp, &saved_data);
             nsMemFree (npp);
-            npp = 0L;
+            npp = nullptr;
         }
         npShutdown();
-        npShutdown = 0;
+        npShutdown = nullptr;
     }
 }
 
@@ -1320,13 +1320,13 @@ static int initPlugin (const char *plugin_lib) {
     np_err = npInitialize (&ns_funcs, &np_funcs);
     if (np_err != NPERR_NO_ERROR) {
         print ("NP_Initialize failure %d\n", np_err);
-        npShutdown = 0;
+        npShutdown = nullptr;
         return -1;
     }
-    np_err = npGetValue (NULL, NPPVpluginNameString, &pname);
+    np_err = npGetValue (nullptr, NPPVpluginNameString, &pname);
     if (np_err == NPERR_NO_ERROR)
         print ("NP_GetValue Name %s\n", pname);
-    np_err = npGetValue (NULL, NPPVpluginDescriptionString, &pname);
+    np_err = npGetValue (nullptr, NPPVpluginDescriptionString, &pname);
     if (np_err == NPERR_NO_ERROR)
         print ("NP_GetValue Description %s\n", pname);
     return 0;
@@ -1342,9 +1342,9 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
 
     for (i = 0; i < argc; i++) {
         if (!strcasecmp (argn[i], "width"))
-            width = strtol (argv[i], 0L, 10);
+            width = strtol (argv[i], nullptr, 10);
         else if (!strcasecmp (argn[i], "height"))
-            height = strtol (argv[i], 0L, 10);
+            height = strtol (argv[i], nullptr, 10);
     }
     /*if (width > 0 && height > 0)
         callFunction (-1, "dimension",
@@ -1415,14 +1415,14 @@ static bool startPlugin (const char *mime,
 
 static StreamInfo *getStreamInfo (const char *path, gpointer *stream_id) {
     const char *p = strrchr (path, '_');
-    *stream_id = p ? (gpointer) strtol (p+1, NULL, 10) : NULL;
+    *stream_id = p ? (gpointer) strtol (p+1, nullptr, 10) : nullptr;
     return (StreamInfo *) g_tree_lookup (stream_list, *stream_id);
 }
 
 static void defaultReply (DBusConnection *conn, DBusMessage *msg) {
     if (!dbus_message_get_no_reply (msg)) {
         DBusMessage *rmsg = dbus_message_new_method_return (msg);
-        dbus_connection_send (conn, rmsg, NULL);
+        dbus_connection_send (conn, rmsg, nullptr);
         dbus_connection_flush (conn);
         dbus_message_unref (rmsg);
     }
@@ -1451,7 +1451,7 @@ static DBusHandlerResult dbusStreamMessage (DBusConnection *conn,
     print ("dbusStreamMessage %s %s %s\n", dbus_message_get_interface (msg),
             dbus_message_get_member (msg), dbus_message_get_signature (msg));
     if (dbus_message_is_method_call (msg, iface, "redirected")) {
-        char *url = 0;
+        char *url = nullptr;
         si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
         if (dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &url, true)) {
             if (si) {
@@ -1557,16 +1557,16 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         DBusMessage * rmsg = dbus_message_new_method_return (msg);
         dbus_message_append_args (rmsg,
                 DBUS_TYPE_STRING, &plugin_inspect, DBUS_TYPE_INVALID);
-        dbus_connection_send (conn, rmsg, NULL);
+        dbus_connection_send (conn, rmsg, nullptr);
         dbus_connection_flush (conn);
         dbus_message_unref (rmsg);
     } else if (dbus_message_is_method_call (msg, iface, "setup")) {
         DBusMessageIter ait;
-        char *param = 0;
+        char *param = nullptr;
         unsigned int params = 0;
-        char **argn = NULL;
-        char **argv = NULL;
-        GSList *arglst = NULL;
+        char **argn = nullptr;
+        char **argv = nullptr;
+        GSList *arglst = nullptr;
         if (!dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &param, true)) {
             g_printerr ("missing mimetype arg");
             return DBUS_HANDLER_RESULT_HANDLED;
@@ -1631,7 +1631,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         startPlugin (mimetype, params, argn, argv);
         defaultReply (conn, msg);
     } else if (dbus_message_is_method_call (msg, iface, "play")) {
-        char *param = 0;
+        char *param = nullptr;
         if (!dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &param, true)) {
             g_printerr ("missing url arg");
             return DBUS_HANDLER_RESULT_HANDLED;
@@ -1639,7 +1639,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         object_url = g_strdup (param);
         print ("play %s\n", object_url);
         if (mimetype && strncmp (mimetype, "application/x-java", 18))
-            addStream (object_url, mimetype, 0L, 0, NULL, 0L, false);
+            addStream (object_url, mimetype, nullptr, 0, nullptr, nullptr, false);
         defaultReply (conn, msg);
     } else if (dbus_message_is_method_call (msg, iface, "get")) {
         DBusMessage * rmsg;
@@ -1647,13 +1647,13 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         char *prop;
         if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT32, &object, true) &&
                 dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &prop, false)) {
-            char *result = NULL;
+            char *result = nullptr;
             doGet (object, prop, &result);
             print ("get %s => %s\n", prop, result ? result : "NULL");
             rmsg = dbus_message_new_method_return (msg);
             dbus_message_append_args (rmsg,
                     DBUS_TYPE_STRING, &result, DBUS_TYPE_INVALID);
-            dbus_connection_send (conn, rmsg, NULL);
+            dbus_connection_send (conn, rmsg, nullptr);
             dbus_connection_flush (conn);
             dbus_message_unref (rmsg);
             g_free (result);
@@ -1663,10 +1663,10 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
         DBusMessageIter ait;
         uint32_t object;
         char *func;
-        GSList *arglst = NULL;
+        GSList *arglst = nullptr;
         GSList *sl;
         uint32_t arg_count = 0;
-        char *result = NULL;
+        char *result = nullptr;
         if (dbusMsgIterGet (msg, &args, DBUS_TYPE_UINT32, &object, true) &&
                 dbusMsgIterGet (msg, &args, DBUS_TYPE_STRING, &func, false)) {
             if (!dbus_message_iter_next (&args) ||
@@ -1691,7 +1691,7 @@ static DBusHandlerResult dbusPluginMessage (DBusConnection *conn,
             rmsg = dbus_message_new_method_return (msg);
             dbus_message_append_args (rmsg,
                     DBUS_TYPE_STRING, &result, DBUS_TYPE_INVALID);
-            dbus_connection_send (conn, rmsg, NULL);
+            dbus_connection_send (conn, rmsg, nullptr);
             dbus_connection_flush (conn);
             dbus_message_unref (rmsg);
             g_free (result);
@@ -1728,14 +1728,14 @@ static void callFunction(int stream, const char *iface, const char *func, int fi
             va_end (var_args);
         }
         dbus_message_set_no_reply (msg, TRUE);
-        dbus_connection_send (dbus_connection, msg, NULL);
+        dbus_connection_send (dbus_connection, msg, nullptr);
         dbus_message_unref (msg);
         dbus_connection_flush (dbus_connection);
     }
 }
 
 static char *evaluate (const char *script, bool store) {
-    char * ret = NULL;
+    char * ret = nullptr;
     print ("evaluate %s", script);
     if (callback_service) {
         DBusMessage *rmsg;
@@ -1750,7 +1750,7 @@ static char *evaluate (const char *script, bool store) {
                 DBUS_TYPE_BOOLEAN, &bool_val,
                 DBUS_TYPE_INVALID);
         rmsg = dbus_connection_send_with_reply_and_block (dbus_connection,
-                msg, 2000, NULL);
+                msg, 2000, nullptr);
         if (rmsg) {
             DBusMessageIter it;
             if (dbus_message_iter_init (rmsg, &it) &&
@@ -1775,7 +1775,7 @@ static void pluginAdded (GtkSocket *socket, gpointer d) {
     /*(void)socket;*/ (void)d;
     print ("pluginAdded\n");
     if (socket->plug_window) {
-        gpointer user_data = NULL;
+        gpointer user_data = nullptr;
         gdk_window_get_user_data (socket->plug_window, &user_data);
         if (!user_data) {
             /**
@@ -1830,7 +1830,7 @@ static void windowCreatedEvent (GtkWidget *w, gpointer d) {
         char *argn[] = { g_strdup("WIDTH"), g_strdup("HEIGHT"), g_strdup("debug"), g_strdup("SRC") };
         char *argv[] = { g_strdup("440"), g_strdup("330"), g_strdup("yes"), g_strdup(object_url) };
         if (startPlugin (mimetype, 4, argn, argv))
-            addStream (object_url, mimetype, 0L, 0, NULL, 0L, false);
+            addStream (object_url, mimetype, nullptr, 0, nullptr, nullptr, false);
     }
 }
 
@@ -1866,7 +1866,7 @@ static gboolean configureEvent(GtkWidget *w, GdkEventConfigure *e, gpointer d) {
         top_w = e->width;
         top_h = e->height;
         if (!update_dimension_timer)
-            update_dimension_timer = g_timeout_add (100, updateDimension, NULL);
+            update_dimension_timer = g_timeout_add (100, updateDimension, nullptr);
     }
     return FALSE;
 }
@@ -1937,7 +1937,7 @@ static gboolean initPlayer (void * p) {
         g_sprintf (myname, "org.kde.kmplayer.npplayer-%d", getpid ());
         service_name = g_strdup (myname);
         print ("using service %s was '%s'\n", service_name, dbus_bus_get_unique_name (dbus_connection));
-        dbus_connection_setup_with_g_main (dbus_connection, 0L);
+        dbus_connection_setup_with_g_main (dbus_connection, nullptr);
         dbus_bus_request_name (dbus_connection, service_name,
                 DBUS_NAME_FLAG_REPLACE_EXISTING, &dberr);
         if (dbus_error_is_set (&dberr)) {
@@ -1949,7 +1949,7 @@ static gboolean initPlayer (void * p) {
         pluginVTable.unregister_function = dbusPluginUnregister;
         pluginVTable.message_function = dbusPluginMessage;
         if (!dbus_connection_register_object_path (dbus_connection, "/plugin",
-                    &pluginVTable, NULL))
+                    &pluginVTable, nullptr))
             g_printerr ("dbus_connection_register_object_path error\n");
 
 
@@ -1968,7 +1968,7 @@ static gboolean initPlayer (void * p) {
 int main (int argc, char **argv) {
     int i;
 
-    g_thread_init (NULL);
+    g_thread_init (nullptr);
     gtk_init (&argc, &argv);
 
     for (i = 1; i < argc; i++) {
@@ -1986,7 +1986,7 @@ int main (int argc, char **argv) {
         } else if (!strcmp (argv[i], "-m") && ++i < argc) {
             mimetype = g_strdup (argv[i]);
         } else if (!strcmp (argv [i], "-wid") && ++i < argc) {
-            parent_id = strtol (argv[i], 0L, 10);
+            parent_id = strtol (argv[i], nullptr, 10);
         } else
             object_url = g_strdup (argv[i]);
     }
@@ -2000,7 +2000,7 @@ int main (int argc, char **argv) {
     stream_vtable.unregister_function = dbusStreamUnregister;
     stream_vtable.message_function = dbusStreamMessage;
 
-    g_timeout_add (0, initPlayer, NULL);
+    g_timeout_add (0, initPlayer, nullptr);
 
     fcntl (0, F_SETFL, fcntl (0, F_GETFL) | O_NONBLOCK);
 

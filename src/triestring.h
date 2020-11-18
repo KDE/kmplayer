@@ -50,7 +50,7 @@ public:
     bool operator < (const TrieString & s) const;
 };
 
-inline TrieString::TrieString () : node (0L) {}
+inline TrieString::TrieString () : node (nullptr) {}
 
 class KMPLAYER_EXPORT Ids {
 public:

@@ -34,7 +34,7 @@ Node *ATOM::Feed::childFromTag (const QString & tag) {
         return new ATOM::Link (m_doc);
     else if (!strcmp (name, "title"))
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_title);
-    return NULL;
+    return nullptr;
 }
 
 void ATOM::Feed::closed () {
@@ -49,7 +49,7 @@ void ATOM::Feed::closed () {
 void *ATOM::Feed::role (RoleType msg, void *content)
 {
     if (RolePlaylist == msg)
-        return !title.isEmpty () ? (PlaylistRole *) this : NULL;
+        return !title.isEmpty () ? (PlaylistRole *) this : nullptr;
     return Element::role (msg, content);
 }
 
@@ -75,12 +75,12 @@ Node *ATOM::Entry::childFromTag (const QString &tag) {
             !strncmp (cstr, "yt:", 3) ||
             !strncmp (cstr, "gd:", 3))
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_ignored);
-    return NULL;
+    return nullptr;
 }
 
 void ATOM::Entry::closed () {
-    MediaGroup *group = NULL;
-    Node *rating = NULL;
+    MediaGroup *group = nullptr;
+    Node *rating = nullptr;
     for (Node *c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
             title = c->innerText ().simplified ();
@@ -97,7 +97,7 @@ void ATOM::Entry::closed () {
 void *ATOM::Entry::role (RoleType msg, void *content)
 {
     if (RolePlaylist == msg)
-        return !title.isEmpty () ? (PlaylistRole *) this : NULL;
+        return !title.isEmpty () ? (PlaylistRole *) this : nullptr;
     return Element::role (msg, content);
 }
 
@@ -167,7 +167,7 @@ Node *ATOM::MediaGroup::childFromTag (const QString &tag) {
         return new DarkNode (m_doc, tag.toUtf8 (), id_node_ignored);
     else if (!strcmp (cstr, "smil"))
         return new SMIL::Smil (m_doc);
-    return NULL;
+    return nullptr;
 }
 
 void ATOM::MediaGroup::message (MessageType msg, void *content) {

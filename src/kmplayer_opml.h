@@ -41,7 +41,7 @@ public:
     Opml (NodePtr& d) : Element (d, id_node_opml) {}
     Node *childFromTag (const QString& tag);
     const char *nodeName () const { return "opml"; }
-    void *role (RoleType msg, void *content=NULL);
+    void *role (RoleType msg, void *content=nullptr);
     void closed ();
 };
 

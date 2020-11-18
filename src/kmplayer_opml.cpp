@@ -34,7 +34,7 @@ KDE_NO_EXPORT Node *OPML::Opml::childFromTag (const QString & tag)
         return new Head (m_doc);
     else if (!strcasecmp (name, "body"))
         return new Body (m_doc);
-    return 0L;
+    return nullptr;
 }
 
 void OPML::Opml::closed ()
@@ -51,7 +51,7 @@ void OPML::Opml::closed ()
 void *OPML::Opml::role (RoleType msg, void *content)
 {
     if (RolePlaylist == msg)
-        return !title.isEmpty () ? (PlaylistRole *) this : NULL;
+        return !title.isEmpty () ? (PlaylistRole *) this : nullptr;
     return Element::role (msg, content);
 }
 
@@ -65,7 +65,7 @@ Node *OPML::Head::childFromTag (const QString & tag)
         return new DarkNode (m_doc, name, id_node_title);
     else if (!strcasecmp (name, "dateCreated"))
         return new DarkNode (m_doc, name, id_node_ignore);
-    return 0L;
+    return nullptr;
 }
 
 //--------------------------%<-------------------------------------------------
@@ -76,7 +76,7 @@ Node *OPML::Body::childFromTag (const QString & tag)
     const char *name = ba.constData ();
     if (!strcasecmp (name, "outline"))
         return new Outline (m_doc);
-    return 0L;
+    return nullptr;
 }
 
 //--------------------------%<-------------------------------------------------

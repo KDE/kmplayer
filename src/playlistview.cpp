@@ -109,7 +109,7 @@ public:
 KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget *, View *view, KActionCollection * ac)
  : //QTreeView (parent),
    m_view (view),
-   m_find_dialog (0L),
+   m_find_dialog (nullptr),
    m_active_color (30, 0, 255),
    last_drag_tree_id (0),
    m_ignore_expanded (false) {
@@ -341,8 +341,8 @@ KDE_NO_EXPORT void PlayListView::showAllNodes(TopPlayItem *ri, bool show) {
                 ri->node->document() == m_current_find_elm->document() &&
                 !ri->show_all_nodes) {
             if (!m_current_find_elm->role (RolePlaylist))
-                m_current_find_elm = 0L;
-            m_current_find_attr = 0L;
+                m_current_find_elm = nullptr;
+            m_current_find_attr = nullptr;
         }
     }
 }

@@ -331,7 +331,7 @@ struct KMPLAYER_NO_EXPORT ImageData {
     ~ImageData();
     void setImage (QImage *img);
 #ifdef KMPLAYER_WITH_CAIRO
-    void copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar, CalculatedSizer *zoom=NULL);
+    void copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar, CalculatedSizer *zoom=nullptr);
 #endif
     bool isEmpty () const {
         return !image
@@ -361,7 +361,7 @@ class KMPLAYER_NO_EXPORT ImageMedia : public MediaObject {
 public:
     ImageMedia (MediaManager *manager, Node *node,
             const QString &url, const QByteArray &data);
-    ImageMedia (Node *node, ImageDataPtr id = NULL);
+    ImageMedia (Node *node, ImageDataPtr id = nullptr);
 
     MediaManager::MediaType type () const { return MediaManager::Image; }
 

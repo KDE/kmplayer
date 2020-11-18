@@ -26,8 +26,8 @@ namespace KMPlayer {
 
 class NodeValue {
 public:
-    NodeValue (Node *n, Attribute *a=NULL) : node (n), attr (a) {}
-    NodeValue (const QString &s) : node (NULL), attr (NULL), string (s) {}
+    NodeValue (Node *n, Attribute *a=nullptr) : node (n), attr (a) {}
+    NodeValue (const QString &s) : node (nullptr), attr (nullptr), string (s) {}
 
     QString value () const;
     bool operator ==(const NodeValue& v) const {
@@ -47,8 +47,8 @@ public:
     class iterator {
         mutable ExprIterator* iter;
     public:
-        iterator(ExprIterator* it=NULL) : iter(it) {}
-        iterator(const iterator& it) : iter(it.iter) { it.iter = NULL; }
+        iterator(ExprIterator* it=nullptr) : iter(it) {}
+        iterator(const iterator& it) : iter(it.iter) { it.iter = nullptr; }
         ~iterator();
         iterator& operator =(const iterator& it);
         bool operator ==(const iterator& it) const;

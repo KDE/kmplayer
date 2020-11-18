@@ -89,9 +89,9 @@ extern const char * strMPlayerGroup;
 
 
 KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
-    : KXmlGuiWindow (NULL),
-      m_systray (0L),
-      m_player (new KMPlayer::PartBase (this, 0L, KSharedConfig::openConfig ())),
+    : KXmlGuiWindow (nullptr),
+      m_systray (nullptr),
+      m_player (new KMPlayer::PartBase (this, nullptr, KSharedConfig::openConfig ())),
       m_view (static_cast <KMPlayer::View*> (m_player->view())),
       //m_ffserverconfig (new KMPlayerFFServerConfig),
       //m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig)),
@@ -136,7 +136,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
 
     if (current_generator && current_generator->active ()) {
         current_generator->deactivate ();
-        current_generator = NULL;
+        current_generator = nullptr;
     }
     while (generators.first ()) {
         generators.first ()->data->document ()->dispose ();
@@ -365,7 +365,7 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
                                recents->firstChild ());
         KMPlayer::Node *c = recents->firstChild ()->nextSibling ();
         int count = 1;
-        KMPlayer::Node *more = NULL;
+        KMPlayer::Node *more = nullptr;
         while (c) {
             if (c->id == id_node_recent_node &&
                     (c->mrl ()->src == surl || c->mrl ()->src == nurl)) {
@@ -406,7 +406,7 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
             if (count > 50)
                 more->removeChild (more->lastChild ());
         }
-        m_player->playModel()->updateTree (recents_id, recents, 0, false, false);
+        m_player->playModel()->updateTree (recents_id, recents, nullptr, false, false);
     }
 }
 
@@ -1136,7 +1136,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
     if (recents) { // small window this check fails and thus ClearHistory fails
         recents->defer (); // make sure it's loaded
         recents->clear ();
-        m_player->playModel()->updateTree (recents_id, recents, 0, false, false);
+        m_player->playModel()->updateTree (recents_id, recents, nullptr, false, false);
     }
 }
 
@@ -1173,7 +1173,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotGenerator () {
 
     if (current_generator && current_generator->active ()) {
         current_generator->deactivate ();
-        current_generator = NULL;
+        current_generator = nullptr;
     }
 
     for (int i = 0; store && i < chlds.size (); ++i) {
@@ -1280,7 +1280,7 @@ void KMPlayerApp::playListItemDropped (QDropEvent *de, KMPlayer::PlayItem *item)
     KMPlayer::TopPlayItem *ritem = item->rootItem();
     KUrl url;
 
-    manip_node = 0L;
+    manip_node = nullptr;
     m_drop_list.clear ();
 
     if (de->mimeData()->hasFormat ("text/uri-list")) {
@@ -1332,7 +1332,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {
     for (int i = m_drop_list.size (); n && (i > 0 || manip_node); i--) {
         if (manip_node && manip_node->parentNode ()) {
             pi = manip_node;
-            manip_node = 0L;
+            manip_node = nullptr;
             pi->parentNode ()->removeChild (pi);
         } else
             pi = new PlaylistItem(playlist, this,false, m_drop_list[i-1].url());
@@ -1363,7 +1363,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
     for (int i = 0; i < m_drop_list.size () || manip_node; ++i) {
         if (manip_node && manip_node->parentNode ()) {
             pi = manip_node;
-            manip_node = 0L;
+            manip_node = nullptr;
             pi->parentNode ()->removeChild (pi);
         } else
             pi = new PlaylistItem (playlist,this, false, m_drop_list[i].url ());
@@ -1388,12 +1388,12 @@ KDE_NO_EXPORT void KMPlayerApp::menuCopyDrop () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuDeleteNode () {
-    KMPlayer::Node *n = NULL;
+    KMPlayer::Node *n = nullptr;
     if (manip_node && manip_node->parentNode ()) {
         n = manip_node->previousSibling() ? manip_node->previousSibling() : manip_node->parentNode ();
         manip_node->parentNode ()->removeChild (manip_node);
     }
-    m_player->playModel()->updateTree (manip_tree_id, 0L, n, true, false);
+    m_player->playModel()->updateTree (manip_tree_id, nullptr, n, true, false);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuMoveUpNode () {
@@ -1403,7 +1403,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuMoveUpNode () {
         n->parentNode ()->removeChild (n);
         prev->parentNode ()->insertBefore (n, prev);
     }
-    m_player->playModel()->updateTree (manip_tree_id, 0L, n, true, false);
+    m_player->playModel()->updateTree (manip_tree_id, nullptr, n, true, false);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuMoveDownNode () {
@@ -1413,7 +1413,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuMoveDownNode () {
         n->parentNode ()->removeChild (n);
         next->parentNode ()->insertBefore (n, next->nextSibling ());
     }
-    m_player->playModel()->updateTree (manip_tree_id, 0L, n, true, false);
+    m_player->playModel()->updateTree (manip_tree_id, nullptr, n, true, false);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
@@ -1424,7 +1424,7 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
         KMPlayer::Node *p = si->node->parentNode ();
         if (p) {
             p->removeChild (si->node);
-            m_player->playModel()->updateTree(playlist_id,playlist,0L,false,false);
+            m_player->playModel()->updateTree(playlist_id,playlist,nullptr,false,false);
         }
     }
 }
@@ -1455,7 +1455,7 @@ KDE_NO_EXPORT void KMPlayerApp::configChanged () {
         m_systray->show ();
     } else if (!m_player->settings ()->docksystray && m_systray) {
         delete m_systray;
-        m_systray = 0L;
+        m_systray = nullptr;
     }
     if (m_player->settings ()->autoresize && !m_auto_resize)
         connect(m_player,SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
@@ -1505,7 +1505,7 @@ public:
 };
 
 KDE_NO_CDTOR_EXPORT Disks::Disks (KMPlayerApp * a)
-                : KMPlayer::Document ("disks://", 0L), app (a) {
+                : KMPlayer::Document ("disks://", nullptr), app (a) {
     id = id_node_disk_document;
     resolved = true;
     bookmarkable = false;
@@ -1540,7 +1540,7 @@ KDE_NO_EXPORT void Disk::activate () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource(KMPlayerApp* a)
-    : KMPlayer::Source(i18n ("DVD"), a->player(), "dvdsource"), m_app(a), m_configpage(0L) {
+    : KMPlayer::Source(i18n ("DVD"), a->player(), "dvdsource"), m_app(a), m_configpage(nullptr) {
     // FIXME: these menus are void currently
     setUrl ("dvd://");
     m_player->settings ()->addPage (this);
@@ -1669,7 +1669,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidge
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::KMPlayerVCDSource(KMPlayerApp* a)
-    : KMPlayer::Source(i18n("VCD"), a->player(), "vcdsource"), m_app(a), m_configpage(0L) {
+    : KMPlayer::Source(i18n("VCD"), a->player(), "vcdsource"), m_app(a), m_configpage(nullptr) {
     m_player->settings ()->addPage (this);
     setUrl ("vcd://");
 }

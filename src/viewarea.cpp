@@ -107,7 +107,7 @@ void ImageData::copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar
             cairo_surface_destroy (src_sf);
             src_sf = surface;
             delete image;
-            image = NULL;
+            image = nullptr;
         }
     }
 
@@ -116,7 +116,7 @@ void ImageData::copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar
     if (zoom) {
         cairo_matrix_t mat;
         Single zx, zy, zw, zh;
-        zoom->calcSizes (NULL, NULL, width, height, zx, zy, zw, zh);
+        zoom->calcSizes (nullptr, nullptr, width, height, zx, zy, zw, zh);
         cairo_matrix_init_translate (&mat, zx, zy);
         cairo_matrix_scale (&mat, 1.0 * zw/w, 1.0 * zh/h);
         cairo_pattern_set_matrix (img_pat, &mat);
@@ -171,7 +171,7 @@ struct KMPLAYER_NO_EXPORT PaintContext
         , clip (c)
         , fit (fit_default)
         , bg_repeat (SMIL::RegionBase::BgRepeat)
-        , bg_image (NULL)
+        , bg_image (nullptr)
     {}
     Matrix matrix;
     IRect clip;
@@ -320,9 +320,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
 
         ImageMedia *im = reg->media_info
             ? (ImageMedia *) reg->media_info->media
-            : NULL;
+            : nullptr;
 
-        ImageData *bg_img = im && !im->isEmpty() ? im->cached_img.ptr () : NULL;
+        ImageData *bg_img = im && !im->isEmpty() ? im->cached_img.ptr () : nullptr;
         if (reg->background_image == "inherit")
             bg_img = bg_image;
         else
@@ -674,7 +674,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
             return;
 
         ImageMedia *im = static_cast <ImageMedia *> (ref->media_info->media);
-        ImageData *id = im ? im->cached_img.ptr () : NULL;
+        ImageData *id = im ? im->cached_img.ptr () : nullptr;
         if (id && id->flags == ImageData::ImageScalable)
             im->render (scr.size);
         if (!id || im->isEmpty () || ref->size.isEmpty ()) {
@@ -749,7 +749,7 @@ static Mrl *findActiveMrl (Node *n, bool *rp_or_smil) {
             if (m)
                 return m;
         }
-    return NULL;
+    return nullptr;
 }
 
 KDE_NO_EXPORT
@@ -924,7 +924,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
         cairo_save (cr);
         if (brush->transition.active_trans) {
             cur_transition = &brush->transition;
-            cur_pat = NULL;
+            cur_pat = nullptr;
             brush->transition.active_trans->accept (this);
         } else {
             cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
@@ -959,7 +959,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
 struct SmilTextBlock {
     SmilTextBlock (const QFont& f, const QString &t,
             IRect r, unsigned char a)
-        : font (f), rich_text (t), rect (r), align (a), next (NULL) {}
+        : font (f), rich_text (t), rect (r), align (a), next (nullptr) {}
 
     QFont font;
     QString rich_text;
@@ -981,7 +981,7 @@ struct KMPLAYER_NO_EXPORT SmilTextInfo {
 class KMPLAYER_NO_EXPORT SmilTextVisitor : public Visitor {
 public:
     SmilTextVisitor (int w, float s, const SmilTextProperties &p)
-        : first (NULL), last (NULL), width (w), voffset (0),
+        : first (nullptr), last (nullptr), width (w), voffset (0),
           scale (s), max_font_size (0), info (p) {
          info.span (scale);
     }
@@ -1285,7 +1285,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
     if (fi->target && fi->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (fi->target);
         ImageMedia *im = img && img->media_info
-            ? static_cast <ImageMedia*> (img->media_info->media) : NULL;
+            ? static_cast <ImageMedia*> (img->media_info->media) : nullptr;
         if (im && img->surface ()) {
             Single sx = fi->srcx, sy = fi->srcy, sw = fi->srcw, sh = fi->srch;
             if (!(int)sw)
@@ -1336,7 +1336,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
     if (cf->target && cf->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (cf->target);
         ImageMedia *im = img && img->media_info
-            ? static_cast <ImageMedia*> (img->media_info->media) : NULL;
+            ? static_cast <ImageMedia*> (img->media_info->media) : nullptr;
         if (im && img->surface ()) {
             Single sx = cf->srcx, sy = cf->srcy, sw = cf->srcw, sh = cf->srch;
             if (!(int)sw)
@@ -1374,7 +1374,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
     if (wipe->target && wipe->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (wipe->target);
         ImageMedia *im = img && img->media_info
-            ? static_cast <ImageMedia*> (img->media_info->media) : NULL;
+            ? static_cast <ImageMedia*> (img->media_info->media) : nullptr;
         if (im && img->surface ()) {
             Single x = wipe->x, y = wipe->y;
             Single tx = x, ty = y;
@@ -1599,7 +1599,7 @@ static void followLink (SMIL::LinkingBase * link) {
             for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {
                 if (n->mrl () && n->mrl ()->opener == p) {
                     p->setState (Node::state_deferred);
-                    p->mrl ()->setParam (Ids::attr_src, link->href, 0L);
+                    p->mrl ()->setParam (Ids::attr_src, link->href, nullptr);
                     p->activate ();
                     break;
                 }
@@ -1753,7 +1753,7 @@ class KMPLAYER_NO_EXPORT ViewerAreaPrivate {
 public:
     ViewerAreaPrivate (ViewArea *v)
         : m_view_area (v), backing_store (0), gc(0),
-          screen(NULL), visual(NULL), width(0), height(0)
+          screen(nullptr), visual(nullptr), width(0), height(0)
     {}
     ~ViewerAreaPrivate() {
         destroyBackingStore ();
@@ -1766,7 +1766,7 @@ public:
 #ifdef KMPLAYER_WITH_CAIRO
         if (s->surface) {
             cairo_surface_destroy (s->surface);
-            s->surface = 0L;
+            s->surface = nullptr;
         }
         destroyBackingStore ();
 #endif
@@ -1792,7 +1792,7 @@ public:
         xcb_generic_error_t* error = xcb_request_check(connection, cookie);
         if (error) {
             qDebug("failed to create pixmap");
-            return NULL;
+            return nullptr;
         }
         return cairo_xcb_surface_create(connection, backing_store, visual_of_screen(connection, scr), w, h);
     }
@@ -2019,9 +2019,9 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
         int ew = rect.width () + 2;
         int eh = rect.height () + 2;
         IRect swap_rect;
-        cairo_surface_t *merge = NULL;
-        cairo_pattern_t *pat = NULL;
-        cairo_t *cr = NULL;
+        cairo_surface_t *merge = nullptr;
+        cairo_pattern_t *pat = nullptr;
+        cairo_t *cr = nullptr;
         if (!surface->surface) {
             surface->surface = d->createSurface(w, h);
             swap_rect = IRect (ex, ey, ew, eh);
@@ -2103,14 +2103,14 @@ KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
 QPaintEngine *ViewArea::paintEngine () const {
 #ifdef KMPLAYER_WITH_CAIRO
     if (surface->node)
-        return NULL;
+        return nullptr;
     else
 #endif
         return QWidget::paintEngine ();
 }
 
 KDE_NO_EXPORT void ViewArea::scale (int) {
-    resizeEvent (0L);
+    resizeEvent (nullptr);
 }
 
 KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
@@ -2199,11 +2199,11 @@ KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
     int devicew = (int)(width() * devicePixelRatioF());
     int deviceh = (int)(height() * devicePixelRatioF());
     scheduleRepaint (IRect (0, 0, devicew, deviceh));
-    return 0L;
+    return nullptr;
 }
 
 KDE_NO_EXPORT void ViewArea::showEvent (QShowEvent *) {
-    resizeEvent (0L);
+    resizeEvent (nullptr);
 }
 
 KDE_NO_EXPORT void ViewArea::dropEvent (QDropEvent * de) {
@@ -2288,7 +2288,7 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
     } else if (e->timerId () == m_restore_fullscreen_timer) {
         xcb_connection_t* connection = QX11Info::connection();
         xcb_get_window_attributes_cookie_t cookie = xcb_get_window_attributes(connection, winId());
-        xcb_get_window_attributes_reply_t* attrs = xcb_get_window_attributes_reply(connection, cookie, NULL);
+        xcb_get_window_attributes_reply_t* attrs = xcb_get_window_attributes_reply(connection, cookie, nullptr);
         if (attrs->map_state == XCB_MAP_STATE_UNMAPPED) {
             m_view->dockArea ()->setCentralWidget (this);
             killTimer(m_restore_fullscreen_timer);
@@ -2343,7 +2343,7 @@ static void setXSelectInput(WId wid, uint32_t mask) {
     const uint32_t values[] = { mask };
     xcb_change_window_attributes(connection, wid, XCB_CW_EVENT_MASK, values);
     xcb_query_tree_cookie_t biscuit = xcb_query_tree(connection, wid);
-    xcb_query_tree_reply_t *reply = xcb_query_tree_reply(connection, biscuit, NULL);
+    xcb_query_tree_reply_t *reply = xcb_query_tree_reply(connection, biscuit, nullptr);
     if (reply) {
         xcb_window_t *chlds = xcb_query_tree_children(reply);
         for (int i = 0; i < xcb_query_tree_children_length(reply); i++)
@@ -2390,7 +2390,7 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
                 xcb_window_t root = 0;
                 while (p != v) {
                     xcb_query_tree_cookie_t cookie = xcb_query_tree(connection, w);
-                    xcb_query_tree_reply_t *reply = xcb_query_tree_reply(connection, cookie, NULL);
+                    xcb_query_tree_reply_t *reply = xcb_query_tree_reply(connection, cookie, nullptr);
                     if (reply) {
                         p = reply->parent;
                         root = reply->root;
@@ -2464,7 +2464,7 @@ KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
 
     xcb_connection_t* connection = QX11Info::connection();
     xcb_get_window_attributes_cookie_t cookie = xcb_get_window_attributes(connection, winId());
-    xcb_get_window_attributes_reply_t* attrs = xcb_get_window_attributes_reply(connection, cookie, NULL);
+    xcb_get_window_attributes_reply_t* attrs = xcb_get_window_attributes_reply(connection, cookie, nullptr);
     if (!(attrs->your_event_mask & XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY))
         setXSelectInput(winId(), attrs->your_event_mask | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY);
     free(attrs);
@@ -2489,7 +2489,7 @@ void VideoOutput::useIndirectWidget (bool inderect) {
             if (!m_plain_window) {
                 xcb_screen_t* scr = m_view->viewArea()->d->screen_of_display(connection, QX11Info::appScreen());
                 m_plain_window = xcb_generate_id(connection);
-                uint32_t values[] = { scr->black_pixel, m_input_mask };
+                uint32_t values[] = { scr->black_pixel, static_cast<uint32_t>(m_input_mask) };
                 int devicew = (int)(width() * devicePixelRatioF());
                 int deviceh = (int)(height() * devicePixelRatioF());
                 xcb_create_window(connection,

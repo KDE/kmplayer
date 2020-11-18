@@ -29,7 +29,7 @@ using namespace KMPlayer;
 
 TopPlayItem *PlayItem::rootItem ()
 {
-    PlayItem *r = NULL;
+    PlayItem *r = nullptr;
     for (PlayItem *p = this; p->parent_item; p = p->parent_item)
         r = p;
     return static_cast <TopPlayItem *> (r);
@@ -68,11 +68,11 @@ PlayModel::PlayModel (QObject *parent, KIconLoader *loader)
     unknown_pix (loader->loadIcon (QString ("unknown"), KIconLoader::Small)),
     url_pix (loader->loadIcon (QString ("internet-web-browser"), KIconLoader::Small)),
     video_pix (loader->loadIcon (QString ("video-x-generic"), KIconLoader::Small)),
-    root_item (new PlayItem ((Node *)NULL, NULL)),
+    root_item (new PlayItem ((Node *)nullptr, nullptr)),
     last_id (0)
 {
     TopPlayItem *ritem = new TopPlayItem (this,
-            0, NULL, PlayModel::AllowDrops | PlayModel::TreeEdit);
+            0, nullptr, PlayModel::AllowDrops | PlayModel::TreeEdit);
     ritem->parent_item = root_item;
     root_item->child_items.append (ritem);
     ritem->icon = url_pix;
@@ -194,7 +194,7 @@ bool PlayModel::setData (const QModelIndex& i, const QVariant& v, int role)
 Qt::ItemFlags PlayModel::flags (const QModelIndex &index) const
 {
     if (!index.isValid ())
-        return 0;
+        return {};
 
     return static_cast<PlayItem*>(index.internalPointer())->item_flags;
 }
@@ -234,7 +234,7 @@ QModelIndex PlayModel::indexFromItem (PlayItem *item) const
 PlayItem *PlayModel::itemFromIndex (const QModelIndex& index) const
 {
     if (!index.isValid ())
-        return NULL;
+        return nullptr;
     return static_cast <PlayItem*> (index.internalPointer ());
 }
 
@@ -287,8 +287,8 @@ int PlayModel::rowCount (const QModelIndex &parent) const
             pitem->node->defer ();
             if (!pitem->node->mrl()->resolved)
                 return 0;
-            PlayItem *curitem = 0L;
-            ritem->model->populate (ritem->node, 0, ritem, 0L, &curitem);
+            PlayItem *curitem = nullptr;
+            ritem->model->populate (ritem->node, nullptr, ritem, nullptr, &curitem);
             count = ritem->childCount();
             if (count) {
                 ritem->model->beginInsertRows (parent, 0, count-1);
@@ -397,8 +397,8 @@ int PlayModel::addTree (NodePtr doc, const QString &source, const QString &icon,
     TopPlayItem *ritem = new TopPlayItem(this, ++last_id, doc, flags);
     ritem->source = source;
     ritem->icon = KIconLoader::global ()->loadIcon (icon, KIconLoader::Small);
-    PlayItem *curitem = 0L;
-    populate (doc, 0, ritem, 0L, &curitem);
+    PlayItem *curitem = nullptr;
+    populate (doc, nullptr, ritem, nullptr, &curitem);
     ritem->add ();
     return last_id;
 }
@@ -408,7 +408,7 @@ void PlayModel::updateTree (int id, NodePtr root, NodePtr active,
     // TODO, if root is same as rootitems->node and treeversion is the same
     // and show all nodes is unchanged then only update the cells
     int root_item_count = root_item->childCount ();
-    TopPlayItem *ritem = NULL;
+    TopPlayItem *ritem = nullptr;
     if (id == -1) { // wildcard id
         for (int i = 0; i < root_item_count; ++i) {
             ritem = static_cast<TopPlayItem*>(root_item->child (i));
@@ -447,7 +447,7 @@ KDE_NO_EXPORT void PlayModel::updateTrees () {
 }
 
 PlayItem *PlayModel::updateTree (TopPlayItem *ritem, NodePtr active) {
-    PlayItem *curitem = 0L;
+    PlayItem *curitem = nullptr;
 
     ritem->remove ();
     ritem->deleteChildren ();
@@ -458,7 +458,7 @@ PlayItem *PlayModel::updateTree (TopPlayItem *ritem, NodePtr active) {
                 if (n->role (RolePlaylist))
                     break;
             }
-        populate (ritem->node, active, ritem, 0L, &curitem);
+        populate (ritem->node, active, ritem, nullptr, &curitem);
     }
     ritem->add ();
 

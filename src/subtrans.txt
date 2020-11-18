@@ -16,4 +16,4 @@
 { "rectangle",      SMIL::Transition::SubRectangle },
 { "topToBottom",    SMIL::Transition::SubTopToBottom },
 { "vertical",       SMIL::Transition::SubVertical },
-{ NULL,             SMIL::Transition::SubTransLast }
+{ nullptr,          SMIL::Transition::SubTransLast }

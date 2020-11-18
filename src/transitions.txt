@@ -25,5 +25,5 @@
     SMIL::Transition::SubFromTop,
     SMIL::Transition::SubFromRight,
     SMIL::Transition::SubFromBottom } },
-{ NULL,         SMIL::Transition::TransTypeNone, 0, {
+{ nullptr,      SMIL::Transition::TransTypeNone, 0, {
     } }

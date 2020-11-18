@@ -134,7 +134,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 }
 
 KDE_NO_EXPORT void Preferences::setPage (const char * name) {
-    KPageWidgetItem *item = NULL;
+    KPageWidgetItem *item = nullptr;
     if (!strcmp (name, "RecordPage"))
         item = m_record_item;
     else if (!strcmp (name, "URLPage"))
@@ -366,7 +366,7 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     urllist = new KComboBox (true);
     urllist->setMaxCount (20);
     urllist->setDuplicatesEnabled (false); // not that it helps much :(
-    url = new KUrlRequester(urllist, NULL);
+    url = new KUrlRequester(urllist, nullptr);
     url->setWhatsThis(i18n ("Location of the playable item"));
     //url->setShowLocalProtocol (true);
     url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
@@ -374,7 +374,7 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     sub_urllist = new KComboBox(true);
     sub_urllist->setMaxCount (20);
     sub_urllist->setDuplicatesEnabled (false); // not that it helps much :(
-    sub_url = new KUrlRequester(sub_urllist, NULL);
+    sub_url = new KUrlRequester(sub_urllist, nullptr);
     sub_url->setWhatsThis(i18n ("Optional location of a file containing the subtitles of the URL above"));
     sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
     backend = new QListWidget;
@@ -597,7 +597,7 @@ KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
 }
 
 KDE_NO_CDTOR_EXPORT RecorderPage::RecorderPage (QWidget *parent, PartBase * player)
- : QWidget(parent), next(0L), m_player(player) {}
+ : QWidget(parent), next(nullptr), m_player(player) {}
 
 KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage(QWidget* parent, PartBase* player)
     : RecorderPage (parent, player)

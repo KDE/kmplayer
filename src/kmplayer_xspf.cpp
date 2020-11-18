@@ -55,7 +55,7 @@ KDE_NO_EXPORT Node *XSPF::Playlist::childFromTag (const QString & tag) {
         return new DarkNode (m_doc, name, id_node_meta);
     else if (!strcasecmp (name, "extension"))
         return new DarkNode (m_doc, name, id_node_extension);
-    return 0L;
+    return nullptr;
 }
 
 KDE_NO_EXPORT void XSPF::Playlist::closed () {
@@ -71,7 +71,7 @@ KDE_NO_EXPORT void XSPF::Playlist::closed () {
 void *XSPF::Playlist::role (RoleType msg, void *content)
 {
     if (RolePlaylist == msg)
-        return !title.isEmpty () ? (PlaylistRole *) this : NULL;
+        return !title.isEmpty () ? (PlaylistRole *) this : nullptr;
     return Mrl::role (msg, content);
 }
 
@@ -82,7 +82,7 @@ KDE_NO_EXPORT Node *XSPF::Tracklist::childFromTag (const QString & tag) {
     const char *name = ba.constData ();
     if (!strcasecmp (name, "track"))
         return new XSPF::Track (m_doc);
-    return 0L;
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -116,11 +116,11 @@ KDE_NO_EXPORT Node *XSPF::Track::childFromTag (const QString & tag) {
         return new DarkNode (m_doc, name, id_node_meta);
     else if (!strcasecmp (name, "extension"))
         return new DarkNode (m_doc, name, id_node_extension);
-    return 0L;
+    return nullptr;
 }
 
 KDE_NO_EXPORT void XSPF::Track::closed () {
-    Location *location = NULL;
+    Location *location = nullptr;
     QString title;
     for (Node *e = firstChild (); e; e = e->nextSibling ()) {
         switch (e->id) {

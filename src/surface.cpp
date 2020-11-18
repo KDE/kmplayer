@@ -41,7 +41,7 @@ KDE_NO_CDTOR_EXPORT Surface::Surface (ViewArea *widget)
     xscale (1.0), yscale (1.0),
     background_color (0),
 #ifdef KMPLAYER_WITH_CAIRO
-    surface (0L),
+    surface (nullptr),
 #endif
     dirty (false),
     scroll (false),
@@ -69,7 +69,7 @@ template <> void TreeNode<Surface>::removeChild (SurfacePtr c) {
 }
 
 void Surface::clear () {
-    m_first_child = 0L;
+    m_first_child = nullptr;
     background_color = 0;
 }
 
@@ -92,7 +92,7 @@ void Surface::resize (const SRect &rect, bool parent_resized) {
 #ifdef KMPLAYER_WITH_CAIRO
             if (surface) {
                 cairo_surface_destroy (surface);
-                surface = NULL;
+                surface = nullptr;
             }
 #endif
             updateChildren (true);
@@ -144,7 +144,7 @@ void Surface::setBackgroundColor (unsigned int argb) {
             ((background_color & 0xff000000) < 0xff000000) !=
             ((argb & 0xff000000) < 0xff000000)) {
         cairo_surface_destroy (surface);
-        surface = NULL;
+        surface = nullptr;
     }
 #endif
     background_color = argb;

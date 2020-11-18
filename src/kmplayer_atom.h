@@ -53,7 +53,7 @@ public:
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "feed"; }
     void closed ();
-    void *role (RoleType msg, void *content=NULL);
+    void *role (RoleType msg, void *content=nullptr);
 };
 
 class KMPLAYER_NO_EXPORT Entry : public Element, public PlaylistRole {
@@ -62,7 +62,7 @@ public:
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "entry"; }
     void closed ();
-    void *role (RoleType msg, void *content=NULL);
+    void *role (RoleType msg, void *content=nullptr);
 };
 
 class KMPLAYER_NO_EXPORT Link : public Mrl {
@@ -85,7 +85,7 @@ class KMPLAYER_NO_EXPORT MediaGroup : public Element {
 public:
     MediaGroup (NodePtr &d) : Element (d, id_node_media_group) {}
     Node *childFromTag (const QString &tag);
-    void message (MessageType msg, void *content=NULL);
+    void message (MessageType msg, void *content=nullptr);
     KDE_NO_EXPORT const char *nodeName () const { return "media:group"; }
     void addSummary (Node *parent, Node *ratings, const QString& alt_title, const QString& alt_desc,
                      const QString& alt_img, int width, int height);

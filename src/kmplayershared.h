@@ -120,7 +120,7 @@ template <class T> inline void SharedData<T>::dispose () {
     std::cerr << "SharedData::dispose use:" << use_count << " weak:" << weak_count << std::endl;
 #endif
     T *p = ptr;
-    ptr = NULL;
+    ptr = nullptr;
     delete p;
 }
 
@@ -135,17 +135,17 @@ template <class T> struct WeakPtr;
  **/
 template <class T>
 struct SharedPtr {
-    SharedPtr () : data (0L) {};
-    SharedPtr (T *t) : data (t ? new SharedData<T> (t, false) : 0L) {}
+    SharedPtr () : data (nullptr) {};
+    SharedPtr (T *t) : data (t ? new SharedData<T> (t, false) : nullptr) {}
     SharedPtr (const SharedPtr<T> & s) : data (s.data) { if (data) data->addRef (); }
     SharedPtr (const WeakPtr <T> &);
     ~SharedPtr () { if (data) data->release (); }
     SharedPtr<T> & operator = (const SharedPtr<T> &);
     SharedPtr<T> & operator = (const WeakPtr<T> &);
     SharedPtr<T> & operator = (T *);
-    T * ptr () const { return data ? data->ptr : 0L; }
-    T * operator -> () { return data ? data->ptr : 0L; }
-    T * operator -> () const { return data ? data->ptr : 0L; }
+    T * ptr () const { return data ? data->ptr : nullptr; }
+    T * operator -> () { return data ? data->ptr : nullptr; }
+    T * operator -> () const { return data ? data->ptr : nullptr; }
     T & operator * () { return *data->ptr; }
     const T & operator * () const { return *data->ptr; }
     // operator bool () const { return data && data->ptr; }
@@ -156,8 +156,8 @@ struct SharedPtr {
     bool operator != (const SharedPtr<T> & s) const { return data != s.data; }
     bool operator != (const WeakPtr<T> & w) const;
     bool operator != (const T * t) const { return !operator == (t); }
-    operator T * () { return data ? data->ptr : 0L; }
-    operator const T * () const { return data ? data->ptr : 0L; }
+    operator T * () { return data ? data->ptr : nullptr; }
+    operator const T * () const { return data ? data->ptr : nullptr; }
     mutable SharedData<T> * data;
 };
 
@@ -185,7 +185,7 @@ inline SharedPtr<T> & SharedPtr<T>::operator = (const SharedPtr<T> & s) {
 template <class T> inline SharedPtr<T> & SharedPtr<T>::operator = (T * t) {
     if ((!data && t) || (data && data->ptr != t)) {
         if (data) data->release ();
-        data = t ? new SharedData<T> (t, false) : 0L;
+        data = t ? new SharedData<T> (t, false) : nullptr;
     }
     return *this;
 }
@@ -197,17 +197,17 @@ template <class T> inline SharedPtr<T> & SharedPtr<T>::operator = (T * t) {
  */
 template <class T>
 struct WeakPtr {
-    WeakPtr () : data (0L) {};
+    WeakPtr () : data (nullptr) {};
     WeakPtr (T * t) : data (t ? new SharedData<T> (t, true) : 0) {}
-    WeakPtr (T * t, bool /*b*/) : data (t ? new SharedData<T> (t, true) : 0) {}
+    WeakPtr (T * t, bool /*b*/) : data (t ? new SharedData<T> (t, true) : nullptr) {}
     WeakPtr (const WeakPtr<T> & s) : data (s.data) { if (data) data->addWeakRef (); }
     WeakPtr (const SharedPtr<T> & s) : data (s.data) { if (data) data->addWeakRef (); }
     ~WeakPtr () { if (data) data->releaseWeak (); }
     WeakPtr<T> & operator = (const WeakPtr<T> &);
     WeakPtr<T> & operator = (const SharedPtr<T> &);
     WeakPtr<T> & operator = (T *);
-    T * ptr () const { return data ? data->ptr : 0L; }
-    T * operator -> () { return data ? data->ptr : 0L; }
+    T * ptr () const { return data ? data->ptr : nullptr; }
+    T * operator -> () { return data ? data->ptr : nullptr; }
     const T * operator -> () const { return data ? data->ptr : 0L; }
     T & operator * () { return *data->ptr; }
     const T & operator * () const { return *data->ptr; }
@@ -218,8 +218,8 @@ struct WeakPtr {
     bool operator == (T * t) const { return (!t && !data) || (data && data->ptr == t); }
     bool operator != (const WeakPtr<T> & w) const { return data != w.data; }
     bool operator != (const SharedPtr<T> & s) const { return data != s.data; }
-    operator T * () { return data ? data->ptr : 0L; }
-    operator const T * () const { return data ? data->ptr : 0L; }
+    operator T * () { return data ? data->ptr : nullptr; }
+    operator const T * () const { return data ? data->ptr : nullptr; }
     mutable SharedData<T> * data;
 };
 
@@ -258,7 +258,7 @@ inline WeakPtr<T> & WeakPtr<T>::operator = (const SharedPtr<T> & s) {
 template <class T>
 inline WeakPtr<T> & WeakPtr<T>::operator = (T * t) {
     if (data) data->releaseWeak ();
-    data = t ? new SharedData<T> (t, true) : 0L;
+    data = t ? new SharedData<T> (t, true) : nullptr;
     return *this;
 }
 

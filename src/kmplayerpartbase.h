@@ -105,7 +105,7 @@ public:
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
     KDE_NO_EXPORT const QString & tuner () const { return m_tuner; }
     KDE_NO_EXPORT const char* name() const { return m_name; }
-    KDE_NO_EXPORT Mrl *current() { return m_current ? m_current->mrl() : NULL;}
+    KDE_NO_EXPORT Mrl *current() { return m_current ? m_current->mrl() : nullptr;}
     virtual void setCurrent (Mrl *mrl);
     QString plugin (const QString &mime) const;
     virtual NodePtr document ();
@@ -206,8 +206,8 @@ class KMPLAYER_EXPORT SourceDocument : public Document {
 public:
     SourceDocument (Source *s, const QString &url);
 
-    void message (MessageType msg, void *data=NULL);
-    void *role (RoleType msg, void *data=NULL);
+    void message (MessageType msg, void *data=nullptr);
+    void *role (RoleType msg, void *data=nullptr);
 protected:
     Source *m_source;
     ConnectionList m_KeyListeners;

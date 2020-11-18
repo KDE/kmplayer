@@ -116,8 +116,8 @@ KDE_NO_EXPORT void InfoWindow::contextMenuEvent (QContextMenuEvent * e) {
 
 KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
   : KMediaPlayer::View (parent),
-    m_control_panel (0L),
-    m_status_bar (0L),
+    m_control_panel (nullptr),
+    m_status_bar (nullptr),
     m_controlpanel_mode (CP_Show),
     m_old_controlpanel_mode (CP_Show),
     m_statusbar_mode (SB_Hide),
@@ -183,15 +183,15 @@ void View::initDock (QWidget *central) {
     m_dockarea->setWindowFlags (Qt::SubWindow);
     m_dockarea->show ();
 
-    m_view_area->resizeEvent (0L);
+    m_view_area->resizeEvent (nullptr);
 }
 
 KDE_NO_EXPORT void View::init (KActionCollection *action_collection, bool transparent) {
     QVBoxLayout * viewbox = new QVBoxLayout;
     viewbox->setContentsMargins (0, 0, 0, 0);
     setLayout (viewbox);
-    m_view_area = new ViewArea (NULL, this, !transparent);
-    m_playlist = new PlayListView (NULL, this, action_collection);
+    m_view_area = new ViewArea (nullptr, this, !transparent);
+    m_playlist = new PlayListView (nullptr, this, action_collection);
 
     m_picture = new PictureWidget (m_view_area, this);
     m_picture->hide ();
@@ -210,7 +210,7 @@ KDE_NO_EXPORT void View::init (KActionCollection *action_collection, bool transp
     m_multiedit->setFont (fnt);
     m_multiedit->hide ();
 
-    m_infopanel = new InfoWindow (NULL, this);
+    m_infopanel = new InfoWindow (nullptr, this);
 
     connect (m_control_panel->scale_slider, SIGNAL (valueChanged (int)),
              m_view_area, SLOT (scale (int)));
@@ -369,15 +369,15 @@ void View::setControlPanelMode (ControlPanelMode m) {
         bool vis = m_control_panel->isVisible();
         m_control_panel->hide ();
         if (vis)
-            m_view_area->resizeEvent (0L);
+            m_view_area->resizeEvent (nullptr);
     }
-    m_view_area->resizeEvent (0L);
+    m_view_area->resizeEvent (nullptr);
 }
 
 void View::setStatusBarMode (StatusBarMode m) {
     m_statusbar_mode = m;
     m_status_bar->setVisible (m != SB_Hide);
-    m_view_area->resizeEvent (0L);
+    m_view_area->resizeEvent (nullptr);
 }
 
 KDE_NO_EXPORT void View::delayedShowButtons (bool show) {
@@ -408,7 +408,7 @@ KDE_NO_EXPORT void View::mouseMoved (int, int y) {
 KDE_NO_EXPORT void View::updateLayout () {
     if (m_controlpanel_mode == CP_Only)
         m_control_panel->setMaximumHeight(height());
-    m_view_area->resizeEvent (0L);
+    m_view_area->resizeEvent (nullptr);
 }
 
 void View::setKeepSizeRatio (bool b) {
@@ -433,10 +433,10 @@ KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
                     mouse_pos.x () < m_control_panel->width());
             if (mouse_on_buttons && !m_control_panel->isVisible ()) {
                 m_control_panel->show ();
-                m_view_area->resizeEvent (0L);
+                m_view_area->resizeEvent (nullptr);
             } else if (!mouse_on_buttons && m_control_panel->isVisible ()) {
                 m_control_panel->hide ();
-                m_view_area->resizeEvent (0L);
+                m_view_area->resizeEvent (nullptr);
             }
         }
     } else if (e->timerId () == infopanel_timer) {
@@ -518,7 +518,7 @@ KDE_NO_EXPORT void View::playingStop () {
         controlbar_timer = 0;
     }
     m_playing = false;
-    m_view_area->resizeEvent (0L);
+    m_view_area->resizeEvent (nullptr);
 }
 
 KDE_NO_EXPORT void View::leaveEvent (QEvent *) {

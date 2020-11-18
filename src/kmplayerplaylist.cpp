@@ -66,7 +66,7 @@ Node *KMPlayer::fromXMLDocumentTag (NodePtr & d, const QString & tag) {
     else if (!strcasecmp (name, "mrl") ||
             !strcasecmp (name, "document"))
         return new GenericMrl (d);
-    return 0L;
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -97,7 +97,7 @@ Connection::Connection (Node *invoker, Node *receiver, VirtualVoid *pl)
 #endif
 }
 
-ConnectionLink::ConnectionLink () : connection (NULL) {}
+ConnectionLink::ConnectionLink () : connection (nullptr) {}
 
 ConnectionLink::~ConnectionLink () {
     disconnect ();
@@ -112,7 +112,7 @@ bool ConnectionLink::connect (Node *send, MessageType msg, Node *rec,
         connection->list = list;
         connection->link = &connection;
         connection->prev = list->link_last;
-        connection->next = NULL;
+        connection->next = nullptr;
         if (list->link_last)
             list->link_last->next = connection;
         else
@@ -133,7 +133,7 @@ void ConnectionLink::disconnect () const {
             tmp->next->prev = tmp->prev;
         else
             tmp->list->link_last = tmp->prev;
-        *tmp->link = NULL;
+        *tmp->link = nullptr;
         if (tmp->list->link_next == tmp)
             tmp->list->link_next = tmp->next;
         delete tmp;
@@ -144,17 +144,17 @@ void ConnectionLink::disconnect () const {
 void ConnectionLink::assign (const ConnectionLink *link) const {
     disconnect ();
     connection = link->connection;
-    link->connection = NULL;
+    link->connection = nullptr;
     if (connection)
         connection->link = &connection;
 }
 
 Node *ConnectionLink::signaler () const {
-    return connection ? connection->connectee.ptr () : NULL;
+    return connection ? connection->connectee.ptr () : nullptr;
 }
 
 ConnectionList::ConnectionList ()
-    : link_first (NULL), link_last (NULL), link_next (NULL) {}
+    : link_first (nullptr), link_last (nullptr), link_next (nullptr) {}
 
 ConnectionList::~ConnectionList () {
     clear ();
@@ -164,16 +164,16 @@ void ConnectionList::clear () {
     while (link_first) {
         Connection *tmp = link_first;
         link_first = tmp->next;
-        *tmp->link = NULL;
+        *tmp->link = nullptr;
         delete tmp;
     }
-    link_last = link_next = NULL;
+    link_last = link_next = nullptr;
 }
 
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT TimerPosting::TimerPosting (int ms, unsigned eid)
- : Posting (NULL, MsgEventTimer),
+ : Posting (nullptr, MsgEventTimer),
    event_id (eid),
    milli_sec (ms),
    interval (false) {}
@@ -254,7 +254,7 @@ Document * Node::document () {
 }
 
 Mrl * Node::mrl () {
-    return 0L;
+    return nullptr;
 }
 
 const char * Node::nodeName () const {
@@ -355,13 +355,13 @@ void Node::clearChildren () {
         document()->m_tree_version++;
     while (m_first_child != m_last_child) {
         // avoid stack abuse with 10k children derefing each other
-        m_last_child->m_parent = 0L;
+        m_last_child->m_parent = nullptr;
         m_last_child = m_last_child->m_prev;
-        m_last_child->m_next = 0L;
+        m_last_child->m_next = nullptr;
     }
     if (m_first_child)
-        m_first_child->m_parent = 0L;
-    m_first_child = m_last_child = 0L;
+        m_first_child->m_parent = nullptr;
+    m_first_child = m_last_child = nullptr;
 }
 
 template <>
@@ -389,25 +389,25 @@ KDE_NO_EXPORT void Node::replaceChild (NodePtr _new, NodePtr old) {
     if (old->m_prev) {
         old->m_prev->m_next = _new;
         _new->m_prev = old->m_prev;
-        old->m_prev = 0L;
+        old->m_prev = nullptr;
     } else {
-        _new->m_prev = 0L;
+        _new->m_prev = nullptr;
         m_first_child = _new;
     }
     if (old->m_next) {
         old->m_next->m_prev = _new;
         _new->m_next = old->m_next;
-        old->m_next = 0L;
+        old->m_next = nullptr;
     } else {
-        _new->m_next = 0L;
+        _new->m_next = nullptr;
         m_last_child = _new;
     }
     _new->m_parent = this;
-    old->m_parent = 0L;
+    old->m_parent = nullptr;
 }
 
 Node *Node::childFromTag (const QString &) {
-    return NULL;
+    return nullptr;
 }
 
 KDE_NO_EXPORT void Node::characterData (const QString & s) {
@@ -529,7 +529,7 @@ void *Node::role (RoleType msg, void *) {
     default:
         break;
     }
-    return NULL;
+    return nullptr;
 }
 
 KDE_NO_EXPORT void Node::deliver (MessageType msg, void *content) {
@@ -554,7 +554,7 @@ namespace {
     struct KMPLAYER_NO_EXPORT ParamValue {
         QString val;
         QStringList  * modifications;
-        ParamValue (const QString & v) : val (v), modifications (0L) {}
+        ParamValue (const QString & v) : val (v), modifications (nullptr) {}
         ~ParamValue () { delete modifications; }
         QString value ();
         void setValue (const QString & v) { val = v; }
@@ -634,7 +634,7 @@ void Element::resetParam (const TrieString &name, int mid) {
         QString val = pv->value ();
         if (pv->modifications->size () == 0) {
             delete pv->modifications;
-            pv->modifications = 0L;
+            pv->modifications = nullptr;
             if (val.isNull ()) {
                 delete pv;
                 d->params.remove (name);
@@ -732,7 +732,7 @@ static bool hasMrlChildren (const NodePtr & e) {
 
 Mrl::Mrl (NodePtr & d, short id)
     : Element (d, id), cached_ismrl_version (~0),
-      media_info (NULL),
+      media_info (nullptr),
       aspect (0), repeat (0),
       view_mode (SingleMode),
       resolved (false), bookmarkable (true), access_granted (false) {}
@@ -768,7 +768,7 @@ Node *Mrl::childFromTag (const QString & tag) {
     Node * elm = fromXMLDocumentTag (m_doc, tag);
     if (elm)
         return elm;
-    return NULL;
+    return nullptr;
 }
 
 Mrl * Mrl::mrl () {
@@ -812,12 +812,12 @@ void *Mrl::role (RoleType msg, void *content) {
         for (Node *p = parentNode (); p; p = p->parentNode ())
             if (p->mrl ())
                 return p->role (msg, content);
-        return NULL;
+        return nullptr;
 
     case RolePlaylist:
         if (title.isEmpty ())
             title = src;
-        return !title.isEmpty () ? (PlaylistRole *) this : NULL;
+        return !title.isEmpty () ? (PlaylistRole *) this : nullptr;
 
     default:
         break;
@@ -876,7 +876,7 @@ void Mrl::undefer () {
 
 void Mrl::deactivate () {
     delete media_info;
-    media_info = NULL;
+    media_info = nullptr;
     Node::deactivate ();
 }
 
@@ -940,9 +940,9 @@ Document::Document (const QString & s, PlayListNotify * n)
  : Mrl (dummy_element, id_node_document),
    notify_listener (n),
    m_tree_version (0),
-   event_queue (NULL),
-   paused_queue (NULL),
-   cur_event (NULL),
+   event_queue (nullptr),
+   paused_queue (nullptr),
+   cur_event (nullptr),
    cur_timeout (-1) {
     m_doc = m_self; // just-in-time setting fragile m_self to m_doc
     src = s;
@@ -955,7 +955,7 @@ Document::~Document () {
 static Node *getElementByIdImpl (Node *n, const QString & id, bool inter) {
     NodePtr elm;
     if (!n->isElementNode ())
-        return NULL;
+        return nullptr;
     Element *e = static_cast <Element *> (n);
     if (e->getAttribute (Ids::attr_id) == id)
         return n;
@@ -980,12 +980,12 @@ Node *Document::childFromTag (const QString & tag) {
     Node * elm = fromXMLDocumentTag (m_doc, tag);
     if (elm)
         return elm;
-    return NULL;
+    return nullptr;
 }
 
 void Document::dispose () {
     clear ();
-    m_doc = 0L;
+    m_doc = nullptr;
 }
 
 void Document::activate () {
@@ -1001,7 +1001,7 @@ void Document::defer () {
 }
 
 void Document::undefer () {
-    postpone_lock = 0L;
+    postpone_lock = nullptr;
     Mrl::undefer ();
 }
 
@@ -1017,7 +1017,7 @@ void Document::reset () {
         }
         cur_timeout = -1;
     }
-    postpone_lock = 0L;
+    postpone_lock = nullptr;
 }
 
 static inline
@@ -1056,7 +1056,7 @@ KDE_NO_CDTOR_EXPORT UpdateEvent::UpdateEvent (Document *doc, unsigned int skip)
 }*/
 
 void Document::timeOfDay (struct timeval & tv) {
-    gettimeofday (&tv, 0L);
+    gettimeofday (&tv, nullptr);
     if (!first_event_time.tv_sec) {
         first_event_time = tv;
         last_event_time = 0;
@@ -1075,7 +1075,7 @@ void Document::insertPosting (Node *n, Posting *e, const struct timeval &tv) {
     if (!notify_listener)
         return;
     bool postponed_sensible = postponedSensible (e->message);
-    EventData *prev = NULL;
+    EventData *prev = nullptr;
     EventData *ed = event_queue;
     for (; ed; ed = ed->next) {
         int diff = diffTime (ed->timeout, tv);
@@ -1136,19 +1136,19 @@ Posting *Document::post (Node *n, Posting *e) {
 }
 
 static EventData *findPosting (EventData *queue, EventData **prev, const Posting *e) {
-    *prev = NULL;
+    *prev = nullptr;
     for (EventData *ed = queue; ed; ed = ed->next) {
         if (e == ed->event)
             return ed;
         *prev = ed;
     }
-    return NULL;
+    return nullptr;
 }
 
 void Document::cancelPosting (Posting *e) {
     if (cur_event && cur_event->event == e) {
         delete cur_event->event;
-        cur_event->event = NULL;
+        cur_event->event = nullptr;
     } else {
         EventData *prev;
         EventData **queue = &event_queue;
@@ -1180,7 +1180,7 @@ void Document::pausePosting (Posting *e) {
     if (cur_event && cur_event->event == e) {
         paused_queue = new EventData (cur_event->target, cur_event->event, paused_queue);
         paused_queue->timeout = cur_event->timeout;
-        cur_event->event = NULL;
+        cur_event->event = nullptr;
     } else {
         EventData *prev;
         EventData *ed = findPosting (event_queue, &prev, e);
@@ -1207,7 +1207,7 @@ void Document::unpausePosting (Posting *e, int ms) {
             paused_queue = ed->next;
         addTime (ed->timeout, ms);
         insertPosting (ed->target, ed->event, ed->timeout);
-        ed->event = NULL;
+        ed->event = nullptr;
         delete ed;
     } else {
         kError () << "pausePosting not found";
@@ -1247,7 +1247,7 @@ void Document::timer () {
                         insertPosting (cur_event->target,
                                 cur_event->event,
                                 cur_event->timeout);
-                        cur_event->event = NULL;
+                        cur_event->event = nullptr;
                     }
                 }
             }
@@ -1256,7 +1256,7 @@ void Document::timer () {
             if (!cur_event || diffTime (cur_event->timeout, start) > 5)
                 break;
         }
-        cur_event = NULL;
+        cur_event = nullptr;
     }
     setNextTimeout (now);
 }
@@ -1282,7 +1282,7 @@ PostponePtr Document::postpone () {
 
 void Document::proceed (const struct timeval &postponed_time) {
     kDebug () << "proceed";
-    postpone_ref = NULL;
+    postpone_ref = nullptr;
     struct timeval now;
     timeOfDay (now);
     int diff = diffTime (now, postponed_time);
@@ -1379,7 +1379,7 @@ void *GenericMrl::role (RoleType msg, void *content)
     if (RolePlaylist == msg)
         return !title.isEmpty () || //return false if no title and only one
             previousSibling () || nextSibling ()
-            ? (PlaylistRole *) this : NULL;
+            ? (PlaylistRole *) this : nullptr;
     return Mrl::role (msg, content);
 }
 
@@ -1409,7 +1409,7 @@ void CacheAllocator::dealloc (void *p) {
         free (p);
 }
 
-KMPLAYER_EXPORT CacheAllocator *KMPlayer::shared_data_cache_allocator = NULL;
+KMPLAYER_EXPORT CacheAllocator *KMPlayer::shared_data_cache_allocator = nullptr;
 
 //-----------------------------------------------------------------------------
 
@@ -1824,7 +1824,7 @@ bool SimpleSAXParser::nextToken () {
                     if (!prev_token->string.startsWith (QChar ('x')))
                         token->string = QChar (prev_token->string.toInt ());
                     else
-                        token->string = QChar (prev_token->string.mid (1).toInt (0L, 16));
+                        token->string = QChar (prev_token->string.mid (1).toInt (nullptr, 16));
                     if (tmp) { // cut out the '& # xxx ;' tokens
                         tmp->next = token;
                         token = tmp;
@@ -1987,7 +1987,7 @@ bool SimpleSAXParser::readDTD () {
         m_state = new StateInfo (InCDATA, m_state->next); // note: pop DTD
         if (token->next) {
             cdata = token->next->string;
-            token->next = 0;
+            token->next = nullptr;
         } else {
             cdata = next_token->string;
             next_token->string.truncate (0);

@@ -70,7 +70,7 @@ void Slave::newStream (const QString &url, uint64_t wid) {
         killTimer (stay_alive_timer);
         stay_alive_timer = 0;
     }
-    slave_map.insert (wid, new Stream (NULL, url, wid));
+    slave_map.insert (wid, new Stream (nullptr, url, wid));
 }
 
 void Slave::quit () {
@@ -273,7 +273,7 @@ int main (int argc, char **argv) {
     }
     slave = new Slave;
     if (!url.isEmpty ()) {
-        new Stream (NULL, url, 0);
+        new Stream (nullptr, url, 0);
         //mw.show ();
         //mw.play ();
     }

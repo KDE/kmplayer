@@ -78,7 +78,7 @@ class KMPLAYER_NO_EXPORT TopPlayItem : public PlayItem
 {
 public:
     TopPlayItem (PlayModel *m, int _id, Node *e, int flags)
-      : PlayItem (e, NULL),
+      : PlayItem (e, nullptr),
         model (m),
         id (_id),
         root_flags (flags),

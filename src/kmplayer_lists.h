@@ -62,7 +62,7 @@ public:
 
 class KMPLAYER_NO_EXPORT FileDocument : public KMPlayer::SourceDocument {
 public:
-    FileDocument (short id, const QString&, KMPlayer::Source *source = 0L);
+    FileDocument (short id, const QString&, KMPlayer::Source *source = nullptr);
     KMPlayer::Node *childFromTag (const QString &tag);
     void readFromFile (const QString &file);
     void writeToFile (const QString &file);
@@ -75,7 +75,7 @@ public:
     Recents (KMPlayerApp *a);
     void defer ();
     void activate ();
-    void message (KMPlayer::MessageType msg, void *content=NULL);
+    void message (KMPlayer::MessageType msg, void *content=nullptr);
     KMPlayer::Node *childFromTag (const QString &tag);
     KDE_NO_EXPORT const char *nodeName () const { return "playlist"; }
     KMPlayerApp *app;
@@ -98,7 +98,7 @@ public:
     KMPlayer::Node *childFromTag (const QString &tag);
     void defer () {} // TODO lazy loading of largish sub trees
     void closed ();
-    void *role (KMPlayer::RoleType msg, void *content=NULL);
+    void *role (KMPlayer::RoleType msg, void *content=nullptr);
     KDE_NO_EXPORT const char *nodeName () const { return "group"; }
     KMPlayerApp *app;
 };
@@ -106,7 +106,7 @@ public:
 class KMPLAYER_NO_EXPORT Playlist : public FileDocument {
 public:
     Playlist (KMPlayerApp *a, KMPlayer::Source *s, bool plmod = false);
-    void message (KMPlayer::MessageType msg, void *content=NULL);
+    void message (KMPlayer::MessageType msg, void *content=nullptr);
     void defer ();
     void activate ();
     KMPlayer::Node *childFromTag (const QString &tag);
@@ -141,7 +141,7 @@ public:
     PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool plmode=false);
     KMPlayer::Node *childFromTag (const QString &tag);
     void closed ();
-    void *role (KMPlayer::RoleType msg, void *content=NULL);
+    void *role (KMPlayer::RoleType msg, void *content=nullptr);
     void setNodeName (const QString&);
     KDE_NO_EXPORT const char *nodeName () const { return "group"; }
     KMPlayerApp *app;
@@ -164,7 +164,7 @@ public:
     void activate ();
     void begin ();
     void deactivate ();
-    void message (KMPlayer::MessageType msg, void *content=NULL);
+    void message (KMPlayer::MessageType msg, void *content=nullptr);
     KMPlayer::Node *childFromTag (const QString &tag);
     KDE_NO_EXPORT const char *nodeName () const { return "generator"; }
 

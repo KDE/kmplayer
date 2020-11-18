@@ -160,11 +160,11 @@ static void outputToView (View *view, const QByteArray &ba)
 Process::Process (QObject *parent, ProcessInfo *pinfo, Settings *settings)
  : QObject (parent),
    IProcess (pinfo),
-   m_source (0L),
+   m_source (nullptr),
    m_settings (settings),
    m_old_state (IProcess::NotRunning),
-   m_process (0L),
-   m_job(0L),
+   m_process (nullptr),
+   m_job(nullptr),
    m_process_state (QProcess::NotRunning)
 {}
 
@@ -195,7 +195,7 @@ WId Process::widget () {
 Mrl *Process::mrl () const {
     if (user)
         return user->getMrl ();
-    return NULL;
+    return nullptr;
 }
 
 static bool processRunning (QProcess *process) {
@@ -307,14 +307,14 @@ void Process::result (KJob * job) {
     QString url = entry.stringValue (KIO::UDSEntry::UDS_LOCAL_PATH);
     if (!url.isEmpty ())
         m_url = url;
-    m_job = 0L;
+    m_job = nullptr;
     deMediafiedPlay ();
 }
 
 void Process::terminateJobs () {
     if (m_job) {
         m_job->kill ();
-        m_job = 0L;
+        m_job = nullptr;
     }
 }
 
@@ -341,7 +341,7 @@ void Process::startProcess (const QString &program, const QStringList &args)
 }
 
 View *Process::view () const {
-    return m_source ? m_source->player ()->viewWidget () : NULL;
+    return m_source ? m_source->player ()->viewWidget () : nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -379,9 +379,9 @@ void RecordDocument::deactivate () {
 }
 
 static RecordDocument *recordDocument (ProcessUser *user) {
-    Mrl *mrl = user ? user->getMrl () : NULL;
+    Mrl *mrl = user ? user->getMrl () : nullptr;
     return mrl && id_node_record_document == mrl->id
-        ? static_cast <RecordDocument *> (mrl) : NULL;
+        ? static_cast <RecordDocument *> (mrl) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -482,7 +482,7 @@ KDE_NO_EXPORT void MPlayerBase::processStopped (int, QProcess::ExitStatus) {
 //-----------------------------------------------------------------------------
 
 static const char *mplayer_supports [] = {
-    "dvdsource", "exitsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
+    "dvdsource", "exitsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", nullptr
 };
 
 MPlayerProcessInfo::MPlayerProcessInfo (MediaManager *mgr)
@@ -500,7 +500,7 @@ IProcess *MPlayerProcessInfo::create (PartBase *part, ProcessUser *usr) {
 KDE_NO_CDTOR_EXPORT
 MPlayer::MPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings)
  : MPlayerBase (parent, pinfo, settings),
-   m_widget (0L),
+   m_widget (nullptr),
    m_transition_state (NotRunning),
    aid (-1), sid (-1)
 {}
@@ -546,10 +546,10 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     } else {
         m_needs_restarted = false;
     }
-    alanglist = NULL;
-    slanglist = NULL;
-    slanglist_end = NULL;
-    alanglist_end = NULL;
+    alanglist = nullptr;
+    slanglist = nullptr;
+    slanglist_end = nullptr;
+    alanglist_end = nullptr;
     m_request_seek = -1;
     m_tmpURL.truncate (0);
 
@@ -639,7 +639,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     if (m && m->repeat > 0)
         args << "-loop" << QString::number (m->repeat);
     else if (m_settings->loop)
-        args << "-loop" << 0;
+        args << "-loop" << nullptr;
     args << "-identify";
     const QString surl = encodeFileOrUrl (m_source->subUrl ());
     if (!surl.isEmpty ())
@@ -1064,7 +1064,7 @@ KDE_NO_CDTOR_EXPORT MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * 
 }
 
 KDE_NO_CDTOR_EXPORT MPlayerPreferencesPage::MPlayerPreferencesPage ()
- : m_configframe (0L) {
+ : m_configframe (nullptr) {
 }
 
 KDE_NO_EXPORT void MPlayerPreferencesPage::write (KSharedConfigPtr config) {
@@ -1128,12 +1128,12 @@ KDE_NO_EXPORT QFrame * MPlayerPreferencesPage::prefPage (QWidget * parent) {
 
 static const char * mencoder_supports [] = {
     "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource",
-    "vcdsource", "audiocdsource", NULL
+    "vcdsource", "audiocdsource", nullptr
 };
 
 MEncoderProcessInfo::MEncoderProcessInfo (MediaManager *mgr)
  : ProcessInfo ("mencoder", i18n ("M&Encoder"), mencoder_supports,
-         mgr, NULL) {}
+         mgr, nullptr) {}
 
 IProcess *MEncoderProcessInfo::create (PartBase *part, ProcessUser *usr) {
     MEncoder *m = new MEncoder (part, this, part->settings ());
@@ -1194,12 +1194,12 @@ KDE_NO_EXPORT void MEncoder::stop () {
 //-----------------------------------------------------------------------------
 
 static const char * mplayerdump_supports [] = {
-    "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
+    "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", nullptr
 };
 
 MPlayerDumpProcessInfo::MPlayerDumpProcessInfo (MediaManager *mgr)
  : ProcessInfo ("mplayerdumpstream", i18n ("&MPlayerDumpstream"),
-         mplayerdump_supports, mgr, NULL) {}
+         mplayerdump_supports, mgr, nullptr) {}
 
 IProcess *MPlayerDumpProcessInfo::create (PartBase *p, ProcessUser *usr) {
     MPlayerDumpstream *m = new MPlayerDumpstream (p, this, p->settings ());
@@ -1259,7 +1259,7 @@ KDE_NO_EXPORT void MPlayerDumpstream::stop () {
 MasterProcessInfo::MasterProcessInfo (const char *nm, const QString &lbl,
             const char **supported, MediaManager *mgr, PreferencesPage *pp)
  : ProcessInfo (nm, lbl, supported, mgr, pp),
-   m_slave (NULL) {}
+   m_slave (nullptr) {}
 
 MasterProcessInfo::~MasterProcessInfo () {
     stopSlave ();
@@ -1456,11 +1456,11 @@ void MasterProcess::stop () {
 //-------------------------%<--------------------------------------------------
 
 static const char *phonon_supports [] = {
-    "urlsource", "dvdsource", "vcdsource", "audiocdsource", 0L
+    "urlsource", "dvdsource", "vcdsource", "audiocdsource", nullptr
 };
 
 PhononProcessInfo::PhononProcessInfo (MediaManager *mgr)
-  : MasterProcessInfo ("phonon", i18n ("&Phonon"), phonon_supports, mgr, NULL)
+  : MasterProcessInfo ("phonon", i18n ("&Phonon"), phonon_supports, mgr, nullptr)
 {}
 
 IProcess *PhononProcessInfo::create (PartBase *part, ProcessUser *usr) {
@@ -1522,12 +1522,12 @@ namespace KMPlayer {
 } // namespace
 
 KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (NodePtr & d, const QString & t)
-    : DarkNode (d, t.toUtf8 ()), w (0L) {}
+    : DarkNode (d, t.toUtf8 ()), w (nullptr) {}
 
 Node *ConfigDocument::childFromTag (const QString & tag) {
     if (tag.toLower () == QString ("document"))
         return new ConfigNode (m_doc, tag);
-    return 0L;
+    return nullptr;
 }
 
 Node *ConfigNode::childFromTag (const QString & t) {
@@ -1603,11 +1603,11 @@ void TypeNode::changedXML (QTextStream & out) {
 //-----------------------------------------------------------------------------
 
 static const char * ffmpeg_supports [] = {
-    "tvsource", "urlsource", 0L
+    "tvsource", "urlsource", nullptr
 };
 
 FFMpegProcessInfo::FFMpegProcessInfo (MediaManager *mgr)
- : ProcessInfo ("ffmpeg", i18n ("&FFMpeg"), ffmpeg_supports, mgr, NULL) {}
+ : ProcessInfo ("ffmpeg", i18n ("&FFMpeg"), ffmpeg_supports, mgr, nullptr) {}
 
 IProcess *FFMpegProcessInfo::create (PartBase *p, ProcessUser *usr) {
     FFMpeg *m = new FFMpeg (p, this, p->settings ());
@@ -1703,10 +1703,10 @@ KDE_NO_EXPORT void FFMpeg::processStopped (int, QProcess::ExitStatus) {
 
 //-----------------------------------------------------------------------------
 
-static const char *npp_supports [] = { "urlsource", 0L };
+static const char *npp_supports [] = { "urlsource", nullptr };
 
 NppProcessInfo::NppProcessInfo (MediaManager *mgr)
- : ProcessInfo ("npp", i18n ("&Ice Ape"), npp_supports, mgr, NULL) {}
+ : ProcessInfo ("npp", i18n ("&Ice Ape"), npp_supports, mgr, nullptr) {}
 
 IProcess *NppProcessInfo::create (PartBase *p, ProcessUser *usr) {
     NpPlayer *n = new NpPlayer (p, this, p->settings());
@@ -1722,7 +1722,7 @@ KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString
  : QObject (p),
    url (u),
    post (ps),
-   job (0L), bytes (0),
+   job (nullptr), bytes (0),
    stream_id (sid),
    content_length (0),
    finish_reason (NoReason),
@@ -1748,7 +1748,7 @@ KDE_NO_EXPORT void NpStream::open () {
             pending_buf.resize (len + 1);
             memcpy (pending_buf.data (), cr.constData (), len);
             pending_buf.data ()[len] = 0;
-            gettimeofday (&data_arrival, 0L);
+            gettimeofday (&data_arrival, nullptr);
         }
         kDebug () << "result is " << pending_buf.constData ();
         finish_reason = BecauseDone;
@@ -1812,7 +1812,7 @@ KDE_NO_EXPORT void NpStream::open () {
 KDE_NO_EXPORT void NpStream::close () {
     if (job) {
         job->kill (); // quiet, no result signal
-        job = 0L;
+        job = nullptr;
         finish_reason = BecauseStopped;
         // don't emit stateChanged(), because always triggered from NpPlayer
     }
@@ -1826,7 +1826,7 @@ KDE_NO_EXPORT void NpStream::destroy () {
 KDE_NO_EXPORT void NpStream::slotResult (KJob *jb) {
     kDebug() << "slotResult " << stream_id << " " << bytes << " err:" << jb->error ();
     finish_reason = jb->error () ? BecauseError : BecauseDone;
-    job = 0L; // signal KIO::Job::result deletes itself
+    job = nullptr; // signal KIO::Job::result deletes itself
     emit stateChanged ();
 }
 
@@ -1843,7 +1843,7 @@ KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
                 !job->isSuspended () && !job->suspend ())
             kError () << "suspend not supported" << endl;
         if (!sz)
-            gettimeofday (&data_arrival, 0L);
+            gettimeofday (&data_arrival, nullptr);
         if (!received_data) {
             received_data = true;
             http_headers = job->queryMetaData ("HTTP-Headers");
@@ -2133,7 +2133,7 @@ KDE_NO_EXPORT void NpPlayer::processOutput () {
 KDE_NO_EXPORT void NpPlayer::processStopped (int, QProcess::ExitStatus) {
     terminateJobs ();
     if (m_source)
-        m_source->document ()->message (MsgInfoString, NULL);
+        m_source->document ()->message (MsgInfoString, nullptr);
     setState (IProcess::NotRunning);
 }
 
@@ -2190,7 +2190,7 @@ KDE_NO_EXPORT void NpPlayer::requestCall (const uint32_t id, const QString &func
 }
 
 KDE_NO_EXPORT void NpPlayer::processStreams () {
-    NpStream *stream = 0L;
+    NpStream *stream = nullptr;
     qint32 stream_id;
     timeval tv = { 0x7fffffff, 0 };
     const StreamMap::iterator e = streams.end ();

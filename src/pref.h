@@ -281,7 +281,7 @@ class KMPLAYER_NO_EXPORT PrefOPPagePostProc : public QWidget
 {
     Q_OBJECT
 public:
-    PrefOPPagePostProc(QWidget *parent = 0);
+    PrefOPPagePostProc(QWidget *parent = nullptr);
     ~PrefOPPagePostProc() {}
 
     QCheckBox* postProcessing;

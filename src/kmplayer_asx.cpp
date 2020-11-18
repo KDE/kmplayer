@@ -45,13 +45,13 @@ KDE_NO_EXPORT Node *ASX::Asx::childFromTag (const QString & tag) {
         return new DarkNode (m_doc, name, id_node_base);
     else if (!strcasecmp (name, "param"))
         return new DarkNode (m_doc, name, id_node_param);
-    return 0L;
+    return nullptr;
 }
 
 void *ASX::Asx::role (RoleType msg, void *content)
 {
     if (RolePlaylist == msg)
-        return !title.isEmpty () ? (PlaylistRole *) this : NULL;
+        return !title.isEmpty () ? (PlaylistRole *) this : nullptr;
     return Mrl::role (msg, content);
 }
 
@@ -81,7 +81,7 @@ KDE_NO_EXPORT Node *ASX::Entry::childFromTag (const QString & tag) {
         return new DarkNode (m_doc, name, id_node_starttime);
     else if (!strcasecmp (name, "duration"))
         return new DarkNode (m_doc, name, id_node_duration);
-    return 0L;
+    return nullptr;
 }
 
 KDE_NO_EXPORT Node::PlayType ASX::Entry::playType () {
@@ -90,7 +90,7 @@ KDE_NO_EXPORT Node::PlayType ASX::Entry::playType () {
 
 KDE_NO_EXPORT void ASX::Entry::closed () {
     ref_child_count = 0;
-    Node *ref = NULL;
+    Node *ref = nullptr;
     for (Node *e = firstChild (); e; e = e->nextSibling ()) {
         switch (e->id) {
         case id_node_title:
@@ -131,7 +131,7 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
 
 KDE_NO_EXPORT void ASX::Entry::message (MessageType msg, void *content) {
     if (msg == MsgEventTimer) {
-        duration_timer = NULL;
+        duration_timer = nullptr;
         deactivate ();
         return;
     }
@@ -139,10 +139,10 @@ KDE_NO_EXPORT void ASX::Entry::message (MessageType msg, void *content) {
 }
 
 KDE_NO_EXPORT void ASX::Entry::deactivate () {
-    document ()->message (MsgInfoString, NULL);
+    document ()->message (MsgInfoString, nullptr);
     if (duration_timer) {
         document()->cancelPosting (duration_timer);
-        duration_timer = NULL;
+        duration_timer = nullptr;
     }
     Mrl::deactivate ();
 }
@@ -151,7 +151,7 @@ void *ASX::Entry::role (RoleType msg, void *content)
 {
     if (RolePlaylist == msg)
         return ref_child_count > 1 && !title.isEmpty ()
-            ? (PlaylistRole *) this : NULL;
+            ? (PlaylistRole *) this : nullptr;
     return Mrl::role (msg, content);
 }
 

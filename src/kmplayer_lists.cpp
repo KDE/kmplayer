@@ -43,7 +43,7 @@ KDE_NO_EXPORT void ListsSource::play (KMPlayer::Mrl *mrl) {
 
 KDE_NO_EXPORT void ListsSource::activate () {
     activated = true;
-    play (m_current ? m_current->mrl () : NULL);
+    play (m_current ? m_current->mrl () : nullptr);
 }
 
 QString ListsSource::prettyName ()
@@ -59,7 +59,7 @@ KDE_NO_CDTOR_EXPORT FileDocument::FileDocument (short i, const QString &s, KMPla
 KDE_NO_EXPORT KMPlayer::Node *FileDocument::childFromTag(const QString &tag) {
     if (tag == QString::fromLatin1 (nodeName ()))
         return this;
-    return 0L;
+    return nullptr;
 }
 
 void FileDocument::readFromFile (const QString & fn) {
@@ -153,7 +153,7 @@ KDE_NO_EXPORT KMPlayer::Node *Group::childFromTag (const QString & tag) {
         return new Recent (m_doc, app);
     else if (tag == QString::fromLatin1 ("group"))
         return new Group (m_doc, app);
-    return 0L;
+    return nullptr;
 }
 
 KDE_NO_EXPORT void Group::closed () {
@@ -331,7 +331,7 @@ KDE_NO_EXPORT KMPlayer::Node *PlaylistGroup::childFromTag (const QString &tag) {
         return new PlaylistGroup (m_doc, app, playmode);
     else if (!strcmp (name, "object"))
         return new HtmlObject (m_doc, app, playmode);
-    return 0L;
+    return nullptr;
 }
 
 KDE_NO_EXPORT void PlaylistGroup::closed () {
@@ -391,13 +391,13 @@ KDE_NO_EXPORT KMPlayer::Node *HtmlObject::childFromTag (const QString & tag) {
         return new KMPlayer::DarkNode (m_doc, name, KMPlayer::id_node_param);
     else if (!strcasecmp (name, "embed"))
         return new KMPlayer::DarkNode(m_doc, name,KMPlayer::id_node_html_embed);
-    return NULL;
+    return nullptr;
 }
 
 Generator::Generator (KMPlayerApp *a)
  : FileDocument (id_node_gen_document, QString (),
             a->player ()->sources () ["listssource"]),
-   app (a), qprocess (NULL), data (NULL)
+   app (a), qprocess (nullptr), data (nullptr)
 {}
 
 KMPlayer::Node *Generator::childFromTag (const QString &tag) {
@@ -405,7 +405,7 @@ KMPlayer::Node *Generator::childFromTag (const QString &tag) {
     const char *ctag = ba.constData ();
     if (!strcmp (ctag, "generator"))
         return new GeneratorElement (m_doc, tag, id_node_gen_generator);
-    return NULL;
+    return nullptr;
 }
 
 QString Generator::genReadAsk (KMPlayer::Node *n) {
@@ -435,7 +435,7 @@ QString Generator::genReadAsk (KMPlayer::Node *n) {
                     desc = c->innerText ().simplified ();
                     break;
             }
-        input = QInputDialog::getText(0, title, desc, QLineEdit::Normal, def);
+        input = QInputDialog::getText(nullptr, title, desc, QLineEdit::Normal, def);
     }
     if (input.isNull ())
         canceled = true;
@@ -619,9 +619,9 @@ void Generator::deactivate () {
         qprocess->kill ();
         qprocess->deleteLater ();
     }
-    qprocess = NULL;
+    qprocess = nullptr;
     delete data;
-    data = NULL;
+    data = nullptr;
     buffer.clear ();
     FileDocument::deactivate ();
 }
@@ -652,7 +652,7 @@ void Generator::readyRead () {
             KMPlayer::readXML (pl, stream, QString (), false);
             pl->title = title;
             pl->normalize ();
-            message (KMPlayer::MsgInfoString, NULL);
+            message (KMPlayer::MsgInfoString, nullptr);
             bool reset_only = m_source == app->player ()->source ();
             if (reset_only)
                 app->player ()->stop ();
@@ -715,7 +715,7 @@ struct GeneratorTag {
     { "key", id_node_gen_sequence },
     { "value", id_node_gen_sequence },
     { "sequence", id_node_gen_sequence },
-    { NULL, -1 }
+    { nullptr, -1 }
 };
 
 KMPlayer::Node *GeneratorElement::childFromTag (const QString &tag) {
@@ -724,6 +724,6 @@ KMPlayer::Node *GeneratorElement::childFromTag (const QString &tag) {
     for (GeneratorTag *t = gen_tags; t->tag; ++t)
         if (!strcmp (ctag, t->tag))
             return new GeneratorElement (m_doc, tag, t->id);
-    return NULL;
+    return nullptr;
 }
 

@@ -40,7 +40,7 @@ struct TrieNode
 {
     enum { MaxPacked = sizeof (void*) };
 
-    TrieNode() : ref_count(0), length(0), parent(NULL), buffer(NULL)
+    TrieNode() : ref_count(0), length(0), parent(nullptr), buffer(nullptr)
     {}
     TrieNode(TrieNode* p, const char* s, size_t len)
         : ref_count(0), length(0)
@@ -54,7 +54,7 @@ struct TrieNode
     }
     void update(TrieNode* p, const char* s, size_t len)
     {
-        char* old = length > MaxPacked ? buffer : NULL;
+        char* old = length > MaxPacked ? buffer : nullptr;
         parent = p;
         length = len;
         if (len <= MaxPacked) {
@@ -308,7 +308,7 @@ static int trieStringStarts(TrieNode* node, const char* s, int& pos)
     return cmp;
 }
 
-TrieString::TrieString (const QString& s) : node(NULL)
+TrieString::TrieString (const QString& s) : node(nullptr)
 {
     if (!s.isNull()) {
         const QByteArray ba = s.toUtf8();
@@ -318,14 +318,14 @@ TrieString::TrieString (const QString& s) : node(NULL)
 }
 
 TrieString::TrieString(const char* s)
-    : node(!s ? NULL : trieInsert(trieRoot(), s, strlen(s)))
+    : node(!s ? nullptr : trieInsert(trieRoot(), s, strlen(s)))
 {
     if (node)
         ++node->ref_count;
 }
 
 TrieString::TrieString(const char* s, int len)
-    : node(!s ? NULL : trieInsert(trieRoot(), s, len))
+    : node(!s ? nullptr : trieInsert(trieRoot(), s, len))
 {
     if (node)
         ++node->ref_count;
@@ -355,7 +355,7 @@ TrieString& TrieString::operator=(const char* s)
 #endif
         trieRemove(node);
     }
-    node = !s ? NULL : trieInsert(trieRoot(), s, strlen(s));
+    node = !s ? nullptr : trieInsert(trieRoot(), s, strlen(s));
     if (node)
         ++node->ref_count;
     return *this;
@@ -424,7 +424,7 @@ void TrieString::clear()
 #endif
         trieRemove(node);
     }
-    node = NULL;
+    node = nullptr;
 }
 
 

@@ -69,7 +69,7 @@ static OutputDriver _ads[] = {
     { "alsa9", i18n ("Advanced Linux Sound Architecture v0.9") },
     { "", i18n ("Use back-end defaults") },
     { "pulse", i18n ("PulseAudio") },
-    { 0, QString () }
+    { nullptr, QString () }
 };
 
 static OutputDriver _vds [] = {
@@ -82,14 +82,14 @@ static OutputDriver _vds [] = {
     { "gl2", i18n ("OpenGL MT") },
     { "xv", i18n ("XVideo") },
     { "vdpau", i18n ("Video Decode and Presentation API for Unix") },
-    { 0, QString () }
+    { nullptr, QString () }
 };
 
 static const int ADRIVER_ARTS_INDEX = 4;
 
 
 KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KSharedConfigPtr config)
-  : pagelist (0L), configdialog (0L), m_config (config), m_player (player) {
+  : pagelist (nullptr), configdialog (nullptr), m_config (config), m_player (player) {
     audiodrivers = _ads;
     videodrivers = _vds;
     colors [ColorSetting::playlist_background].title = i18n ("Playlist background");
@@ -411,7 +411,7 @@ void Settings::addPage (PreferencesPage * page) {
 void Settings::removePage (PreferencesPage * page) {
     if (configdialog)
         configdialog->removePrefPage (page);
-    PreferencesPage * prev = 0L;
+    PreferencesPage * prev = nullptr;
     for (PreferencesPage * p = pagelist; p; prev = p, p = p->next)
         if (p == page) {
             if (prev)

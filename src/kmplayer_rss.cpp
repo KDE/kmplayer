@@ -26,13 +26,13 @@ using namespace KMPlayer;
 KDE_NO_EXPORT Node *RSS::Rss::childFromTag (const QString & tag) {
     if (!strcmp (tag.toLatin1 ().constData (), "channel"))
         return new RSS::Channel (m_doc);
-    return 0L;
+    return nullptr;
 }
 
 void *RSS::Rss::role (RoleType msg, void *content)
 {
     if (RolePlaylist == msg)
-        return NULL;
+        return nullptr;
     return Element::role (msg, content);
 }
 
@@ -46,7 +46,7 @@ KDE_NO_EXPORT Node *RSS::Channel::childFromTag (const QString & tag) {
     else if (!strncmp (ctag, "itunes", 6) ||
             !strncmp (ctag, "media", 5))
         return new DarkNode (m_doc, ctag, id_node_ignored);
-    return 0L;
+    return nullptr;
 }
 
 KDE_NO_EXPORT void RSS::Channel::closed () {
@@ -62,7 +62,7 @@ void *RSS::Channel::role (RoleType msg, void *content)
 {
     if (RolePlaylist == msg)
         return !title.isEmpty () || //return false if no title and only one
-            previousSibling () || nextSibling () ? (PlaylistRole *) this : NULL;
+            previousSibling () || nextSibling () ? (PlaylistRole *) this : nullptr;
     return Element::role (msg, content);
 }
 
@@ -88,13 +88,13 @@ KDE_NO_EXPORT Node *RSS::Item::childFromTag (const QString & tag) {
             !strcmp (ctag, "guid") ||
             !strncmp (ctag, "media", 5))
         return new DarkNode (m_doc, ctag, id_node_ignored);
-    return 0L;
+    return nullptr;
 }
 
 KDE_NO_EXPORT void RSS::Item::closed () {
     if (!summary_added) {
-        ATOM::MediaGroup *group = NULL;
-        Enclosure *enclosure = NULL;
+        ATOM::MediaGroup *group = nullptr;
+        Enclosure *enclosure = nullptr;
         QString description;
         QString thumbnail;
         int width = 0, height = 0;
@@ -120,7 +120,7 @@ KDE_NO_EXPORT void RSS::Item::closed () {
             }
         }
         if (group)
-            group->addSummary (this, NULL, title, description, thumbnail, width, height);
+            group->addSummary (this, nullptr, title, description, thumbnail, width, height);
         if (enclosure) {
             enclosure->setCaption (title);
             enclosure->description = description;
@@ -136,7 +136,7 @@ KDE_NO_EXPORT void RSS::Enclosure::activate () {
 }
 
 KDE_NO_EXPORT void RSS::Enclosure::deactivate () {
-    document ()->message (MsgInfoString, NULL);
+    document ()->message (MsgInfoString, nullptr);
     Mrl::deactivate ();
 }
 

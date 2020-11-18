@@ -59,7 +59,7 @@ public:
     virtual void finish ();     // end the timings
     virtual void deactivate (); // stop handling paint events
     KDE_NO_EXPORT virtual PlayType playType () { return play_type_image; }
-    virtual void message (MessageType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
     virtual void accept (Visitor *);
     Surface *surface ();
     void repaint (); // called whenever something changes on image
@@ -78,7 +78,7 @@ public:
     virtual void begin ();       // start_timer has expired
     virtual void finish ();      // ?duration_timer has expired?
     virtual void deactivate ();  // disabled
-    virtual void message (MessageType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
     int progress;
     Single x, y, w, h;
     Single srcx, srcy, srcw, srch;
@@ -172,7 +172,7 @@ public:
     virtual void begin ();
     virtual void deactivate ();
     virtual void closed ();
-    virtual void message (MessageType msg, void *content=NULL);
+    virtual void message (MessageType msg, void *content=nullptr);
     bool isReady (bool postpone_if_not = false); // is downloading ready
     Surface *surface ();
     SurfacePtrW img_surface;

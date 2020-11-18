@@ -108,8 +108,8 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
    m_settings (new Settings (this, config)),
    m_media_manager (new MediaManager (this)),
    m_play_model (new PlayModel (this, KIconLoader::global ())),
-   m_source (0L),
-   m_bookmark_menu (0L),
+   m_source (nullptr),
+   m_bookmark_menu (nullptr),
    m_update_tree_timer (0),
    m_rec_timer (0),
    m_noresize (false),
@@ -235,7 +235,7 @@ void PartBase::connectInfoPanel (InfoWindow * infopanel) {
 
 PartBase::~PartBase () {
     kDebug() << "PartBase::~PartBase";
-    m_view = (View*) 0;
+    m_view = (View*) nullptr;
     stopRecording ();
     stop ();
     if (m_source)
@@ -585,14 +585,14 @@ qlonglong PartBase::position () const {
 }
 
 void PartBase::pause () {
-    NodePtr doc = m_source ? m_source->document () : 0L;
+    NodePtr doc = m_source ? m_source->document () : nullptr;
     if (doc) {
-        Mrl *mrl = NULL;
+        Mrl *mrl = nullptr;
         NodePtrW cur = m_source->current ();
         if (cur) {
             mrl = cur->mrl ();
             if (mrl && Mrl::WindowMode == mrl->view_mode)
-                mrl = NULL;
+                mrl = nullptr;
         }
         if (doc->state == Node::state_deferred) {
             doc->undefer ();
@@ -642,7 +642,7 @@ KDE_NO_EXPORT void PartBase::playListItemActivated(const QModelIndex &index) {
         if (node->isPlayable () || id_node_playlist_item == node->id) {
             source->play (node->mrl ()); //may become !isPlayable by lazy loading
             if (node && !node->isPlayable ())
-                emit treeChanged (ri->id, node, 0, false, true);
+                emit treeChanged (ri->id, node, nullptr, false, true);
         } // else if (vi->childCount ()) {handled by playListItemClicked
     } else if (vi->attribute) {
         if (vi->attribute->name () == Ids::attr_src ||
@@ -666,7 +666,7 @@ KDE_NO_EXPORT void PartBase::playListItemActivated(const QModelIndex &index) {
             }
         }
     } else
-        emit treeChanged (ri->id, ri->node, 0L, false, false);
+        emit treeChanged (ri->id, ri->node, nullptr, false, false);
     if (m_view)
         m_view->viewArea ()->setFocus ();
 }
@@ -789,16 +789,16 @@ void PartBase::play () {
         if (lvi) {
             TopPlayItem *ri = lvi->rootItem ();
             if (ri->id != 0) // make sure it's in the first tree
-                lvi = 0L;
+                lvi = nullptr;
         }
         if (!lvi) {
             QModelIndex index = m_view->playList ()->model ()->index (0, 0);
             lvi = static_cast<PlayItem*>(index.internalPointer ());
             if (!lvi->node)
-                lvi = NULL;
+                lvi = nullptr;
         }
         if (lvi) {
-            Mrl *mrl = NULL;
+            Mrl *mrl = nullptr;
             for (Node * n = lvi->node.ptr (); n; n = n->parentNode ()) {
                 if (n->isPlayable ()) {
                     mrl = n->mrl ();
@@ -811,7 +811,7 @@ void PartBase::play () {
                 m_source->play (mrl);
         }
     } else {
-        m_source->play (NULL);
+        m_source->play (nullptr);
     }
 }
 
@@ -820,7 +820,7 @@ bool PartBase::playing () const {
 }
 
 void PartBase::stop () {
-    QPushButton * b = m_view ? m_view->controlPanel ()->button (ControlPanel::button_stop) : 0L;
+    QPushButton * b = m_view ? m_view->controlPanel ()->button (ControlPanel::button_stop) : nullptr;
     if (b) {
         if (!b->isChecked ())
             b->toggle ();
@@ -931,8 +931,8 @@ KDE_NO_EXPORT bool PartBase::isPlaying () {
 }
 
 KAboutData* PartBase::createAboutData () {
-    KMessageBox::error(0L, "createAboutData", "KMPlayer");
-    return 0;
+    KMessageBox::error(nullptr, "createAboutData", "KMPlayer");
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -974,7 +974,7 @@ void *SourceDocument::role (RoleType msg, void *data) {
         PartBase *p = m_source->player ();
         if (p->view ())
             return p->viewWidget ()->viewArea ()->getSurface ((Mrl *) data);
-        return NULL;
+        return nullptr;
     }
 
     case RoleReceivers:
@@ -1014,7 +1014,7 @@ Source::Source (const QString&, PartBase * player, const char * n)
 Source::~Source () {
     if (m_document)
         m_document->document ()->dispose ();
-    m_document = 0L;
+    m_document = nullptr;
 }
 
 void Source::init () {
@@ -1046,7 +1046,7 @@ KDE_NO_EXPORT void Source::setLanguages (LangInfoPtr audio, LangInfoPtr sub)
 }
 
 void Source::setDimensions (NodePtr node, int w, int h) {
-    Mrl *mrl = node ? node->mrl () : 0L;
+    Mrl *mrl = node ? node->mrl () : nullptr;
     if (mrl) {
         float a = h > 0 ? 1.0 * w / h : 0.0;
         mrl->size = SSize (w, h);
@@ -1068,7 +1068,7 @@ void Source::setDimensions (NodePtr node, int w, int h) {
 
 void Source::setAspect (NodePtr node, float a) {
     //kDebug () << "setAspect " << a;
-    Mrl *mrl = node ? node->mrl () : 0L;
+    Mrl *mrl = node ? node->mrl () : nullptr;
     bool changed = false;
     if (mrl &&
             mrl->media_info &&
@@ -1083,7 +1083,7 @@ void Source::setAspect (NodePtr node, float a) {
         changed |= (fabs (m_aspect - a) > 0.001);
         m_aspect = a;
         if (changed && m_player->view ())
-            m_player->viewWidget ()->viewArea ()->resizeEvent (NULL);
+            m_player->viewWidget ()->viewArea ()->resizeEvent (nullptr);
 
     } else {
        mrl->message (MsgSurfaceBoundsUpdate);
@@ -1168,7 +1168,7 @@ void Source::reset () {
     if (m_document) {
         kDebug() << "Source::reset " << name () << endl;
         NodePtr doc = m_document; // avoid recursive calls
-        m_document = NULL;
+        m_document = nullptr;
         doc->reset ();
         m_document = doc;
         m_player->updateTree ();
@@ -1433,8 +1433,8 @@ void Source::setIdentified (bool b) {
     //kDebug () << "Source::setIdentified " << m_identified << b;
     m_identified = b;
     if (!b) {
-        m_audio_infos = NULL;
-        m_subtitle_infos = NULL;
+        m_audio_infos = nullptr;
+        m_subtitle_infos = nullptr;
     }
 }
 
@@ -1489,7 +1489,7 @@ KDE_NO_EXPORT void URLSource::activate () {
         return;
     }
     if (m_auto_play)
-        play (NULL);
+        play (nullptr);
 }
 
 void URLSource::reset () {
@@ -1515,10 +1515,10 @@ void URLSource::deactivate () {
     reset ();
     if (m_document) {
         m_document->document ()->dispose ();
-        m_document = NULL;
+        m_document = nullptr;
     }
     if (m_player->view ())
-        m_player->viewWidget ()->viewArea ()->getSurface (NULL);
+        m_player->viewWidget ()->viewArea ()->getSurface (nullptr);
 }
 
 QString URLSource::prettyName () {

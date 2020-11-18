@@ -118,8 +118,8 @@ public:
     ~TVDevice ();
     KMPlayer::Node *childFromTag (const QString &);
     void closed ();
-    void message (KMPlayer::MessageType msg, void *content=NULL);
-    void *role (KMPlayer::RoleType msg, void *content=NULL);
+    void message (KMPlayer::MessageType msg, void *content=nullptr);
+    void *role (KMPlayer::RoleType msg, void *content=nullptr);
     void setNodeName (const QString &);
     void updateNodeName ();
     void updateDevicePage ();
@@ -134,7 +134,7 @@ public:
     KMPlayer::Node *childFromTag (const QString &);
     void defer ();
     KDE_NO_EXPORT const char * nodeName () const { return "tvdevices"; }
-    void message (KMPlayer::MessageType msg, void *content=NULL);
+    void message (KMPlayer::MessageType msg, void *content=nullptr);
 };
 
 

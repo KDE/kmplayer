@@ -40,7 +40,7 @@ QString NodeValue::value () const {
 namespace KMPlayer {
 
 struct ExprIterator {
-    ExprIterator(ExprIterator* p) : cur_value(NULL, NULL), parent(p), position(0)
+    ExprIterator(ExprIterator* p) : cur_value(nullptr, nullptr), parent(p), position(0)
     {}
     virtual ~ExprIterator() {
         delete parent;
@@ -64,7 +64,7 @@ Expression::iterator::~iterator() {
 
 void ExprIterator::next() {
     assert(!atEnd());
-    cur_value = NodeValue(NULL, NULL);
+    cur_value = NodeValue(nullptr, nullptr);
     ++position;
 }
 
@@ -72,7 +72,7 @@ Expression::iterator& Expression::iterator::operator =(const Expression::iterato
     if (iter != it.iter) {
         delete iter;
         iter = it.iter;
-        it.iter = NULL;
+        it.iter = nullptr;
     }
     return *this;
 }
@@ -96,7 +96,7 @@ Expression::iterator& Expression::iterator::operator ++() {
 }
 
 NodeValue& Expression::iterator::operator*() {
-    static NodeValue empty(NULL, NULL);
+    static NodeValue empty(nullptr, nullptr);
     if (iter)
         return iter->current();
     return empty;
@@ -105,15 +105,15 @@ NodeValue& Expression::iterator::operator*() {
 NodeValue* Expression::iterator::operator->() {
     if (iter)
         return &iter->cur_value;
-    return NULL;
+    return nullptr;
 }
 
 namespace {
 
 struct EvalState {
     EvalState (EvalState *p, const QString &root_tag=QString())
-     : def_root_tag (root_tag), root (NULL),
-       iterator(NULL), parent (p),
+     : def_root_tag (root_tag), root (nullptr),
+       iterator(nullptr), parent (p),
        sequence (1), ref_count (0) {}
 
     void addRef () { ++ref_count; }
@@ -535,7 +535,7 @@ struct Comparison : public BoolBase {
 
 
 AST::AST (EvalState *ev)
- : sequence (0), eval_state (ev), first_child (NULL), next_sibling (NULL) {
+ : sequence (0), eval_state (ev), first_child (nullptr), next_sibling (nullptr) {
     ev->addRef ();
 }
 
@@ -584,7 +584,7 @@ ExprIterator* AST::exprIterator(ExprIterator* parent) const {
 }
 
 Expression::iterator AST::begin() const {
-    return iterator(exprIterator(NULL));
+    return iterator(exprIterator(nullptr));
 }
 
 Expression::iterator AST::end() const {
@@ -631,7 +631,7 @@ static void appendASTChild (AST *p, AST *c) {
 
 static AST *releaseASTChildren (AST *p) {
     AST *child = p->first_child;
-    p->first_child = NULL;
+    p->first_child = nullptr;
     return child;
 }
 
@@ -640,7 +640,7 @@ static AST *releaseLastASTChild (AST *p) {
     while ((*chldptr)->next_sibling)
         chldptr = &(*chldptr)->next_sibling;
     AST *last = *chldptr;
-    *chldptr = NULL;
+    *chldptr = nullptr;
     return last;
 }
 
@@ -715,7 +715,7 @@ bool Step::matches (Attribute *a) const {
 bool SequenceBase::toBool () const {
     bool b = false;
     if (eval_state->iterator) {
-        ExprIterator* it = exprIterator(NULL);
+        ExprIterator* it = exprIterator(nullptr);
         b = !it->atEnd();
         delete it;
     } else {
@@ -727,7 +727,7 @@ bool SequenceBase::toBool () const {
 QString SequenceBase::toString () const {
     if (eval_state->sequence != sequence) {
         string.clear();
-        ExprIterator* it = exprIterator(NULL);
+        ExprIterator* it = exprIterator(nullptr);
         if (!it->atEnd()) {
             string = it->cur_value.value();
             while (!it->atEnd()) {
@@ -772,7 +772,7 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
                     cur_value = NodeValue(parent->cur_value.node->firstChild());
                     return;
                 }
-            cur_value = NodeValue(NULL, NULL);
+            cur_value = NodeValue(nullptr, nullptr);
         }
         virtual void next() {
             assert(cur_value.node);
@@ -802,7 +802,7 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
                 parent->next();
                 cur_value = parent->cur_value;
             }
-            cur_value = NodeValue(NULL, NULL);
+            cur_value = NodeValue(nullptr, nullptr);
         }
         virtual void next() {
             assert(!atEnd());
@@ -846,7 +846,7 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
                     cur_value.attr = a;
                     return true;
                 }
-            cur_value.attr = NULL;
+            cur_value.attr = nullptr;
             return false;
         }
         void pullNext() {
@@ -869,7 +869,7 @@ ExprIterator* Step::exprIterator(ExprIterator* parent) const {
                 }
                 parent->next();
             }
-            cur_value.node = NULL;
+            cur_value.node = nullptr;
         }
         virtual void next() {
             assert(!atEnd());
@@ -906,7 +906,7 @@ ExprIterator* Path::exprIterator(ExprIterator* parent) const {
         virtual void next() {
             assert(!atEnd());
             if (!contextual || parent->atEnd()) {
-                cur_value = NodeValue(NULL, NULL);
+                cur_value = NodeValue(nullptr, nullptr);
             } else {
                 parent->next();
                 cur_value = parent->cur_value;
@@ -943,7 +943,7 @@ ExprIterator* PredicateFilter::exprIterator(ExprIterator* parent) const {
                     ast->eval_state->iterator = parent;
                     cur_value = parent->cur_value;
                     bool res = ast->toBool();
-                    ast->eval_state->iterator = NULL;
+                    ast->eval_state->iterator = nullptr;
                     if (res) {
                         return;
                     }
@@ -953,7 +953,7 @@ ExprIterator* PredicateFilter::exprIterator(ExprIterator* parent) const {
                     break;
                 parent->next();
             }
-            cur_value = NodeValue(NULL, NULL);
+            cur_value = NodeValue(nullptr, nullptr);
         }
         virtual void next() {
             assert(!atEnd());
@@ -1040,7 +1040,7 @@ int Count::toInt () const {
         sequence = eval_state->sequence;
         i = 0;
         if (first_child) {
-            ExprIterator* it = first_child->exprIterator(NULL);
+            ExprIterator* it = first_child->exprIterator(nullptr);
             while (!it->atEnd())
                 it->next();
             i = it->position;
@@ -1179,7 +1179,7 @@ QString StringJoin::toString () const {
         string.clear ();
         AST *child = first_child;
         if (child) {
-            ExprIterator* it = child->exprIterator(NULL);
+            ExprIterator* it = child->exprIterator(nullptr);
             if (!it->atEnd()) {
                 QString sep;
                 if (child->next_sibling)
@@ -1236,7 +1236,7 @@ QString SubstringBefore::toString () const {
 QString CurrentTime::toString () const {
     if (eval_state->sequence != sequence) {
         char buf[200];
-        time_t t = time(NULL);
+        time_t t = time(nullptr);
         struct tm *lt = localtime(&t);
         if (lt && strftime (buf, sizeof (buf), "%H:%M:%S %z", lt))
             string = buf;
@@ -1248,7 +1248,7 @@ QString CurrentTime::toString () const {
 QString CurrentDate::toString () const {
     if (eval_state->sequence != sequence) {
         char buf[200];
-        time_t t = time(NULL);
+        time_t t = time(nullptr);
         struct tm *lt = localtime(&t);
         if (lt && strftime (buf, sizeof (buf), "%a, %d %b %Y %z", lt))
             string = buf;
@@ -1337,7 +1337,7 @@ ExprIterator* SubSequence::exprIterator(ExprIterator* parent) const
             if (length < 0 || parent->position + 1 < start + length)
                 cur_value = parent->cur_value;
             else
-                cur_value = NodeValue(NULL, NULL);
+                cur_value = NodeValue(nullptr, nullptr);
             ++position;
         }
     };
@@ -1367,7 +1367,7 @@ ExprIterator* Tokenize::exprIterator(ExprIterator* parent) const
                 }
             }
             if (reg_pos < 0)
-                cur_value = NodeValue(NULL, NULL);
+                cur_value = NodeValue(nullptr, nullptr);
         }
         virtual void next() {
             assert(!atEnd());
@@ -1518,7 +1518,7 @@ ExprIterator* Join::exprIterator(ExprIterator* parent) const {
     struct JoinIterator : public ExprIterator {
         const AST *ast;
         ExprIterator* it;
-        JoinIterator(ExprIterator* p, const AST* a) : ExprIterator(p), ast(a), it(NULL) {
+        JoinIterator(ExprIterator* p, const AST* a) : ExprIterator(p), ast(a), it(nullptr) {
             pullNext();
         }
         ~JoinIterator() {
@@ -1527,20 +1527,20 @@ ExprIterator* Join::exprIterator(ExprIterator* parent) const {
         void pullNext() {
             if (it && it->atEnd()) {
                 delete it;
-                it = NULL;
+                it = nullptr;
             }
             while (!it && ast) {
-                it = ast->exprIterator(NULL);
+                it = ast->exprIterator(nullptr);
                 ast = ast->next_sibling;
                 if (it->atEnd()) {
                     delete it;
-                    it = NULL;
+                    it = nullptr;
                 }
             }
             if (it)
                 cur_value = it->cur_value;
             else
-                cur_value = NodeValue(NULL, NULL);
+                cur_value = NodeValue(nullptr, nullptr);
         }
         virtual void next() {
             assert(!atEnd());
@@ -1703,10 +1703,10 @@ interp:
         buf[cur - begin] = 0;
         if (is_fractal) {
             cur_token = TDouble;
-            double_value = strtod(buf, NULL);
+            double_value = strtod(buf, nullptr);
         } else {
             cur_token = TLong;
-            long_value = strtol(buf, NULL, 10);
+            long_value = strtol(buf, nullptr, 10);
         }
     } else {
         cur_token = TIdentifier;
@@ -1758,7 +1758,7 @@ static bool parseStep (Parser *parser, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
     fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
 #endif
-    AST *entry = NULL;
+    AST *entry = nullptr;
     int axes = Step::ChildAxis;
     if ('/' == parser->cur_token) {
         axes = Step::DescendantAxis;
@@ -1875,7 +1875,7 @@ static bool parsePath (Parser *parser, AST *ast) {
 #ifdef KMPLAYER_EXPR_DEBUG
     fprintf (stderr, "%s enter str:'%s'\n", __FUNCTION__, parser->cur);
 #endif
-    Path path (ast->eval_state, NULL, false);
+    Path path (ast->eval_state, nullptr, false);
     bool has_any = false;
 
     bool start_contextual =  '/' != parser->cur_token;
@@ -1913,7 +1913,7 @@ static bool parseFunction (Parser *parser, const QString &name, AST *ast) {
         switch (parser->cur_token) {
         case ')': {
             parser->nextToken();
-            AST *func = NULL;
+            AST *func = nullptr;
             if (name == "boolean")
                 func = new Boolean(ast->eval_state);
             else if (name == "concat")
@@ -2209,7 +2209,7 @@ static bool parseStatement (Parser *parser, AST *ast) {
 }
 
 Expression* KMPlayer::evaluateExpr(const QByteArray& expr, const QString &root) {
-    EvalState *eval_state = new EvalState (NULL, root);
+    EvalState *eval_state = new EvalState (nullptr, root);
     AST ast (eval_state);
     Parser parser(expr.constData());
     parser.nextToken ();
@@ -2220,7 +2220,7 @@ Expression* KMPlayer::evaluateExpr(const QByteArray& expr, const QString &root) 
 #endif
         return releaseASTChildren (&ast);
     }
-    return NULL;
+    return nullptr;
 }
 /*
 int main (int argc, char **argv) {

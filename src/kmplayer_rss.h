@@ -48,7 +48,7 @@ public:
     KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Element (d, id_node_rss) {}
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "rss"; }
-    void *role (RoleType msg, void *content=NULL);
+    void *role (RoleType msg, void *content=nullptr);
 };
 
 class KMPLAYER_NO_EXPORT Channel : public Element, public PlaylistRole
@@ -58,7 +58,7 @@ public:
     Node *childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
     void closed ();
-    void *role (RoleType msg, void *content=NULL);
+    void *role (RoleType msg, void *content=nullptr);
 };
 
 class KMPLAYER_NO_EXPORT Item : public Element, public PlaylistRole {
