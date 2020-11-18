@@ -509,7 +509,7 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
         ready ();
         return true;
     }
-    QString protocol = kurl.protocol ();
+    QString protocol = kurl.scheme ();
     if (!domain.isEmpty ()) {
         QString get_from = protocol + "://" + kurl.host ();
         if (get_from != domain) {

@@ -504,8 +504,8 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl(const QUrl& _url) {
         url = _url;
         if (!m_file_name.isEmpty() && _url.url().indexOf(m_file_name) < 0) {
             KUrl u (m_file_name);
-            if ((u.protocol () == QString ("mms")) ||
-                    KUrl(_url).protocol ().isEmpty ()) {
+            if ((u.scheme () == QLatin1String("mms")) ||
+                    KUrl(_url).scheme().isEmpty()) {
                 // see if we somehow have to merge these
                 int p = _url.port ();
                 if (p > 0)
@@ -1486,7 +1486,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             rval.setNum (player->position ());
             break;
         case protocol:
-            rval = player->url ().protocol ();
+            rval = player->url ().scheme();
             break;
         case setsource:
             rval ="false";

@@ -631,7 +631,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
                     !m_url.startsWith (QString ("cdda://")))
                 m_url = QString ("cdda://") + m_url.mid (6);
         }
-        if (url.protocol () != QString ("stdin"))
+        if (url.scheme () != QString ("stdin"))
             args << encodeFileOrUrl (m_url);
     }
     Mrl *m = mrl ();

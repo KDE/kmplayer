@@ -1627,7 +1627,7 @@ QString SMIL::State::domain () {
     KUrl url (s);
     if (url.isLocalFile ())
         return QString ();
-    return url.protocol () + "://" + url.host ();
+    return url.scheme() + "://" + url.host ();
 }
 
 void SMIL::State::stateChanged (Node *ref) {

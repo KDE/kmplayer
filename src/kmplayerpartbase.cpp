@@ -471,7 +471,7 @@ bool PartBase::openUrl (const KUrl &url) {
     qCDebug(LOG_KMPLAYER_COMMON) << "PartBase::openUrl " << url.url() << url.isValid ();
     if (!m_view) return false;
     stop ();
-    Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
+    Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.scheme().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
     setSource (src);
     src->setSubURL (KUrl ());
     src->setUrl (url.isLocalFile () ? url.toLocalFile() : url.url ());
@@ -1527,7 +1527,7 @@ QString URLSource::prettyName () {
     if (m_url.url ().size () > 50) {
         QString newurl;
         if (!m_url.isLocalFile ()) {
-            newurl = m_url.protocol () + QString ("://");
+            newurl = m_url.scheme() + QString ("://");
             if (m_url.hasHost ())
                 newurl += m_url.host ();
             if (m_url.port () != -1)
@@ -1563,7 +1563,7 @@ bool URLSource::authoriseUrl (const QString &url) {
         // want to cache local ones.
         if (
 #if 0
-            !KProtocolInfo::protocolClass (dest.protocol ()).isEmpty () &&
+            !KProtocolInfo::protocolClass (dest.scheme()).isEmpty () &&
 #else
             dest.isLocalFile () &&
 #endif

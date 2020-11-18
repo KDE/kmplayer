@@ -187,7 +187,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     connect (panel->button (KMPlayer::ControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
     connect (panel->button (KMPlayer::ControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
     setAspect (m_document, scale ? 16.0/9 : 1.33);
-    if (!m_url.protocol ().compare ("kmplayer"))
+    if (!m_url.scheme().compare ("kmplayer"))
         m_request_jump = KUrl::decode_string (m_url.path ()).mid (1);
     setUrl (QString ("vdr://localhost:%1").arg (tcp_port));
     QTimer::singleShot (0, m_player, SLOT (play ()));
