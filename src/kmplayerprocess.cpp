@@ -44,7 +44,6 @@
 #include <kprotocolmanager.h>
 #include <kmessagebox.h>
 #include <klocalizedstring.h>
-#include <kstandarddirs.h>
 #include <kshell.h>
 #include <kio/job.h>
 #include <kio/accessmanager.h>
