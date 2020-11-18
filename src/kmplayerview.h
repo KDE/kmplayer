@@ -37,7 +37,6 @@ class QStatusBar;
 class QMainWindow;
 class QDockWidget;
 class KActionCollection;
-class KAction;
 
 namespace KMPlayer {
 

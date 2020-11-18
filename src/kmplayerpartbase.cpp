@@ -48,7 +48,6 @@
 #include <kconfiggroup.h>
 #include <kiconloader.h>
 #include <klocalizedstring.h>
-#include <kaction.h>
 #include <kprotocolinfo.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>

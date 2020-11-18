@@ -41,7 +41,6 @@
 #include <kstandardaction.h>
 #include <kfinddialog.h>
 #include <kfind.h>
-#include <kaction.h>
 #include <klocalizedstring.h>
 #include <KActionCollection>
 

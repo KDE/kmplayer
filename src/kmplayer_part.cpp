@@ -33,7 +33,6 @@
 
 class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollection.h does not forward declare KXMLGUIClient
 #include <kconfig.h>
-#include <kaction.h>
 #include <kurlauthorized.h>
 #include <kiconloader.h>
 #include <klocalizedstring.h>
