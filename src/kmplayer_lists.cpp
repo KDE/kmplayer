@@ -23,8 +23,8 @@
 #include <qbytearray.h>
 #include <qinputdialog.h>
 #include <QStandardPaths>
+#include <QFileDialog>
 
-#include <kfiledialog.h>
 #include <ksharedconfig.h>
 #include <klocalizedstring.h>
 
@@ -420,9 +420,9 @@ QString Generator::genReadAsk (KMPlayer::Node *n) {
     if (!key.isEmpty ())
         def = cfg.readEntry (key, def);
     if (type == "file") {
-        input = KFileDialog::getOpenFileName (KUrl (def), QString(), app);
+        input = QFileDialog::getOpenFileUrl (app, QString(), QUrl::fromUserInput(def)).url();
     } else if (type == "dir") {
-        input = KFileDialog::getExistingDirectoryUrl (KUrl (def), app).toLocalFile ();
+        input = QFileDialog::getExistingDirectoryUrl (app, QString(), QUrl::fromUserInput(def)).url();
         if (!input.isEmpty ())
             input += QChar ('/');
     } else {
