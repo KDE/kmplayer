@@ -25,8 +25,7 @@
 
 #include <qwidget.h>
 
-#include <kdebug.h>
-
+#include "kmplayercommon_log.h"
 #include "surface.h"
 #include "viewarea.h"
 
@@ -116,7 +115,7 @@ void Surface::updateChildren (bool parent_resized) {
         if (c->node)
             c->node->message (MsgSurfaceBoundsUpdate, (void *) parent_resized);
         else
-            kError () << "Surface without node";
+            qCCritical(LOG_KMPLAYER_COMMON) << "Surface without node";
 }
 
 Surface *Surface::createSurface (NodePtr owner, const SRect & rect) {

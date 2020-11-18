@@ -17,9 +17,10 @@
  **/
 
 #include "config-kmplayer.h"
-#include <kdebug.h>
+
 #include <kurl.h>
 
+#include "kmplayercommon_log.h"
 #include "kmplayer_opml.h"
 #include "expression.h"
 

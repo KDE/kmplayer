@@ -32,6 +32,14 @@ set(libkmplayercommon_SRCS
   viewarea.cpp
 )
 
+ecm_qt_declare_logging_category(libkmplayercommon_SRCS
+    HEADER kmplayercommon_log.h
+    IDENTIFIER LOG_KMPLAYER_COMMON
+    CATEGORY_NAME kmplayer.common
+    DESCRIPTION "KMPlayer Common lib"
+    EXPORT KMPLAYER
+)
+
 qt5_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.master.xml
     ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::MasterProcessInfo)
 qt5_add_dbus_adaptor(libkmplayercommon_SRCS
@@ -67,6 +75,14 @@ install(TARGETS kmplayercommon ${INSTALL_TARGETS_DEFAULT_ARGS} )
 
 set(kmplayerpart_SRCS kmplayer_part.cpp)
 
+ecm_qt_declare_logging_category(kmplayerpart_SRCS
+    HEADER kmplayerpart_log.h
+    IDENTIFIER LOG_KMPLAYER_PART
+    CATEGORY_NAME kmplayer.kpart
+    DESCRIPTION "KMPlayer KPart"
+    EXPORT KMPLAYER
+)
+
 add_library(kmplayerpart MODULE ${kmplayerpart_SRCS})
 
 target_link_libraries(kmplayerpart
@@ -90,6 +106,14 @@ set(kmplayer_SRCS
 
 #kmplayerbroadcast.cpp
 #kmplayervdr.cpp
+
+ecm_qt_declare_logging_category(kmplayer_SRCS
+    HEADER kmplayerapp_log.h
+    IDENTIFIER LOG_KMPLAYER_APP
+    CATEGORY_NAME kmplayer.app
+    DESCRIPTION "KMPlayer App"
+    EXPORT KMPLAYER
+)
 
 kf5_add_kdeinit_executable(kmplayer ${kmplayer_SRCS} main.cpp)
 
@@ -156,3 +180,10 @@ install(FILES pluginsinfo bookmarks.xml DESTINATION ${DATA_INSTALL_DIR}/kmplayer
 install(FILES kmplayerui.rc kmplayerpartui.rc DESTINATION ${KXMLGUI_INSTALL_DIR}/kmplayer)
 install(FILES kmplayerrc DESTINATION ${CONFIG_INSTALL_DIR})
 #install(FILES kmplayer.kcfg  DESTINATION  ${KCFG_INSTALL_DIR})
+
+
+ecm_qt_install_logging_categories(
+    EXPORT KMPLAYER
+    FILE kmplayer.categories
+    DESTINATION ${KDE_INSTALL_LOGGINGCATEGORIESDIR}
+)

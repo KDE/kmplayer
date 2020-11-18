@@ -43,7 +43,6 @@
 #include <QListWidget>
 
 #include <klocalizedstring.h>
-#include <kdebug.h>
 #include <kmessagebox.h>
 #include <klineedit.h>
 #include <kiconloader.h>
@@ -55,6 +54,7 @@
 #include <KTextWidgets/kpluralhandlingspinbox.h>
 #include <KFontChooserDialog>
 #include "pref.h"
+#include "kmplayercommon_log.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
 #include "mediaobject.h"
@@ -526,7 +526,7 @@ PrefRecordPage::~PrefRecordPage () {
 }
 
 KDE_NO_EXPORT void PrefRecordPage::recording (bool on) {
-    kDebug() << "PrefRecordPage::recording " << on << endl;
+    qCDebug(LOG_KMPLAYER_COMMON) << "PrefRecordPage::recording " << on << endl;
     recordButton->setText (on
             ? i18n ("Stop &Recording")
             : i18n ("Start &Recording"));

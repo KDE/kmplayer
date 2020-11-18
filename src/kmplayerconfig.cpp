@@ -40,13 +40,13 @@
 #include <kconfig.h>
 #include <kconfiggroup.h>
 #include <kurl.h>
-#include <kdebug.h>
 #include <klocalizedstring.h>
 #include <kcombobox.h>
 #include <kmessagebox.h>
 #include <kglobalsettings.h>
 #include <kcolorscheme.h>
 
+#include "kmplayercommon_log.h"
 #include "kmplayerconfig.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"

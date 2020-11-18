@@ -42,8 +42,8 @@
 #include <kstatusbar.h>
 #include <kshortcut.h>
 #include <klocalizedstring.h>
-#include <kdebug.h>
 
+#include "kmplayercommon_log.h"
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
 #include "playlistview.h"
@@ -250,7 +250,7 @@ KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (Node * n) {
-    kWarning() << "Paint called on " << n->nodeName();
+    qCWarning(LOG_KMPLAYER_COMMON) << "Paint called on " << n->nodeName();
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Smil *s) {
@@ -1497,7 +1497,7 @@ MouseVisitor::MouseVisitor (ViewArea *v, MessageType evt, Matrix m, int a, int b
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (Node * n) {
-    kDebug () << "Mouse event ignored for " << n->nodeName ();
+    qCDebug(LOG_KMPLAYER_COMMON) << "Mouse event ignored for " << n->nodeName ();
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Smil *s) {
@@ -1583,13 +1583,13 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
 }
 
 static void followLink (SMIL::LinkingBase * link) {
-    kDebug() << "link to " << link->href << " clicked";
+    qCDebug(LOG_KMPLAYER_COMMON) << "link to " << link->href << " clicked";
     if (link->href.startsWith ("#")) {
         SMIL::Smil * s = SMIL::Smil::findSmilNode (link);
         if (s)
             s->jump (link->href.mid (1));
         else
-            kError() << "In document jumps smil not found" << endl;
+            qCCritical(LOG_KMPLAYER_COMMON) << "In document jumps smil not found" << endl;
     } else {
         PlayListNotify *notify = link->document ()->notify_listener;
         if (notify && !link->target.isEmpty ()) {
@@ -1791,7 +1791,7 @@ public:
         xcb_void_cookie_t cookie = xcb_create_pixmap_checked(connection, scr->root_depth, backing_store, m_view_area->winId(), w, h);
         xcb_generic_error_t* error = xcb_request_check(connection, cookie);
         if (error) {
-            qDebug("failed to create pixmap");
+            qCDebug(LOG_KMPLAYER_COMMON) << "failed to create pixmap";
             return nullptr;
         }
         return cairo_xcb_surface_create(connection, backing_store, visual_of_screen(connection, scr), w, h);
@@ -2180,7 +2180,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
 KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
     surface->clear ();
     surface->node = mrl;
-    kDebug() << mrl;
+    qCDebug(LOG_KMPLAYER_COMMON) << mrl;
     //m_view->viewer()->resetBackgroundColor ();
     if (mrl) {
         updateSurfaceBounds ();
@@ -2296,13 +2296,13 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
         }
         free(attrs);
     } else {
-        kError () << "unknown timer " << e->timerId () << " " << m_repaint_timer << endl;
+        qCCritical(LOG_KMPLAYER_COMMON) << "unknown timer " << e->timerId () << " " << m_repaint_timer << endl;
         killTimer (e->timerId ());
     }
 }
 
 KDE_NO_EXPORT void ViewArea::closeEvent (QCloseEvent * e) {
-    //kDebug () << "closeEvent";
+    //qCDebug(LOG_KMPLAYER_COMMON) << "closeEvent";
     if (m_fullscreen) {
         m_view->fullScreen();
         if (!m_view->topLevelWidget ()->isVisible ())
@@ -2328,7 +2328,7 @@ void ViewArea::destroyVideoWidget (IViewer *widget) {
         delete viewer;
         video_widgets.removeAt(i);
     } else {
-        kWarning () << "destroyVideoWidget widget not found" << endl;
+        qCWarning(LOG_KMPLAYER_COMMON) << "destroyVideoWidget widget not found" << endl;
     }
 }
 
@@ -2350,7 +2350,7 @@ static void setXSelectInput(WId wid, uint32_t mask) {
             setXSelectInput(chlds[i], mask);
         free(reply);
     } else {
-        qDebug("failed to get x children");
+        qCDebug(LOG_KMPLAYER_COMMON) << "failed to get x children";
     }
 }
 
@@ -2396,7 +2396,7 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
                         root = reply->root;
                         free(reply);
                     } else {
-                        qDebug("failed to get x parent");
+                        qCDebug(LOG_KMPLAYER_COMMON) << "failed to get x parent";
                         break;
                     }
                     if (p == va || p == v || p == root)
@@ -2458,7 +2458,7 @@ KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
     setAcceptDrops (true);
     connect (view->viewArea (), SIGNAL (fullScreenChanged ()),
              this, SLOT (fullScreenChanged ()));
-    kDebug() << "VideoOutput::VideoOutput" << endl;
+    qCDebug(LOG_KMPLAYER_COMMON) << "VideoOutput::VideoOutput" << endl;
     setMonitoring (MonitorAll);
     setAttribute (Qt::WA_NoSystemBackground, true);
 
@@ -2472,7 +2472,7 @@ KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
 }
 
 KDE_NO_CDTOR_EXPORT VideoOutput::~VideoOutput () {
-    kDebug() << "VideoOutput::~VideoOutput" << endl;
+    qCDebug(LOG_KMPLAYER_COMMON) << "VideoOutput::~VideoOutput" << endl;
     if (m_plain_window) {
         xcb_connection_t* connection = QX11Info::connection();
         xcb_destroy_window(connection, m_plain_window);
@@ -2482,7 +2482,7 @@ KDE_NO_CDTOR_EXPORT VideoOutput::~VideoOutput () {
 }
 
 void VideoOutput::useIndirectWidget (bool inderect) {
-    kDebug () << "setIntermediateWindow " << !!m_plain_window << "->" << inderect;
+    qCDebug(LOG_KMPLAYER_COMMON) << "setIntermediateWindow " << !!m_plain_window << "->" << inderect;
     if (!clientWinId () || !!m_plain_window != inderect) {
         xcb_connection_t* connection = QX11Info::connection();
         if (inderect) {
@@ -2517,7 +2517,7 @@ void VideoOutput::useIndirectWidget (bool inderect) {
 }
 
 KDE_NO_EXPORT void VideoOutput::embedded(WindowId handle) {
-    kDebug () << "[01;35mwindowChanged[00m " << (int)clientWinId ();
+    qCDebug(LOG_KMPLAYER_COMMON) << "[01;35mwindowChanged[00m " << (int)clientWinId ();
     m_client_window = handle;
     if (clientWinId () && !resized_timer)
          resized_timer = startTimer (50);

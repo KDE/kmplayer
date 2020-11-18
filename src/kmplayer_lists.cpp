@@ -27,8 +27,8 @@
 #include <kfiledialog.h>
 #include <ksharedconfig.h>
 #include <klocalizedstring.h>
-#include <kdebug.h>
 
+#include "kmplayerapp_log.h"
 #include "kmplayer_lists.h"
 #include "kmplayer.h"
 #include "mediaobject.h"
@@ -64,7 +64,7 @@ KDE_NO_EXPORT KMPlayer::Node *FileDocument::childFromTag(const QString &tag) {
 
 void FileDocument::readFromFile (const QString & fn) {
     QFile file (fn);
-    kDebug () << "readFromFile " << fn;
+    qCDebug(LOG_KMPLAYER_APP) << "readFromFile " << fn;
     if (QFileInfo (file).exists ()) {
         file.open (QIODevice::ReadOnly);
         QTextStream inxml (&file);
@@ -77,7 +77,7 @@ void FileDocument::readFromFile (const QString & fn) {
 
 void FileDocument::writeToFile (const QString & fn) {
     QFile file (fn);
-    kDebug () << "writeToFile " << fn;
+    qCDebug(LOG_KMPLAYER_APP) << "writeToFile " << fn;
     file.open (QIODevice::WriteOnly | QIODevice::Truncate);
     file.write (outerXML ().toUtf8 ());
     load_tree_version = m_tree_version;
@@ -109,7 +109,7 @@ KDE_NO_EXPORT void Recents::defer () {
 }
 
 KDE_NO_EXPORT KMPlayer::Node *Recents::childFromTag (const QString & tag) {
-    // kDebug () << nodeName () << " childFromTag " << tag;
+    // qCDebug(LOG_KMPLAYER_APP) << nodeName () << " childFromTag " << tag;
     if (tag == QString::fromLatin1 ("item"))
         return new Recent (m_doc, app);
     else if (tag == QString::fromLatin1 ("group"))
@@ -196,7 +196,7 @@ KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::Source *s, boo
 }
 
 KDE_NO_EXPORT KMPlayer::Node *Playlist::childFromTag (const QString & tag) {
-    // kDebug () << nodeName () << " childFromTag " << tag;
+    // qCDebug(LOG_KMPLAYER_APP) << nodeName () << " childFromTag " << tag;
     QByteArray ba = tag.toUtf8 ();
     const char *name = ba.constData ();
     if (!strcmp (name, "item"))
@@ -241,7 +241,7 @@ KDE_NO_EXPORT void PlaylistItemBase::activate () {
             pn = title.isEmpty () ? src : title;
         }
         pl->setCaption (pn);
-        //kDebug () << "cloning to " << data;
+        //qCDebug(LOG_KMPLAYER_APP) << "cloning to " << data;
         QTextStream inxml (&data, QIODevice::ReadOnly);
         KMPlayer::readXML (pl, inxml, QString (), false);
         pl->normalize ();
@@ -601,7 +601,7 @@ void Generator::begin () {
             QString::number (media_info->rawData ().size () / 1024.0) + "kb | ";
     info += process;
     message (KMPlayer::MsgInfoString, &info);
-    kDebug() << process;
+    qCDebug(LOG_KMPLAYER_APP) << process;
     qprocess->start (process);
     state = state_began;
 }
@@ -684,7 +684,7 @@ void Generator::started () {
 }
 
 void Generator::error (QProcess::ProcessError err) {
-    kDebug () << (int)err;
+    qCDebug(LOG_KMPLAYER_APP) << (int)err;
     QString msg ("Couldn't start process");
     message (KMPlayer::MsgInfoString, &msg);
     deactivate ();

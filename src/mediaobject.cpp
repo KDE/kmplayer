@@ -31,7 +31,6 @@
 #include <QMimeDatabase>
 #include <QMimeType>
 
-#include <kdebug.h>
 #include <klocalizedstring.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
@@ -43,6 +42,7 @@
 #include "expression.h"
 #include "viewarea.h"
 #include "kmplayerpartbase.h"
+#include "kmplayercommon_log.h"
 
 using namespace KMPlayer;
 
@@ -112,14 +112,14 @@ MediaManager::~MediaManager () {
             i != m_processes.end ();
             i = m_processes.begin () /*~Process removes itself from this list*/)
     {
-        kDebug() << "~MediaManager " << *i << endl;
+        qCDebug(LOG_KMPLAYER_COMMON) << "~MediaManager " << *i << endl;
         delete *i;
     }
     for (ProcessList::iterator i = m_recorders.begin ();
             i != m_recorders.end ();
             i = m_recorders.begin ())
     {
-        kDebug() << "~MediaManager " << *i << endl;
+        qCDebug(LOG_KMPLAYER_COMMON) << "~MediaManager " << *i << endl;
         delete *i;
     }
     const ProcessInfoMap::iterator ie = m_process_infos.end ();
@@ -132,7 +132,7 @@ MediaManager::~MediaManager () {
         delete i.value ();
 
     if (m_media_objects.size ()) {
-        kError () << "~MediaManager media list not empty " << m_media_objects.size () << endl;
+        qCCritical(LOG_KMPLAYER_COMMON) << "~MediaManager media list not empty " << m_media_objects.size () << endl;
         // bug elsewere, but don't crash
         const MediaList::iterator me = m_media_objects.end ();
         for (MediaList::iterator i = m_media_objects.begin (); i != me; ) {
@@ -145,7 +145,7 @@ MediaManager::~MediaManager () {
             }
         }
         if (m_media_objects.size ())
-            kError () << "~MediaManager media list still not empty" << m_media_objects.size () << endl;
+            qCCritical(LOG_KMPLAYER_COMMON) << "~MediaManager media list still not empty" << m_media_objects.size () << endl;
     }
     global_media->unref ();
 }
@@ -162,7 +162,7 @@ MediaObject *MediaManager::createAVMedia (Node *node, const QByteArray &) {
     if (rec) {
         av->process = m_record_infos[rec->recorder]->create (m_player, av);
         m_recorders.push_back (av->process);
-        kDebug() << "Adding recorder " << endl;
+        qCDebug(LOG_KMPLAYER_COMMON) << "Adding recorder " << endl;
     } else {
         av->process = m_process_infos[m_player->processName (
                 av->mrl ())]->create (m_player, av);
@@ -186,7 +186,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
         IProcess::State olds, IProcess::State news) {
     //p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
     Mrl *mrl = media->mrl ();
-    kDebug () << "processState " << media->process->process_info->name << " "
+    qCDebug(LOG_KMPLAYER_COMMON) << "processState " << media->process->process_info->name << " "
         << statemap[olds] << " -> " << statemap[news];
 
     if (!mrl) { // document dispose
@@ -284,7 +284,7 @@ void MediaManager::grabPicture (AudioVideoMedia *media) {
 }
 
 void MediaManager::processDestroyed (IProcess *process) {
-    kDebug() << "processDestroyed " << process << endl;
+    qCDebug(LOG_KMPLAYER_COMMON) << "processDestroyed " << process << endl;
     m_processes.removeAll (process);
     m_recorders.removeAll (process);
 }
@@ -359,7 +359,7 @@ static bool isPlayListMime (const QString & mime) {
         m.truncate (plugin_pos);
     QByteArray ba = m.toAscii ();
     const char * mimestr = ba.data ();
-    kDebug() << "isPlayListMime " << mimestr;
+    qCDebug(LOG_KMPLAYER_COMMON) << "isPlayListMime " << mimestr;
     return mimestr && (!strcmp (mimestr, "audio/mpegurl") ||
             !strcmp (mimestr, "audio/x-mpegurl") ||
             !strncmp (mimestr, "video/x-ms", 10) ||
@@ -454,7 +454,7 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
             if (m && !m->src.isEmpty () &&
                   m->src != "Playlist://" &&
                   !KUrlAuthorized::authorizeUrlAction ("redirect", m->src, kurl)) {
-                kWarning () << "redirect access denied";
+                qCWarning(LOG_KMPLAYER_COMMON) << "redirect access denied";
                 ready ();
                 return true;
             }
@@ -478,7 +478,7 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
                     mrl->mimetype = mimeTyoe.name ();
                     setMimetype (mrl->mimetype);
                 }
-                kDebug () << "wget2 " << str << " " << mime;
+                qCDebug(LOG_KMPLAYER_COMMON) << "wget2 " << str << " " << mime;
             } else {
                 setMimetype (mime);
             }
@@ -533,7 +533,7 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
         }
     }
     if (check_access || memory_cache->preserve (str)) {
-        //kDebug () << "downloading " << str;
+        //qCDebug(LOG_KMPLAYER_COMMON) << "downloading " << str;
         job = KIO::get (kurl, KIO::NoReload, KIO::HideProgressInfo);
         job->addMetaData ("PropagateHttpHeader", "true");
         job->addMetaData ("errorPage", "false");
@@ -545,7 +545,7 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
             connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
                     this, SLOT (slotMimetype (KIO::Job *, const QString &)));
     } else {
-        //kDebug () << "download preserved " << str;
+        //qCDebug(LOG_KMPLAYER_COMMON) << "download preserved " << str;
         connect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
                  this, SLOT (cachePreserveRemoved (const QString &)));
         preserve_wait = true;
@@ -579,13 +579,13 @@ KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
                             pls_groupfound = true;
                         else
                             break;
-                        kDebug () << "Group found: " << line;
+                        qCDebug(LOG_KMPLAYER_COMMON) << "Group found: " << line;
                     } else if (pls_groupfound) {
                         int eq_pos = line.indexOf (QChar ('='));
                         if (eq_pos > 0) {
                             if (line.toLower ().startsWith (QString ("numberofentries"))) {
                                 nr = line.mid (eq_pos + 1).trimmed ().toInt ();
-                                kDebug () << "numberofentries : " << nr;
+                                qCDebug(LOG_KMPLAYER_COMMON) << "numberofentries : " << nr;
                                 if (nr > 0 && nr < 1024)
                                     entries = new Entry[nr];
                                 else
@@ -694,7 +694,7 @@ void MediaInfo::create () {
         switch (type) {
         case MediaManager::Audio:
         case MediaManager::AudioVideo:
-            kDebug() << data.size ();
+            qCDebug(LOG_KMPLAYER_COMMON) << data.size ();
             if (!data.size () || !readChildDoc ())
                 media = mgr->createAVMedia (node, data);
             break;
@@ -856,7 +856,7 @@ AudioVideoMedia::AudioVideoMedia (MediaManager *manager, Node *node)
    process (nullptr),
    m_viewer (nullptr),
    request (ask_nothing) {
-    kDebug() << "AudioVideoMedia::AudioVideoMedia" << endl;
+    qCDebug(LOG_KMPLAYER_COMMON) << "AudioVideoMedia::AudioVideoMedia" << endl;
 }
 
 AudioVideoMedia::~AudioVideoMedia () {
@@ -871,15 +871,15 @@ AudioVideoMedia::~AudioVideoMedia () {
         request = ask_nothing;
         delete process;
     }
-    kDebug() << "AudioVideoMedia::~AudioVideoMedia";
+    qCDebug(LOG_KMPLAYER_COMMON) << "AudioVideoMedia::~AudioVideoMedia";
 }
 
 bool AudioVideoMedia::play () {
-    kDebug() << process;
+    qCDebug(LOG_KMPLAYER_COMMON) << process;
     if (process) {
-        kDebug() << process->state ();
+        qCDebug(LOG_KMPLAYER_COMMON) << process->state ();
         if (process->state () > IProcess::Ready) {
-            kError() << "already playing" << endl;
+            qCCritical(LOG_KMPLAYER_COMMON) << "already playing" << endl;
             return true;
         }
         if (process->state () != IProcess::Ready) {
@@ -894,7 +894,7 @@ bool AudioVideoMedia::play () {
 
 bool AudioVideoMedia::grabPicture (const QString &file, int frame) {
     if (process) {
-        kDebug() << "AudioVideoMedia::grab " << file << endl;
+        qCDebug(LOG_KMPLAYER_COMMON) << "AudioVideoMedia::grab " << file << endl;
         m_grab_file = file;
         m_frame = frame;
         if (process->state () < IProcess::Ready) {
@@ -989,9 +989,9 @@ ImageData::ImageData( const QString & img)
 #endif
    url (img) {
     //if (img.isEmpty ())
-    //    //kDebug() << "New ImageData for " << this << endl;
+    //    //qCDebug(LOG_KMPLAYER_COMMON) << "New ImageData for " << this << endl;
     //else
-    //    //kDebug() << "New ImageData for " << img << endl;
+    //    //qCDebug(LOG_KMPLAYER_COMMON) << "New ImageData for " << img << endl;
 }
 
 ImageData::~ImageData() {
@@ -1112,7 +1112,7 @@ KDE_NO_EXPORT void ImageMedia::setupImage (const QString &url) {
     if (!isEmpty ()) {
         buffer = new QBuffer (&data);
         img_movie = new QMovie (buffer);
-        //kDebug() << img_movie->frameCount ();
+        //qCDebug(LOG_KMPLAYER_COMMON) << img_movie->frameCount ();
         if (img_movie->frameCount () > 1) {
             cached_img->flags |= (short)ImageData::ImagePixmap | ImageData::ImageAnimated;
             connect (img_movie, SIGNAL (updated (const QRect &)),
@@ -1192,7 +1192,7 @@ KDE_NO_EXPORT void ImageMedia::svgUpdated() {
 }
 
 KDE_NO_EXPORT void ImageMedia::movieResize (const QSize &) {
-    //kDebug () << "movieResize" << endl;
+    //qCDebug(LOG_KMPLAYER_COMMON) << "movieResize" << endl;
     if (m_node)
         m_node->document ()->post (m_node, new Posting (m_node, MsgMediaUpdated));
 }

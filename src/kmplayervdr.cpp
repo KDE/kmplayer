@@ -41,7 +41,6 @@
 #include <qeventloop.h>
 
 #include <klocalizedstring.h>
-#include <kdebug.h>
 #include <kmessagebox.h>
 #include <klineedit.h>
 #include <kurlrequester.h>
@@ -55,6 +54,7 @@
 #include <kdeversion.h>
 #include <kinputdialog.h>
 
+#include "kmplayerapp_log.h"
 #include "kmplayer_backend_stub.h"
 #include "kmplayer_callback.h"
 #include "kmplayerpartbase.h"

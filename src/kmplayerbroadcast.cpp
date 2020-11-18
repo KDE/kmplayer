@@ -34,13 +34,13 @@
 #include <qtimer.h>
 
 #include <klocalizedstring.h>
-#include <kdebug.h>
 #include <kled.h>
 #include <kconfig.h>
 #include <kprocess.h>
 #include <kprocctrl.h>
 #include <kmessagebox.h>
 
+#include "kmplayerapp_log.h"
 #include "kmplayerbroadcast.h"
 #include "kmplayerprocess.h"
 #include "kmplayerview.h"

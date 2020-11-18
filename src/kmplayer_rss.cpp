@@ -17,7 +17,8 @@
  **/
 
 #include "config-kmplayer.h"
-#include <kdebug.h>
+
+#include "kmplayercommon_log.h"
 #include "kmplayer_rss.h"
 #include "kmplayer_atom.h"
 

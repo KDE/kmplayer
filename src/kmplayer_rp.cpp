@@ -21,8 +21,7 @@
 #include <qcolor.h>
 #include <qtimer.h>
 
-#include <kdebug.h>
-
+#include "kmplayercommon_log.h"
 #include "kmplayer_rp.h"
 #include "kmplayer_smil.h"
 #include "mediaobject.h"
@@ -60,7 +59,7 @@ KDE_NO_EXPORT void RP::Imfl::closed () {
 }
 
 KDE_NO_EXPORT void RP::Imfl::defer () {
-    kDebug () << "RP::Imfl::defer ";
+    qCDebug(LOG_KMPLAYER_COMMON) << "RP::Imfl::defer ";
     setState (state_deferred);
     for (Node *n = firstChild (); n; n = n->nextSibling ())
         if (n->id == RP::id_node_image && !n->active ())
@@ -68,7 +67,7 @@ KDE_NO_EXPORT void RP::Imfl::defer () {
 }
 
 KDE_NO_EXPORT void RP::Imfl::activate () {
-    kDebug () << "RP::Imfl::activate ";
+    qCDebug(LOG_KMPLAYER_COMMON) << "RP::Imfl::activate ";
     resolved = true;
     setState (state_activated);
     int timings_count = 0;
@@ -96,7 +95,7 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
 }
 
 KDE_NO_EXPORT void RP::Imfl::finish () {
-    kDebug () << "RP::Imfl::finish ";
+    qCDebug(LOG_KMPLAYER_COMMON) << "RP::Imfl::finish ";
     Mrl::finish ();
     if (duration_timer) {
         document ()->cancelPosting (duration_timer);
@@ -108,7 +107,7 @@ KDE_NO_EXPORT void RP::Imfl::finish () {
 }
 
 KDE_NO_EXPORT void RP::Imfl::deactivate () {
-    kDebug () << "RP::Imfl::deactivate ";
+    qCDebug(LOG_KMPLAYER_COMMON) << "RP::Imfl::deactivate ";
     if (unfinished ())
         finish ();
     else if (duration_timer) {
@@ -188,7 +187,7 @@ KDE_NO_EXPORT Node *RP::Imfl::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void RP::Imfl::repaint () {
     if (!active ()) {
-        kWarning () << "Spurious Imfl repaint";
+        qCWarning(LOG_KMPLAYER_COMMON) << "Spurious Imfl repaint";
     } else if (surface () && !size.isEmpty ()) {
         rp_surface->markDirty ();
         rp_surface->repaint (SRect (0, 0, size));
@@ -209,7 +208,7 @@ KDE_NO_EXPORT void RP::Image::closed () {
 }
 
 KDE_NO_EXPORT void RP::Image::activate () {
-    kDebug () << "RP::Image::activate";
+    qCDebug(LOG_KMPLAYER_COMMON) << "RP::Image::activate";
     setState (state_activated);
     isPlayable (); // update src attribute
     if (!media_info)
@@ -242,7 +241,7 @@ KDE_NO_EXPORT void RP::Image::message (MessageType msg, void *content) {
 }
 
 KDE_NO_EXPORT void RP::Image::dataArrived () {
-    kDebug () << "RP::Image::remoteReady";
+    qCDebug(LOG_KMPLAYER_COMMON) << "RP::Image::remoteReady";
     ImageMedia *im = media_info->media ? (ImageMedia *)media_info->media : nullptr;
     if (im && !im->isEmpty ()) {
         size.width = im->cached_img->width;
@@ -400,7 +399,7 @@ KDE_NO_EXPORT void RP::Crossfade::activate () {
 }
 
 KDE_NO_EXPORT void RP::Crossfade::begin () {
-    //kDebug () << "RP::Crossfade::begin";
+    //qCDebug(LOG_KMPLAYER_COMMON) << "RP::Crossfade::begin";
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
@@ -422,7 +421,7 @@ KDE_NO_EXPORT void RP::Fadein::activate () {
 }
 
 KDE_NO_EXPORT void RP::Fadein::begin () {
-    //kDebug () << "RP::Fadein::begin";
+    //qCDebug(LOG_KMPLAYER_COMMON) << "RP::Fadein::begin";
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
@@ -443,7 +442,7 @@ KDE_NO_EXPORT void RP::Fadeout::activate () {
 }
 
 KDE_NO_EXPORT void RP::Fadeout::begin () {
-    //kDebug () << "RP::Fadeout::begin";
+    //qCDebug(LOG_KMPLAYER_COMMON) << "RP::Fadeout::begin";
     TimingsBase::begin ();
 }
 
@@ -479,7 +478,7 @@ KDE_NO_EXPORT void RP::Wipe::activate () {
 }
 
 KDE_NO_EXPORT void RP::Wipe::begin () {
-    //kDebug () << "RP::Wipe::begin";
+    //qCDebug(LOG_KMPLAYER_COMMON) << "RP::Wipe::begin";
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
@@ -499,7 +498,7 @@ KDE_NO_EXPORT void RP::ViewChange::activate () {
 }
 
 KDE_NO_EXPORT void RP::ViewChange::begin () {
-    kDebug () << "RP::ViewChange::begin";
+    qCDebug(LOG_KMPLAYER_COMMON) << "RP::ViewChange::begin";
     setState (state_began);
     Node *p = parentNode ();
     if (p->id == RP::id_node_imfl)

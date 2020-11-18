@@ -41,7 +41,6 @@
 
 #include <kmessagebox.h>
 #include <kaboutdata.h>
-#include <kdebug.h>
 #include <kbookmarkmenu.h>
 #include <kbookmarkmanager.h>
 #include <kbookmark.h>
@@ -55,6 +54,7 @@
 #include <kio/jobclasses.h>
 #include <kurlauthorized.h>
 
+#include "kmplayercommon_log.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerview.h"
 #include "playmodel.h"
@@ -125,7 +125,7 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
     QString localbmfile = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/kmplayer/bookmarks.xml";
     if (localbmfile != bmfile) {
         bool bmfileCopied = QFile(bmfile).copy(localbmfile);
-        kDebug() << "bookmarks.xml copied successfully?" << bmfileCopied;
+        qCDebug(LOG_KMPLAYER_COMMON) << "bookmarks.xml copied successfully?" << bmfileCopied;
     }
     m_bookmark_manager = KBookmarkManager::managerForFile (localbmfile, "kmplayer");
     m_bookmark_owner = new BookmarkOwner (this);
@@ -235,7 +235,7 @@ void PartBase::connectInfoPanel (InfoWindow * infopanel) {
 }
 
 PartBase::~PartBase () {
-    kDebug() << "PartBase::~PartBase";
+    qCDebug(LOG_KMPLAYER_COMMON) << "PartBase::~PartBase";
     m_view = (View*) nullptr;
     stopRecording ();
     stop ();
@@ -469,7 +469,7 @@ bool PartBase::openUrl (const QUrl &url) {
 }
 
 bool PartBase::openUrl (const KUrl &url) {
-    kDebug () << "PartBase::openUrl " << url.url() << url.isValid ();
+    qCDebug(LOG_KMPLAYER_COMMON) << "PartBase::openUrl " << url.url() << url.isValid ();
     if (!m_view) return false;
     stop ();
     Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
@@ -498,7 +498,7 @@ bool PartBase::openUrl(const QList<QUrl>& urls) {
 }
 
 void PartBase::openUrl (const KUrl &u, const QString &t, const QString &srv) {
-    kDebug() << u << " " << t << " " << srv;
+    qCDebug(LOG_KMPLAYER_COMMON) << u << " " << t << " " << srv;
     QDBusMessage msg = QDBusMessage::createMethodCall (
             "org.kde.klauncher", "/KLauncher",
             "org.kde.KLauncher", "start_service_by_desktop_name");
@@ -538,7 +538,7 @@ void PartBase::timerEvent (QTimerEvent * e) {
 }
 
 void PartBase::playingStarted () {
-    kDebug () << "playingStarted " << this;
+    qCDebug(LOG_KMPLAYER_COMMON) << "playingStarted " << this;
     if (m_view) {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
@@ -555,7 +555,7 @@ void PartBase::slotPlayingStarted () {
 }
 
 void PartBase::playingStopped () {
-    kDebug () << "playingStopped " << this;
+    qCDebug(LOG_KMPLAYER_COMMON) << "playingStopped " << this;
     if (m_view) {
         m_view->controlPanel ()->setPlaying (false);
         m_view->playingStop ();
@@ -638,7 +638,7 @@ KDE_NO_EXPORT void PartBase::playListItemActivated(const QModelIndex &index) {
     if (vi->node) {
         QString src = ri->source;
         NodePtrW node = vi->node;
-        //kDebug() << src << " " << vi->node->nodeName();
+        //qCDebug(LOG_KMPLAYER_COMMON) << src << " " << vi->node->nodeName();
         Source * source = src.isEmpty() ? m_source : m_sources[src.toAscii().constData()];
         if (node->isPlayable () || id_node_playlist_item == node->id) {
             source->play (node->mrl ()); //may become !isPlayable by lazy loading
@@ -1061,14 +1061,14 @@ void Source::setDimensions (NodePtr node, int w, int h) {
         }
         if (Mrl::WindowMode == mrl->view_mode || m_aspect < 0.001)
             setAspect (node, h > 0 ? 1.0 * w / h : 0.0);
-            //kDebug () << "setDimensions " << w << "x" << h << " a:" << m_aspect;
+            //qCDebug(LOG_KMPLAYER_COMMON) << "setDimensions " << w << "x" << h << " a:" << m_aspect;
         else if (ev)
             emit dimensionsChanged ();
     }
 }
 
 void Source::setAspect (NodePtr node, float a) {
-    //kDebug () << "setAspect " << a;
+    //qCDebug(LOG_KMPLAYER_COMMON) << "setAspect " << a;
     Mrl *mrl = node ? node->mrl () : nullptr;
     bool changed = false;
     if (mrl &&
@@ -1110,17 +1110,17 @@ KDE_NO_EXPORT void Source::setLoading (int percentage) {
 /*
 static void printTree (NodePtr root, QString off=QString()) {
     if (!root) {
-        kDebug() << off << "[null]";
+        qCDebug(LOG_KMPLAYER_COMMON) << off << "[null]";
         return;
     }
-    kDebug() << off << root->nodeName() << " " << (Element*)root << (root->isPlayable() ? root->mrl ()->src : QString ("-"));
+    qCDebug(LOG_KMPLAYER_COMMON) << off << root->nodeName() << " " << (Element*)root << (root->isPlayable() ? root->mrl ()->src : QString ("-"));
     off += QString ("  ");
     for (NodePtr e = root->firstChild(); e; e = e->nextSibling())
         printTree(e, off);
 }*/
 
 void Source::setUrl (const QString &url) {
-    kDebug() << url;
+    qCDebug(LOG_KMPLAYER_COMMON) << url;
     m_url = KUrl (url);
     if (m_document && !m_document->hasChildNodes () &&
             (m_document->mrl()->src.isEmpty () ||
@@ -1167,7 +1167,7 @@ KDE_NO_EXPORT void Source::setSubtitle (int id) {
 
 void Source::reset () {
     if (m_document) {
-        kDebug() << "Source::reset " << name () << endl;
+        qCDebug(LOG_KMPLAYER_COMMON) << "Source::reset " << name () << endl;
         NodePtr doc = m_document; // avoid recursive calls
         m_document = nullptr;
         doc->reset ();
@@ -1195,7 +1195,7 @@ void Source::play (Mrl *mrl) {
     m_width = mrl->size.width;
     m_height = mrl->size.height;
     m_aspect = mrl->aspect;
-    //kDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ());
+    //qCDebug(LOG_KMPLAYER_COMMON) << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ());
     m_player->updateTree ();
     emit dimensionsChanged ();
 }
@@ -1205,7 +1205,7 @@ bool Source::authoriseUrl (const QString &) {
 }
 
 void Source::setTimeout (int ms) {
-    //kDebug () << "Source::setTimeout " << ms;
+    //qCDebug(LOG_KMPLAYER_COMMON) << "Source::setTimeout " << ms;
     if (m_doc_timer)
         killTimer (m_doc_timer);
     m_doc_timer = ms > -1 ? startTimer (ms) : 0;
@@ -1226,7 +1226,7 @@ void Source::setCurrent (Mrl *mrl) {
 }
 
 void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
-    //kDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << endl;
+    //qCDebug(LOG_KMPLAYER_COMMON) << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << endl;
     if (ns == Node::state_activated &&
             elm->mrl ()) {
         if (Mrl::WindowMode != elm->mrl ()->view_mode &&
@@ -1274,11 +1274,11 @@ void Source::insertURL (NodePtr node, const QString & mrl, const QString & title
     QString cur_url = node->mrl ()->absolutePath ();
     KUrl url (cur_url, mrl);
     QString urlstr = QUrl::fromPercentEncoding (url.url ().toUtf8 ());
-    kDebug() << cur_url << " " << urlstr;
+    qCDebug(LOG_KMPLAYER_COMMON) << cur_url << " " << urlstr;
     if (!url.isValid ())
-        kError () << "try to append non-valid url" << endl;
+        qCCritical(LOG_KMPLAYER_COMMON) << "try to append non-valid url" << endl;
     else if (QUrl::fromPercentEncoding (cur_url.toUtf8 ()) == urlstr)
-        kError () << "try to append url to itself" << endl;
+        qCCritical(LOG_KMPLAYER_COMMON) << "try to append url to itself" << endl;
     else {
         int depth = 0; // cache this?
         for (Node *e = node; e->parentNode (); e = e->parentNode ())
@@ -1287,7 +1287,7 @@ void Source::insertURL (NodePtr node, const QString & mrl, const QString & title
             node->appendChild (new GenericURL (m_document, urlstr, title.isEmpty() ? QUrl::fromPercentEncoding (mrl.toUtf8 ()) : title));
             m_player->updateTree ();
         } else
-            kError () << "insertURL exceeds depth limit" << endl;
+            qCCritical(LOG_KMPLAYER_COMMON) << "insertURL exceeds depth limit" << endl;
     }
 }
 
@@ -1320,7 +1320,7 @@ void Source::setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur) {
         m_document->document()->dispose ();
     m_document = doc;
     setCurrent (cur->mrl ());
-    //kDebug () << "setDocument: " << m_document->outerXML ();
+    //qCDebug(LOG_KMPLAYER_COMMON) << "setDocument: " << m_document->outerXML ();
 }
 
 NodePtr Source::document () {
@@ -1431,7 +1431,7 @@ bool Source::isSeekable () {
 }
 
 void Source::setIdentified (bool b) {
-    //kDebug () << "Source::setIdentified " << m_identified << b;
+    //qCDebug(LOG_KMPLAYER_COMMON) << "Source::setIdentified " << m_identified << b;
     m_identified = b;
     if (!b) {
         m_audio_infos = nullptr;
@@ -1457,11 +1457,11 @@ void Source::slotActivate ()
 URLSource::URLSource (PartBase * player, const KUrl & url)
     : Source (i18n ("URL"), player, "urlsource"), activated (false) {
     setUrl (url.url ());
-    //kDebug () << "URLSource::URLSource";
+    //qCDebug(LOG_KMPLAYER_COMMON) << "URLSource::URLSource";
 }
 
 URLSource::~URLSource () {
-    //kDebug () << "URLSource::~URLSource";
+    //qCDebug(LOG_KMPLAYER_COMMON) << "URLSource::~URLSource";
 }
 
 void URLSource::init () {
@@ -1569,7 +1569,7 @@ bool URLSource::authoriseUrl (const QString &url) {
             dest.isLocalFile () &&
 #endif
                 !KUrlAuthorized::authorizeUrlAction ("redirect", base, dest)) {
-            kWarning () << "requestPlayURL from document " << base << " to play " << dest << " is not allowed";
+            qCWarning(LOG_KMPLAYER_COMMON) << "requestPlayURL from document " << base << " to play " << dest << " is not allowed";
             return false;
         }
     }

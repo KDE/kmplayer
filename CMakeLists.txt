@@ -23,6 +23,7 @@ include(ECMInstallIcons)
 include(FeatureSummary)
 Include(CheckIncludeFiles)
 include(ECMSetupVersion)
+include(ECMQtDeclareLoggingCategory)
 include(FindXCB)
 
 ecm_setup_version(${KMPLAYER_VERSION_STRING} VARIABLE_PREFIX KMPLAYERPRIVATE

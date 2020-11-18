@@ -18,6 +18,7 @@
 
 #include "playmodel.h"
 #include "playlistview.h"
+#include "kmplayercommon_log.h"
 
 #include <qpixmap.h>
 #include <qtimer.h>
@@ -305,7 +306,7 @@ int PlayModel::columnCount (const QModelIndex&) const
 }
 
 void dumpTree( PlayItem *p, const QString &indent ) {
-    qDebug( "%s%s", qPrintable(indent),qPrintable(p->title));
+    qCDebug(LOG_KMPLAYER_COMMON, "%s%s", qPrintable(indent),qPrintable(p->title));
     for (int i=0; i < p->childCount(); i++)
         dumpTree(p->child(i), indent+"  ");
 }
@@ -434,7 +435,7 @@ void PlayModel::updateTree (int id, NodePtr root, NodePtr active,
         if (need_timer)
             QTimer::singleShot (0, this, SLOT (updateTrees ()));
     } else
-        qDebug ("updateTree root item not found");
+        qCDebug(LOG_KMPLAYER_COMMON) << "updateTree root item not found";
 }
 
 KDE_NO_EXPORT void PlayModel::updateTrees () {

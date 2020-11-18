@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <vector>
 
-
+#include "kmplayercommon_log.h"
 #include "triestring.h"
 
 namespace KMPlayer {
@@ -497,7 +497,7 @@ void Ids::reset() {
     attr_fill.clear ();
     attr_fit.clear ();
     if (trieRoot()->children.size()) {
-        qWarning ("Trie not empty");
+        qCWarning(LOG_KMPLAYER_COMMON) << "Trie not empty";
         dumpTrie ();
     //} else {
         //delete root_trie;

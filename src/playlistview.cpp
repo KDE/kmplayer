@@ -43,9 +43,9 @@
 #include <kfind.h>
 #include <kaction.h>
 #include <klocalizedstring.h>
-#include <kdebug.h>
 #include <KActionCollection>
 
+#include "kmplayercommon_log.h"
 #include "playlistview.h"
 #include "playmodel.h"
 #include "kmplayerview.h"
@@ -452,14 +452,14 @@ KDE_NO_EXPORT void PlayListView::slotFind () {
 }
 
 /*static QTreeWidgetItem * findNodeInTree (NodePtr n, QTreeWidgetItem * item) {
-    //kDebug () << "item:" << item->text (0) << " n:" << (n ? n->nodeName () : "null" );
+    //qCDebug(LOG_KMPLAYER_COMMON) << "item:" << item->text (0) << " n:" << (n ? n->nodeName () : "null" );
     PlayItem * pi = static_cast <PlayItem *> (item);
     if (!n || !pi->node)
         return 0L;
     if (n == pi->node)
         return item;
     for (int i = 0; i < item->childCount (); ++i) {
-        //kDebug () << "ci:" << ci->text (0) << " n:" << n->nodeName ();
+        //qCDebug(LOG_KMPLAYER_COMMON) << "ci:" << ci->text (0) << " n:" << n->nodeName ();
         QTreeWidgetItem *vi = findNodeInTree (n, item->child (i));
         if (vi)
             return vi;
@@ -588,12 +588,12 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
         }
     }
     m_current_find_elm = n;
-    kDebug () << " search for " << str << "=" << (node ? node->nodeName () : "not found") << " next:" << (n ? n->nodeName () : " not found");
+    qCDebug(LOG_KMPLAYER_COMMON) << " search for " << str << "=" << (node ? node->nodeName () : "not found") << " next:" << (n ? n->nodeName () : " not found");
     if (found) {
         QTreeWidgetItem *fc = findNodeInTree (node, ri);
         if (!fc) {
             m_current_find_elm = 0L;
-            kDebug () << "node not found in tree tree:" << ri->id;
+            qCDebug(LOG_KMPLAYER_COMMON) << "node not found in tree tree:" << ri->id;
         } else {
             fc->setSelected (true);
             if (m_current_find_attr && fc->childCount () && fc->child (0)->childCount ())

@@ -51,12 +51,12 @@
 
 #include <kiconloader.h>
 #include <kstatusbar.h>
-#include <kdebug.h>
 #include <klocalizedstring.h>
 #include <kactioncollection.h>
 #include <kshortcut.h>
 #include <kfinddialog.h>
 
+#include "kmplayercommon_log.h"
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
 #include "playlistview.h"
@@ -307,7 +307,7 @@ bool View::setPicture (const QString & path) {
     else {
         m_image = QImage (path);
         if (m_image.isNull ())
-            kDebug() << "View::setPicture failed " << path;
+            qCDebug(LOG_KMPLAYER_COMMON) << "View::setPicture failed " << path;
         else if (m_image.depth () < 24)
             m_image = m_image.convertToFormat (QImage::Format_RGB32);
     }

@@ -28,11 +28,11 @@
 #include <qtimer.h>
 #include <QBuffer>
 
-#include <kdebug.h>
 #include <kurl.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 
+#include "kmplayercommon_log.h"
 #include "kmplayer_smil.h"
 #include "kmplayer_rp.h"
 #include "expression.h"
@@ -179,12 +179,12 @@ static bool parseTransitionParam (Node *n, TransitionModule &m, Runtime *r,
             m.trans_in = t;
             r->trans_in_dur = t->dur;
         } else {
-            kWarning() << "Transition " << val << " not found in head";
+            qCWarning(LOG_KMPLAYER_COMMON) << "Transition " << val << " not found in head";
         }
     } else if (para == "transOut") {
         m.trans_out = findTransition (n, val);
         if (!m.trans_out)
-            kWarning() << "Transition " << val << " not found in head";
+            qCWarning(LOG_KMPLAYER_COMMON) << "Transition " << val << " not found in head";
     } else {
         return false;
     }
@@ -424,7 +424,7 @@ void setDurationItem (Node *n, const QString &val, Runtime::DurationItem *itm) {
                     }
                 }
             } else
-                kWarning () << "setDuration no match " << cval;
+                qCWarning(LOG_KMPLAYER_COMMON) << "setDuration no match " << cval;
             if (!target &&
                    dur >= Runtime::DurActivated && dur <= Runtime::DurOutBounds)
                 target = n;
@@ -499,7 +499,7 @@ KDE_NO_EXPORT void Runtime::start () {
                 if (rt)
                     offset -= element->document()->last_event_time/10 - rt->start_time;
                 stop = false;
-                kWarning() << "start trigger on started element";
+                qCWarning(LOG_KMPLAYER_COMMON) << "start trigger on started element";
             } // else wait for start event
             break;
         }
@@ -511,7 +511,7 @@ KDE_NO_EXPORT void Runtime::start () {
                 if (rt)
                     offset -= element->document()->last_event_time/10 - rt->finish_time;
                 stop = false;
-                kWarning() << "start trigger on finished element";
+                qCWarning(LOG_KMPLAYER_COMMON) << "start trigger on finished element";
             } // else wait for end event
             break;
         }
@@ -637,7 +637,7 @@ KDE_NO_EXPORT void Runtime::message (MessageType msg, void *content) {
                 duration_timer = nullptr;
                 doFinish ();
             } else {
-                kWarning () << "unhandled timer event";
+                qCWarning(LOG_KMPLAYER_COMMON) << "unhandled timer event";
             }
             return;
         }
@@ -723,7 +723,7 @@ KDE_NO_EXPORT void *Runtime::role (RoleType msg, void *content) {
         case MsgChildTransformedIn:
             break;
         default:
-            kWarning () << "unknown event requested " << (int)msg;
+            qCWarning(LOG_KMPLAYER_COMMON) << "unknown event requested " << (int)msg;
         }
         return nullptr;
     }
@@ -1475,7 +1475,7 @@ void SMIL::Smil::jump (const QString & id) {
     Node *n = document ()->getElementById (this, id, false);
     if (n) {
         if (n->unfinished ())
-            kDebug() << "Smil::jump node is unfinished " << id;
+            qCDebug(LOG_KMPLAYER_COMMON) << "Smil::jump node is unfinished " << id;
         else {
             for (Node *p = n; p; p = p->parentNode ()) {
                 if (p->unfinished () &&
@@ -1485,7 +1485,7 @@ void SMIL::Smil::jump (const QString & id) {
                     break;
                 }
                 if (n->id == id_node_body || n->id == id_node_smil) {
-                    kError() << "Smil::jump node passed body for " <<id<< endl;
+                    qCCritical(LOG_KMPLAYER_COMMON) << "Smil::jump node passed body for " <<id<< endl;
                     break;
                 }
             }
@@ -3332,7 +3332,7 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
     } else if (para == "panZoom") {
         QStringList coords = val.split (QChar (','));
         if (coords.size () < 4) {
-            kWarning () << "panZoom less then four nubmers";
+            qCWarning(LOG_KMPLAYER_COMMON) << "panZoom less then four nubmers";
             return;
         }
         if (!pan_zoom)
@@ -3473,7 +3473,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         clipStart ();
         transition.begin (this, runtime);
     } else {
-        kWarning () << nodeName() << "::begin " << src << " region '" <<
+        qCWarning(LOG_KMPLAYER_COMMON) << nodeName() << "::begin " << src << " region '" <<
             param (Ids::attr_region) << "' not found" << endl;
     }
     Element::begin ();
@@ -4489,7 +4489,7 @@ void SMIL::NewValue::init () {
 void SMIL::NewValue::begin () {
     SMIL::State *st = static_cast <SMIL::State *> (state.ptr ());
     if (name.isEmpty () || !st) {
-        kWarning () << "name is empty or no state";
+        qCWarning(LOG_KMPLAYER_COMMON) << "name is empty or no state";
     } else {
         if (!ref)
             ref = evaluateExpr ("/data");
@@ -4524,7 +4524,7 @@ void SMIL::NewValue::parseParam (const TrieString &para, const QString &val) {
 void SMIL::SetValue::begin () {
     SMIL::State *st = static_cast <SMIL::State *> (state.ptr ());
     if (!ref || !st) {
-        kWarning () << "ref is empty or no state";
+        qCWarning(LOG_KMPLAYER_COMMON) << "ref is empty or no state";
     } else {
         ref->setRoot (st);
         Expression::iterator it = ref->begin(), e = ref->end();
@@ -4542,7 +4542,7 @@ void SMIL::SetValue::begin () {
 void SMIL::DelValue::begin () {
     SMIL::State *st = static_cast <SMIL::State *> (state.ptr ());
     if (!ref || !st) {
-        kWarning () << "ref is empty or no state";
+        qCWarning(LOG_KMPLAYER_COMMON) << "ref is empty or no state";
     } else {
         ref->setRoot (st);
         Expression::iterator it = ref->begin(), e = ref->end();
@@ -4568,7 +4568,7 @@ void SMIL::Send::init () {
 void SMIL::Send::begin () {
     SMIL::State *st = static_cast <SMIL::State *> (state.ptr ());
     if (action.isEmpty () || !st) {
-        kWarning () << "action is empty or no state";
+        qCWarning(LOG_KMPLAYER_COMMON) << "action is empty or no state";
     } else {
         Smil *s = SMIL::Smil::findSmilNode (this);
         if (s) {
@@ -4580,7 +4580,7 @@ void SMIL::Send::begin () {
                 // TODO compose GET url
                 media_info->wget (url, st->domain ());
             } else // TODO ..
-                qDebug("unsupported method %d replace %d", method, replace);
+                qCDebug(LOG_KMPLAYER_COMMON, "unsupported method %d replace %d", method, replace);
         }
     }
 }
@@ -4786,7 +4786,7 @@ KDE_NO_EXPORT void SMIL::Set::begin () {
     if (target)
         target->setParam (changed_attribute, change_to, &modification_id);
     else
-        kWarning () << "target element not found" << endl;
+        qCWarning(LOG_KMPLAYER_COMMON) << "target element not found" << endl;
     AnimateGroup::begin ();
 }
 
@@ -4949,9 +4949,9 @@ void SMIL::AnimateBase::parseParam (const TrieString &name, const QString &val) 
         for (unsigned int i = 0; i < keytime_count; i++) {
             keytimes[i] = kts[i].trimmed().toDouble();
             if (keytimes[i] < 0.0 || keytimes[i] > 1.0)
-                kWarning() << "animateMotion wrong keyTimes values";
+                qCWarning(LOG_KMPLAYER_COMMON) << "animateMotion wrong keyTimes values";
             else if (i == 0 && keytimes[i] > 0.01)
-                kWarning() << "animateMotion first keyTimes value not 0";
+                qCWarning(LOG_KMPLAYER_COMMON) << "animateMotion first keyTimes value not 0";
             else
                 continue;
             free (keytimes);
@@ -5014,7 +5014,7 @@ bool SMIL::AnimateBase::setInterval () {
     else if (values.size () > 1)
         cs /= values.size () - 1;
     if (cs < 0) {
-        kWarning () << "animateMotion has no valid duration interval " <<
+        qCWarning(LOG_KMPLAYER_COMMON) << "animateMotion has no valid duration interval " <<
             interval << endl;
         runtime->doFinish ();
         return false;
@@ -5034,7 +5034,7 @@ bool SMIL::AnimateBase::setInterval () {
                     for (int i = 0; i < 4; ++i) {
                         control_point[i] = kss[i].toDouble();
                         if (control_point[i] < 0 || control_point[i] > 1) {
-                            kWarning () << "keySplines values not between 0-1"
+                            qCWarning(LOG_KMPLAYER_COMMON) << "keySplines values not between 0-1"
                                 << endl;
                             control_point[i] = i > 1 ? 1 : 0;
                             break;
@@ -5058,7 +5058,7 @@ bool SMIL::AnimateBase::setInterval () {
                     for (int i = 0; i < 100; ++i)
                         spline_table[i] = cubicBezier (ax, bx, cx, ay, by, cy, 1.0*i/100);
                 } else {
-                    kWarning () << "keySplines " << interval <<
+                    qCWarning(LOG_KMPLAYER_COMMON) << "keySplines " << interval <<
                         " has not 4 values" << endl;
                 }
             }
@@ -5070,7 +5070,7 @@ bool SMIL::AnimateBase::setInterval () {
         default:
             break;
     }
-    //kDebug() << "setInterval " << steps << " " <<
+    //qCDebug(LOG_KMPLAYER_COMMON) << "setInterval " << steps << " " <<
     //    cur_x.size () << "," << cur_y.size () << "=>"
     //    << end_x.size () << "," << end_y.size () << " d:" << 
     //    delta_x.size () << "," << delta_y.size () << endl;
@@ -5116,7 +5116,7 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
     NodePtr protect = target_element;
     Element *target = static_cast <Element *> (targetElement ());
     if (!target) {
-        kWarning () << "target element not found";
+        qCWarning(LOG_KMPLAYER_COMMON) << "target element not found";
         runtime->doFinish ();
         return;
     }
@@ -5133,7 +5133,7 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
         }
     }
     if (values.size () < 2) {
-        kWarning () << "could not determine change values";
+        qCWarning(LOG_KMPLAYER_COMMON) << "could not determine change values";
         runtime->doFinish ();
         return;
     }

@@ -20,10 +20,10 @@
 #include <time.h>
 
 #include <qtextstream.h>
-#include <kdebug.h>
 #ifdef KMPLAYER_WITH_EXPAT
 #include <expat.h>
 #endif
+#include "kmplayercommon_log.h"
 #include "kmplayerplaylist.h"
 #include "kmplayer_asx.h"
 #include "kmplayer_atom.h"
@@ -214,7 +214,7 @@ SRect Matrix::toUser (const IRect &rect) const {
                 rect.width () / a,
                 rect.height () / d);
     } else {
-        kWarning () << "Not invering " << a << ", " << d << " scale";
+        qCWarning(LOG_KMPLAYER_COMMON) << "Not invering " << a << ", " << d << " scale";
         return SRect ();
     }
 }
@@ -271,7 +271,7 @@ void Node::setState (State nstate) {
 }
 
 void Node::activate () {
-    //kDebug () << nodeName () << " Node::activate";
+    //qCDebug(LOG_KMPLAYER_COMMON) << nodeName () << " Node::activate";
     setState (state_activated);
     if (firstChild ())
         firstChild ()->activate (); // activate only the first
@@ -283,14 +283,14 @@ void Node::begin () {
     if (active ()) {
         setState (state_began);
     } else
-        kError () << nodeName() << " begin call on not active element" << endl;
+        qCCritical(LOG_KMPLAYER_COMMON) << nodeName() << " begin call on not active element" << endl;
 }
 
 void Node::defer () {
     if (active ()) {
         setState (state_deferred);
     } else
-        kError () << "Node::defer () call on not activated element" << endl;
+        qCCritical(LOG_KMPLAYER_COMMON) << "Node::defer () call on not activated element" << endl;
 }
 
 void Node::undefer () {
@@ -302,7 +302,7 @@ void Node::undefer () {
             activate ();
         }
     } else
-        kWarning () << nodeName () << " call on not deferred element";
+        qCWarning(LOG_KMPLAYER_COMMON) << nodeName () << " call on not deferred element";
 }
 
 void Node::finish () {
@@ -313,11 +313,11 @@ void Node::finish () {
         else
             deactivate (); // document deactivates itself on finish
     } else
-        kWarning () <<"Node::finish () call on not active element";
+        qCWarning(LOG_KMPLAYER_COMMON) <<"Node::finish () call on not active element";
 }
 
 void Node::deactivate () {
-    //kDebug () << nodeName () << " Node::deactivate";
+    //qCDebug(LOG_KMPLAYER_COMMON) << nodeName () << " Node::deactivate";
     bool need_finish (unfinished ());
     if (state_resetting != state)
         setState (state_deactivated);
@@ -332,7 +332,7 @@ void Node::deactivate () {
 }
 
 void Node::reset () {
-    //kDebug () << nodeName () << " Node::reset";
+    //qCDebug(LOG_KMPLAYER_COMMON) << nodeName () << " Node::reset";
     if (active ()) {
         setState (state_resetting);
         deactivate ();
@@ -642,7 +642,7 @@ void Element::resetParam (const TrieString &name, int mid) {
         }
         parseParam (name, val);
     } else
-        kError () << "resetting " << name.toString() << " that doesn't exists" << endl;
+        qCCritical(LOG_KMPLAYER_COMMON) << "resetting " << name.toString() << " that doesn't exists" << endl;
 }
 
 void Element::setAttribute (const TrieString & name, const QString & value) {
@@ -844,7 +844,7 @@ void Mrl::activate () {
 }
 
 void Mrl::begin () {
-    kDebug () << nodeName () << src << this;
+    qCDebug(LOG_KMPLAYER_COMMON) << nodeName () << src << this;
     if (!src.isEmpty ()) {
         if (!media_info)
             media_info = new MediaInfo (this, MediaManager::AudioVideo);
@@ -949,7 +949,7 @@ Document::Document (const QString & s, PlayListNotify * n)
 }
 
 Document::~Document () {
-    kDebug () << "~Document " << src;
+    qCDebug(LOG_KMPLAYER_COMMON) << "~Document " << src;
 }
 
 static Node *getElementByIdImpl (Node *n, const QString & id, bool inter) {
@@ -1022,7 +1022,7 @@ void Document::reset () {
 
 static inline
 int diffTime (const struct timeval & tv1, const struct timeval & tv2) {
-    //kDebug () << "diffTime sec:" << ((tv1.tv_sec - tv2.tv_sec) * 1000) << " usec:" << ((tv1.tv_usec - tv2.tv_usec) /1000);
+    //qCDebug(LOG_KMPLAYER_COMMON) << "diffTime sec:" << ((tv1.tv_sec - tv2.tv_sec) * 1000) << " usec:" << ((tv1.tv_usec - tv2.tv_usec) /1000);
     return (tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) /1000;
 }
 
@@ -1090,7 +1090,7 @@ void Document::insertPosting (Node *n, Posting *e, const struct timeval &tv) {
         prev->next = ed;
     else
         event_queue = ed;
-    //kDebug () << "setTimeout " << ms << " at:" << pos << " tv:" << tv.tv_sec << "." << tv.tv_usec;
+    //qCDebug(LOG_KMPLAYER_COMMON) << "setTimeout " << ms << " at:" << pos << " tv:" << tv.tv_sec << "." << tv.tv_usec;
 }
 
 void Document::setNextTimeout (const struct timeval &now) {
@@ -1171,7 +1171,7 @@ void Document::cancelPosting (Posting *e) {
             }
             delete ed;
         } else {
-            kError () << "Posting not found";
+            qCCritical(LOG_KMPLAYER_COMMON) << "Posting not found";
         }
     }
 }
@@ -1192,7 +1192,7 @@ void Document::pausePosting (Posting *e) {
             ed->next = paused_queue;
             paused_queue = ed;
         } else {
-            kError () << "pauseEvent not found";
+            qCCritical(LOG_KMPLAYER_COMMON) << "pauseEvent not found";
         }
     }
 }
@@ -1210,7 +1210,7 @@ void Document::unpausePosting (Posting *e, int ms) {
         ed->event = nullptr;
         delete ed;
     } else {
-        kError () << "pausePosting not found";
+        qCCritical(LOG_KMPLAYER_COMMON) << "pausePosting not found";
     }
 }
 
@@ -1231,7 +1231,7 @@ void Document::timer () {
 
             if (!cur_event->target) {
                 // some part of document has gone and didn't remove timer
-                kError () << "spurious timer" << endl;
+                qCCritical(LOG_KMPLAYER_COMMON) << "spurious timer" << endl;
             } else {
                 EventData *ed = cur_event;
                 cur_event->target->message (cur_event->event->message, cur_event->event);
@@ -1264,7 +1264,7 @@ void Document::timer () {
 PostponePtr Document::postpone () {
     if (postpone_ref)
         return postpone_ref;
-    kDebug () << "postpone";
+    qCDebug(LOG_KMPLAYER_COMMON) << "postpone";
     PostponePtr p = new Postpone (this);
     postpone_ref = p;
     PostponedEvent event (true);
@@ -1281,7 +1281,7 @@ PostponePtr Document::postpone () {
 }
 
 void Document::proceed (const struct timeval &postponed_time) {
-    kDebug () << "proceed";
+    qCDebug(LOG_KMPLAYER_COMMON) << "proceed";
     postpone_ref = nullptr;
     struct timeval now;
     timeOfDay (now);
@@ -1450,17 +1450,17 @@ DocumentBuilder::DocumentBuilder (NodePtr d, bool set_opener)
 bool DocumentBuilder::startTag(const QString &tag, const AttributeList &attr) {
     if (m_ignore_depth) {
         m_ignore_depth++;
-        //kDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth;
+        //qCDebug(LOG_KMPLAYER_COMMON) << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth;
     } else if (!m_node) {
         return false; // had underflow
     } else {
         NodePtr n = m_node->childFromTag (tag);
         if (!n) {
-            kDebug () << "Warning: unknown tag " << tag.toLocal8Bit ().constData();
+            qCDebug(LOG_KMPLAYER_COMMON) << "Warning: unknown tag " << tag.toLocal8Bit ().constData();
             NodePtr doc = m_root->document ();
             n = new DarkNode (doc, tag.toUtf8 ());
         }
-        //kDebug () << "Found tag " << tag;
+        //qCDebug(LOG_KMPLAYER_COMMON) << "Found tag " << tag;
         if (n->isElementNode ())
             convertNode <Element> (n)->setAttributes (attr);
         if (m_node == n && m_node == m_root)
@@ -1481,7 +1481,7 @@ bool DocumentBuilder::startTag(const QString &tag, const AttributeList &attr) {
 bool DocumentBuilder::endTag (const QString & tag) {
     if (m_ignore_depth) { // endtag to ignore
         m_ignore_depth--;
-        kDebug () << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth;
+        qCDebug(LOG_KMPLAYER_COMMON) << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth;
     } else if (!m_node) {
         return false; // had underflow
     } else {  // endtag
@@ -1490,7 +1490,7 @@ bool DocumentBuilder::endTag (const QString & tag) {
             if (!strcasecmp (n->nodeName (), tag.toLocal8Bit ().constData ()) &&
                     (m_root_is_first || n != m_root)) {
                 while (n != m_node) {
-                    kWarning() << m_node->nodeName () << " not closed";
+                    qCWarning(LOG_KMPLAYER_COMMON) << m_node->nodeName () << " not closed";
                     if (m_root == m_node->parentNode ())
                         break;
                     m_node->closed ();
@@ -1500,16 +1500,16 @@ bool DocumentBuilder::endTag (const QString & tag) {
             }
             if (n == m_root) {
                 if (n == m_node) {
-                    kError () << "m_node == m_doc, stack underflow " << endl;
+                    qCCritical(LOG_KMPLAYER_COMMON) << "m_node == m_doc, stack underflow " << endl;
                     return false;
                 }
-                kWarning () << "endtag: no match " << tag.toLocal8Bit ().constData();
+                qCWarning(LOG_KMPLAYER_COMMON) << "endtag: no match " << tag.toLocal8Bit ().constData();
                 break;
             } else
-                 kWarning () << "tag " << tag << " not " << n->nodeName ();
+                 qCWarning(LOG_KMPLAYER_COMMON) << "tag " << tag << " not " << n->nodeName ();
             n = n ->parentNode ();
         }
-        //kDebug () << "end tag " << tag;
+        //qCDebug(LOG_KMPLAYER_COMMON) << "end tag " << tag;
         m_node->closed ();
         m_node = m_node->parentNode ();
     }
@@ -1525,7 +1525,7 @@ bool DocumentBuilder::characterData (const QString & data) {
 #endif
             m_node->characterData (data);
     }
-    //kDebug () << "characterData " << d.latin1();
+    //qCDebug(LOG_KMPLAYER_COMMON) << "characterData " << d.latin1();
     return !!m_node;
 }
 
@@ -1534,7 +1534,7 @@ bool DocumentBuilder::cdataData (const QString & data) {
         NodePtr d = m_node->document ();
         m_node->appendChild (new CData (d, data));
     }
-    //kDebug () << "cdataData " << d.latin1();
+    //qCDebug(LOG_KMPLAYER_COMMON) << "cdataData " << d.latin1();
     return !!m_node;
 }
 
@@ -1603,14 +1603,14 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
         char *buf = ba.data();
         ok = XML_Parse(parser, buf, strlen (buf), false) != XML_STATUS_ERROR;
         if (!ok)
-            kWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser);
+            qCWarning(LOG_KMPLAYER_COMMON) << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser);
     }
     if (ok && !in.atEnd ()) {
         QByteArray ba = in.readAll().toUtf8();
         char *buf = ba.data();
         ok = XML_Parse(parser, buf, strlen (buf), true) != XML_STATUS_ERROR;
         if (!ok)
-            kWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser);
+            qCWarning(LOG_KMPLAYER_COMMON) << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser);
     }
     XML_ParserFree(parser);
     root->normalize ();
@@ -1712,7 +1712,7 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
         e->closed ();
     }
     //doc->normalize ();
-    //kDebug () << root->outerXML ();
+    //qCDebug(LOG_KMPLAYER_COMMON) << root->outerXML ();
 }
 
 void SimpleSAXParser::push () {
@@ -1722,12 +1722,12 @@ void SimpleSAXParser::push () {
         if (prev_token)
             prev_token->next = token;
         next_token = TokenInfoPtr (new TokenInfo);
-        //kDebug () << "push " << token->string;
+        //qCDebug(LOG_KMPLAYER_COMMON) << "push " << token->string;
     }
 }
 
 void SimpleSAXParser::push_attribute () {
-    //kDebug () << "attribute " << attr_name.latin1 () << "=" << attr_value.latin1 ();
+    //qCDebug(LOG_KMPLAYER_COMMON) << "attribute " << attr_name.latin1 () << "=" << attr_value.latin1 ();
     m_attributes.append(new Attribute (attr_namespace, attr_name, attr_value));
     attr_namespace.clear ();
     attr_name.truncate (0);
@@ -1815,11 +1815,11 @@ bool SimpleSAXParser::nextToken () {
                         tmp->next = token;
                         token = tmp;
                     }
-                    //kDebug () << "entity found "<<prev_token->string;
+                    //qCDebug(LOG_KMPLAYER_COMMON) << "entity found "<<prev_token->string;
                 } else if (token->token == tok_hash &&
                         nextToken () && token->token == tok_text &&
                         nextToken () && token->token == tok_semi_colon) {
-                    //kDebug () << "char entity found " << prev_token->string << prev_token->string.toInt (0L, 16);
+                    //qCDebug(LOG_KMPLAYER_COMMON) << "char entity found " << prev_token->string << prev_token->string.toInt (0L, 16);
                     token->token = tok_text;
                     if (!prev_token->string.startsWith (QChar ('x')))
                         token->string = QChar (prev_token->string.toInt ());
@@ -1875,7 +1875,7 @@ bool SimpleSAXParser::readAttributes () {
     bool closed = false;
     while (true) {
         if (!nextToken ()) return false;
-        //kDebug () << "readAttributes " << token->string.latin1();
+        //qCDebug(LOG_KMPLAYER_COMMON) << "readAttributes " << token->string.latin1();
         if ((in_dbl_quote && token->token != tok_double_quote) ||
                     (in_sngl_quote && token->token != tok_single_quote)) {
             attr_value += token->string;
@@ -1884,7 +1884,7 @@ bool SimpleSAXParser::readAttributes () {
                 return false;
             if (equal_seen)
                 attr_value += token->string; // EQ=a=2c ???
-            //kDebug () << "equal_seen";
+            //qCDebug(LOG_KMPLAYER_COMMON) << "equal_seen";
             equal_seen = true;
         } else if (token->token == tok_white_space) {
             if (!attr_value.isEmpty ())
@@ -1914,18 +1914,18 @@ bool SimpleSAXParser::readAttributes () {
                 in_dbl_quote = true;
             else
                 attr_value += token->string;
-            //kDebug () << "in_dbl_quote:"<< in_dbl_quote;
+            //qCDebug(LOG_KMPLAYER_COMMON) << "in_dbl_quote:"<< in_dbl_quote;
         } else if (token->token == tok_slash) {
             TokenInfoPtr mark_token = token;
             if (nextToken () &&
                     (token->token != tok_white_space || nextToken()) &&//<e / >
                     token->token == tok_angle_close) {
-            //kDebug () << "close mark:";
+            //qCDebug(LOG_KMPLAYER_COMMON) << "close mark:";
                 closed = true;
                 break;
             } else {
                 token = mark_token;
-            //kDebug () << "not end mark:"<< equal_seen;
+            //qCDebug(LOG_KMPLAYER_COMMON) << "not end mark:"<< equal_seen;
                 if (equal_seen)
                     attr_value += token->string; // ABBR=w/o ???
                 else
@@ -1947,13 +1947,13 @@ bool SimpleSAXParser::readAttributes () {
             /*const AttributeMap::const_iterator e = attr.end ();
             for (AttributeMap::const_iterator i = attr.begin (); i != e; ++i)
                 if (!strcasecmp (i.key ().latin1 (), "encoding"))
-                  kDebug () << "encodeing " << i.data().latin1();*/
+                  qCDebug(LOG_KMPLAYER_COMMON) << "encodeing " << i.data().latin1();*/
         }
     } else {
         have_error = !builder.startTag (tagname, m_attributes);
         if (closed)
             have_error &= !builder.endTag (tagname);
-        //kDebug () << "readTag " << tagname << " closed:" << closed << " ok:" << have_error;
+        //qCDebug(LOG_KMPLAYER_COMMON) << "readTag " << tagname << " closed:" << closed << " ok:" << have_error;
     }
     m_state = m_state->next; // pop Node or PI
     return !have_error;
@@ -1982,7 +1982,7 @@ bool SimpleSAXParser::readDTD () {
         m_state = new StateInfo (InComment, m_state->next); // note: pop DTD
         return readComment ();
     }
-    //kDebug () << "readDTD: " << token->string.latin1 ();
+    //qCDebug(LOG_KMPLAYER_COMMON) << "readDTD: " << token->string.latin1 ();
     if (token->token == tok_cdata_start) {
         m_state = new StateInfo (InCDATA, m_state->next); // note: pop DTD
         if (token->next) {
@@ -2056,7 +2056,7 @@ bool SimpleSAXParser::readTag () {
     if (!nextToken ()) return false;
     if (token->token == tok_exclamation) {
         m_state = new StateInfo (InDTDTag, m_state->next);
-    //kDebug () << "readTag: " << token->string.latin1 ();
+    //qCDebug(LOG_KMPLAYER_COMMON) << "readTag: " << token->string.latin1 ();
         return readDTD ();
     }
     if (token->token == tok_white_space)
@@ -2072,7 +2072,7 @@ bool SimpleSAXParser::readTag () {
     if (token->token != tok_text)
         return false; // FIXME entities
     tagname = token->string;
-    //kDebug () << "readTag " << tagname.latin1();
+    //qCDebug(LOG_KMPLAYER_COMMON) << "readTag " << tagname.latin1();
     m_state = new StateInfo (InAttributes, m_state);
     return readAttributes ();
 }

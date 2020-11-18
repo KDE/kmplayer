@@ -17,8 +17,8 @@
  **/
 
 #include "config-kmplayer.h"
-#include <kdebug.h>
 
+#include "kmplayercommon_log.h"
 #include "kmplayer_asx.h"
 
 #include <QUrl>

@@ -159,18 +159,9 @@ public:
 
 //-----------------------------------------------------------------------------
 
-#ifdef _KDEBUG_H_
-# ifndef KDE_NO_DEBUG_OUTPUT
-inline QDebug & operator << (QDebug & dbg, Single s) {
-    dbg << (double) (s);
-    return dbg;
-}
-# else
 inline QDebug & operator << (QDebug & dbg, Single) {
     return dbg;
 }
-# endif
-#endif
 
 inline Single & Single::operator *= (const Single s) {
     value = (((int64_t)value) * s.value) >> 8;

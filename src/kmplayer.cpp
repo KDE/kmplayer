@@ -57,7 +57,6 @@
 #include <ksharedconfig.h>
 #include <kstandardaction.h>
 #include <kactioncollection.h>
-#include <kdebug.h>
 #include <klineedit.h>
 #include <kshortcutsdialog.h>
 #include <ksystemtrayicon.h>
@@ -66,6 +65,7 @@
 #include <ktoggleaction.h>
 
 // application specific includes
+#include "kmplayerapp_log.h"
 #include "kmplayer_def.h"
 #include "kmplayerconfig.h"
 #include "kmplayer.h"
@@ -737,7 +737,7 @@ KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int /*percentage*/) {
         h = 240;
     } else
         h = m_view->viewer ()->heightForWidth (w);
-    //kDebug () << "KMPlayerApp::resizePlayer (" << w << "," << h << ")";
+    //qCDebug(LOG_KMPLAYER_APP) << "KMPlayerApp::resizePlayer (" << w << "," << h << ")";
     if (w > 0 && h > 0) {
         if (m_view->controlPanel ()->isVisible ())
             h += m_view->controlPanel ()->size ().height ();
@@ -1419,7 +1419,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuMoveDownNode () {
 KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
     KMPlayer::PlayItem *si = m_view->playList ()->selectedItem ();
     KMPlayer::TopPlayItem * ri = si->rootItem ();
-    kDebug() << "playListItemMoved " << (ri->id == playlist_id) << !! si->node;
+    qCDebug(LOG_KMPLAYER_APP) << "playListItemMoved " << (ri->id == playlist_id) << !! si->node;
     if (ri->id == playlist_id && si->node) {
         KMPlayer::Node *p = si->node->parentNode ();
         if (p) {
@@ -1682,13 +1682,13 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
         return true;
     if (m_identified)
         return false;
-    //kDebug () << "scanning " << cstr;
+    //qCDebug(LOG_KMPLAYER_APP) << "scanning " << cstr;
     QRegExp * patterns = static_cast <KMPlayer::MPlayerPreferencesPage *> (m_player->mediaManager ()->processInfos () ["mplayer"]->config_page)->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_vcdtrack];
     if (trackRegExp.indexIn(str) > -1) {
         m_document->state = KMPlayer::Element::state_deferred;
         m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("vcd://") + trackRegExp.cap (1), i18n ("Track ") + trackRegExp.cap (1)));
-        kDebug () << "track " << trackRegExp.cap (1);
+        qCDebug(LOG_KMPLAYER_APP) << "track " << trackRegExp.cap (1);
         return true;
     }
     return false;
@@ -1777,14 +1777,14 @@ KDE_NO_EXPORT bool KMPlayerAudioCDSource::processOutput (const QString & str) {
         return true;
     if (m_identified)
         return false;
-    //kDebug () << "scanning " << str;
+    //qCDebug(LOG_KMPLAYER_APP) << "scanning " << str;
     QRegExp * patterns = static_cast <KMPlayer::MPlayerPreferencesPage *> (m_player->mediaManager ()->processInfos () ["mplayer"]->config_page)->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_cdromtracks];
     if (trackRegExp.indexIn(str) > -1) {
         //if (m_document->state != KMPlayer::Element::state_deferred)
         //    m_document->defer ();
         int nt = trackRegExp.cap (1).toInt ();
-        kDebug () << "tracks " << trackRegExp.cap (1);
+        qCDebug(LOG_KMPLAYER_APP) << "tracks " << trackRegExp.cap (1);
         for (int i = 0; i < nt; i++)
             m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("cdda://%1").arg (i+1), i18n ("Track %1",QString::number(i+1))));
         return true;

@@ -32,7 +32,6 @@
 #include <QStandardPaths>
 
 class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollection.h does not forward declare KXMLGUIClient
-#include <kdebug.h>
 #include <kconfig.h>
 #include <kaction.h>
 #include <kurlauthorized.h>
@@ -41,6 +40,7 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include <kparts/factory.h>
 #include <kstatusbar.h>
 
+#include "kmplayerpart_log.h"
 #include "kmplayer_part.h"
 #include "kmplayerview.h"
 #include "playlistview.h"
@@ -137,7 +137,7 @@ GrabDocument::GrabDocument (KMPlayerPart *part, const QString &url,
 void GrabDocument::activate () {
     media_info = new MediaInfo (this, MediaManager::AudioVideo);
     media_info->create ();
-    kDebug() << src;
+    qCDebug(LOG_KMPLAYER_PART) << src;
     Mrl::activate ();
 }
 
@@ -148,7 +148,7 @@ void GrabDocument::undefer () {
 void GrabDocument::begin () {
     setState (state_began);
     AudioVideoMedia *av = static_cast <AudioVideoMedia *> (media_info->media);
-    kDebug() << m_grab_file;
+    qCDebug(LOG_KMPLAYER_PART) << m_grab_file;
     av->grabPicture (m_grab_file, 0);
 }
 
@@ -187,7 +187,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
    m_wait_npp_loaded (false)
 {
     setComponentData(KMPlayerFactory::aboutData());
-    kDebug () << "KMPlayerPart(" << this << ")::KMPlayerPart ()";
+    qCDebug(LOG_KMPLAYER_PART) << "KMPlayerPart(" << this << ")::KMPlayerPart ()";
     bool show_fullscreen = false;
     if (!kmplayerpart_static)
         (void) new KMPlayerPartStatic (&kmplayerpart_static);
@@ -218,7 +218,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                 value = value.right (value.size () - 1);
             if (value.at (value.size () - 1) == '\"')
                 value.truncate (value.size () - 1);
-            kDebug () << "name=" << name << " value=" << value;
+            qCDebug(LOG_KMPLAYER_PART) << "name=" << name << " value=" << value;
             if (name == "href") {
                 m_href_url = value;
             } else if (name == QString::fromLatin1("target")) {
@@ -412,13 +412,13 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
 #undef SET_FEAT_OFF
 
 KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
-    kDebug() << "KMPlayerPart::~KMPlayerPart";
+    qCDebug(LOG_KMPLAYER_PART) << "KMPlayerPart::~KMPlayerPart";
     //if (!m_group.isEmpty ()) {
         KMPlayerPartList::iterator i = std::find (kmplayerpart_static->partlist.begin (), kmplayerpart_static->partlist.end (), this);
         if (i != kmplayerpart_static->partlist.end ())
             kmplayerpart_static->partlist.erase (i);
         else
-            kError () << "KMPlayerPart::~KMPlayerPart group lost" << endl;
+            qCCritical(LOG_KMPLAYER_PART) << "KMPlayerPart::~KMPlayerPart group lost" << endl;
     //}
     if (!m_grab_file.isEmpty ())
         ::unlink (m_grab_file.toLocal8Bit ().data ());
@@ -458,7 +458,7 @@ KDE_NO_EXPORT void KMPlayerPart::setAutoControls (bool b) {
 KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject * o) {
     if (o == m_master)
         m_master = nullptr;
-    kDebug () << "KMPlayerPart(" << this << ")::viewerPartDestroyed";
+    qCDebug(LOG_KMPLAYER_PART) << "KMPlayerPart(" << this << ")::viewerPartDestroyed";
     const KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end();
     KMPlayerPartList::iterator i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group));
     if (i != e && *i != this)
@@ -473,7 +473,7 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartProcessChanged (const char *) {
 }
 
 KDE_NO_EXPORT void KMPlayerPart::viewerPartSourceChanged(Source *o, Source *s) {
-    kDebug () << "KMPlayerPart::source changed " << m_master;
+    qCDebug(LOG_KMPLAYER_PART) << "KMPlayerPart::source changed " << m_master;
     if (m_master && m_view) {
         connectSource (o, s);
         m_master->updatePlayerMenu (m_view->controlPanel ());
@@ -489,7 +489,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl(const QUrl& _url) {
     GroupPredicate pred (this, m_group);
     bool emit_started = !m_settings->clicktoplay;
 
-    kDebug () << "KMPlayerPart::openUrl " << _url.url() << " " << args.mimeType();;
+    qCDebug(LOG_KMPLAYER_PART) << "KMPlayerPart::openUrl " << _url.url() << " " << args.mimeType();;
     if (args.mimeType () == "application/x-shockwave-flash" ||
             args.mimeType () == "application/futuresplash") {
         m_wait_npp_loaded = true;
@@ -515,7 +515,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl(const QUrl& _url) {
                     u.setPath (QChar ('/') + _url.host ());
                 if (allowRedir (u)) {
                     url = u;
-                    kDebug () << "KMPlayerPart::openUrl compose " << m_file_name << " " << _url.url() << " ->" << u.url();
+                    qCDebug(LOG_KMPLAYER_PART) << "KMPlayerPart::openUrl compose " << m_file_name << " " << _url.url() << " ->" << u.url();
                 }
             }
         }
@@ -552,7 +552,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl(const QUrl& _url) {
             if ((*i)->url ().isEmpty ()) // image window created w/o url
                 return (*i)->startUrl (_url);
         QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
-        //kError () << "Not the ImageWindow and no ImageWindow found" << endl;
+        //qCCritical(LOG_KMPLAYER_PART) << "Not the ImageWindow and no ImageWindow found" << endl;
         return true;
     }
     if (!m_view || !url.isValid ())
@@ -585,7 +585,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openNewURL (const KUrl & url) {
 KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
     Source * src = sources () ["urlsource"];
     KUrl url (uri);
-    kDebug() << "uri '" << uri << "' img '" << img;
+    qCDebug(LOG_KMPLAYER_PART) << "uri '" << uri << "' img '" << img;
     if (url.isEmpty ()) {
         url = m_src_url;
     } else if (m_settings->grabhref && !m_href_url.isEmpty ()) {
@@ -781,7 +781,7 @@ KDE_NO_EXPORT void KMPlayerPart::playingStarted () {
         KMPlayer::PartBase::playingStarted ();
     else
         return; // ugh
-    kDebug () << "KMPlayerPart::processStartedPlaying ";
+    qCDebug(LOG_KMPLAYER_PART) << "KMPlayerPart::processStartedPlaying ";
     if (m_settings->sizeratio && !m_noresize && m_source->width() > 0 && m_source->height() > 0)
         m_liveconnectextension->setSize (m_source->width(), m_source->height());
     m_browserextension->setLoadingProgress (100);
@@ -1069,7 +1069,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerLiveConnectExtension::~KMPlayerLiveConnectExtension() {
-    kDebug () << "KMPlayerLiveConnectExtension::~KMPlayerLiveConnectExtension()";
+    qCDebug(LOG_KMPLAYER_PART) << "KMPlayerLiveConnectExtension::~KMPlayerLiveConnectExtension()";
 }
 
 KDE_NO_EXPORT void KMPlayerLiveConnectExtension::started () {
@@ -1092,7 +1092,7 @@ QString KMPlayerLiveConnectExtension::evaluate (const QString &script) {
     args.push_back(qMakePair(KParts::LiveConnectExtension::TypeString, script));
     script_result.clear ();
     emit partEvent (0, "eval", args);
-    //kDebug() << script << script_result;
+    //qCDebug(LOG_KMPLAYER_PART) << script << script_result;
     return script_result;
 }
 
@@ -1257,7 +1257,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
             return true;
         }
     }
-    kDebug () << "[01;35mget[00m " << name;
+    qCDebug(LOG_KMPLAYER_PART) << "[01;35mget[00m " << name;
     const JSCommandEntry * entry = getJSCommandEntry (name.toAscii ().constData ());
     if (!entry)
         return false;
@@ -1310,7 +1310,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
         return !m_evaluating;
     }
 
-    kDebug () << "[01;35mput[00m " << name << "=" << val;
+    qCDebug(LOG_KMPLAYER_PART) << "[01;35mput[00m " << name << "=" << val;
 
     const JSCommandEntry * entry = getJSCommandEntry (name.toAscii ().constData ());
     if (!entry)
@@ -1353,7 +1353,7 @@ static QString unescapeArg (const QString &arg) {
             } // else fall through
         default:
             if (last_escape) {
-                kError() << "unescape error " << arg;
+                qCCritical(LOG_KMPLAYER_PART) << "unescape error " << arg;
                 last_escape = false;
             }
             s += arg[i];
@@ -1404,7 +1404,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
         if (str2LC (req_result, type, rval))
             return true;
     }
-    kDebug () << "[01;35mentry[00m " << func;
+    qCDebug(LOG_KMPLAYER_PART) << "[01;35mentry[00m " << func;
     const JSCommandEntry * entry = lastJSCommandEntry;
     const QByteArray ascii = func.toAscii ();
     if (!entry || strcmp (entry->name, ascii.constData ()))
@@ -1412,7 +1412,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
     if (!entry)
         return false;
     for (QStringList::size_type i = 0; i < args.size (); ++i)
-        kDebug () << "      " << args[i];
+        qCDebug(LOG_KMPLAYER_PART) << "      " << args[i];
     if (!player->view ())
         return false;
     type = entry->rettype;

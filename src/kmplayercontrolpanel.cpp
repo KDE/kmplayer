@@ -32,8 +32,8 @@
 
 #include <kiconloader.h>
 #include <klocalizedstring.h>
-#include <kdebug.h>
 
+#include "kmplayercommon_log.h"
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
 
@@ -343,7 +343,7 @@ void VolumeBar::paintEvent (QPaintEvent * e) {
     p.fillRect (3 * dpi_scale, 3 * dpi_scale, vx, 7 * dpi_scale, color);
     p.drawRect (vx + 3 * dpi_scale, 3 * dpi_scale, w - vx, 7 * dpi_scale);
     p.end ();
-    //kDebug () << "w=" << w << " vx=" << vx;
+    //qCDebug(LOG_KMPLAYER_COMMON) << "w=" << w << " vx=" << vx;
 }
 
 void VolumeBar::mousePressEvent (QMouseEvent * e) {
