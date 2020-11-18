@@ -51,9 +51,9 @@
 #include <kcombobox.h>
 #include <kcolorbutton.h>
 #include <kurlrequester.h>
-#include <kfontdialog.h>
 #include <kvbox.h>
 #include <KTextWidgets/kpluralhandlingspinbox.h>
+#include <KFontChooserDialog>
 #include "pref.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
@@ -348,8 +348,8 @@ KDE_NO_EXPORT void PrefGeneralPageLooks::fontItemChanged (int f) {
 KDE_NO_EXPORT void PrefGeneralPageLooks::fontClicked () {
     if (fontscombo->currentIndex () < int (FontSetting::last_target)) {
         QFont myfont = fonts [fontscombo->currentIndex ()].newfont;
-        int res = KFontDialog::getFont (myfont, KFontChooser::NoDisplayFlags, this);
-        if (res == KFontDialog::Accepted) {
+        int res = KFontChooserDialog::getFont (myfont, KFontChooser::NoDisplayFlags, this);
+        if (res == QDialog::Accepted) {
             fonts [fontscombo->currentIndex ()].newfont = myfont;
             fontbutton->setFont (myfont);
         }
