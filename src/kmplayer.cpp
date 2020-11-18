@@ -46,7 +46,6 @@
 #include <QtX11Extras/QX11Info>
 
 // include files for KDE
-#include <kdeversion.h>
 #include <kiconloader.h>
 #include <kmessagebox.h>
 #include <kmenubar.h>

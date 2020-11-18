@@ -46,7 +46,6 @@
 #include <kmessagebox.h>
 #include <klineedit.h>
 #include <kiconloader.h>
-#include <kdeversion.h>
 #include <kcombobox.h>
 #include <kcolorbutton.h>
 #include <kurlrequester.h>
@@ -265,11 +264,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     pluralSeekBox->setRange(1, 600);
     pluralSeekBox->setSingleStep(1);
     pluralSeekBox->setValue(10);
-#if KDE_IS_VERSION(4, 2, 80)
     pluralSeekBox->setSuffix(ki18np(" second", " seconds"));
-#else
-    pluralSeekBox->setSuffix(i18n(" seconds"));
-#endif
     seekTime = pluralSeekBox;
     seekLayout->addWidget(seekTime);
     seekLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
@@ -481,11 +476,7 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage(QWidget* parent,
     QWidget* customreplay = new QWidget;
     KPluralHandlingSpinBox* pluralReplayBox = new KPluralHandlingSpinBox;
     pluralReplayBox = new KPluralHandlingSpinBox;
-#if KDE_IS_VERSION(4, 2, 80)
     pluralReplayBox->setSuffix(ki18np(" second", " seconds"));
-#else
-    pluralReplayBox->setSuffix(i18n(" seconds"));
-#endif
     replaytime = pluralReplayBox;
     QHBoxLayout *replaylayout = new QHBoxLayout;
     replaylayout->addWidget(new QLabel(i18n("Time:")));

@@ -51,7 +51,6 @@
 #include <kaction.h>
 #include <kiconloader.h>
 #include <klistview.h>
-#include <kdeversion.h>
 #include <kinputdialog.h>
 
 #include "kmplayerapp_log.h"
