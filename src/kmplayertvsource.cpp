@@ -800,6 +800,3 @@ KMPlayer::IViewer *TVDeviceScannerSource::viewer () {
 KMPlayer::Mrl *TVDeviceScannerSource::getMrl () {
     return document ()->mrl ();
 }
-
-
-#include "kmplayertvsource.moc"

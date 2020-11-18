@@ -779,6 +779,3 @@ void Settings::okPressed () {
 KDE_NO_EXPORT void Settings::getHelp () {
    // KApplication::kApplication()->invokeBrowser ("man:/mplayer");
 }
-
-#include "kmplayerconfig.moc"
-

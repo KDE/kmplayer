@@ -2325,5 +2325,3 @@ KDE_NO_EXPORT void NpPlayer::streamRedirected(uint32_t, const QUrl&) {}
 KDE_NO_EXPORT void NpPlayer::terminateJobs () {}
 
 #endif
-
-#include "kmplayerprocess.moc"

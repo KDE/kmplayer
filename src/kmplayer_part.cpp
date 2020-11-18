@@ -1529,5 +1529,3 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     args.push_back (qMakePair (KParts::LiveConnectExtension::TypeString, jscode));
     emit partEvent (0, "eval", args);
 }
-
-#include "kmplayer_part.moc"

@@ -1240,5 +1240,3 @@ int TextMedia::defaultFontSize () {
         default_font_size = QApplication::font ().pointSize ();
     return default_font_size;
 }
-
-#include "mediaobject.moc"

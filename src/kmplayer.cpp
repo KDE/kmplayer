@@ -1876,5 +1876,3 @@ KDE_NO_EXPORT void KMPlayerPipeSource::setCommand (const QString & cmd) {
     if (m_document)
         m_document->mrl ()->title = cmd;
 }
-
-#include "kmplayer.moc"

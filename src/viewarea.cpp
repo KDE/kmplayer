@@ -2669,5 +2669,3 @@ KDE_NO_EXPORT void VideoOutput::setCurrentBackgroundColor (const QColor & c) {
         xcb_flush(connection);
     }
 }
-
-#include "viewarea.moc"

@@ -920,4 +920,3 @@ KDE_NO_EXPORT void Preferences::setDefaults() {
 	m_OPPagePostproc->FfmpegDeinterlacer->setChecked(false);
 
 }
-#include "pref.moc"

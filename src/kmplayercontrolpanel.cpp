@@ -747,5 +747,3 @@ KDE_NO_EXPORT void ControlPanel::actionToggled (QAction* act) {
 }
 
 //-----------------------------------------------------------------------------
-
-#include "kmplayercontrolpanel.moc"

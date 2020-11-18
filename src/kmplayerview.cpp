@@ -586,5 +586,3 @@ KDE_NO_EXPORT int View::statusBarHeight () const {
     }
     return 0;
 }
-
-#include "kmplayerview.moc"

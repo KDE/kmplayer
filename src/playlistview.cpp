@@ -603,5 +603,3 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
     }
     m_find_next->setEnabled (!!m_current_find_elm);*/
 }
-
-#include "playlistview.moc"
