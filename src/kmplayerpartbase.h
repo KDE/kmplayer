@@ -164,7 +164,7 @@ protected:
     void stateElementChanged (Node * element, Node::State os, Node::State ns) override;
     void bitRates (int & preferred, int & maximal) override;
     void setTimeout (int ms) override;
-    void openUrl (const KUrl &url, const QString &target, const QString &srv) override;
+    void openUrl (const QUrl &url, const QString &target, const QString &srv) override;
     void enableRepaintUpdaters (bool enable, unsigned int off_time) override;
 
     NodePtr m_document;

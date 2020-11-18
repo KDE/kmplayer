@@ -35,7 +35,7 @@
 typedef struct _cairo_surface cairo_surface_t;
 
 class QTextStream;
-class KUrl;
+class QUrl;
 
 namespace KMPlayer {
 
@@ -686,7 +686,7 @@ public:
     /**
      * Request to open url with mimetype
      */
-    virtual void openUrl (const KUrl &, const QString &t, const QString &srv)=0;
+    virtual void openUrl (const QUrl &, const QString &t, const QString &srv)=0;
     /**
      * Dis/Enable repaint updaters
      */

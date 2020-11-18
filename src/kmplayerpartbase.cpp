@@ -1254,7 +1254,7 @@ void Source::bitRates (int & preferred, int & maximal) {
     maximal= 1024 * m_player->settings ()->maxbitrate;
 }
 
-void Source::openUrl (const KUrl &url, const QString &t, const QString &srv) {
+void Source::openUrl (const QUrl &url, const QString &t, const QString &srv) {
     m_player->openUrl (url, t, srv);
 }
 
