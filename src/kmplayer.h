@@ -40,7 +40,7 @@ class QMenuItem;
 class QTreeWidgetItem;
 class KMPlayerBroadcastConfig;
 class KMPlayerFFServerConfig;
-class KSystemTrayIcon;
+class QSystemTrayIcon;
 class KRecentFilesAction;
 class KSharedConfig;
 template<class T> class KSharedPtr;
@@ -135,7 +135,7 @@ private slots:
 private:
     void aboutToCloseWindow ();
     void minimalMode (bool deco=true);
-    KSystemTrayIcon *m_systray;
+    QSystemTrayIcon *m_systray;
     KMPlayer::PartBase * m_player;
     KMPlayer::View * m_view;
     KMPlayer::NodePtr recents;

@@ -44,6 +44,7 @@
 #include <QDockWidget>
 #include <QMenuBar>
 #include <QStandardPaths>
+#include <QSystemTrayIcon>
 #include <QtX11Extras/QX11Info>
 
 // include files for KDE
@@ -58,7 +59,6 @@
 #include <kactioncollection.h>
 #include <klineedit.h>
 #include <kshortcutsdialog.h>
-#include <ksystemtrayicon.h>
 #include <kedittoolbar.h>
 #include <krecentfilesaction.h>
 #include <ktoggleaction.h>
@@ -1450,7 +1450,7 @@ KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayItem * item, 
 KDE_NO_EXPORT void KMPlayerApp::configChanged () {
     //viewKeepRatio->setChecked (m_player->settings ()->sizeratio);
     if (m_player->settings ()->docksystray && !m_systray) {
-        m_systray = new KSystemTrayIcon (QIcon::fromTheme("kmplayer"), this);
+        m_systray = new QSystemTrayIcon (QIcon::fromTheme("kmplayer"), this);
         m_systray->show ();
     } else if (!m_player->settings ()->docksystray && m_systray) {
         delete m_systray;
