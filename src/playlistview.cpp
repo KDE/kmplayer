@@ -351,8 +351,8 @@ KDE_NO_EXPORT bool PlayListView::isDragValid (QDropEvent *event) {
             event->mimeData ()
                 ->hasFormat ("application/x-qabstractitemmodeldatalist"))
         return true;
-    if (event->mimeData()->hasFormat ("text/uri-list")) {
-        KUrl::List uriList = KUrl::List::fromMimeData (event->mimeData ());
+    if (event->mimeData()->hasUrls()) {
+        const QList<QUrl> uriList = event->mimeData()->urls();
         if (!uriList.isEmpty ())
             return true;
     } else {
@@ -391,7 +391,7 @@ KDE_NO_EXPORT void PlayListView::dropEvent (QDropEvent *event) {
         if (ritem->id > 0 || n->isDocument ()) {
             emit dropped (event, itm);
         } else {
-            KUrl::List uris = KUrl::List::fromMimeData (event->mimeData());
+            QList<QUrl> uris = event->mimeData()->urls();
             if (uris.isEmpty ()) {
                 KUrl url (event->mimeData ()->text ());
                 if (url.isValid ())
