@@ -45,7 +45,9 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
 find_package(X11 REQUIRED)
 find_package(Phonon4Qt5 REQUIRED NO_MODULE)
 
-add_definitions(-DQT_USE_FAST_CONCATENATION -DQT_USE_FAST_OPERATOR_PLUS)
+add_definitions(
+    -DQT_USE_QSTRINGBUILDER
+)
 
 if(NOT WIN32)
   OPTION(KMPLAYER_BUILT_WITH_CAIRO "Enable Cairo support" ON)
