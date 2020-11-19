@@ -1595,7 +1595,7 @@ void SMIL::State::parseParam (const TrieString &name, const QString &val) {
             if (!media_info)
                 media_info = new MediaInfo (this, MediaManager::Text);
             Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : nullptr;
-            QString url = mrl ? KURL (mrl->absolutePath(), val).url() : val;
+            QString url = mrl ? KUrl (mrl->absolutePath(), val).url() : val;
             postpone_lock = document ()->postpone ();
             media_info->wget (url, domain ());
             m_url = url;
@@ -1912,7 +1912,7 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
                 if (!media_info)
                     media_info = new MediaInfo (this, MediaManager::Image);
                 Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : nullptr;
-                QString url = mrl ? KURL (mrl->absolutePath(), val).url() : val;
+                QString url = mrl ? KUrl (mrl->absolutePath(), val).url() : val;
                 postpone_lock = document ()->postpone ();
                 media_info->wget (url);
             }
@@ -4575,7 +4575,7 @@ void SMIL::Send::begin () {
             delete media_info;
             media_info = new MediaInfo (this, MediaManager::Text);
             Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : nullptr;
-            QString url = mrl ? KURL (mrl->absolutePath(), action).url() : action;
+            QString url = mrl ? KUrl (mrl->absolutePath(), action).url() : action;
             if (SMIL::State::get == method && replace == SMIL::State::instance) {
                 // TODO compose GET url
                 media_info->wget (url, st->domain ());

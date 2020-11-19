@@ -756,7 +756,7 @@ QString Mrl::absolutePath () {
         for (Node *e = parentNode (); e; e = e->parentNode ()) {
             Mrl * mrl = e->mrl ();
             if (mrl && !mrl->src.isEmpty () && mrl->src != src) {
-                path = KURL (mrl->absolutePath (), src).url ();
+                path = KUrl (mrl->absolutePath (), src).url ();
                 break;
             }
         }
@@ -886,7 +886,7 @@ void Mrl::parseParam (const TrieString & para, const QString & val) {
         if (abs != src)
             src = val;
         else
-            src = KURL (abs, val).url ();
+            src = KUrl (abs, val).url ();
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
             if (c->mrl () && c->mrl ()->opener.ptr () == this) {
                 removeChild (c);

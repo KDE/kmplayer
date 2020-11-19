@@ -65,6 +65,4 @@
   #define KMPLAYER_NO_MBR_EXPORT
 #endif
 
-#define KURL KUrl
-
 #endif //_KMPLAYER_DEF_H_
