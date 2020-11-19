@@ -95,7 +95,7 @@ target_link_libraries(kmplayerpart
   KF5::Parts
 )
 
-install(TARGETS kmplayerpart DESTINATION ${PLUGIN_INSTALL_DIR} )
+install(TARGETS kmplayerpart DESTINATION ${KDE_INSTALL_PLUGINDIR}/kf5/parts)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kmplayer_part.desktop  DESTINATION  ${KDE_INSTALL_KSERVICES5DIR})
 
