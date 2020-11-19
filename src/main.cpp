@@ -1,19 +1,9 @@
-/***************************************************************************
-  main.cpp  -  description
-  -------------------
-begin                : Sat Dec  7 16:14:51 CET 2002
-copyright            : (C) 2002 by Koos Vriezen
-email                :
- ***************************************************************************/
+/*
+    SPDX-FileCopyrightText: 2002 Koos Vriezen
 
-/***************************************************************************
-*                                                                         *
-*   This program is free software; you can redistribute it and/or modify  *
-*   it under the terms of the GNU General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or     *
-*   (at your option) any later version.                                   *
-*                                                                         *
- ***************************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+
 #include <unistd.h>
 
 #include "config-kmplayer.h"
