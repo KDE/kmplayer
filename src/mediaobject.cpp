@@ -1199,7 +1199,7 @@ KDE_NO_EXPORT void ImageMedia::movieResize (const QSize &) {
 
 KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
     if (frame_nr++) {
-        ASSERT (cached_img && isEmpty ());
+        Q_ASSERT (cached_img && isEmpty ());
         QImage *img = new QImage;
         *img = img_movie->currentImage ();
         cached_img->setImage (img);

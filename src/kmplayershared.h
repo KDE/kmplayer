@@ -98,7 +98,7 @@ template <class T> inline void SharedData<T>::addWeakRef () {
 }
 
 template <class T> inline void SharedData<T>::releaseWeak () {
-    ASSERT (weak_count > 0 && weak_count > use_count);
+    Q_ASSERT (weak_count > 0 && weak_count > use_count);
 #ifdef SHAREDPTR_DEBUG
     std::cerr << "SharedData::releaseWeak use:" << use_count << " weak:" << weak_count-1 << std::endl;
 #endif
@@ -106,7 +106,7 @@ template <class T> inline void SharedData<T>::releaseWeak () {
 }
 
 template <class T> inline void SharedData<T>::release () {
-    ASSERT (use_count > 0);
+    Q_ASSERT (use_count > 0);
     if (--use_count <= 0) dispose (); 
 #ifdef SHAREDPTR_DEBUG
     std::cerr << "SharedData::release use:" << use_count << " weak:" << weak_count << std::endl;
@@ -115,7 +115,7 @@ template <class T> inline void SharedData<T>::release () {
 }
 
 template <class T> inline void SharedData<T>::dispose () {
-    ASSERT (use_count == 0);
+    Q_ASSERT (use_count == 0);
 #ifdef SHAREDPTR_DEBUG
     std::cerr << "SharedData::dispose use:" << use_count << " weak:" << weak_count << std::endl;
 #endif

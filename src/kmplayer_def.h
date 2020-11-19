@@ -24,9 +24,6 @@
 #define _KMPLAYER_DEF_H_
 
 #include "config-kmplayer.h"
-#ifndef ASSERT
-#define ASSERT Q_ASSERT
-#endif
 
 #include <kdemacros.h>
 

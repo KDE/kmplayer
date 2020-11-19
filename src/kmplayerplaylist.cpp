@@ -138,7 +138,7 @@ void ConnectionLink::disconnect () const {
             tmp->list->link_next = tmp->next;
         delete tmp;
     }
-    ASSERT (!connection);
+    Q_ASSERT (!connection);
 }
 
 void ConnectionLink::assign (const ConnectionLink *link) const {
@@ -367,13 +367,13 @@ void Node::clearChildren () {
 template <>
 void TreeNode<Node>::appendChild (Node *c) {
     static_cast <Node *> (this)->document()->m_tree_version++;
-    ASSERT (!c->parentNode ());
+    Q_ASSERT (!c->parentNode ());
     appendChildImpl (c);
 }
 
 template <>
 void TreeNode<Node>::insertBefore (Node *c, Node *b) {
-    ASSERT (!c->parentNode ());
+    Q_ASSERT (!c->parentNode ());
     static_cast <Node *> (this)->document()->m_tree_version++;
     insertBeforeImpl (c, b);
 }
