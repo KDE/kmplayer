@@ -73,6 +73,8 @@ install(TARGETS kmplayercommon ${INSTALL_TARGETS_DEFAULT_ARGS} )
 
 ########### next target ###############
 
+configure_file(kmplayer_part.desktop ${CMAKE_CURRENT_BINARY_DIR}/kmplayer_part.desktop @ONLY)
+
 set(kmplayerpart_SRCS kmplayer_part.cpp)
 
 ecm_qt_declare_logging_category(kmplayerpart_SRCS
@@ -84,6 +86,7 @@ ecm_qt_declare_logging_category(kmplayerpart_SRCS
 )
 
 add_library(kmplayerpart MODULE ${kmplayerpart_SRCS})
+kcoreaddons_desktop_to_json(kmplayerpart ${CMAKE_CURRENT_BINARY_DIR}/kmplayer_part.desktop)
 
 target_link_libraries(kmplayerpart
   kmplayercommon
@@ -94,7 +97,7 @@ target_link_libraries(kmplayerpart
 
 install(TARGETS kmplayerpart DESTINATION ${PLUGIN_INSTALL_DIR} )
 
-install( FILES kmplayer_part.desktop  DESTINATION  ${SERVICES_INSTALL_DIR} )
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kmplayer_part.desktop  DESTINATION  ${KDE_INSTALL_KSERVICES5DIR})
 
 ########### next target ###############
 

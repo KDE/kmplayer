@@ -19,6 +19,8 @@
 #ifdef KDE_USE_FINAL
 #undef Always
 #endif
+#include "kmplayer_part.h"
+
 #include <list>
 #include <algorithm>
 
@@ -38,9 +40,11 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include <klocalizedstring.h>
 #include <kparts/factory.h>
 #include <kstatusbar.h>
+#if KCOREADDONS_VERSION >= QT_VERSION_CHECK(5, 77, 0)
+#include <KPluginMetaData>
+#endif
 
 #include "kmplayerpart_log.h"
-#include "kmplayer_part.h"
 #include "kmplayerview.h"
 #include "playlistview.h"
 #include "kmplayercontrolpanel.h"
@@ -96,9 +100,9 @@ struct KMPLAYER_NO_EXPORT GroupPredicate {
 
 //-----------------------------------------------------------------------------
 
-K_EXPORT_PLUGIN(KMPlayerFactory)
-
+#if KCOREADDONS_VERSION < QT_VERSION_CHECK(5, 77, 0)
 KAboutData* KMPlayerFactory::s_about = nullptr;
+#endif
 
 KDE_NO_CDTOR_EXPORT KMPlayerFactory::KMPlayerFactory () {
 }
@@ -106,6 +110,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerFactory::KMPlayerFactory () {
 KDE_NO_CDTOR_EXPORT KMPlayerFactory::~KMPlayerFactory () {
 }
 
+#if KCOREADDONS_VERSION < QT_VERSION_CHECK(5, 77, 0)
 KAboutData& KMPlayerFactory::aboutData() {
     if (!s_about) {
         s_about = new KAboutData("kmplayer", i18n("KMPlayer"), QStringLiteral(KMPLAYER_VERSION_STRING),
@@ -115,11 +120,16 @@ KAboutData& KMPlayerFactory::aboutData() {
     }
     return *s_about;
 }
+#endif
 
 QObject* KMPlayerFactory::create(const char *iface, QWidget* parentWidget, QObject* parent,
         const QVariantList& args, const QString&)
 {
+#if KCOREADDONS_VERSION >= QT_VERSION_CHECK(5, 77, 0)
+    return new KMPlayerPart(parentWidget, parent, metaData(), args);
+#else
     return new KMPlayerPart(parentWidget, parent, args);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -172,8 +182,12 @@ static bool getBoolValue (const QString & value) {
 #define SET_FEAT_ON(f) { m_features |= f; turned_off_features &= ~f; }
 #define SET_FEAT_OFF(f) { m_features &= ~f; turned_off_features |= f; }
 
+#if KCOREADDONS_VERSION >= QT_VERSION_CHECK(5, 77, 0)
+    KMPlayerPart::KMPlayerPart(QWidget* wparent, QObject* ppart, const KPluginMetaData& metaData, const QVariantList &args)
+#else
 KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                     QObject* ppart, const QVariantList& args)
+#endif
  : PartBase (wparent, ppart, KSharedConfig::openConfig ("kmplayerrc")),
    m_master (nullptr),
    m_browserextension (new KMPlayerBrowserExtension (this)),
@@ -185,14 +199,17 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
    m_started_emited (false),
    m_wait_npp_loaded (false)
 {
+#if KCOREADDONS_VERSION >= QT_VERSION_CHECK(5, 77, 0)
+    setMetaData(metaData);
+#else
     setComponentData(KMPlayerFactory::aboutData());
+#endif
     qCDebug(LOG_KMPLAYER_PART) << "KMPlayerPart(" << this << ")::KMPlayerPart ()";
     bool show_fullscreen = false;
     if (!kmplayerpart_static)
         (void) new KMPlayerPartStatic (&kmplayerpart_static);
     else
         kmplayerpart_static->ref ();
-    setComponentData(KMPlayerFactory::aboutData ());
     init (actionCollection (),
          QString ("/KMPlayerPart%1").arg(kmplayerpart_static->counter++), true);
     createBookmarkMenu (m_view->controlPanel ()->bookmarkMenu, actionCollection ());

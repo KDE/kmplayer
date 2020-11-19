@@ -22,7 +22,10 @@
 #include <kpluginfactory.h>
 #include <kparts/browserextension.h>
 #include <kparts/liveconnectextension.h>
-#include <kaboutdata.h>
+#include <kcoreaddons_version.h>
+#if KCOREADDONS_VERSION < QT_VERSION_CHECK(5, 77, 0)
+#include <KAboutData>
+#endif
 #include "kmplayerpartbase.h"
 #include "config-kmplayer.h"
 
@@ -36,7 +39,7 @@ namespace KMPlayer {
 
 class KMPlayerFactory : public KPluginFactory {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.kde.KPluginFactory")
+    Q_PLUGIN_METADATA(IID "org.kde.KPluginFactory" FILE "kmplayer_part.json")
     Q_INTERFACES(KPluginFactory)
 public:
     KMPlayerFactory();
@@ -44,9 +47,11 @@ public:
 
     QObject* create(const char *iface, QWidget* parentWidget, QObject* parent,
             const QVariantList& args, const QString& keyword) Q_DECL_OVERRIDE;
+#if KCOREADDONS_VERSION < QT_VERSION_CHECK(5, 77, 0)
     static KAboutData& aboutData();
 private:
     static KAboutData* s_about;
+#endif
 };
 
 /*
@@ -143,7 +148,11 @@ public:
         Feat_InfoPanel = 0x10, Feat_VolumeSlider = 0x20, Feat_PlayList = 0x40,
         Feat_ImageWindow = 0x80, Feat_All = 0xff
     };
+#if KCOREADDONS_VERSION >= QT_VERSION_CHECK(5, 77, 0)
+    KMPlayerPart(QWidget* parentWidget, QObject* parent, const KPluginMetaData& metaData, const QVariantList &args);
+#else
     KMPlayerPart (QWidget *wparent, QObject *parent, const QVariantList &args);
+#endif
     ~KMPlayerPart () override;
 
     KDE_NO_EXPORT KMPlayerBrowserExtension * browserextension() const
