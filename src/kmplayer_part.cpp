@@ -330,7 +330,7 @@ KMPlayerPart::KMPlayerPart (QWidget *wparent,
             } else if (name == QString::fromLatin1("console")) {
                 m_group = value.isEmpty() ? QString::fromLatin1("_anonymous") : value;
             } else if (name == QString::fromLatin1("__khtml__pluginbaseurl")) {
-                m_docbase = KUrl (value);
+                m_docbase = QUrl (value);
             } else if (name == QString::fromLatin1("src")) {
                 m_src_url = value;
             } else if (name == QString::fromLatin1("filename")) {

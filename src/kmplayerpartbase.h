@@ -245,7 +245,7 @@ public:
     void keepMovieAspect (bool);
     KUrl url () const { return m_sources ["urlsource"]->url (); }
     void setUrl (const QString &url) { m_sources ["urlsource"]->setUrl (url); }
-    KUrl docBase () const { return m_docbase; }
+    QUrl docBase () const { return m_docbase; }
 
     /* Changes the backend process */
     QString processName (Mrl *mrl);
@@ -353,7 +353,7 @@ protected slots:
     void audioSelected (QAction*) KMPLAYERCOMMON_NO_EXPORT;
     void subtitleSelected (QAction*) KMPLAYERCOMMON_NO_EXPORT;
 protected:
-    KUrl m_docbase;
+    QUrl m_docbase;
     NodePtr m_record_doc;
     KSharedConfigPtr m_config;
     QPointer <View> m_view;
