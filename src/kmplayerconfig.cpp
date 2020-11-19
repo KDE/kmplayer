@@ -758,9 +758,9 @@ void Settings::okPressed () {
 
     if (urlchanged || playerchanged) {
         m_player->sources () ["urlsource"]->setSubURL
-            (KUrl(configdialog->m_SourcePageURL->sub_url->url()));
+            (configdialog->m_SourcePageURL->sub_url->url());
         m_player->openUrl (KUrl (configdialog->m_SourcePageURL->url->url ()));
-        m_player->source ()->setSubURL (KUrl (configdialog->m_SourcePageURL->sub_url->url ()));
+        m_player->source ()->setSubURL (configdialog->m_SourcePageURL->sub_url->url ());
     }
 }
 

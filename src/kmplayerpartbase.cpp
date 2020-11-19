@@ -457,7 +457,7 @@ bool PartBase::openUrl (const QUrl &url) {
     stop ();
     Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.scheme().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
     setSource (src);
-    src->setSubURL (KUrl ());
+    src->setSubURL (QUrl ());
     src->setUrl (url.isLocalFile () ? url.toLocalFile() : url.url ());
     if (src->avoidRedirects ())
         src->activate ();

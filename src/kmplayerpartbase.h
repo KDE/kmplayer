@@ -76,7 +76,7 @@ public:
     KMPLAYERCOMMON_NO_EXPORT int position () const { return m_position; }
     KMPLAYERCOMMON_NO_EXPORT float aspect () const { return m_aspect; }
     KMPLAYERCOMMON_NO_EXPORT const KUrl & url () const { return m_url; }
-    KMPLAYERCOMMON_NO_EXPORT const KUrl & subUrl () const { return m_sub_url; }
+    KMPLAYERCOMMON_NO_EXPORT const QUrl & subUrl () const { return m_sub_url; }
     PartBase * player () { return m_player; }
     virtual void reset ();
     KMPLAYERCOMMON_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
@@ -104,7 +104,7 @@ public:
 
     virtual void setUrl (const QString &url);
     void insertURL (NodePtr mrl, const QString & url, const QString & title=QString());
-    KMPLAYERCOMMON_NO_EXPORT void setSubURL (const KUrl & url) { m_sub_url = url; }
+    KMPLAYERCOMMON_NO_EXPORT void setSubURL (const QUrl & url) { m_sub_url = url; }
     void setLanguages (LangInfoPtr alang, LangInfoPtr slang) KMPLAYERCOMMON_NO_EXPORT;
     KMPLAYERCOMMON_NO_EXPORT void setWidth (int w) { m_width = w; }
     KMPLAYERCOMMON_NO_EXPORT void setHeight (int h) { m_height = h; }
@@ -164,7 +164,7 @@ protected:
     bool m_auto_play;
     bool m_avoid_redirects;
     KUrl m_url;
-    KUrl m_sub_url;
+    QUrl m_sub_url;
     QString m_audiodevice;
     QString m_videodevice;
     QString m_videonorm;
