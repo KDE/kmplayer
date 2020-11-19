@@ -60,15 +60,15 @@ add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
 generate_export_header(kmplayercommon)
 
 target_link_libraries(kmplayercommon
-   LINK_PRIVATE
-  ${CAIRO_LIBRARIES}
-  KF5::KDELibs4Support
-  KF5::Parts
-  ${XCB_LIBRARIES}
-  ${EXPAT_LIBRARIES}
-  KF5::MediaPlayer
-  Qt5::Svg
-  Qt5::X11Extras
+    PUBLIC
+        KF5::MediaPlayer
+        KF5::KDELibs4Support
+    PRIVATE
+        ${CAIRO_LIBRARIES}
+        ${XCB_LIBRARIES}
+        ${EXPAT_LIBRARIES}
+        Qt5::Svg
+        Qt5::X11Extras
 )
 
 install(TARGETS kmplayercommon ${INSTALL_TARGETS_DEFAULT_ARGS} )
@@ -91,10 +91,7 @@ add_library(kmplayerpart MODULE ${kmplayerpart_SRCS})
 kcoreaddons_desktop_to_json(kmplayerpart ${CMAKE_CURRENT_BINARY_DIR}/kmplayer_part.desktop)
 
 target_link_libraries(kmplayerpart
-  kmplayercommon
-  KF5::MediaPlayer
-  KF5::KDELibs4Support
-  KF5::Parts
+    kmplayercommon
 )
 
 install(TARGETS kmplayerpart DESTINATION ${KDE_INSTALL_PLUGINDIR}/kf5/parts)
@@ -123,10 +120,7 @@ ecm_qt_declare_logging_category(kmplayer_SRCS
 kf5_add_kdeinit_executable(kmplayer ${kmplayer_SRCS} main.cpp)
 
 target_link_libraries(kdeinit_kmplayer
-  kmplayercommon
-  KF5::MediaPlayer
-  KF5::KDELibs4Support
-  KF5::Parts
+    kmplayercommon
 )
 
 target_link_libraries(kmplayer kdeinit_kmplayer)
