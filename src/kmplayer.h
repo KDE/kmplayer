@@ -48,7 +48,7 @@ public:
     KMPlayerApp (QWidget* parent=nullptr);
     ~KMPlayerApp () override;
     void openDocumentFile (const QUrl& url = QUrl());
-    void addUrl (const KUrl& url);
+    void addUrl (const QUrl& url);
     KMPlayer::PartBase * player () const { return m_player; }
     void resizePlayer (int percentage);
     KRecentFilesAction * recentFiles () const { return fileOpenRecent; }

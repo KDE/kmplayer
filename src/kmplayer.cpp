@@ -693,7 +693,7 @@ void KMPlayerApp::openDocumentFile (const QUrl& url)
     slotStatusMsg (i18n ("Ready."));
 }
 
-void KMPlayerApp::addUrl (const KUrl& url) {
+void KMPlayerApp::addUrl (const QUrl& url) {
     KMPlayer::Source * src = m_player->sources () ["urlsource"];
     KMPlayer::NodePtr d = src->document ();
     if (d)
