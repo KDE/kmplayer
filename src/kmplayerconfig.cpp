@@ -463,7 +463,10 @@ void Settings::show (const char * pagename) {
 
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentRow(videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentRow(audiodriver);
-    configdialog->m_SourcePageURL->backend->setCurrentItem(configdialog->m_SourcePageURL->backend->findItems(backends["urlsource"], Qt::MatchFixedString).first());
+    const auto matchedBackends = configdialog->m_SourcePageURL->backend->findItems(backends["urlsource"], Qt::MatchFixedString);
+    if (!matchedBackends.isEmpty()) {
+        configdialog->m_SourcePageURL->backend->setCurrentItem(matchedBackends.first());
+    }
     int id = 0;
     const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
     for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().constBegin(); i != e; ++i) {
