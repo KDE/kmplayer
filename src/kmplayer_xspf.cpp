@@ -24,7 +24,7 @@
 using namespace KMPlayer;
 
 
-KDE_NO_EXPORT Node *XSPF::Playlist::childFromTag (const QString & tag) {
+Node *XSPF::Playlist::childFromTag (const QString & tag) {
     QByteArray ba = tag.toLatin1();
     const char * name = ba.constData ();
     if (!strcasecmp (name, "tracklist"))
@@ -58,7 +58,7 @@ KDE_NO_EXPORT Node *XSPF::Playlist::childFromTag (const QString & tag) {
     return nullptr;
 }
 
-KDE_NO_EXPORT void XSPF::Playlist::closed () {
+void XSPF::Playlist::closed () {
     for (Node *e = firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_title)
             title = e->innerText ().simplified ();
@@ -77,7 +77,7 @@ void *XSPF::Playlist::role (RoleType msg, void *content)
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT Node *XSPF::Tracklist::childFromTag (const QString & tag) {
+Node *XSPF::Tracklist::childFromTag (const QString & tag) {
     QByteArray ba = tag.toLatin1 ();
     const char *name = ba.constData ();
     if (!strcasecmp (name, "track"))
@@ -87,7 +87,7 @@ KDE_NO_EXPORT Node *XSPF::Tracklist::childFromTag (const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT Node *XSPF::Track::childFromTag (const QString & tag) {
+Node *XSPF::Track::childFromTag (const QString & tag) {
     QByteArray ba = tag.toLatin1 ();
     const char *name = ba.constData ();
     if (!strcasecmp (name, "location"))
@@ -119,7 +119,7 @@ KDE_NO_EXPORT Node *XSPF::Track::childFromTag (const QString & tag) {
     return nullptr;
 }
 
-KDE_NO_EXPORT void XSPF::Track::closed () {
+void XSPF::Track::closed () {
     Location *location = nullptr;
     QString title;
     for (Node *e = firstChild (); e; e = e->nextSibling ()) {
@@ -137,7 +137,7 @@ KDE_NO_EXPORT void XSPF::Track::closed () {
     Element::closed ();
 }
 
-KDE_NO_EXPORT void XSPF::Track::activate () {
+void XSPF::Track::activate () {
     for (Node *e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_annotation) {
             QString inf = e->innerText ().trimmed ();

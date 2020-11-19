@@ -88,7 +88,7 @@ static OutputDriver _vds [] = {
 static const int ADRIVER_ARTS_INDEX = 4;
 
 
-KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KSharedConfigPtr config)
+Settings::Settings (PartBase * player, KSharedConfigPtr config)
   : pagelist (nullptr), configdialog (nullptr), m_config (config), m_player (player) {
     audiodrivers = _ads;
     videodrivers = _vds;
@@ -133,12 +133,12 @@ KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KSharedConfigPtr conf
     fonts [FontSetting::infowindow].font = KGlobalSettings::generalFont();
 }
 
-KDE_NO_CDTOR_EXPORT Settings::~Settings () {
+Settings::~Settings () {
     // configdialog should be destroyed when the view is destroyed
     //delete configdialog;
 }
 
-KDE_EXPORT const char * strMPlayerGroup = "MPlayer";
+KMPLAYERCOMMON_EXPORT const char * strMPlayerGroup = "MPlayer";
 const char * strGeneralGroup = "General Options";
 static const char * strKeepSizeRatio = "Keep Size Ratio";
 static const char * strRememberSize = "Remember Size";
@@ -216,7 +216,7 @@ static const char * strAutoPlayAfterRecording = "Auto Play After Recording";
 static const char * strAutoPlayAfterTime = "Auto Play After Recording Time";
 static const char * strRecordingCopy = "Recording Is Copy";
 
-KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
+void Settings::applyColorSetting (bool only_changed_ones) {
     View *view = static_cast <View *> (m_player->view ());
     if (!view) return;
     for (int i = 0; i < int (ColorSetting::last_target); i++)
@@ -283,7 +283,7 @@ View * Settings::defaultView () {
     return static_cast <View *> (m_player->view ());
 }
 
-KDE_NO_EXPORT void Settings::readConfig () {
+void Settings::readConfig () {
     KConfigGroup general (m_config, strGeneralGroup);
     no_intro = general.readEntry (strNoIntro, false);
     urllist = general.readEntry (strURLList, QStringList());
@@ -373,7 +373,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
     emit configChanged ();
 }
 
-KDE_NO_EXPORT bool Settings::createDialog () {
+bool Settings::createDialog () {
     if (configdialog) return false;
     configdialog = new Preferences (m_player, this);
     const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().constEnd ();
@@ -776,6 +776,6 @@ void Settings::okPressed () {
     }
 }
 
-KDE_NO_EXPORT void Settings::getHelp () {
+void Settings::getHelp () {
    // KApplication::kApplication()->invokeBrowser ("man:/mplayer");
 }

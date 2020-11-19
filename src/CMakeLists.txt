@@ -57,6 +57,8 @@ endif (KMPLAYER_WITH_NPP)
 
 add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
 
+generate_export_header(kmplayercommon)
+
 target_link_libraries(kmplayercommon
    LINK_PRIVATE
   ${CAIRO_LIBRARIES}

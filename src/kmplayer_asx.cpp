@@ -32,7 +32,7 @@ static QString getAsxAttribute (Element * e, const QString & attr) {
     return QString ();
 }
 
-KDE_NO_EXPORT Node *ASX::Asx::childFromTag (const QString & tag) {
+Node *ASX::Asx::childFromTag (const QString & tag) {
     QByteArray ba = tag.toLatin1 ();
     const char *name = ba.constData ();
     if (!strcasecmp (name, "entry"))
@@ -55,7 +55,7 @@ void *ASX::Asx::role (RoleType msg, void *content)
     return Mrl::role (msg, content);
 }
 
-KDE_NO_EXPORT void ASX::Asx::closed () {
+void ASX::Asx::closed () {
     for (Node *e = firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_title)
             title = e->innerText ().simplified ();
@@ -66,7 +66,7 @@ KDE_NO_EXPORT void ASX::Asx::closed () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT Node *ASX::Entry::childFromTag (const QString & tag) {
+Node *ASX::Entry::childFromTag (const QString & tag) {
     QByteArray ba = tag.toLatin1 ();
     const char *name = ba.constData ();
     if (!strcasecmp (name, "ref"))
@@ -84,11 +84,11 @@ KDE_NO_EXPORT Node *ASX::Entry::childFromTag (const QString & tag) {
     return nullptr;
 }
 
-KDE_NO_EXPORT Node::PlayType ASX::Entry::playType () {
+Node::PlayType ASX::Entry::playType () {
     return play_type_none;
 }
 
-KDE_NO_EXPORT void ASX::Entry::closed () {
+void ASX::Entry::closed () {
     ref_child_count = 0;
     Node *ref = nullptr;
     for (Node *e = firstChild (); e; e = e->nextSibling ()) {
@@ -108,7 +108,7 @@ KDE_NO_EXPORT void ASX::Entry::closed () {
         static_cast <ASX::Ref *> (ref)->title = title;
 }
 
-KDE_NO_EXPORT void ASX::Entry::activate () {
+void ASX::Entry::activate () {
     resolved = true;
     for (Node *e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_param) {
@@ -129,7 +129,7 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
     Mrl::activate ();
 }
 
-KDE_NO_EXPORT void ASX::Entry::message (MessageType msg, void *content) {
+void ASX::Entry::message (MessageType msg, void *content) {
     if (msg == MsgEventTimer) {
         duration_timer = nullptr;
         deactivate ();
@@ -138,7 +138,7 @@ KDE_NO_EXPORT void ASX::Entry::message (MessageType msg, void *content) {
     Mrl::message (msg, content);
 }
 
-KDE_NO_EXPORT void ASX::Entry::deactivate () {
+void ASX::Entry::deactivate () {
     document ()->message (MsgInfoString, nullptr);
     if (duration_timer) {
         document()->cancelPosting (duration_timer);
@@ -157,14 +157,14 @@ void *ASX::Entry::role (RoleType msg, void *content)
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT void ASX::Ref::opened () {
+void ASX::Ref::opened () {
     src = getAsxAttribute (this, "href");
     Mrl::opened ();
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT void ASX::EntryRef::opened () {
+void ASX::EntryRef::opened () {
     src = getAsxAttribute (this, "href");
     Mrl::opened ();
 }

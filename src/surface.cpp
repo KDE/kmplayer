@@ -32,7 +32,7 @@
 using namespace KMPlayer;
 
 
-KDE_NO_CDTOR_EXPORT Surface::Surface (ViewArea *widget)
+Surface::Surface (ViewArea *widget)
   : bounds(SRect(0, 0,
                  widget->width() * widget->devicePixelRatioF(),
                  widget->height() * widget->devicePixelRatioF()
@@ -126,7 +126,7 @@ Surface *Surface::createSurface (NodePtr owner, const SRect & rect) {
     return surface;
 }
 
-KDE_NO_EXPORT IRect Surface::toScreen (const SSize &size) {
+IRect Surface::toScreen (const SSize &size) {
     //FIXME: handle scroll
     Matrix matrix (0, 0, xscale, yscale);
     matrix.translate (bounds.x (), bounds.y ());
@@ -168,7 +168,7 @@ static void clipToScreen (Surface *s, Matrix &m, IRect &clip) {
 }
 
 
-KDE_NO_EXPORT void Surface::repaint (const SRect &rect) {
+void Surface::repaint (const SRect &rect) {
     Matrix matrix;
     IRect clip;
     clipToScreen (this, matrix, clip);
@@ -178,7 +178,7 @@ KDE_NO_EXPORT void Surface::repaint (const SRect &rect) {
         view_widget->scheduleRepaint (clip);
 }
 
-KDE_NO_EXPORT void Surface::repaint () {
+void Surface::repaint () {
     Surface *ps = parentNode ();
     if (ps)
         ps->repaint (bounds);

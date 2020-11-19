@@ -18,13 +18,9 @@
 **/
 
 #ifdef TEST_TRIE
-# define KMPLAYER_NO_EXPORT
-# define KMPLAYER_EXPORT
-# define KDE_NO_EXPORT
-# define KDE_NO_CDTOR_EXPORT
+# define KMPLAYERCOMMON_EXPORT
 #else
 # include <config-kmplayer.h>
-# include "kmplayer_def.h"
 #endif
 #include <assert.h>
 #include <stdio.h>

@@ -277,7 +277,6 @@ static QPushButton *ctrlButton(QBoxLayout* l, const char **p, int key = 0) {
     return b;
 }
 
-KDE_NO_CDTOR_EXPORT
 KMPlayerMenuButton::KMPlayerMenuButton(QWidget*, QBoxLayout * l, const char ** p, int key)
  : QPushButton(makeIcon(p), QString()) {
     setFocusPolicy (Qt::NoFocus);
@@ -288,23 +287,22 @@ KMPlayerMenuButton::KMPlayerMenuButton(QWidget*, QBoxLayout * l, const char ** p
     l->addWidget (this);
 }
 
-KDE_NO_EXPORT void KMPlayerMenuButton::enterEvent (QEvent *) {
+void KMPlayerMenuButton::enterEvent (QEvent *) {
     emit mouseEntered ();
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT
 KMPlayerPopupMenu::KMPlayerPopupMenu (QWidget *parent, const QString &title)
  : QMenu(title, parent) {}
 
-KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
+void KMPlayerPopupMenu::leaveEvent (QEvent *) {
     emit mouseLeft ();
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT VolumeBar::VolumeBar(QWidget*, View * view)
+VolumeBar::VolumeBar(QWidget*, View * view)
  : m_view(view), m_value(100) {
     setSizePolicy( QSizePolicy (QSizePolicy::Minimum, QSizePolicy::Fixed));
     setMinimumSize (QSize (51, button_height_only_buttons + 2));
@@ -315,7 +313,7 @@ KDE_NO_CDTOR_EXPORT VolumeBar::VolumeBar(QWidget*, View * view)
     setPalette (palette);
 }
 
-KDE_NO_CDTOR_EXPORT VolumeBar::~VolumeBar () {
+VolumeBar::~VolumeBar () {
 }
 
 void VolumeBar::setValue (int v) {
@@ -358,7 +356,7 @@ void VolumeBar::mouseMoveEvent (QMouseEvent * e) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
+ControlPanel::ControlPanel(QWidget * parent, View * view)
  : QWidget (parent),
    m_progress_mode (progress_playing),
    m_progress_length (0),
@@ -497,7 +495,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     connect (audioMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
 }
 
-KDE_NO_EXPORT void ControlPanel::setPalette (const QPalette & pal) {
+void ControlPanel::setPalette (const QPalette & pal) {
     QWidget::setPalette (pal);
     QColor c = palette ().color (foregroundRole ());
     if (c == Qt::black)
@@ -520,7 +518,7 @@ KDE_NO_EXPORT void ControlPanel::setPalette (const QPalette & pal) {
     m_buttons[button_blue]->setIcon(makeIcon(blue_xpm));
 }
 
-KDE_NO_EXPORT void ControlPanel::timerEvent (QTimerEvent * e) {
+void ControlPanel::timerEvent (QTimerEvent * e) {
     if (e->timerId () == m_popup_timer) {
         m_popup_timer = 0;
         if (m_button_monitored == button_config) {
@@ -581,11 +579,11 @@ void ControlPanel::setAutoControls (bool b) {
     m_view->updateLayout ();
 }
 
-KDE_NO_EXPORT void ControlPanel::showPopupMenu () {
+void ControlPanel::showPopupMenu () {
     popupMenu->exec (m_buttons [button_config]->mapToGlobal (QPoint (0, maximumSize ().height ())));
 }
 
-KDE_NO_EXPORT void ControlPanel::showLanguageMenu () {
+void ControlPanel::showLanguageMenu () {
     languageMenu->exec (m_buttons [button_language]->mapToGlobal (QPoint (0, maximumSize ().height ())));
 }
 
@@ -597,7 +595,7 @@ void ControlPanel::showPositionSlider (bool show) {
         m_view->updateLayout ();
 }
 
-KDE_NO_EXPORT void ControlPanel::setupPositionSlider (bool show) {
+void ControlPanel::setupPositionSlider (bool show) {
     int h = show ? button_height_with_slider : button_height_only_buttons;
     m_posSlider->setEnabled (false);
     m_posSlider->setValue (0);
@@ -609,7 +607,7 @@ KDE_NO_EXPORT void ControlPanel::setupPositionSlider (bool show) {
     setMaximumHeight((h + 6) * dpi_scale);
 }
 
-KDE_NO_EXPORT int ControlPanel::preferredHeight () {
+int ControlPanel::preferredHeight () {
     return dpi_scale * (m_posSlider->isVisible () ?
             button_height_with_slider + 8 : button_height_only_buttons + 2);
 }
@@ -648,12 +646,12 @@ void ControlPanel::setPlaying (bool play) {
     }
 }
 
-KDE_NO_EXPORT void ControlPanel::setRecording (bool record) {
+void ControlPanel::setRecording (bool record) {
     if (record != m_buttons[button_record]->isChecked ())
         m_buttons[button_record]->toggle ();
 }
 
-KDE_NO_EXPORT void ControlPanel::setPlayingProgress (int pos, int len) {
+void ControlPanel::setPlayingProgress (int pos, int len) {
     m_posSlider->setEnabled (false);
     m_progress_length = len;
     showPositionSlider (len > 0);
@@ -671,7 +669,7 @@ KDE_NO_EXPORT void ControlPanel::setPlayingProgress (int pos, int len) {
     m_posSlider->setEnabled (true);
 }
 
-KDE_NO_EXPORT void ControlPanel::setLoadingProgress (int pos) {
+void ControlPanel::setLoadingProgress (int pos) {
     if (pos > 0 && pos < 100 && !m_posSlider->isVisible ())
         showPositionSlider (true);
     else if (pos >= 100 && m_posSlider->isVisible ())
@@ -684,7 +682,7 @@ KDE_NO_EXPORT void ControlPanel::setLoadingProgress (int pos) {
     m_posSlider->setValue (pos);
 }
 
-KDE_NO_EXPORT void ControlPanel::buttonClicked () {
+void ControlPanel::buttonClicked () {
     if (m_popup_timer) {
         killTimer (m_popup_timer);
         m_popup_timer = 0;
@@ -696,7 +694,7 @@ KDE_NO_EXPORT void ControlPanel::buttonClicked () {
         showPopupMenu ();
 }
 
-KDE_NO_EXPORT void ControlPanel::buttonMouseEntered () {
+void ControlPanel::buttonMouseEntered () {
     if (!m_popup_timer) {
         if (sender () == m_buttons [button_config]) {
             if (!popupMenu->isVisible ()) {
@@ -712,12 +710,12 @@ KDE_NO_EXPORT void ControlPanel::buttonMouseEntered () {
     }
 }
 
-KDE_NO_EXPORT void ControlPanel::menuMouseLeft () {
+void ControlPanel::menuMouseLeft () {
     if (!m_popdown_timer && !m_popup_clicked)
         m_popdown_timer = startTimer (400);
 }
 
-KDE_NO_EXPORT void ControlPanel::setLanguages (const QStringList & alang, const QStringList & slang) {
+void ControlPanel::setLanguages (const QStringList & alang, const QStringList & slang) {
     int sz = (int) alang.size ();
     bool showbutton = (sz > 0);
     audioMenu->clear ();
@@ -734,7 +732,7 @@ KDE_NO_EXPORT void ControlPanel::setLanguages (const QStringList & alang, const 
         m_buttons [button_language]->hide ();
 }
 
-KDE_NO_EXPORT void ControlPanel::actionToggled (QAction* act) {
+void ControlPanel::actionToggled (QAction* act) {
     if (act->isChecked ())
         return;
     int size = act->parentWidget()->actions().count();

@@ -21,8 +21,6 @@
 
 #include "config-kmplayer.h"
 
-#include "kmplayer_def.h"
-
 #include <qobject.h>
 #include <QList>
 #include <QPointer>
@@ -36,6 +34,7 @@
 #include <ksharedconfig.h>
 #include <kconfiggroup.h>
 
+#include "kmplayercommon_export.h"
 #include "kmplayerview.h"
 #include "kmplayerplaylist.h"
 
@@ -61,7 +60,8 @@ class MediaManager;
 /**
  * Class for a certain media, like URL, DVD, TV etc
  */
-class KMPLAYER_EXPORT Source : public QObject, public PlayListNotify {
+class KMPLAYERCOMMON_EXPORT Source : public QObject, public PlayListNotify
+{
     Q_OBJECT
 public:
     struct LangInfo {
@@ -79,33 +79,33 @@ public:
     virtual bool hasLength ();
     virtual bool isSeekable ();
 
-    KDE_NO_EXPORT int width () const { return m_width; }
-    KDE_NO_EXPORT int height () const { return m_height; }
+    KMPLAYERCOMMON_NO_EXPORT int width () const { return m_width; }
+    KMPLAYERCOMMON_NO_EXPORT int height () const { return m_height; }
     virtual void dimensions (int & w, int & h) { w = m_width; h = m_height; }
     /* length () returns length in deci-seconds */
-    KDE_NO_EXPORT int length () const { return m_length; }
+    KMPLAYERCOMMON_NO_EXPORT int length () const { return m_length; }
     /* position () returns position in deci-seconds */
-    KDE_NO_EXPORT int position () const { return m_position; }
-    KDE_NO_EXPORT float aspect () const { return m_aspect; }
-    KDE_NO_EXPORT const KUrl & url () const { return m_url; }
-    KDE_NO_EXPORT const KUrl & subUrl () const { return m_sub_url; }
+    KMPLAYERCOMMON_NO_EXPORT int position () const { return m_position; }
+    KMPLAYERCOMMON_NO_EXPORT float aspect () const { return m_aspect; }
+    KMPLAYERCOMMON_NO_EXPORT const KUrl & url () const { return m_url; }
+    KMPLAYERCOMMON_NO_EXPORT const KUrl & subUrl () const { return m_sub_url; }
     PartBase * player () { return m_player; }
     virtual void reset ();
-    KDE_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
-    KDE_NO_EXPORT const QString & videoDevice () const { return m_videodevice; }
-    KDE_NO_EXPORT const QString & videoNorm () const { return m_videonorm; }
+    KMPLAYERCOMMON_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
+    KMPLAYERCOMMON_NO_EXPORT const QString & videoDevice () const { return m_videodevice; }
+    KMPLAYERCOMMON_NO_EXPORT const QString & videoNorm () const { return m_videonorm; }
     /* frequency() if set, returns frequency in kHz */
-    KDE_NO_EXPORT int frequency () const { return m_frequency; }
-    KDE_NO_EXPORT int xvPort () const { return m_xvport; }
-    KDE_NO_EXPORT int xvEncoding () const { return m_xvencoding; }
-    KDE_NO_EXPORT int audioLangId () const { return m_audio_id; }
-    KDE_NO_EXPORT int subTitleId () const { return m_subtitle_id; }
-    KDE_NO_EXPORT const QString & pipeCmd () const { return m_pipecmd; }
-    KDE_NO_EXPORT const QString & options () const { return m_options; }
-    KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
-    KDE_NO_EXPORT const QString & tuner () const { return m_tuner; }
-    KDE_NO_EXPORT const char* name() const { return m_name; }
-    KDE_NO_EXPORT Mrl *current() { return m_current ? m_current->mrl() : nullptr;}
+    KMPLAYERCOMMON_NO_EXPORT int frequency () const { return m_frequency; }
+    KMPLAYERCOMMON_NO_EXPORT int xvPort () const { return m_xvport; }
+    KMPLAYERCOMMON_NO_EXPORT int xvEncoding () const { return m_xvencoding; }
+    KMPLAYERCOMMON_NO_EXPORT int audioLangId () const { return m_audio_id; }
+    KMPLAYERCOMMON_NO_EXPORT int subTitleId () const { return m_subtitle_id; }
+    KMPLAYERCOMMON_NO_EXPORT const QString & pipeCmd () const { return m_pipecmd; }
+    KMPLAYERCOMMON_NO_EXPORT const QString & options () const { return m_options; }
+    KMPLAYERCOMMON_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
+    KMPLAYERCOMMON_NO_EXPORT const QString & tuner () const { return m_tuner; }
+    KMPLAYERCOMMON_NO_EXPORT const char* name() const { return m_name; }
+    KMPLAYERCOMMON_NO_EXPORT Mrl *current() { return m_current ? m_current->mrl() : nullptr;}
     virtual void setCurrent (Mrl *mrl);
     QString plugin (const QString &mime) const;
     virtual NodePtr document ();
@@ -116,23 +116,23 @@ public:
 
     virtual void setUrl (const QString &url);
     void insertURL (NodePtr mrl, const QString & url, const QString & title=QString());
-    KDE_NO_EXPORT void setSubURL (const KUrl & url) { m_sub_url = url; }
-    void setLanguages (LangInfoPtr alang, LangInfoPtr slang) KDE_NO_EXPORT;
-    KDE_NO_EXPORT void setWidth (int w) { m_width = w; }
-    KDE_NO_EXPORT void setHeight (int h) { m_height = h; }
+    KMPLAYERCOMMON_NO_EXPORT void setSubURL (const KUrl & url) { m_sub_url = url; }
+    void setLanguages (LangInfoPtr alang, LangInfoPtr slang) KMPLAYERCOMMON_NO_EXPORT;
+    KMPLAYERCOMMON_NO_EXPORT void setWidth (int w) { m_width = w; }
+    KMPLAYERCOMMON_NO_EXPORT void setHeight (int h) { m_height = h; }
     virtual void setDimensions (NodePtr, int w, int h);
     virtual void setAspect (NodePtr, float a);
     /* setLength (len) set length in deci-seconds */
     void setLength (NodePtr, int len);
     /* setPosition (pos) set position in deci-seconds */
-    void setPosition (int pos) KDE_NO_EXPORT;
+    void setPosition (int pos) KMPLAYERCOMMON_NO_EXPORT;
     virtual void setIdentified (bool b = true);
-    KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
-    KDE_NO_EXPORT bool autoPlay () const { return m_auto_play; }
-    KDE_NO_EXPORT void setAvoidRedirects (bool b) { m_avoid_redirects = b; }
-    KDE_NO_EXPORT bool avoidRedirects () const { return m_avoid_redirects; }
+    KMPLAYERCOMMON_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
+    KMPLAYERCOMMON_NO_EXPORT bool autoPlay () const { return m_auto_play; }
+    KMPLAYERCOMMON_NO_EXPORT void setAvoidRedirects (bool b) { m_avoid_redirects = b; }
+    KMPLAYERCOMMON_NO_EXPORT bool avoidRedirects () const { return m_avoid_redirects; }
     void setTitle (const QString & title);
-    void setLoading (int percentage) KDE_NO_EXPORT;
+    void setLoading (int percentage) KMPLAYERCOMMON_NO_EXPORT;
 
     virtual QString prettyName ();
     virtual void activate () = 0;
@@ -154,8 +154,8 @@ signals:
     void titleChanged (const QString & title);
 public slots:
     void slotActivate ();
-    void setAudioLang (int) KDE_NO_EXPORT;
-    void setSubtitle (int) KDE_NO_EXPORT;
+    void setAudioLang (int) KMPLAYERCOMMON_NO_EXPORT;
+    void setSubtitle (int) KMPLAYERCOMMON_NO_EXPORT;
 protected:
     void timerEvent (QTimerEvent *) override;
     /**
@@ -202,7 +202,8 @@ private slots:
     void changedUrl();
 };
 
-class KMPLAYER_EXPORT SourceDocument : public Document {
+class KMPLAYERCOMMON_EXPORT SourceDocument : public Document
+{
 public:
     SourceDocument (Source *s, const QString &url);
 
@@ -215,7 +216,8 @@ protected:
 /*
  * Source from URLs
  */
-class KMPLAYER_EXPORT URLSource : public Source {
+class KMPLAYERCOMMON_EXPORT URLSource : public Source
+{
     Q_OBJECT
 public:
     URLSource (PartBase * player, const KUrl & url = KUrl ());
@@ -228,7 +230,7 @@ public:
     void setUrl (const QString &url) override;
     bool authoriseUrl (const QString &url) override;
     void init () override;
-    void activate () override KDE_NO_EXPORT;
+    void activate () override KMPLAYERCOMMON_NO_EXPORT;
     void deactivate () override;
     void forward () override;
     void backward () override;
@@ -240,7 +242,8 @@ protected:
 /*
  * KDE's KMediaPlayer::Player implementation and base for KMPlayerPart
  */
-class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
+class KMPLAYERCOMMON_EXPORT PartBase : public KMediaPlayer::Player
+{
     Q_OBJECT
 public:
     PartBase (QWidget *parent, QObject *objParent, KSharedConfigPtr);
@@ -279,7 +282,7 @@ public:
     void updateStatus (const QString & msg);
 
     // these are called from Process
-    void changeURL (const QString & url) KDE_NO_EXPORT;
+    void changeURL (const QString & url) KMPLAYERCOMMON_NO_EXPORT;
     void updateTree (bool full=true, bool force=false);
     void setLanguages (const QStringList & alang, const QStringList & slang);
     void recorderPlaying ();
@@ -300,15 +303,15 @@ public slots:
     void adjustVolume (int incdec);
     bool playing () const;
     void showConfigDialog ();
-    void showPlayListWindow () KDE_NO_EXPORT;
-    void slotPlayerMenu (QAction*) KDE_NO_EXPORT;
+    void showPlayListWindow () KMPLAYERCOMMON_NO_EXPORT;
+    void slotPlayerMenu (QAction*) KMPLAYERCOMMON_NO_EXPORT;
     void back ();
     void forward ();
-    void addBookMark (const QString & title, const QString & url) KDE_NO_EXPORT;
-    void volumeChanged (int) KDE_NO_EXPORT;
+    void addBookMark (const QString & title, const QString & url) KMPLAYERCOMMON_NO_EXPORT;
+    void volumeChanged (int) KMPLAYERCOMMON_NO_EXPORT;
     void increaseVolume ();
     void decreaseVolume ();
-    void setPosition (int position, int length) KDE_NO_EXPORT;
+    void setPosition (int position, int length) KMPLAYERCOMMON_NO_EXPORT;
     virtual void setLoaded (int percentage);
     virtual void processCreated (Process *);
 public:
@@ -317,11 +320,11 @@ public:
     bool hasLength (void) const override;
     qlonglong length (void) const override;
     void seek (qlonglong) override;
-    void toggleFullScreen () KDE_NO_EXPORT;
-    bool isPlaying () KDE_NO_EXPORT;
+    void toggleFullScreen () KMPLAYERCOMMON_NO_EXPORT;
+    bool isPlaying () KMPLAYERCOMMON_NO_EXPORT;
 
     virtual QString doEvaluate (const QString &script);
-    void showControls (bool show) KDE_NO_EXPORT;
+    void showControls (bool show) KMPLAYERCOMMON_NO_EXPORT;
     QString getStatus ();
 signals:
     void sourceChanged (KMPlayer::Source * old, KMPlayer::Source * nw);
@@ -345,22 +348,22 @@ protected:
     virtual void playingStarted ();
     virtual void playingStopped ();
 protected slots:
-    void posSliderPressed () KDE_NO_EXPORT;
-    void posSliderReleased () KDE_NO_EXPORT;
-    void positionValueChanged (int val) KDE_NO_EXPORT;
-    void contrastValueChanged (int val) KDE_NO_EXPORT;
-    void brightnessValueChanged (int val) KDE_NO_EXPORT;
-    void hueValueChanged (int val) KDE_NO_EXPORT;
-    void saturationValueChanged (int val) KDE_NO_EXPORT;
-    void sourceHasChangedAspects () KDE_NO_EXPORT;
-    void fullScreen () KDE_NO_EXPORT;
-    void playListItemClicked (const QModelIndex &) KDE_NO_EXPORT;
-    void playListItemActivated (const QModelIndex &) KDE_NO_EXPORT;
+    void posSliderPressed () KMPLAYERCOMMON_NO_EXPORT;
+    void posSliderReleased () KMPLAYERCOMMON_NO_EXPORT;
+    void positionValueChanged (int val) KMPLAYERCOMMON_NO_EXPORT;
+    void contrastValueChanged (int val) KMPLAYERCOMMON_NO_EXPORT;
+    void brightnessValueChanged (int val) KMPLAYERCOMMON_NO_EXPORT;
+    void hueValueChanged (int val) KMPLAYERCOMMON_NO_EXPORT;
+    void saturationValueChanged (int val) KMPLAYERCOMMON_NO_EXPORT;
+    void sourceHasChangedAspects () KMPLAYERCOMMON_NO_EXPORT;
+    void fullScreen () KMPLAYERCOMMON_NO_EXPORT;
+    void playListItemClicked (const QModelIndex &) KMPLAYERCOMMON_NO_EXPORT;
+    void playListItemActivated (const QModelIndex &) KMPLAYERCOMMON_NO_EXPORT;
     void slotPlayingStarted ();
     void slotPlayingStopped ();
     void settingsChanged ();
-    void audioSelected (QAction*) KDE_NO_EXPORT;
-    void subtitleSelected (QAction*) KDE_NO_EXPORT;
+    void audioSelected (QAction*) KMPLAYERCOMMON_NO_EXPORT;
+    void subtitleSelected (QAction*) KMPLAYERCOMMON_NO_EXPORT;
 protected:
     KUrl m_docbase;
     NodePtr m_record_doc;

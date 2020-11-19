@@ -49,35 +49,39 @@ const short id_node_tracknum = 516;
 const short id_node_duration = 517;
 const short id_node_link = 518;
 
-class KMPLAYER_NO_EXPORT Playlist : public Mrl {
+class Playlist : public Mrl
+{
 public:
-    KDE_NO_CDTOR_EXPORT Playlist (NodePtr & d) : Mrl (d, id_node_playlist) {}
+    Playlist (NodePtr & d) : Mrl (d, id_node_playlist) {}
     Node *childFromTag (const QString & tag) override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "playlist"; }
+    const char * nodeName () const override { return "playlist"; }
     void *role (RoleType msg, void *content=nullptr) override;
     void closed () override;
 };
 
-class KMPLAYER_NO_EXPORT Tracklist : public Element {
+class Tracklist : public Element
+{
 public:
-    KDE_NO_CDTOR_EXPORT Tracklist (NodePtr & d) : Element (d, id_node_tracklist) {}
+    Tracklist (NodePtr & d) : Element (d, id_node_tracklist) {}
     Node *childFromTag (const QString & tag) override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "tracklist"; }
+    const char * nodeName () const override { return "tracklist"; }
 };
 
-class KMPLAYER_NO_EXPORT Track : public Element {
+class Track : public Element
+{
 public:
-    KDE_NO_CDTOR_EXPORT Track (NodePtr & d) : Element (d, id_node_track) {}
+    Track (NodePtr & d) : Element (d, id_node_track) {}
     void closed () override;
     void activate () override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "track"; }
+    const char * nodeName () const override { return "track"; }
     Node *childFromTag (const QString & tag) override;
 };
 
-class KMPLAYER_NO_EXPORT Location : public Mrl {
+class Location : public Mrl
+{
 public:
-    KDE_NO_CDTOR_EXPORT Location (NodePtr &d) : Mrl (d, id_node_location) {}
-    KDE_NO_EXPORT const char * nodeName () const override { return "location"; }
+    Location (NodePtr &d) : Mrl (d, id_node_location) {}
+    const char * nodeName () const override { return "location"; }
     void closed () override;
 };
 

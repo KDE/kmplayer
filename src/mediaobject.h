@@ -29,7 +29,7 @@
 #include <QMovie>
 #include <QList>
 
-#include "kmplayer_def.h"
+#include "kmplayercommon_export.h"
 #include "kmplayerplaylist.h"
 
 class QMovie;
@@ -56,7 +56,8 @@ class CalculatedSizer;
 class Surface;
 
 
-class KMPLAYER_EXPORT IProcess {
+class KMPLAYERCOMMON_EXPORT IProcess
+{
 public:
     enum State { NotRunning = 0, Ready, Buffering, Playing, Paused };
 
@@ -94,7 +95,8 @@ private:
     IProcess (const IViewer &);
 };
 
-class KMPLAYER_EXPORT ProcessUser {
+class KMPLAYERCOMMON_EXPORT ProcessUser
+{
 public:
     virtual ~ProcessUser () {}
 
@@ -105,7 +107,8 @@ public:
     virtual Mrl *getMrl () = 0;
 };
 
-class KMPLAYER_EXPORT ProcessInfo {
+class KMPLAYERCOMMON_EXPORT ProcessInfo
+{
 public:
     ProcessInfo (const char *nm, const QString &lbl, const char **supported,
             MediaManager *, PreferencesPage *);
@@ -125,7 +128,8 @@ public:
 /*
  * Class that creates MediaObject and keeps track objects
  */
-class KMPLAYER_EXPORT MediaManager {
+class KMPLAYERCOMMON_EXPORT MediaManager
+{
 public:
     enum MediaType { Any, Audio, AudioVideo, Image, Text, Data };
     typedef QMap <QString, ProcessInfo *> ProcessInfoMap;
@@ -166,7 +170,8 @@ private:
  * Abstract base of MediaObject types, handles downloading
  */
 
-class KMPLAYER_NO_EXPORT DataCache : public QObject {
+class DataCache : public QObject
+{
     Q_OBJECT
     typedef QMap <QString, QPair <QString, QByteArray> > DataMap;
     typedef QMap <QString, bool> PreserveMap;
@@ -184,7 +189,8 @@ signals:
     void preserveRemoved (const QString &); // ready or canceled
 };
 
-class KMPLAYER_EXPORT MediaObject : public QObject {
+class KMPLAYERCOMMON_EXPORT MediaObject : public QObject
+{
     Q_OBJECT
     friend class MediaManager;
 public:
@@ -194,7 +200,7 @@ public:
     virtual void pause () {}
     virtual void unpause () {}
     virtual void stop () {}
-    virtual void destroy() KDE_NO_EXPORT;
+    virtual void destroy() KMPLAYERCOMMON_NO_EXPORT;
 
     Mrl *mrl ();
 
@@ -208,17 +214,18 @@ protected:
 
 //------------------------%<----------------------------------------------------
 
-class KMPLAYER_EXPORT MediaInfo : public QObject {
+class KMPLAYERCOMMON_EXPORT MediaInfo : public QObject
+{
     Q_OBJECT
 public:
     MediaInfo (Node *node, MediaManager::MediaType type);
     ~MediaInfo () override;
 
     bool wget(const QString& url, const QString& from_domain=QString());
-    void killWGet() KDE_NO_EXPORT;
-    void clearData() KDE_NO_EXPORT;
-    QString mimetype() KDE_NO_EXPORT;
-    bool downloading() const KDE_NO_EXPORT;
+    void killWGet() KMPLAYERCOMMON_NO_EXPORT;
+    void clearData() KMPLAYERCOMMON_NO_EXPORT;
+    QString mimetype() KMPLAYERCOMMON_NO_EXPORT;
+    bool downloading() const KMPLAYERCOMMON_NO_EXPORT;
     void create ();
 
     QByteArray &rawData () { return data; }
@@ -229,15 +236,15 @@ public:
     MediaManager::MediaType type;
 
 private slots:
-    void slotResult(KJob*) KDE_NO_EXPORT;
-    void slotData(KIO::Job*, const QByteArray& qb) KDE_NO_EXPORT;
-    void slotMimetype (KIO::Job* job, const QString& mimestr) KDE_NO_EXPORT;
-    void cachePreserveRemoved(const QString&) KDE_NO_EXPORT;
+    void slotResult(KJob*) KMPLAYERCOMMON_NO_EXPORT;
+    void slotData(KIO::Job*, const QByteArray& qb) KMPLAYERCOMMON_NO_EXPORT;
+    void slotMimetype (KIO::Job* job, const QString& mimestr) KMPLAYERCOMMON_NO_EXPORT;
+    void cachePreserveRemoved(const QString&) KMPLAYERCOMMON_NO_EXPORT;
 
 private:
-    void ready() KDE_NO_EXPORT;
-    bool readChildDoc() KDE_NO_EXPORT;
-    void setMimetype(const QString&) KDE_NO_EXPORT;
+    void ready() KMPLAYERCOMMON_NO_EXPORT;
+    bool readChildDoc() KMPLAYERCOMMON_NO_EXPORT;
+    void setMimetype(const QString&) KMPLAYERCOMMON_NO_EXPORT;
 
     Node *node;
     KIO::Job *job;
@@ -257,7 +264,8 @@ typedef unsigned long WindowId;
 
 class AudioVideoMedia;
 
-class KMPLAYER_NO_EXPORT IViewer {
+class IViewer
+{
 public:
     enum Monitor {
         MonitorNothing = 0, MonitorMouse = 1, MonitorKey = 2 , MonitorAll = 3
@@ -280,7 +288,8 @@ private:
     IViewer (const IViewer &);
 };
 
-class KMPLAYER_NO_EXPORT AudioVideoMedia : public MediaObject, ProcessUser {
+class AudioVideoMedia : public MediaObject, ProcessUser
+{
     friend class MediaManager;
 public:
     enum Request {
@@ -323,7 +332,8 @@ protected:
  * MediaObject for (animated)images
  */
 
-struct KMPLAYER_NO_EXPORT ImageData {
+struct ImageData
+{
     enum ImageFlags {
         ImageAny=0, ImagePixmap=0x1, ImageAnimated=0x2, ImageScalable=0x4
     };
@@ -356,7 +366,8 @@ private:
 typedef SharedPtr <ImageData> ImageDataPtr;
 typedef WeakPtr <ImageData> ImageDataPtrW;
 
-class KMPLAYER_NO_EXPORT ImageMedia : public MediaObject {
+class ImageMedia : public MediaObject
+{
     Q_OBJECT
 public:
     ImageMedia (MediaManager *manager, Node *node,
@@ -404,7 +415,8 @@ private:
 /*
  * MediaObject for text
  */
-class KMPLAYER_NO_EXPORT TextMedia : public MediaObject {
+class TextMedia : public MediaObject
+{
 public:
     TextMedia (MediaManager *manager, Node *node, const QByteArray &ba);
 

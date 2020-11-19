@@ -68,10 +68,10 @@
 
 namespace KMPlayer {
 
-class KMPLAYER_NO_EXPORT BookmarkOwner : public KBookmarkOwner {
+class BookmarkOwner : public KBookmarkOwner {
 public:
     BookmarkOwner (PartBase *);
-    KDE_NO_CDTOR_EXPORT ~BookmarkOwner () override {}
+    ~BookmarkOwner () override {}
     void openBookmark(const KBookmark &bm, Qt::MouseButtons mb, Qt::KeyboardModifiers km) override;
     QString currentTitle() const override;
     QString currentURL() const;
@@ -83,19 +83,19 @@ private:
 
 using namespace KMPlayer;
 
-KDE_NO_CDTOR_EXPORT BookmarkOwner::BookmarkOwner (PartBase * player)
+BookmarkOwner::BookmarkOwner (PartBase * player)
     : m_player (player) {}
 
-KDE_NO_EXPORT void BookmarkOwner::openBookmark(const KBookmark &bm, Qt::MouseButtons, Qt::KeyboardModifiers) {
+void BookmarkOwner::openBookmark(const KBookmark &bm, Qt::MouseButtons, Qt::KeyboardModifiers) {
     if (!bm.isNull ())
         m_player->openUrl (bm.url ());
 }
 
-KDE_NO_EXPORT QString BookmarkOwner::currentTitle () const {
+QString BookmarkOwner::currentTitle () const {
     return m_player->source ()->prettyName ();
 }
 
-KDE_NO_EXPORT QString BookmarkOwner::currentURL () const {
+QString BookmarkOwner::currentURL () const {
     return m_player->source ()->url ().url ();
 }
 
@@ -134,7 +134,7 @@ void PartBase::showConfigDialog () {
     m_settings->show ("URLPage");
 }
 
-KDE_NO_EXPORT void PartBase::showPlayListWindow () {
+void PartBase::showPlayListWindow () {
     // note, this is also the slot of application's view_playlist action, but
     // anyhow, actions don't work for the fullscreen out-of-the-box, so ...
     if (m_view->viewArea ()->isFullScreen ())
@@ -145,7 +145,7 @@ KDE_NO_EXPORT void PartBase::showPlayListWindow () {
         m_view->toggleShowPlaylist ();
 }
 
-KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url) {
+void PartBase::addBookMark (const QString & t, const QString & url) {
     KBookmarkGroup b = m_bookmark_manager->root ();
     b.addBookmark (t, KUrl (url), KIO::iconNameForUrl(url));
     m_bookmark_manager->emitChanged (b);
@@ -250,7 +250,7 @@ PartBase::~PartBase () {
     delete m_bookmark_owner;
 }
 
-KDE_NO_EXPORT void PartBase::showControls (bool show) {
+void PartBase::showControls (bool show) {
     viewWidget ()->setControlPanelMode (
             show ? View::CP_Show : View::CP_Hide);
 }
@@ -342,7 +342,7 @@ QString PartBase::processName (Mrl *mrl) {
 
 void PartBase::processCreated (Process*) {}
 
-KDE_NO_EXPORT void PartBase::slotPlayerMenu (QAction* act) {
+void PartBase::slotPlayerMenu (QAction* act) {
     Mrl *mrl = m_source->current ();
     bool playing = mrl && mrl->active ();
     const char * srcname = m_source->name ();
@@ -447,7 +447,7 @@ void PartBase::setSource (Source * _source) {
     emit sourceChanged (old_source, m_source);
 }
 
-KDE_NO_EXPORT void PartBase::changeURL (const QString & url) {
+void PartBase::changeURL (const QString & url) {
     emit urlChanged (url);
 }
 
@@ -563,7 +563,7 @@ void PartBase::slotPlayingStopped () {
     playingStarted ();
 }
 
-KDE_NO_EXPORT void PartBase::setPosition (int position, int length) {
+void PartBase::setPosition (int position, int length) {
     if (m_view && !m_bPosSliderPressed) {
         if (m_media_manager->processes ().size () > 1)
             emit positioned (0, 0);
@@ -610,7 +610,7 @@ void PartBase::forward () {
     m_source->forward ();
 }
 
-KDE_NO_EXPORT void PartBase::playListItemClicked (const QModelIndex& index) {
+void PartBase::playListItemClicked (const QModelIndex& index) {
     if (!index.isValid ())
         return;
     PlayListView *pv = qobject_cast <PlayListView *> (sender ());
@@ -622,7 +622,7 @@ KDE_NO_EXPORT void PartBase::playListItemClicked (const QModelIndex& index) {
     }
 }
 
-KDE_NO_EXPORT void PartBase::playListItemActivated(const QModelIndex &index) {
+void PartBase::playListItemActivated(const QModelIndex &index) {
     if (m_in_update_tree) return;
     if (m_view->editMode ()) return;
     PlayListView *pv = qobject_cast <PlayListView *> (sender ());
@@ -698,14 +698,14 @@ void PartBase::setLanguages (const QStringList & al, const QStringList & sl) {
     emit languagesUpdated (al, sl);
 }
 
-KDE_NO_EXPORT void PartBase::audioSelected (QAction* act) {
+void PartBase::audioSelected (QAction* act) {
     emit panelActionToggled(act);
     int i = act->parentWidget()->actions().indexOf(act);
     if (i >= 0)
         emit audioIsSelected (i);
 }
 
-KDE_NO_EXPORT void PartBase::subtitleSelected (QAction* act) {
+void PartBase::subtitleSelected (QAction* act) {
     emit panelActionToggled(act);
     int i = act->parentWidget()->actions().indexOf(act);
     if (i >= 0)
@@ -863,66 +863,66 @@ void PartBase::decreaseVolume () {
     //    m_view->controlPanel ()->volumeBar ()->setValue (m_view->controlPanel ()->volumeBar ()->value () - 2);
 }
 
-KDE_NO_EXPORT void PartBase::posSliderPressed () {
+void PartBase::posSliderPressed () {
     m_bPosSliderPressed=true;
 }
 
-KDE_NO_EXPORT void PartBase::posSliderReleased () {
+void PartBase::posSliderReleased () {
     m_bPosSliderPressed=false;
     const QSlider * posSlider = ::qobject_cast<const QSlider *> (sender ());
     if (m_media_manager->processes ().size () == 1)
         m_media_manager->processes ().first ()->seek (posSlider->value(), true);
 }
 
-KDE_NO_EXPORT void PartBase::volumeChanged (int val) {
+void PartBase::volumeChanged (int val) {
     if (m_media_manager->processes ().size () > 0) {
         m_settings->volume = val;
         m_media_manager->processes ().first ()->volume (val, true);
     }
 }
 
-KDE_NO_EXPORT void PartBase::contrastValueChanged (int val) {
+void PartBase::contrastValueChanged (int val) {
     if (m_media_manager->processes ().size () > 0)
         m_media_manager->processes ().first ()->contrast (val, true);
 }
 
-KDE_NO_EXPORT void PartBase::brightnessValueChanged (int val) {
+void PartBase::brightnessValueChanged (int val) {
     if (m_media_manager->processes ().size () > 0)
         m_media_manager->processes ().first ()->brightness (val, true);
 }
 
-KDE_NO_EXPORT void PartBase::hueValueChanged (int val) {
+void PartBase::hueValueChanged (int val) {
     if (m_media_manager->processes ().size () > 0)
         m_media_manager->processes ().first ()->hue (val, true);
 }
 
-KDE_NO_EXPORT void PartBase::saturationValueChanged (int val) {
+void PartBase::saturationValueChanged (int val) {
     m_settings->saturation = val;
     if (m_media_manager->processes ().size () > 0)
         m_media_manager->processes ().first ()->saturation (val, true);
 }
 
-KDE_NO_EXPORT void PartBase::sourceHasChangedAspects () {
+void PartBase::sourceHasChangedAspects () {
     emit sourceDimensionChanged ();
 }
 
-KDE_NO_EXPORT void PartBase::positionValueChanged (int pos) {
+void PartBase::positionValueChanged (int pos) {
     QSlider * slider = ::qobject_cast <QSlider *> (sender ());
     if (m_media_manager->processes ().size () == 1 &&
             slider && slider->isEnabled ())
         m_media_manager->processes ().first ()->seek (pos, true);
 }
 
-KDE_NO_EXPORT void PartBase::fullScreen () {
+void PartBase::fullScreen () {
     if (m_view)
         m_view->fullScreen ();
 }
 
-KDE_NO_EXPORT void PartBase::toggleFullScreen () {
+void PartBase::toggleFullScreen () {
     m_view->fullScreen ();
 }
 
-KDE_NO_EXPORT bool PartBase::isPlaying () {
+bool PartBase::isPlaying () {
     return playing ();
 }
 
@@ -1026,7 +1026,7 @@ void Source::init () {
     m_recordcmd.truncate (0);
 }
 
-KDE_NO_EXPORT void Source::setLanguages (LangInfoPtr audio, LangInfoPtr sub)
+void Source::setLanguages (LangInfoPtr audio, LangInfoPtr sub)
 {
     m_audio_infos = audio;
     m_subtitle_infos = sub;
@@ -1093,12 +1093,12 @@ void Source::setLength (NodePtr, int len) {
     m_player->setPosition (m_position, m_length);
 }
 
-KDE_NO_EXPORT void Source::setPosition (int pos) {
+void Source::setPosition (int pos) {
     m_position = pos;
     m_player->setPosition (pos, m_length);
 }
 
-KDE_NO_EXPORT void Source::setLoading (int percentage) {
+void Source::setLoading (int percentage) {
     m_player->setLoaded (percentage);
 }
 
@@ -1142,7 +1142,7 @@ void Source::setTitle (const QString & title) {
     emit titleChanged (title);
 }
 
-KDE_NO_EXPORT void Source::setAudioLang (int id) {
+void Source::setAudioLang (int id) {
     LangInfoPtr li = m_audio_infos;
     for (; id > 0 && li; li = li->next)
         id--;
@@ -1151,7 +1151,7 @@ KDE_NO_EXPORT void Source::setAudioLang (int id) {
         m_player->mediaManager ()->processes ().first ()->setAudioLang (m_audio_id);
 }
 
-KDE_NO_EXPORT void Source::setSubtitle (int id) {
+void Source::setSubtitle (int id) {
     LangInfoPtr li = m_subtitle_infos;
     for (; id > 0 && li; li = li->next)
         id--;
@@ -1476,7 +1476,7 @@ bool URLSource::hasLength () {
     return !!length ();
 }
 
-KDE_NO_EXPORT void URLSource::activate () {
+void URLSource::activate () {
     if (activated)
         return;
     activated = true;

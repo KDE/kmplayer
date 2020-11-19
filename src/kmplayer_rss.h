@@ -42,39 +42,41 @@ const short id_node_ignored = 208;
 /**
  * '<RSS>' tag
  */
-class KMPLAYER_NO_EXPORT Rss : public Element, public PlaylistRole
+class Rss : public Element, public PlaylistRole
 {
 public:
-    KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Element (d, id_node_rss) {}
+    Rss (NodePtr & d) : Element (d, id_node_rss) {}
     Node *childFromTag (const QString & tag) override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "rss"; }
+    const char * nodeName () const override { return "rss"; }
     void *role (RoleType msg, void *content=nullptr) override;
 };
 
-class KMPLAYER_NO_EXPORT Channel : public Element, public PlaylistRole
+class Channel : public Element, public PlaylistRole
 {
 public:
-    KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Element (d, id_node_channel) {}
+    Channel (NodePtr & d) : Element (d, id_node_channel) {}
     Node *childFromTag (const QString & tag) override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "channel"; }
+    const char * nodeName () const override { return "channel"; }
     void closed () override;
     void *role (RoleType msg, void *content=nullptr) override;
 };
 
-class KMPLAYER_NO_EXPORT Item : public Element, public PlaylistRole {
+class Item : public Element, public PlaylistRole
+{
 public:
-    KDE_NO_CDTOR_EXPORT Item (NodePtr &d)
+    Item (NodePtr &d)
         : Element (d, id_node_item), summary_added (false) {}
     Node *childFromTag (const QString & tag) override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "item"; }
+    const char * nodeName () const override { return "item"; }
     void closed () override;
     bool summary_added;
 };
 
-class KMPLAYER_NO_EXPORT Enclosure : public Mrl {
+class Enclosure : public Mrl
+{
 public:
-    KDE_NO_CDTOR_EXPORT Enclosure(NodePtr &d) : Mrl(d, id_node_enclosure) {}
-    KDE_NO_EXPORT const char * nodeName () const override { return "enclosure"; }
+    Enclosure(NodePtr &d) : Mrl(d, id_node_enclosure) {}
+    const char * nodeName () const override { return "enclosure"; }
     void closed () override;
     void activate () override;
     void deactivate () override;

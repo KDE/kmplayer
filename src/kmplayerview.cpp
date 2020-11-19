@@ -70,23 +70,23 @@ using namespace KMPlayer;
 
 //-------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT PictureWidget::PictureWidget (QWidget * parent, View * view)
+PictureWidget::PictureWidget (QWidget * parent, View * view)
  : QWidget (parent), m_view (view) {
     setAutoFillBackground (true);
 }
 
-KDE_NO_EXPORT void PictureWidget::mousePressEvent (QMouseEvent *) {
+void PictureWidget::mousePressEvent (QMouseEvent *) {
     m_view->emitPictureClicked ();
 }
 
-KDE_NO_EXPORT void PictureWidget::mouseMoveEvent (QMouseEvent *e) {
+void PictureWidget::mouseMoveEvent (QMouseEvent *e) {
     if (e->buttons () == Qt::NoButton)
         m_view->mouseMoved (e->x (), e->y ());
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TextEdit::TextEdit (QWidget * parent, View * view) : QTextEdit (parent), m_view (view) {
+TextEdit::TextEdit (QWidget * parent, View * view) : QTextEdit (parent), m_view (view) {
     setAttribute (Qt::WA_NativeWindow);
     setAttribute(Qt::WA_DontCreateNativeAncestors);
     setReadOnly (true);
@@ -96,25 +96,25 @@ KDE_NO_CDTOR_EXPORT TextEdit::TextEdit (QWidget * parent, View * view) : QTextEd
     setPalette (p);
 }
 
-KDE_NO_EXPORT void TextEdit::contextMenuEvent (QContextMenuEvent * e) {
+void TextEdit::contextMenuEvent (QContextMenuEvent * e) {
     m_view->controlPanel ()->popupMenu->exec (e->globalPos ());
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT InfoWindow::InfoWindow (QWidget *, View * view)
+InfoWindow::InfoWindow (QWidget *, View * view)
  : m_view (view) {
     setReadOnly (true);
     //setLinkUnderline (false);
 }
 
-KDE_NO_EXPORT void InfoWindow::contextMenuEvent (QContextMenuEvent * e) {
+void InfoWindow::contextMenuEvent (QContextMenuEvent * e) {
     m_view->controlPanel ()->popupMenu->exec (e->globalPos ());
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
+View::View (QWidget *parent)
   : KMediaPlayer::View (parent),
     m_control_panel (nullptr),
     m_status_bar (nullptr),
@@ -137,7 +137,7 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
     setAcceptDrops(true);
 }
 
-KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
+void View::dropEvent (QDropEvent * de) {
     QList<QUrl> uris = de->mimeData()->urls();
     if (uris.isEmpty() || !uris[0].isValid()) {
         QString text = de->mimeData()->text();
@@ -151,7 +151,7 @@ KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
     }
 }
 
-KDE_NO_EXPORT void View::dragEnterEvent (QDragEnterEvent* dee) {
+void View::dragEnterEvent (QDragEnterEvent* dee) {
     if (m_playlist->isDragValid (dee))
         dee->accept ();
 }
@@ -186,7 +186,7 @@ void View::initDock (QWidget *central) {
     m_view_area->resizeEvent (nullptr);
 }
 
-KDE_NO_EXPORT void View::init (KActionCollection *action_collection, bool transparent) {
+void View::init (KActionCollection *action_collection, bool transparent) {
     QVBoxLayout * viewbox = new QVBoxLayout;
     viewbox->setContentsMargins (0, 0, 0, 0);
     setLayout (viewbox);
@@ -219,12 +219,12 @@ KDE_NO_EXPORT void View::init (KActionCollection *action_collection, bool transp
     setAcceptDrops (true);
 }
 
-KDE_NO_CDTOR_EXPORT View::~View () {
+View::~View () {
     if (m_view_area->parent () != this)
         delete m_view_area;
 }
 
-KDE_NO_EXPORT void View::setEraseColor (const QColor & /*color*/) {
+void View::setEraseColor (const QColor & /*color*/) {
     /*KMediaPlayer::View::setEraseColor (color);
     if (statusBar ()) {
         statusBar ()->setEraseColor (color);
@@ -380,7 +380,7 @@ void View::setStatusBarMode (StatusBarMode m) {
     m_view_area->resizeEvent (nullptr);
 }
 
-KDE_NO_EXPORT void View::delayedShowButtons (bool show) {
+void View::delayedShowButtons (bool show) {
     if ((show && m_control_panel->isVisible ()) ||
             (!show && !m_control_panel->isVisible ())) {
         if (controlbar_timer) {
@@ -396,7 +396,7 @@ KDE_NO_EXPORT void View::delayedShowButtons (bool show) {
     }
 }
 
-KDE_NO_EXPORT void View::mouseMoved (int, int y) {
+void View::mouseMoved (int, int y) {
     int h = m_view_area->height ();
     int vert_buttons_pos = h - statusBarHeight ();
     int cp_height = controlPanel ()->maximumSize ().height ();
@@ -405,7 +405,7 @@ KDE_NO_EXPORT void View::mouseMoved (int, int y) {
     delayedShowButtons (y > vert_buttons_pos-cp_height && y < vert_buttons_pos);
 }
 
-KDE_NO_EXPORT void View::updateLayout () {
+void View::updateLayout () {
     if (m_controlpanel_mode == CP_Only)
         m_control_panel->setMaximumHeight(height());
     m_view_area->resizeEvent (nullptr);
@@ -419,7 +419,7 @@ void View::setKeepSizeRatio (bool b) {
     }
 }
 
-KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
+void View::timerEvent (QTimerEvent * e) {
     if (e->timerId () == controlbar_timer) {
         controlbar_timer = 0;
         if (m_playing || !m_image.isNull ()) {
@@ -483,7 +483,7 @@ void View::addText (const QString & str, bool eol) {
     m_multiedit->setTextCursor (cursor);
 }
 
-KDE_NO_EXPORT void View::videoStart () {
+void View::videoStart () {
     if (!isFullScreen () && m_dockarea->centralWidget () != m_view_area) {
         // restore from an info or playlist only setting
         if (m_dockarea->centralWidget () == m_playlist)
@@ -500,7 +500,7 @@ KDE_NO_EXPORT void View::videoStart () {
     }
 }
 
-KDE_NO_EXPORT void View::playingStart () {
+void View::playingStart () {
     if (m_playing)
         return; //FIXME: make symetric with playingStop
     m_playing = true;
@@ -508,7 +508,7 @@ KDE_NO_EXPORT void View::playingStart () {
     setControlPanelMode (m_old_controlpanel_mode);
 }
 
-KDE_NO_EXPORT void View::playingStop () {
+void View::playingStop () {
     if (m_controlpanel_mode == CP_AutoHide && m_image.isNull ()) {
         m_control_panel->show ();
         //m_view_area->setMouseTracking (false);
@@ -521,11 +521,11 @@ KDE_NO_EXPORT void View::playingStop () {
     m_view_area->resizeEvent (nullptr);
 }
 
-KDE_NO_EXPORT void View::leaveEvent (QEvent *) {
+void View::leaveEvent (QEvent *) {
     delayedShowButtons (false);
 }
 
-KDE_NO_EXPORT void View::reset () {
+void View::reset () {
     if (m_revert_fullscreen && isFullScreen ())
         m_control_panel->fullscreenAction->activate (QAction::Trigger);
         //m_view_area->fullScreen ();
@@ -577,7 +577,7 @@ void View::fullScreen () {
     emit fullScreenChanged ();
 }
 
-KDE_NO_EXPORT int View::statusBarHeight () const {
+int View::statusBarHeight () const {
     if (statusBar()->isVisible () && !viewArea()->isFullScreen ()) {
         if (statusBarMode () == SB_Only)
             return height ();

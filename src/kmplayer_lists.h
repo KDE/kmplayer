@@ -24,7 +24,6 @@
 
 #include <qprocess.h>
 
-#include "kmplayer_def.h"
 #include "kmplayerplaylist.h"
 #include "kmplayerpartbase.h"
 
@@ -51,16 +50,18 @@ static const short id_node_gen_sequence = 50;
 class QTextStream;
 class KMPlayerApp;
 
-class KMPLAYER_NO_EXPORT ListsSource : public KMPlayer::URLSource {
+class ListsSource : public KMPlayer::URLSource
+{
 public:
-    KDE_NO_CDTOR_EXPORT ListsSource (KMPlayer::PartBase * p)
+    ListsSource (KMPlayer::PartBase * p)
         : KMPlayer::URLSource (p, KUrl ("lists://")) {}
     void play (KMPlayer::Mrl *) override;
     void activate () override;
     QString prettyName () override;
 };
 
-class KMPLAYER_NO_EXPORT FileDocument : public KMPlayer::SourceDocument {
+class FileDocument : public KMPlayer::SourceDocument
+{
 public:
     FileDocument (short id, const QString&, KMPlayer::Source *source = nullptr);
     KMPlayer::Node *childFromTag (const QString &tag) override;
@@ -70,27 +71,29 @@ public:
     unsigned int load_tree_version;
 };
 
-class KMPLAYER_NO_EXPORT Recents : public FileDocument {
+class Recents : public FileDocument
+{
 public:
     Recents (KMPlayerApp *a);
     void defer () override;
     void activate () override;
     void message (KMPlayer::MessageType msg, void *content=nullptr) override;
     KMPlayer::Node *childFromTag (const QString &tag) override;
-    KDE_NO_EXPORT const char *nodeName () const override { return "playlist"; }
+    const char *nodeName () const override { return "playlist"; }
     KMPlayerApp *app;
 };
 
-class KMPLAYER_NO_EXPORT Recent : public KMPlayer::Mrl {
+class Recent : public KMPlayer::Mrl
+{
 public:
     Recent (KMPlayer::NodePtr & doc, KMPlayerApp *a, const QString &url = QString());
     void activate () override;
     void closed () override;
-    KDE_NO_EXPORT const char *nodeName () const override { return "item"; }
+    const char *nodeName () const override { return "item"; }
     KMPlayerApp *app;
 };
 
-class KMPLAYER_NO_EXPORT Group
+class Group
  : public KMPlayer::Element, public KMPlayer::PlaylistRole
 {
 public:
@@ -99,23 +102,25 @@ public:
     void defer () override {} // TODO lazy loading of largish sub trees
     void closed () override;
     void *role (KMPlayer::RoleType msg, void *content=nullptr) override;
-    KDE_NO_EXPORT const char *nodeName () const override { return "group"; }
+    const char *nodeName () const override { return "group"; }
     KMPlayerApp *app;
 };
 
-class KMPLAYER_NO_EXPORT Playlist : public FileDocument {
+class Playlist : public FileDocument
+{
 public:
     Playlist (KMPlayerApp *a, KMPlayer::Source *s, bool plmod = false);
     void message (KMPlayer::MessageType msg, void *content=nullptr) override;
     void defer () override;
     void activate () override;
     KMPlayer::Node *childFromTag (const QString &tag) override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "playlist"; }
+    const char * nodeName () const override { return "playlist"; }
     KMPlayerApp *app;
     bool playmode;
 };
 
-class KMPLAYER_NO_EXPORT PlaylistItemBase : public KMPlayer::Mrl {
+class PlaylistItemBase : public KMPlayer::Mrl
+{
 public:
     PlaylistItemBase (KMPlayer::NodePtr &d, short id, KMPlayerApp *a, bool pm);
     void activate () override;
@@ -124,16 +129,17 @@ public:
     bool playmode;
 };
 
-class KMPLAYER_NO_EXPORT PlaylistItem : public PlaylistItemBase {
+class PlaylistItem : public PlaylistItemBase
+{
 public:
     PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp *a, bool playmode, const QString &url = QString());
     void closed () override;
     void begin () override;
     void setNodeName (const QString&) override;
-    const char *nodeName () const KDE_NO_EXPORT override { return "item"; }
+    const char *nodeName () const override { return "item"; }
 };
 
-class KMPLAYER_NO_EXPORT PlaylistGroup
+class PlaylistGroup
  : public KMPlayer::Element, public KMPlayer::PlaylistRole
 {
 public:
@@ -143,21 +149,23 @@ public:
     void closed () override;
     void *role (KMPlayer::RoleType msg, void *content=nullptr) override;
     void setNodeName (const QString&) override;
-    KDE_NO_EXPORT const char *nodeName () const override { return "group"; }
+    const char *nodeName () const override { return "group"; }
     KMPlayerApp *app;
     bool playmode;
 };
 
-class KMPLAYER_NO_EXPORT HtmlObject : public PlaylistItemBase {
+class HtmlObject : public PlaylistItemBase
+{
 public:
     HtmlObject (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool playmode);
     void activate () override;
     void closed () override;
     KMPlayer::Node *childFromTag (const QString &tag) override;
-    const char *nodeName () const KDE_NO_EXPORT override { return "object"; }
+    const char *nodeName () const override { return "object"; }
 };
 
-class KMPLAYER_NO_EXPORT Generator : public QObject, public FileDocument {
+class Generator : public QObject, public FileDocument
+{
     Q_OBJECT
 public:
     Generator (KMPlayerApp *a);
@@ -166,7 +174,7 @@ public:
     void deactivate () override;
     void message (KMPlayer::MessageType msg, void *content=nullptr) override;
     KMPlayer::Node *childFromTag (const QString &tag) override;
-    KDE_NO_EXPORT const char *nodeName () const override { return "generator"; }
+    const char *nodeName () const override { return "generator"; }
 
 private slots:
     void started ();
@@ -190,12 +198,13 @@ private:
     bool quote;
 };
 
-class KMPLAYER_NO_EXPORT GeneratorElement : public KMPlayer::Element {
+class GeneratorElement : public KMPlayer::Element
+{
 public:
     GeneratorElement (KMPlayer::NodePtr &doc, const QString &t, short id)
         : KMPlayer::Element (doc, id), tag (t.toUtf8 ()) {}
     KMPlayer::Node *childFromTag (const QString &tag) override;
-    KDE_NO_EXPORT const char *nodeName () const override { return tag.constData (); }
+    const char *nodeName () const override { return tag.constData (); }
     QByteArray tag;
 };
 

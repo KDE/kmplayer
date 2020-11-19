@@ -31,10 +31,10 @@
 
 #include <kio/global.h>
 
-#include "kmplayer_def.h"
 #include "kmplayerplaylist.h"
 #include "kmplayerpartbase.h"
 #include "mediaobject.h"
+#include "kmplayercommon_export.h"
 
 class QWidget;
 class KJob;
@@ -62,7 +62,8 @@ class XMLPreferencesFrame;
 /*
  * Base class for all backend processes
  */
-class KMPLAYER_EXPORT Process : public QObject, public IProcess {
+class KMPLAYERCOMMON_EXPORT Process : public QObject, public IProcess
+{
     Q_OBJECT
 public:
     Process (QObject *parent, ProcessInfo *, Settings *settings);
@@ -73,13 +74,13 @@ public:
     void setAudioLang (int id) override;
     void setSubtitle (int id) override;
     bool running () const override;
-    KDE_NO_EXPORT QProcess * process () const { return m_process; }
-    KDE_NO_EXPORT Source * source () const { return m_source; }
+    KMPLAYERCOMMON_NO_EXPORT QProcess * process () const { return m_process; }
+    KMPLAYERCOMMON_NO_EXPORT Source * source () const { return m_source; }
     View *view () const;
     WId widget ();
     void setSource (Source * src) { m_source = src; }
     void setState (IProcess::State newstate);
-    bool grabPicture (const QString &file, int frame) override KDE_NO_EXPORT;
+    bool grabPicture (const QString &file, int frame) override KMPLAYERCOMMON_NO_EXPORT;
     Mrl *mrl () const;
 
     bool ready () override;
@@ -100,7 +101,7 @@ public:
 signals:
     void grabReady (const QString & path);
 protected slots:
-    void rescheduledStateChanged () KDE_NO_EXPORT;
+    void rescheduledStateChanged () KMPLAYERCOMMON_NO_EXPORT;
     void result (KJob *);
     void processStateChanged (QProcess::ProcessState);
 protected:
@@ -127,55 +128,57 @@ class MPlayerBase : public Process {
 public:
     MPlayerBase (QObject *parent, ProcessInfo *, Settings *);
     ~MPlayerBase () override;
-    void initProcess () override KDE_NO_EXPORT;
-    void stop () override KDE_NO_EXPORT;
-    void quit () override KDE_NO_EXPORT;
+    void initProcess () override;
+    void stop () override;
+    void quit () override;
 protected:
-    bool sendCommand (const QString &) KDE_NO_EXPORT;
+    bool sendCommand (const QString &);
     bool removeQueued (const char *cmd);
     QList<QByteArray> commands;
     bool m_needs_restarted;
 protected slots:
-    virtual void processStopped () KDE_NO_EXPORT;
+    virtual void processStopped ();
 private slots:
-    void dataWritten (qint64) KDE_NO_EXPORT;
-    void processStopped (int, QProcess::ExitStatus) KDE_NO_EXPORT;
+    void dataWritten (qint64);
+    void processStopped (int, QProcess::ExitStatus);
 };
 
 /*
  * MPlayer process
  */
-class KMPLAYER_NO_EXPORT MPlayerProcessInfo : public ProcessInfo {
+class MPlayerProcessInfo : public ProcessInfo
+{
 public:
     MPlayerProcessInfo (MediaManager *);
     IProcess *create (PartBase*, ProcessUser*) override;
 };
 
-class KDE_EXPORT MPlayer : public MPlayerBase {
+class KMPLAYERCOMMON_EXPORT MPlayer : public MPlayerBase
+{
     Q_OBJECT
 public:
-    MPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings) KDE_NO_CDTOR_EXPORT;
-    ~MPlayer () override KDE_NO_CDTOR_EXPORT;
+    MPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings);
+    ~MPlayer () override;
 
-    void init () override KDE_NO_EXPORT;
-    bool grabPicture (const QString &file, int pos) override KDE_NO_EXPORT;
+    void init () override KMPLAYERCOMMON_NO_EXPORT;
+    bool grabPicture (const QString &file, int pos) override KMPLAYERCOMMON_NO_EXPORT;
     void setAudioLang (int id) override;
     void setSubtitle (int id) override;
-    bool deMediafiedPlay () override KDE_NO_EXPORT;
-    void stop () override KDE_NO_EXPORT;
-    void pause () override KDE_NO_EXPORT;
-    void unpause () override KDE_NO_EXPORT;
-    bool seek (int pos, bool absolute) override KDE_NO_EXPORT;
-    void volume (int pos, bool absolute) override KDE_NO_EXPORT;
-    bool saturation (int pos, bool absolute) override KDE_NO_EXPORT;
-    bool hue (int pos, bool absolute) override KDE_NO_EXPORT;
-    bool contrast (int pos, bool absolute) override KDE_NO_EXPORT;
-    bool brightness (int pos, bool absolute) override KDE_NO_EXPORT;
-    bool ready () override KDE_NO_EXPORT;
+    bool deMediafiedPlay () override KMPLAYERCOMMON_NO_EXPORT;
+    void stop () override KMPLAYERCOMMON_NO_EXPORT;
+    void pause () override KMPLAYERCOMMON_NO_EXPORT;
+    void unpause () override KMPLAYERCOMMON_NO_EXPORT;
+    bool seek (int pos, bool absolute) override KMPLAYERCOMMON_NO_EXPORT;
+    void volume (int pos, bool absolute) override KMPLAYERCOMMON_NO_EXPORT;
+    bool saturation (int pos, bool absolute) override KMPLAYERCOMMON_NO_EXPORT;
+    bool hue (int pos, bool absolute) override KMPLAYERCOMMON_NO_EXPORT;
+    bool contrast (int pos, bool absolute) override KMPLAYERCOMMON_NO_EXPORT;
+    bool brightness (int pos, bool absolute) override KMPLAYERCOMMON_NO_EXPORT;
+    bool ready () override KMPLAYERCOMMON_NO_EXPORT;
 protected:
-    void processStopped () override KDE_NO_EXPORT;
+    void processStopped () override KMPLAYERCOMMON_NO_EXPORT;
 private slots:
-    void processOutput () KDE_NO_EXPORT;
+    void processOutput () KMPLAYERCOMMON_NO_EXPORT;
 private:
     QString m_process_output;
     QString m_grab_file;
@@ -195,7 +198,8 @@ private:
 /*
  * MPlayer preferences page
  */
-class KMPLAYER_NO_EXPORT MPlayerPreferencesPage : public PreferencesPage {
+class MPlayerPreferencesPage : public PreferencesPage
+{
 public:
     enum Pattern {
         pat_size = 0, pat_cache, pat_pos, pat_index,
@@ -204,7 +208,7 @@ public:
         pat_last
     };
     MPlayerPreferencesPage ();
-    KDE_NO_CDTOR_EXPORT ~MPlayerPreferencesPage () override {}
+    ~MPlayerPreferencesPage () override {}
     void write (KSharedConfigPtr) override;
     void read (KSharedConfigPtr) override;
     void sync (bool fromUI) override;
@@ -224,7 +228,8 @@ private:
 /*
  * Base class for all recorders
  */
-class KMPLAYER_NO_EXPORT RecordDocument : public SourceDocument {
+class RecordDocument : public SourceDocument
+{
 public:
     RecordDocument (const QString &url, const QString &rurl, const QString &rec,
                     Source *source);
@@ -240,7 +245,8 @@ public:
 /*
  * MEncoder recorder
  */
-class KMPLAYER_NO_EXPORT MEncoderProcessInfo : public ProcessInfo {
+class MEncoderProcessInfo : public ProcessInfo
+{
 public:
     MEncoderProcessInfo (MediaManager *);
     IProcess *create (PartBase*, ProcessUser*) override;
@@ -259,13 +265,15 @@ public:
 /*
  * MPlayer recorder, runs 'mplayer -dumpstream'
  */
-class KMPLAYER_NO_EXPORT MPlayerDumpProcessInfo : public ProcessInfo {
+class MPlayerDumpProcessInfo : public ProcessInfo
+{
 public:
     MPlayerDumpProcessInfo (MediaManager *);
     IProcess *create (PartBase*, ProcessUser*) override;
 };
 
-class KMPLAYER_NO_EXPORT MPlayerDumpstream : public MPlayerBase {
+class MPlayerDumpstream : public MPlayerBase
+{
     Q_OBJECT
 public:
     MPlayerDumpstream (QObject *parent, ProcessInfo *pinfo, Settings *settings);
@@ -275,7 +283,8 @@ public:
     void stop () override;
 };
 
-class KMPLAYER_NO_EXPORT MasterProcessInfo : public QObject, public ProcessInfo {
+class MasterProcessInfo : public QObject, public ProcessInfo
+{
     Q_OBJECT
 public:
     MasterProcessInfo (const char *nm, const QString &lbl,
@@ -301,7 +310,8 @@ protected:
     virtual void stopSlave ();
 };
 
-class KMPLAYER_NO_EXPORT MasterProcess : public Process {
+class MasterProcess : public Process
+{
     Q_OBJECT
 public:
     MasterProcess (QObject *p, ProcessInfo *pi, Settings *s);
@@ -327,7 +337,8 @@ private:
     QString m_slave_path;
 };
 
-class KMPLAYER_NO_EXPORT PhononProcessInfo : public MasterProcessInfo {
+class PhononProcessInfo : public MasterProcessInfo
+{
 public:
     PhononProcessInfo (MediaManager *);
 
@@ -336,7 +347,8 @@ public:
     bool startSlave () override;
 };
 
-class KMPLAYER_NO_EXPORT Phonon : public MasterProcess {
+class Phonon : public MasterProcess
+{
     Q_OBJECT
 public:
     Phonon (QObject *parent, ProcessInfo*, Settings *settings);
@@ -347,7 +359,8 @@ public:
 /*
  * Config document as used by kxineplayer backend
  */
-struct KMPLAYER_NO_EXPORT ConfigDocument : public Document {
+struct ConfigDocument : public Document
+{
     ConfigDocument ();
     ~ConfigDocument () override;
     Node *childFromTag (const QString & tag) override;
@@ -356,9 +369,10 @@ struct KMPLAYER_NO_EXPORT ConfigDocument : public Document {
 /*
  * Element for ConfigDocument
  */
-struct KMPLAYER_NO_EXPORT ConfigNode : public DarkNode {
+struct ConfigNode : public DarkNode
+{
     ConfigNode (NodePtr & d, const QString & tag);
-    KDE_NO_CDTOR_EXPORT ~ConfigNode () override {}
+    ~ConfigNode () override {}
     Node *childFromTag (const QString & tag) override;
     QWidget * w;
 };
@@ -366,9 +380,10 @@ struct KMPLAYER_NO_EXPORT ConfigNode : public DarkNode {
 /*
  * Element for ConfigDocument, defining type of config item
  */
-struct KMPLAYER_NO_EXPORT TypeNode : public ConfigNode {
+struct TypeNode : public ConfigNode
+{
     TypeNode (NodePtr & d, const QString & t);
-    KDE_NO_CDTOR_EXPORT ~TypeNode () override {}
+    ~TypeNode () override {}
     Node *childFromTag (const QString & tag) override;
     void changedXML (QTextStream & out);
     QWidget * createWidget (QWidget * parent);
@@ -379,30 +394,33 @@ struct KMPLAYER_NO_EXPORT TypeNode : public ConfigNode {
 /*
  * ffmpeg backend recorder
  */
-class KMPLAYER_NO_EXPORT FFMpegProcessInfo : public ProcessInfo {
+class FFMpegProcessInfo : public ProcessInfo
+{
 public:
     FFMpegProcessInfo (MediaManager *);
     IProcess *create (PartBase*, ProcessUser*) override;
 };
 
-class KMPLAYER_EXPORT FFMpeg : public Process {
+class KMPLAYERCOMMON_EXPORT FFMpeg : public Process
+{
     Q_OBJECT
 public:
-    FFMpeg (QObject *parent, ProcessInfo *pinfo, Settings *settings) KDE_NO_CDTOR_EXPORT;
-    ~FFMpeg () override KDE_NO_CDTOR_EXPORT;
-    void init () override KDE_NO_EXPORT;
+    FFMpeg (QObject *parent, ProcessInfo *pinfo, Settings *settings);
+    ~FFMpeg () override;
+    void init () override KMPLAYERCOMMON_NO_EXPORT;
     bool deMediafiedPlay () override;
-    void stop () override KDE_NO_EXPORT;
-    void quit () override KDE_NO_EXPORT;
+    void stop () override KMPLAYERCOMMON_NO_EXPORT;
+    void quit () override KMPLAYERCOMMON_NO_EXPORT;
 private slots:
-    void processStopped (int, QProcess::ExitStatus) KDE_NO_EXPORT;
+    void processStopped (int, QProcess::ExitStatus) KMPLAYERCOMMON_NO_EXPORT;
 };
 
 /*
  * npplayer backend
  */
 
-class KMPLAYER_NO_EXPORT NpStream : public QObject {
+class NpStream : public QObject
+{
     Q_OBJECT
 public:
     enum Reason {
@@ -413,10 +431,10 @@ public:
     NpStream (NpPlayer *parent, uint32_t stream_id, const QString &url, const QByteArray &post);
     ~NpStream () override;
 
-    void open () KMPLAYER_NO_MBR_EXPORT;
-    void close () KMPLAYER_NO_MBR_EXPORT;
+    void open ();
+    void close ();
 
-    void destroy () KMPLAYER_NO_MBR_EXPORT;
+    void destroy ();
 
     QString url;
     QByteArray post;
@@ -441,13 +459,15 @@ private slots:
     void slotTotalSize (KJob *, qulonglong sz);
 };
 
-class KMPLAYER_NO_EXPORT NppProcessInfo : public ProcessInfo {
+class NppProcessInfo : public ProcessInfo
+{
 public:
     NppProcessInfo (MediaManager *);
     IProcess *create (PartBase*, ProcessUser*) override;
 };
 
-class KMPLAYER_NO_EXPORT NpPlayer : public Process {
+class NpPlayer : public Process
+{
     Q_OBJECT
 public:
     NpPlayer (QObject *, KMPlayer::ProcessInfo*, Settings *);
@@ -462,18 +482,18 @@ public:
     void initProcess () override;
 
     using Process::running;
-    void running (const QString &srv) KMPLAYER_NO_MBR_EXPORT;
-    void plugged () KMPLAYER_NO_MBR_EXPORT;
-    void request_stream (const QString &path, const QString &url, const QString &target, const QByteArray &post) KMPLAYER_NO_MBR_EXPORT;
-    QString evaluate (const QString &script, bool store) KMPLAYER_NO_MBR_EXPORT;
+    void running (const QString &srv);
+    void plugged ();
+    void request_stream (const QString &path, const QString &url, const QString &target, const QByteArray &post);
+    QString evaluate (const QString &script, bool store);
     QString cookie (const QString &url);
-    void dimension (int w, int h) KMPLAYER_NO_MBR_EXPORT;
+    void dimension (int w, int h);
 
     void destroyStream (uint32_t sid);
 
-    KDE_NO_EXPORT const QString & destination () const { return service; }
-    KDE_NO_EXPORT const QString & interface () const { return iface; }
-    KDE_NO_EXPORT QString objectPath () const { return path; }
+    const QString & destination () const { return service; }
+    const QString & interface () const { return iface; }
+    QString objectPath () const { return path; }
     void stop () override;
     void quit () override;
     bool ready () override;

@@ -48,9 +48,9 @@ Qt::ItemFlags TopPlayItem::itemFlags ()
 
 //-----------------------------------------------------------------------------
 
-struct KMPLAYER_NO_EXPORT TreeUpdate {
-    KDE_NO_CDTOR_EXPORT TreeUpdate (TopPlayItem *ri, NodePtr n, bool s, bool o, SharedPtr <TreeUpdate> &nx) : root_item (ri), node (n), select (s), open (o), next (nx) {}
-    KDE_NO_CDTOR_EXPORT ~TreeUpdate () {}
+struct TreeUpdate {
+    TreeUpdate (TopPlayItem *ri, NodePtr n, bool s, bool o, SharedPtr <TreeUpdate> &nx) : root_item (ri), node (n), select (s), open (o), next (nx) {}
+    ~TreeUpdate () {}
     TopPlayItem * root_item;
     NodePtrW node;
     bool select;
@@ -438,7 +438,7 @@ void PlayModel::updateTree (int id, NodePtr root, NodePtr active,
         qCDebug(LOG_KMPLAYER_COMMON) << "updateTree root item not found";
 }
 
-KDE_NO_EXPORT void PlayModel::updateTrees () {
+void PlayModel::updateTrees () {
     for (; tree_update; tree_update = tree_update->next) {
         emit updating (indexFromItem (tree_update->root_item));
         PlayItem *cur = updateTree (tree_update->root_item, tree_update->node);

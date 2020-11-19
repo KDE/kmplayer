@@ -45,11 +45,12 @@ class QCheckBox;
 class QPushButton;
 
 
-class KMPLAYER_NO_EXPORT TVDevicePage : public QFrame {
+class TVDevicePage : public QFrame
+{
     Q_OBJECT
 public:
     TVDevicePage (QWidget *parent, KMPlayer::NodePtr dev);
-    KDE_NO_CDTOR_EXPORT ~TVDevicePage () override {}
+    ~TVDevicePage () override {}
 
     QLineEdit * name;
     KUrlRequester * audiodevice;
@@ -64,11 +65,12 @@ private slots:
     void slotDelete ();
 };
 
-class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageTV : public QFrame {
+class KMPlayerPrefSourcePageTV : public QFrame
+{
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerTVSource *);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTV () override {}
+    ~KMPlayerPrefSourcePageTV () override {}
     QLineEdit * driver;
     KUrlRequester * device;
     QPushButton * scan;
@@ -78,7 +80,8 @@ protected:
     KMPlayerTVSource * m_tvsource;
 };
 
-class KMPLAYER_NO_EXPORT TVNode : public KMPlayer::GenericMrl {
+class TVNode : public KMPlayer::GenericMrl
+{
 public:
     TVNode (KMPlayer::NodePtr &d, const QString &s, const char * t, short id, const QString &n=QString ());
     void setNodeName (const QString &) override;
@@ -87,22 +90,24 @@ public:
 /*
  * Element for channels
  */
-class KMPLAYER_NO_EXPORT TVChannel : public TVNode {
+class TVChannel : public TVNode
+{
 public:
     TVChannel (KMPlayer::NodePtr & d, const QString & n, double f);
     TVChannel (KMPlayer::NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~TVChannel () override {}
+    ~TVChannel () override {}
     void closed () override;
 };
 
 /*
  * Element for inputs
  */
-class KMPLAYER_NO_EXPORT TVInput : public TVNode {
+class TVInput : public TVNode
+{
 public:
     TVInput (KMPlayer::NodePtr & d, const QString & n, int id);
     TVInput (KMPlayer::NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~TVInput () override {}
+    ~TVInput () override {}
     KMPlayer::Node *childFromTag (const QString &) override;
     void setNodeName (const QString &) override;
     void closed () override;
@@ -111,7 +116,8 @@ public:
 /*
  * Element for TV devices
  */
-class KMPLAYER_NO_EXPORT TVDevice : public TVNode {
+class TVDevice : public TVNode
+{
 public:
     TVDevice (KMPlayer::NodePtr & d, const QString & s);
     TVDevice (KMPlayer::NodePtr & d);
@@ -127,13 +133,14 @@ public:
     QPointer <TVDevicePage> device_page;
 };
 
-class KMPLAYER_NO_EXPORT TVDocument : public FileDocument {
+class TVDocument : public FileDocument
+{
     KMPlayerTVSource * m_source;
 public:
     TVDocument (KMPlayerTVSource *);
     KMPlayer::Node *childFromTag (const QString &) override;
     void defer () override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "tvdevices"; }
+    const char * nodeName () const override { return "tvdevices"; }
     void message (KMPlayer::MessageType msg, void *content=nullptr) override;
 };
 
@@ -141,12 +148,12 @@ public:
 /*
  * Source form scanning TV devices
  */
-class KMPLAYER_NO_EXPORT TVDeviceScannerSource
-                             : public KMPlayer::Source, KMPlayer::ProcessUser {
+class TVDeviceScannerSource : public KMPlayer::Source, KMPlayer::ProcessUser
+{
     Q_OBJECT
 public:
     TVDeviceScannerSource (KMPlayerTVSource * src);
-    KDE_NO_CDTOR_EXPORT ~TVDeviceScannerSource () override {};
+    ~TVDeviceScannerSource () override {};
     void init () override;
     bool processOutput (const QString & line) override;
     QString filterOptions () override;
@@ -184,7 +191,8 @@ private:
 /*
  * Source form TV devices, also implementing preference page for it
  */
-class KMPLAYER_NO_EXPORT KMPlayerTVSource : public KMPlayer::Source, public KMPlayer::PreferencesPage {
+class KMPlayerTVSource : public KMPlayer::Source, public KMPlayer::PreferencesPage
+{
     Q_OBJECT
 public:
     KMPlayerTVSource(KMPlayerApp* app);

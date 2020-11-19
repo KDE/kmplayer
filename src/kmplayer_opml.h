@@ -36,7 +36,8 @@ const short id_node_body = 553;
 const short id_node_outline = 554;
 const short id_node_ignore = 555;
 
-class KMPLAYER_NO_EXPORT Opml : public Element, public PlaylistRole {
+class Opml : public Element, public PlaylistRole
+{
 public:
     Opml (NodePtr& d) : Element (d, id_node_opml) {}
     Node *childFromTag (const QString& tag) override;
@@ -45,21 +46,24 @@ public:
     void closed () override;
 };
 
-class KMPLAYER_NO_EXPORT Head : public Element {
+class Head : public Element
+{
 public:
     Head (NodePtr& d) : Element (d, id_node_head) {}
     Node *childFromTag (const QString& tag) override;
     const char *nodeName () const override { return "head"; }
 };
 
-class KMPLAYER_NO_EXPORT Body : public Element {
+class Body : public Element
+{
 public:
     Body (NodePtr& d) : Element (d, id_node_body) {}
     const char *nodeName () const override { return "body"; }
     Node *childFromTag (const QString& tag) override;
 };
 
-class KMPLAYER_NO_EXPORT Outline : public Mrl {
+class Outline : public Mrl
+{
 public:
     Outline (NodePtr& d) : Mrl (d, id_node_outline) {}
     const char *nodeName () const override { return "outline"; }

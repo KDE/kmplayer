@@ -61,7 +61,7 @@
 
 using namespace KMPlayer;
 
-KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * settings)
+Preferences::Preferences(PartBase * player, Settings * settings)
 : KPageDialog (player->view ())
 {
     setFaceType (KPageDialog::List);
@@ -132,7 +132,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     //connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
 }
 
-KDE_NO_EXPORT void Preferences::setPage (const char * name) {
+void Preferences::setPage (const char * name) {
     KPageWidgetItem *item = nullptr;
     if (!strcmp (name, "RecordPage"))
         item = m_record_item;
@@ -153,7 +153,7 @@ KDE_NO_EXPORT void Preferences::setPage (const char * name) {
     }
 }
 
-KDE_NO_EXPORT void Preferences::addPrefPage (PreferencesPage * page) {
+void Preferences::addPrefPage (PreferencesPage * page) {
     QString item, subitem, icon;
     KPageWidgetItem *witem;
     QTabWidget *tab;
@@ -173,7 +173,7 @@ KDE_NO_EXPORT void Preferences::addPrefPage (PreferencesPage * page) {
     tab->addTab (frame, subitem);
 }
 
-KDE_NO_EXPORT void Preferences::removePrefPage(PreferencesPage * page) {
+void Preferences::removePrefPage(PreferencesPage * page) {
     QString item, subitem, icon;
     page->prefLocation (item, icon, subitem);
     if (item.isEmpty ())
@@ -198,10 +198,10 @@ KDE_NO_EXPORT void Preferences::removePrefPage(PreferencesPage * page) {
     }
 }
 
-KDE_NO_CDTOR_EXPORT Preferences::~Preferences() {
+Preferences::~Preferences() {
 }
 
-KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *parent, Settings *)
+PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *parent, Settings *)
 : QWidget(parent)
 {
     QGroupBox *windowbox = new QGroupBox(i18n("Window"));
@@ -281,7 +281,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     setLayout(pagelayout);
 }
 
-KDE_NO_CDTOR_EXPORT PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent, Settings * settings)
+PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent, Settings * settings)
  : QWidget(parent), colors (settings->colors), fonts (settings->fonts)
 {
     QGroupBox *colorbox= new QGroupBox(i18n("Colors"));
@@ -325,22 +325,22 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent,
     setLayout(vbox);
 }
 
-KDE_NO_EXPORT void PrefGeneralPageLooks::colorItemChanged (int c) {
+void PrefGeneralPageLooks::colorItemChanged (int c) {
     if (c < int (ColorSetting::last_target))
         colorbutton->setColor (colors[c].newcolor);
 }
 
-KDE_NO_EXPORT void PrefGeneralPageLooks::colorCanged (const QColor & c) {
+void PrefGeneralPageLooks::colorCanged (const QColor & c) {
     if (colorscombo->currentIndex () < int (ColorSetting::last_target))
         colors[colorscombo->currentIndex ()].newcolor = c;
 }
 
-KDE_NO_EXPORT void PrefGeneralPageLooks::fontItemChanged (int f) {
+void PrefGeneralPageLooks::fontItemChanged (int f) {
     if (f < int (FontSetting::last_target))
         fontbutton->setFont (fonts[f].newfont);
 }
 
-KDE_NO_EXPORT void PrefGeneralPageLooks::fontClicked () {
+void PrefGeneralPageLooks::fontClicked () {
     if (fontscombo->currentIndex () < int (FontSetting::last_target)) {
         QFont myfont = fonts [fontscombo->currentIndex ()].newfont;
         int res = KFontChooserDialog::getFont (myfont, KFontChooser::NoDisplayFlags, this);
@@ -351,7 +351,7 @@ KDE_NO_EXPORT void PrefGeneralPageLooks::fontClicked () {
     }
 }
 
-KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
+PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
 : QWidget(parent)
 {
     setObjectName ("URLPage");
@@ -426,14 +426,14 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
              this, SLOT (slotTextChanged (const QString &)));
 }
 
-KDE_NO_EXPORT void PrefSourcePageURL::slotBrowse () {
+void PrefSourcePageURL::slotBrowse () {
 }
 
-KDE_NO_EXPORT void PrefSourcePageURL::slotTextChanged (const QString &) {
+void PrefSourcePageURL::slotTextChanged (const QString &) {
     changed = true;
 }
 
-KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage(QWidget* parent,
+PrefRecordPage::PrefRecordPage(QWidget* parent,
         PartBase * player, RecorderPage * rl, int rec_len)
  : QWidget(parent),
    m_player (player),
@@ -516,7 +516,7 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage(QWidget* parent,
 PrefRecordPage::~PrefRecordPage () {
 }
 
-KDE_NO_EXPORT void PrefRecordPage::recording (bool on) {
+void PrefRecordPage::recording (bool on) {
     qCDebug(LOG_KMPLAYER_COMMON) << "PrefRecordPage::recording " << on << endl;
     recordButton->setText (on
             ? i18n ("Stop &Recording")
@@ -526,7 +526,7 @@ KDE_NO_EXPORT void PrefRecordPage::recording (bool on) {
         topLevelWidget ()->hide ();
 }
 
-KDE_NO_EXPORT void PrefRecordPage::showEvent (QShowEvent *e) {
+void PrefRecordPage::showEvent (QShowEvent *e) {
     Source *src = m_player->source ();
     if (recordButton->text () == i18n ("Start &Recording") && src &&
             src->current ()) {
@@ -546,7 +546,7 @@ KDE_NO_EXPORT void PrefRecordPage::showEvent (QShowEvent *e) {
     QWidget::showEvent (e);
 }
 
-KDE_NO_EXPORT void PrefRecordPage::recorderClicked (int /*id*/) {
+void PrefRecordPage::recorderClicked (int /*id*/) {
     /*bool b = recorder->button(id)->text().indexOf (QString::fromLatin1("Xine")) > -1;
     replay->setEnabled (!b);
     if (b)
@@ -554,11 +554,11 @@ KDE_NO_EXPORT void PrefRecordPage::recorderClicked (int /*id*/) {
 
 }
 
-KDE_NO_EXPORT void PrefRecordPage::replayClicked (int id) {
+void PrefRecordPage::replayClicked (int id) {
     replaytime->setEnabled (id == Settings::ReplayAfter);
 }
 
-KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
+void PrefRecordPage::slotRecord () {
     if (m_player->isRecording ()) {
         m_player->stopRecording ();
     } else if (!url->lineEdit()->text().isEmpty()) {
@@ -587,10 +587,10 @@ KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
     }
 }
 
-KDE_NO_CDTOR_EXPORT RecorderPage::RecorderPage (QWidget *parent, PartBase * player)
+RecorderPage::RecorderPage (QWidget *parent, PartBase * player)
  : QWidget(parent), next(nullptr), m_player(player) {}
 
-KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage(QWidget* parent, PartBase* player)
+PrefMEncoderPage::PrefMEncoderPage(QWidget* parent, PartBase* player)
     : RecorderPage (parent, player)
 {
     QGroupBox* formatbox = new QGroupBox(i18n("Format"));
@@ -619,28 +619,28 @@ KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage(QWidget* parent, PartBase
     setLayout(pagelayout);
 }
 
-KDE_NO_EXPORT void PrefMEncoderPage::formatClicked (int id) {
+void PrefMEncoderPage::formatClicked (int id) {
     arguments->setEnabled (!!id);
 }
 
-KDE_NO_EXPORT void PrefMEncoderPage::startRecording () {
+void PrefMEncoderPage::startRecording () {
     m_player->settings ()->recordcopy = !format->checkedId ();
     m_player->settings ()->mencoderarguments = arguments->text ();
 }
 
-KDE_NO_EXPORT QString PrefMEncoderPage::name () {
+QString PrefMEncoderPage::name () {
     return i18n ("&MEncoder");
 }
 
-KDE_NO_CDTOR_EXPORT PrefMPlayerDumpstreamPage::PrefMPlayerDumpstreamPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
+PrefMPlayerDumpstreamPage::PrefMPlayerDumpstreamPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     hide();
 }
 
-KDE_NO_EXPORT QString PrefMPlayerDumpstreamPage::name () {
+QString PrefMPlayerDumpstreamPage::name () {
     return i18n ("MPlayer -&dumpstream");
 }
 
-KDE_NO_CDTOR_EXPORT PrefFFMpegPage::PrefFFMpegPage(QWidget* parent, PartBase* player)
+PrefFFMpegPage::PrefFFMpegPage(QWidget* parent, PartBase* player)
     : RecorderPage(parent, player)
 {
     QGridLayout *gridlayout = new QGridLayout (/*1, 2, 2*/);
@@ -657,25 +657,25 @@ KDE_NO_CDTOR_EXPORT PrefFFMpegPage::PrefFFMpegPage(QWidget* parent, PartBase* pl
     setLayout(pagelayout);
 }
 
-KDE_NO_EXPORT void PrefFFMpegPage::startRecording () {
+void PrefFFMpegPage::startRecording () {
     m_player->settings ()->ffmpegarguments = arguments->text ();
 }
 
-KDE_NO_EXPORT QString PrefFFMpegPage::name () {
+QString PrefFFMpegPage::name () {
     return i18n ("&FFMpeg");
 }
 
 #ifdef KMPLAYER_WITH_XINE
-KDE_NO_CDTOR_EXPORT PrefXinePage::PrefXinePage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
+PrefXinePage::PrefXinePage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     hide();
 }
 
-KDE_NO_EXPORT QString PrefXinePage::name () {
+QString PrefXinePage::name () {
     return i18n ("&Xine");
 }
 #endif
 
-KDE_NO_CDTOR_EXPORT PrefGeneralPageOutput::PrefGeneralPageOutput(QWidget *parent, OutputDriver * ad, OutputDriver * vd)
+PrefGeneralPageOutput::PrefGeneralPageOutput(QWidget *parent, OutputDriver * ad, OutputDriver * vd)
  : QWidget(parent)
 {
     videoDriver = new QListWidget;
@@ -696,7 +696,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageOutput::PrefGeneralPageOutput(QWidget *parent
     setLayout(pagelayout);
 }
 
-KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent)
+PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent)
     : QWidget(parent)
 {
     postProcessing = new QCheckBox(i18n("Enable use of postprocessing filters"));
@@ -878,7 +878,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent)
     PostprocessingOptions->adjustSize();
 }
 
-KDE_NO_EXPORT void Preferences::confirmDefaults() {
+void Preferences::confirmDefaults() {
     switch( KMessageBox::warningContinueCancel( this,
                 i18n("You are about to have all your settings overwritten with defaults.\nPlease confirm.\n"),
                 i18n("Reset Settings?"))) {
@@ -891,7 +891,7 @@ KDE_NO_EXPORT void Preferences::confirmDefaults() {
     }
 }
 
-KDE_NO_EXPORT void Preferences::setDefaults() {
+void Preferences::setDefaults() {
 	m_GeneralPageGeneral->keepSizeRatio->setChecked(true);
 	m_GeneralPageGeneral->loop->setChecked(false);
 	m_GeneralPageGeneral->seekTime->setValue(10);

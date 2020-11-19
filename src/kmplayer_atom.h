@@ -47,54 +47,60 @@ const short id_node_ignored = 313;
 /**
  * '<feed>' tag
  */
-class KMPLAYER_NO_EXPORT Feed : public Element, public PlaylistRole {
+class Feed : public Element, public PlaylistRole
+{
 public:
-    KDE_NO_CDTOR_EXPORT Feed (NodePtr & d) : Element (d, id_node_feed) {}
+    Feed (NodePtr & d) : Element (d, id_node_feed) {}
     Node *childFromTag (const QString & tag) override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "feed"; }
+    const char * nodeName () const override { return "feed"; }
     void closed () override;
     void *role (RoleType msg, void *content=nullptr) override;
 };
 
-class KMPLAYER_NO_EXPORT Entry : public Element, public PlaylistRole {
+class Entry : public Element, public PlaylistRole
+{
 public:
-    KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Element (d, id_node_entry) {}
+    Entry (NodePtr & d) : Element (d, id_node_entry) {}
     Node *childFromTag (const QString & tag) override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "entry"; }
+    const char * nodeName () const override { return "entry"; }
     void closed () override;
     void *role (RoleType msg, void *content=nullptr) override;
 };
 
-class KMPLAYER_NO_EXPORT Link : public Mrl {
+class Link : public Mrl
+{
 public:
-    KDE_NO_CDTOR_EXPORT Link (NodePtr & d) : Mrl (d, id_node_link) {}
-    KDE_NO_EXPORT const char * nodeName () const override { return "link"; }
+    Link (NodePtr & d) : Mrl (d, id_node_link) {}
+    const char * nodeName () const override { return "link"; }
     PlayType playType () override;
     void closed () override;
 };
 
-class KMPLAYER_NO_EXPORT Content : public Mrl {
+class Content : public Mrl
+{
 public:
-    KDE_NO_CDTOR_EXPORT Content (NodePtr &d) : Mrl(d, id_node_content) {}
-    KDE_NO_EXPORT const char * nodeName () const override { return "content"; }
+    Content (NodePtr &d) : Mrl(d, id_node_content) {}
+    const char * nodeName () const override { return "content"; }
     PlayType playType () override;
     void closed () override;
 };
 
-class KMPLAYER_NO_EXPORT MediaGroup : public Element {
+class MediaGroup : public Element
+{
 public:
     MediaGroup (NodePtr &d) : Element (d, id_node_media_group) {}
     Node *childFromTag (const QString &tag) override;
     void message (MessageType msg, void *content=nullptr) override;
-    KDE_NO_EXPORT const char *nodeName () const override { return "media:group"; }
+    const char *nodeName () const override { return "media:group"; }
     void addSummary (Node *parent, Node *ratings, const QString& alt_title, const QString& alt_desc,
                      const QString& alt_img, int width, int height);
 };
 
-class KMPLAYER_NO_EXPORT MediaContent : public Mrl {
+class MediaContent : public Mrl
+{
 public:
     MediaContent (NodePtr &d) : Mrl (d, id_node_media_content) {}
-    KDE_NO_EXPORT const char *nodeName () const override { return "media:content"; }
+    const char *nodeName () const override { return "media:content"; }
     void closed () override;
 };
 

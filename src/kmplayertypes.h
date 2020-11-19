@@ -20,7 +20,6 @@
 #define _KMPLAYER_TYPES_H_
 
 #include <stdint.h>
-#include "kmplayer_def.h"
 #include "triestring.h"
 
 namespace KMPlayer {
@@ -28,7 +27,8 @@ namespace KMPlayer {
 /**
  * Type meant for screen coordinates
  */
-class KMPLAYER_NO_EXPORT Single {
+class Single
+{
     int value;
     friend Single operator + (const Single s1, const Single s2);
     friend Single operator - (const Single s1, const Single s2);
@@ -80,7 +80,8 @@ public:
 };
 
 template <class T>
-class KMPLAYER_NO_EXPORT Point {
+class Point
+{
 public:
     Point ();
     Point (T _x, T _y);
@@ -93,7 +94,8 @@ public:
 };
 
 template <class T>
-class KMPLAYER_NO_EXPORT Size {
+class Size
+{
 public:
     Size ();
     Size (T w, T h);
@@ -107,7 +109,8 @@ public:
 };
 
 template <class T>
-class KMPLAYER_NO_EXPORT Rect {
+class Rect
+{
 public:
     Rect ();
     Rect (T a, T b, T w, T h);
@@ -139,7 +142,8 @@ template <> Rect<int> Rect<int>::intersect (const Rect<int> &r) const;
 /**                                   a  b  0
  * Matrix for coordinate transforms   c  d  0
  *                                    tx ty 1     */
-class KMPLAYER_NO_EXPORT Matrix {
+class Matrix
+{
     friend class SizeEvent;
     float a, b, c, d;
     Single tx, ty;

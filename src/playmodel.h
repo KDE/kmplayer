@@ -39,7 +39,7 @@ class TopPlayItem;
 /*
  * An item in the playlist
  */
-class KMPLAYER_NO_EXPORT PlayItem
+class PlayItem
 {
 public:
     PlayItem (Node *e, PlayItem *parent)
@@ -62,7 +62,7 @@ public:
         return parent_item->child_items.indexOf (const_cast <PlayItem*>( this));
     }
     PlayItem *parent () { return parent_item; }
-    TopPlayItem *rootItem () KMPLAYER_EXPORT;
+    TopPlayItem *rootItem () KMPLAYERCOMMON_EXPORT;
 
     QString title;
     Qt::ItemFlags item_flags;
@@ -74,7 +74,7 @@ public:
     PlayItem *parent_item;
 };
 
-class KMPLAYER_NO_EXPORT TopPlayItem : public PlayItem
+class TopPlayItem : public PlayItem
 {
 public:
     TopPlayItem (PlayModel *m, int _id, Node *e, int flags)
@@ -85,7 +85,7 @@ public:
         show_all_nodes (false),
         have_dark_nodes (false)
     {}
-    Qt::ItemFlags itemFlags () KMPLAYER_EXPORT;
+    Qt::ItemFlags itemFlags () KMPLAYERCOMMON_EXPORT;
     void add ();
     void remove ();
     QPixmap icon;
@@ -97,7 +97,7 @@ public:
     bool have_dark_nodes;
 };
 
-class KMPLAYER_EXPORT PlayModel : public QAbstractItemModel
+class KMPLAYERCOMMON_EXPORT PlayModel : public QAbstractItemModel
 {
     friend class TopPlayItem;
 
@@ -112,24 +112,24 @@ public:
         Moveable = 0x10, Deleteable = 0x20
     };
 
-    PlayModel(QObject *parent, KIconLoader *) KDE_NO_CDTOR_EXPORT;
-    ~PlayModel() override KDE_NO_CDTOR_EXPORT;
+    PlayModel(QObject *parent, KIconLoader *);
+    ~PlayModel() override;
 
-    QVariant data (const QModelIndex &index, int role) const override KMPLAYER_NO_EXPORT;
-    bool setData (const QModelIndex&, const QVariant& v, int role) override KMPLAYER_NO_EXPORT;
-    Qt::ItemFlags flags (const QModelIndex &index) const override KMPLAYER_NO_EXPORT;
+    QVariant data (const QModelIndex &index, int role) const override KMPLAYERCOMMON_NO_EXPORT;
+    bool setData (const QModelIndex&, const QVariant& v, int role) override KMPLAYERCOMMON_NO_EXPORT;
+    Qt::ItemFlags flags (const QModelIndex &index) const override KMPLAYERCOMMON_NO_EXPORT;
     QVariant headerData (int section, Qt::Orientation orientation,
-            int role = Qt::DisplayRole) const override KMPLAYER_NO_EXPORT;
+            int role = Qt::DisplayRole) const override KMPLAYERCOMMON_NO_EXPORT;
     QModelIndex index (int row, int column,
-            const QModelIndex &parent = QModelIndex()) const override KMPLAYER_NO_EXPORT;
-    QModelIndex parent (const QModelIndex &index) const override KMPLAYER_NO_EXPORT;
-    bool hasChildren (const QModelIndex& parent = QModelIndex ()) const override KMPLAYER_NO_EXPORT;
-    int rowCount (const QModelIndex &parent = QModelIndex()) const override KMPLAYER_NO_EXPORT;
-    int columnCount (const QModelIndex &parent = QModelIndex()) const override KMPLAYER_NO_EXPORT;
+            const QModelIndex &parent = QModelIndex()) const override KMPLAYERCOMMON_NO_EXPORT;
+    QModelIndex parent (const QModelIndex &index) const override KMPLAYERCOMMON_NO_EXPORT;
+    bool hasChildren (const QModelIndex& parent = QModelIndex ()) const override KMPLAYERCOMMON_NO_EXPORT;
+    int rowCount (const QModelIndex &parent = QModelIndex()) const override KMPLAYERCOMMON_NO_EXPORT;
+    int columnCount (const QModelIndex &parent = QModelIndex()) const override KMPLAYERCOMMON_NO_EXPORT;
 
-    PlayItem *rootItem () const KMPLAYER_NO_EXPORT { return root_item; }
-    QModelIndex indexFromItem (PlayItem *item) const KMPLAYER_NO_EXPORT;
-    PlayItem *itemFromIndex (const QModelIndex& index) const KMPLAYER_NO_EXPORT;
+    PlayItem *rootItem () const KMPLAYERCOMMON_NO_EXPORT { return root_item; }
+    QModelIndex indexFromItem (PlayItem *item) const KMPLAYERCOMMON_NO_EXPORT;
+    PlayItem *itemFromIndex (const QModelIndex& index) const KMPLAYERCOMMON_NO_EXPORT;
 
     int addTree (NodePtr r, const QString &src, const QString &ico, int flgs);
     PlayItem *updateTree (TopPlayItem *ritem, NodePtr active);
@@ -141,12 +141,12 @@ public slots:
     void updateTree (int id, NodePtr root, NodePtr active, bool sel, bool open);
 
 private slots:
-    void updateTrees() KMPLAYER_NO_EXPORT;
+    void updateTrees() KMPLAYERCOMMON_NO_EXPORT;
 
 private:
     PlayItem *populate (Node *e, Node *focus,
             TopPlayItem *root, PlayItem *item,
-            PlayItem **curitem) KMPLAYER_NO_EXPORT;
+            PlayItem **curitem) KMPLAYERCOMMON_NO_EXPORT;
     SharedPtr <TreeUpdate> tree_update;
     QPixmap auxiliary_pix;
     QPixmap config_pix;

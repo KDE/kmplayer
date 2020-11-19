@@ -23,8 +23,6 @@
 
 #include "config-kmplayer.h"
 
-#include "kmplayer_def.h"
-
 #include <kpagedialog.h>
 #include <qmap.h>
 
@@ -68,7 +66,7 @@ class OutputDriver;
 class ColorSetting;
 class FontSetting;
 
-class KMPLAYER_NO_EXPORT Preferences : public KPageDialog
+class Preferences : public KPageDialog
 {
     Q_OBJECT
 public:
@@ -103,7 +101,7 @@ private:
     KPageWidgetItem *m_url_item;
 };
 
-class KMPLAYER_NO_EXPORT PrefGeneralPageGeneral : public QWidget
+class PrefGeneralPageGeneral : public QWidget
 {
     Q_OBJECT
 public:
@@ -126,7 +124,7 @@ public:
     QSpinBox *seekTime;
 };
 
-class KMPLAYER_NO_EXPORT PrefGeneralPageLooks : public QWidget {
+class PrefGeneralPageLooks : public QWidget {
     Q_OBJECT
 public:
     PrefGeneralPageLooks (QWidget *parent, Settings *);
@@ -145,7 +143,7 @@ private:
     FontSetting * fonts;
 };
 
-class KMPLAYER_NO_EXPORT PrefSourcePageURL : public QWidget
+class PrefSourcePageURL : public QWidget
 {
     Q_OBJECT
 public:
@@ -169,7 +167,7 @@ private slots:
 };
 
 
-class KMPLAYER_NO_EXPORT PrefRecordPage : public QWidget
+class PrefRecordPage : public QWidget
 {
     Q_OBJECT
 public:
@@ -197,7 +195,7 @@ private:
     int m_recorders_length;
 };
 
-class KMPLAYER_NO_EXPORT RecorderPage : public QWidget
+class RecorderPage : public QWidget
 {
     Q_OBJECT
 public:
@@ -211,7 +209,7 @@ protected:
     PartBase *m_player;
 };
 
-class KMPLAYER_NO_EXPORT PrefMEncoderPage : public RecorderPage
+class PrefMEncoderPage : public RecorderPage
 {
     Q_OBJECT
 public:
@@ -229,7 +227,7 @@ public slots:
 private:
 };
 
-class KMPLAYER_NO_EXPORT PrefMPlayerDumpstreamPage : public RecorderPage {
+class PrefMPlayerDumpstreamPage : public RecorderPage {
 public:
     PrefMPlayerDumpstreamPage (QWidget *parent, PartBase *);
     ~PrefMPlayerDumpstreamPage () override {}
@@ -239,7 +237,7 @@ public:
 };
 
 #ifdef KMPLAYER_WITH_XINE
-class KMPLAYER_NO_EXPORT PrefXinePage : public RecorderPage {
+class PrefXinePage : public RecorderPage {
 public:
     PrefXinePage (QWidget *parent, PartBase *);
     ~PrefXinePage () {}
@@ -249,7 +247,7 @@ public:
 };
 #endif
 
-class KMPLAYER_NO_EXPORT PrefFFMpegPage : public RecorderPage
+class PrefFFMpegPage : public RecorderPage
 {
     Q_OBJECT
 public:
@@ -266,7 +264,7 @@ private:
 };
 
 
-class KMPLAYER_NO_EXPORT PrefGeneralPageOutput : public QWidget
+class PrefGeneralPageOutput : public QWidget
 {
     Q_OBJECT
 public:
@@ -277,7 +275,7 @@ public:
     QListWidget* audioDriver;
 };
 
-class KMPLAYER_NO_EXPORT PrefOPPagePostProc : public QWidget
+class PrefOPPagePostProc : public QWidget
 {
     Q_OBJECT
 public:

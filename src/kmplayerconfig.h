@@ -29,7 +29,7 @@
 
 #include <ksharedconfig.h>
 
-#include "kmplayer_def.h"
+#include "kmplayercommon_export.h"
 
 class KSharedConfig;
 class QFrame;
@@ -40,13 +40,15 @@ class PartBase;
 class Preferences;
 class View;
 
-class KDE_NO_EXPORT OutputDriver {
+class OutputDriver
+{
 public:
     const char * driver;
     const QString description;
 };
 
-class KDE_NO_EXPORT ColorSetting {
+class ColorSetting
+{
 public:
     QString title;
     QString option;
@@ -61,7 +63,8 @@ public:
     } target;
 };
 
-class KDE_NO_EXPORT FontSetting {
+class FontSetting
+{
 public:
     QString title;
     QString option; // for ini file
@@ -82,7 +85,8 @@ struct Deleter {
 /*
  * Base class for all dynamic preferance pages
  */
-class KMPLAYER_EXPORT PreferencesPage {
+class KMPLAYERCOMMON_EXPORT PreferencesPage
+{
 public:
     virtual ~PreferencesPage () {}
     virtual void write (KSharedConfigPtr) = 0;
@@ -96,16 +100,17 @@ public:
 /*
  * Class for storing all actual settings and reading/writing them
  */
-class KMPLAYER_EXPORT Settings : public QObject {
+class KMPLAYERCOMMON_EXPORT Settings : public QObject
+{
     Q_OBJECT
 public:
-    Settings (PartBase *, KSharedConfigPtr part) KDE_NO_CDTOR_EXPORT;
-    ~Settings () override KDE_NO_CDTOR_EXPORT;
-    bool createDialog () KDE_NO_EXPORT;
+    Settings (PartBase *, KSharedConfigPtr part);
+    ~Settings () override;
+    bool createDialog () KMPLAYERCOMMON_NO_EXPORT;
     void show (const char * pagename = nullptr);
     void addPage (PreferencesPage *);
     void removePage (PreferencesPage *);
-    void applyColorSetting (bool only_changed_ones) KDE_NO_EXPORT;
+    void applyColorSetting (bool only_changed_ones) KMPLAYERCOMMON_NO_EXPORT;
     Preferences *configDialog() const { return configdialog; }
     View * defaultView ();
     KSharedConfigPtr kconfig () { return m_config; }
@@ -191,11 +196,11 @@ public:
 signals:
     void configChanged ();
 public slots:
-    void readConfig () KDE_NO_EXPORT;
+    void readConfig () KMPLAYERCOMMON_NO_EXPORT;
     void writeConfig ();
 private slots:
-    void okPressed () KDE_NO_EXPORT;
-    void getHelp () KDE_NO_EXPORT;
+    void okPressed () KMPLAYERCOMMON_NO_EXPORT;
+    void getHelp () KMPLAYERCOMMON_NO_EXPORT;
 private:
     Preferences * configdialog;
     KSharedConfigPtr m_config;

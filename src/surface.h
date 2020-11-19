@@ -22,7 +22,6 @@
 
 #include <config-kmplayer.h>
 
-#include "kmplayer_def.h"
 #include "kmplayerplaylist.h"
 
 #ifdef KMPLAYER_WITH_CAIRO
@@ -33,7 +32,8 @@ namespace KMPlayer {
 
 class ViewArea;
 
-class KMPLAYER_NO_EXPORT Surface : public TreeNode <Surface> {
+class Surface : public TreeNode <Surface>
+{
 public:
     Surface (ViewArea *widget);
     ~Surface();

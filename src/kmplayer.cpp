@@ -65,7 +65,6 @@
 
 // application specific includes
 #include "kmplayerapp_log.h"
-#include "kmplayer_def.h"
 #include "kmplayerconfig.h"
 #include "kmplayer.h"
 #include "kmplayer_lists.h"
@@ -87,7 +86,7 @@
 extern const char * strMPlayerGroup;
 
 
-KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
+KMPlayerApp::KMPlayerApp (QWidget *)
     : KXmlGuiWindow (nullptr),
       m_systray (nullptr),
       m_player (new KMPlayer::PartBase (this, nullptr, KSharedConfig::openConfig ())),
@@ -126,7 +125,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
     readOptions();
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
+KMPlayerApp::~KMPlayerApp () {
     //delete m_broadcastconfig;
     if (recents)
         recents->document ()->dispose ();
@@ -144,7 +143,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
 }
 
 
-KDE_NO_EXPORT void KMPlayerApp::initActions () {
+void KMPlayerApp::initActions () {
     KActionCollection * ac = actionCollection ();
     fileNewWindow = ac->addAction ("new_window");
     fileNewWindow->setText( i18n( "New window" ) );
@@ -236,14 +235,14 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     viewToolBar->setStatusTip (i18n ("Enables/disables the toolbar"));
 }
 
-KDE_NO_EXPORT void KMPlayerApp::initStatusBar () {
+void KMPlayerApp::initStatusBar () {
     QStatusBar *sb = statusBar();
     playtime_info = new QLabel("--:--");
     sb->addPermanentWidget(playtime_info);
     sb->showMessage(i18n ("Ready."));
 }
 
-KDE_NO_EXPORT void KMPlayerApp::initMenu () {
+void KMPlayerApp::initMenu () {
     createGUI ("kmplayerui.rc"); // first build the one from the kmplayerui.rc
 
     //QAction *bookmark_action = actionCollection ()->addAction ("bookmarks");
@@ -257,7 +256,7 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
 
 }
 
-KDE_NO_EXPORT void KMPlayerApp::initView () {
+void KMPlayerApp::initView () {
     KSharedConfigPtr config = KSharedConfig::openConfig ();
     //m_view->docArea ()->readDockConfig (config.data (), QString ("Window Layout"));
     m_player->connectPanel (m_view->controlPanel ());
@@ -311,14 +310,14 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
     setAcceptDrops (true);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::loadingProgress (int perc) {
+void KMPlayerApp::loadingProgress (int perc) {
     if (perc < 100)
         playtime_info->setText(QString ("%1%").arg (perc));
     else
         playtime_info->setText(QString ("--:--"));
 }
 
-KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
+void KMPlayerApp::positioned (int pos, int length) {
     int left = (length - pos) / 10;
     if (left != last_time_left) {
         last_time_left = left;
@@ -336,7 +335,7 @@ KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (bool show) {
+void KMPlayerApp::windowVideoConsoleToggled (bool show) {
     if (show) {
         toggleView->setText (i18n ("V&ideo"));
         toggleView->setIcon (QIcon::fromTheme("video-display"));
@@ -346,7 +345,7 @@ KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (bool show) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
+void KMPlayerApp::playerStarted () {
     KMPlayer::Source * source = m_player->source ();
     if (!strcmp (source->name (), "urlsource")) {
         KUrl url = source->url ();
@@ -409,7 +408,7 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPlayer::Source * news) {
+void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPlayer::Source * news) {
     if (olds) {
         disconnect (olds, SIGNAL (titleChanged (const QString &)), this,
                     SLOT (setCaption (const QString &)));
@@ -427,22 +426,22 @@ KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPla
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::openDVD () {
+void KMPlayerApp::openDVD () {
     slotStatusMsg(i18n("Opening DVD..."));
     m_player->setSource (m_player->sources () ["dvdsource"]);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::openVCD () {
+void KMPlayerApp::openVCD () {
     slotStatusMsg(i18n("Opening VCD..."));
     m_player->setSource (m_player->sources () ["vcdsource"]);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::openAudioCD () {
+void KMPlayerApp::openAudioCD () {
     slotStatusMsg(i18n("Opening Audio CD..."));
     m_player->setSource (m_player->sources () ["audiocdsource"]);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::openPipe () {
+void KMPlayerApp::openPipe () {
     slotStatusMsg(i18n("Opening pipe..."));
     bool ok;
     QString cmd = QInputDialog::getText(m_player->view(), i18n("Read From Pipe"),
@@ -455,7 +454,7 @@ KDE_NO_EXPORT void KMPlayerApp::openPipe () {
     m_player->setSource (m_player->sources () ["pipesource"]);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::openVDR () {
+void KMPlayerApp::openVDR () {
     /*slotStatusMsg(i18n("Opening VDR..."));
     if (!strcmp (m_player->source ()->name (), "vdrsource") && m_player->playing ())
         static_cast<KMPlayerVDRSource *>(m_player->source())->toggleConnected();
@@ -535,9 +534,9 @@ struct IntroSource : public KMPlayer::Source {
     KMPlayerApp * m_app;
     IntroSource (KMPlayer::PartBase *p, KMPlayerApp * a)
         : KMPlayer::Source (i18n ("Intro"), p, "introsource"), m_app (a) {}
-    KDE_NO_EXPORT bool hasLength () override { return false; }
-    KDE_NO_EXPORT bool isSeekable () override { return false; }
-    KDE_NO_EXPORT QString prettyName () override { return i18n ("Intro"); }
+    bool hasLength () override { return false; }
+    bool isSeekable () override { return false; }
+    QString prettyName () override { return i18n ("Intro"); }
     void activate () override;
     void deactivate () override;
     void stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State os, KMPlayer::Node::State ns) override;
@@ -555,7 +554,7 @@ QString makeNumber (int i) {
             "</svg>").arg (i);
 }
 
-KDE_NO_EXPORT void IntroSource::activate () {
+void IntroSource::activate () {
     if (m_player->settings ()->autoresize)
         m_app->disconnect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
     m_document = new KMPlayer::SourceDocument (this, QString ());
@@ -637,7 +636,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
     deactivated = finished = false;
 }
 
-KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State, KMPlayer::Node::State new_state) {
+void IntroSource::stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State, KMPlayer::Node::State new_state) {
     if (new_state == KMPlayer::Node::state_deactivated &&
             m_document == node) {
         m_document->reset ();
@@ -650,7 +649,7 @@ KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::Node * node, KMPl
     }
 }
 
-KDE_NO_EXPORT void IntroSource::deactivate () {
+void IntroSource::deactivate () {
     deactivated = true;
     if (m_player->settings ()->autoresize)
         m_app->connect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
@@ -659,7 +658,7 @@ KDE_NO_EXPORT void IntroSource::deactivate () {
 }
 #endif
 
-KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
+void KMPlayerApp::restoreFromConfig () {
     if (m_player->view ()) {
         m_view->dockArea ()->hide ();
         KConfigGroup dock_cfg (KSharedConfig::openConfig(), "Window Layout");
@@ -670,7 +669,7 @@ KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KUrl& url)
+void KMPlayerApp::openDocumentFile (const KUrl& url)
 {
     if (!m_played_intro) {
         m_played_intro = true;
@@ -705,7 +704,7 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KUrl& url)
     slotStatusMsg (i18n ("Ready."));
 }
 
-KDE_NO_EXPORT void KMPlayerApp::addUrl (const KUrl& url) {
+void KMPlayerApp::addUrl (const KUrl& url) {
     KMPlayer::Source * src = m_player->sources () ["urlsource"];
     KMPlayer::NodePtr d = src->document ();
     if (d)
@@ -713,19 +712,19 @@ KDE_NO_EXPORT void KMPlayerApp::addUrl (const KUrl& url) {
                     url.isLocalFile() ? url.toLocalFile() : url.url()));
 }
 
-KDE_NO_EXPORT void KMPlayerApp::saveProperties (KConfigGroup &def_cfg) {
+void KMPlayerApp::saveProperties (KConfigGroup &def_cfg) {
     def_cfg.writeEntry ("URL", m_player->source ()->url ().url ());
     def_cfg.writeEntry ("Visible", isVisible ());
 }
 
-KDE_NO_EXPORT void KMPlayerApp::readProperties (const KConfigGroup &def_cfg) {
+void KMPlayerApp::readProperties (const KConfigGroup &def_cfg) {
     KUrl url (def_cfg.readEntry ("URL", QString ()));
     openDocumentFile (url);
     if (!def_cfg.readEntry ("Visible", true) && m_systray)
         hide ();
 }
 
-KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int /*percentage*/) {
+void KMPlayerApp::resizePlayer (int /*percentage*/) {
     /*KMPlayer::Source * source = m_player->source ();
     if (!source)
         return;
@@ -754,19 +753,19 @@ KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int /*percentage*/) {
     }*/
 }
 
-KDE_NO_EXPORT void KMPlayerApp::zoom50 () {
+void KMPlayerApp::zoom50 () {
     resizePlayer (50);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::zoom100 () {
+void KMPlayerApp::zoom100 () {
     resizePlayer (100);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::zoom150 () {
+void KMPlayerApp::zoom150 () {
     resizePlayer (150);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::editMode () {
+void KMPlayerApp::editMode () {
     //m_view->dockArea ()->hide ();
     bool editmode = !m_view->editMode ();
     KMPlayer::PlayItem * pi = m_view->playList ()->selectedItem ();
@@ -789,7 +788,7 @@ KDE_NO_EXPORT void KMPlayerApp::editMode () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
+void KMPlayerApp::syncEditMode () {
     if (edit_tree_id > -1) {
         KMPlayer::PlayItem *si = m_view->playList()->selectedItem();
         if (si && si->node) {
@@ -803,17 +802,17 @@ KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
         m_player->openUrl (m_player->source ()->url ());
 }
 
-KDE_NO_EXPORT void KMPlayerApp::showBroadcastConfig () {
+void KMPlayerApp::showBroadcastConfig () {
     /*m_player->settings ()->addPage (m_broadcastconfig);
     m_player->settings ()->addPage (m_ffserverconfig);*/
 }
 
-KDE_NO_EXPORT void KMPlayerApp::hideBroadcastConfig () {
+void KMPlayerApp::hideBroadcastConfig () {
     /*m_player->settings ()->removePage (m_broadcastconfig);
     m_player->settings ()->removePage (m_ffserverconfig);*/
 }
 
-KDE_NO_EXPORT void KMPlayerApp::broadcastClicked () {
+void KMPlayerApp::broadcastClicked () {
     /*if (m_broadcastconfig->broadcasting ())
         m_broadcastconfig->stopServer ();
     else {
@@ -822,12 +821,12 @@ KDE_NO_EXPORT void KMPlayerApp::broadcastClicked () {
     }*/
 }
 
-KDE_NO_EXPORT void KMPlayerApp::broadcastStarted () {
+void KMPlayerApp::broadcastStarted () {
     /*if (!m_view->controlPanel()->broadcastButton ()->isOn ())
         m_view->controlPanel()->broadcastButton ()->toggle ();*/
 }
 
-KDE_NO_EXPORT void KMPlayerApp::broadcastStopped () {
+void KMPlayerApp::broadcastStopped () {
     /*if (m_view->controlPanel()->broadcastButton ()->isOn ())
         m_view->controlPanel()->broadcastButton ()->toggle ();
     if (m_player->source () != m_player->sources () ["tvsource"])
@@ -835,12 +834,12 @@ KDE_NO_EXPORT void KMPlayerApp::broadcastStopped () {
     setCursor (QCursor (Qt::ArrowCursor));*/
 }
 
-KDE_NO_EXPORT bool KMPlayerApp::broadcasting () const {
+bool KMPlayerApp::broadcasting () const {
     //return m_broadcastconfig->broadcasting ();
     return false;
 }
 
-KDE_NO_EXPORT void KMPlayerApp::saveOptions()
+void KMPlayerApp::saveOptions()
 {
     KSharedConfigPtr config = KSharedConfig::openConfig ();
     KConfigGroup general (config, "General Options");
@@ -870,7 +869,7 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
 }
 
 
-KDE_NO_EXPORT void KMPlayerApp::readOptions() {
+void KMPlayerApp::readOptions() {
     KSharedConfigPtr config = KSharedConfig::openConfig ();
 
     KConfigGroup gen_cfg (config, "General Options");
@@ -915,7 +914,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 #undef Unsorted
 #undef Bool
 
-KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool by_user) {
+void KMPlayerApp::minimalMode (bool by_user) {
     /*unsigned long props = NET::WMWindowType;
     NETWinInfo winfo (QX11Info::display (), winId (), QX11Info::appRootWindow(), props);
     if (m_minimal_mode) {
@@ -945,23 +944,23 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool by_user) {
     m_minimal_mode = !m_minimal_mode;*/
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotMinimalMode () {
+void KMPlayerApp::slotMinimalMode () {
     minimalMode (true);
 }
 
 #ifdef KMPLAYER_WITH_CAIRO
 struct ExitSource : public KMPlayer::Source {
-    KDE_NO_CDTOR_EXPORT ExitSource (KMPlayer::PartBase *p)
+    ExitSource (KMPlayer::PartBase *p)
         : KMPlayer::Source (i18n ("Exit"), p, "exitsource") {}
-    KDE_NO_EXPORT QString prettyName () override { return i18n ("Exit"); }
-    KDE_NO_EXPORT bool hasLength () override { return false; }
-    KDE_NO_EXPORT bool isSeekable () override { return false; }
+    QString prettyName () override { return i18n ("Exit"); }
+    bool hasLength () override { return false; }
+    bool isSeekable () override { return false; }
     void activate () override;
-    KDE_NO_EXPORT void deactivate () override {}
+    void deactivate () override {}
     void stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State os, KMPlayer::Node::State ns) override;
 };
 
-KDE_NO_EXPORT void ExitSource::activate () {
+void ExitSource::activate () {
     m_document = new KMPlayer::SourceDocument (this, QString ());
     QString exitfile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kmplayer/exit.xml");
     QFile file (exitfile);
@@ -1000,7 +999,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
     qApp->quit ();
 }
 
-KDE_NO_EXPORT void ExitSource::stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State, KMPlayer::Node::State new_state) {
+void ExitSource::stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State, KMPlayer::Node::State new_state) {
     if (new_state == KMPlayer::Node::state_deactivated &&
             m_document == node &&
             m_player->view ())
@@ -1008,7 +1007,7 @@ KDE_NO_EXPORT void ExitSource::stateElementChanged (KMPlayer::Node * node, KMPla
 }
 #endif
 
-KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
+bool KMPlayerApp::queryClose () {
     // KMPlayerVDRSource has to wait for pending commands like mute and quit
     m_player->stop ();
     //static_cast <KMPlayerVDRSource *> (m_player->sources () ["vdrsource"])->waitForConnectionClose ();
@@ -1030,7 +1029,7 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
 #endif
 }
 
-KDE_NO_EXPORT void KMPlayerApp::aboutToCloseWindow()
+void KMPlayerApp::aboutToCloseWindow()
 {
     if (!m_minimal_mode)
         saveOptions();
@@ -1039,7 +1038,7 @@ KDE_NO_EXPORT void KMPlayerApp::aboutToCloseWindow()
     m_player->settings ()->writeConfig ();
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotFileNewWindow()
+void KMPlayerApp::slotFileNewWindow()
 {
     slotStatusMsg(i18n("Opening a new application window..."));
 
@@ -1061,7 +1060,7 @@ static bool findOpenLocation(QStandardPaths::StandardLocation type, QString* dir
     return false;
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotFileOpen () {
+void KMPlayerApp::slotFileOpen () {
     QString dir;
     if (!(findOpenLocation(QStandardPaths::MoviesLocation, &dir)
                 || findOpenLocation(QStandardPaths::MusicLocation, &dir)
@@ -1080,7 +1079,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileOpen () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const QUrl& url)
+void KMPlayerApp::slotFileOpenRecent(const QUrl& url)
 {
     slotStatusMsg(i18n("Opening file..."));
 
@@ -1094,7 +1093,7 @@ static bool findSaveLocation(QStandardPaths::StandardLocation type, QString* dir
     return !dir->isEmpty() && QDir(*dir).exists();
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
+void KMPlayerApp::slotSaveAs () {
     QString dir;
     if (!(findSaveLocation(QStandardPaths::MoviesLocation, &dir)
                 || findSaveLocation(QStandardPaths::MusicLocation, &dir)
@@ -1125,7 +1124,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
+void KMPlayerApp::slotClearHistory () {
     fileOpenRecent->clear ();
     int mi = fileOpenRecent->maxItems ();
     fileOpenRecent->setMaxItems (0);
@@ -1139,7 +1138,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotGeneratorMenu () {
+void KMPlayerApp::slotGeneratorMenu () {
     if (!generators.first ()) {
         const QStringList dirs = QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, "kmplayer/generators", QStandardPaths::LocateDirectory);
         for (int i = 0; i < dirs.size(); ++i) {
@@ -1165,7 +1164,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotGeneratorMenu () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotGenerator () {
+void KMPlayerApp::slotGenerator () {
     const QAction *act = qobject_cast <QAction *> (sender ());
     KMPlayer::NodeStoreItem *store = generators.first ();
     QObjectList chlds = m_generatormenu->children ();
@@ -1189,7 +1188,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotGenerator () {
         current_generator->activate ();
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotFileClose()
+void KMPlayerApp::slotFileClose()
 {
     slotStatusMsg(i18n("Closing file..."));
 
@@ -1198,26 +1197,26 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileClose()
     slotStatusMsg(i18n("Ready."));
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotFileQuit()
+void KMPlayerApp::slotFileQuit()
 {
     close();
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotPreferences () {
+void KMPlayerApp::slotPreferences () {
     m_player->showConfigDialog ();
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotConfigureKeys () {
+void KMPlayerApp::slotConfigureKeys () {
   KShortcutsDialog::configure (actionCollection ());
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotConfigureToolbars () {
+void KMPlayerApp::slotConfigureToolbars () {
     //KEditToolbar dlg (actionCollection ());
     //if (dlg.exec ())
     //    initMenu (); // also add custom popups //createGUI ();
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotViewToolBar() {
+void KMPlayerApp::slotViewToolBar() {
     m_showToolbar = viewToolBar->isChecked();
     if(m_showToolbar)
         toolBar("mainToolBar")->show();
@@ -1225,12 +1224,12 @@ KDE_NO_EXPORT void KMPlayerApp::slotViewToolBar() {
         toolBar("mainToolBar")->hide();
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotViewStatusBar() {
+void KMPlayerApp::slotViewStatusBar() {
     m_showStatusbar = viewStatusBar->isChecked();
     statusBar()->setVisible (m_showStatusbar);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotViewMenuBar() {
+void KMPlayerApp::slotViewMenuBar() {
     m_showMenubar = viewMenuBar->isChecked();
     if (m_showMenubar) {
         menuBar()->show();
@@ -1246,12 +1245,12 @@ KDE_NO_EXPORT void KMPlayerApp::slotViewMenuBar() {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotStatusMsg (const QString &text) {
+void KMPlayerApp::slotStatusMsg (const QString &text) {
     QStatusBar * sb = statusBar ();
     sb->showMessage(text);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::fullScreen () {
+void KMPlayerApp::fullScreen () {
     if (qobject_cast <QAction *> (sender ()))
         m_view->fullScreen();
     viewFullscreen->setChecked (m_view->isFullScreen ());
@@ -1263,7 +1262,7 @@ KDE_NO_EXPORT void KMPlayerApp::fullScreen () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::playListItemActivated (const QModelIndex& index) {
+void KMPlayerApp::playListItemActivated (const QModelIndex& index) {
     KMPlayer::PlayItem * vi = static_cast <KMPlayer::PlayItem *> (index.internalPointer ());
     if (edit_tree_id > -1) {
         if (vi->rootItem ()->id != edit_tree_id)
@@ -1274,7 +1273,6 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemActivated (const QModelIndex& index)
     viewEditMode->setEnabled (vi->rootItem ()->itemFlags() & KMPlayer::PlayModel::TreeEdit);
 }
 
-KDE_NO_EXPORT
 void KMPlayerApp::playListItemDropped (QDropEvent *de, KMPlayer::PlayItem *item) {
     KMPlayer::TopPlayItem *ritem = item->rootItem();
     KUrl url;
@@ -1325,7 +1323,7 @@ void KMPlayerApp::playListItemDropped (QDropEvent *de, KMPlayer::PlayItem *item)
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {
+void KMPlayerApp::menuDropInList () {
     KMPlayer::NodePtr n = m_drop_after->node;
     KMPlayer::NodePtr pi;
     for (int i = m_drop_list.size (); n && (i > 0 || manip_node); i--) {
@@ -1346,7 +1344,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {
     m_player->playModel()->updateTree (playlist_id, playlist, pi, true, false);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
+void KMPlayerApp::menuDropInGroup () {
     KMPlayer::NodePtr n = m_drop_after->node;
     if (!n)
         return;
@@ -1371,7 +1369,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
     m_player->playModel()->updateTree (playlist_id, playlist, pi, true, false);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::menuCopyDrop () {
+void KMPlayerApp::menuCopyDrop () {
     KMPlayer::NodePtr n = m_drop_after->node;
     if (n && manip_node) {
         KMPlayer::NodePtr pi = new PlaylistItem (playlist, this, false, manip_node->mrl ()->src);
@@ -1386,7 +1384,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuCopyDrop () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::menuDeleteNode () {
+void KMPlayerApp::menuDeleteNode () {
     KMPlayer::Node *n = nullptr;
     if (manip_node && manip_node->parentNode ()) {
         n = manip_node->previousSibling() ? manip_node->previousSibling() : manip_node->parentNode ();
@@ -1395,7 +1393,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDeleteNode () {
     m_player->playModel()->updateTree (manip_tree_id, nullptr, n, true, false);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::menuMoveUpNode () {
+void KMPlayerApp::menuMoveUpNode () {
     KMPlayer::NodePtr n = manip_node.ptr ();
     if (n && n->parentNode () && n->previousSibling ()) {
         KMPlayer::Node *prev = n->previousSibling ();
@@ -1405,7 +1403,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuMoveUpNode () {
     m_player->playModel()->updateTree (manip_tree_id, nullptr, n, true, false);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::menuMoveDownNode () {
+void KMPlayerApp::menuMoveDownNode () {
     KMPlayer::NodePtr n = manip_node.ptr ();
     if (n && n->parentNode () && n->nextSibling ()) {
         KMPlayer::Node *next = n->nextSibling ();
@@ -1415,7 +1413,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuMoveDownNode () {
     m_player->playModel()->updateTree (manip_tree_id, nullptr, n, true, false);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
+void KMPlayerApp::playListItemMoved () {
     KMPlayer::PlayItem *si = m_view->playList ()->selectedItem ();
     KMPlayer::TopPlayItem * ri = si->rootItem ();
     qCDebug(LOG_KMPLAYER_APP) << "playListItemMoved " << (ri->id == playlist_id) << !! si->node;
@@ -1428,7 +1426,7 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayItem * item, QMenu * pm) {
+void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayItem * item, QMenu * pm) {
     KMPlayer::TopPlayItem *ri = item->rootItem ();
     if (ri != item
             && item->node
@@ -1447,7 +1445,7 @@ KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayItem * item, 
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::configChanged () {
+void KMPlayerApp::configChanged () {
     //viewKeepRatio->setChecked (m_player->settings ()->sizeratio);
     if (m_player->settings ()->docksystray && !m_systray) {
         m_systray = new QSystemTrayIcon (QIcon::fromTheme("kmplayer"), this);
@@ -1463,7 +1461,7 @@ KDE_NO_EXPORT void KMPlayerApp::configChanged () {
     m_auto_resize = m_player->settings ()->autoresize;
 }
 
-KDE_NO_EXPORT void KMPlayerApp::keepSizeRatio () {
+void KMPlayerApp::keepSizeRatio () {
     m_view->setKeepSizeRatio (!m_view->keepSizeRatio ());
     m_player->settings ()->sizeratio = m_view->keepSizeRatio ();
     //viewKeepRatio->setChecked (m_view->keepSizeRatio ());
@@ -1471,7 +1469,7 @@ KDE_NO_EXPORT void KMPlayerApp::keepSizeRatio () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidget * parent)
+KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidget * parent)
  : QFrame(parent) {
     QVBoxLayout *layout = new QVBoxLayout;
     autoPlayDVD = new QCheckBox (i18n ("Auto play after opening DVD"));
@@ -1489,21 +1487,23 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidge
 
 //-----------------------------------------------------------------------------
 
-class KMPLAYER_NO_EXPORT Disks : public KMPlayer::Document {
+class Disks : public KMPlayer::Document
+{
 public:
     Disks (KMPlayerApp * a);
     void message (KMPlayer::MessageType msg, void *data) override;
     KMPlayerApp * app;
 };
 
-class KMPLAYER_NO_EXPORT Disk : public KMPlayer::Mrl {
+class Disk : public KMPlayer::Mrl
+{
 public:
     Disk (KMPlayer::NodePtr & doc, KMPlayerApp *a, const QString &url, const QString &pn);
     void activate () override;
     KMPlayerApp * app;
 };
 
-KDE_NO_CDTOR_EXPORT Disks::Disks (KMPlayerApp * a)
+Disks::Disks (KMPlayerApp * a)
                 : KMPlayer::Document ("disks://", nullptr), app (a) {
     id = id_node_disk_document;
     resolved = true;
@@ -1511,21 +1511,21 @@ KDE_NO_CDTOR_EXPORT Disks::Disks (KMPlayerApp * a)
     title = i18n ("Optical Disks");
 }
 
-KDE_NO_EXPORT void Disks::message (KMPlayer::MessageType msg, void *data) {
+void Disks::message (KMPlayer::MessageType msg, void *data) {
     if (KMPlayer::MsgChildFinished)
         finish ();
     else
         return KMPlayer::Document::message (msg, data);
 }
 
-KDE_NO_CDTOR_EXPORT Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url, const QString &pn)
+Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url, const QString &pn)
   : KMPlayer::Mrl (doc, id_node_disk_node), app (a) {
     src = url;
     title = pn;
     bookmarkable = false;
 }
 
-KDE_NO_EXPORT void Disk::activate () {
+void Disk::activate () {
     const char * sn;
     if (src.startsWith ("cdda"))
         sn = "audiocdsource";
@@ -1538,7 +1538,7 @@ KDE_NO_EXPORT void Disk::activate () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource(KMPlayerApp* a)
+KMPlayerDVDSource::KMPlayerDVDSource(KMPlayerApp* a)
     : KMPlayer::Source(i18n ("DVD"), a->player(), "dvdsource"), m_app(a), m_configpage(nullptr) {
     // FIXME: these menus are void currently
     setUrl ("dvd://");
@@ -1550,11 +1550,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource(KMPlayerApp* a)
     m_player->playModel()->addTree (disks, "listssource", "media-optical", 0);
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::~KMPlayerDVDSource () {
+KMPlayerDVDSource::~KMPlayerDVDSource () {
     disks->document ()->dispose ();
 }
 
-KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
+bool KMPlayerDVDSource::processOutput (const QString & str) {
     if (KMPlayer::Source::processOutput (str))
         return true;
     if (m_identified)
@@ -1570,23 +1570,23 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
     return false;
 }
 
-KDE_NO_EXPORT void KMPlayerDVDSource::activate () {
+void KMPlayerDVDSource::activate () {
     m_start_play = m_auto_play;
     setUrl ("dvd://");
     QTimer::singleShot (0, m_player, SLOT (play ()));
 }
 
-KDE_NO_EXPORT void KMPlayerDVDSource::setIdentified (bool b) {
+void KMPlayerDVDSource::setIdentified (bool b) {
     KMPlayer::Source::setIdentified (b);
     m_start_play = true;
     m_player->updateTree ();
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
-KDE_NO_EXPORT void KMPlayerDVDSource::deactivate () {
+void KMPlayerDVDSource::deactivate () {
 }
 
-KDE_NO_EXPORT void KMPlayerDVDSource::setCurrent (KMPlayer::Mrl *cur) {
+void KMPlayerDVDSource::setCurrent (KMPlayer::Mrl *cur) {
     KMPlayer::Source::setCurrent (cur);
     QString url ("dvd://");
     if (m_document)
@@ -1601,32 +1601,32 @@ KDE_NO_EXPORT void KMPlayerDVDSource::setCurrent (KMPlayer::Mrl *cur) {
     m_recordcmd = m_options + QString (" -vf scale -zoom");
 }
 
-KDE_NO_EXPORT QString KMPlayerDVDSource::filterOptions () {
+QString KMPlayerDVDSource::filterOptions () {
     KMPlayer::Settings * settings = m_player->settings ();
     if (!settings->disableppauto)
         return KMPlayer::Source::filterOptions ();
     return QString ("");
 }
 
-KDE_NO_EXPORT void KMPlayerDVDSource::play (KMPlayer::Mrl *mrl) {
+void KMPlayerDVDSource::play (KMPlayer::Mrl *mrl) {
     KMPlayer::Source::play (mrl);
 }
 
-KDE_NO_EXPORT QString KMPlayerDVDSource::prettyName () {
+QString KMPlayerDVDSource::prettyName () {
     return i18n ("DVD");
 }
 
 static const char * strPlayDVD = "Immediately Play DVD";
 
-KDE_NO_EXPORT void KMPlayerDVDSource::write (KSharedConfigPtr config) {
+void KMPlayerDVDSource::write (KSharedConfigPtr config) {
     KConfigGroup (config, strMPlayerGroup).writeEntry (strPlayDVD, m_auto_play);
 }
 
-KDE_NO_EXPORT void KMPlayerDVDSource::read (KSharedConfigPtr config) {
+void KMPlayerDVDSource::read (KSharedConfigPtr config) {
     m_auto_play = KConfigGroup (config, strMPlayerGroup).readEntry (strPlayDVD, true);
 }
 
-KDE_NO_EXPORT void KMPlayerDVDSource::sync (bool fromUI) {
+void KMPlayerDVDSource::sync (bool fromUI) {
     if (fromUI) {
         m_auto_play = m_configpage->autoPlayDVD->isChecked ();
         m_player->settings ()->dvddevice = m_configpage->dvddevice->lineEdit()->text ();
@@ -1636,20 +1636,20 @@ KDE_NO_EXPORT void KMPlayerDVDSource::sync (bool fromUI) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerDVDSource::prefLocation (QString & item, QString & icon, QString & tab) {
+void KMPlayerDVDSource::prefLocation (QString & item, QString & icon, QString & tab) {
     item = i18n ("Source");
     icon = QString ("source");
     tab = i18n ("DVD");
 }
 
-KDE_NO_EXPORT QFrame * KMPlayerDVDSource::prefPage (QWidget * parent) {
+QFrame * KMPlayerDVDSource::prefPage (QWidget * parent) {
     m_configpage = new KMPlayerPrefSourcePageDVD (parent);
     return m_configpage;
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidget * parent)
+KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidget * parent)
  : QFrame (parent) {
      QVBoxLayout *layout = new QVBoxLayout;
      autoPlayVCD = new QCheckBox (i18n ("Auto play after opening a VCD"));
@@ -1667,16 +1667,16 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidge
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::KMPlayerVCDSource(KMPlayerApp* a)
+KMPlayerVCDSource::KMPlayerVCDSource(KMPlayerApp* a)
     : KMPlayer::Source(i18n("VCD"), a->player(), "vcdsource"), m_app(a), m_configpage(nullptr) {
     m_player->settings ()->addPage (this);
     setUrl ("vcd://");
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::~KMPlayerVCDSource () {
+KMPlayerVCDSource::~KMPlayerVCDSource () {
 }
 
-KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
+bool KMPlayerVCDSource::processOutput (const QString & str) {
     if (KMPlayer::Source::processOutput (str))
         return true;
     if (m_identified)
@@ -1693,7 +1693,7 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
     return false;
 }
 
-KDE_NO_EXPORT void KMPlayerVCDSource::activate () {
+void KMPlayerVCDSource::activate () {
     m_player->stop ();
     init ();
     m_start_play = m_auto_play;
@@ -1702,10 +1702,10 @@ KDE_NO_EXPORT void KMPlayerVCDSource::activate () {
         QTimer::singleShot (0, m_player, SLOT (play ()));
 }
 
-KDE_NO_EXPORT void KMPlayerVCDSource::deactivate () {
+void KMPlayerVCDSource::deactivate () {
 }
 
-KDE_NO_EXPORT void KMPlayerVCDSource::setIdentified (bool b) {
+void KMPlayerVCDSource::setIdentified (bool b) {
     KMPlayer::Source::setIdentified (b);
     setCurrent (!m_current || !m_document->hasChildNodes ()
             ? m_document->mrl () : m_current->mrl ());
@@ -1715,7 +1715,7 @@ KDE_NO_EXPORT void KMPlayerVCDSource::setIdentified (bool b) {
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
-KDE_NO_EXPORT void KMPlayerVCDSource::setCurrent (KMPlayer::Mrl *cur) {
+void KMPlayerVCDSource::setCurrent (KMPlayer::Mrl *cur) {
     KMPlayer::Source::setCurrent (cur);
     QString url ("vcd://");
     if (m_current && m_current != m_document)
@@ -1726,21 +1726,21 @@ KDE_NO_EXPORT void KMPlayerVCDSource::setCurrent (KMPlayer::Mrl *cur) {
     m_recordcmd = m_options;
 }
 
-KDE_NO_EXPORT QString KMPlayerVCDSource::prettyName () {
+QString KMPlayerVCDSource::prettyName () {
     return i18n ("VCD");
 }
 
 static const char * strPlayVCD = "Immediately Play VCD";
 
-KDE_NO_EXPORT void KMPlayerVCDSource::write (KSharedConfigPtr config) {
+void KMPlayerVCDSource::write (KSharedConfigPtr config) {
     KConfigGroup (config, strMPlayerGroup).writeEntry (strPlayVCD, m_auto_play);
 }
 
-KDE_NO_EXPORT void KMPlayerVCDSource::read (KSharedConfigPtr config) {
+void KMPlayerVCDSource::read (KSharedConfigPtr config) {
     m_auto_play = KConfigGroup (config, strMPlayerGroup).readEntry (strPlayVCD, true);
 }
 
-KDE_NO_EXPORT void KMPlayerVCDSource::sync (bool fromUI) {
+void KMPlayerVCDSource::sync (bool fromUI) {
     if (fromUI) {
         m_auto_play = m_configpage->autoPlayVCD->isChecked ();
         m_player->settings ()->vcddevice = m_configpage->vcddevice->lineEdit()->text ();
@@ -1750,28 +1750,28 @@ KDE_NO_EXPORT void KMPlayerVCDSource::sync (bool fromUI) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVCDSource::prefLocation (QString & item, QString & icon, QString & tab) {
+void KMPlayerVCDSource::prefLocation (QString & item, QString & icon, QString & tab) {
     item = i18n ("Source");
     icon = QString ("source");
     tab = i18n ("VCD");
 }
 
-KDE_NO_EXPORT QFrame * KMPlayerVCDSource::prefPage (QWidget * parent) {
+QFrame * KMPlayerVCDSource::prefPage (QWidget * parent) {
     m_configpage = new KMPlayerPrefSourcePageVCD (parent);
     return m_configpage;
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerAudioCDSource::KMPlayerAudioCDSource(KMPlayerApp* a)
+KMPlayerAudioCDSource::KMPlayerAudioCDSource(KMPlayerApp* a)
     : KMPlayer::Source(i18n("Audio CD"), a->player(), "audiocdsource"), m_app(a) {
     setUrl ("cdda://");
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerAudioCDSource::~KMPlayerAudioCDSource () {
+KMPlayerAudioCDSource::~KMPlayerAudioCDSource () {
 }
 
-KDE_NO_EXPORT bool KMPlayerAudioCDSource::processOutput (const QString & str) {
+bool KMPlayerAudioCDSource::processOutput (const QString & str) {
     if (KMPlayer::Source::processOutput (str))
         return true;
     if (m_identified)
@@ -1791,7 +1791,7 @@ KDE_NO_EXPORT bool KMPlayerAudioCDSource::processOutput (const QString & str) {
     return false;
 }
 
-KDE_NO_EXPORT void KMPlayerAudioCDSource::activate () {
+void KMPlayerAudioCDSource::activate () {
     m_player->stop ();
     init ();
     //m_start_play = m_auto_play;
@@ -1800,10 +1800,10 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::activate () {
         QTimer::singleShot (0, m_player, SLOT (play ()));
 }
 
-KDE_NO_EXPORT void KMPlayerAudioCDSource::deactivate () {
+void KMPlayerAudioCDSource::deactivate () {
 }
 
-KDE_NO_EXPORT void KMPlayerAudioCDSource::setIdentified (bool b) {
+void KMPlayerAudioCDSource::setIdentified (bool b) {
     KMPlayer::Source::setIdentified (b);
     setCurrent (!m_current || !m_document->hasChildNodes ()
             ? m_document->mrl () : m_current->mrl ());
@@ -1817,7 +1817,7 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::setIdentified (bool b) {
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
-KDE_NO_EXPORT void KMPlayerAudioCDSource::setCurrent (KMPlayer::Mrl *cur) {
+void KMPlayerAudioCDSource::setCurrent (KMPlayer::Mrl *cur) {
     KMPlayer::Source::setCurrent (cur);
     QString url ("cdda://");
     if (m_current && m_current != m_document)
@@ -1828,28 +1828,28 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::setCurrent (KMPlayer::Mrl *cur) {
     m_recordcmd = m_options;
 }
 
-KDE_NO_EXPORT QString KMPlayerAudioCDSource::prettyName () {
+QString KMPlayerAudioCDSource::prettyName () {
     return i18n ("Audio CD");
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
+KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
  : KMPlayer::Source (i18n ("Pipe"), a->player (), "pipesource"), m_app (a) {
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPipeSource::~KMPlayerPipeSource () {
+KMPlayerPipeSource::~KMPlayerPipeSource () {
 }
 
-KDE_NO_EXPORT bool KMPlayerPipeSource::hasLength () {
+bool KMPlayerPipeSource::hasLength () {
     return false;
 }
 
-KDE_NO_EXPORT bool KMPlayerPipeSource::isSeekable () {
+bool KMPlayerPipeSource::isSeekable () {
     return false;
 }
 
-KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
+void KMPlayerPipeSource::activate () {
     // dangerous !! if (!m_url.protocol ().compare ("kmplayer"))
     //    m_pipecmd = KUrl::decode_string (m_url.path ()).mid (1);
     setUrl ("stdin://");
@@ -1863,14 +1863,14 @@ KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
-KDE_NO_EXPORT void KMPlayerPipeSource::deactivate () {
+void KMPlayerPipeSource::deactivate () {
 }
 
-KDE_NO_EXPORT QString KMPlayerPipeSource::prettyName () {
+QString KMPlayerPipeSource::prettyName () {
     return i18n ("Pipe - %1",m_pipecmd);
 }
 
-KDE_NO_EXPORT void KMPlayerPipeSource::setCommand (const QString & cmd) {
+void KMPlayerPipeSource::setCommand (const QString & cmd) {
     m_pipecmd = cmd;
     if (m_document)
         m_document->mrl ()->title = cmd;

@@ -105,7 +105,7 @@ public:
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget *, View *view, KActionCollection * ac)
+PlayListView::PlayListView (QWidget *, View *view, KActionCollection * ac)
  : //QTreeView (parent),
    m_view (view),
    m_find_dialog (nullptr),
@@ -143,7 +143,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget *, View *view, KActionCo
              this, SLOT (slotItemExpanded (const QModelIndex&)));
 }
 
-KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
+PlayListView::~PlayListView () {
 }
 
 void PlayListView::paintCell (const QAbstractItemDelegate *def,
@@ -218,7 +218,7 @@ void PlayListView::selectItem(const QString&) {
     }*/
 }
 
-/*KDE_NO_EXPORT Q3DragObject * PlayListView::dragObject () {
+/*Q3DragObject * PlayListView::dragObject () {
     PlayItem * item = static_cast <PlayItem *> (selectedItem ());
     if (item && item->node) {
         QString txt = item->node->isPlayable ()
@@ -234,12 +234,12 @@ void PlayListView::selectItem(const QString&) {
     return 0;
 }*/
 
-KDE_NO_EXPORT void PlayListView::setFont (const QFont & fnt) {
+void PlayListView::setFont (const QFont & fnt) {
     //setTreeStepSize (QFontMetrics (fnt).boundingRect ('m').width ());
     QTreeView::setFont (fnt);
 }
 
-KDE_NO_EXPORT void PlayListView::contextMenuEvent (QContextMenuEvent *event)
+void PlayListView::contextMenuEvent (QContextMenuEvent *event)
 {
     PlayItem *item = playModel ()->itemFromIndex (indexAt (event->pos ()));
     if (item) {
@@ -331,7 +331,7 @@ void PlayListView::toggleShowAllNodes () {
     }
 }
 
-KDE_NO_EXPORT void PlayListView::showAllNodes(TopPlayItem *ri, bool show) {
+void PlayListView::showAllNodes(TopPlayItem *ri, bool show) {
     if (ri && ri->show_all_nodes != show) {
         PlayItem * cur_item = selectedItem ();
         ri->show_all_nodes = show;
@@ -346,7 +346,7 @@ KDE_NO_EXPORT void PlayListView::showAllNodes(TopPlayItem *ri, bool show) {
     }
 }
 
-KDE_NO_EXPORT bool PlayListView::isDragValid (QDropEvent *event) {
+bool PlayListView::isDragValid (QDropEvent *event) {
     if (event->source() == this &&
             event->mimeData ()
                 ->hasFormat ("application/x-qabstractitemmodeldatalist"))
@@ -363,7 +363,7 @@ KDE_NO_EXPORT bool PlayListView::isDragValid (QDropEvent *event) {
     return false;
 }
 
-KDE_NO_EXPORT void PlayListView::dragMoveEvent (QDragMoveEvent *event)
+void PlayListView::dragMoveEvent (QDragMoveEvent *event)
 {
     PlayItem *itm = playModel ()->itemFromIndex (indexAt (event->pos ()));
     if (itm) {
@@ -383,7 +383,7 @@ void PlayListView::dragEnterEvent (QDragEnterEvent *event)
         event->ignore();
 }
 
-KDE_NO_EXPORT void PlayListView::dropEvent (QDropEvent *event) {
+void PlayListView::dropEvent (QDropEvent *event) {
     PlayItem *itm = playModel ()->itemFromIndex (indexAt (event->pos ()));
     if (itm && itm->node) {
         TopPlayItem *ritem = itm->rootItem ();
@@ -426,20 +426,20 @@ PlayModel *PlayListView::playModel () const
 }
 
 
-KDE_NO_EXPORT void PlayListView::renameSelected () {
+void PlayListView::renameSelected () {
     QModelIndex i = currentIndex ();
     PlayItem *itm = playModel ()->itemFromIndex (i);
     if (itm && itm->item_flags & Qt::ItemIsEditable)
         edit (i);
 }
 
-KDE_NO_EXPORT void PlayListView::slotCurrentItemChanged (QModelIndex /*cur*/, QModelIndex)
+void PlayListView::slotCurrentItemChanged (QModelIndex /*cur*/, QModelIndex)
 {
     //TopPlayItem * ri = rootItem (qitem);
     //setItemsRenameable (ri && (ri->item_flagsTreeEdit) && ri != qitem);
 }
 
-KDE_NO_EXPORT void PlayListView::slotFind () {
+void PlayListView::slotFind () {
     /*m_current_find_elm = 0L;
     if (!m_find_dialog) {
         m_find_dialog = new KFindDialog (this, KFind::CaseSensitive);
@@ -467,7 +467,7 @@ KDE_NO_EXPORT void PlayListView::slotFind () {
 
 }*/
 
-KDE_NO_EXPORT void PlayListView::slotFindOk () {
+void PlayListView::slotFindOk () {
     /*if (!m_find_dialog)
         return;
     m_find_dialog->hide ();
@@ -496,7 +496,7 @@ KDE_NO_EXPORT void PlayListView::slotFindOk () {
 /* A bit tricky, but between the find's PlayItems might be gone, so
  * try to match on the generated tree following the source's document tree
  */
-KDE_NO_EXPORT void PlayListView::slotFindNext () {
+void PlayListView::slotFindNext () {
     /*if (!m_find_dialog)
         return;
     QString str = m_find_dialog->pattern();

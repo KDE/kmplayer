@@ -24,7 +24,7 @@
 
 using namespace KMPlayer;
 
-KDE_NO_EXPORT Node *RSS::Rss::childFromTag (const QString & tag) {
+Node *RSS::Rss::childFromTag (const QString & tag) {
     if (!strcmp (tag.toLatin1 ().constData (), "channel"))
         return new RSS::Channel (m_doc);
     return nullptr;
@@ -37,7 +37,7 @@ void *RSS::Rss::role (RoleType msg, void *content)
     return Element::role (msg, content);
 }
 
-KDE_NO_EXPORT Node *RSS::Channel::childFromTag (const QString & tag) {
+Node *RSS::Channel::childFromTag (const QString & tag) {
     QByteArray ba = tag.toLatin1 ();
     const char *ctag = ba.constData ();
     if (!strcmp (ctag, "item"))
@@ -50,7 +50,7 @@ KDE_NO_EXPORT Node *RSS::Channel::childFromTag (const QString & tag) {
     return nullptr;
 }
 
-KDE_NO_EXPORT void RSS::Channel::closed () {
+void RSS::Channel::closed () {
     for (Node *c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
             title = c->innerText ().simplified ();
@@ -67,7 +67,7 @@ void *RSS::Channel::role (RoleType msg, void *content)
     return Element::role (msg, content);
 }
 
-KDE_NO_EXPORT Node *RSS::Item::childFromTag (const QString & tag) {
+Node *RSS::Item::childFromTag (const QString & tag) {
     QByteArray ba = tag.toLatin1 ();
     const char *ctag = ba.constData ();
     if (!strcmp (ctag, "enclosure"))
@@ -92,7 +92,7 @@ KDE_NO_EXPORT Node *RSS::Item::childFromTag (const QString & tag) {
     return nullptr;
 }
 
-KDE_NO_EXPORT void RSS::Item::closed () {
+void RSS::Item::closed () {
     if (!summary_added) {
         ATOM::MediaGroup *group = nullptr;
         Enclosure *enclosure = nullptr;
@@ -131,17 +131,17 @@ KDE_NO_EXPORT void RSS::Item::closed () {
     Element::closed ();
 }
 
-KDE_NO_EXPORT void RSS::Enclosure::activate () {
+void RSS::Enclosure::activate () {
     document ()->message (MsgInfoString, &description);
     Mrl::activate ();
 }
 
-KDE_NO_EXPORT void RSS::Enclosure::deactivate () {
+void RSS::Enclosure::deactivate () {
     document ()->message (MsgInfoString, nullptr);
     Mrl::deactivate ();
 }
 
-KDE_NO_EXPORT void RSS::Enclosure::closed () {
+void RSS::Enclosure::closed () {
     src = getAttribute (Ids::attr_url);
     Mrl::closed ();
 }

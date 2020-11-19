@@ -20,13 +20,16 @@
 #ifndef _TRIE_STRING_H_
 #define _TRIE_STRING_H_
 
+#include "kmplayercommon_export.h"
+
 #include <qstring.h>
 
 namespace KMPlayer {
 
 class TrieNode;
 
-class KMPLAYER_EXPORT TrieString {
+class KMPLAYERCOMMON_EXPORT TrieString
+{
     TrieNode * node;
     friend bool operator == (const TrieString & s1, const TrieString & s2);
     friend bool operator == (const TrieString & s, const char * utf8);
@@ -52,7 +55,8 @@ public:
 
 inline TrieString::TrieString () : node (nullptr) {}
 
-class KMPLAYER_EXPORT Ids {
+class KMPLAYERCOMMON_EXPORT Ids
+{
 public:
     static void init();
     static void reset();

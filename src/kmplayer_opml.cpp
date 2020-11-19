@@ -27,7 +27,7 @@
 using namespace KMPlayer;
 
 
-KDE_NO_EXPORT Node *OPML::Opml::childFromTag (const QString & tag)
+Node *OPML::Opml::childFromTag (const QString & tag)
 {
     QByteArray ba = tag.toLatin1 ();
     const char *name = ba.constData ();

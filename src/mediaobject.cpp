@@ -300,7 +300,7 @@ MediaObject::~MediaObject () {
     m_manager->medias ().removeAll (this);
 }
 
-KDE_NO_EXPORT void MediaObject::destroy () {
+void MediaObject::destroy () {
     delete this;
 }
 
@@ -404,7 +404,7 @@ MediaInfo::~MediaInfo () {
     clearData ();
 }
 
-KDE_NO_EXPORT void MediaInfo::killWGet () {
+void MediaInfo::killWGet () {
     if (job) {
         job->kill (); // quiet, no result signal
         job = nullptr;
@@ -553,7 +553,7 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
     return false;
 }
 
-KDE_NO_EXPORT bool MediaInfo::readChildDoc () {
+bool MediaInfo::readChildDoc () {
     QTextStream textstream (data, QIODevice::ReadOnly);
     QString line;
     NodePtr cur_elm = node;
@@ -666,13 +666,13 @@ void MediaInfo::setMimetype (const QString &mt)
     }
 }
 
-KDE_NO_EXPORT QString MediaInfo::mimetype () {
+QString MediaInfo::mimetype () {
     if (data.size () > 0 && mime.isEmpty ())
         setMimetype (mimeByContent (data));
     return mime;
 }
 
-KDE_NO_EXPORT void MediaInfo::clearData () {
+void MediaInfo::clearData () {
     killWGet ();
     if (media) {
         media->destroy ();
@@ -684,7 +684,7 @@ KDE_NO_EXPORT void MediaInfo::clearData () {
     data.resize (0);
 }
 
-KDE_NO_EXPORT bool MediaInfo::downloading () const {
+bool MediaInfo::downloading () const {
     return !!job;
 }
 
@@ -723,7 +723,7 @@ void MediaInfo::create () {
     }
 }
 
-KDE_NO_EXPORT void MediaInfo::ready () {
+void MediaInfo::ready () {
     if (MediaManager::Data != type) {
         create ();
         if (id_node_record_document == node->id)
@@ -748,7 +748,7 @@ static bool validDataFormat (MediaManager::MediaType type, const QByteArray &ba)
     }
 }
 
-KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
+void MediaInfo::slotResult (KJob *kjob) {
     job = nullptr; // signal KIO::Job::result deletes itself
     if (check_access) {
         check_access = false;
@@ -798,7 +798,7 @@ KDE_NO_EXPORT void MediaInfo::slotResult (KJob *kjob) {
     }
 }
 
-KDE_NO_EXPORT void MediaInfo::cachePreserveRemoved (const QString & str) {
+void MediaInfo::cachePreserveRemoved (const QString & str) {
     if (str == url && !memory_cache->isPreserved (str)) {
         preserve_wait = false;
         disconnect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
@@ -807,7 +807,7 @@ KDE_NO_EXPORT void MediaInfo::cachePreserveRemoved (const QString & str) {
     }
 }
 
-KDE_NO_EXPORT void MediaInfo::slotData (KIO::Job *, const QByteArray &qb) {
+void MediaInfo::slotData (KIO::Job *, const QByteArray &qb) {
     if (qb.size ()) {
         int old_size = data.size ();
         int newsize = old_size + qb.size ();
@@ -824,7 +824,7 @@ KDE_NO_EXPORT void MediaInfo::slotData (KIO::Job *, const QByteArray &qb) {
     }
 }
 
-KDE_NO_EXPORT void MediaInfo::slotMimetype (KIO::Job *, const QString & m) {
+void MediaInfo::slotMimetype (KIO::Job *, const QString & m) {
     Mrl *mrl = node->mrl ();
     mime = m;
     if (mrl)
@@ -1067,7 +1067,7 @@ ImageMedia::~ImageMedia () {
     delete buffer;
 }
 
-KDE_NO_EXPORT bool ImageMedia::play () {
+bool ImageMedia::play () {
     if (!img_movie)
         return false;
     if (img_movie->state () == QMovie::Paused)
@@ -1077,7 +1077,7 @@ KDE_NO_EXPORT bool ImageMedia::play () {
     return true;
 }
 
-KDE_NO_EXPORT void ImageMedia::stop () {
+void ImageMedia::stop () {
     pause ();
 }
 
@@ -1099,7 +1099,7 @@ void ImageMedia::unpause () {
     paused = false;
 }
 
-KDE_NO_EXPORT void ImageMedia::setupImage (const QString &url) {
+void ImageMedia::setupImage (const QString &url) {
     if (isEmpty () && data.size ()) {
         QImage *pix = new QImage;
         if (pix->loadFromData((data))) {
@@ -1133,7 +1133,7 @@ KDE_NO_EXPORT void ImageMedia::setupImage (const QString &url) {
     }
 }
 
-KDE_NO_EXPORT void ImageMedia::render (const ISize &sz) {
+void ImageMedia::render (const ISize &sz) {
     if (svg_renderer && update_render) {
         delete svg_renderer;
         svg_renderer = nullptr;
@@ -1161,13 +1161,13 @@ KDE_NO_EXPORT void ImageMedia::render (const ISize &sz) {
     }
 }
 
-KDE_NO_EXPORT void ImageMedia::updateRender () {
+void ImageMedia::updateRender () {
     update_render = true;
     if (m_node)
         m_node->document()->post(m_node, new Posting (m_node, MsgMediaUpdated));
 }
 
-KDE_NO_EXPORT void ImageMedia::sizes (SSize &size) {
+void ImageMedia::sizes (SSize &size) {
     if (svg_renderer) {
         QSize s = svg_renderer->defaultSize ();
         size.width = s.width ();
@@ -1185,19 +1185,19 @@ bool ImageMedia::isEmpty () const {
     return !cached_img || (!svg_renderer && cached_img->isEmpty ());
 }
 
-KDE_NO_EXPORT void ImageMedia::svgUpdated() {
+void ImageMedia::svgUpdated() {
     cached_img->setImage (nullptr);
     if (m_node)
         m_node->document ()->post (m_node, new Posting (m_node, MsgMediaUpdated));
 }
 
-KDE_NO_EXPORT void ImageMedia::movieResize (const QSize &) {
+void ImageMedia::movieResize (const QSize &) {
     //qCDebug(LOG_KMPLAYER_COMMON) << "movieResize" << endl;
     if (m_node)
         m_node->document ()->post (m_node, new Posting (m_node, MsgMediaUpdated));
 }
 
-KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
+void ImageMedia::movieUpdated (const QRect &) {
     if (frame_nr++) {
         Q_ASSERT (cached_img && isEmpty ());
         QImage *img = new QImage;
@@ -1209,7 +1209,7 @@ KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
     }
 }
 
-KDE_NO_EXPORT void ImageMedia::movieStatus (QMovie::MovieState status) {
+void ImageMedia::movieStatus (QMovie::MovieState status) {
     if (QMovie::NotRunning == status && m_node)
         m_node->document ()->post (m_node, new Posting (m_node, MsgMediaFinished));
 }

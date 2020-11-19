@@ -20,6 +20,7 @@
 #define KMPLAYER_CONTROLPANEL_H
 
 #include "config-kmplayer.h"
+#include "kmplayercommon_export.h"
 
 #include <qwidget.h>
 #include <qmenu.h>
@@ -39,11 +40,12 @@ class View;
 /*
  * A button from the controlpanel
  */
-class KMPLAYER_NO_EXPORT KMPlayerMenuButton : public QPushButton {
+class KMPlayerMenuButton : public QPushButton
+{
     Q_OBJECT
 public:
     KMPlayerMenuButton (QWidget *, QBoxLayout *, const char **, int = 0);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerMenuButton () override {}
+    ~KMPlayerMenuButton () override {}
 signals:
     void mouseEntered ();
 protected:
@@ -53,34 +55,36 @@ protected:
 /*
  * The pop down menu from the controlpanel
  */
-class KMPLAYER_EXPORT KMPlayerPopupMenu : public QMenu {
+class KMPLAYERCOMMON_EXPORT KMPlayerPopupMenu : public QMenu
+{
     Q_OBJECT
 public:
-    KMPlayerPopupMenu(QWidget*, const QString& title) KDE_NO_CDTOR_EXPORT;
-    KDE_NO_CDTOR_EXPORT ~KMPlayerPopupMenu () override {}
+    KMPlayerPopupMenu(QWidget*, const QString& title);
+    ~KMPlayerPopupMenu () override {}
 signals:
     void mouseLeft ();
 protected:
-    void leaveEvent(QEvent*) override KDE_NO_EXPORT;
+    void leaveEvent(QEvent*) override KMPLAYERCOMMON_NO_EXPORT;
 };
 
 /*
  * The volume bar from the controlpanel
  */
-class KMPLAYER_EXPORT VolumeBar : public QWidget {
+class KMPLAYERCOMMON_EXPORT VolumeBar : public QWidget
+{
     Q_OBJECT
 public:
-    VolumeBar(QWidget* parent, View* view) KDE_NO_CDTOR_EXPORT;
-    ~VolumeBar() override KDE_NO_CDTOR_EXPORT;
-    KDE_NO_EXPORT int value () const { return m_value; }
+    VolumeBar(QWidget* parent, View* view);
+    ~VolumeBar() override;
+    KMPLAYERCOMMON_NO_EXPORT int value () const { return m_value; }
     void setValue (int v);
 signals:
     void volumeChanged (int); // 0 - 100
 protected:
-    void wheelEvent(QWheelEvent* e) override KDE_NO_EXPORT;
-    void paintEvent(QPaintEvent*) override KDE_NO_EXPORT;
-    void mousePressEvent(QMouseEvent* e) override KDE_NO_EXPORT;
-    void mouseMoveEvent(QMouseEvent* e) override KDE_NO_EXPORT;
+    void wheelEvent(QWheelEvent* e) override KMPLAYERCOMMON_NO_EXPORT;
+    void paintEvent(QPaintEvent*) override KMPLAYERCOMMON_NO_EXPORT;
+    void mousePressEvent(QMouseEvent* e) override KMPLAYERCOMMON_NO_EXPORT;
+    void mouseMoveEvent(QMouseEvent* e) override KMPLAYERCOMMON_NO_EXPORT;
 private:
     View * m_view;
     int m_value;
@@ -89,7 +93,8 @@ private:
 /*
  * The controlpanel GUI
  */
-class KMPLAYER_EXPORT ControlPanel : public QWidget {
+class KMPLAYERCOMMON_EXPORT ControlPanel : public QWidget
+{
     Q_OBJECT
 public:
     enum Button {
@@ -100,27 +105,27 @@ public:
         button_red, button_green, button_yellow, button_blue,
         button_last
     };
-    ControlPanel(QWidget* parent, View* view) KDE_NO_CDTOR_EXPORT;
-    KDE_NO_CDTOR_EXPORT ~ControlPanel () override {}
+    ControlPanel(QWidget* parent, View* view);
+    ~ControlPanel () override {}
     void showPositionSlider (bool show);
     void enableSeekButtons (bool enable);
     void enableRecordButtons (bool enable);
     void enableFullscreenButton(bool enable);
     void setPlaying (bool play);
-    void setRecording (bool record) KDE_NO_EXPORT;
+    void setRecording (bool record) KMPLAYERCOMMON_NO_EXPORT;
     void setAutoControls (bool b);
-    void setPalette (const QPalette &) KDE_NO_EXPORT;
-    int preferredHeight () KDE_NO_EXPORT;
-    KDE_NO_EXPORT bool autoControls () const { return m_auto_controls; }
-    KDE_NO_EXPORT QSlider * positionSlider () const { return m_posSlider; }
-    KDE_NO_EXPORT QSlider * contrastSlider () const { return m_contrastSlider; }
-    KDE_NO_EXPORT QSlider * brightnessSlider () const { return m_brightnessSlider; }
-    KDE_NO_EXPORT QSlider * hueSlider () const { return m_hueSlider; }
-    KDE_NO_EXPORT QSlider * saturationSlider () const { return m_saturationSlider; }
+    void setPalette (const QPalette &) KMPLAYERCOMMON_NO_EXPORT;
+    int preferredHeight () KMPLAYERCOMMON_NO_EXPORT;
+    KMPLAYERCOMMON_NO_EXPORT bool autoControls () const { return m_auto_controls; }
+    KMPLAYERCOMMON_NO_EXPORT QSlider * positionSlider () const { return m_posSlider; }
+    KMPLAYERCOMMON_NO_EXPORT QSlider * contrastSlider () const { return m_contrastSlider; }
+    KMPLAYERCOMMON_NO_EXPORT QSlider * brightnessSlider () const { return m_brightnessSlider; }
+    KMPLAYERCOMMON_NO_EXPORT QSlider * hueSlider () const { return m_hueSlider; }
+    KMPLAYERCOMMON_NO_EXPORT QSlider * saturationSlider () const { return m_saturationSlider; }
     QPushButton * button (Button b) const { return m_buttons [(int) b]; }
-    KDE_NO_EXPORT QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
-    KDE_NO_EXPORT VolumeBar * volumeBar () const { return m_volume; }
-    KDE_NO_EXPORT View * view () const { return m_view; }
+    KMPLAYERCOMMON_NO_EXPORT QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
+    KMPLAYERCOMMON_NO_EXPORT VolumeBar * volumeBar () const { return m_volume; }
+    KMPLAYERCOMMON_NO_EXPORT View * view () const { return m_view; }
     QAction *playersAction;
     QAction *videoConsoleAction;
     QAction *playlistAction;
@@ -145,19 +150,19 @@ public:
     KMPlayerPopupMenu *audioMenu;
     KMPlayerPopupMenu *subtitleMenu;
 public slots:
-    void setLanguages(const QStringList& al, const QStringList& sl) KDE_NO_EXPORT;
-    void actionToggled(QAction*) KDE_NO_EXPORT;
-    void showPopupMenu() KDE_NO_EXPORT;
-    void showLanguageMenu() KDE_NO_EXPORT;
-    void setPlayingProgress(int position, int length) KDE_NO_EXPORT;
-    void setLoadingProgress(int pos) KDE_NO_EXPORT;
+    void setLanguages(const QStringList& al, const QStringList& sl) KMPLAYERCOMMON_NO_EXPORT;
+    void actionToggled(QAction*) KMPLAYERCOMMON_NO_EXPORT;
+    void showPopupMenu() KMPLAYERCOMMON_NO_EXPORT;
+    void showLanguageMenu() KMPLAYERCOMMON_NO_EXPORT;
+    void setPlayingProgress(int position, int length) KMPLAYERCOMMON_NO_EXPORT;
+    void setLoadingProgress(int pos) KMPLAYERCOMMON_NO_EXPORT;
 protected:
-    void timerEvent(QTimerEvent* e) override KDE_NO_EXPORT;
-    void setupPositionSlider(bool show) KDE_NO_EXPORT;
+    void timerEvent(QTimerEvent* e) override KMPLAYERCOMMON_NO_EXPORT;
+    void setupPositionSlider(bool show) KMPLAYERCOMMON_NO_EXPORT;
 private slots:
-    void buttonMouseEntered() KDE_NO_EXPORT;
-    void buttonClicked() KDE_NO_EXPORT;
-    void menuMouseLeft() KDE_NO_EXPORT;
+    void buttonMouseEntered() KMPLAYERCOMMON_NO_EXPORT;
+    void buttonClicked() KMPLAYERCOMMON_NO_EXPORT;
+    void menuMouseLeft() KMPLAYERCOMMON_NO_EXPORT;
 private:
     enum { progress_loading, progress_playing } m_progress_mode;
     int m_progress_length;

@@ -57,7 +57,8 @@ private:
 /*
  * Document to get first frame for streams starting with a picture
  */
-class KMPLAYER_NO_EXPORT GrabDocument : public KMPlayer::SourceDocument {
+class GrabDocument : public KMPlayer::SourceDocument
+{
 public:
     GrabDocument (KMPlayerPart *part, const QString &url, const QString &file,
             KMPlayer::PlayListNotify *);
@@ -74,11 +75,12 @@ public:
 /*
  * Part notifications to hosting application
  */
-class KMPLAYER_NO_EXPORT KMPlayerBrowserExtension : public KParts::BrowserExtension {
+class KMPlayerBrowserExtension : public KParts::BrowserExtension
+{
     Q_OBJECT
 public:
     KMPlayerBrowserExtension(KMPlayerPart *parent);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerBrowserExtension () override {}
+    ~KMPlayerBrowserExtension () override {}
     void urlChanged (const QString & url);
     void setLoadingProgress (int percentage);
 
@@ -90,7 +92,8 @@ public:
 /*
  * Part javascript support
  */
-class KMPLAYER_NO_EXPORT KMPlayerLiveConnectExtension : public KParts::LiveConnectExtension {
+class KMPlayerLiveConnectExtension : public KParts::LiveConnectExtension
+{
     Q_OBJECT
 public:
     KMPlayerLiveConnectExtension (KMPlayerPart * parent);
@@ -137,7 +140,8 @@ private:
 /*
  * Part that gets created when used a KPart
  */
-class KMPLAYER_NO_EXPORT KMPlayerPart : public KMPlayer::PartBase {
+class KMPlayerPart : public KMPlayer::PartBase
+{
     Q_OBJECT
     friend struct GroupPredicate;
 public:
@@ -155,11 +159,11 @@ public:
 #endif
     ~KMPlayerPart () override;
 
-    KDE_NO_EXPORT KMPlayerBrowserExtension * browserextension() const
+    KMPlayerBrowserExtension * browserextension() const
         { return m_browserextension; }
     KMPlayerLiveConnectExtension * liveconnectextension () const
         { return m_liveconnectextension; }
-    KDE_NO_EXPORT bool hasFeature (int f) { return m_features & f; }
+    bool hasFeature (int f) { return m_features & f; }
     bool allowRedir (const KUrl & url) const;
     void connectToPart (KMPlayerPart *);
     KMPlayerPart * master () const { return m_master; }

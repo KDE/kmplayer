@@ -164,7 +164,7 @@ void ImageData::copyImage (Surface *s, const SSize &sz, cairo_surface_t *similar
             1.0 * (((c)) & 0xff) / 255,       \
             1.0 * (((c) >> 24) & 0xff) / 255)
 
-struct KMPLAYER_NO_EXPORT PaintContext
+struct PaintContext
 {
     PaintContext (const Matrix& m, const IRect& c)
         : matrix (m)
@@ -180,7 +180,8 @@ struct KMPLAYER_NO_EXPORT PaintContext
     ImageData *bg_image;
 };
 
-class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor, public PaintContext {
+class CairoPaintVisitor : public Visitor, public PaintContext
+{
     cairo_surface_t * cairo_surface;
     // stack vars need for transitions
     TransitionModule *cur_transition;
@@ -218,7 +219,6 @@ public:
     void visit (RP::ViewChange *) override;
 };
 
-KDE_NO_CDTOR_EXPORT
 CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
         const IRect & rect, QColor c, bool top)
  : PaintContext (m, rect), cairo_surface (cs), toplevel (top)
@@ -237,7 +237,7 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
     }
 }
 
-KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
+CairoPaintVisitor::~CairoPaintVisitor () {
     /*if (toplevel) {
         cairo_pattern_t * pat = cairo_pop_group (cr);
         //cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
@@ -249,16 +249,16 @@ KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
     cairo_destroy (cr);
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (Node * n) {
+void CairoPaintVisitor::visit (Node * n) {
     qCWarning(LOG_KMPLAYER_COMMON) << "Paint called on " << n->nodeName();
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Smil *s) {
+void CairoPaintVisitor::visit (SMIL::Smil *s) {
     if (s->active () && s->layout_node)
         s->layout_node->accept (this);
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (Node *node, Surface *s) {
+void CairoPaintVisitor::traverseRegion (Node *node, Surface *s) {
     ConnectionList *nl = nodeMessageReceivers (node, MsgSurfaceAttach);
     if (nl) {
         for (Connection *c = nl->first(); c; c = nl->next ())
@@ -282,7 +282,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (Node *node, Surface *s) {
     s->dirty = false;
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout *layout) {
+void CairoPaintVisitor::visit (SMIL::Layout *layout) {
     if (layout->root_layout)
         layout->root_layout->accept (this);
 }
@@ -295,7 +295,7 @@ static void cairoDrawRect (cairo_t *cr, unsigned int color,
     cairo_fill (cr);
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
+void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
     Surface *s = (Surface *) reg->role (RoleDisplay);
     if (s) {
         SRect rect = s->bounds;
@@ -478,7 +478,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RegionBase *reg) {
         cairo_set_source (cr, pat);                             \
     }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
+void CairoPaintVisitor::visit (SMIL::Transition *trans) {
     float perc = trans->start_progress + (trans->end_progress - trans->start_progress)*cur_transition->trans_gain;
     if (cur_transition->trans_out_active)
         perc = 1.0 - perc;
@@ -629,7 +629,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
     }
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::video (Mrl *m, Surface *s) {
+void CairoPaintVisitor::video (Mrl *m, Surface *s) {
     if (m->media_info &&
             m->media_info->media &&
             (MediaManager::Audio == m->media_info->type ||
@@ -649,7 +649,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::video (Mrl *m, Surface *s) {
     }
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
+void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
     Surface *s = ref->surface ();
     if (s && ref->external_tree) {
         updateExternal (ref, s);
@@ -690,7 +690,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
     }
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::paint (TransitionModule *trans,
+void CairoPaintVisitor::paint (TransitionModule *trans,
         MediaOpacity mopacity, Surface *s,
         const IPoint &point, const IRect &rect) {
     cairo_save (cr);
@@ -752,7 +752,6 @@ static Mrl *findActiveMrl (Node *n, bool *rp_or_smil) {
     return nullptr;
 }
 
-KDE_NO_EXPORT
 void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
     bool rp_or_smil = false;
     Mrl *ext_mrl = findActiveMrl (av->external_tree.ptr (), &rp_or_smil);
@@ -840,7 +839,7 @@ static cairo_t *createContext (cairo_surface_t *similar, Surface *s, int w, int 
     return cr;
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
+void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     if (!txt->media_info || !txt->media_info->media)
         return;
     TextMedia *tm = static_cast <TextMedia *> (txt->media_info->media);
@@ -914,7 +913,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     s->dirty = false;
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
+void CairoPaintVisitor::visit (SMIL::Brush * brush) {
     Surface *s = brush->surface ();
     if (s) {
         opacity = 1.0;
@@ -969,7 +968,8 @@ struct SmilTextBlock {
     SmilTextBlock *next;
 };
 
-struct KMPLAYER_NO_EXPORT SmilTextInfo {
+struct SmilTextInfo
+{
     SmilTextInfo (const SmilTextProperties &p) : props (p) {}
 
     void span (float scale);
@@ -978,7 +978,8 @@ struct KMPLAYER_NO_EXPORT SmilTextInfo {
     QString span_text;
 };
 
-class KMPLAYER_NO_EXPORT SmilTextVisitor : public Visitor {
+class SmilTextVisitor : public Visitor
+{
 public:
     SmilTextVisitor (int w, float s, const SmilTextProperties &p)
         : first (nullptr), last (nullptr), width (w), voffset (0),
@@ -1136,7 +1137,7 @@ void SmilTextVisitor::visit (SMIL::TemporalMoment *tm) {
         tm->nextSibling ()->accept (this);
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
+void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
     Surface *s = txt->surface ();
     if (!s)
         return;
@@ -1224,7 +1225,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::SmilText *txt) {
     s->dirty = false;
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
+void CairoPaintVisitor::visit (RP::Imfl * imfl) {
     if (imfl->surface ()) {
         cairo_save (cr);
         Matrix m = matrix;
@@ -1273,7 +1274,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
     }
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
+void CairoPaintVisitor::visit (RP::Fill * fi) {
     CAIRO_SET_SOURCE_RGB (cr, fi->color);
     if ((int)fi->w && (int)fi->h) {
         cairo_rectangle (cr, fi->x, fi->y, fi->w, fi->h);
@@ -1281,7 +1282,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
     }
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
+void CairoPaintVisitor::visit (RP::Fadein * fi) {
     if (fi->target && fi->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (fi->target);
         ImageMedia *im = img && img->media_info
@@ -1319,7 +1320,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
     }
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
+void CairoPaintVisitor::visit (RP::Fadeout * fo) {
     if (fo->progress > 0) {
         CAIRO_SET_SOURCE_RGB (cr, fo->to_color);
         if ((int)fo->w && (int)fo->h) {
@@ -1332,7 +1333,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
     }
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
+void CairoPaintVisitor::visit (RP::Crossfade * cf) {
     if (cf->target && cf->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (cf->target);
         ImageMedia *im = img && img->media_info
@@ -1370,7 +1371,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
     }
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
+void CairoPaintVisitor::visit (RP::Wipe * wipe) {
     if (wipe->target && wipe->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (wipe->target);
         ImageMedia *im = img && img->media_info
@@ -1428,7 +1429,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
     }
 }
 
-KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::ViewChange * vc) {
+void CairoPaintVisitor::visit (RP::ViewChange * vc) {
     if (vc->unfinished () || vc->progress < 100) {
         cairo_pattern_t * pat = cairo_pop_group (cr); // from imfl
         cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
@@ -1461,7 +1462,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::ViewChange * vc) {
 
 namespace KMPlayer {
 
-class KMPLAYER_NO_EXPORT MouseVisitor : public Visitor {
+class MouseVisitor : public Visitor
+{
     ViewArea *view_area;
     Matrix matrix;
     NodePtrW source;
@@ -1474,7 +1476,7 @@ class KMPLAYER_NO_EXPORT MouseVisitor : public Visitor {
     void surfaceEvent (Node *mt, Surface *s);
 public:
     MouseVisitor (ViewArea *v, MessageType evt, Matrix m, int x, int y);
-    KDE_NO_CDTOR_EXPORT ~MouseVisitor () override {}
+    ~MouseVisitor () override {}
     using Visitor::visit;
     void visit (Node * n) override;
     void visit (Element *) override;
@@ -1490,27 +1492,26 @@ public:
 
 } // namespace
 
-KDE_NO_CDTOR_EXPORT
 MouseVisitor::MouseVisitor (ViewArea *v, MessageType evt, Matrix m, int a, int b)
   : view_area (v), matrix (m), event (evt), x (a), y (b),
     handled (false), bubble_up (false) {
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (Node * n) {
+void MouseVisitor::visit (Node * n) {
     qCDebug(LOG_KMPLAYER_COMMON) << "Mouse event ignored for " << n->nodeName ();
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Smil *s) {
+void MouseVisitor::visit (SMIL::Smil *s) {
     if (s->active () && s->layout_node)
         s->layout_node->accept (this);
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {
+void MouseVisitor::visit (SMIL::Layout * layout) {
     if (layout->root_layout)
         layout->root_layout->accept (this);
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::RegionBase *region) {
+void MouseVisitor::visit (SMIL::RegionBase *region) {
     Surface *s = (Surface *) region->role (RoleDisplay);
     if (s) {
         SRect rect = s->bounds;
@@ -1609,14 +1610,14 @@ static void followLink (SMIL::LinkingBase * link) {
     }
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
+void MouseVisitor::visit (SMIL::Anchor * anchor) {
     if (event == MsgEventPointerMoved)
         cursor.setShape (Qt::PointingHandCursor);
     else if (event == MsgEventClicked)
         followLink (anchor);
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
+void MouseVisitor::visit (SMIL::Area * area) {
     NodePtr n = area->parentNode ();
     Surface *s = (Surface *) n->role (RoleDisplay);
     if (s) {
@@ -1654,7 +1655,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
     }
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (Element *elm) {
+void MouseVisitor::visit (Element *elm) {
     Runtime *rt = (Runtime *) elm->role (RoleTiming);
     if (rt) {
         Posting mouse_event (source, event);
@@ -1735,21 +1736,22 @@ void MouseVisitor::surfaceEvent (Node *node, Surface *s) {
     }
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
+void MouseVisitor::visit (SMIL::MediaType *mt) {
     if (mt->sensitivity == SMIL::MediaType::sens_transparent)
         bubble_up = true;
     else
         surfaceEvent (mt, mt->surface ());
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::SmilText *st) {
+void MouseVisitor::visit (SMIL::SmilText *st) {
     surfaceEvent (st, st->surface ());
 }
 
 //-----------------------------------------------------------------------------
 
 namespace KMPlayer {
-class KMPLAYER_NO_EXPORT ViewerAreaPrivate {
+class ViewerAreaPrivate
+{
 public:
     ViewerAreaPrivate (ViewArea *v)
         : m_view_area (v), backing_store (0), gc(0),
@@ -1860,7 +1862,8 @@ public:
     int height;
 };
 
-class KMPLAYER_NO_EXPORT RepaintUpdater {
+class RepaintUpdater
+{
 public:
     RepaintUpdater (Node *n, RepaintUpdater *nx) : node (n), next (nx) {}
 
@@ -1870,7 +1873,7 @@ public:
 
 }
 
-KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view, bool paint_bg)
+ViewArea::ViewArea (QWidget *, View * view, bool paint_bg)
 // : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
  : //QWidget (parent),
    d (new ViewerAreaPrivate (this)),
@@ -1896,11 +1899,11 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view, bool paint_bg)
     QCoreApplication::instance()->installNativeEventFilter(this);
 }
 
-KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
+ViewArea::~ViewArea () {
     delete d;
 }
 
-KDE_NO_EXPORT void ViewArea::stopTimers () {
+void ViewArea::stopTimers () {
     if (m_mouse_invisible_timer) {
         killTimer (m_mouse_invisible_timer);
         m_mouse_invisible_timer = 0;
@@ -1911,7 +1914,7 @@ KDE_NO_EXPORT void ViewArea::stopTimers () {
     }
 }
 
-KDE_NO_EXPORT void ViewArea::fullScreen () {
+void ViewArea::fullScreen () {
     stopTimers ();
     if (m_fullscreen) {
         setVisible(false);
@@ -1957,11 +1960,11 @@ void ViewArea::minimalMode () {
     m_topwindow_rect = topLevelWidget ()->geometry ();
 }
 
-KDE_NO_EXPORT void ViewArea::accelActivated () {
+void ViewArea::accelActivated () {
     m_view->controlPanel()->fullscreenAction->trigger ();
 }
 
-KDE_NO_EXPORT void ViewArea::keyPressEvent (QKeyEvent *e) {
+void ViewArea::keyPressEvent (QKeyEvent *e) {
     if (surface->node) {
         QString txt = e->text ();
         if (!txt.isEmpty ())
@@ -1970,7 +1973,7 @@ KDE_NO_EXPORT void ViewArea::keyPressEvent (QKeyEvent *e) {
     }
 }
 
-KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
+void ViewArea::mousePressEvent (QMouseEvent * e) {
     int devicex = (int)(e->x() * devicePixelRatioF());
     int devicey = (int)(e->y() * devicePixelRatioF());
     if (surface->node) {
@@ -1982,11 +1985,11 @@ KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
     }
 }
 
-KDE_NO_EXPORT void ViewArea::mouseDoubleClickEvent (QMouseEvent *) {
+void ViewArea::mouseDoubleClickEvent (QMouseEvent *) {
     m_view->fullScreen (); // screensaver stuff
 }
 
-KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
+void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     if (e->buttons () == Qt::NoButton)
         m_view->mouseMoved (e->x (), e->y ());
     if (surface->node) {
@@ -2003,7 +2006,7 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     mouseMoved (); // for m_mouse_invisible_timer
 }
 
-KDE_NO_EXPORT void ViewArea::syncVisual () {
+void ViewArea::syncVisual () {
     pixel_device_ratio = devicePixelRatioF();
     int w = (int)(width() * devicePixelRatioF());
     int h = (int)(height() * devicePixelRatioF());
@@ -2082,7 +2085,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
     }
 }
 
-KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
+void ViewArea::paintEvent (QPaintEvent * pe) {
 #ifdef KMPLAYER_WITH_CAIRO
     if (surface->node) {
         int x = (int)(pe->rect().x() * devicePixelRatioF());
@@ -2109,11 +2112,11 @@ QPaintEngine *ViewArea::paintEngine () const {
         return QWidget::paintEngine ();
 }
 
-KDE_NO_EXPORT void ViewArea::scale (int) {
+void ViewArea::scale (int) {
     resizeEvent (nullptr);
 }
 
-KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
+void ViewArea::updateSurfaceBounds () {
     int devicew = (int)(width() * devicePixelRatioF());
     int deviceh = (int)(height() * devicePixelRatioF());
     Single x, y, w = devicew, h = deviceh;
@@ -2141,7 +2144,7 @@ KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
     scheduleRepaint (IRect (0, 0, devicew, deviceh));
 }
 
-KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
+void ViewArea::resizeEvent (QResizeEvent *) {
     if (!m_view->controlPanel ()) return;
     Single x, y, w = width (), h = height ();
     Single hsb = m_view->statusBarHeight ();
@@ -2177,7 +2180,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     }
 }
 
-KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
+Surface *ViewArea::getSurface (Mrl *mrl) {
     surface->clear ();
     surface->node = mrl;
     qCDebug(LOG_KMPLAYER_COMMON) << mrl;
@@ -2202,23 +2205,23 @@ KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
     return nullptr;
 }
 
-KDE_NO_EXPORT void ViewArea::showEvent (QShowEvent *) {
+void ViewArea::showEvent (QShowEvent *) {
     resizeEvent (nullptr);
 }
 
-KDE_NO_EXPORT void ViewArea::dropEvent (QDropEvent * de) {
+void ViewArea::dropEvent (QDropEvent * de) {
     m_view->dropEvent (de);
 }
 
-KDE_NO_EXPORT void ViewArea::dragEnterEvent (QDragEnterEvent* dee) {
+void ViewArea::dragEnterEvent (QDragEnterEvent* dee) {
     m_view->dragEnterEvent (dee);
 }
 
-KDE_NO_EXPORT void ViewArea::contextMenuEvent (QContextMenuEvent * e) {
+void ViewArea::contextMenuEvent (QContextMenuEvent * e) {
     m_view->controlPanel ()->popupMenu->exec (e->globalPos ());
 }
 
-KDE_NO_EXPORT void ViewArea::mouseMoved () {
+void ViewArea::mouseMoved () {
     if (m_fullscreen) {
         if (m_mouse_invisible_timer)
             killTimer (m_mouse_invisible_timer);
@@ -2227,7 +2230,7 @@ KDE_NO_EXPORT void ViewArea::mouseMoved () {
     }
 }
 
-KDE_NO_EXPORT void ViewArea::scheduleRepaint (const IRect &rect) {
+void ViewArea::scheduleRepaint (const IRect &rect) {
     if (m_repaint_timer) {
         m_repaint_rect = m_repaint_rect.unite (rect);
     } else {
@@ -2236,13 +2239,12 @@ KDE_NO_EXPORT void ViewArea::scheduleRepaint (const IRect &rect) {
     }
 }
 
-KDE_NO_EXPORT ConnectionList *ViewArea::updaters () {
+ConnectionList *ViewArea::updaters () {
     if (!m_repaint_timer)
         m_repaint_timer = startTimer (25);
     return &m_updaters;
 }
 
-KDE_NO_EXPORT
 void ViewArea::enableUpdaters (bool enable, unsigned int skip) {
     m_updaters_enabled = enable;
     Connection *connect = m_updaters.first ();
@@ -2260,7 +2262,7 @@ void ViewArea::enableUpdaters (bool enable, unsigned int skip) {
     }
 }
 
-KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
+void ViewArea::timerEvent (QTimerEvent * e) {
     if (e->timerId () == m_mouse_invisible_timer) {
         killTimer (m_mouse_invisible_timer);
         m_mouse_invisible_timer = 0;
@@ -2301,7 +2303,7 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
     }
 }
 
-KDE_NO_EXPORT void ViewArea::closeEvent (QCloseEvent * e) {
+void ViewArea::closeEvent (QCloseEvent * e) {
     //qCDebug(LOG_KMPLAYER_COMMON) << "closeEvent";
     if (m_fullscreen) {
         m_view->fullScreen();
@@ -2449,7 +2451,7 @@ bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, lo
 
 //----------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
+VideoOutput::VideoOutput (QWidget *parent, View * view)
   : QX11EmbedContainer (parent),
     m_plain_window(0), m_client_window(0), resized_timer(0),
     m_bgcolor (0), m_aspect (0.0),
@@ -2471,7 +2473,7 @@ KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
     //setProtocol (QXEmbed::XPLAIN);
 }
 
-KDE_NO_CDTOR_EXPORT VideoOutput::~VideoOutput () {
+VideoOutput::~VideoOutput () {
     qCDebug(LOG_KMPLAYER_COMMON) << "VideoOutput::~VideoOutput" << endl;
     if (m_plain_window) {
         xcb_connection_t* connection = QX11Info::connection();
@@ -2516,7 +2518,7 @@ void VideoOutput::useIndirectWidget (bool inderect) {
     }
 }
 
-KDE_NO_EXPORT void VideoOutput::embedded(WindowId handle) {
+void VideoOutput::embedded(WindowId handle) {
     qCDebug(LOG_KMPLAYER_COMMON) << "[01;35mwindowChanged[00m " << (int)clientWinId ();
     m_client_window = handle;
     if (clientWinId () && !resized_timer)
@@ -2525,12 +2527,12 @@ KDE_NO_EXPORT void VideoOutput::embedded(WindowId handle) {
         setXSelectInput (clientWinId (), m_input_mask);
 }
 
-KDE_NO_EXPORT void VideoOutput::resizeEvent (QResizeEvent *) {
+void VideoOutput::resizeEvent (QResizeEvent *) {
     if (clientWinId () && !resized_timer)
          resized_timer = startTimer (50);
 }
 
-KDE_NO_EXPORT void VideoOutput::timerEvent (QTimerEvent *e) {
+void VideoOutput::timerEvent (QTimerEvent *e) {
     if (e->timerId () == resized_timer) {
         killTimer (resized_timer);
         resized_timer = 0;
@@ -2594,15 +2596,15 @@ void VideoOutput::setAspect (float a) {
     m_view->viewArea()->scheduleRepaint(IRect(x, y, w, h));
 }
 
-KDE_NO_EXPORT void VideoOutput::map () {
+void VideoOutput::map () {
     setVisible (true);
 }
 
-KDE_NO_EXPORT void VideoOutput::unmap () {
+void VideoOutput::unmap () {
     setVisible (false);
 }
 
-KDE_NO_EXPORT void VideoOutput::setMonitoring (Monitor m) {
+void VideoOutput::setMonitoring (Monitor m) {
     m_input_mask =
         //KeyPressMask | KeyReleaseMask |
         //EnterWindowMask | LeaveWindowMask |
@@ -2618,7 +2620,7 @@ KDE_NO_EXPORT void VideoOutput::setMonitoring (Monitor m) {
         setXSelectInput (clientWinId (), m_input_mask);
 }
 
-KDE_NO_EXPORT void VideoOutput::fullScreenChanged () {
+void VideoOutput::fullScreenChanged () {
     if (!(m_input_mask & XCB_EVENT_MASK_KEY_PRESS)) { // FIXME: store monitor when needed
         if (m_view->isFullScreen ())
             m_input_mask |= XCB_EVENT_MASK_POINTER_MOTION;
@@ -2629,36 +2631,36 @@ KDE_NO_EXPORT void VideoOutput::fullScreenChanged () {
         setXSelectInput (clientWinId (), m_input_mask);
 }
 
-KDE_NO_EXPORT int VideoOutput::heightForWidth (int w) const {
+int VideoOutput::heightForWidth (int w) const {
     if (m_aspect <= 0.01)
         return 0;
     return int (w/m_aspect);
 }
 
-KDE_NO_EXPORT void VideoOutput::dropEvent (QDropEvent * de) {
+void VideoOutput::dropEvent (QDropEvent * de) {
     m_view->dropEvent (de);
 }
 
-KDE_NO_EXPORT void VideoOutput::dragEnterEvent (QDragEnterEvent* dee) {
+void VideoOutput::dragEnterEvent (QDragEnterEvent* dee) {
     m_view->dragEnterEvent (dee);
 }
 
-KDE_NO_EXPORT void VideoOutput::contextMenuEvent (QContextMenuEvent * e) {
+void VideoOutput::contextMenuEvent (QContextMenuEvent * e) {
     m_view->controlPanel ()->popupMenu->exec (e->globalPos ());
 }
 
-KDE_NO_EXPORT void VideoOutput::setBackgroundColor (const QColor & c) {
+void VideoOutput::setBackgroundColor (const QColor & c) {
     if (m_bgcolor != c.rgb ()) {
         m_bgcolor = c.rgb ();
         setCurrentBackgroundColor (c);
     }
 }
 
-KDE_NO_EXPORT void VideoOutput::resetBackgroundColor () {
+void VideoOutput::resetBackgroundColor () {
     setCurrentBackgroundColor (m_bgcolor);
 }
 
-KDE_NO_EXPORT void VideoOutput::setCurrentBackgroundColor (const QColor & c) {
+void VideoOutput::setCurrentBackgroundColor (const QColor & c) {
     QPalette palette;
     palette.setColor (backgroundRole(), c);
     setPalette (palette);

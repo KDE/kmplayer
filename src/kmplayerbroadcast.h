@@ -43,12 +43,13 @@ namespace KMPlayer {
     class FFMpeg;
 }
 
-class KMPLAYER_NO_EXPORT FFServerSetting {
+class FFServerSetting
+{
 public:
-    KDE_NO_CDTOR_EXPORT FFServerSetting () {}
+    FFServerSetting () {}
     FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h);
-    KDE_NO_CDTOR_EXPORT FFServerSetting (const QStringList & sl) { *this = sl; }
-    KDE_NO_CDTOR_EXPORT ~FFServerSetting () {}
+    FFServerSetting (const QStringList & sl) { *this = sl; }
+    ~FFServerSetting () {}
     int index;
     QString name;
     QString format;
@@ -72,11 +73,12 @@ public:
 typedef std::vector <FFServerSetting *> FFServerSettingList;
 
 
-class KMPLAYER_NO_EXPORT KMPlayerPrefBroadcastPage : public QFrame {
+class KMPlayerPrefBroadcastPage : public QFrame
+{
     Q_OBJECT
 public:
     KMPlayerPrefBroadcastPage (QWidget * parent);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefBroadcastPage () {}
+    ~KMPlayerPrefBroadcastPage () {}
 
     QLineEdit * bindaddress;
     QLineEdit * port;
@@ -86,11 +88,12 @@ public:
     QLineEdit * feedfilesize;
 };
 
-class KMPLAYER_NO_EXPORT KMPlayerPrefBroadcastFormatPage : public QFrame {
+class KMPlayerPrefBroadcastFormatPage : public QFrame
+{
     Q_OBJECT
 public:
     KMPlayerPrefBroadcastFormatPage (QWidget * parent, FFServerSettingList &);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefBroadcastFormatPage () {}
+    ~KMPlayerPrefBroadcastFormatPage () {}
 
     QListBox * profilelist;
     QComboBox * format;
@@ -129,10 +132,11 @@ private:
 /*
  * Preference page for ffmpeg commandline arguments
  */
-class KMPLAYER_NO_EXPORT KMPlayerFFServerConfig : public KMPlayer::PreferencesPage {
+class KMPlayerFFServerConfig : public KMPlayer::PreferencesPage
+{
 public:
     KMPlayerFFServerConfig ();
-    KDE_NO_CDTOR_EXPORT ~KMPlayerFFServerConfig () {}
+    ~KMPlayerFFServerConfig () {}
     virtual void write (KConfig *);
     virtual void read (KConfig *);
     virtual void sync (bool fromUI);
@@ -151,11 +155,12 @@ private:
 /*
  * Preference page for ffserver
  */
-class KMPLAYER_NO_EXPORT KMPlayerBroadcastConfig : public QObject, public KMPlayer::PreferencesPage {
+class KMPlayerBroadcastConfig : public QObject, public KMPlayer::PreferencesPage
+{
     Q_OBJECT
 public:
     KMPlayerBroadcastConfig (KMPlayer::PartBase * player, KMPlayerFFServerConfig * fsc);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerBroadcastConfig ();
+    ~KMPlayerBroadcastConfig ();
 
     virtual void write (KConfig *);
     virtual void read (KConfig *);
@@ -165,7 +170,7 @@ public:
 
     bool broadcasting () const;
     void stopServer ();
-    KDE_NO_EXPORT const QString & serverURL () const { return m_ffserver_url; }
+    const QString & serverURL () const { return m_ffserver_url; }
 
     FFServerSetting ffserversettings;
     FFServerSettingList ffserversettingprofiles;

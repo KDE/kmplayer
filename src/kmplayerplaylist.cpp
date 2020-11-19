@@ -37,7 +37,7 @@
 #include <kurl.h>
 
 #ifdef SHAREDPTR_DEBUG
-KMPLAYER_EXPORT int shared_data_count;
+KMPLAYERCOMMON_EXPORT int shared_data_count;
 #endif
 
 using namespace KMPlayer;
@@ -172,7 +172,7 @@ void ConnectionList::clear () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TimerPosting::TimerPosting (int ms, unsigned eid)
+TimerPosting::TimerPosting (int ms, unsigned eid)
  : Posting (nullptr, MsgEventTimer),
    event_id (eid),
    milli_sec (ms),
@@ -241,7 +241,7 @@ void Matrix::translate (Single x, Single y) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d, short _id)
+Node::Node (NodePtr & d, short _id)
  : m_doc (d), state (state_init), id (_id),
    auxiliary_node (false), open (false) {}
 
@@ -384,7 +384,7 @@ void TreeNode<Node>::removeChild (NodePtr c) {
     removeChildImpl (c);
 }
 
-KDE_NO_EXPORT void Node::replaceChild (NodePtr _new, NodePtr old) {
+void Node::replaceChild (NodePtr _new, NodePtr old) {
     document()->m_tree_version++;
     if (old->m_prev) {
         old->m_prev->m_next = _new;
@@ -410,7 +410,7 @@ Node *Node::childFromTag (const QString &) {
     return nullptr;
 }
 
-KDE_NO_EXPORT void Node::characterData (const QString & s) {
+void Node::characterData (const QString & s) {
     document()->m_tree_version++;
     if (!m_last_child || m_last_child->id != id_node_text)
         appendChild (new TextNode (m_doc, s));
@@ -532,7 +532,7 @@ void *Node::role (RoleType msg, void *) {
     return nullptr;
 }
 
-KDE_NO_EXPORT void Node::deliver (MessageType msg, void *content) {
+void Node::deliver (MessageType msg, void *content) {
     ConnectionList *nl = nodeMessageReceivers (this, msg);
     if (nl)
         for (Connection *c = nl->first(); c; c = nl->next ())
@@ -551,7 +551,7 @@ QString Node::nodeValue () const {
 //-----------------------------------------------------------------------------
 
 namespace {
-    struct KMPLAYER_NO_EXPORT ParamValue {
+    struct ParamValue {
         QString val;
         QStringList  * modifications;
         ParamValue (const QString & v) : val (v), modifications (nullptr) {}
@@ -563,7 +563,8 @@ namespace {
 }
 
 namespace KMPlayer {
-    class KMPLAYER_NO_EXPORT ElementPrivate {
+    class ElementPrivate
+    {
     public:
         ~ElementPrivate ();
         ParamMap params;
@@ -576,11 +577,11 @@ QString ParamValue::value() {
         ? modifications->back () : val;
 }
 
-KDE_NO_CDTOR_EXPORT ElementPrivate::~ElementPrivate () {
+ElementPrivate::~ElementPrivate () {
     clear ();
 }
 
-KDE_NO_EXPORT void ElementPrivate::clear () {
+void ElementPrivate::clear () {
     const ParamMap::iterator e = params.end ();
     for (ParamMap::iterator i = params.begin (); i != e; ++i)
         delete i.value ();
@@ -1035,7 +1036,7 @@ static inline void addTime (struct timeval & tv, int ms) {
     tv.tv_usec = (tv.tv_usec + ms*1000) % 1000000;
 }
 
-KDE_NO_CDTOR_EXPORT UpdateEvent::UpdateEvent (Document *doc, unsigned int skip)
+UpdateEvent::UpdateEvent (Document *doc, unsigned int skip)
  : skipped_time (skip) {
     struct timeval tv;
     doc->timeOfDay (tv);
@@ -1309,7 +1310,7 @@ void *Document::role (RoleType msg, void *content) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TextNode::TextNode (NodePtr & d, const QString & s, short i)
+TextNode::TextNode (NodePtr & d, const QString & s, short i)
  : Node (d, i), text (s) {}
 
 void TextNode::appendText (const QString & s) {
@@ -1322,7 +1323,7 @@ QString TextNode::nodeValue () const {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT CData::CData (NodePtr & d, const QString & s)
+CData::CData (NodePtr & d, const QString & s)
  : TextNode (d, s, id_node_cdata) {}
 
 //-----------------------------------------------------------------------------
@@ -1345,7 +1346,7 @@ GenericURL::GenericURL (NodePtr & d, const QString & s, const QString & name)
     title = name;
 }
 
-KDE_NO_EXPORT void GenericURL::closed () {
+void GenericURL::closed () {
     if (src.isEmpty ())
         src = getAttribute (Ids::attr_src);
     Mrl::closed ();
@@ -1409,13 +1410,14 @@ void CacheAllocator::dealloc (void *p) {
         free (p);
 }
 
-KMPLAYER_EXPORT CacheAllocator *KMPlayer::shared_data_cache_allocator = nullptr;
+KMPLAYERCOMMON_EXPORT CacheAllocator *KMPlayer::shared_data_cache_allocator = nullptr;
 
 //-----------------------------------------------------------------------------
 
 namespace KMPlayer {
 
-class KMPLAYER_NO_EXPORT DocumentBuilder {
+class DocumentBuilder
+{
     int m_ignore_depth;
     bool m_set_opener;
     bool m_root_is_first;
@@ -1588,7 +1590,6 @@ static void cdataEnd (void *data) {
     builder->cdataEnd ();
 }
 
-KMPLAYER_EXPORT
 void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
     bool ok = true;
     DocumentBuilder builder (root, set_opener);
@@ -1622,7 +1623,8 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
 
 namespace {
 
-class KMPLAYER_NO_EXPORT SimpleSAXParser {
+class SimpleSAXParser
+{
     enum Token { tok_empty, tok_text, tok_white_space, tok_angle_open,
         tok_equal, tok_double_quote, tok_single_quote, tok_angle_close,
         tok_slash, tok_exclamation, tok_amp, tok_hash, tok_colon,
@@ -1692,7 +1694,6 @@ inline void SimpleSAXParser::TokenInfo::operator delete (void *p) {
     token_pool.dealloc (p);
 }
 
-KMPLAYER_EXPORT
 void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
     DocumentBuilder builder (root, set_opener);
     root->opened ();

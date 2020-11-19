@@ -29,17 +29,17 @@
 using namespace KMPlayer;
 
 
-KDE_NO_CDTOR_EXPORT RP::Imfl::Imfl (NodePtr & d)
+RP::Imfl::Imfl (NodePtr & d)
   : Mrl (d, id_node_imfl),
     fit (fit_hidden),
     duration (0),
     duration_timer (nullptr),
     needs_scene_img (0) {}
 
-KDE_NO_CDTOR_EXPORT RP::Imfl::~Imfl () {
+RP::Imfl::~Imfl () {
 }
 
-KDE_NO_EXPORT void RP::Imfl::closed () {
+void RP::Imfl::closed () {
     for (Node *n = firstChild (); n; n = n->nextSibling ())
         if (RP::id_node_head == n->id) {
             Attribute *a = static_cast <Element *> (n)->attributes ().first ();
@@ -58,7 +58,7 @@ KDE_NO_EXPORT void RP::Imfl::closed () {
     Mrl::closed ();
 }
 
-KDE_NO_EXPORT void RP::Imfl::defer () {
+void RP::Imfl::defer () {
     qCDebug(LOG_KMPLAYER_COMMON) << "RP::Imfl::defer ";
     setState (state_deferred);
     for (Node *n = firstChild (); n; n = n->nextSibling ())
@@ -66,7 +66,7 @@ KDE_NO_EXPORT void RP::Imfl::defer () {
             n->activate ();
 }
 
-KDE_NO_EXPORT void RP::Imfl::activate () {
+void RP::Imfl::activate () {
     qCDebug(LOG_KMPLAYER_COMMON) << "RP::Imfl::activate ";
     resolved = true;
     setState (state_activated);
@@ -94,7 +94,7 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
         finish ();
 }
 
-KDE_NO_EXPORT void RP::Imfl::finish () {
+void RP::Imfl::finish () {
     qCDebug(LOG_KMPLAYER_COMMON) << "RP::Imfl::finish ";
     Mrl::finish ();
     if (duration_timer) {
@@ -106,7 +106,7 @@ KDE_NO_EXPORT void RP::Imfl::finish () {
             n->finish ();
 }
 
-KDE_NO_EXPORT void RP::Imfl::deactivate () {
+void RP::Imfl::deactivate () {
     qCDebug(LOG_KMPLAYER_COMMON) << "RP::Imfl::deactivate ";
     if (unfinished ())
         finish ();
@@ -123,7 +123,7 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     rp_surface = (Surface *) role (RoleChildDisplay, nullptr);
 }
 
-KDE_NO_EXPORT void RP::Imfl::message (MessageType msg, void *content) {
+void RP::Imfl::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgEventTimer:
             duration_timer = nullptr;
@@ -150,11 +150,11 @@ KDE_NO_EXPORT void RP::Imfl::message (MessageType msg, void *content) {
     Mrl::message (msg, content);
 }
 
-KDE_NO_EXPORT void RP::Imfl::accept (Visitor * v) {
+void RP::Imfl::accept (Visitor * v) {
     v->visit (this);
 }
 
-KDE_NO_EXPORT Surface *RP::Imfl::surface () {
+Surface *RP::Imfl::surface () {
     if (!rp_surface) {
         rp_surface = (Surface *) Mrl::role (RoleChildDisplay, this);
         if (rp_surface && size.isEmpty ())
@@ -163,7 +163,7 @@ KDE_NO_EXPORT Surface *RP::Imfl::surface () {
     return rp_surface.ptr ();
 }
 
-KDE_NO_EXPORT Node *RP::Imfl::childFromTag (const QString & tag) {
+Node *RP::Imfl::childFromTag (const QString & tag) {
     QByteArray ba = tag.toLatin1 ();
     const char *ctag = ba.constData ();
     if (!strcmp (ctag, "head"))
@@ -185,7 +185,7 @@ KDE_NO_EXPORT Node *RP::Imfl::childFromTag (const QString & tag) {
     return nullptr;
 }
 
-KDE_NO_EXPORT void RP::Imfl::repaint () {
+void RP::Imfl::repaint () {
     if (!active ()) {
         qCWarning(LOG_KMPLAYER_COMMON) << "Spurious Imfl repaint";
     } else if (surface () && !size.isEmpty ()) {
@@ -194,20 +194,20 @@ KDE_NO_EXPORT void RP::Imfl::repaint () {
     }
 }
 
-KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)
+RP::Image::Image (NodePtr & doc)
  : Mrl (doc, id_node_image) {
     view_mode = WindowMode;
 }
 
-KDE_NO_CDTOR_EXPORT RP::Image::~Image () {
+RP::Image::~Image () {
 }
 
-KDE_NO_EXPORT void RP::Image::closed () {
+void RP::Image::closed () {
     src = getAttribute (Ids::attr_name);
     Mrl::closed ();
 }
 
-KDE_NO_EXPORT void RP::Image::activate () {
+void RP::Image::activate () {
     qCDebug(LOG_KMPLAYER_COMMON) << "RP::Image::activate";
     setState (state_activated);
     isPlayable (); // update src attribute
@@ -216,11 +216,11 @@ KDE_NO_EXPORT void RP::Image::activate () {
     media_info->wget (absolutePath ());
 }
 
-KDE_NO_EXPORT void RP::Image::begin () {
+void RP::Image::begin () {
     Node::begin ();
 }
 
-KDE_NO_EXPORT void RP::Image::deactivate () {
+void RP::Image::deactivate () {
     if (img_surface) {
         img_surface->remove ();
         img_surface = nullptr;
@@ -231,7 +231,7 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
     media_info = nullptr;
 }
 
-KDE_NO_EXPORT void RP::Image::message (MessageType msg, void *content) {
+void RP::Image::message (MessageType msg, void *content) {
     if (msg == MsgMediaReady) {
         if (media_info)
             dataArrived ();
@@ -240,7 +240,7 @@ KDE_NO_EXPORT void RP::Image::message (MessageType msg, void *content) {
     }
 }
 
-KDE_NO_EXPORT void RP::Image::dataArrived () {
+void RP::Image::dataArrived () {
     qCDebug(LOG_KMPLAYER_COMMON) << "RP::Image::remoteReady";
     ImageMedia *im = media_info->media ? (ImageMedia *)media_info->media : nullptr;
     if (im && !im->isEmpty ()) {
@@ -250,13 +250,13 @@ KDE_NO_EXPORT void RP::Image::dataArrived () {
     postpone_lock = nullptr;
 }
 
-KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
+bool RP::Image::isReady (bool postpone_if_not) {
     if (media_info->downloading () && postpone_if_not)
         postpone_lock = document ()->postpone ();
     return !media_info->downloading ();
 }
 
-KDE_NO_EXPORT Surface *RP::Image::surface () {
+Surface *RP::Image::surface () {
     ImageMedia *im = media_info && media_info->media
         ? (ImageMedia *)media_info->media : nullptr;
     if (im && !img_surface && !im->isEmpty ()) {
@@ -271,11 +271,11 @@ KDE_NO_EXPORT Surface *RP::Image::surface () {
     return img_surface;
 }
 
-KDE_NO_CDTOR_EXPORT RP::TimingsBase::TimingsBase (NodePtr & d, const short i)
+RP::TimingsBase::TimingsBase (NodePtr & d, const short i)
  : Element (d, i), x (0), y (0), w (0), h (0), start (0), duration (0),
    start_timer (nullptr), duration_timer (nullptr), update_timer (nullptr) {}
 
-KDE_NO_EXPORT void RP::TimingsBase::activate () {
+void RP::TimingsBase::activate () {
     setState (state_activated);
     x = y = w = h = 0;
     srcx = srcy = srcw = srch = 0;
@@ -314,7 +314,7 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
     start_timer = document ()->post (this, new TimerPosting (start *10));
 }
 
-KDE_NO_EXPORT void RP::TimingsBase::deactivate () {
+void RP::TimingsBase::deactivate () {
     if (unfinished ())
         finish ();
     else
@@ -322,7 +322,7 @@ KDE_NO_EXPORT void RP::TimingsBase::deactivate () {
     setState (state_deactivated);
 }
 
-KDE_NO_EXPORT void RP::TimingsBase::message (MessageType msg, void *content) {
+void RP::TimingsBase::message (MessageType msg, void *content) {
     switch (msg) {
         case MsgEventTimer: {
             TimerPosting *te = static_cast <TimerPosting *> (content);
@@ -354,7 +354,7 @@ KDE_NO_EXPORT void RP::TimingsBase::message (MessageType msg, void *content) {
     }
 }
 
-KDE_NO_EXPORT void RP::TimingsBase::begin () {
+void RP::TimingsBase::begin () {
     progress = 0;
     setState (state_began);
     if (target)
@@ -366,21 +366,21 @@ KDE_NO_EXPORT void RP::TimingsBase::begin () {
     }
 }
 
-KDE_NO_EXPORT void RP::TimingsBase::update (int percentage) {
+void RP::TimingsBase::update (int percentage) {
     progress = percentage;
     Node *p = parentNode ();
     if (p->id == RP::id_node_imfl)
         static_cast <RP::Imfl *> (p)->repaint ();
 }
 
-KDE_NO_EXPORT void RP::TimingsBase::finish () {
+void RP::TimingsBase::finish () {
     progress = 100;
     cancelTimers ();
     document_postponed.disconnect ();
     Element::finish ();
 }
 
-KDE_NO_EXPORT void RP::TimingsBase::cancelTimers () {
+void RP::TimingsBase::cancelTimers () {
     if (start_timer) {
         document ()->cancelPosting (start_timer);
         start_timer = nullptr;
@@ -394,11 +394,11 @@ KDE_NO_EXPORT void RP::TimingsBase::cancelTimers () {
     }
 }
 
-KDE_NO_EXPORT void RP::Crossfade::activate () {
+void RP::Crossfade::activate () {
     TimingsBase::activate ();
 }
 
-KDE_NO_EXPORT void RP::Crossfade::begin () {
+void RP::Crossfade::begin () {
     //qCDebug(LOG_KMPLAYER_COMMON) << "RP::Crossfade::begin";
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
@@ -410,17 +410,17 @@ KDE_NO_EXPORT void RP::Crossfade::begin () {
     }
 }
 
-KDE_NO_EXPORT void RP::Crossfade::accept (Visitor * v) {
+void RP::Crossfade::accept (Visitor * v) {
     v->visit (this);
 }
 
-KDE_NO_EXPORT void RP::Fadein::activate () {
+void RP::Fadein::activate () {
     // pickup color from Fill that should be declared before this node
     from_color = 0;
     TimingsBase::activate ();
 }
 
-KDE_NO_EXPORT void RP::Fadein::begin () {
+void RP::Fadein::begin () {
     //qCDebug(LOG_KMPLAYER_COMMON) << "RP::Fadein::begin";
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
@@ -432,39 +432,39 @@ KDE_NO_EXPORT void RP::Fadein::begin () {
     }
 }
 
-KDE_NO_EXPORT void RP::Fadein::accept (Visitor * v) {
+void RP::Fadein::accept (Visitor * v) {
     v->visit (this);
 }
 
-KDE_NO_EXPORT void RP::Fadeout::activate () {
+void RP::Fadeout::activate () {
     to_color = QColor (getAttribute ("color")).rgb ();
     TimingsBase::activate ();
 }
 
-KDE_NO_EXPORT void RP::Fadeout::begin () {
+void RP::Fadeout::begin () {
     //qCDebug(LOG_KMPLAYER_COMMON) << "RP::Fadeout::begin";
     TimingsBase::begin ();
 }
 
-KDE_NO_EXPORT void RP::Fadeout::accept (Visitor * v) {
+void RP::Fadeout::accept (Visitor * v) {
     v->visit (this);
 }
 
-KDE_NO_EXPORT void RP::Fill::activate () {
+void RP::Fill::activate () {
     color = QColor (getAttribute ("color")).rgb ();
     TimingsBase::activate ();
 }
 
-KDE_NO_EXPORT void RP::Fill::begin () {
+void RP::Fill::begin () {
     setState (state_began);
     update (0);
 }
 
-KDE_NO_EXPORT void RP::Fill::accept (Visitor * v) {
+void RP::Fill::accept (Visitor * v) {
     v->visit (this);
 }
 
-KDE_NO_EXPORT void RP::Wipe::activate () {
+void RP::Wipe::activate () {
     //TODO implement 'type="push"'
     QString dir = getAttribute ("direction").toLower ();
     direction = dir_right;
@@ -477,7 +477,7 @@ KDE_NO_EXPORT void RP::Wipe::activate () {
     TimingsBase::activate ();
 }
 
-KDE_NO_EXPORT void RP::Wipe::begin () {
+void RP::Wipe::begin () {
     //qCDebug(LOG_KMPLAYER_COMMON) << "RP::Wipe::begin";
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
@@ -489,15 +489,15 @@ KDE_NO_EXPORT void RP::Wipe::begin () {
     }
 }
 
-KDE_NO_EXPORT void RP::Wipe::accept (Visitor * v) {
+void RP::Wipe::accept (Visitor * v) {
     v->visit (this);
 }
 
-KDE_NO_EXPORT void RP::ViewChange::activate () {
+void RP::ViewChange::activate () {
     TimingsBase::activate ();
 }
 
-KDE_NO_EXPORT void RP::ViewChange::begin () {
+void RP::ViewChange::begin () {
     qCDebug(LOG_KMPLAYER_COMMON) << "RP::ViewChange::begin";
     setState (state_began);
     Node *p = parentNode ();
@@ -506,13 +506,13 @@ KDE_NO_EXPORT void RP::ViewChange::begin () {
     update (0);
 }
 
-KDE_NO_EXPORT void RP::ViewChange::finish () {
+void RP::ViewChange::finish () {
     Node *p = parentNode ();
     if (p && p->id == RP::id_node_imfl)
         static_cast <RP::Imfl *> (p)->needs_scene_img--;
     TimingsBase::finish ();
 }
 
-KDE_NO_EXPORT void RP::ViewChange::accept (Visitor * v) {
+void RP::ViewChange::accept (Visitor * v) {
     v->visit (this);
 }

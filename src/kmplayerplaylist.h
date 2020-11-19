@@ -28,7 +28,7 @@
 
 #include <qstring.h>
 
-#include "kmplayer_def.h"
+#include "kmplayercommon_export.h"
 #include "kmplayertypes.h"
 #include "kmplayershared.h"
 
@@ -40,7 +40,7 @@ class QUrl;
 namespace KMPlayer {
 
 class Document;
-class KMPLAYER_EXPORT Node;
+class KMPLAYERCOMMON_EXPORT Node;
 class TextNode;
 class Posting;
 class Mrl;
@@ -48,7 +48,8 @@ class ElementPrivate;
 class Visitor;
 class MediaInfo;
 
-template <class T> class KMPLAYER_EXPORT GlobalShared {
+template <class T> class KMPLAYERCOMMON_EXPORT GlobalShared
+{
     T **global;
     int refcount;
 public:
@@ -77,7 +78,8 @@ template <class T> inline void GlobalShared<T>::unref() {
  * \sa: self()
  */
 template <class T>
-class KMPLAYER_EXPORT Item {
+class KMPLAYERCOMMON_EXPORT Item
+{
     friend class SharedPtr<T>;
     friend class WeakPtr<T>;
 public:
@@ -138,7 +140,8 @@ private:
  * A double linked list of ListNodeBase<T> nodes
  */
 template <class T>
-class KMPLAYER_EXPORT List {
+class KMPLAYERCOMMON_EXPORT List
+{
 public:
     List () {}
     List (typename Item<T>::SharedType f, typename Item<T>::SharedType l)
@@ -165,7 +168,8 @@ protected:
  * The linkage is a shared nextSibling and a weak previousSibling.
  */
 template <class T>
-class KMPLAYER_EXPORT ListNodeBase : public Item <T> {
+class KMPLAYERCOMMON_EXPORT ListNodeBase : public Item <T>
+{
     friend class List<T>;
 public:
     T* nextSibling () const { return m_next.ptr (); }
@@ -191,7 +195,8 @@ public:
  * The linkage is a shared firstChild and weak parentNode.
  */
 template <class T>
-class KMPLAYER_EXPORT TreeNode : public ListNodeBase <T> {
+class KMPLAYERCOMMON_EXPORT TreeNode : public ListNodeBase <T>
+{
 public:
     void insertBefore (T *c, T *b);
     void appendChild (T *c);
@@ -215,11 +220,12 @@ protected:
 /**
  * Attribute having a name/value pair for use with Elements
  */
-class KMPLAYER_EXPORT Attribute : public ListNodeBase <Attribute> {
+class KMPLAYERCOMMON_EXPORT Attribute : public ListNodeBase <Attribute>
+{
 public:
-    KDE_NO_CDTOR_EXPORT Attribute () {}
+    Attribute () {}
     Attribute (const TrieString &ns, const TrieString &n, const QString &v);
-    KDE_NO_CDTOR_EXPORT ~Attribute () {}
+    ~Attribute () {}
     TrieString ns () const { return m_namespace; }
     TrieString name () const { return m_name; }
     QString value () const { return m_value; }
@@ -381,7 +387,7 @@ public:
     Connection *link_next;
 public:
     ConnectionList ();
-    ~ConnectionList () KMPLAYER_EXPORT;
+    ~ConnectionList () KMPLAYERCOMMON_EXPORT;
 
     Connection *first () {
         link_next = link_first ? link_first->next : nullptr;
@@ -419,7 +425,8 @@ QTextStream & operator << (QTextStream &out, const XMLStringlet &txt);
  |-->state_activated<-->state_began<-->state_finished-->state_deactivated-->|
   In scope            begin event    end event         Out scope
  */
-class KMPLAYER_EXPORT Node : public TreeNode <Node> {
+class KMPLAYERCOMMON_EXPORT Node : public TreeNode <Node>
+{
     friend class DocumentBuilder;
 public:
     enum State {
@@ -435,7 +442,7 @@ public:
     Document * document ();
     virtual Mrl * mrl ();
     virtual Node *childFromTag (const QString & tag);
-    void characterData(const QString& s) KDE_NO_EXPORT;
+    void characterData(const QString& s) KMPLAYERCOMMON_NO_EXPORT;
     QString innerText () const;
     QString innerXML () const;
     QString outerXML () const;
@@ -466,7 +473,7 @@ public:
     /*
      * Dispatch Event to all connectors of MessageType
      */
-    void deliver(MessageType msg, void *content) KDE_NO_EXPORT;
+    void deliver(MessageType msg, void *content) KMPLAYERCOMMON_NO_EXPORT;
     /**
      * Alternative to event handling is the Visitor pattern
      */
@@ -516,14 +523,14 @@ public:
     virtual void reset ();
     virtual void clear ();
     void clearChildren ();
-    void replaceChild(NodePtr _new, NodePtr old) KDE_NO_EXPORT;
+    void replaceChild(NodePtr _new, NodePtr old) KMPLAYERCOMMON_NO_EXPORT;
     /*
      * Get rid of whitespace only text nodes
      */
     void normalize ();
-    KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
+    KMPLAYERCOMMON_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
 
-    NodeList childNodes() const KDE_NO_EXPORT;
+    NodeList childNodes() const KMPLAYERCOMMON_NO_EXPORT;
     void setState (State nstate);
     /*
      * Open tag is found by parser, attributes are set
@@ -534,7 +541,7 @@ public:
      */
     virtual void closed ();
 protected:
-    Node(NodePtr& d, short _id=0) KDE_NO_CDTOR_EXPORT;
+    Node(NodePtr& d, short _id=0);
     NodePtr m_doc;
 public:
     State state;
@@ -562,14 +569,15 @@ const short id_node_svg = 31;
 /*
  * Element node, XML node that can have attributes
  */
-class KMPLAYER_EXPORT Element : public Node {
+class KMPLAYERCOMMON_EXPORT Element : public Node
+{
 public:
     ~Element () override;
     void setAttributes (const AttributeList &attrs);
     void setAttribute (const TrieString & name, const QString & value);
     QString getAttribute (const TrieString & name);
-    KDE_NO_EXPORT AttributeList &attributes () { return m_attributes; }
-    KDE_NO_EXPORT AttributeList attributes () const { return m_attributes; }
+    KMPLAYERCOMMON_NO_EXPORT AttributeList &attributes () { return m_attributes; }
+    KMPLAYERCOMMON_NO_EXPORT AttributeList attributes () const { return m_attributes; }
     virtual void init ();
     void reset () override;
     void clear () override;
@@ -595,11 +603,12 @@ private:
 };
 
 template <class T>
-inline KDE_NO_EXPORT T * convertNode (NodePtr e) {
+inline T * convertNode (NodePtr e)
+{
     return static_cast <T *> (e.ptr ());
 }
 
-KMPLAYER_NO_EXPORT
+KMPLAYERCOMMON_NO_EXPORT
 inline Node *findChildWithId (const Node *p, const short id) {
     for (Node *c = p->firstChild (); c; c = c->nextSibling ())
         if (id == c->id)
@@ -607,7 +616,8 @@ inline Node *findChildWithId (const Node *p, const short id) {
     return nullptr;
 }
 
-class KMPLAYER_EXPORT PlaylistRole {
+class KMPLAYERCOMMON_EXPORT PlaylistRole
+{
 public:
     PlaylistRole () : editable (false) {}
 
@@ -621,7 +631,7 @@ public:
 /**
  * Element representing a playable link, like URL to a movie or playlist.
  */
-class KMPLAYER_EXPORT Mrl : public Element, public PlaylistRole
+class KMPLAYERCOMMON_EXPORT Mrl : public Element, public PlaylistRole
 {
 protected:
     Mrl (NodePtr & d, short id=0);
@@ -668,7 +678,8 @@ public:
 /**
  * Document listener interface
  */
-class KMPLAYER_EXPORT PlayListNotify {
+class KMPLAYERCOMMON_EXPORT PlayListNotify
+{
 public:
     virtual ~PlayListNotify() { }
     /**
@@ -696,11 +707,12 @@ public:
 /*
  *  A generic type for posting messages
  **/
-class KMPLAYER_EXPORT Posting {
+class KMPLAYERCOMMON_EXPORT Posting
+{
 public:
-    KDE_NO_CDTOR_EXPORT Posting (Node *n, MessageType msg, VirtualVoid *p=nullptr)
+    Posting (Node *n, MessageType msg, VirtualVoid *p=nullptr)
         : source (n), message (msg), payload (p) {}
-    KDE_NO_CDTOR_EXPORT virtual ~Posting () {}
+    virtual ~Posting () {}
     NodePtrW source;
     MessageType message;
     VirtualVoid *payload;
@@ -709,7 +721,8 @@ public:
 /**
  * Posting signaling a timer event
  */
-class KMPLAYER_NO_EXPORT TimerPosting : public Posting {
+class TimerPosting : public Posting
+{
 public:
     TimerPosting (int ms, unsigned eid=0);
     unsigned event_id;
@@ -717,7 +730,8 @@ public:
     bool interval; // set to 'true' in 'Node::message()' to make it repeat
 };
 
-class KMPLAYER_NO_EXPORT UpdateEvent {
+class UpdateEvent
+{
 public:
     UpdateEvent (Document *, unsigned int off_time);
     unsigned int cur_event_time;
@@ -727,7 +741,8 @@ public:
 /**
  * Event signaling postponed or proceeded
  */
-class KMPLAYER_NO_EXPORT PostponedEvent {
+class PostponedEvent
+{
 public:
     PostponedEvent (bool postponed);
     bool is_postponed; // postponed or proceeded
@@ -737,7 +752,8 @@ public:
  * Postpone object representing a postponed document
  * During its livetime, no TimerEvent's happen
  */
-class KMPLAYER_NO_EXPORT Postpone {
+class Postpone
+{
     friend class Document;
     struct timeval postponed_time;
     NodePtrW m_doc;
@@ -749,7 +765,8 @@ public:
 typedef SharedPtr <Postpone> PostponePtr;
 typedef WeakPtr <Postpone> PostponePtrW;
 
-struct KMPLAYER_NO_EXPORT EventData {
+struct EventData
+{
     EventData (Node *t, Posting *e, EventData *n);
     ~EventData ();
 
@@ -763,7 +780,8 @@ struct KMPLAYER_NO_EXPORT EventData {
 /**
  * The root of the DOM tree
  */
-class KMPLAYER_EXPORT Document : public Mrl {
+class KMPLAYERCOMMON_EXPORT Document : public Mrl
+{
     friend class Postpone;
 public:
     Document (const QString &, PlayListNotify * notify = nullptr);
@@ -775,7 +793,7 @@ public:
      * */
     void dispose ();
     Node *childFromTag (const QString & tag) override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "document"; }
+    KMPLAYERCOMMON_NO_EXPORT const char * nodeName () const override { return "document"; }
     void activate () override;
     void defer () override;
     void undefer () override;
@@ -849,10 +867,11 @@ namespace RP {
     class Animate;
 }
 
-class KMPLAYER_NO_EXPORT Visitor {
+class Visitor
+{
 public:
-    KDE_NO_CDTOR_EXPORT Visitor () {}
-    KDE_NO_CDTOR_EXPORT virtual ~Visitor () {}
+    Visitor () {}
+    virtual ~Visitor () {}
     virtual void visit (Node *) {}
     virtual void visit (TextNode *);
     virtual void visit (Element *);
@@ -888,10 +907,11 @@ public:
 /**
  * Represents XML text, like "some text" in '<foo>some text</foo>'
  */
-class KMPLAYER_EXPORT TextNode : public Node {
+class KMPLAYERCOMMON_EXPORT TextNode : public Node
+{
 public:
-    TextNode(NodePtr& d, const QString& s, short _id = id_node_text) KDE_NO_CDTOR_EXPORT;
-    KDE_NO_CDTOR_EXPORT ~TextNode () override {}
+    TextNode(NodePtr& d, const QString& s, short _id = id_node_text);
+    ~TextNode () override {}
     void appendText (const QString & s);
     void setText (const QString & txt) { text = txt; }
     const char * nodeName () const override { return "#text"; }
@@ -904,20 +924,22 @@ protected:
 /**
  * Represents cdata sections, like "some text" in '<![CDATA[some text]]>'
  */
-class KMPLAYER_EXPORT CData : public TextNode {
+class KMPLAYERCOMMON_EXPORT CData : public TextNode
+{
 public:
-    CData(NodePtr& d, const QString& s) KDE_NO_CDTOR_EXPORT;
-    KDE_NO_CDTOR_EXPORT ~CData () override {}
+    CData(NodePtr& d, const QString& s);
+    ~CData () override {}
     const char * nodeName () const override { return "#cdata"; }
 };
 
 /**
  * Unrecognized tag by parent element or just some auxiliary node
  */
-class KMPLAYER_EXPORT DarkNode : public Element {
+class KMPLAYERCOMMON_EXPORT DarkNode : public Element
+{
 public:
     DarkNode (NodePtr & d, const QByteArray &n, short id=0);
-    KDE_NO_CDTOR_EXPORT ~DarkNode () override {}
+    ~DarkNode () override {}
     const char * nodeName () const override { return name.data (); }
     Node *childFromTag (const QString & tag) override;
 protected:
@@ -929,29 +951,31 @@ protected:
 /**
  * just some url, can get a SMIL, RSS, or ASX childtree
  */
-class KMPLAYER_EXPORT GenericURL : public Mrl {
+class KMPLAYERCOMMON_EXPORT GenericURL : public Mrl
+{
 public:
     GenericURL(NodePtr &d, const QString &s, const QString &n=QString ());
-    KDE_NO_EXPORT const char * nodeName () const override { return "url"; }
-    void closed() override KDE_NO_EXPORT;
+    KMPLAYERCOMMON_NO_EXPORT const char * nodeName () const override { return "url"; }
+    void closed() override KMPLAYERCOMMON_NO_EXPORT;
 };
 
 /**
  * Non url mrl
  */
-class KMPLAYER_EXPORT GenericMrl : public Mrl {
+class KMPLAYERCOMMON_EXPORT GenericMrl : public Mrl
+{
 public:
-    KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d), node_name ("mrl") {}
+    GenericMrl (NodePtr & d) : Mrl (d), node_name ("mrl") {}
     GenericMrl(NodePtr &d, const QString &s, const QString &name=QString (), const QByteArray &tag=QByteArray ("mrl"));
-    KDE_NO_EXPORT const char * nodeName () const override { return node_name.data (); }
+    KMPLAYERCOMMON_NO_EXPORT const char * nodeName () const override { return node_name.data (); }
     void closed () override;
     void *role (RoleType msg, void *content=nullptr) override;
     QByteArray node_name;
 };
 
-KMPLAYER_EXPORT
+KMPLAYERCOMMON_EXPORT
 void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener=true);
-KMPLAYER_EXPORT Node * fromXMLDocumentTag (NodePtr & d, const QString & tag);
+KMPLAYERCOMMON_EXPORT Node * fromXMLDocumentTag (NodePtr & d, const QString & tag);
 
 template <class T>
 inline Item<T>::Item () : m_self (static_cast <T*> (this), true) {}
@@ -1083,7 +1107,7 @@ inline void TreeNode<T>::removeChildImpl (typename Item<T>::SharedType c) {
     c->m_parent = nullptr;
 }
 
-inline KDE_NO_EXPORT NodeList Node::childNodes () const {
+inline NodeList Node::childNodes () const {
     return NodeList (m_first_child, m_last_child);
 }
 

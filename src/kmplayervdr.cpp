@@ -72,7 +72,7 @@ static const char * strXVPort = "XV Port";
 static const char * strXVEncoding = "XV Encoding";
 static const char * strXVScale = "XV Scale";
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer::PartBase * player)
+KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer::PartBase * player)
  : QFrame (parent), m_player (player) {
     //KUrlRequester * v4ldevice;
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
@@ -102,9 +102,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidge
     layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::~KMPlayerPrefSourcePageVDR () {}
+KMPlayerPrefSourcePageVDR::~KMPlayerPrefSourcePageVDR () {}
 
-KDE_NO_EXPORT void KMPlayerPrefSourcePageVDR::showEvent (QShowEvent *) {
+void KMPlayerPrefSourcePageVDR::showEvent (QShowEvent *) {
     XvProcessInfo *pi = static_cast<XvProcessInfo *>(m_player->mediaManager()->
             processInfos()["xvideo"]);
     if (!pi->config_doc)
@@ -118,16 +118,16 @@ static const char * cmd_volume_query = "VOLU\n";
 
 class VDRCommand {
 public:
-    KDE_NO_CDTOR_EXPORT VDRCommand (const char * c, VDRCommand * n=0L)
+    VDRCommand (const char * c, VDRCommand * n=0L)
         : command (strdup (c)), next (n) {}
-    KDE_NO_CDTOR_EXPORT ~VDRCommand () { free (command); }
+    ~VDRCommand () { free (command); }
     char * command;
     VDRCommand * next;
 };
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app)
+KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app)
  : KMPlayer::Source (QString ("VDR"), app->player (), "vdrsource"),
    m_app (app),
    m_configpage (0),
@@ -146,9 +146,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app)
     connect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::~KMPlayerVDRSource () {}
+KMPlayerVDRSource::~KMPlayerVDRSource () {}
 
-KDE_NO_CDTOR_EXPORT void KMPlayerVDRSource::waitForConnectionClose () {
+void KMPlayerVDRSource::waitForConnectionClose () {
     if (timeout_timer) {
         finish_timer = startTimer (500);
         kdDebug () << "VDR connection not yet closed" << endl;
@@ -158,19 +158,19 @@ KDE_NO_CDTOR_EXPORT void KMPlayerVDRSource::waitForConnectionClose () {
     }
 }
 
-KDE_NO_EXPORT bool KMPlayerVDRSource::hasLength () {
+bool KMPlayerVDRSource::hasLength () {
     return false;
 }
 
-KDE_NO_EXPORT bool KMPlayerVDRSource::isSeekable () {
+bool KMPlayerVDRSource::isSeekable () {
     return true;
 }
 
-KDE_NO_EXPORT QString KMPlayerVDRSource::prettyName () {
+QString KMPlayerVDRSource::prettyName () {
     return i18n ("VDR");
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
+void KMPlayerVDRSource::activate () {
     last_channel = 0;
     connect (this, SIGNAL (startPlaying ()), this, SLOT (processStarted()));
     connect (this, SIGNAL (stopPlaying ()), this, SLOT (processStopped ()));
@@ -193,7 +193,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     QTimer::singleShot (0, m_player, SLOT (play ()));
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
+void KMPlayerVDRSource::deactivate () {
     disconnect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
     if (m_player->view ()) {
         disconnect (this, SIGNAL(startPlaying()), this, SLOT(processStarted()));
@@ -209,14 +209,14 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     m_request_jump.truncate (0);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::processStopped () {
+void KMPlayerVDRSource::processStopped () {
     if (m_socket->state () == QSocket::Connected) {
         queueCommand (QString ("VOLU %1\n").arg (m_stored_volume).ascii ());
         queueCommand ("QUIT\n");
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::processStarted () {
+void KMPlayerVDRSource::processStarted () {
     m_socket->connectToHost ("127.0.0.1", tcp_port);
     commands = new VDRCommand ("connect", commands);
 }
@@ -225,7 +225,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::processStarted () {
     m_actions [i] = new KAction (text, QString (pix), KShortcut (scut), this, slot, m_app->actionCollection (), name); \
     m_fullscreen_actions [i] = new KAction (text, KShortcut (scut), this, slot, m_app->view ()->viewArea ()->actionCollection (), name)
 
-KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
+void KMPlayerVDRSource::connected () {
     queueCommand (cmd_list_channels);
     queueCommand (cmd_volume_query);
     killTimer (channel_timer);
@@ -265,7 +265,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
 
 #undef DEF_ACT
 
-KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
+void KMPlayerVDRSource::disconnected () {
     kdDebug() << "disconnected " << commands << endl;
     if (finish_timer) {
         deleteCommands ();
@@ -288,7 +288,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
     m_app->initMenu ();
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::toggleConnected () {
+void KMPlayerVDRSource::toggleConnected () {
     if (m_socket->state () == QSocket::Connected) {
         queueCommand ("QUIT\n");
         killTimer (channel_timer);
@@ -299,18 +299,18 @@ KDE_NO_EXPORT void KMPlayerVDRSource::toggleConnected () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::volumeChanged (int val) {
+void KMPlayerVDRSource::volumeChanged (int val) {
     queueCommand (QString ("VOLU %1\n").arg (int (sqrt (255 * 255 * val / 100))).ascii ());
 }
 
 static struct ReadBuf {
     char * buf;
     int length;
-    KDE_NO_CDTOR_EXPORT ReadBuf () : buf (0L), length (0) {}
-    KDE_NO_CDTOR_EXPORT ~ReadBuf () {
+    ReadBuf () : buf (0L), length (0) {}
+    ~ReadBuf () {
         clear ();
     }
-    KDE_NO_EXPORT void operator += (const char * s) {
+    void operator += (const char * s) {
         int l = strlen (s);
         char * b = new char [length + l + 1];
         if (length)
@@ -320,21 +320,21 @@ static struct ReadBuf {
         delete buf;
         buf = b;
     }
-    KDE_NO_EXPORT QCString mid (int p) {
+    QCString mid (int p) {
         return QCString (buf + p);
     }
-    KDE_NO_EXPORT QCString left (int p) {
+    QCString left (int p) {
         return QCString (buf, p);
     }
-    KDE_NO_EXPORT QCString getReadLine ();
-    KDE_NO_EXPORT void clear () {
+    QCString getReadLine ();
+    void clear () {
         delete [] buf;
         buf = 0;
         length = 0;
     }
 } readbuf;
 
-KDE_NO_EXPORT QCString ReadBuf::getReadLine () {
+QCString ReadBuf::getReadLine () {
     QCString out;
     if (!length)
         return out;
@@ -349,7 +349,7 @@ KDE_NO_EXPORT QCString ReadBuf::getReadLine () {
     return out;
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
+void KMPlayerVDRSource::readyRead () {
     KMPlayer::View * v = finish_timer ? 0L : static_cast <KMPlayer::View *> (m_player->view ());
     long nr = m_socket->bytesAvailable();
     char * data = new char [nr + 1];
@@ -438,7 +438,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
     delete [] data;
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::socketError (int code) {
+void KMPlayerVDRSource::socketError (int code) {
     if (code == QSocket::ErrHostNotFound) {
         KMessageBox::error (m_configpage, i18n ("Host not found"), i18n ("Error"));
     } else if (code == QSocket::ErrConnectionRefused) {
@@ -446,7 +446,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::socketError (int code) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::queueCommand (const char * cmd) {
+void KMPlayerVDRSource::queueCommand (const char * cmd) {
     if (m_player->source () != this)
         return;
     if (!commands) {
@@ -468,13 +468,13 @@ KDE_NO_EXPORT void KMPlayerVDRSource::queueCommand (const char * cmd) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::queueCommand (const char * cmd, int t) {
+void KMPlayerVDRSource::queueCommand (const char * cmd, int t) {
     queueCommand (cmd);
     killTimer (channel_timer);
     channel_timer = startTimer (t);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::sendCommand () {
+void KMPlayerVDRSource::sendCommand () {
     //kdDebug () << "sendCommand " << commands->command << endl;
     m_socket->writeBlock (commands->command, strlen(commands->command));
     m_socket->flush ();
@@ -482,13 +482,13 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sendCommand () {
     timeout_timer = startTimer (30000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::customCmd () {
+void KMPlayerVDRSource::customCmd () {
     QString cmd = KInputDialog::getText (i18n ("Custom VDR command"), i18n ("You can pass commands to VDR.\nEnter 'HELP' to see a list of available commands.\nYou can see VDR response in the console window.\n\nVDR Command:"), QString(), 0, m_player->view ());
     if (!cmd.isEmpty ())
         queueCommand (QString (cmd + QChar ('\n')).local8Bit ());
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::timerEvent (QTimerEvent * e) {
+void KMPlayerVDRSource::timerEvent (QTimerEvent * e) {
     if (e->timerId () == timeout_timer || e->timerId () == finish_timer) {
         deleteCommands ();
     } else if (e->timerId () == channel_timer) {
@@ -498,7 +498,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::timerEvent (QTimerEvent * e) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::deleteCommands () {
+void KMPlayerVDRSource::deleteCommands () {
     killTimer (timeout_timer);
     timeout_timer = 0;
     killTimer (channel_timer);
@@ -514,12 +514,12 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deleteCommands () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::play (KMPlayer::Mrl *mrl) {
+void KMPlayerVDRSource::play (KMPlayer::Mrl *mrl) {
     if (!mrl || !mrl->isPlayable ()) return;
     jump (mrl->pretty_name);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::jump (const QString & channel) {
+void KMPlayerVDRSource::jump (const QString & channel) {
     QCString c ("CHAN ");
     QCString ch = channel.local8Bit ();
     int p = ch.find (' ');
@@ -531,99 +531,99 @@ KDE_NO_EXPORT void KMPlayerVDRSource::jump (const QString & channel) {
     queueCommand (c);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::forward () {
+void KMPlayerVDRSource::forward () {
     queueCommand ("CHAN +\n", 1000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::backward () {
+void KMPlayerVDRSource::backward () {
     queueCommand ("CHAN -\n", 1000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::keyUp () {
+void KMPlayerVDRSource::keyUp () {
     queueCommand ("HITK UP\n", 1000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::keyDown () {
+void KMPlayerVDRSource::keyDown () {
     queueCommand ("HITK DOWN\n", 1000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::keyBack () {
+void KMPlayerVDRSource::keyBack () {
     queueCommand ("HITK BACK\n");
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::keyOk () {
+void KMPlayerVDRSource::keyOk () {
     queueCommand ("HITK OK\n");
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::keySetup () {
+void KMPlayerVDRSource::keySetup () {
     queueCommand ("HITK SETUP\n");
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::keyChannels () {
+void KMPlayerVDRSource::keyChannels () {
     queueCommand ("HITK CHANNELS\n");
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::keyMenu () {
+void KMPlayerVDRSource::keyMenu () {
     queueCommand ("HITK MENU\n");
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::key0 () {
+void KMPlayerVDRSource::key0 () {
     queueCommand ("HITK 0\n", 2000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::key1 () {
+void KMPlayerVDRSource::key1 () {
     queueCommand ("HITK 1\n", 2000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::key2 () {
+void KMPlayerVDRSource::key2 () {
     queueCommand ("HITK 2\n", 2000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::key3 () {
+void KMPlayerVDRSource::key3 () {
     queueCommand ("HITK 3\n", 2000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::key4 () {
+void KMPlayerVDRSource::key4 () {
     queueCommand ("HITK 4\n", 2000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::key5 () {
+void KMPlayerVDRSource::key5 () {
     queueCommand ("HITK 5\n", 2000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::key6 () {
+void KMPlayerVDRSource::key6 () {
     queueCommand ("HITK 6\n", 2000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::key7 () {
+void KMPlayerVDRSource::key7 () {
     queueCommand ("HITK 7\n", 2000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::key8 () {
+void KMPlayerVDRSource::key8 () {
     queueCommand ("HITK 8\n", 2000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::key9 () {
+void KMPlayerVDRSource::key9 () {
     queueCommand ("HITK 9\n", 2000);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::keyRed () {
+void KMPlayerVDRSource::keyRed () {
     queueCommand ("HITK RED\n");
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::keyGreen () {
+void KMPlayerVDRSource::keyGreen () {
     queueCommand ("HITK GREEN\n");
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::keyYellow () {
+void KMPlayerVDRSource::keyYellow () {
     queueCommand ("HITK YELLOW\n");
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::keyBlue () {
+void KMPlayerVDRSource::keyBlue () {
     queueCommand ("HITK BLUE\n");
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::write (KConfig * m_config) {
+void KMPlayerVDRSource::write (KConfig * m_config) {
     m_config->setGroup (strVDR);
     m_config->writeEntry (strVDRPort, tcp_port);
     m_config->writeEntry (strXVPort, m_xvport);
@@ -631,7 +631,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::write (KConfig * m_config) {
     m_config->writeEntry (strXVScale, scale);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::read (KConfig * m_config) {
+void KMPlayerVDRSource::read (KConfig * m_config) {
     m_config->setGroup (strVDR);
     tcp_port = m_config->readNumEntry (strVDRPort, 2001);
     m_xvport = m_config->readNumEntry (strXVPort, 0);
@@ -646,7 +646,7 @@ struct XVTreeItem : public Q3ListViewItem {
     int encoding;
 };
 
-KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
+void KMPlayerVDRSource::sync (bool fromUI) {
     XvProcessInfo *pi = static_cast<XvProcessInfo *>(m_player->mediaManager()->
             processInfos()["xvideo"]);
     if (fromUI) {
@@ -706,26 +706,26 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::configReceived () {
+void KMPlayerVDRSource::configReceived () {
     XvProcessInfo *pi = static_cast<XvProcessInfo *>(m_player->mediaManager()->
             processInfos()["xvideo"]);
     disconnect (pi, SIGNAL (configReceived()), this, SLOT (configReceived()));
     sync (false);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::prefLocation (QString & item, QString & icon, QString & tab) {
+void KMPlayerVDRSource::prefLocation (QString & item, QString & icon, QString & tab) {
     item = i18n ("Source");
     icon = QString ("source");
     tab = i18n ("VDR");
 }
 
-KDE_NO_EXPORT QFrame * KMPlayerVDRSource::prefPage (QWidget * parent) {
+QFrame * KMPlayerVDRSource::prefPage (QWidget * parent) {
     if (!m_configpage)
         m_configpage = new KMPlayerPrefSourcePageVDR (parent, m_player);
     return m_configpage;
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::stateElementChanged (KMPlayer::Node *, KMPlayer::Node::State, KMPlayer::Node::State) {
+void KMPlayerVDRSource::stateElementChanged (KMPlayer::Node *, KMPlayer::Node::State, KMPlayer::Node::State) {
 }
 
 //-----------------------------------------------------------------------------
@@ -770,14 +770,14 @@ bool XvProcessInfo::startBackend () {
     return m_process->isRunning ();
 }
 
-KDE_NO_CDTOR_EXPORT XVideo::XVideo (QObject *p, ProcessInfo *pi, Settings *s)
+XVideo::XVideo (QObject *p, ProcessInfo *pi, Settings *s)
  : KMPlayer::CallbackProcess (p, pi, s, "xvideo") {
     //m_player->settings ()->addPage (m_configpage);
 }
 
-KDE_NO_CDTOR_EXPORT XVideo::~XVideo () {}
+XVideo::~XVideo () {}
 
-KDE_NO_EXPORT bool XVideo::ready () {
+bool XVideo::ready () {
     if (running () || !media_object || !media_object->viewer) {
         setState (IProcess::Ready);
         return true;

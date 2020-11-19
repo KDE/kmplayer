@@ -42,25 +42,27 @@ const short id_node_duration = 408;
 /**
  * '<ASX>' tag
  */
-class KMPLAYER_NO_EXPORT Asx : public Mrl {
+class Asx : public Mrl
+{
 public:
-    KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d, id_node_asx) {}
+    Asx (NodePtr & d) : Mrl (d, id_node_asx) {}
     Node *childFromTag (const QString & tag) override;
     void closed () override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "ASX"; }
+    const char * nodeName () const override { return "ASX"; }
     void *role (RoleType msg, void *content=nullptr) override;
 };
 
 /**
  * Entry tag as found in ASX for playlist item
  */
-class KMPLAYER_NO_EXPORT Entry : public Mrl {
+class Entry : public Mrl
+{
 public:
-    KDE_NO_CDTOR_EXPORT Entry (NodePtr & d)
+    Entry (NodePtr & d)
         : Mrl (d, id_node_entry), duration_timer (nullptr), ref_child_count (0) {}
     Node *childFromTag (const QString & tag) override;
     void message (MessageType msg, void *content=nullptr) override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "Entry"; }
+    const char * nodeName () const override { return "Entry"; }
     void closed () override;
     void activate () override;
     void deactivate () override;
@@ -77,23 +79,25 @@ public:
 /**
  * Ref tag as found in ASX for URL item in playlist item
  */
-class KMPLAYER_NO_EXPORT Ref : public Mrl {
+class Ref : public Mrl
+{
 public:
-    KDE_NO_CDTOR_EXPORT Ref (NodePtr & d) : Mrl (d, id_node_ref) {}
+    Ref (NodePtr & d) : Mrl (d, id_node_ref) {}
     //Node *childFromTag (const QString & tag);
     void opened () override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "Ref"; }
+    const char * nodeName () const override { return "Ref"; }
 };
 
 /**
  * EntryRef tag as found in ASX for shortcut of Entry plus Ref playlist item
  */
-class KMPLAYER_NO_EXPORT EntryRef : public Mrl {
+class EntryRef : public Mrl
+{
 public:
-    KDE_NO_CDTOR_EXPORT EntryRef (NodePtr & d) : Mrl (d, id_node_entryref) {}
+    EntryRef (NodePtr & d) : Mrl (d, id_node_entryref) {}
     //Node *childFromTag (const QString & tag);
     void opened () override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "EntryRef"; }
+    const char * nodeName () const override { return "EntryRef"; }
 };
 
 } //namespace ASX

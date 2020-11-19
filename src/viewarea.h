@@ -41,22 +41,23 @@ class VideoOutput;
 /*
  * The area in which the video widget and controlpanel are laid out
  */
-class KMPLAYER_EXPORT ViewArea : public QWidget, public QAbstractNativeEventFilter {
+class KMPLAYERCOMMON_EXPORT ViewArea : public QWidget, public QAbstractNativeEventFilter
+{
     friend class VideoOutput;
     Q_OBJECT
 public:
-    ViewArea(QWidget* parent, View *view, bool paint_bg) KDE_NO_CDTOR_EXPORT;
-    ~ViewArea() override KDE_NO_CDTOR_EXPORT;
-    KDE_NO_EXPORT bool isFullScreen () const { return m_fullscreen; }
-    KDE_NO_EXPORT bool isMinimalMode () const { return m_minimal; }
-    KDE_NO_EXPORT KActionCollection * actionCollection () const { return m_collection; }
-    KDE_NO_EXPORT QRect topWindowRect () const { return m_topwindow_rect; }
-    Surface *getSurface(Mrl* mrl) KDE_NO_EXPORT;
-    void mouseMoved() KDE_NO_EXPORT;
-    void scheduleRepaint(const IRect& rect) KDE_NO_EXPORT;
-    ConnectionList* updaters() KDE_NO_EXPORT;
-    void resizeEvent(QResizeEvent*) override KDE_NO_EXPORT;
-    void enableUpdaters(bool enable, unsigned int off_time) KDE_NO_EXPORT;
+    ViewArea(QWidget* parent, View *view, bool paint_bg);
+    ~ViewArea() override;
+    KMPLAYERCOMMON_NO_EXPORT bool isFullScreen () const { return m_fullscreen; }
+    KMPLAYERCOMMON_NO_EXPORT bool isMinimalMode () const { return m_minimal; }
+    KMPLAYERCOMMON_NO_EXPORT KActionCollection * actionCollection () const { return m_collection; }
+    KMPLAYERCOMMON_NO_EXPORT QRect topWindowRect () const { return m_topwindow_rect; }
+    Surface *getSurface(Mrl* mrl) KMPLAYERCOMMON_NO_EXPORT;
+    void mouseMoved() KMPLAYERCOMMON_NO_EXPORT;
+    void scheduleRepaint(const IRect& rect) KMPLAYERCOMMON_NO_EXPORT;
+    ConnectionList* updaters() KMPLAYERCOMMON_NO_EXPORT;
+    void resizeEvent(QResizeEvent*) override KMPLAYERCOMMON_NO_EXPORT;
+    void enableUpdaters(bool enable, unsigned int off_time) KMPLAYERCOMMON_NO_EXPORT;
     void minimalMode ();
     IViewer *createVideoWidget ();
     void destroyVideoWidget (IViewer *widget);
@@ -64,27 +65,27 @@ public:
 signals:
     void fullScreenChanged ();
 public slots:
-    void fullScreen() KDE_NO_EXPORT;
-    void accelActivated() KDE_NO_EXPORT;
-    void scale(int) KDE_NO_EXPORT;
+    void fullScreen() KMPLAYERCOMMON_NO_EXPORT;
+    void accelActivated() KMPLAYERCOMMON_NO_EXPORT;
+    void scale(int) KMPLAYERCOMMON_NO_EXPORT;
 protected:
-    void showEvent(QShowEvent*) override KDE_NO_EXPORT;
-    void keyPressEvent(QKeyEvent*) override KDE_NO_EXPORT;
-    void mouseMoveEvent(QMouseEvent*) override KDE_NO_EXPORT;
-    void mousePressEvent(QMouseEvent*) override KDE_NO_EXPORT;
-    void mouseDoubleClickEvent(QMouseEvent*) override KDE_NO_EXPORT;
-    void dragEnterEvent(QDragEnterEvent*) override KDE_NO_EXPORT;
-    void dropEvent(QDropEvent*) override KDE_NO_EXPORT;
-    void contextMenuEvent(QContextMenuEvent* e) override KDE_NO_EXPORT;
-    void paintEvent(QPaintEvent*) override KDE_NO_EXPORT;
-    void timerEvent(QTimerEvent* e) override KDE_NO_EXPORT;
-    void closeEvent(QCloseEvent* e) override KDE_NO_EXPORT;
+    void showEvent(QShowEvent*) override KMPLAYERCOMMON_NO_EXPORT;
+    void keyPressEvent(QKeyEvent*) override KMPLAYERCOMMON_NO_EXPORT;
+    void mouseMoveEvent(QMouseEvent*) override KMPLAYERCOMMON_NO_EXPORT;
+    void mousePressEvent(QMouseEvent*) override KMPLAYERCOMMON_NO_EXPORT;
+    void mouseDoubleClickEvent(QMouseEvent*) override KMPLAYERCOMMON_NO_EXPORT;
+    void dragEnterEvent(QDragEnterEvent*) override KMPLAYERCOMMON_NO_EXPORT;
+    void dropEvent(QDropEvent*) override KMPLAYERCOMMON_NO_EXPORT;
+    void contextMenuEvent(QContextMenuEvent* e) override KMPLAYERCOMMON_NO_EXPORT;
+    void paintEvent(QPaintEvent*) override KMPLAYERCOMMON_NO_EXPORT;
+    void timerEvent(QTimerEvent* e) override KMPLAYERCOMMON_NO_EXPORT;
+    void closeEvent(QCloseEvent* e) override KMPLAYERCOMMON_NO_EXPORT;
     bool nativeEventFilter(const QByteArray& eventType, void * message, long *result) override;
     QPaintEngine *paintEngine () const override;
 private:
-    void syncVisual() KDE_NO_EXPORT;
-    void updateSurfaceBounds() KDE_NO_EXPORT;
-    void stopTimers() KDE_NO_EXPORT;
+    void syncVisual() KMPLAYERCOMMON_NO_EXPORT;
+    void updateSurfaceBounds() KMPLAYERCOMMON_NO_EXPORT;
+    void stopTimers() KMPLAYERCOMMON_NO_EXPORT;
 
     ConnectionList m_updaters;
     ViewerAreaPrivate *d;
@@ -108,13 +109,14 @@ private:
 /*
  * The video widget
  */
-class KMPLAYER_NO_EXPORT VideoOutput : public QX11EmbedContainer, public IViewer {
+class VideoOutput : public QX11EmbedContainer, public IViewer
+{
     Q_OBJECT
 public:
-    VideoOutput(QWidget* parent, View* view) KDE_NO_CDTOR_EXPORT;
-    ~VideoOutput() override KDE_NO_CDTOR_EXPORT;
+    VideoOutput(QWidget* parent, View* view);
+    ~VideoOutput() override;
 
-    int heightForWidth(int w) const override KDE_NO_EXPORT;
+    int heightForWidth(int w) const override;
 
     WindowId windowHandle () override;
     WindowId clientHandle () override;
@@ -124,27 +126,27 @@ public:
     void setAspect (float a) override;
     float aspect () override { return m_aspect; }
     void useIndirectWidget (bool) override;
-    void setMonitoring(Monitor m) override KDE_NO_EXPORT;
-    void map() override KDE_NO_EXPORT;
-    void unmap() override KDE_NO_EXPORT;
+    void setMonitoring(Monitor m) override;
+    void map() override;
+    void unmap() override;
 
-    KDE_NO_EXPORT long inputMask () const { return m_input_mask; }
-    void setBackgroundColor(const QColor& c) KDE_NO_EXPORT;
-    void resetBackgroundColor() KDE_NO_EXPORT;
-    void setCurrentBackgroundColor(const QColor& c) KDE_NO_EXPORT;
-    KDE_NO_EXPORT View * view () const { return m_view; }
+    long inputMask () const { return m_input_mask; }
+    void setBackgroundColor(const QColor& c);
+    void resetBackgroundColor();
+    void setCurrentBackgroundColor(const QColor& c);
+    View * view () const { return m_view; }
 
     WindowId clientWinId() { return m_client_window; }
     void discardClient() {}
-    void embedded(WindowId handle) override KDE_NO_EXPORT;
+    void embedded(WindowId handle) override;
 public slots:
-    void fullScreenChanged() KDE_NO_EXPORT;
+    void fullScreenChanged();
 protected:
-    void resizeEvent(QResizeEvent*) override KDE_NO_EXPORT;
-    void timerEvent(QTimerEvent*) override KDE_NO_EXPORT;
-    void dragEnterEvent(QDragEnterEvent*) override KDE_NO_EXPORT;
-    void dropEvent(QDropEvent*) override KDE_NO_EXPORT;
-    void contextMenuEvent(QContextMenuEvent* e) override KDE_NO_EXPORT;
+    void resizeEvent(QResizeEvent*) override;
+    void timerEvent(QTimerEvent*) override;
+    void dragEnterEvent(QDragEnterEvent*) override;
+    void dropEvent(QDropEvent*) override;
+    void contextMenuEvent(QContextMenuEvent* e) override;
     //virtual void windowChanged( WId w );
 private:
     WId m_plain_window;

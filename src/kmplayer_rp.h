@@ -47,18 +47,19 @@ const short id_node_animate = 159;
 const short id_node_first = id_node_imfl;
 const short id_node_last = 160;
 
-class KMPLAYER_NO_EXPORT Imfl : public Mrl {
+class Imfl : public Mrl
+{
 public:
     Imfl (NodePtr & d);
     ~Imfl () override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "imfl"; }
+    const char * nodeName () const override { return "imfl"; }
     Node *childFromTag (const QString & tag) override;
     void closed () override;
     void defer () override;      // start loading the images if not yet done
     void activate () override;   // start timings, handle paint events
     void finish () override;     // end the timings
     void deactivate () override; // stop handling paint events
-    KDE_NO_EXPORT PlayType playType () override { return play_type_image; }
+    PlayType playType () override { return play_type_image; }
     void message (MessageType msg, void *content=nullptr) override;
     void accept (Visitor *) override;
     Surface *surface ();
@@ -70,10 +71,11 @@ public:
     int needs_scene_img;
 };
 
-class KMPLAYER_NO_EXPORT TimingsBase  : public Element {
+class TimingsBase  : public Element
+{
 public:
     TimingsBase (NodePtr & d, const short id);
-    KDE_NO_CDTOR_EXPORT ~TimingsBase () override {}
+    ~TimingsBase () override {}
     void activate () override;    // start the 'start_timer'
     void begin () override;       // start_timer has expired
     void finish () override;      // ?duration_timer has expired?
@@ -94,44 +96,48 @@ protected:
     ConnectionLink document_postponed;
 };
 
-class KMPLAYER_NO_EXPORT Crossfade : public TimingsBase {
+class Crossfade : public TimingsBase
+{
 public:
-    KDE_NO_CDTOR_EXPORT Crossfade (NodePtr & d)
+    Crossfade (NodePtr & d)
         : TimingsBase (d, id_node_crossfade) {}
-    KDE_NO_CDTOR_EXPORT ~Crossfade () override {}
-    KDE_NO_EXPORT const char * nodeName () const override { return "crossfade"; }
+    ~Crossfade () override {}
+    const char * nodeName () const override { return "crossfade"; }
     void activate () override;
     void begin () override;
     void accept (Visitor *) override;
 };
 
-class KMPLAYER_NO_EXPORT Fadein : public TimingsBase {
+class Fadein : public TimingsBase
+{
 public:
-    KDE_NO_CDTOR_EXPORT Fadein (NodePtr & d) : TimingsBase(d, id_node_fadein) {}
-    KDE_NO_CDTOR_EXPORT ~Fadein () override {}
-    KDE_NO_EXPORT const char * nodeName () const override { return "fadein"; }
+    Fadein (NodePtr & d) : TimingsBase(d, id_node_fadein) {}
+    ~Fadein () override {}
+    const char * nodeName () const override { return "fadein"; }
     void activate () override;
     void begin () override;
     void accept (Visitor *) override;
     unsigned int from_color;
 };
 
-class KMPLAYER_NO_EXPORT Fadeout : public TimingsBase {
+class Fadeout : public TimingsBase
+{
 public:
-    KDE_NO_CDTOR_EXPORT Fadeout(NodePtr &d) : TimingsBase(d, id_node_fadeout) {}
-    KDE_NO_CDTOR_EXPORT ~Fadeout () override {}
-    KDE_NO_EXPORT const char * nodeName () const override { return "fadeout"; }
+    Fadeout(NodePtr &d) : TimingsBase(d, id_node_fadeout) {}
+    ~Fadeout () override {}
+    const char * nodeName () const override { return "fadeout"; }
     void activate () override;
     void begin () override;
     void accept (Visitor *) override;
     unsigned int to_color;
 };
 
-class KMPLAYER_NO_EXPORT Fill : public TimingsBase {
+class Fill : public TimingsBase
+{
 public:
-    KDE_NO_CDTOR_EXPORT Fill (NodePtr & d) : TimingsBase (d, id_node_fill) {}
-    KDE_NO_CDTOR_EXPORT ~Fill () override {}
-    KDE_NO_EXPORT const char * nodeName () const override { return "fill"; }
+    Fill (NodePtr & d) : TimingsBase (d, id_node_fill) {}
+    ~Fill () override {}
+    const char * nodeName () const override { return "fill"; }
     void activate () override;
     void begin () override;
     unsigned int fillColor () const { return color; }
@@ -139,35 +145,38 @@ public:
     unsigned int color;
 };
 
-class KMPLAYER_NO_EXPORT Wipe : public TimingsBase {
+class Wipe : public TimingsBase
+{
 public:
-    KDE_NO_CDTOR_EXPORT Wipe (NodePtr & d) : TimingsBase (d, id_node_wipe) {}
-    KDE_NO_CDTOR_EXPORT ~Wipe () override {}
-    KDE_NO_EXPORT const char * nodeName () const override { return "wipe"; }
+    Wipe (NodePtr & d) : TimingsBase (d, id_node_wipe) {}
+    ~Wipe () override {}
+    const char * nodeName () const override { return "wipe"; }
     void activate () override;
     void begin () override;
     void accept (Visitor *) override;
     enum { dir_right, dir_left, dir_up, dir_down } direction;
 };
 
-class KMPLAYER_NO_EXPORT ViewChange : public TimingsBase {
+class ViewChange : public TimingsBase
+{
 public:
-    KDE_NO_CDTOR_EXPORT ViewChange (NodePtr & d)
+    ViewChange (NodePtr & d)
         : TimingsBase (d, id_node_viewchange) {}
-    KDE_NO_CDTOR_EXPORT ~ViewChange () override {}
-    KDE_NO_EXPORT const char * nodeName() const override { return "viewchange"; }
+    ~ViewChange () override {}
+    const char * nodeName() const override { return "viewchange"; }
     void activate () override;
     void begin () override;
     void finish () override;
     void accept (Visitor *) override;
 };
 
-class KMPLAYER_NO_EXPORT Image : public Mrl {
+class Image : public Mrl
+{
     PostponePtr postpone_lock;
 public:
     Image (NodePtr & d);
     ~Image () override;
-    KDE_NO_EXPORT const char * nodeName () const override { return "image"; }
+    const char * nodeName () const override { return "image"; }
     void activate () override;
     void begin () override;
     void deactivate () override;

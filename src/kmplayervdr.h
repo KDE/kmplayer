@@ -44,7 +44,8 @@ class KListView;
 /*
  * Preference page for VDR
  */
-class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageVDR : public QFrame {
+class KMPlayerPrefSourcePageVDR : public QFrame
+{
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer::PartBase * player);
@@ -63,7 +64,8 @@ private:
 /*
  * Source from VDR (XVideo actually) and socket connection
  */
-class KMPLAYER_NO_EXPORT KMPlayerVDRSource : public KMPlayer::Source, public KMPlayer::PreferencesPage {
+class KMPlayerVDRSource : public KMPlayer::Source, public KMPlayer::PreferencesPage
+{
     Q_OBJECT
 public:
     KMPlayerVDRSource (KMPlayerApp * app);
@@ -149,7 +151,8 @@ private:
     int last_channel;
 };
 
-class KMPLAYER_NO_EXPORT XvProcessInfo : public KMPlayer::CallbackProcessInfo {
+class XvProcessInfo : public KMPlayer::CallbackProcessInfo
+{
 public:
     XvProcessInfo (KMPlayer::MediaManager *);
 

@@ -62,12 +62,12 @@ public:
     void addUrl (const KUrl& url);
     KMPlayer::PartBase * player () const { return m_player; }
     void resizePlayer (int percentage);
-    KDE_NO_EXPORT KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
-    KDE_NO_EXPORT KMPlayer::View *view () const { return m_view; }
+    KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
+    KMPlayer::View *view () const { return m_view; }
     bool broadcasting () const;
     void showBroadcastConfig ();
     void hideBroadcastConfig ();
-    KDE_NO_EXPORT KMPlayerBroadcastConfig * broadcastConfig () const { return m_broadcastconfig; }
+    KMPlayerBroadcastConfig * broadcastConfig () const { return m_broadcastconfig; }
     /* After createGUI() some menu's have to readded again */
     void initMenu ();
     void restoreFromConfig ();
@@ -189,7 +189,8 @@ private:
 /*
  * Preference page for DVD
  */
-class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageDVD : public QFrame {
+class KMPlayerPrefSourcePageDVD : public QFrame
+{
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageDVD (QWidget * parent);
@@ -202,7 +203,8 @@ public:
 /*
  * Source from DVD
  */
-class KMPLAYER_NO_EXPORT KMPlayerDVDSource : public KMPlayer::Source, public KMPlayer::PreferencesPage {
+class KMPlayerDVDSource : public KMPlayer::Source, public KMPlayer::PreferencesPage
+{
     Q_OBJECT
 public:
     KMPlayerDVDSource(KMPlayerApp* app);
@@ -233,7 +235,8 @@ private:
 /*
  * Preference page for VCD
  */
-class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageVCD : public QFrame {
+class KMPlayerPrefSourcePageVCD : public QFrame
+{
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageVCD (QWidget * parent);
@@ -246,7 +249,8 @@ public:
 /*
  * Source from VCD
  */
-class KMPLAYER_NO_EXPORT KMPlayerVCDSource : public KMPlayer::Source, public KMPlayer::PreferencesPage {
+class KMPlayerVCDSource : public KMPlayer::Source, public KMPlayer::PreferencesPage
+{
     Q_OBJECT
 public:
     KMPlayerVCDSource(KMPlayerApp* app);
@@ -272,7 +276,8 @@ private:
 /*
  * Source from AudoCD
  */
-class KMPLAYER_NO_EXPORT KMPlayerAudioCDSource : public KMPlayer::Source {
+class KMPlayerAudioCDSource : public KMPlayer::Source
+{
     Q_OBJECT
 public:
     KMPlayerAudioCDSource(KMPlayerApp* app);
@@ -291,7 +296,8 @@ private:
 /*
  * Source from stdin (for the backends, not kmplayer)
  */
-class KMPLAYER_NO_EXPORT KMPlayerPipeSource : public KMPlayer::Source {
+class KMPlayerPipeSource : public KMPlayer::Source
+{
     Q_OBJECT
 public:
     KMPlayerPipeSource (KMPlayerApp * app);

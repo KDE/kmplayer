@@ -30,11 +30,11 @@ extern int shared_data_count;
 #include <iostream>
 #endif
 
-#include "kmplayer_def.h"
+#include "kmplayercommon_export.h"
 
 namespace KMPlayer {
 
-class KMPLAYER_EXPORT CacheAllocator {
+class KMPLAYERCOMMON_EXPORT CacheAllocator {
     void **pool;
     size_t size;
     int count;
