@@ -47,7 +47,7 @@ class KMPlayerApp : public KXmlGuiWindow {
 public:
     KMPlayerApp (QWidget* parent=nullptr);
     ~KMPlayerApp () override;
-    void openDocumentFile (const KUrl& url=KUrl());
+    void openDocumentFile (const QUrl& url = QUrl());
     void addUrl (const KUrl& url);
     KMPlayer::PartBase * player () const { return m_player; }
     void resizePlayer (int percentage);

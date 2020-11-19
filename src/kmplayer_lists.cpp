@@ -124,7 +124,7 @@ void Recent::closed () {
 }
 
 void Recent::activate () {
-    app->openDocumentFile (KUrl (src));
+    app->openDocumentFile (QUrl (src));
 }
 
 Group::Group (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn)

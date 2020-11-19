@@ -658,7 +658,7 @@ void KMPlayerApp::restoreFromConfig () {
     }
 }
 
-void KMPlayerApp::openDocumentFile (const KUrl& url)
+void KMPlayerApp::openDocumentFile (const QUrl& url)
 {
     if (!m_played_intro) {
         m_played_intro = true;
@@ -707,7 +707,7 @@ void KMPlayerApp::saveProperties (KConfigGroup &def_cfg) {
 }
 
 void KMPlayerApp::readProperties (const KConfigGroup &def_cfg) {
-    KUrl url (def_cfg.readEntry ("URL", QString ()));
+    QUrl url (def_cfg.readEntry ("URL", QString ()));
     openDocumentFile (url);
     if (!def_cfg.readEntry ("Visible", true) && m_systray)
         hide ();
@@ -1264,7 +1264,7 @@ void KMPlayerApp::playListItemActivated (const QModelIndex& index) {
 
 void KMPlayerApp::playListItemDropped (QDropEvent *de, KMPlayer::PlayItem *item) {
     KMPlayer::TopPlayItem *ritem = item->rootItem();
-    KUrl url;
+    QUrl url;
 
     manip_node = nullptr;
     m_drop_list.clear ();
