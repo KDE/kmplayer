@@ -1464,7 +1464,7 @@ KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidget * parent)
     autoPlayDVD = new QCheckBox (i18n ("Auto play after opening DVD"));
     autoPlayDVD->setWhatsThis(i18n("Start playing DVD right after opening DVD"));
     QLabel *dvdDevicePathLabel = new QLabel (i18n("DVD device:"));
-    dvddevice = new KUrlRequester (KUrl ("/dev/dvd"));
+    dvddevice = new KUrlRequester (QUrl::fromLocalFile("/dev/dvd"));
     dvddevice->setWhatsThis(i18n("Path to your DVD device, you must have read rights to this device"));
     layout->addWidget (autoPlayDVD);
     layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
@@ -1644,7 +1644,7 @@ KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidget * parent)
      autoPlayVCD = new QCheckBox (i18n ("Auto play after opening a VCD"));
      autoPlayVCD->setWhatsThis(i18n("Start playing VCD right after opening VCD"));
      QLabel *vcdDevicePathLabel = new QLabel (i18n ("VCD (CDROM) device:"));
-     vcddevice= new KUrlRequester (KUrl ("/dev/cdrom"));
+     vcddevice= new KUrlRequester (QUrl::fromLocalFile ("/dev/cdrom"));
      vcddevice->setWhatsThis(i18n("Path to your CDROM/DVD device, you must have read rights to this device"));
      layout->addWidget (autoPlayVCD);
      layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));

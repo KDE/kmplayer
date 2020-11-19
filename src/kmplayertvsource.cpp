@@ -148,7 +148,7 @@ KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerTVS
     driver = new QLineEdit;
     driver->setWhatsThis(i18n("dummy, v4l or bsdbt848"));
     QLabel *deviceLabel = new QLabel(i18n("Device:"));
-    device = new KUrlRequester(KUrl("/dev/video"));
+    device = new KUrlRequester(QUrl::fromLocalFile("/dev/video"));
     device->setWhatsThis(i18n("Path to your video device, eg. /dev/video0"));
     scan = new QPushButton(i18n("Scan..."));
     QGridLayout *gridlayout = new QGridLayout;
