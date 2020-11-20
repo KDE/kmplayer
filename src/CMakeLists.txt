@@ -55,6 +55,10 @@ if (KMPLAYER_WITH_NPP)
         ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::NpStream)
 endif (KMPLAYER_WITH_NPP)
 
+set_source_files_properties( org.freedesktop.PowerManagement.Inhibit.xml
+                             PROPERTIES NO_NAMESPACE TRUE)
+qt5_add_dbus_interfaces(libkmplayercommon_SRCS org.freedesktop.PowerManagement.Inhibit.xml)
+
 add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
 
 generate_export_header(kmplayercommon)

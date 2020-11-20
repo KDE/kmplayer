@@ -16,6 +16,7 @@
 
 #include <kmediaplayer/view.h>
 
+#include "inhibitinterface.h"
 #include "kmplayercommon_export.h"
 
 #define MOUSE_INVISIBLE_DELAY 2000
@@ -174,6 +175,7 @@ private:
     int infopanel_timer;
     int m_restore_state_timer;
     int m_powerManagerStopSleep;
+    OrgFreedesktopPowerManagementInhibitInterface m_inhibitIface;
     bool m_keepsizeratio;
     bool m_playing;
     bool m_sreensaver_disabled;

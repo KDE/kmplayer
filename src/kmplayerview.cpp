@@ -49,7 +49,6 @@
 #include "kmplayercontrolpanel.h"
 #include "playlistview.h"
 #include "viewarea.h"
-#include <solid/powermanagement.h>
 
 /* mouse invisible: define the time (in 1/1000 seconds) before mouse goes invisible */
 
@@ -113,6 +112,9 @@ View::View (QWidget *parent)
     infopanel_timer (0),
     m_restore_state_timer(0),
     m_powerManagerStopSleep( -1 ),
+    m_inhibitIface("org.freedesktop.PowerManagement.Inhibit",
+                   "/org/freedesktop/PowerManagement/Inhibit",
+                   QDBusConnection::sessionBus()),
     m_keepsizeratio (false),
     m_playing (false),
     m_tmplog_needs_eol (false),
@@ -531,7 +533,10 @@ void View::fullScreen () {
     }
     if (!m_view_area->isFullScreen()) {
         m_sreensaver_disabled = false;
-        m_powerManagerStopSleep = Solid::PowerManagement::beginSuppressingSleep("KMplayer: watching a film");
+        QDBusReply<uint> reply = m_inhibitIface.Inhibit(QCoreApplication::applicationName(), "KMplayer: watching a film");
+
+        m_powerManagerStopSleep = reply.isValid() ? reply : -1;
+
         /*QByteArray data, replydata;
         QCString replyType;
         if (kapp->dcopClient ()->call ("kdesktop", "KScreensaverIface",
@@ -553,7 +558,7 @@ void View::fullScreen () {
         //if (m_viewer->isVisible ())
         //    m_viewer->setFocus ();
     } else {
-        Solid::PowerManagement::stopSuppressingSleep(m_powerManagerStopSleep);
+        m_inhibitIface.UnInhibit(m_powerManagerStopSleep);
        // if (m_sreensaver_disabled)
        //     m_sreensaver_disabled = !kapp->dcopClient()->send
        //         ("kdesktop", "KScreensaverIface", "enable(bool)", "true");
