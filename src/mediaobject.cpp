@@ -435,13 +435,13 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
             }
     }
 
-    KUrl kurl (str);
+    QUrl kurl = QUrl::fromUserInput(str);
     if (!mrl || !mrl->access_granted)
         for (Node *p = node->parentNode (); p; p = p->parentNode ()) {
             Mrl *m = p->mrl ();
             if (m && !m->src.isEmpty () &&
                   m->src != "Playlist://" &&
-                  !KUrlAuthorized::authorizeUrlAction ("redirect", QUrl(m->src), kurl)) {
+                  !KUrlAuthorized::authorizeUrlAction ("redirect", QUrl::fromUserInput(m->src), kurl)) {
                 qCWarning(LOG_KMPLAYER_COMMON) << "redirect access denied";
                 ready ();
                 return true;
@@ -458,7 +458,7 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
     }
 
     if (kurl.isLocalFile ()) {
-        QFile file (kurl.path ());
+        QFile file (kurl.toLocalFile ());
         if (file.exists ()) {
             if (MediaManager::Data != type && mime.isEmpty ()) {
                 const QMimeType mimeTyoe = QMimeDatabase().mimeTypeForUrl (kurl);

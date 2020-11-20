@@ -1608,7 +1608,7 @@ QString SMIL::State::domain () {
             }
         }
     }
-    KUrl url (s);
+    const QUrl url = QUrl::fromUserInput(s);
     if (url.isLocalFile ())
         return QString ();
     return url.scheme() + "://" + url.host ();

@@ -75,7 +75,7 @@ public:
     /* position () returns position in deci-seconds */
     KMPLAYERCOMMON_NO_EXPORT int position () const { return m_position; }
     KMPLAYERCOMMON_NO_EXPORT float aspect () const { return m_aspect; }
-    KMPLAYERCOMMON_NO_EXPORT const KUrl & url () const { return m_url; }
+    KMPLAYERCOMMON_NO_EXPORT const QUrl & url () const { return m_url; }
     KMPLAYERCOMMON_NO_EXPORT const QUrl & subUrl () const { return m_sub_url; }
     PartBase * player () { return m_player; }
     virtual void reset ();
@@ -163,7 +163,7 @@ protected:
     bool m_identified;
     bool m_auto_play;
     bool m_avoid_redirects;
-    KUrl m_url;
+    QUrl m_url;
     QUrl m_sub_url;
     QString m_audiodevice;
     QString m_videodevice;
@@ -243,7 +243,7 @@ public:
 
     Settings * settings () const { return m_settings; }
     void keepMovieAspect (bool);
-    KUrl url () const { return m_sources ["urlsource"]->url (); }
+    QUrl url () const { return m_sources ["urlsource"]->url (); }
     void setUrl (const QString &url) { m_sources ["urlsource"]->setUrl (url); }
     QUrl docBase () const { return m_docbase; }
 

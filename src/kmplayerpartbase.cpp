@@ -517,7 +517,7 @@ void PartBase::timerEvent (QTimerEvent * e) {
     } else if (e->timerId () == m_rec_timer) {
         m_rec_timer = 0;
         if (m_record_doc)
-            openUrl(KUrl(convertNode <RecordDocument> (m_record_doc)->record_file));
+            openUrl(QUrl::fromUserInput(convertNode <RecordDocument> (m_record_doc)->record_file));
     }
     killTimer (e->timerId ());
 }
@@ -645,7 +645,7 @@ void PartBase::playListItemActivated(const QModelIndex &index) {
                         if (mrl)
                             src = QUrl (mrl->absolutePath ()).resolved(QUrl(src)).url ();
                     }
-                    KUrl url (src);
+                    const QUrl url = QUrl::fromUserInput(src);
                     if (url.isValid ())
                         openUrl (url);
                 }
@@ -711,7 +711,7 @@ void PartBase::recorderPlaying () {
 void PartBase::recorderStopped () {
     stopRecording ();
     if (m_view && m_rec_timer < 0 && m_record_doc)
-        openUrl(KUrl(convertNode <RecordDocument> (m_record_doc)->record_file));
+        openUrl(QUrl::fromUserInput(convertNode <RecordDocument> (m_record_doc)->record_file));
 }
 
 void PartBase::stopRecording () {
@@ -1106,7 +1106,7 @@ static void printTree (NodePtr root, QString off=QString()) {
 
 void Source::setUrl (const QString &url) {
     qCDebug(LOG_KMPLAYER_COMMON) << url;
-    m_url = KUrl (url);
+    m_url = QUrl::fromUserInput(url);
     if (m_document && !m_document->hasChildNodes () &&
             (m_document->mrl()->src.isEmpty () ||
              m_document->mrl()->src == url))
@@ -1545,9 +1545,9 @@ QString URLSource::prettyName () {
 }
 
 bool URLSource::authoriseUrl (const QString &url) {
-    KUrl base = document ()->mrl ()->src;
-    if (base != url) {
-        KUrl dest (url);
+    const QUrl base = QUrl::fromUserInput(document ()->mrl ()->src);
+    const QUrl dest = QUrl::fromUserInput(url);
+    if (base != dest) {
         // check if some remote playlist tries to open something local, but
         // do ignore unknown protocols because there are so many and we only
         // want to cache local ones.

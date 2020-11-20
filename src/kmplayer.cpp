@@ -1276,7 +1276,7 @@ void KMPlayerApp::playListItemDropped (QDropEvent *de, KMPlayer::PlayItem *item)
         if (pli && pli->node) {
             manip_node = pli->node;
             if (pli->node->mrl ()) {
-                KUrl url (pli->node->mrl ()->src);
+                QUrl url = QUrl::fromUserInput(pli->node->mrl ()->src);
                 if (url.isValid ())
                     m_drop_list.push_back (url);
             }

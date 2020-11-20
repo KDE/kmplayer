@@ -487,7 +487,7 @@ void KMPlayerPart::viewerPartSourceChanged(Source *o, Source *s) {
 }
 
 bool KMPlayerPart::openUrl(const QUrl& _url) {
-    KUrl url;
+    QUrl url;
     KParts::OpenUrlArguments args = arguments ();
     Source * urlsource = m_sources ["urlsource"];
     KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
@@ -510,9 +510,9 @@ bool KMPlayerPart::openUrl(const QUrl& _url) {
     } else if (_url != m_docbase) {
         url = _url;
         if (!m_file_name.isEmpty() && _url.url().indexOf(m_file_name) < 0) {
-            KUrl u (m_file_name);
+            QUrl u = QUrl::fromUserInput(m_file_name);
             if ((u.scheme () == QLatin1String("mms")) ||
-                    KUrl(_url).scheme().isEmpty()) {
+                    _url.scheme().isEmpty()) {
                 // see if we somehow have to merge these
                 int p = _url.port ();
                 if (p > 0)
@@ -591,10 +591,10 @@ bool KMPlayerPart::openNewURL (const QUrl & url) {
 bool KMPlayerPart::startUrl(const QUrl &uri, const QString &img)
 {
     Source * src = sources () ["urlsource"];
-    KUrl url (uri);
+    QUrl url (uri);
     qCDebug(LOG_KMPLAYER_PART) << "uri '" << uri << "' img '" << img;
     if (url.isEmpty ()) {
-        url = m_src_url;
+        url = QUrl::fromUserInput(m_src_url);
     } else if (m_settings->grabhref && !m_href_url.isEmpty ()) {
         static int counter;
         m_href_url = m_docbase.resolved(QUrl(m_href_url)).url ();
@@ -696,18 +696,18 @@ bool KMPlayerPart::startUrl(const QUrl &uri, const QString &img)
             emit completed ();
             m_started_emited = false;
         } else {
-            return PartBase::openUrl(m_href_url.isEmpty() ? url : KUrl(m_href_url));
+            return PartBase::openUrl(m_href_url.isEmpty() ? url : QUrl::fromUserInput(m_href_url));
         }
 #endif
         return true;
     } else
-        return PartBase::openUrl(m_href_url.isEmpty() ? url : KUrl(m_href_url));
+        return PartBase::openUrl(m_href_url.isEmpty() ? url : QUrl::fromUserInput(m_href_url));
 }
 
 #ifndef KMPLAYER_WITH_CAIRO
 void KMPlayerPart::pictureClicked () {
     m_view->setPicture (QString ());
-    PartBase::openUrl (QUrl (m_src_url));
+    PartBase::openUrl (QUrl::fromUserInput(m_src_url));
 }
 #endif
 
@@ -1325,7 +1325,7 @@ bool KMPlayerLiveConnectExtension::put
         return false;
     switch (entry->command) {
         case prop_source: {
-            KUrl url (val);
+            const QUrl url = QUrl::fromUserInput(val);
             if (player->allowRedir (url))
                 player->openNewURL (url);
             break;
@@ -1443,7 +1443,7 @@ bool KMPlayerLiveConnectExtension::call
             break;
         case play:
             if (args.size ()) {
-                KUrl url (args.first ());
+                const QUrl url = QUrl::fromUserInput(args.first ());
                 if (player->allowRedir (url))
                     player->openNewURL (url);
             } else
@@ -1500,7 +1500,7 @@ bool KMPlayerLiveConnectExtension::call
         case setsource:
             rval ="false";
             if (args.size ()) {
-                KUrl url (args.first ());
+                const QUrl url = QUrl::fromUserInput (args.first ());
                 if (player->allowRedir (url) && player->openNewURL (url))
                     rval = "true";
             }

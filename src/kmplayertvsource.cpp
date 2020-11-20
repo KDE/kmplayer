@@ -52,7 +52,7 @@ TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodePtr dev)
     TVDevice * device = KMPlayer::convertNode <TVDevice> (device_doc);
     QLabel* deviceLabel = new QLabel(i18n("Video device:") + device->src);
     QLabel* audioLabel = new QLabel(i18n("Audio device:"));
-    audiodevice = new KUrlRequester (KUrl (device->getAttribute ("audio")));
+    audiodevice = new KUrlRequester (QUrl::fromUserInput (device->getAttribute ("audio")));
     QLabel* nameLabel = new QLabel(i18n("Name:"));
     name = new QLineEdit(device->title);
     QLabel *sizewidthLabel = new QLabel(i18n("Width:"));
@@ -359,7 +359,7 @@ void TVDocument::defer () {
 
 KMPlayerTVSource::KMPlayerTVSource(KMPlayerApp* a)
     : KMPlayer::Source (i18n ("TV"), a->player(), "tvsource"), m_app(a), m_configpage(nullptr), scanner(nullptr), config_read(false) {
-    m_url = "tv://";
+    m_url = QUrl("tv://");
     m_document = new TVDocument (this);
     m_player->settings ()->addPage (this);
     tree_id = m_player->playModel()->addTree (m_document, "tvsource", "video-television", KMPlayer::PlayModel::TreeEdit | KMPlayer::PlayModel::Moveable | KMPlayer::PlayModel::Deleteable);

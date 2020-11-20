@@ -306,7 +306,7 @@ void PlayListView::addBookMark () {
     PlayItem * item = selectedItem ();
     if (item->node) {
         Mrl * mrl = item->node->mrl ();
-        KUrl url (mrl ? mrl->src : QString (item->node->nodeName ()));
+        const QUrl url = QUrl::fromUserInput(mrl ? mrl->src : QString (item->node->nodeName ()));
         emit addBookMark (mrl->title.isEmpty () ? url.toDisplayString() : mrl->title, url.url ());
     }
 }

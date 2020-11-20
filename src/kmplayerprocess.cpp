@@ -273,12 +273,13 @@ bool Process::play () {
     m_url = url;
     if (user) // FIXME: remove check
         user->starting (this);
+    const QUrl u = QUrl::fromUserInput(m_url);
     if (!changed ||
-            KUrl (m_url).isLocalFile () ||
+            u.isLocalFile () ||
             nonstdurl ||
             (m_source && m_source->avoidRedirects ()))
         return deMediafiedPlay ();
-    m_job = KIO::stat (QUrl(m_url), KIO::HideProgressInfo);
+    m_job = KIO::stat (u, KIO::HideProgressInfo);
     connect (m_job, SIGNAL (result (KJob *)), this, SLOT (result (KJob *)));
     return true;
 }
@@ -389,7 +390,7 @@ MPlayerBase::~MPlayerBase () {
 
 void MPlayerBase::initProcess () {
     Process::initProcess ();
-    const KUrl &url (m_source->url ());
+    const QUrl &url  = m_source->url ();
     if (!url.isEmpty ()) {
         QString proxy_url;
         if (KProtocolManager::useProxy () && proxyForURL (url, proxy_url)) {
@@ -595,7 +596,7 @@ bool MPlayer::deMediafiedPlay () {
 
     args << KShell::splitArgs (m_source->options ());
 
-    KUrl url (m_url);
+    const QUrl url = QUrl::fromUserInput(m_url);
     if (!url.isEmpty ()) {
         if (m_source->url ().isLocalFile ())
             m_process->setWorkingDirectory
@@ -825,9 +826,9 @@ void MPlayer::processOutput () {
             if (!m_tmpURL.isEmpty () &&
                     (m_url.endsWith (m_tmpURL) || m_tmpURL.endsWith (m_url)))
                 m_source->insertURL (mrl (), m_tmpURL);;
-            KUrl tmp (m_refURLRegExp.cap (1));
+            const QUrl tmp = QUrl::fromUserInput(m_refURLRegExp.cap (1));
             m_tmpURL = tmp.isLocalFile () ? tmp.toLocalFile () : tmp.url ();
-            if (m_source->url () == m_tmpURL ||
+            if (m_source->url () == tmp ||
                     m_url.endsWith (m_tmpURL) || m_tmpURL.endsWith (m_url))
                 m_tmpURL.truncate (0);
         } else if (m_refRegExp.indexIn (out) > -1) {
@@ -1333,7 +1334,7 @@ bool MasterProcess::deMediafiedPlay () {
     if (!m_url.startsWith ("dvd:") ||
             !m_url.startsWith ("vcd:") ||
             !m_url.startsWith ("cdda:")) {
-        KUrl url (m_url);
+        const QUrl url = QUrl::fromUserInput(m_url);
         if (url.isLocalFile ())
             m_url = getPath (url);
     }
@@ -1738,7 +1739,7 @@ void NpStream::open () {
         emit stateChanged ();
     } else {
         if (!post.size ()) {
-            job = KIO::get (KUrl (url), KIO::NoReload, KIO::HideProgressInfo);
+            job = KIO::get (QUrl::fromUserInput (url), KIO::NoReload, KIO::HideProgressInfo);
             job->addMetaData ("PropagateHttpHeader", "true");
         } else {
             QStringList name;
@@ -1774,7 +1775,7 @@ void NpStream::open () {
                     buf += QChar (c);
                 }
             }
-            job = KIO::http_post (KUrl (url), post.mid (data_pos), KIO::HideProgressInfo);
+            job = KIO::http_post (QUrl::fromUserInput (url), post.mid (data_pos), KIO::HideProgressInfo);
             for (int i = 0; i < name.size (); ++i)
                 job->addMetaData (name[i].trimmed (), value[i].trimmed ());
         }
@@ -2011,7 +2012,7 @@ void NpPlayer::request_stream (const QString &path, const QString &url, const QS
     bool js = url.startsWith ("javascript:");
     if (!js) {
         const QUrl base = process_info->manager->player ()->docBase ();
-        uri = (base.isEmpty () ? QUrl(m_url) : base).resolved(QUrl(url)).url ();
+        uri = (base.isEmpty () ? QUrl::fromUserInput(m_url) : base).resolved(QUrl(url)).url ();
     }
     qCDebug(LOG_KMPLAYER_COMMON) << "NpPlayer::request " << path << " '" << uri << "'" << m_url << "->" << url;
     qint32 sid = getStreamId (path);
@@ -2024,9 +2025,9 @@ void NpPlayer::request_stream (const QString &path, const QString &url, const QS
                 if (result == "undefined")
                     uri = QString ();
                 else
-                    uri = QUrl (m_url).resolved(QUrl(result)).url (); // probably wrong ..
+                    uri = QUrl::fromUserInput (m_url).resolved(QUrl(result)).url (); // probably wrong ..
             }
-            KUrl kurl(uri);
+            QUrl kurl = QUrl::fromUserInput(uri);
             if (kurl.isValid ())
                 process_info->manager->player ()->openUrl (kurl, target, QString ());
             sendFinish (sid, 0, NpStream::BecauseDone);
