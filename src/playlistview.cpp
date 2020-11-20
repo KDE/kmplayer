@@ -25,11 +25,11 @@
 #include <QItemSelectionModel>
 #include <QMimeData>
 
-#include <kiconloader.h>
-#include <kstandardaction.h>
-#include <kfinddialog.h>
-#include <kfind.h>
-#include <klocalizedstring.h>
+#include <KIconLoader>
+#include <KStandardAction>
+#include <KFindDialog>
+#include <KFind>
+#include <KLocalizedString>
 #include <KActionCollection>
 
 #include "kmplayercommon_log.h"

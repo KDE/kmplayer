@@ -23,10 +23,10 @@
 #include <QStandardPaths>
 
 class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollection.h does not forward declare KXMLGUIClient
-#include <kconfig.h>
-#include <kurlauthorized.h>
-#include <kiconloader.h>
-#include <klocalizedstring.h>
+#include <KConfig>
+#include <KUrlAuthorized>
+#include <KIconLoader>
+#include <KLocalizedString>
 #if KCOREADDONS_VERSION >= QT_VERSION_CHECK(5, 77, 0)
 #include <KPluginMetaData>
 #endif

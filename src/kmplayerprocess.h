@@ -15,7 +15,7 @@
 #include <QRegExp>
 #include <QProcess>
 
-#include <kio/global.h>
+#include <KIO/Global>
 
 #include "kmplayerplaylist.h"
 #include "kmplayerpartbase.h"

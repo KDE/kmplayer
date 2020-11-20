@@ -11,8 +11,8 @@
 #include <QPixmap>
 #include <QTimer>
 
-#include <klocalizedstring.h>
-#include <kiconloader.h>
+#include <KLocalizedString>
+#include <KIconLoader>
 
 using namespace KMPlayer;
 

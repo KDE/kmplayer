@@ -14,7 +14,7 @@
 #include <QList>
 #include <QUrl>
 
-#include <kmediaplayer/view.h>
+#include <KMediaPlayer/View>
 
 #include "inhibitinterface.h"
 #include "kmplayercommon_export.h"

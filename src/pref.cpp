@@ -29,14 +29,14 @@
 #include <QGroupBox>
 #include <QListWidget>
 
-#include <klocalizedstring.h>
-#include <kmessagebox.h>
-#include <klineedit.h>
-#include <kiconloader.h>
-#include <kcombobox.h>
-#include <kcolorbutton.h>
-#include <kurlrequester.h>
-#include <KTextWidgets/kpluralhandlingspinbox.h>
+#include <KLocalizedString>
+#include <KMessageBox>
+#include <KLineEdit>
+#include <KIconLoader>
+#include <KComboBox>
+#include <KColorButton>
+#include <KUrlRequester>
+#include <KPluralHandlingSpinBox>
 #include <KFontChooserDialog>
 #include "pref.h"
 #include "kmplayercommon_log.h"

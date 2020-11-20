@@ -16,8 +16,7 @@
 #include <QTimer>
 #include <QBuffer>
 
-#include <kio/job.h>
-#include <kio/jobclasses.h>
+#include <KIO/Job>
 
 #include "kmplayercommon_log.h"
 #include "kmplayer_smil.h"

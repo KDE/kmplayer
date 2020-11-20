@@ -27,12 +27,12 @@
 #include <QHeaderView>
 #include <QNetworkCookie>
 
-#include <kprotocolmanager.h>
-#include <kmessagebox.h>
-#include <klocalizedstring.h>
-#include <kshell.h>
-#include <kio/job.h>
-#include <kio/accessmanager.h>
+#include <KProtocolManager>
+#include <KMessageBox>
+#include <KLocalizedString>
+#include <KShell>
+#include <KIO/Job>
+#include <KIO/AccessManager>
 
 #include "kmplayercommon_log.h"
 #include "kmplayerconfig.h"

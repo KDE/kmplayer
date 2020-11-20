@@ -37,10 +37,9 @@
 #include <QStatusBar>
 #include <QDockWidget>
 
-#include <kiconloader.h>
-#include <klocalizedstring.h>
-#include <kactioncollection.h>
-#include <kfinddialog.h>
+#include <KIconLoader>
+#include <KLocalizedString>
+#include <KActionCollection>
 
 #include "kmplayercommon_log.h"
 #include "kmplayerview.h"

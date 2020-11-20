@@ -22,12 +22,12 @@
 #include <QFile>
 #include <QTimer>
 
-#include <klocalizedstring.h>
+#include <KLocalizedString>
 #include <kled.h>
-#include <kconfig.h>
+#include <KConfig>
 #include <kprocess.h>
 #include <kprocctrl.h>
-#include <kmessagebox.h>
+#include <KMessageBox>
 
 #include "kmplayerapp_log.h"
 #include "kmplayerbroadcast.h"

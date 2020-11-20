@@ -27,8 +27,8 @@
 #include <QImage>
 #include <QAbstractNativeEventFilter>
 
-#include <kactioncollection.h>
-#include <klocalizedstring.h>
+#include <KActionCollection>
+#include <KLocalizedString>
 
 #include "kmplayercommon_log.h"
 #include "kmplayerview.h"

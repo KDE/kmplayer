@@ -10,7 +10,7 @@
 
 #include "config-kmplayer.h"
 
-#include <kpagedialog.h>
+#include <KPageDialog>
 #include <QMap>
 
 #include "kmplayerplaylist.h"

@@ -36,20 +36,19 @@
 #include <QSystemTrayIcon>
 #include <QX11Info>
 
-// include files for KDE
-#include <kiconloader.h>
-#include <kmessagebox.h>
-#include <ktoolbar.h>
-#include <klocalizedstring.h>
-#include <kconfig.h>
-#include <ksharedconfig.h>
-#include <kstandardaction.h>
-#include <kactioncollection.h>
-#include <klineedit.h>
-#include <kshortcutsdialog.h>
-#include <kedittoolbar.h>
-#include <krecentfilesaction.h>
-#include <ktoggleaction.h>
+// KF
+#include <KIconLoader>
+#include <KMessageBox>
+#include <KToolBar>
+#include <KLocalizedString>
+#include <KConfig>
+#include <KSharedConfig>
+#include <KStandardAction>
+#include <KActionCollection>
+#include <KLineEdit>
+#include <KShortcutsDialog>
+#include <KRecentFilesAction>
+#include <KToggleAction>
 
 // application specific includes
 #include "kmplayerapp_log.h"
@@ -68,7 +67,7 @@
 //#include "kmplayervdr.h"
 #include "kmplayerconfig.h"
 
-#include <kurlrequester.h>
+#include <KUrlRequester>
 #include <QFileDialog>
 
 extern const char * strMPlayerGroup;

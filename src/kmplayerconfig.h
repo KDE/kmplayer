@@ -15,7 +15,7 @@
 #include <QStringList>
 #include <QMap>
 
-#include <ksharedconfig.h>
+#include <KSharedConfig>
 
 #include "kmplayercommon_export.h"
 

@@ -22,15 +22,15 @@
 #include <QListWidget>
 #include <QFontDatabase>
 
-#include <kurlrequester.h>
-#include <klineedit.h>
+#include <KUrlRequester>
+#include <KLineEdit>
 
-#include <kconfig.h>
-#include <kconfiggroup.h>
-#include <klocalizedstring.h>
-#include <kcombobox.h>
-#include <kmessagebox.h>
-#include <kcolorscheme.h>
+#include <KConfig>
+#include <KConfigGroup>
+#include <KLocalizedString>
+#include <KComboBox>
+#include <KMessageBox>
+#include <KColorScheme>
 
 #include "kmplayercommon_log.h"
 #include "kmplayerconfig.h"

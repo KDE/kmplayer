@@ -28,20 +28,19 @@
 #include <QMimeDatabase>
 #include <QMimeType>
 
-#include <kmessagebox.h>
-#include <kaboutdata.h>
-#include <kbookmarkmenu.h>
-#include <kbookmarkmanager.h>
-#include <kbookmark.h>
-#include <kconfig.h>
-#include <kconfiggroup.h>
-#include <kiconloader.h>
-#include <klocalizedstring.h>
-#include <kprotocolinfo.h>
+#include <KMessageBox>
+#include <KAboutData>
+#include <KBookmarkMenu>
+#include <KBookmarkManager>
+#include <KBookmark>
+#include <KConfig>
+#include <KConfigGroup>
+#include <KIconLoader>
+#include <KLocalizedString>
+#include <KProtocolInfo>
 #include <KIO/Global>
-#include <kio/job.h>
-#include <kio/jobclasses.h>
-#include <kurlauthorized.h>
+#include <KIO/Job>
+#include <KUrlAuthorized>
 
 #include "kmplayercommon_log.h"
 #include "kmplayerpartbase.h"

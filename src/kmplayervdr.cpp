@@ -27,16 +27,16 @@
 #include <QSocket>
 #include <QEventLoop>
 
-#include <klocalizedstring.h>
-#include <kmessagebox.h>
-#include <klineedit.h>
-#include <kurlrequester.h>
-#include <kcombobox.h>
+#include <KLocalizedString>
+#include <KMessageBox>
+#include <KLineEdit>
+#include <KUrlRequester>
+#include <KComboBox>
 #include <kstatusbar.h>
 #include <kprocess.h>
-#include <kconfig.h>
+#include <KConfig>
 #include <kaction.h>
-#include <kiconloader.h>
+#include <KIconLoader>
 #include <klistview.h>
 #include <kinputdialog.h>
 

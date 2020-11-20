@@ -17,9 +17,9 @@
 #include <QMap>
 #include <QModelIndex>
 
-#include <kmediaplayer/player.h>
-#include <ksharedconfig.h>
-#include <kconfiggroup.h>
+#include <KMediaPlayer/Player>
+#include <KSharedConfig>
+#include <KConfigGroup>
 
 #include "kmplayercommon_export.h"
 #include "kmplayerview.h"

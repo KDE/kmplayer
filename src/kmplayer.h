@@ -13,8 +13,8 @@
 #include <QModelIndex>
 #include <QFrame>
 
-#include <kxmlguiwindow.h>
-#include <ksharedconfig.h>
+#include <KXmlGuiWindow>
+#include <KSharedConfig>
 
 #include "kmplayerconfig.h"
 #include "kmplayerpartbase.h"

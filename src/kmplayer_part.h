@@ -7,9 +7,9 @@
 #ifndef KMPLAYER_PART_H
 #define KMPLAYER_PART_H
 
-#include <kpluginfactory.h>
-#include <kparts/browserextension.h>
-#include <kparts/liveconnectextension.h>
+#include <KPluginFactory>
+#include <KParts/BrowserExtension>
+#include <KParts/LiveConnectExtension>
 #include <kcoreaddons_version.h>
 #if KCOREADDONS_VERSION < QT_VERSION_CHECK(5, 77, 0)
 #include <KAboutData>

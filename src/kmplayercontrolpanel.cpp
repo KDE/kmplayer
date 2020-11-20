@@ -18,8 +18,8 @@
 #include <QWheelEvent>
 #include <QWidgetAction>
 
-#include <kiconloader.h>
-#include <klocalizedstring.h>
+#include <KIconLoader>
+#include <KLocalizedString>
 
 #include "kmplayercommon_log.h"
 #include "kmplayerview.h"

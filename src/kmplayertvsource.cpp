@@ -23,13 +23,13 @@
 #include <QStandardPaths>
 #include <QFontMetrics>
 
-#include <klocalizedstring.h>
-#include <kmessagebox.h>
-#include <klineedit.h>
-#include <kurlrequester.h>
-#include <kcombobox.h>
-#include <kconfig.h>
-#include <kconfiggroup.h>
+#include <KLocalizedString>
+#include <KMessageBox>
+#include <KLineEdit>
+#include <KUrlRequester>
+#include <KComboBox>
+#include <KConfig>
+#include <KConfigGroup>
 
 #include "kmplayerapp_log.h"
 #include "kmplayerpartbase.h"

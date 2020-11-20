@@ -19,10 +19,9 @@
 #include <QMimeDatabase>
 #include <QMimeType>
 
-#include <klocalizedstring.h>
-#include <kio/job.h>
-#include <kio/jobclasses.h>
-#include <kurlauthorized.h>
+#include <KLocalizedString>
+#include <KIO/Job>
+#include <KUrlAuthorized>
 
 #include "mediaobject.h"
 #include "kmplayerprocess.h"

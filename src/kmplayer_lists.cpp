@@ -13,8 +13,8 @@
 #include <QStandardPaths>
 #include <QFileDialog>
 
-#include <ksharedconfig.h>
-#include <klocalizedstring.h>
+#include <KSharedConfig>
+#include <KLocalizedString>
 
 #include "kmplayerapp_log.h"
 #include "kmplayer_lists.h"
