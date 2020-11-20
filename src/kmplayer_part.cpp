@@ -506,7 +506,7 @@ bool KMPlayerPart::openUrl(const QUrl& _url) {
         url = QUrl ("about:empty");
         m_wait_npp_loaded = emit_started = false;
     } else if (!m_file_name.isEmpty () && (_url.isEmpty () || _url == m_docbase)) {
-        url = KUrl (m_docbase, m_file_name); // fix misdetected SRC attr
+        url = m_docbase.resolved(QUrl(m_file_name)); // fix misdetected SRC attr
     } else if (_url != m_docbase) {
         url = _url;
         if (!m_file_name.isEmpty() && _url.url().indexOf(m_file_name) < 0) {
@@ -537,7 +537,7 @@ bool KMPlayerPart::openUrl(const QUrl& _url) {
     }
     if (!m_href_url.isEmpty () &&
             !KUrlAuthorized::authorizeUrlAction (
-                "redirect", url, KUrl (m_docbase, m_href_url)))
+                "redirect", url, m_docbase.resolved(QUrl(m_href_url))))
            m_href_url.truncate (0);
     if (m_href_url.isEmpty ())
         setUrl (url.url ());
@@ -597,7 +597,7 @@ bool KMPlayerPart::startUrl(const QUrl &uri, const QString &img)
         url = m_src_url;
     } else if (m_settings->grabhref && !m_href_url.isEmpty ()) {
         static int counter;
-        m_href_url = KUrl (m_docbase, m_href_url).url ();
+        m_href_url = m_docbase.resolved(QUrl(m_href_url)).url ();
         m_grab_file = QString ("%1grab-%2-%3.jpg")
             .arg (QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)+ "kmplayer/")
             .arg (getpid ())

@@ -2010,8 +2010,8 @@ void NpPlayer::request_stream (const QString &path, const QString &url, const QS
     qCDebug(LOG_KMPLAYER_COMMON) << "NpPlayer::request " << path << " '" << url << "' " << " tg:" << target << "post" << post.size ();
     bool js = url.startsWith ("javascript:");
     if (!js) {
-        QString base = process_info->manager->player ()->docBase ().url ();
-        uri = KUrl (base.isEmpty () ? m_url : base, url).url ();
+        const QUrl base = process_info->manager->player ()->docBase ();
+        uri = (base.isEmpty () ? QUrl(m_url) : base).resolved(QUrl(url)).url ();
     }
     qCDebug(LOG_KMPLAYER_COMMON) << "NpPlayer::request " << path << " '" << uri << "'" << m_url << "->" << url;
     qint32 sid = getStreamId (path);
@@ -2024,7 +2024,7 @@ void NpPlayer::request_stream (const QString &path, const QString &url, const QS
                 if (result == "undefined")
                     uri = QString ();
                 else
-                    uri = KUrl (m_url, result).url (); // probably wrong ..
+                    uri = QUrl (m_url).resolved(QUrl(result)).url (); // probably wrong ..
             }
             KUrl kurl(uri);
             if (kurl.isValid ())

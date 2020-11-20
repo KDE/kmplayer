@@ -739,13 +739,14 @@ Node::PlayType Mrl::playType () {
     return cached_play_type;
 }
 
-QString Mrl::absolutePath () {
+QString Mrl::absolutePath () const
+{
     QString path = src;
     if (!path.isEmpty() && !path.startsWith ("tv:/")) {
         for (Node *e = parentNode (); e; e = e->parentNode ()) {
             Mrl * mrl = e->mrl ();
             if (mrl && !mrl->src.isEmpty () && mrl->src != src) {
-                path = KUrl (mrl->absolutePath (), src).url ();
+                path = QUrl(mrl->absolutePath ()).resolved(QUrl(src)).url ();
                 break;
             }
         }
@@ -875,7 +876,7 @@ void Mrl::parseParam (const TrieString & para, const QString & val) {
         if (abs != src)
             src = val;
         else
-            src = KUrl (abs, val).url ();
+            src = QUrl(abs).resolved(QUrl(val)).url ();
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
             if (c->mrl () && c->mrl ()->opener.ptr () == this) {
                 removeChild (c);

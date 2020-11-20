@@ -135,7 +135,7 @@ void PartBase::showPlayListWindow () {
 
 void PartBase::addBookMark (const QString & t, const QString & url) {
     KBookmarkGroup b = m_bookmark_manager->root ();
-    b.addBookmark (t, KUrl (url), KIO::iconNameForUrl(QUrl(url)));
+    b.addBookmark (t, QUrl (url), KIO::iconNameForUrl(QUrl(url)));
     m_bookmark_manager->emitChanged (b);
 }
 
@@ -642,7 +642,7 @@ void PartBase::playListItemActivated(const QModelIndex &index) {
                     for (Node *e = pi->node.ptr (); e; e = e->parentNode ()) {
                         Mrl * mrl = e->mrl ();
                         if (mrl)
-                            src = KUrl (mrl->absolutePath (), src).url ();
+                            src = QUrl (mrl->absolutePath ()).resolved(QUrl(src)).url ();
                     }
                     KUrl url (src);
                     if (url.isValid ())
@@ -1256,7 +1256,7 @@ void Source::insertURL (NodePtr node, const QString & mrl, const QString & title
     if (!node || !node->mrl ()) // this should always be false
         return;
     QString cur_url = node->mrl ()->absolutePath ();
-    KUrl url (cur_url, mrl);
+    const QUrl url = QUrl(cur_url).resolved(QUrl(mrl));
     QString urlstr = QUrl::fromPercentEncoding (url.url ().toUtf8 ());
     qCDebug(LOG_KMPLAYER_COMMON) << cur_url << " " << urlstr;
     if (!url.isValid ())

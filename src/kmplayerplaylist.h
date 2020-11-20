@@ -632,7 +632,8 @@ public:
     ~Mrl () override;
     PlayType playType () override;
     Mrl * mrl () override;
-    QString absolutePath ();
+    /// Returns the resolved full url
+    QString absolutePath () const;
 
     void activate () override;
     void begin () override;
