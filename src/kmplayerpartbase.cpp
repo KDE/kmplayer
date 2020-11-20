@@ -1521,7 +1521,7 @@ QString URLSource::prettyName () {
         }
         QString file = m_url.fileName ();
         int len = newurl.size () + file.size ();
-        KUrl path = KUrl (m_url.directory ());
+        QUrl path = m_url.adjusted(QUrl::RemoveFilename|QUrl::RemoveQuery|QUrl::RemoveFragment);
         bool modified = false;
         while (path.url ().size () + len > 50) {
             const QUrl upPath = KIO::upUrl(path);
@@ -1531,7 +1531,7 @@ QString URLSource::prettyName () {
             path = upPath;
             modified = true;
         }
-        QString dir = path.directory ();
+        QString dir = path.path ();
         if (!dir.endsWith (QString ("/")))
             dir += '/';
         if (modified)
