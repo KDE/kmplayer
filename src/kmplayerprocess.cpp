@@ -1043,7 +1043,7 @@ MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * parent)
         QTableWidgetItem *item = table->itemAt (i, 0);
         item->setFlags (item->flags () ^ Qt::ItemIsEditable);
     }
-    table->horizontalHeader ()->setResizeMode (QHeaderView::ResizeToContents);
+    table->horizontalHeader ()->setSectionResizeMode (QHeaderView::ResizeToContents);
     table->horizontalHeader ()->setStretchLastSection (true);
     table->resizeRowsToContents ();
     layout->addWidget (table);
