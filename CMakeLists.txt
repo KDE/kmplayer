@@ -22,7 +22,6 @@ include(ECMInstallIcons)
 include(ECMSetupVersion)
 include(ECMQtDeclareLoggingCategory)
 include(GenerateExportHeader)
-Include(CheckIncludeFiles)
 include(FeatureSummary)
 include(FindXCB)
 
@@ -94,8 +93,6 @@ if(NOT WIN32)
   endif (KMPLAYER_BUILT_WITH_EXPAT)
 
 endif(NOT WIN32)
-
-check_include_files(stdint.h HAVE_STDINT_H)
 
 configure_file (config-kmplayer.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kmplayer.h )
 
