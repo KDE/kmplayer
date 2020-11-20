@@ -66,8 +66,9 @@ generate_export_header(kmplayercommon)
 target_link_libraries(kmplayercommon
     PUBLIC
         KF5::MediaPlayer
-        KF5::KDELibs4Support
     PRIVATE
+        KF5::IconThemes
+        KF5::Bookmarks
         ${CAIRO_LIBRARIES}
         ${XCB_LIBRARIES}
         ${EXPAT_LIBRARIES}
@@ -96,6 +97,7 @@ kcoreaddons_desktop_to_json(kmplayerpart ${CMAKE_CURRENT_BINARY_DIR}/kmplayer_pa
 
 target_link_libraries(kmplayerpart
     kmplayercommon
+    KF5::IconThemes
 )
 
 install(TARGETS kmplayerpart DESTINATION ${KDE_INSTALL_PLUGINDIR}/kf5/parts)
@@ -125,6 +127,7 @@ kf5_add_kdeinit_executable(kmplayer ${kmplayer_SRCS} main.cpp)
 
 target_link_libraries(kdeinit_kmplayer
     kmplayercommon
+    KF5::IconThemes
 )
 
 target_link_libraries(kmplayer kdeinit_kmplayer)
