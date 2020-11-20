@@ -4,7 +4,7 @@
     SPDX-License-Identifier: LGPL-2.0-only
 */
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "config-kmplayer.h"
 // include files for Qt

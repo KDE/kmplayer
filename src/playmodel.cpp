@@ -453,7 +453,3 @@ PlayItem *PlayModel::updateTree (TopPlayItem *ritem, NodePtr active) {
 
     return curitem;
 }
-
-
-#include <stdio.h>
-

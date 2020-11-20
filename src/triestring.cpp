@@ -10,9 +10,9 @@
 #else
 # include <config-kmplayer.h>
 #endif
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
 #include <vector>
 
 #include "kmplayercommon_log.h"

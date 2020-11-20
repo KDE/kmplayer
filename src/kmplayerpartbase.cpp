@@ -10,7 +10,7 @@
 
 #include "config-kmplayer.h"
 
-#include <math.h>
+#include <cmath>
 
 #include <qapplication.h>
 #include <QByteArray>

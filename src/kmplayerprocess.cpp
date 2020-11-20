@@ -4,7 +4,7 @@
     SPDX-License-Identifier: LGPL-2.0-or-later
 */
 
-#include <math.h>
+#include <cmath>
 #include "config-kmplayer.h"
 #include <unistd.h>
 #include <qstring.h>

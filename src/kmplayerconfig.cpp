@@ -6,7 +6,7 @@
 
 #include <algorithm>
 #include <functional>
-#include <assert.h>
+#include <cassert>
 
 #include "config-kmplayer.h"
 #include <qcheckbox.h>

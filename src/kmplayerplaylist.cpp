@@ -5,7 +5,7 @@
 */
 
 #include "config-kmplayer.h"
-#include <time.h>
+#include <ctime>
 
 #include <qtextstream.h>
 #ifdef KMPLAYER_WITH_EXPAT

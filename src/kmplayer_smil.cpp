@@ -6,7 +6,7 @@
 
 #include "config-kmplayer.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <qtextstream.h>
 #include <qcolor.h>

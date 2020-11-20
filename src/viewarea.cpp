@@ -7,8 +7,8 @@
 
 #include "config-kmplayer.h"
 
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
 
 #include <qapplication.h>
 #include <qslider.h>
