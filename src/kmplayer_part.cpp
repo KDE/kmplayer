@@ -451,7 +451,8 @@ void KMPlayerPart::processCreated (KMPlayer::Process *p) {
 #endif
 }
 
-bool KMPlayerPart::allowRedir (const KUrl & url) const {
+bool KMPlayerPart::allowRedir (const QUrl & url) const
+{
     return KUrlAuthorized::authorizeUrlAction ("redirect", m_docbase, url);
 }
 
@@ -580,14 +581,15 @@ KMPlayerPart::openUrl(const QUrl& u, const QString& t, const QString& srv) {
     m_browserextension->requestOpenURL (u, t, srv);
 }
 
-bool KMPlayerPart::openNewURL (const KUrl & url) {
+bool KMPlayerPart::openNewURL (const QUrl & url) {
     m_file_name.truncate (0);
     m_href_url.truncate (0);
     m_sources ["urlsource"]->setAutoPlay (true);
     return openUrl (url);
 }
 
-bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
+bool KMPlayerPart::startUrl(const QUrl &uri, const QString &img)
+{
     Source * src = sources () ["urlsource"];
     KUrl url (uri);
     qCDebug(LOG_KMPLAYER_PART) << "uri '" << uri << "' img '" << img;
@@ -883,7 +885,8 @@ void KMPlayerBrowserExtension::restoreState (QDataStream & stream) {
     static_cast <PartBase *> (parent ())->openUrl (QUrl(url));
 }
 
-void KMPlayerBrowserExtension::requestOpenURL (const KUrl & url, const QString & target, const QString & service) {
+void KMPlayerBrowserExtension::requestOpenURL (const QUrl & url, const QString & target, const QString & service)
+{
     KParts::OpenUrlArguments args;
     KParts::BrowserArguments bargs;
     bargs.frameName = target;

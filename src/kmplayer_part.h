@@ -74,7 +74,7 @@ public:
 
     void saveState (QDataStream & stream) override;
     void restoreState (QDataStream & stream) override;
-    void requestOpenURL (const KUrl & url, const QString & target, const QString & service);
+    void requestOpenURL (const QUrl & url, const QString & target, const QString & service);
 };
 
 /*
@@ -152,13 +152,13 @@ public:
     KMPlayerLiveConnectExtension * liveconnectextension () const
         { return m_liveconnectextension; }
     bool hasFeature (int f) { return m_features & f; }
-    bool allowRedir (const KUrl & url) const;
+    bool allowRedir (const QUrl & url) const;
     void connectToPart (KMPlayerPart *);
     KMPlayerPart * master () const { return m_master; }
     void setMaster (KMPlayerPart * m) { m_master = m; }
     void setLoaded (int percentage) override;
-    bool openNewURL (const KUrl & url); // for JS interface
-    bool startUrl (const KUrl &url, const QString &pic=QString ());//clickToPlay
+    bool openNewURL (const QUrl & url); // for JS interface
+    bool startUrl (const QUrl &url, const QString &pic=QString ());//clickToPlay
 
     QString doEvaluate (const QString &script) override;
 
