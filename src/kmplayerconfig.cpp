@@ -20,6 +20,7 @@
 #include <qfileinfo.h>
 #include <QButtonGroup>
 #include <QListWidget>
+#include <QFontDatabase>
 
 #include <kurlrequester.h>
 #include <klineedit.h>
@@ -31,7 +32,6 @@
 #include <klocalizedstring.h>
 #include <kcombobox.h>
 #include <kmessagebox.h>
-#include <kglobalsettings.h>
 #include <kcolorscheme.h>
 
 #include "kmplayercommon_log.h"
@@ -114,11 +114,11 @@ Settings::Settings (PartBase * player, KSharedConfigPtr config)
         colors [ColorSetting::playlist_foreground].color;
     fonts [FontSetting::playlist].title = i18n ("Playlist");
     fonts [FontSetting::playlist].option = "PlaylistFont";
-    fonts [FontSetting::playlist].font = KGlobalSettings::generalFont();
+    fonts [FontSetting::playlist].font = QFontDatabase::systemFont(QFontDatabase::GeneralFont);
     fonts [FontSetting::playlist].font.setItalic (true);
     fonts [FontSetting::infowindow].title = i18n ("Info window");
     fonts [FontSetting::infowindow].option = "InfoWindowFont";
-    fonts [FontSetting::infowindow].font = KGlobalSettings::generalFont();
+    fonts [FontSetting::infowindow].font = QFontDatabase::systemFont(QFontDatabase::GeneralFont);
 }
 
 Settings::~Settings () {
