@@ -36,7 +36,6 @@
 #include <kcombobox.h>
 #include <kcolorbutton.h>
 #include <kurlrequester.h>
-#include <kvbox.h>
 #include <KTextWidgets/kpluralhandlingspinbox.h>
 #include <KFontChooserDialog>
 #include "pref.h"
@@ -56,7 +55,8 @@ Preferences::Preferences(PartBase * player, Settings * settings)
     setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Apply);
     button(QDialogButtonBox::Ok)->setDefault(true);
 
-    KVBox *page = new KVBox (this);
+    QWidget *page = new QWidget (this);
+    QVBoxLayout* pageLayout = new QVBoxLayout(page);
     KPageWidgetItem *item = addPage (page, i18n ("General Options"));
     item->setIcon(QIcon::fromTheme("kmplayer"));
     QTabWidget *tab = new QTabWidget (page);
@@ -67,17 +67,21 @@ Preferences::Preferences(PartBase * player, Settings * settings)
     m_GeneralPageOutput = new PrefGeneralPageOutput
         (tab, settings->audiodrivers, settings->videodrivers);
     tab->addTab (m_GeneralPageOutput, i18n("Output"));
+    pageLayout->addWidget(tab);
     entries.insert (i18n("General Options"), tab);
 
-    page = new KVBox (this);
+    page = new QWidget (this);
+    pageLayout = new QVBoxLayout(page);
     m_url_item = addPage (page, i18n ("Source"));
     m_url_item->setIcon(QIcon::fromTheme("document-import"));
     tab = new QTabWidget (page);
     m_SourcePageURL = new PrefSourcePageURL (tab);
     tab->addTab (m_SourcePageURL, i18n ("URL"));
+    pageLayout->addWidget(tab);
     entries.insert (i18n("Source"), tab);
 
-    page = new KVBox (this);
+    page = new QWidget (this);
+    pageLayout = new QVBoxLayout(page);
     m_record_item = addPage (page, i18n ("Recording"));
     m_record_item->setIcon(QIcon::fromTheme("folder-video"));
     tab = new QTabWidget (page);
@@ -103,14 +107,17 @@ Preferences::Preferences(PartBase * player, Settings * settings)
     m_RecordPage = new PrefRecordPage (tab, player, recorders, recorders_count);
     tab->insertTab (0, m_RecordPage, i18n ("General"));
     tab->setCurrentIndex (0);
+    pageLayout->addWidget(tab);
     entries.insert (i18n("Recording"), tab);
 
-    page = new KVBox (this);
+    page = new QWidget (this);
+    pageLayout = new QVBoxLayout(page);
     item = addPage (page, i18n ("Output Plugins"));
     item->setIcon(QIcon::fromTheme("folder-image"));
     tab = new QTabWidget (page);
     m_OPPagePostproc = new PrefOPPagePostProc (tab);
     tab->addTab (m_OPPagePostproc, i18n ("Postprocessing"));
+    pageLayout->addWidget(tab);
     entries.insert (i18n("Postprocessing"), tab);
 
     for (PreferencesPage * p = settings->pagelist; p; p = p->next)
@@ -149,10 +156,12 @@ void Preferences::addPrefPage (PreferencesPage * page) {
         return;
     QMap<QString, QTabWidget *>::iterator en_it = entries.find (item);
     if (en_it == entries.end ()) {
-        KVBox *page = new KVBox (this);
+        QWidget *page = new QWidget(this);
+        QVBoxLayout* pageLayout = new QVBoxLayout(page);
         witem = addPage (page, item);
         witem->setIcon(QIcon::fromTheme(icon));
         tab = new QTabWidget (page);
+        pageLayout->addWidget(tab);
         entries.insert (item, tab);
     } else
         tab = en_it.value ();
