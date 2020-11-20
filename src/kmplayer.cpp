@@ -1840,7 +1840,7 @@ bool KMPlayerPipeSource::isSeekable () {
 
 void KMPlayerPipeSource::activate () {
     // dangerous !! if (!m_url.protocol ().compare ("kmplayer"))
-    //    m_pipecmd = KUrl::decode_string (m_url.path ()).mid (1);
+    //    m_pipecmd = QUrl::fromPercentEncoding(m_url.path ().toLatin1()).mid (1);
     setUrl ("stdin://");
     KMPlayer::GenericMrl * gen = new KMPlayer::GenericMrl (m_document, QString ("stdin://"), m_pipecmd);
     gen->bookmarkable = false;
