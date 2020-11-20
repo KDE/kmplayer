@@ -480,7 +480,8 @@ bool PartBase::openUrl(const QList<QUrl>& urls) {
     return true;
 }
 
-void PartBase::openUrl (const KUrl &u, const QString &t, const QString &srv) {
+void PartBase::openUrl (const QUrl &u, const QString &t, const QString &srv)
+{
     qCDebug(LOG_KMPLAYER_COMMON) << u << " " << t << " " << srv;
     QDBusMessage msg = QDBusMessage::createMethodCall (
             "org.kde.klauncher", "/KLauncher",
