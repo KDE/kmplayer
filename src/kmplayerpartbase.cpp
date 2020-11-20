@@ -1513,7 +1513,7 @@ QString URLSource::prettyName () {
         QString newurl;
         if (!m_url.isLocalFile ()) {
             newurl = m_url.scheme() + QString ("://");
-            if (m_url.hasHost ())
+            if (!m_url.host().isEmpty())
                 newurl += m_url.host ();
             if (m_url.port () != -1)
                 newurl += QString (":%1").arg (m_url.port ());
