@@ -164,7 +164,7 @@ public:
     KMPlayer::Node *childFromTag (const QString &tag) override;
     const char *nodeName () const override { return "generator"; }
 
-private slots:
+private Q_SLOTS:
     void started ();
     void error (QProcess::ProcessError err);
     void readyRead ();

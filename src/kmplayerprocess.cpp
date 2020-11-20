@@ -1736,7 +1736,7 @@ void NpStream::open () {
         }
         qCDebug(LOG_KMPLAYER_COMMON) << "result is " << pending_buf.constData ();
         finish_reason = BecauseDone;
-        emit stateChanged ();
+        Q_EMIT stateChanged ();
     } else {
         if (!post.size ()) {
             job = KIO::get (QUrl::fromUserInput (url), KIO::NoReload, KIO::HideProgressInfo);
@@ -1811,7 +1811,7 @@ void NpStream::slotResult (KJob *jb) {
     qCDebug(LOG_KMPLAYER_COMMON) << "slotResult " << stream_id << " " << bytes << " err:" << jb->error ();
     finish_reason = jb->error () ? BecauseError : BecauseDone;
     job = nullptr; // signal KIO::Job::result deletes itself
-    emit stateChanged ();
+    Q_EMIT stateChanged ();
 }
 
 void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
@@ -1835,13 +1835,13 @@ void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
                 http_headers += QChar ('\n');
         }
         if (sz + qb.size ())
-            emit stateChanged ();
+            Q_EMIT stateChanged ();
     }
 }
 
 void NpStream::redirection (KIO::Job*, const QUrl& kurl) {
     url = kurl.url ();
-    emit redirected (stream_id, kurl);
+    Q_EMIT redirected (stream_id, kurl);
 }
 
 void NpStream::slotMimetype (KIO::Job *, const QString &mime) {
@@ -2045,7 +2045,7 @@ void NpPlayer::request_stream (const QString &path, const QString &url, const QS
 
 QString NpPlayer::evaluate (const QString &script, bool store) {
     QString result ("undefined");
-    emit evaluate (script, store, result);
+    Q_EMIT evaluate (script, store, result);
     //qCDebug(LOG_KMPLAYER_COMMON) << "evaluate " << script << " => " << result;
     return result;
 }
@@ -2064,7 +2064,7 @@ void NpPlayer::destroyStream (uint32_t sid) {
         qCWarning(LOG_KMPLAYER_COMMON) << "Object " << sid << " not found";
     }
     if (!sid)
-        emit loaded ();
+        Q_EMIT loaded ();
 }
 
 void NpPlayer::sendFinish (quint32 sid, quint32 bytes, NpStream::Reason because) {
@@ -2079,7 +2079,7 @@ void NpPlayer::sendFinish (quint32 sid, quint32 bytes, NpStream::Reason because)
         QDBusConnection::sessionBus().send (msg);
     }
     if (!sid)
-        emit loaded ();
+        Q_EMIT loaded ();
 }
 
 void NpPlayer::terminateJobs () {

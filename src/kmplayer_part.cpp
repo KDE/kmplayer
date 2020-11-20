@@ -569,7 +569,7 @@ bool KMPlayerPart::openUrl(const QUrl& _url) {
     startUrl (url);
 
     if (emit_started && urlsource->autoPlay ()) {
-        emit started (nullptr);
+        Q_EMIT started (nullptr);
         m_started_emited = true;
     }
     return true;
@@ -692,7 +692,7 @@ bool KMPlayerPart::startUrl(const QUrl &uri, const QString &img)
         if (m_view->setPicture (img)) {
             connect (m_view, SIGNAL (pictureClicked ()),
                      this, SLOT (pictureClicked ()));
-            emit completed ();
+            Q_EMIT completed ();
             m_started_emited = false;
         } else {
             return PartBase::openUrl(m_href_url.isEmpty() ? url : QUrl::fromUserInput(m_href_url));
@@ -782,7 +782,7 @@ void KMPlayerPart::playingStarted () {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider(!!(*i)->source()->length ());
         m_view->controlPanel()->enableSeekButtons((*i)->source()->isSeekable());
-        emit loading (100);
+        Q_EMIT loading (100);
     } else if (m_source)
         KMPlayer::PartBase::playingStarted ();
     else
@@ -792,7 +792,7 @@ void KMPlayerPart::playingStarted () {
         m_liveconnectextension->setSize (m_source->width(), m_source->height());
     m_browserextension->setLoadingProgress (100);
     if (m_started_emited && !m_wait_npp_loaded) {
-        emit completed ();
+        Q_EMIT completed ();
         m_started_emited = false;
     }
     m_liveconnectextension->started ();
@@ -804,7 +804,7 @@ void KMPlayerPart::playingStopped () {
     if (m_started_emited && !m_wait_npp_loaded) {
         m_started_emited = false;
         m_browserextension->setLoadingProgress (100);
-        emit completed ();
+        Q_EMIT completed ();
     }
     m_liveconnectextension->finished ();
     m_browserextension->infoMessage (i18n ("KMPlayer: Stop Playing"));
@@ -817,7 +817,7 @@ void KMPlayerPart::nppLoaded () {
         m_wait_npp_loaded = false;
         m_started_emited = false;
         m_browserextension->setLoadingProgress (100);
-        emit completed ();
+        Q_EMIT completed ();
     }
 }
 
@@ -867,11 +867,11 @@ KMPlayerBrowserExtension::KMPlayerBrowserExtension (KMPlayerPart * parent)
 }
 
 void KMPlayerBrowserExtension::urlChanged (const QString & url) {
-    emit setLocationBarUrl (url);
+    Q_EMIT setLocationBarUrl (url);
 }
 
 void KMPlayerBrowserExtension::setLoadingProgress (int percentage) {
-    emit loadingProgress (percentage);
+    Q_EMIT loadingProgress (percentage);
 }
 
 void KMPlayerBrowserExtension::saveState (QDataStream & stream) {
@@ -890,7 +890,7 @@ void KMPlayerBrowserExtension::requestOpenURL (const QUrl & url, const QString &
     KParts::BrowserArguments bargs;
     bargs.frameName = target;
     args.setMimeType (service);
-    emit openUrlRequest (url, args, bargs);
+    Q_EMIT openUrlRequest (url, args, bargs);
 }
 
 //---------------------------------------------------------------------
@@ -1088,7 +1088,7 @@ void KMPlayerLiveConnectExtension::finished () {
     if (m_started && m_enablefinish) {
         KParts::LiveConnectExtension::ArgList args;
         args.push_back (qMakePair (KParts::LiveConnectExtension::TypeString, QString("if (window.onFinished) onFinished();")));
-        emit partEvent (0, "eval", args);
+        Q_EMIT partEvent (0, "eval", args);
         m_started = true;
         m_enablefinish = false;
     }
@@ -1098,7 +1098,7 @@ QString KMPlayerLiveConnectExtension::evaluate (const QString &script) {
     KParts::LiveConnectExtension::ArgList args;
     args.push_back(qMakePair(KParts::LiveConnectExtension::TypeString, script));
     script_result.clear ();
-    emit partEvent (0, "eval", args);
+    Q_EMIT partEvent (0, "eval", args);
     //qCDebug(LOG_KMPLAYER_PART) << script << script_result;
     return script_result;
 }
@@ -1217,7 +1217,7 @@ bool KMPlayerLiveConnectExtension::get
     }
     rid = id;
     QString req_result;
-    emit requestGet (id, name, &req_result);
+    Q_EMIT requestGet (id, name, &req_result);
     if (!req_result.isEmpty ()) {
         if (str2LC (req_result, type, rval)) {
             if (KParts::LiveConnectExtension::TypeFunction == type) {
@@ -1406,7 +1406,7 @@ bool KMPlayerLiveConnectExtension::call
         }
     }
     rid = oid;
-    emit requestCall (oid, func, arglst, &req_result);
+    Q_EMIT requestCall (oid, func, arglst, &req_result);
     if (!req_result.isEmpty ()) {
         if (str2LC (req_result, type, rval))
             return true;
@@ -1534,5 +1534,5 @@ void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     jscode.sprintf("try { eval(\"this.setAttribute('WIDTH',%d);this.setAttribute('HEIGHT',%d)\"); } catch(e){}", w, h);
     KParts::LiveConnectExtension::ArgList args;
     args.push_back (qMakePair (KParts::LiveConnectExtension::TypeString, jscode));
-    emit partEvent (0, "eval", args);
+    Q_EMIT partEvent (0, "eval", args);
 }

@@ -50,9 +50,9 @@ public:
     IViewer *createVideoWidget ();
     void destroyVideoWidget (IViewer *widget);
     void setVideoWidgetVisible (bool show);
-signals:
+Q_SIGNALS:
     void fullScreenChanged ();
-public slots:
+public Q_SLOTS:
     void fullScreen() KMPLAYERCOMMON_NO_EXPORT;
     void accelActivated() KMPLAYERCOMMON_NO_EXPORT;
     void scale(int) KMPLAYERCOMMON_NO_EXPORT;
@@ -127,7 +127,7 @@ public:
     WindowId clientWinId() { return m_client_window; }
     void discardClient() {}
     void embedded(WindowId handle) override;
-public slots:
+public Q_SLOTS:
     void fullScreenChanged();
 protected:
     void resizeEvent(QResizeEvent*) override;

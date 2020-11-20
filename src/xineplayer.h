@@ -54,7 +54,7 @@ public:
     bool event (QEvent * e);
     void setAudioLang (int, const QString &);
     void setSubtitle (int, const QString &);
-public slots:
+public Q_SLOTS:
     void play (int repeat_count);
     void stop ();
     void pause ();

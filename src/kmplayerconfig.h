@@ -181,12 +181,12 @@ public:
     QString vcddevice;
     QMap <QString, QString> backends;
     PreferencesPage * pagelist;
-signals:
+Q_SIGNALS:
     void configChanged ();
-public slots:
+public Q_SLOTS:
     void readConfig () KMPLAYERCOMMON_NO_EXPORT;
     void writeConfig ();
-private slots:
+private Q_SLOTS:
     void okPressed () KMPLAYERCOMMON_NO_EXPORT;
     void getHelp () KMPLAYERCOMMON_NO_EXPORT;
 private:

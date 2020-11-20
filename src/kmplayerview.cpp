@@ -134,7 +134,7 @@ void View::dropEvent (QDropEvent * de) {
     }
     if (uris.size () > 0) {
         //m_widgetstack->currentWidget ()->setFocus ();
-        emit urlDropped (uris);
+        Q_EMIT urlDropped (uris);
         de->accept ();
     }
 }
@@ -333,7 +333,7 @@ void View::toggleVideoConsoleWindow () {
             m_control_panel->show();
     }
     updateLayout ();
-    emit windowVideoConsoleToggled (m_multiedit->isVisible ());
+    Q_EMIT windowVideoConsoleToggled (m_multiedit->isVisible ());
 }
 
 void View::setControlPanelMode (ControlPanelMode m) {
@@ -565,7 +565,7 @@ void View::fullScreen () {
         m_restore_state_timer = startTimer(100); //dockArea()->restoreState(m_dock_state);
     }
     setControlPanelMode (m_old_controlpanel_mode);
-    emit fullScreenChanged ();
+    Q_EMIT fullScreenChanged ();
 }
 
 int View::statusBarHeight () const {

@@ -356,7 +356,7 @@ void Settings::readConfig () {
 
     for (PreferencesPage * p = pagelist; p; p = p->next)
         p->read (m_config);
-    emit configChanged ();
+    Q_EMIT configChanged ();
 }
 
 bool Settings::createDialog () {
@@ -753,7 +753,7 @@ void Settings::okPressed () {
     //\dynamic stuff
 
     writeConfig ();
-    emit configChanged ();
+    Q_EMIT configChanged ();
 
     if (urlchanged || playerchanged) {
         m_player->sources () ["urlsource"]->setSubURL

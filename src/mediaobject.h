@@ -173,7 +173,7 @@ public:
     bool preserve (const QString &);
     bool unpreserve (const QString &);
     bool isPreserved (const QString &);
-signals:
+Q_SIGNALS:
     void preserveRemoved (const QString &); // ready or canceled
 };
 
@@ -223,7 +223,7 @@ public:
     QString mime;
     MediaManager::MediaType type;
 
-private slots:
+private Q_SLOTS:
     void slotResult(KJob*) KMPLAYERCOMMON_NO_EXPORT;
     void slotData(KIO::Job*, const QByteArray& qb) KMPLAYERCOMMON_NO_EXPORT;
     void slotMimetype (KIO::Job* job, const QString& mimestr) KMPLAYERCOMMON_NO_EXPORT;
@@ -377,7 +377,7 @@ public:
 
     ImageDataPtr cached_img;
 
-private slots:
+private Q_SLOTS:
     void svgUpdated();
     void movieUpdated (const QRect &);
     void movieStatus (QMovie::MovieState);

@@ -128,21 +128,21 @@ public:
     void setEditMode (TopPlayItem *, bool enable=true);
     void dragEnterEvent(QDragEnterEvent*) override KMPLAYERCOMMON_NO_EXPORT;
     void dropEvent(QDropEvent*) override KMPLAYERCOMMON_NO_EXPORT;
-    KMPLAYERCOMMON_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
+    KMPLAYERCOMMON_NO_EXPORT void emitPictureClicked () { Q_EMIT pictureClicked (); }
     /* raise video widget, might (auto) hides panel */
     void videoStart() KMPLAYERCOMMON_NO_EXPORT;
     void playingStart() KMPLAYERCOMMON_NO_EXPORT;
     /* shows panel */
     void playingStop() KMPLAYERCOMMON_NO_EXPORT;
     void mouseMoved(int x, int y) KMPLAYERCOMMON_NO_EXPORT;
-public slots:
+public Q_SLOTS:
     void fullScreen ();
     void updateLayout() KMPLAYERCOMMON_NO_EXPORT;
     void toggleShowPlaylist ();
     void toggleVideoConsoleWindow ();
     void setInfoMessage (const QString & msg);
     void setStatusMessage (const QString & msg);
-signals:
+Q_SIGNALS:
     void urlDropped (const QList<QUrl>& urls);
     void pictureClicked ();
     void fullScreenChanged ();

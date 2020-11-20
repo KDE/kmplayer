@@ -96,17 +96,17 @@ public:
             unsigned long &, QString &) override;
     void unregister (const unsigned long) override;
     void sendEvent(const unsigned long objid, const QString & event, const KParts::LiveConnectExtension::ArgList & args ) {
-        emit partEvent(objid, event, args);
+        Q_EMIT partEvent(objid, event, args);
     }
 
     void enableFinishEvent (bool b = true) { m_enablefinish = b; }
     QString evaluate (const QString & script);
-signals:
+Q_SIGNALS:
     void partEvent (const unsigned long, const QString &,
                     const KParts::LiveConnectExtension::ArgList &);
     void requestGet (const uint32_t, const QString &, QString *);
     void requestCall (const uint32_t, const QString &, const QStringList &, QString *);
-public slots:
+public Q_SLOTS:
     void setSize (int w, int h);
     void started ();
     void finished ();
@@ -164,7 +164,7 @@ public:
     QString doEvaluate (const QString &script) override;
 
     using KMPlayer::PartBase::openUrl;
-public slots:
+public Q_SLOTS:
     bool openUrl(const QUrl& url) override;
     virtual void openUrl(const QUrl&, const QString& t, const QString& srv);
     bool closeUrl () override;
@@ -173,7 +173,7 @@ protected:
     void processCreated (KMPlayer::Process *) override;
     void playingStarted () override;
     void playingStopped () override;
-protected slots:
+protected Q_SLOTS:
     void viewerPartDestroyed (QObject *);
     void viewerPartProcessChanged (const char *);
     void viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *);

@@ -174,7 +174,7 @@ bool PlayModel::setData (const QModelIndex& i, const QVariant& v, int role)
 
     if (changed) {
         item->title = ntext;
-        emit dataChanged (i, i);
+        Q_EMIT dataChanged (i, i);
         return true;
     }
     return false;
@@ -428,9 +428,9 @@ void PlayModel::updateTree (int id, NodePtr root, NodePtr active,
 
 void PlayModel::updateTrees () {
     for (; tree_update; tree_update = tree_update->next) {
-        emit updating (indexFromItem (tree_update->root_item));
+        Q_EMIT updating (indexFromItem (tree_update->root_item));
         PlayItem *cur = updateTree (tree_update->root_item, tree_update->node);
-        emit updated (indexFromItem (tree_update->root_item),
+        Q_EMIT updated (indexFromItem (tree_update->root_item),
                 indexFromItem (cur), tree_update->select, tree_update->open);
     }
 }

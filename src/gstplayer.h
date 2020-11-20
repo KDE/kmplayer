@@ -39,7 +39,7 @@ public:
     void volume (int val);
     void seek (int val);
     bool event (QEvent * e);
-public slots:
+public Q_SLOTS:
     void play (int repeat_count);
     void stop ();
     void pause ();

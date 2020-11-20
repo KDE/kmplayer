@@ -101,7 +101,7 @@ public:
     KLed * feedled;
     void setSettings (const FFServerSetting &);
     void getSettings (FFServerSetting &);
-private slots:
+private Q_SLOTS:
     void slotIndexChanged (int index);
     void slotItemHighlighted (int index);
     void slotTextChanged (const QString &);
@@ -162,10 +162,10 @@ public:
 
     FFServerSetting ffserversettings;
     FFServerSettingList ffserversettingprofiles;
-signals:
+Q_SIGNALS:
     void broadcastStarted ();
     void broadcastStopped ();
-private slots:
+private Q_SLOTS:
     void processOutput (KProcess *, char *, int);
     void processStopped (KProcess * process);
     void startServer ();

@@ -34,7 +34,7 @@ class KMPlayerMenuButton : public QPushButton
 public:
     KMPlayerMenuButton (QWidget *, QBoxLayout *, const char **, int = 0);
     ~KMPlayerMenuButton () override {}
-signals:
+Q_SIGNALS:
     void mouseEntered ();
 protected:
     void enterEvent (QEvent *) override;
@@ -49,7 +49,7 @@ class KMPLAYERCOMMON_EXPORT KMPlayerPopupMenu : public QMenu
 public:
     KMPlayerPopupMenu(QWidget*, const QString& title);
     ~KMPlayerPopupMenu () override {}
-signals:
+Q_SIGNALS:
     void mouseLeft ();
 protected:
     void leaveEvent(QEvent*) override KMPLAYERCOMMON_NO_EXPORT;
@@ -66,7 +66,7 @@ public:
     ~VolumeBar() override;
     KMPLAYERCOMMON_NO_EXPORT int value () const { return m_value; }
     void setValue (int v);
-signals:
+Q_SIGNALS:
     void volumeChanged (int); // 0 - 100
 protected:
     void wheelEvent(QWheelEvent* e) override KMPLAYERCOMMON_NO_EXPORT;
@@ -137,7 +137,7 @@ public:
     KMPlayerPopupMenu *languageMenu;
     KMPlayerPopupMenu *audioMenu;
     KMPlayerPopupMenu *subtitleMenu;
-public slots:
+public Q_SLOTS:
     void setLanguages(const QStringList& al, const QStringList& sl) KMPLAYERCOMMON_NO_EXPORT;
     void actionToggled(QAction*) KMPLAYERCOMMON_NO_EXPORT;
     void showPopupMenu() KMPLAYERCOMMON_NO_EXPORT;
@@ -147,7 +147,7 @@ public slots:
 protected:
     void timerEvent(QTimerEvent* e) override KMPLAYERCOMMON_NO_EXPORT;
     void setupPositionSlider(bool show) KMPLAYERCOMMON_NO_EXPORT;
-private slots:
+private Q_SLOTS:
     void buttonMouseEntered() KMPLAYERCOMMON_NO_EXPORT;
     void buttonClicked() KMPLAYERCOMMON_NO_EXPORT;
     void menuMouseLeft() KMPLAYERCOMMON_NO_EXPORT;

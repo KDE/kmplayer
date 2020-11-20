@@ -404,7 +404,7 @@ void PartBase::setSource (Source * _source) {
         stop ();
         if (m_view) {
             m_view->reset ();
-            emit infoUpdated (QString ());
+            Q_EMIT infoUpdated (QString ());
         }
         disconnect (this, SIGNAL (audioIsSelected (int)),
                     m_source, SLOT (setAudioLang (int)));
@@ -433,11 +433,11 @@ void PartBase::setSource (Source * _source) {
     if (m_source && !m_source->avoidRedirects ())
         QTimer::singleShot (0, m_source, SLOT (slotActivate ()));
     updateTree (true, true);
-    emit sourceChanged (old_source, m_source);
+    Q_EMIT sourceChanged (old_source, m_source);
 }
 
 void PartBase::changeURL (const QString & url) {
-    emit urlChanged (url);
+    Q_EMIT urlChanged (url);
 }
 
 bool PartBase::isSeekable (void) const {
@@ -532,7 +532,7 @@ void PartBase::playingStarted () {
         //if (m_settings->autoadjustvolume && m_process)
         //   m_process->volume(m_view->controlPanel()->volumeBar()->value(),true);
     }
-    emit loading (100);
+    Q_EMIT loading (100);
 }
 
 void PartBase::slotPlayingStarted () {
@@ -556,14 +556,14 @@ void PartBase::slotPlayingStopped () {
 void PartBase::setPosition (int position, int length) {
     if (m_view && !m_bPosSliderPressed) {
         if (m_media_manager->processes ().size () > 1)
-            emit positioned (0, 0);
+            Q_EMIT positioned (0, 0);
         else
-            emit positioned (position, length);
+            Q_EMIT positioned (position, length);
     }
 }
 
 void PartBase::setLoaded (int percentage) {
-    emit loading (percentage);
+    Q_EMIT loading (percentage);
 }
 
 qlonglong PartBase::position () const {
@@ -628,7 +628,7 @@ void PartBase::playListItemActivated(const QModelIndex &index) {
         if (node->isPlayable () || id_node_playlist_item == node->id) {
             source->play (node->mrl ()); //may become !isPlayable by lazy loading
             if (node && !node->isPlayable ())
-                emit treeChanged (ri->id, node, nullptr, false, true);
+                Q_EMIT treeChanged (ri->id, node, nullptr, false, true);
         } // else if (vi->childCount ()) {handled by playListItemClicked
     } else if (vi->attribute) {
         if (vi->attribute->name () == Ids::attr_src ||
@@ -652,7 +652,7 @@ void PartBase::playListItemActivated(const QModelIndex &index) {
             }
         }
     } else
-        emit treeChanged (ri->id, ri->node, nullptr, false, false);
+        Q_EMIT treeChanged (ri->id, ri->node, nullptr, false, false);
     if (m_view)
         m_view->viewArea ()->setFocus ();
 }
@@ -662,7 +662,7 @@ void PartBase::updateTree (bool full, bool force) {
         m_in_update_tree = true;
         if (m_update_tree_full) {
             if (m_source)
-                emit treeChanged (0, m_source->root (), m_source->current (), true, false);
+                Q_EMIT treeChanged (0, m_source->root (), m_source->current (), true, false);
         }
         m_in_update_tree = false;
         if (m_update_tree_timer) {
@@ -677,35 +677,35 @@ void PartBase::updateTree (bool full, bool force) {
 }
 
 void PartBase::updateInfo (const QString & msg) {
-    emit infoUpdated (msg);
+    Q_EMIT infoUpdated (msg);
 }
 
 void PartBase::updateStatus (const QString & msg) {
-    emit statusUpdated (msg);
+    Q_EMIT statusUpdated (msg);
 }
 
 void PartBase::setLanguages (const QStringList & al, const QStringList & sl) {
-    emit languagesUpdated (al, sl);
+    Q_EMIT languagesUpdated (al, sl);
 }
 
 void PartBase::audioSelected (QAction* act) {
-    emit panelActionToggled(act);
+    Q_EMIT panelActionToggled(act);
     int i = act->parentWidget()->actions().indexOf(act);
     if (i >= 0)
-        emit audioIsSelected (i);
+        Q_EMIT audioIsSelected (i);
 }
 
 void PartBase::subtitleSelected (QAction* act) {
-    emit panelActionToggled(act);
+    Q_EMIT panelActionToggled(act);
     int i = act->parentWidget()->actions().indexOf(act);
     if (i >= 0)
-        emit subtitleIsSelected (i);
+        Q_EMIT subtitleIsSelected (i);
 }
 
 void PartBase::recorderPlaying () {
     stop ();
     m_view->controlPanel ()->setRecording (true);
-    emit recording (true);
+    Q_EMIT recording (true);
 }
 
 void PartBase::recorderStopped () {
@@ -717,7 +717,7 @@ void PartBase::recorderStopped () {
 void PartBase::stopRecording () {
     if (m_view) {
         m_view->controlPanel ()->setRecording (false);
-        emit recording (false);
+        Q_EMIT recording (false);
         if (m_record_doc && m_record_doc->active ()) {
             m_record_doc->deactivate ();
             if (m_rec_timer > 0)
@@ -893,7 +893,7 @@ void PartBase::saturationValueChanged (int val) {
 }
 
 void PartBase::sourceHasChangedAspects () {
-    emit sourceDimensionChanged ();
+    Q_EMIT sourceDimensionChanged ();
 }
 
 void PartBase::positionValueChanged (int pos) {
@@ -1048,7 +1048,7 @@ void Source::setDimensions (NodePtr node, int w, int h) {
             setAspect (node, h > 0 ? 1.0 * w / h : 0.0);
             //qCDebug(LOG_KMPLAYER_COMMON) << "setDimensions " << w << "x" << h << " a:" << m_aspect;
         else if (ev)
-            emit dimensionsChanged ();
+            Q_EMIT dimensionsChanged ();
     }
 }
 
@@ -1075,7 +1075,7 @@ void Source::setAspect (NodePtr node, float a) {
        mrl->message (MsgSurfaceBoundsUpdate);
     }
     if (changed)
-        emit dimensionsChanged ();
+        Q_EMIT dimensionsChanged ();
 }
 
 void Source::setLength (NodePtr, int len) {
@@ -1125,11 +1125,11 @@ void Source::setUrl (const QString &url) {
 
 void Source::changedUrl()
 {
-    emit titleChanged (this->prettyName ());
+    Q_EMIT titleChanged (this->prettyName ());
 }
 
 void Source::setTitle (const QString & title) {
-    emit titleChanged (title);
+    Q_EMIT titleChanged (title);
 }
 
 void Source::setAudioLang (int id) {
@@ -1182,7 +1182,7 @@ void Source::play (Mrl *mrl) {
     m_aspect = mrl->aspect;
     //qCDebug(LOG_KMPLAYER_COMMON) << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ());
     m_player->updateTree ();
-    emit dimensionsChanged ();
+    Q_EMIT dimensionsChanged ();
 }
 
 bool Source::authoriseUrl (const QString &) {
@@ -1220,15 +1220,15 @@ void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
                  Mrl::WindowMode != elm->parentNode ()->mrl ()->view_mode))
             setCurrent (elm->mrl ());
         if (m_current.ptr () == elm)
-            emit startPlaying ();
+            Q_EMIT startPlaying ();
     } else if (ns == Node::state_deactivated) {
         if (elm == m_document) {
             NodePtrW guard = elm;
-            emit endOfPlayItems (); // played all items FIXME on jumps
+            Q_EMIT endOfPlayItems (); // played all items FIXME on jumps
             if (!guard)
                 return;
         } else if (m_current.ptr () == elm) {
-            emit stopPlaying ();
+            Q_EMIT stopPlaying ();
         }
     }
     if (elm->role (RolePlaylist)) {

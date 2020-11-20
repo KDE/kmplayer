@@ -66,7 +66,7 @@ public:
     virtual QFrame * prefPage (QWidget * parent);
     virtual void stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State os, KMPlayer::Node::State ns);
     void waitForConnectionClose ();
-public slots:
+public Q_SLOTS:
     void activate ();
     void deactivate ();
     void play (KMPlayer::Mrl *);
@@ -74,7 +74,7 @@ public slots:
     void backward ();
     void toggleConnected ();
     void volumeChanged (int);
-private slots:
+private Q_SLOTS:
     void keyUp ();
     void keyDown ();
     void keyBack ();
@@ -152,7 +152,7 @@ class XVideo : public KMPlayer::CallbackProcess {
 public:
     XVideo (QObject *, KMPlayer::ProcessInfo *, KMPlayer::Settings *);
     ~XVideo ();
-public slots:
+public Q_SLOTS:
     virtual bool ready ();
 };
 

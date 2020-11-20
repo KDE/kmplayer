@@ -257,7 +257,7 @@ void PlayListView::contextMenuEvent (QContextMenuEvent *event)
             m_itemmenu->addSeparator ();
             m_find->setVisible (true);
             m_find_next->setVisible (true);
-            emit prepareMenu (item, m_itemmenu);
+            Q_EMIT prepareMenu (item, m_itemmenu);
             m_itemmenu->exec (event->globalPos ());
         }
     } else {
@@ -305,7 +305,7 @@ void PlayListView::addBookMark () {
     if (item->node) {
         Mrl * mrl = item->node->mrl ();
         const QUrl url = QUrl::fromUserInput(mrl ? mrl->src : QString (item->node->nodeName ()));
-        emit addBookMark (mrl->title.isEmpty () ? url.toDisplayString() : mrl->title, url.url ());
+        Q_EMIT addBookMark (mrl->title.isEmpty () ? url.toDisplayString() : mrl->title, url.url ());
     }
 }
 
@@ -375,7 +375,7 @@ void PlayListView::dropEvent (QDropEvent *event) {
         TopPlayItem *ritem = itm->rootItem ();
         NodePtr n = itm->node;
         if (ritem->id > 0 || n->isDocument ()) {
-            emit dropped (event, itm);
+            Q_EMIT dropped (event, itm);
         } else {
             QList<QUrl> uris = event->mimeData()->urls();
             if (uris.isEmpty ()) {

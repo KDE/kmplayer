@@ -1925,7 +1925,7 @@ void ViewArea::fullScreen () {
     m_view->controlPanel()->fullscreenAction->setChecked (m_fullscreen);
 
     d->clearSurface (surface.ptr ());
-    emit fullScreenChanged ();
+    Q_EMIT fullScreenChanged ();
 }
 
 void ViewArea::minimalMode () {

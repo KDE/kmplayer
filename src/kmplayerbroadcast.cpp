@@ -507,7 +507,7 @@ void KMPlayerBroadcastConfig::startServer () {
     if (m_ffserver_process->isRunning ()) {
         m_configpage->startbutton->setText (i18n ("Stop"));
         m_configpage->serverled->setState (KLed::On);
-        emit broadcastStarted ();
+        Q_EMIT broadcastStarted ();
     }
     QTimer::singleShot (500, this, SLOT (startFeed ()));
 }
@@ -589,7 +589,7 @@ void KMPlayerBroadcastConfig::processStopped (KProcess *) {
     }
     m_ffserver_process->deleteLater ();
     m_ffserver_process = 0L;
-    emit broadcastStopped ();
+    Q_EMIT broadcastStopped ();
 }
 
 void KMPlayerBroadcastConfig::sourceChanged (KMPlayer::Source *, KMPlayer::Source * source) {

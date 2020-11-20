@@ -28,7 +28,7 @@ public:
     void frequency (int val);
     //void seek (int val);
     //bool event (QEvent * e);
-public slots:
+public Q_SLOTS:
     void play ();
     void stop ();
     //void pause ();

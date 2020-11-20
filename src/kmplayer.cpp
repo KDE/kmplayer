@@ -618,7 +618,7 @@ void IntroSource::activate () {
             Source::setDimensions (m_document->firstChild (), mrl->size.width, mrl->size.height);
             m_player->updateTree ();
             m_current->activate ();
-            emit startPlaying ();
+            Q_EMIT startPlaying ();
         }
     }
     deactivated = finished = false;
@@ -631,7 +631,7 @@ void IntroSource::stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::St
         finished = true;
         if (m_player->view ())
             m_app->restoreFromConfig ();
-        emit stopPlaying ();
+        Q_EMIT stopPlaying ();
         if (!deactivated) // replace introsource with urlsource
             m_player->openUrl (QUrl ());
     }
@@ -980,7 +980,7 @@ void ExitSource::activate () {
             setDimensions (m_document->firstChild (), mrl->size.width, mrl->size.height);
             m_player->updateTree ();
             m_current->activate ();
-            emit startPlaying ();
+            Q_EMIT startPlaying ();
             return;
         }
     }

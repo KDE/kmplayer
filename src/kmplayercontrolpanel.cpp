@@ -276,7 +276,7 @@ KMPlayerMenuButton::KMPlayerMenuButton(QWidget*, QBoxLayout * l, const char ** p
 }
 
 void KMPlayerMenuButton::enterEvent (QEvent *) {
-    emit mouseEntered ();
+    Q_EMIT mouseEntered ();
 }
 
 //-----------------------------------------------------------------------------
@@ -285,7 +285,7 @@ KMPlayerPopupMenu::KMPlayerPopupMenu (QWidget *parent, const QString &title)
  : QMenu(title, parent) {}
 
 void KMPlayerPopupMenu::leaveEvent (QEvent *) {
-    emit mouseLeft ();
+    Q_EMIT mouseLeft ();
 }
 
 //-----------------------------------------------------------------------------
@@ -310,7 +310,7 @@ void VolumeBar::setValue (int v) {
     if (m_value > 100) m_value = 100;
     setToolTip (i18n ("Volume is ") + QString::number (m_value));
     repaint ();
-    emit volumeChanged (m_value);
+    Q_EMIT volumeChanged (m_value);
 }
 
 void VolumeBar::wheelEvent (QWheelEvent * e) {

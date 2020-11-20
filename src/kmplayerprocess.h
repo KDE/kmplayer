@@ -84,9 +84,9 @@ public:
     bool hue (int pos, bool absolute) override;
     bool contrast (int pos, bool absolute) override;
     bool brightness (int pos, bool absolute) override;
-signals:
+Q_SIGNALS:
     void grabReady (const QString & path);
-protected slots:
+protected Q_SLOTS:
     void rescheduledStateChanged () KMPLAYERCOMMON_NO_EXPORT;
     void result (KJob *);
     void processStateChanged (QProcess::ProcessState);
@@ -122,9 +122,9 @@ protected:
     bool removeQueued (const char *cmd);
     QList<QByteArray> commands;
     bool m_needs_restarted;
-protected slots:
+protected Q_SLOTS:
     virtual void processStopped ();
-private slots:
+private Q_SLOTS:
     void dataWritten (qint64);
     void processStopped (int, QProcess::ExitStatus);
 };
@@ -163,7 +163,7 @@ public:
     bool ready () override KMPLAYERCOMMON_NO_EXPORT;
 protected:
     void processStopped () override KMPLAYERCOMMON_NO_EXPORT;
-private slots:
+private Q_SLOTS:
     void processOutput () KMPLAYERCOMMON_NO_EXPORT;
 private:
     QString m_process_output;
@@ -286,7 +286,7 @@ public:
     QString m_slave_service;
     QProcess *m_slave;
 
-private slots:
+private Q_SLOTS:
     void slaveStopped (int, QProcess::ExitStatus);
     void slaveOutput ();
 
@@ -397,7 +397,7 @@ public:
     bool deMediafiedPlay () override;
     void stop () override KMPLAYERCOMMON_NO_EXPORT;
     void quit () override KMPLAYERCOMMON_NO_EXPORT;
-private slots:
+private Q_SLOTS:
     void processStopped (int, QProcess::ExitStatus) KMPLAYERCOMMON_NO_EXPORT;
 };
 
@@ -434,10 +434,10 @@ public:
     QString mimetype;
     QString http_headers;
     bool received_data;
-signals:
+Q_SIGNALS:
     void stateChanged ();
     void redirected(uint32_t, const QUrl&);
-private slots:
+private Q_SLOTS:
     void slotResult (KJob*);
     void slotData (KIO::Job*, const QByteArray& qb);
     void redirection(KIO::Job*, const QUrl& url);
@@ -483,13 +483,13 @@ public:
     void stop () override;
     void quit () override;
     bool ready () override;
-signals:
+Q_SIGNALS:
     void evaluate (const QString & scr, bool store, QString & result);
     void loaded ();
-public slots:
+public Q_SLOTS:
     void requestGet (const uint32_t, const QString &, QString *);
     void requestCall (const uint32_t, const QString &, const QStringList &, QString *);
-private slots:
+private Q_SLOTS:
     void processOutput ();
     void processStopped (int, QProcess::ExitStatus);
     void wroteStdin (qint64);

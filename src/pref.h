@@ -81,7 +81,7 @@ public:
 
     RecorderPage * recorders;
     QMap<QString, QTabWidget *> entries;
-public slots:
+public Q_SLOTS:
     void confirmDefaults();
 private:
     KPageWidgetItem *m_record_item;
@@ -120,7 +120,7 @@ public:
     KColorButton *colorbutton;
     QComboBox *fontscombo;
     QPushButton *fontbutton;
-public slots:
+public Q_SLOTS:
     void colorItemChanged (int);
     void colorCanged (const QColor &);
     void fontItemChanged (int);
@@ -148,7 +148,7 @@ public:
     QLineEdit * prefBitRate;
     QLineEdit * maxBitRate;
     bool changed;
-private slots:
+private Q_SLOTS:
     void slotBrowse ();
     void slotTextChanged (const QString &);
 };
@@ -168,10 +168,10 @@ public:
     QLabel * source;
 protected:
     void showEvent (QShowEvent *) override;
-public slots:
+public Q_SLOTS:
     void replayClicked (int id);
     void recorderClicked (int id);
-private slots:
+private Q_SLOTS:
     void slotRecord ();
     void recording (bool);
 private:
@@ -209,7 +209,7 @@ public:
 
     QLineEdit * arguments;
     QButtonGroup* format;
-public slots:
+public Q_SLOTS:
     void formatClicked (int id);
 private:
 };

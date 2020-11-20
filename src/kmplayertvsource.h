@@ -47,9 +47,9 @@ public:
     QCheckBox * noplayback;
     QTabWidget * inputsTab;
     KMPlayer::NodePtrW device_doc;
-signals:
+Q_SIGNALS:
     void deleted (TVDevicePage *);
-private slots:
+private Q_SLOTS:
     void slotDelete ();
 };
 
@@ -158,9 +158,9 @@ public:
     void activate () override;
     void deactivate () override;
     void play (KMPlayer::Mrl *) override;
-public slots:
+public Q_SLOTS:
     void scanningFinished ();
-signals:
+Q_SIGNALS:
     void scanFinished (TVDevice * tvdevice);
 private:
     KMPlayerTVSource * m_tvsource;
@@ -200,9 +200,9 @@ public:
     void activate () override;
     void deactivate () override;
     void play (KMPlayer::Mrl *) override;
-public slots:
+public Q_SLOTS:
     void menuClicked (int id);
-private slots:
+private Q_SLOTS:
     void slotScan ();
     void slotScanFinished (TVDevice * device);
     void slotDeviceDeleted (TVDevicePage *);

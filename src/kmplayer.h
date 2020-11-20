@@ -70,7 +70,7 @@ protected:
     void initView ();
     bool queryClose () override;
 
-public slots:
+public Q_SLOTS:
     void slotFileNewWindow ();
     void slotFileOpen ();
     void slotFileOpenRecent(const QUrl& url);
@@ -83,7 +83,7 @@ public slots:
     void slotViewMenuBar ();
     void slotStatusMsg (const QString &text);
     void slotSourceChanged (KMPlayer::Source *, KMPlayer::Source *);
-private slots:
+private Q_SLOTS:
     void openDVD ();
     void openVCD ();
     void openAudioCD ();

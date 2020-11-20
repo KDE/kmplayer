@@ -134,7 +134,7 @@ TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodePtr dev)
 
 void TVDevicePage::slotDelete () {
     if (KMessageBox::warningYesNo (this, i18n ("You are about to remove this device from the Source menu.\nContinue?"), i18n ("Confirm")) == KMessageBox::Yes)
-        emit deleted (this);
+        Q_EMIT deleted (this);
 }
 
 //-----------------------------------------------------------------------------
@@ -726,7 +726,7 @@ void TVDeviceScannerSource::deactivate () {
             m_tvdevice->parentNode ()->removeChild (m_tvdevice);
         m_tvdevice = nullptr;
         delete m_process;
-        emit scanFinished (m_tvdevice);
+        Q_EMIT scanFinished (m_tvdevice);
     }
 }
 
@@ -759,7 +759,7 @@ void TVDeviceScannerSource::scanningFinished () {
     }
     m_tvdevice = nullptr;
     m_player->setSource (m_old_source);
-    emit scanFinished (dev);
+    Q_EMIT scanFinished (dev);
 }
 
 void TVDeviceScannerSource::stateChange (KMPlayer::IProcess *,

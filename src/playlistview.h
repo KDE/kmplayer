@@ -53,7 +53,7 @@ public:
                     QPainter *, const QStyleOptionViewItem&, const QModelIndex);
     QModelIndex index (PlayItem *item) const;
     PlayModel *playModel () const;
-signals:
+Q_SIGNALS:
     void addBookMark (const QString & title, const QString & url);
     void prepareMenu (KMPlayer::PlayItem * item, QMenu * menu);
     void dropped (QDropEvent *event, KMPlayer::PlayItem *item);
@@ -63,7 +63,7 @@ protected:
     void dragMoveEvent(QDragMoveEvent* event) override KMPLAYERCOMMON_NO_EXPORT;
     void drawBranches(QPainter*, const QRect&, const QModelIndex&) const override KMPLAYERCOMMON_NO_EXPORT {}
     void contextMenuEvent(QContextMenuEvent* event) override KMPLAYERCOMMON_NO_EXPORT;
-private slots:
+private Q_SLOTS:
     void slotItemExpanded(const QModelIndex&) KMPLAYERCOMMON_NO_EXPORT;
     void copyToClipboard() KMPLAYERCOMMON_NO_EXPORT;
     void addBookMark() KMPLAYERCOMMON_NO_EXPORT;

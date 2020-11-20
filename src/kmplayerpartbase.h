@@ -130,7 +130,7 @@ public:
      * Play at node position
      */
     virtual void play (Mrl *);
-signals:
+Q_SIGNALS:
     void startPlaying ();
     void stopPlaying ();
     /**
@@ -139,7 +139,7 @@ signals:
     void endOfPlayItems ();
     void dimensionsChanged ();
     void titleChanged (const QString & title);
-public slots:
+public Q_SLOTS:
     void slotActivate ();
     void setAudioLang (int) KMPLAYERCOMMON_NO_EXPORT;
     void setSubtitle (int) KMPLAYERCOMMON_NO_EXPORT;
@@ -185,7 +185,7 @@ private:
     int m_length;
     int m_position;
     int m_doc_timer;
-private slots:
+private Q_SLOTS:
     void changedUrl();
 };
 
@@ -276,7 +276,7 @@ public:
     void recorderStopped ();
     void stopRecording ();
     bool isRecording ();
-public slots:
+public Q_SLOTS:
     bool openUrl (const QUrl & url) override;
     virtual void openUrl (const QUrl &, const QString &t, const QString &srv);
     virtual bool openUrl(const QList<QUrl>& urls);
@@ -313,7 +313,7 @@ public:
     virtual QString doEvaluate (const QString &script);
     void showControls (bool show) KMPLAYERCOMMON_NO_EXPORT;
     QString getStatus ();
-signals:
+Q_SIGNALS:
     void sourceChanged (KMPlayer::Source * old, KMPlayer::Source * nw);
     void sourceDimensionChanged ();
     void loading (int percentage);
@@ -334,7 +334,7 @@ protected:
     void timerEvent (QTimerEvent *) override;
     virtual void playingStarted ();
     virtual void playingStopped ();
-protected slots:
+protected Q_SLOTS:
     void posSliderPressed () KMPLAYERCOMMON_NO_EXPORT;
     void posSliderReleased () KMPLAYERCOMMON_NO_EXPORT;
     void positionValueChanged (int val) KMPLAYERCOMMON_NO_EXPORT;

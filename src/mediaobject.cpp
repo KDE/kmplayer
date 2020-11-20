@@ -303,7 +303,7 @@ void DataCache::add (const QString & url, const QString &mime, const QByteArray 
     bytes = data;
     cache_map.insert (url, qMakePair (mime, bytes));
     preserve_map.remove (url);
-    emit preserveRemoved (url);
+    Q_EMIT preserveRemoved (url);
 }
 
 bool DataCache::get (const QString & url, QString &mime, QByteArray & data) {
@@ -334,7 +334,7 @@ bool DataCache::unpreserve (const QString & url) {
     if (it == preserve_map.end ())
         return false;
     preserve_map.erase (it);
-    emit preserveRemoved (url);
+    Q_EMIT preserveRemoved (url);
     return true;
 }
 

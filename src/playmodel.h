@@ -121,14 +121,14 @@ public:
 
     int addTree (NodePtr r, const QString &src, const QString &ico, int flgs);
     PlayItem *updateTree (TopPlayItem *ritem, NodePtr active);
-signals:
+Q_SIGNALS:
     void updating (const QModelIndex&);
     void updated (const QModelIndex&, const QModelIndex&, bool sel, bool exp);
 
-public slots:
+public Q_SLOTS:
     void updateTree (int id, NodePtr root, NodePtr active, bool sel, bool open);
 
-private slots:
+private Q_SLOTS:
     void updateTrees() KMPLAYERCOMMON_NO_EXPORT;
 
 private:
