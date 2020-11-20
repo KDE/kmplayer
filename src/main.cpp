@@ -47,9 +47,6 @@ extern "C" Q_DECL_EXPORT int kdemain(int argc, char **argv)
 
     QCommandLineParser parser;
     aboutData.setupCommandLine(&parser);
-    parser.setApplicationDescription(aboutData.shortDescription());
-    parser.addHelpOption();
-    parser.addVersionOption();
     parser.addPositionalArgument(QStringLiteral("File"), i18n("file to open"), i18n("+[File]"));
     parser.process(app);
 
