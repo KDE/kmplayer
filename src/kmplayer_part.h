@@ -158,6 +158,7 @@ public:
     void setMaster (KMPlayerPart * m) { m_master = m; }
     void setLoaded (int percentage) override;
     bool openNewURL (const QUrl & url); // for JS interface
+    /// @param pic local file path to a placeholder image
     bool startUrl (const QUrl &url, const QString &pic=QString ());//clickToPlay
 
     QString doEvaluate (const QString &script) override;

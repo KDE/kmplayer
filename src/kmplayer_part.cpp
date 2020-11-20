@@ -690,7 +690,7 @@ bool KMPlayerPart::startUrl(const QUrl &uri, const QString &img)
                 m_source->activate();
         }
 #else
-        if (m_view->setPicture (KUrl (img).path ())) {
+        if (m_view->setPicture (img)) {
             connect (m_view, SIGNAL (pictureClicked ()),
                      this, SLOT (pictureClicked ()));
             emit completed ();

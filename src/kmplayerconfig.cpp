@@ -626,14 +626,14 @@ void Settings::writeConfig () {
 void Settings::okPressed () {
     bool urlchanged = configdialog->m_SourcePageURL->changed;
     bool playerchanged = false;
-    KUrl url = configdialog->m_SourcePageURL->url->url ();
-    KUrl sub_url = configdialog->m_SourcePageURL->sub_url->url ();
+    QUrl url = configdialog->m_SourcePageURL->url->url ();
+    QUrl sub_url = configdialog->m_SourcePageURL->sub_url->url ();
     if (urlchanged) {
         if (url.isEmpty ()) {
             urlchanged = false;
         } else {
-            if (KUrl (url.url ()).isLocalFile () || KUrl::isRelativeUrl (url.url ())) {
-                QFileInfo fi (url.path ());
+            if (url.isLocalFile () || KUrl::isRelativeUrl (url.url ())) {
+                QFileInfo fi (url.toLocalFile());
                 int hpos = url.url ().lastIndexOf ('#');
                 QString xine_directives ("");
                 while (!fi.exists () && hpos > -1) {
@@ -650,9 +650,9 @@ void Settings::okPressed () {
             }
             if (urlchanged &&
                     !sub_url.url ().isEmpty () &&
-                    (KUrl (sub_url.url ()).isLocalFile () ||
+                    (sub_url.isLocalFile () ||
                      KUrl::isRelativeUrl (sub_url.url ()))) {
-                QFileInfo sfi (sub_url.path ());
+                QFileInfo sfi (sub_url.toLocalFile());
                 if (!sfi.exists ()) {
                     KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.",sub_url.url ()), i18n ("Error"));
                     configdialog->m_SourcePageURL->sub_url->setUrl (QUrl ());
@@ -662,13 +662,11 @@ void Settings::okPressed () {
         }
     }
     if (urlchanged) {
-        KUrl uri (url.url ());
-        m_player->setUrl (uri.url ());
-        if (urllist.indexOf (uri.toDisplayString()) < 0)
-            configdialog->m_SourcePageURL->urllist->insertItem (0, uri.toDisplayString());
-        KUrl sub_uri (sub_url.url ());
-        if (sub_urllist.indexOf (sub_uri.toDisplayString()) < 0)
-            configdialog->m_SourcePageURL->sub_urllist->insertItem (0, sub_uri.toDisplayString());
+        m_player->setUrl (url.url ());
+        if (urllist.indexOf (url.toDisplayString()) < 0)
+            configdialog->m_SourcePageURL->urllist->insertItem (0, url.toDisplayString());
+        if (sub_urllist.indexOf (sub_url.toDisplayString()) < 0)
+            configdialog->m_SourcePageURL->sub_urllist->insertItem (0, sub_url.toDisplayString());
     }
     urllist.clear ();
     for (int i = 0; i < configdialog->m_SourcePageURL->urllist->count () && i < 20; ++i)
