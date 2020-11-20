@@ -4,9 +4,6 @@
     SPDX-License-Identifier: LGPL-2.0-only
 */
 
-#ifdef KDE_USE_FINAL
-#undef Always
-#endif
 #include "kmplayer_part.h"
 
 #include <list>

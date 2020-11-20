@@ -4,8 +4,6 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-#undef Always
-
 // include files for QT
 #include <QDataStream>
 #include <QRegExp>
