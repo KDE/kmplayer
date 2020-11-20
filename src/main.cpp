@@ -60,7 +60,7 @@ extern "C" Q_DECL_EXPORT int kdemain(int argc, char **argv)
     QPointer <KMPlayerApp> kmplayer;
 
     if (app.isSessionRestored ()) {
-        RESTORE (KMPlayerApp);
+        kRestoreMainWindows<KMPlayerApp>();
     } else {
         kmplayer = new KMPlayerApp ();
         kmplayer->show();
