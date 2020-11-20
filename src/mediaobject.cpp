@@ -5,17 +5,17 @@
     SPDX-License-Identifier: LGPL-2.0-or-later
 */
 
-#include <qtextstream.h>
-#include <qapplication.h>
-#include <qmovie.h>
+#include <QTextStream>
+#include <QApplication>
+#include <QMovie>
 #include <QBuffer>
 #include <QPainter>
-#include <QtSvg/QSvgRenderer>
-#include <qimage.h>
-#include <qfile.h>
-#include <qurl.h>
-#include <qtextcodec.h>
-#include <qtextstream.h>
+#include <QSvgRenderer>
+#include <QImage>
+#include <QFile>
+#include <QUrl>
+#include <QTextCodec>
+#include <QTextStream>
 #include <QMimeDatabase>
 #include <QMimeType>
 

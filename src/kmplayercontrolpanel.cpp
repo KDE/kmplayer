@@ -4,13 +4,13 @@
     SPDX-License-Identifier: LGPL-2.0-only
 */
 
-#include <qicon.h>
-#include <qlayout.h>
-#include <qpixmap.h>
-#include <qslider.h>
-#include <qlabel.h>
-#include <qpainter.h>
-#include <qstringlist.h>
+#include <QIcon>
+#include <QLayout>
+#include <QPixmap>
+#include <QSlider>
+#include <QLabel>
+#include <QPainter>
+#include <QStringList>
 #include <QCursor>
 #include <QPalette>
 #include <QSlider>

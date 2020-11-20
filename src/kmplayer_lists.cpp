@@ -5,11 +5,11 @@
     SPDX-License-Identifier: LGPL-2.0-or-later
 */
 
-#include <qfile.h>
-#include <qurl.h>
-#include <qtextstream.h>
-#include <qbytearray.h>
-#include <qinputdialog.h>
+#include <QFile>
+#include <QUrl>
+#include <QTextStream>
+#include <QByteArray>
+#include <QInputDialog>
 #include <QStandardPaths>
 #include <QFileDialog>
 

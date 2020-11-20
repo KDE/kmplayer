@@ -12,7 +12,7 @@
 #include "config-kmplayer.h"
 #include <sys/time.h>
 
-#include <qstring.h>
+#include <QString>
 
 #include "kmplayercommon_export.h"
 #include "kmplayertypes.h"

@@ -11,7 +11,7 @@
 #include "config-kmplayer.h"
 
 #include <QModelIndex>
-#include <qframe.h>
+#include <QFrame>
 
 #include <kxmlguiwindow.h>
 #include <ksharedconfig.h>

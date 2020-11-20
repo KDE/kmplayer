@@ -12,10 +12,11 @@
 
 #include <QApplication>
 #include <QBoxLayout>
-#include <QtDBus/QtDBus>
-#include <QtCore/QMap>
-#include <QtCore/QTimer>
-#include <QtCore/QUrl>
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QMap>
+#include <QTimer>
+#include <QUrl>
 #include <QX11Info>
 
 #include <phonon/audiooutput.h>

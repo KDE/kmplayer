@@ -10,10 +10,10 @@
 
 #include <config-kmplayer.h>
 
-#include <qobject.h>
-#include <QtCore/QPair>
-#include <qmap.h>
-#include <qstring.h>
+#include <QObject>
+#include <QPair>
+#include <QMap>
+#include <QString>
 #include <QMovie>
 #include <QList>
 

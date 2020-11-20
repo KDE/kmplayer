@@ -12,18 +12,19 @@
 
 #include <cmath>
 
-#include <qapplication.h>
+#include <QApplication>
 #include <QByteArray>
-#include <qcursor.h>
-#include <qtimer.h>
-#include <qpair.h>
-#include <qpushbutton.h>
+#include <QCursor>
+#include <QTimer>
+#include <QPair>
+#include <QPushButton>
 #include <QStandardPaths>
-#include <qslider.h>
-#include <qfile.h>
-#include <qregexp.h>
-#include <qprocess.h>
-#include <QtDBus/QtDBus>
+#include <QSlider>
+#include <QFile>
+#include <QRegExp>
+#include <QProcess>
+#include <QDBusConnection>
+#include <QDBusMessage>
 #include <QMimeDatabase>
 #include <QMimeType>
 

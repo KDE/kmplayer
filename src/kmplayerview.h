@@ -8,8 +8,8 @@
 #define KMPLAYERVIEW_H
 
 #include "config-kmplayer.h"
-#include <qwidget.h>
-#include <qtextedit.h>
+#include <QWidget>
+#include <QTextEdit>
 #include <QImage>
 #include <QList>
 #include <QUrl>

@@ -8,12 +8,12 @@
 
 #include <cstdlib>
 
-#include <qtextstream.h>
-#include <qcolor.h>
-#include <qfont.h>
-#include <qapplication.h>
-#include <qregexp.h>
-#include <qtimer.h>
+#include <QTextStream>
+#include <QColor>
+#include <QFont>
+#include <QApplication>
+#include <QRegExp>
+#include <QTimer>
 #include <QBuffer>
 
 #include <kio/job.h>

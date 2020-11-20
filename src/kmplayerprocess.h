@@ -7,13 +7,13 @@
 #ifndef _KMPLAYERPROCESS_H_
 #define _KMPLAYERPROCESS_H_
 
-#include <qobject.h>
-#include <qstring.h>
-#include <qlist.h>
-#include <qbytearray.h>
-#include <qstringlist.h>
-#include <qregexp.h>
-#include <qprocess.h>
+#include <QObject>
+#include <QString>
+#include <QList>
+#include <QByteArray>
+#include <QStringList>
+#include <QRegExp>
+#include <QProcess>
 
 #include <kio/global.h>
 

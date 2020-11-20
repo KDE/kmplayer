@@ -130,6 +130,7 @@ kf5_add_kdeinit_executable(kmplayer ${kmplayer_SRCS} main.cpp)
 target_link_libraries(kdeinit_kmplayer
     kmplayercommon
     KF5::IconThemes
+    Qt5::X11Extras
 )
 
 target_link_libraries(kmplayer kdeinit_kmplayer)

@@ -11,7 +11,7 @@
 #include "config-kmplayer.h"
 
 #include <kpagedialog.h>
-#include <qmap.h>
+#include <QMap>
 
 #include "kmplayerplaylist.h"
 

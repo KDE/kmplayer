@@ -9,12 +9,12 @@
 
 #include "config-kmplayer.h"
 
-#include <qobject.h>
+#include <QObject>
 #include <QList>
 #include <QPointer>
 #include <QUrl>
-#include <qstringlist.h>
-#include <qmap.h>
+#include <QStringList>
+#include <QMap>
 #include <QModelIndex>
 
 #include <kmediaplayer/player.h>

@@ -11,7 +11,7 @@
 # include <cairo.h>
 #endif
 
-#include <qwidget.h>
+#include <QWidget>
 
 #include "kmplayercommon_log.h"
 #include "surface.h"

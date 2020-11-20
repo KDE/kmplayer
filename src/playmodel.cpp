@@ -8,8 +8,8 @@
 #include "playlistview.h"
 #include "kmplayercommon_log.h"
 
-#include <qpixmap.h>
-#include <qtimer.h>
+#include <QPixmap>
+#include <QTimer>
 
 #include <klocalizedstring.h>
 #include <kiconloader.h>

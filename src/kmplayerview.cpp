@@ -9,20 +9,20 @@
 
 #include "config-kmplayer.h"
 // include files for Qt
-#include <qstyle.h>
-#include <qtimer.h>
-#include <qpainter.h>
-#include <qmetaobject.h>
-#include <qlayout.h>
-#include <qpixmap.h>
-#include <qtextedit.h>
-#include <qtooltip.h>
-#include <qapplication.h>
-#include <qcursor.h>
-#include <qkeysequence.h>
-#include <qslider.h>
-#include <qlabel.h>
-#include <qdatastream.h>
+#include <QStyle>
+#include <QTimer>
+#include <QPainter>
+#include <QMetaObject>
+#include <QLayout>
+#include <QPixmap>
+#include <QTextEdit>
+#include <QToolTip>
+#include <QApplication>
+#include <QCursor>
+#include <QKeySequence>
+#include <QSlider>
+#include <QLabel>
+#include <QDataStream>
 #include <QContextMenuEvent>
 #include <QMimeData>
 #include <QDropEvent>
@@ -31,8 +31,8 @@
 #include <QFontDatabase>
 #include <QTextDocument>
 #include <QTextCursor>
-#include <qcursor.h>
-#include <qclipboard.h>
+#include <QCursor>
+#include <QClipboard>
 #include <QMainWindow>
 #include <QStatusBar>
 #include <QDockWidget>

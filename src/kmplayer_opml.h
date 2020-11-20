@@ -7,7 +7,7 @@
 #ifndef _KMPLAYER_OPML_H_
 #define _KMPLAYER_OPML_H_
 
-#include <qstring.h>
+#include <QString>
 
 #include "kmplayerplaylist.h"
 

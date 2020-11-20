@@ -13,7 +13,7 @@
 #include <QCommandLineParser>
 #include <QApplication>
 #include <QPointer>
-#include <qfileinfo.h>
+#include <QFileInfo>
 
 #include "kmplayer.h"
 

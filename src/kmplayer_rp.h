@@ -7,8 +7,8 @@
 #ifndef _KMPLAYER_RP_H_
 #define _KMPLAYER_RP_H_
 
-#include <qobject.h>
-#include <qstring.h>
+#include <QObject>
+#include <QString>
 
 #include "kmplayerplaylist.h"
 #include "surface.h"

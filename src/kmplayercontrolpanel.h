@@ -10,9 +10,9 @@
 #include "config-kmplayer.h"
 #include "kmplayercommon_export.h"
 
-#include <qwidget.h>
-#include <qmenu.h>
-#include <qpushbutton.h>
+#include <QWidget>
+#include <QMenu>
+#include <QPushButton>
 
 class QSlider;
 //class QPushButton;

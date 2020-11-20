@@ -10,7 +10,7 @@
 
 #include "config-kmplayer.h"
 
-#include <qframe.h>
+#include <QFrame>
 
 #include "kmplayerappsource.h"
 #include "kmplayerconfig.h"

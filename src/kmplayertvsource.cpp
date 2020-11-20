@@ -5,23 +5,23 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-#include <qlayout.h>
-#include <qlabel.h>
-#include <qtimer.h>
-#include <qpushbutton.h>
-#include <qcheckbox.h>
+#include <QLayout>
+#include <QLabel>
+#include <QTimer>
+#include <QPushButton>
+#include <QCheckBox>
 #include <QTableWidget>
-#include <qstringlist.h>
-#include <qcombobox.h>
-#include <qlineedit.h>
-#include <qgroupbox.h>
-#include <qwhatsthis.h>
-#include <qtabwidget.h>
-#include <qmessagebox.h>
+#include <QStringList>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QGroupBox>
+#include <QWhatsThis>
+#include <QTabWidget>
+#include <QMessageBox>
 #include <QHeaderView>
 #include <QMenu>
 #include <QStandardPaths>
-#include <qfontmetrics.h>
+#include <QFontMetrics>
 
 #include <klocalizedstring.h>
 #include <kmessagebox.h>

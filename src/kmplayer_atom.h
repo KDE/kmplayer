@@ -7,7 +7,7 @@
 #ifndef _KMPLAYER_ATOM_H_
 #define _KMPLAYER_ATOM_H_
 
-#include <qstringlist.h>
+#include <QStringList>
 
 #include "kmplayerplaylist.h"
 

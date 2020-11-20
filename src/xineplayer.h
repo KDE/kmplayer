@@ -7,10 +7,10 @@
 #ifndef _KXINEPLAYER_H_
 #define _KXINEPLAYER_H_
 
-#include <qapplication.h>
-#include <qstring.h>
-#include <qstringlist.h>
-#include <qsessionmanager.h>
+#include <QApplication>
+#include <QString>
+#include <QStringList>
+#include <QSessionManager>
 
 struct XineMovieParamEvent : public QEvent {
     XineMovieParamEvent (int l, int w, int h, const QStringList & al, const QStringList & sl, bool ff=false);

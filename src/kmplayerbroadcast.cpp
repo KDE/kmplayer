@@ -7,20 +7,20 @@
 
 #include <algorithm>
 
-#include <qlayout.h>
-#include <qlabel.h>
-#include <qpushbutton.h>
-#include <qtable.h>
-#include <qstringlist.h>
-#include <qcombobox.h>
-#include <qlistbox.h>
-#include <qlineedit.h>
-#include <qwhatsthis.h>
-#include <qtabwidget.h>
-#include <qcursor.h>
-#include <qdir.h>
-#include <qfile.h>
-#include <qtimer.h>
+#include <QLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QTable>
+#include <QStringList>
+#include <QComboBox>
+#include <QListBox>
+#include <QLineEdit>
+#include <QWhatsThis>
+#include <QTabWidget>
+#include <QCursor>
+#include <QDir>
+#include <QFile>
+#include <QTimer>
 
 #include <klocalizedstring.h>
 #include <kled.h>

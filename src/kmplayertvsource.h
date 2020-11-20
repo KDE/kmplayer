@@ -9,8 +9,8 @@
 #define _KMPLAYER_TV_SOURCE_H_
 
 #include <QPointer>
-#include <qstring.h>
-#include <qframe.h>
+#include <QString>
+#include <QFrame>
 
 #include "kmplayer.h"
 #include "kmplayerconfig.h"

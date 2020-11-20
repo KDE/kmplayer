@@ -8,9 +8,9 @@
 #ifndef _K_GST_PLAYER_H_
 #define _K_GST_PLAYER_H_
 
-#include <qapplication.h>
-#include <qstring.h>
-#include <qsessionmanager.h>
+#include <QApplication>
+#include <QString>
+#include <QSessionManager>
 
 struct GstSizeEvent : public QEvent {
     GstSizeEvent (int l, int w, int h);

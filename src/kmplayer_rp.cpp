@@ -6,8 +6,8 @@
 
 #include "config-kmplayer.h"
 
-#include <qcolor.h>
-#include <qtimer.h>
+#include <QColor>
+#include <QTimer>
 
 #include "kmplayercommon_log.h"
 #include "kmplayer_rp.h"

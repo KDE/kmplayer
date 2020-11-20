@@ -7,25 +7,25 @@
 #undef Always
 
 // include files for QT
-#include <qdatastream.h>
-#include <qregexp.h>
-#include <qicon.h>
-#include <qinputdialog.h>
-#include <qiodevice.h>
-#include <qcursor.h>
-#include <qpainter.h>
-#include <qcheckbox.h>
-#include <qpushbutton.h>
-#include <qkeysequence.h>
-#include <qapplication.h>
-#include <qslider.h>
-#include <qlayout.h>
-#include <qmenu.h>
-#include <qmimedata.h>
-#include <qwhatsthis.h>
-#include <qtimer.h>
-#include <qfile.h>
-#include <qmetaobject.h>
+#include <QDataStream>
+#include <QRegExp>
+#include <QIcon>
+#include <QInputDialog>
+#include <QIODevice>
+#include <QCursor>
+#include <QPainter>
+#include <QCheckBox>
+#include <QPushButton>
+#include <QKeySequence>
+#include <QApplication>
+#include <QSlider>
+#include <QLayout>
+#include <QMenu>
+#include <QMimeData>
+#include <QWhatsThis>
+#include <QTimer>
+#include <QFile>
+#include <QMetaObject>
 #include <QDirIterator>
 #include <QDropEvent>
 #include <QLabel>
@@ -34,7 +34,7 @@
 #include <QStatusBar>
 #include <QStandardPaths>
 #include <QSystemTrayIcon>
-#include <QtX11Extras/QX11Info>
+#include <QX11Info>
 
 // include files for KDE
 #include <kiconloader.h>

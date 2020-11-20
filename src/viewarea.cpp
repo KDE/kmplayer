@@ -10,13 +10,13 @@
 #include <cstdlib>
 #include <cmath>
 
-#include <qapplication.h>
-#include <qslider.h>
-#include <qcursor.h>
-#include <qmap.h>
+#include <QApplication>
+#include <QSlider>
+#include <QCursor>
+#include <QMap>
 #include <QPalette>
 #include <QDesktopWidget>
-#include <QtX11Extras/QX11Info>
+#include <QX11Info>
 #include <QPainter>
 #include <QMainWindow>
 #include <QStatusBar>

@@ -9,15 +9,15 @@
 #include <cassert>
 
 #include "config-kmplayer.h"
-#include <qcheckbox.h>
-#include <qtextedit.h>
-#include <qpushbutton.h>
-#include <qradiobutton.h>
-#include <qtabwidget.h>
-#include <qslider.h>
-#include <qspinbox.h>
-#include <qlabel.h>
-#include <qfileinfo.h>
+#include <QCheckBox>
+#include <QTextEdit>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QTabWidget>
+#include <QSlider>
+#include <QSpinBox>
+#include <QLabel>
+#include <QFileInfo>
 #include <QButtonGroup>
 #include <QListWidget>
 #include <QFontDatabase>

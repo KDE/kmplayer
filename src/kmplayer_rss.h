@@ -7,7 +7,7 @@
 #ifndef _KMPLAYER_RSS_H_
 #define _KMPLAYER_RSS_H_
 
-#include <qstring.h>
+#include <QString>
 
 #include "kmplayerplaylist.h"
 

@@ -12,11 +12,11 @@
 #include <list>
 #include <algorithm>
 
-#include <qlabel.h>
-#include <qmenu.h>
-#include <qtimer.h>
-#include <qpushbutton.h>
-#include <qslider.h>
+#include <QLabel>
+#include <QMenu>
+#include <QTimer>
+#include <QPushButton>
+#include <QSlider>
 #include <QStatusBar>
 #include <QFile>
 #include <QMetaObject>

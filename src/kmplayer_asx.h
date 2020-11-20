@@ -7,7 +7,7 @@
 #ifndef _KMPLAYER_ASX_H_
 #define _KMPLAYER_ASX_H_
 
-#include <qstring.h>
+#include <QString>
 
 #include "kmplayerplaylist.h"
 

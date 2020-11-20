@@ -8,8 +8,8 @@
 #define _KMPLAYER_SMILL_H_
 
 #include "config-kmplayer.h"
-#include <qstring.h>
-#include <qstringlist.h>
+#include <QString>
+#include <QStringList>
 
 #include "kmplayerplaylist.h"
 #include "surface.h"

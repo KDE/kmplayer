@@ -8,9 +8,9 @@
 #ifndef _K_XV_PLAYER_H_
 #define _K_XV_PLAYER_H_
 
-#include <qapplication.h>
-#include <qstring.h>
-#include <qsessionmanager.h>
+#include <QApplication>
+#include <QString>
+#include <QSessionManager>
 
 class KXVideoPlayer : public QApplication {
     Q_OBJECT

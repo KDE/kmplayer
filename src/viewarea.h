@@ -8,7 +8,7 @@
 #ifndef KMPLAYER_VIEW_AREA_H
 #define KMPLAYER_VIEW_AREA_H
 
-#include <qwidget.h>
+#include <QWidget>
 #include <QAbstractNativeEventFilter>
 typedef QWidget QX11EmbedContainer;
 #include <QList>

@@ -10,7 +10,7 @@
 
 #include "kmplayercommon_export.h"
 
-#include <qstring.h>
+#include <QString>
 
 namespace KMPlayer {
 

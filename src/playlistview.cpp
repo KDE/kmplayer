@@ -8,20 +8,20 @@
 
 #include "config-kmplayer.h"
 // include files for Qt
-#include <qapplication.h>
-#include <qclipboard.h>
+#include <QApplication>
+#include <QClipboard>
 #include <QMenu>
 #include <QIcon>
 #include <qdrawutil.h>
-#include <qpainter.h>
+#include <QPainter>
 #include <QAbstractItemDelegate>
 #include <QDropEvent>
-#include <qstyle.h>
+#include <QStyle>
 #include <QDropEvent>
 #include <QPalette>
-#include <qregexp.h>
-#include <QtCore/QAbstractItemModel>
-#include <QtCore/QList>
+#include <QRegExp>
+#include <QAbstractItemModel>
+#include <QList>
 #include <QItemSelectionModel>
 #include <QMimeData>
 

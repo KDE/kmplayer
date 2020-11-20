@@ -10,7 +10,7 @@
 
 #include <config-kmplayer.h>
 
-#include <qprocess.h>
+#include <QProcess>
 
 #include "kmplayerplaylist.h"
 #include "kmplayerpartbase.h"

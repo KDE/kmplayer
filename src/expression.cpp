@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <qurl.h>
+#include <QUrl>
 #include "expression.h"
 
 #include <QRegExp>

@@ -11,7 +11,7 @@
 #include <list>
 #include <vector>
 
-#include <qframe.h>
+#include <QFrame>
 #include <QPointer>
 
 #include "kmplayerappsource.h"
