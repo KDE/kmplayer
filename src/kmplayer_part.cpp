@@ -17,6 +17,7 @@
 #include <qtimer.h>
 #include <qpushbutton.h>
 #include <qslider.h>
+#include <QStatusBar>
 #include <QFile>
 #include <QMetaObject>
 #include <QStandardPaths>
@@ -26,8 +27,6 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include <kurlauthorized.h>
 #include <kiconloader.h>
 #include <klocalizedstring.h>
-#include <kparts/factory.h>
-#include <kstatusbar.h>
 #if KCOREADDONS_VERSION >= QT_VERSION_CHECK(5, 77, 0)
 #include <KPluginMetaData>
 #endif

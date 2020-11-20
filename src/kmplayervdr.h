@@ -12,8 +12,6 @@
 
 #include <qframe.h>
 
-#include <kurl.h>
-
 #include "kmplayerappsource.h"
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"

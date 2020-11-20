@@ -16,7 +16,6 @@
 #include <qtimer.h>
 #include <QBuffer>
 
-#include <kurl.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 

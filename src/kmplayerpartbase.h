@@ -18,7 +18,6 @@
 #include <QModelIndex>
 
 #include <kmediaplayer/player.h>
-#include <kurl.h>
 #include <ksharedconfig.h>
 #include <kconfiggroup.h>
 

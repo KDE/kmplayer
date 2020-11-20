@@ -22,8 +22,6 @@
 #include "kmplayer_xspf.h"
 #include "mediaobject.h"
 
-#include <kurl.h>
-
 #ifdef SHAREDPTR_DEBUG
 KMPLAYERCOMMON_EXPORT int shared_data_count;
 #endif

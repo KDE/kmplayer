@@ -24,11 +24,9 @@
 
 #include <kurlrequester.h>
 #include <klineedit.h>
-#include <kstatusbar.h>
 
 #include <kconfig.h>
 #include <kconfiggroup.h>
-#include <kurl.h>
 #include <klocalizedstring.h>
 #include <kcombobox.h>
 #include <kmessagebox.h>

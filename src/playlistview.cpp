@@ -38,8 +38,6 @@
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
 
-#include <kurl.h>
-
 using namespace KMPlayer;
 
 namespace {

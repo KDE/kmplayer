@@ -12,7 +12,6 @@
 #include <qicon.h>
 #include <qinputdialog.h>
 #include <qiodevice.h>
-#include <qprinter.h>
 #include <qcursor.h>
 #include <qpainter.h>
 #include <qcheckbox.h>
@@ -32,6 +31,7 @@
 #include <QLabel>
 #include <QDockWidget>
 #include <QMenuBar>
+#include <QStatusBar>
 #include <QStandardPaths>
 #include <QSystemTrayIcon>
 #include <QtX11Extras/QX11Info>
@@ -39,7 +39,6 @@
 // include files for KDE
 #include <kiconloader.h>
 #include <kmessagebox.h>
-#include <kstatusbar.h>
 #include <ktoolbar.h>
 #include <klocalizedstring.h>
 #include <kconfig.h>

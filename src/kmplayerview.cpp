@@ -33,15 +33,13 @@
 #include <QTextCursor>
 #include <qcursor.h>
 #include <qclipboard.h>
-#include <kicon.h>
 #include <QMainWindow>
+#include <QStatusBar>
 #include <QDockWidget>
 
 #include <kiconloader.h>
-#include <kstatusbar.h>
 #include <klocalizedstring.h>
 #include <kactioncollection.h>
-#include <kshortcut.h>
 #include <kfinddialog.h>
 
 #include "kmplayercommon_log.h"

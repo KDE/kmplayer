@@ -19,6 +19,7 @@
 #include <QtX11Extras/QX11Info>
 #include <QPainter>
 #include <QMainWindow>
+#include <QStatusBar>
 #include <QWidgetAction>
 #include <QTextBlock>
 #include <QTextDocument>
@@ -27,8 +28,6 @@
 #include <QAbstractNativeEventFilter>
 
 #include <kactioncollection.h>
-#include <kstatusbar.h>
-#include <kshortcut.h>
 #include <klocalizedstring.h>
 
 #include "kmplayercommon_log.h"
@@ -45,8 +44,6 @@
 #include "mediaobject.h"
 
 #include <xcb/xcb.h>
-
-#include <kurl.h>
 
 using namespace KMPlayer;
 
