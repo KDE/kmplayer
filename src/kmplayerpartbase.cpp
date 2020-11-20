@@ -135,7 +135,7 @@ void PartBase::showPlayListWindow () {
 
 void PartBase::addBookMark (const QString & t, const QString & url) {
     KBookmarkGroup b = m_bookmark_manager->root ();
-    b.addBookmark (t, KUrl (url), KIO::iconNameForUrl(url));
+    b.addBookmark (t, KUrl (url), KIO::iconNameForUrl(QUrl(url)));
     m_bookmark_manager->emitChanged (b);
 }
 

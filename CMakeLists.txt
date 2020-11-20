@@ -47,6 +47,7 @@ find_package(Phonon4Qt5 REQUIRED NO_MODULE)
 
 add_definitions(
     -DQT_USE_QSTRINGBUILDER
+    -DQT_NO_URL_CAST_FROM_STRING
 )
 
 if(NOT WIN32)

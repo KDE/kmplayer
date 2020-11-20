@@ -441,7 +441,7 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
             Mrl *m = p->mrl ();
             if (m && !m->src.isEmpty () &&
                   m->src != "Playlist://" &&
-                  !KUrlAuthorized::authorizeUrlAction ("redirect", m->src, kurl)) {
+                  !KUrlAuthorized::authorizeUrlAction ("redirect", QUrl(m->src), kurl)) {
                 qCWarning(LOG_KMPLAYER_COMMON) << "redirect access denied";
                 ready ();
                 return true;

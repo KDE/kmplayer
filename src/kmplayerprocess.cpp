@@ -278,7 +278,7 @@ bool Process::play () {
             nonstdurl ||
             (m_source && m_source->avoidRedirects ()))
         return deMediafiedPlay ();
-    m_job = KIO::stat (m_url, KIO::HideProgressInfo);
+    m_job = KIO::stat (QUrl(m_url), KIO::HideProgressInfo);
     connect (m_job, SIGNAL (result (KJob *)), this, SLOT (result (KJob *)));
     return true;
 }
@@ -2035,7 +2035,7 @@ void NpPlayer::request_stream (const QString &path, const QString &url, const QS
             connect (ns, SIGNAL (stateChanged ()), this, SLOT (streamStateChanged ()));
             streams[sid] = ns;
             if (url != uri)
-                streamRedirected (sid, uri);
+                streamRedirected (sid, QUrl(uri));
             if (!write_in_progress)
                 processStreams ();
         }
@@ -2265,7 +2265,7 @@ QString NpPlayer::cookie (const QString &url)
     if (v) {
         KIO::Integration::CookieJar jar (v);
         jar.setWindowId (v->topLevelWidget()->winId ());
-        QList<QNetworkCookie> c = jar.cookiesForUrl (url);
+        QList<QNetworkCookie> c = jar.cookiesForUrl (QUrl(url));
         QList<QNetworkCookie>::const_iterator e = c.constEnd ();
         for (QList<QNetworkCookie>::const_iterator i = c.constBegin (); i != e; ++i)
             s += (s.isEmpty() ? "" : ";") + QString::fromUtf8 ((*i).toRawForm());

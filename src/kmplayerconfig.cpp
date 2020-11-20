@@ -645,7 +645,7 @@ void Settings::okPressed () {
                     urlchanged = false;
                     KMessageBox::error (m_player->view (), i18n ("File %1 does not exist.",url.url ()), i18n ("Error"));
                 } else {
-                    configdialog->m_SourcePageURL->url->setUrl (QString(fi.absoluteFilePath () + xine_directives));
+                    configdialog->m_SourcePageURL->url->setUrl (QUrl::fromLocalFile(fi.absoluteFilePath () + xine_directives));
                 }
             }
             if (urlchanged &&
@@ -655,9 +655,9 @@ void Settings::okPressed () {
                 QFileInfo sfi (sub_url.path ());
                 if (!sfi.exists ()) {
                     KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.",sub_url.url ()), i18n ("Error"));
-                    configdialog->m_SourcePageURL->sub_url->setUrl (QString ());
+                    configdialog->m_SourcePageURL->sub_url->setUrl (QUrl ());
                 } else
-                    configdialog->m_SourcePageURL->sub_url->setUrl (sfi.absoluteFilePath ());
+                    configdialog->m_SourcePageURL->sub_url->setUrl (sub_url);
             }
         }
     }
