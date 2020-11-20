@@ -1438,7 +1438,7 @@ void Source::slotActivate ()
 
 //-----------------------------------------------------------------------------
 
-URLSource::URLSource (PartBase * player, const KUrl & url)
+URLSource::URLSource (PartBase * player, const QUrl & url)
     : Source (i18n ("URL"), player, "urlsource"), activated (false) {
     setUrl (url.url ());
     //qCDebug(LOG_KMPLAYER_COMMON) << "URLSource::URLSource";

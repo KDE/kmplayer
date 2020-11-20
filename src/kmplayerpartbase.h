@@ -208,7 +208,7 @@ class KMPLAYERCOMMON_EXPORT URLSource : public Source
 {
     Q_OBJECT
 public:
-    URLSource (PartBase * player, const KUrl & url = KUrl ());
+    URLSource (PartBase * player, const QUrl & url = QUrl ());
     ~URLSource () override;
 
     void dimensions (int & w, int & h) override;
