@@ -632,7 +632,7 @@ void Settings::okPressed () {
         if (url.isEmpty ()) {
             urlchanged = false;
         } else {
-            if (url.isLocalFile () || KUrl::isRelativeUrl (url.url ())) {
+            if (url.isLocalFile () || url.isRelative ()) {
                 QFileInfo fi (url.toLocalFile());
                 int hpos = url.url ().lastIndexOf ('#');
                 QString xine_directives ("");
@@ -651,7 +651,7 @@ void Settings::okPressed () {
             if (urlchanged &&
                     !sub_url.url ().isEmpty () &&
                     (sub_url.isLocalFile () ||
-                     KUrl::isRelativeUrl (sub_url.url ()))) {
+                     sub_url.isRelative())) {
                 QFileInfo sfi (sub_url.toLocalFile());
                 if (!sfi.exists ()) {
                     KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.",sub_url.url ()), i18n ("Error"));
