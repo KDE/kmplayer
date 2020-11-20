@@ -1582,7 +1582,7 @@ static void followLink (SMIL::LinkingBase * link) {
     } else {
         PlayListNotify *notify = link->document ()->notify_listener;
         if (notify && !link->target.isEmpty ()) {
-            notify->openUrl(KUrl(link->href), link->target, QString());
+            notify->openUrl(QUrl(link->href), link->target, QString());
         } else {
             NodePtr n = link;
             for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {

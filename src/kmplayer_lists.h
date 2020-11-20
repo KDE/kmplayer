@@ -42,7 +42,7 @@ class ListsSource : public KMPlayer::URLSource
 {
 public:
     ListsSource (KMPlayer::PartBase * p)
-        : KMPlayer::URLSource (p, KUrl ("lists://")) {}
+        : KMPlayer::URLSource (p, QUrl ("lists://")) {}
     void play (KMPlayer::Mrl *) override;
     void activate () override;
     QString prettyName () override;

@@ -504,7 +504,7 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
             check_access = true;
             access_from = domain;
             cross_domain = get_from + "/crossdomain.xml";
-            kurl = KUrl (cross_domain);
+            kurl = QUrl (cross_domain);
         }
     }
     if (!check_access) {

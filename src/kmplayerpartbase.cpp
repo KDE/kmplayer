@@ -466,13 +466,13 @@ bool PartBase::openUrl (const QUrl &url) {
 
 bool PartBase::openUrl(const QList<QUrl>& urls) {
     if (urls.size () == 1) {
-        openUrl(KUrl(urls[0].toString()));
+        openUrl(urls[0]);
     } else {
-        openUrl (KUrl ());
+        openUrl (QUrl ());
         NodePtr d = m_source->document ();
         if (d)
             for (int i = 0; i < urls.size (); i++) {
-                const KUrl &url = urls [i];
+                const QUrl &url = urls [i];
                 d->appendChild (new GenericURL (d,
                             url.isLocalFile() ? url.toLocalFile() : url.toString()));
             }

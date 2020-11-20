@@ -337,7 +337,7 @@ void KMPlayerApp::windowVideoConsoleToggled (bool show) {
 void KMPlayerApp::playerStarted () {
     KMPlayer::Source * source = m_player->source ();
     if (!strcmp (source->name (), "urlsource")) {
-        KUrl url = source->url ();
+        const QUrl url = source->url ();
         QString surl = url.url ();
         QString nurl = url.isLocalFile()
             ? url.toLocalFile()
@@ -634,7 +634,7 @@ void IntroSource::stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::St
             m_app->restoreFromConfig ();
         emit stopPlaying ();
         if (!deactivated) // replace introsource with urlsource
-            m_player->openUrl (KUrl ());
+            m_player->openUrl (QUrl ());
     }
 }
 
@@ -1062,7 +1062,7 @@ void KMPlayerApp::slotFileOpen () {
     if (urls.size () == 1) {
         openDocumentFile (urls [0]);
     } else if (urls.size () > 1) {
-        m_player->openUrl (KUrl ());
+        m_player->openUrl (QUrl ());
         for (int i = 0; i < urls.size (); i++)
             addUrl (urls [i]);
     }

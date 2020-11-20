@@ -153,7 +153,7 @@ void GrabDocument::begin () {
 void GrabDocument::message (MessageType msg, void *content) {
     if (MsgMediaFinished == msg) {
         state = state_finished;
-        m_part->startUrl (KUrl (), m_grab_file);
+        m_part->startUrl (QUrl (), m_grab_file);
         // deleted here by Source::reset
     } else {
         SourceDocument::message (msg, content);
@@ -502,7 +502,7 @@ bool KMPlayerPart::openUrl(const QUrl& _url) {
     }
 
     if (m_wait_npp_loaded && (_url.isEmpty () || _url == m_docbase)) {
-        url = KUrl ("about:empty");
+        url = QUrl ("about:empty");
         m_wait_npp_loaded = emit_started = false;
     } else if (!m_file_name.isEmpty () && (_url.isEmpty () || _url == m_docbase)) {
         url = KUrl (m_docbase, m_file_name); // fix misdetected SRC attr
@@ -627,7 +627,7 @@ bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
             }
         }
         QString img = pic.isEmpty ()
-            ? KUrl (KIconLoader::global()->iconPath (
+            ? QUrl::fromLocalFile (KIconLoader::global()->iconPath (
                         QString::fromLatin1 ("video-x-generic"),
 #ifdef KMPLAYER_WITH_CAIRO
                         -128
@@ -705,7 +705,7 @@ bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
 #ifndef KMPLAYER_WITH_CAIRO
 void KMPlayerPart::pictureClicked () {
     m_view->setPicture (QString ());
-    PartBase::openUrl (KUrl (m_src_url));
+    PartBase::openUrl (QUrl (m_src_url));
 }
 #endif
 
@@ -880,7 +880,7 @@ void KMPlayerBrowserExtension::saveState (QDataStream & stream) {
 void KMPlayerBrowserExtension::restoreState (QDataStream & stream) {
     QString url;
     stream >> url;
-    static_cast <PartBase *> (parent ())->openUrl (KUrl(url));
+    static_cast <PartBase *> (parent ())->openUrl (QUrl(url));
 }
 
 void KMPlayerBrowserExtension::requestOpenURL (const KUrl & url, const QString & target, const QString & service) {
