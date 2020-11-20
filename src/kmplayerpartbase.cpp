@@ -37,6 +37,7 @@
 #include <kiconloader.h>
 #include <klocalizedstring.h>
 #include <kprotocolinfo.h>
+#include <KIO/Global>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 #include <kurlauthorized.h>
@@ -1522,8 +1523,12 @@ QString URLSource::prettyName () {
         int len = newurl.size () + file.size ();
         KUrl path = KUrl (m_url.directory ());
         bool modified = false;
-        while (path.url ().size () + len > 50 && path != path.upUrl ()) {
-            path = path.upUrl ();
+        while (path.url ().size () + len > 50) {
+            const QUrl upPath = KIO::upUrl(path);
+            if (path == upPath) {
+                break;
+            }
+            path = upPath;
             modified = true;
         }
         QString dir = path.directory ();
