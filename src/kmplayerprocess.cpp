@@ -75,7 +75,7 @@ bool ProcessInfo::supports (const char *source) const {
 
 //------------------------%<----------------------------------------------------
 
-static QString getPath (const KUrl & url) {
+static QString getPath (const QUrl & url) {
     QString p = QUrl::fromPercentEncoding (url.url ().toAscii ());
     if (p.startsWith (QString ("file:/"))) {
         int i = 0;
@@ -90,7 +90,7 @@ static QString getPath (const KUrl & url) {
     return p;
 }
 
-static QString encodeFileOrUrl (const KUrl &url)
+static QString encodeFileOrUrl (const QUrl &url)
 {
     return url.isEmpty ()
         ? QString ()
@@ -106,7 +106,7 @@ static QString encodeFileOrUrl (const QString &str)
             !str.startsWith (QString ("vcd:")) &&
             !str.startsWith (QString ("tv:")) &&
             !str.startsWith (QString ("cdda:")))
-        return encodeFileOrUrl (KUrl (str));
+        return encodeFileOrUrl (QUrl::fromUserInput(str));
     return str;
 }
 
@@ -371,7 +371,7 @@ static RecordDocument *recordDocument (ProcessUser *user) {
 
 //-----------------------------------------------------------------------------
 
-static bool proxyForURL (const KUrl &url, QString &proxy) {
+static bool proxyForURL (const QUrl &url, QString &proxy) {
     KProtocolManager::slaveProtocol (url, proxy);
     return !proxy.isNull ();
 }
