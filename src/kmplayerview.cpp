@@ -128,9 +128,9 @@ View::View (QWidget *parent)
 void View::dropEvent (QDropEvent * de) {
     QList<QUrl> uris = de->mimeData()->urls();
     if (uris.isEmpty() || !uris[0].isValid()) {
-        QString text = de->mimeData()->text();
-        if (!text.isEmpty())
-            uris.push_back(QUrl::fromUserInput(text));
+        const QUrl url = QUrl::fromUserInput(de->mimeData()->text());
+        if (url.isValid ())
+            uris.push_back(url);
     }
     if (uris.size () > 0) {
         //m_widgetstack->currentWidget ()->setFocus ();

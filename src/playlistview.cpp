@@ -345,7 +345,7 @@ bool PlayListView::isDragValid (QDropEvent *event) {
             return true;
     } else {
         QString text = event->mimeData ()->text ();
-        if (!text.isEmpty () && KUrl (text).isValid ())
+        if (!text.isEmpty () && QUrl::fromUserInput(text).isValid ())
             return true;
     }
     return false;
@@ -381,7 +381,7 @@ void PlayListView::dropEvent (QDropEvent *event) {
         } else {
             QList<QUrl> uris = event->mimeData()->urls();
             if (uris.isEmpty ()) {
-                KUrl url (event->mimeData ()->text ());
+                const QUrl url = QUrl::fromUserInput(event->mimeData ()->text ());
                 if (url.isValid ())
                     uris.push_back (url);
             }

@@ -1283,7 +1283,7 @@ void KMPlayerApp::playListItemDropped (QDropEvent *de, KMPlayer::PlayItem *item)
         }
     }
     if (m_drop_list.isEmpty ()) {
-        KUrl url (de->mimeData ()->text ());
+        const QUrl url = QUrl::fromUserInput(de->mimeData ()->text ());
         if (url.isValid ())
             m_drop_list.push_back (url);
     }
