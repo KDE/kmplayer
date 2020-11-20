@@ -31,7 +31,7 @@ using namespace KMPlayer;
 //-----------------------------------------------------------------------------
 
 Node *KMPlayer::fromXMLDocumentTag (NodePtr & d, const QString & tag) {
-    const QByteArray ba = tag.toAscii ();
+    const QByteArray ba = tag.toLatin1 ();
     const char * const name = ba.constData();
     if (!strcmp (name, "smil"))
         return new SMIL::Smil (d);

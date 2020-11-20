@@ -1843,7 +1843,7 @@ static void updateSurfaceSort (SMIL::RegionBase *rb) {
 void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
     bool need_repaint = false;
     if (name == Ids::attr_fit) {
-        Fit ft = parseFit (val.toAscii ().constData ());
+        Fit ft = parseFit (val.toLatin1 ().constData ());
         if (ft != fit) {
             fit = ft;
             if (region_surface)
@@ -2180,7 +2180,7 @@ void SMIL::Transition::activate () {
 
 void SMIL::Transition::parseParam (const TrieString & para, const QString & val) {
     if (para == Ids::attr_type) {
-        type_info = transInfoFromString (val.toAscii ().constData ());
+        type_info = transInfoFromString (val.toLatin1 ().constData ());
         if (type_info) {
             type = type_info->type;
             if (SubTransTypeNone != sub_type) {
@@ -2194,7 +2194,7 @@ void SMIL::Transition::parseParam (const TrieString & para, const QString & val)
     } else if (para == Ids::attr_dur) {
         parseTime (val, dur);
     } else if (para == "subtype") {
-        sub_type = subTransInfoFromString (val.toAscii ().constData ());
+        sub_type = subTransInfoFromString (val.toLatin1 ().constData ());
         if (type_info) {
             if (SubTransTypeNone != sub_type) {
                 for (int i = 0; i < type_info->sub_types; ++i)
@@ -3300,7 +3300,7 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
                 clipStart ();
         }
     } else if (para == Ids::attr_fit) {
-        fit = parseFit (val.toAscii ().constData ());
+        fit = parseFit (val.toLatin1 ().constData ());
         if (fit != effective_fit)
             message (MsgSurfaceBoundsUpdate);
     } else if (para == Ids::attr_type) {

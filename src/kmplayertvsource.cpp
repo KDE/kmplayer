@@ -473,8 +473,8 @@ void KMPlayerTVSource::setCurrent (KMPlayer::Mrl *mrl) {
         m_xvencoding = xvenc.toInt ();
     QString command;
     command.sprintf ("device=%s:input=%s",
-            tvdevice->src.toAscii ().data (),
-            input->getAttribute (KMPlayer::Ids::attr_id).toAscii ().data ());
+            tvdevice->src.toLatin1 ().data (),
+            input->getAttribute (KMPlayer::Ids::attr_id).toLatin1 ().data ());
     if (channel) {
         QString freq = channel->getAttribute ("frequency");
         m_frequency = (int)(1000 * freq.toDouble ());
@@ -487,8 +487,8 @@ void KMPlayerTVSource::setCurrent (KMPlayer::Mrl *mrl) {
     setDimensions (m_cur_tvdevice,
             tvdevice->getAttribute (KMPlayer::Ids::attr_width).toInt (),
             tvdevice->getAttribute (KMPlayer::Ids::attr_height).toInt ());
-    m_options.sprintf ("-tv noaudio:driver=%s:%s:width=%d:height=%d -slave -nocache -quiet", tvdriver.toAscii ().data (), command.toAscii ().data (), width (), height ());
-    m_recordcmd.sprintf ("-tv %s:driver=%s:%s:width=%d:height=%d", m_audiodevice.isEmpty () ? "noaudio" : QString(QLatin1String ("forceaudio:adevice=") + m_audiodevice).toAscii ().data(), tvdriver.toAscii ().data (), command.toAscii ().data (), width (), height ());
+    m_options.sprintf ("-tv noaudio:driver=%s:%s:width=%d:height=%d -slave -nocache -quiet", tvdriver.toLatin1 ().data (), command.toLatin1 ().data (), width (), height ());
+    m_recordcmd.sprintf ("-tv %s:driver=%s:%s:width=%d:height=%d", m_audiodevice.isEmpty () ? "noaudio" : QString(QLatin1String ("forceaudio:adevice=") + m_audiodevice).toLatin1 ().data(), tvdriver.toLatin1 ().data (), command.toLatin1 ().data (), width (), height ());
 }
 
 void KMPlayerTVSource::menuClicked (int id) {
@@ -733,7 +733,7 @@ void TVDeviceScannerSource::deactivate () {
 void TVDeviceScannerSource::play (KMPlayer::Mrl *) {
     if (!m_tvdevice)
         return;
-    m_options.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.toAscii ().data (), m_tvdevice->src.toAscii ().data ());
+    m_options.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.toLatin1 ().data (), m_tvdevice->src.toLatin1 ().data ());
     m_tvsource->player ()->stop ();
     KMPlayer::Node *n = new KMPlayer::SourceDocument (this, QString ());
     setDocument (n, n);

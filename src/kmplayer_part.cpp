@@ -1265,7 +1265,7 @@ bool KMPlayerLiveConnectExtension::get
         }
     }
     qCDebug(LOG_KMPLAYER_PART) << "[01;35mget[00m " << name;
-    const JSCommandEntry * entry = getJSCommandEntry (name.toAscii ().constData ());
+    const JSCommandEntry * entry = getJSCommandEntry (name.toLatin1 ().constData ());
     if (!entry)
         return false;
     type = entry->rettype;
@@ -1319,7 +1319,7 @@ bool KMPlayerLiveConnectExtension::put
 
     qCDebug(LOG_KMPLAYER_PART) << "[01;35mput[00m " << name << "=" << val;
 
-    const JSCommandEntry * entry = getJSCommandEntry (name.toAscii ().constData ());
+    const JSCommandEntry * entry = getJSCommandEntry (name.toLatin1 ().constData ());
     if (!entry)
         return false;
     switch (entry->command) {
@@ -1413,9 +1413,9 @@ bool KMPlayerLiveConnectExtension::call
     }
     qCDebug(LOG_KMPLAYER_PART) << "[01;35mentry[00m " << func;
     const JSCommandEntry * entry = lastJSCommandEntry;
-    const QByteArray ascii = func.toAscii ();
-    if (!entry || strcmp (entry->name, ascii.constData ()))
-        entry = getJSCommandEntry (ascii.constData ());
+    const QByteArray latin1 = func.toLatin1 ();
+    if (!entry || strcmp (entry->name, latin1.constData ()))
+        entry = getJSCommandEntry (latin1.constData ());
     if (!entry)
         return false;
     for (QStringList::size_type i = 0; i < args.size (); ++i)

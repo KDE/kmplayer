@@ -624,7 +624,7 @@ void PartBase::playListItemActivated(const QModelIndex &index) {
         QString src = ri->source;
         NodePtrW node = vi->node;
         //qCDebug(LOG_KMPLAYER_COMMON) << src << " " << vi->node->nodeName();
-        Source * source = src.isEmpty() ? m_source : m_sources[src.toAscii().constData()];
+        Source * source = src.isEmpty() ? m_source : m_sources[src.toLatin1().constData()];
         if (node->isPlayable () || id_node_playlist_item == node->id) {
             source->play (node->mrl ()); //may become !isPlayable by lazy loading
             if (node && !node->isPlayable ())

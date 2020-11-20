@@ -345,7 +345,7 @@ static bool isPlayListMime (const QString & mime) {
     int plugin_pos = m.indexOf ("-plugin");
     if (plugin_pos > 0)
         m.truncate (plugin_pos);
-    QByteArray ba = m.toAscii ();
+    QByteArray ba = m.toLatin1 ();
     const char * mimestr = ba.data ();
     qCDebug(LOG_KMPLAYER_COMMON) << "isPlayListMime " << mimestr;
     return mimestr && (!strcmp (mimestr, "audio/mpegurl") ||
@@ -1214,7 +1214,7 @@ TextMedia::TextMedia (MediaManager *manager, Node *node, const QByteArray &ba)
     QTextStream ts (data, QIODevice::ReadOnly);
     QString val = convertNode <Element> (node)->getAttribute ("charset");
     if (!val.isEmpty ()) {
-        QTextCodec *codec = QTextCodec::codecForName (val.toAscii ());
+        QTextCodec *codec = QTextCodec::codecForName (val.toLatin1 ());
         if (codec)
             ts.setCodec (codec);
     }

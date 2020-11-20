@@ -361,7 +361,7 @@ ControlPanel::ControlPanel(QWidget * parent, View * view)
     m_buttonbox->setContentsMargins (5 * dpi_scale, 5 * dpi_scale, 5 * dpi_scale, 5 * dpi_scale);
     setAutoFillBackground (true);
     QColor c = palette ().color (foregroundRole ());
-    strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).toAscii().constData(), 31);
+    strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).toLatin1().constData(), 31);
     xpm_fg_color[31] = 0;
     m_buttons[button_config] = new KMPlayerMenuButton (this, m_buttonbox, config_xpm);
     m_buttons[button_playlist] = ctrlButton(m_buttonbox, playlist_xpm);
@@ -488,7 +488,7 @@ void ControlPanel::setPalette (const QPalette & pal) {
     QColor c = palette ().color (foregroundRole ());
     if (c == Qt::black)
         return;
-    strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).toAscii().constData(), 31);
+    strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).toLatin1().constData(), 31);
     xpm_fg_color[31] = 0;
     m_buttons[button_config]->setIcon(makeIcon(config_xpm));
     m_buttons[button_playlist]->setIcon(makeIcon(playlist_xpm));

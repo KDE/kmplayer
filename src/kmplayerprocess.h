@@ -373,7 +373,7 @@ struct TypeNode : public ConfigNode
     Node *childFromTag (const QString & tag) override;
     void changedXML (QTextStream & out);
     QWidget * createWidget (QWidget * parent);
-    const char * nodeName () const override { return tag.toAscii (); }
+    const char * nodeName () const override { return tag.toLatin1().constData(); }
     QString tag;
 };
 

@@ -76,7 +76,7 @@ bool ProcessInfo::supports (const char *source) const {
 //------------------------%<----------------------------------------------------
 
 static QString getPath (const QUrl & url) {
-    QString p = QUrl::fromPercentEncoding (url.url ().toAscii ());
+    QString p = QUrl::fromPercentEncoding (url.url ().toLatin1 ());
     if (p.startsWith (QString ("file:/"))) {
         int i = 0;
         p = p.mid (5);
@@ -418,7 +418,7 @@ bool MPlayerBase::removeQueued (const char *cmd) {
 
 bool MPlayerBase::sendCommand (const QString & cmd) {
     if (running ()) {
-        commands.push_front (QString (cmd + '\n').toAscii ());
+        commands.push_front (QString (cmd + '\n').toLatin1 ());
         fprintf (stderr, "eval %s", commands.last ().constData ());
         if (commands.size () < 2)
             m_process->write (commands.last ());
@@ -729,7 +729,7 @@ bool MPlayer::grabPicture (const QString &file, int pos) {
         return false; //FIXME
     initProcess ();
     m_old_state = m_state = Buffering;
-    unlink (file.toAscii ().constData ());
+    unlink (file.toLatin1 ().constData ());
     QByteArray ba = file.toLocal8Bit ();
     ba.append ("XXXXXX");
     if (mkdtemp ((char *) ba.constData ())) {
@@ -1530,7 +1530,7 @@ Node *SomeNode::childFromTag (const QString & t) {
 }
 
 QWidget * TypeNode::createWidget (QWidget * parent) {
-    QByteArray ba = getAttribute (Ids::attr_type).toAscii ();
+    QByteArray ba = getAttribute (Ids::attr_type).toLatin1 ();
     const char *ctype = ba.constData ();
     QString value = getAttribute (Ids::attr_value);
     if (!strcmp (ctype, "range")) {
@@ -1562,7 +1562,7 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
 
 void TypeNode::changedXML (QTextStream & out) {
     if (!w) return;
-    QByteArray ba = getAttribute (Ids::attr_type).toAscii ();
+    QByteArray ba = getAttribute (Ids::attr_type).toLatin1 ();
     const char *ctype = ba.constData ();
     QString value = getAttribute (Ids::attr_value);
     QString newvalue;
@@ -1925,7 +1925,7 @@ bool NpPlayer::ready () {
             if (!m_process->waitForReadyRead (5000))
                 return false;
             const QByteArray ba = m_process->readAllStandardOutput ();
-            s += QString::fromAscii (ba.data (), ba.size ());
+            s += QString::fromLatin1 (ba.data (), ba.size ());
             int nl = s.indexOf (QChar ('\n'));
             if (nl > 0) {
                 int p = s.indexOf ("NPP_DBUS_SRV=");

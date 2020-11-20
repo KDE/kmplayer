@@ -235,7 +235,7 @@ struct Step : public SequenceBase {
     virtual void dump () const {
         fprintf (stderr, "Step %c%s",
                 (axes & AttributeAxis) ? '@' : ' ',
-                context_node ? "." : string.toAscii ().constData ());
+                context_node ? "." : string.toLatin1 ().constData ());
         AST::dump();
     }
 #endif
@@ -287,7 +287,7 @@ struct StringLiteral : public StringBase {
     Type type(bool calc) const override;
 #ifdef KMPLAYER_EXPR_DEBUG
     virtual void dump () const {
-        fprintf (stderr, "StringLiteral %s", string.toAscii ().constData ());
+        fprintf (stderr, "StringLiteral %s", string.toLatin1 ().constData ());
         AST::dump();
     }
 #endif
