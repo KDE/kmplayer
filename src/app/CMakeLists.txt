@@ -16,6 +16,10 @@ ecm_qt_declare_logging_category(kmplayer_SRCS
     EXPORT KMPLAYER
 )
 
+qt5_add_resources(kmplayer_SRCS
+    kmplayer.qrc
+)
+
 kf5_add_kdeinit_executable(kmplayer ${kmplayer_SRCS} main.cpp)
 
 target_link_libraries(kdeinit_kmplayer
@@ -32,7 +36,6 @@ install(TARGETS kmplayer ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 
 install(FILES org.kde.kmplayer.desktop DESTINATION ${KDE_INSTALL_APPDIR})
 install(FILES org.kde.kmplayer.appdata.xml DESTINATION ${KDE_INSTALL_METAINFODIR})
-install(FILES kmplayerui.rc DESTINATION ${KDE_INSTALL_KXMLGUI5DIR}/kmplayer)
 install(FILES kmplayerrc DESTINATION ${KDE_INSTALL_CONFDIR})
 #install(FILES kmplayer.kcfg  DESTINATION  ${KCFG_INSTALL_DIR})
 

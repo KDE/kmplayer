@@ -14,6 +14,10 @@ ecm_qt_declare_logging_category(kmplayerpart_SRCS
     EXPORT KMPLAYER
 )
 
+qt5_add_resources(kmplayerpart_SRCS
+    kmplayer_part.qrc
+)
+
 add_library(kmplayerpart MODULE ${kmplayerpart_SRCS})
 kcoreaddons_desktop_to_json(kmplayerpart ${CMAKE_CURRENT_BINARY_DIR}/kmplayer_part.desktop)
 
@@ -25,5 +29,4 @@ target_link_libraries(kmplayerpart
 install(TARGETS kmplayerpart DESTINATION ${KDE_INSTALL_PLUGINDIR}/kf5/parts)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kmplayer_part.desktop  DESTINATION  ${KDE_INSTALL_KSERVICES5DIR})
-install(FILES kmplayerpartui.rc DESTINATION ${KDE_INSTALL_KXMLGUI5DIR}/kmplayer)
 install(FILES pluginsinfo DESTINATION ${KDE_INSTALL_DATADIR}/kmplayer)
