@@ -283,17 +283,17 @@ public:
 
     QString m_service;
     QString m_path;
-    QString m_slave_service;
-    QProcess *m_slave;
+    QString m_agent_service;
+    QProcess *m_agent;
 
 private Q_SLOTS:
-    void slaveStopped (int, QProcess::ExitStatus);
-    void slaveOutput ();
+    void agentStopped (int, QProcess::ExitStatus);
+    void agentOutput ();
 
 protected:
-    virtual void initSlave ();
-    virtual bool startSlave () = 0;
-    virtual void stopSlave ();
+    virtual void initAgent ();
+    virtual bool startAgent () = 0;
+    virtual void stopAgent ();
 };
 
 class MasterProcess : public Process
@@ -320,7 +320,7 @@ public:
     void stop () override;
 
 private:
-    QString m_slave_path;
+    QString m_agent_path;
 };
 
 class PhononProcessInfo : public MasterProcessInfo
@@ -330,7 +330,7 @@ public:
 
     IProcess *create (PartBase*, ProcessUser*) override;
 
-    bool startSlave () override;
+    bool startAgent () override;
 };
 
 class Phonon : public MasterProcess

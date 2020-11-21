@@ -24,10 +24,11 @@ namespace Phonon
     class MediaObject;
 } // namespace Phonon
 
-class Slave : public QObject {
+class Agent : public QObject
+{
     Q_OBJECT
 public:
-    Slave ();
+    Agent();
 
     void newStream (const QString &url, uint64_t wid);
     void quit ();

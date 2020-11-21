@@ -3,11 +3,11 @@ set(kphononplayer_SRCS
 )
 
 qt5_add_dbus_adaptor(kphononplayer_SRCS
-    ${CMAKE_SOURCE_DIR}/src/lib/org.kde.kmplayer.slave.xml
-    phononplayer.h Slave
+    ${CMAKE_SOURCE_DIR}/src/lib/org.kde.kmplayer.agent.xml
+    phononplayer.h Agent
 )
 qt5_add_dbus_adaptor(kphononplayer_SRCS
-    ${CMAKE_SOURCE_DIR}/src/lib/org.kde.kmplayer.streamslave.xml
+    ${CMAKE_SOURCE_DIR}/src/lib/org.kde.kmplayer.streamagent.xml
     phononplayer.h Stream
 )
 

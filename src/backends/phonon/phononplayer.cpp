@@ -24,20 +24,22 @@
 #include <phonon/videoplayer.h>
 #include <phonon/videowidget.h>
 
-#include "slaveadaptor.h"
-#include "streamslaveadaptor.h"
+#include "agentadaptor.h"
+#include "streamagentadaptor.h"
 
 #include <xcb/xcb.h>
 
 static QString control_service;
 static QString control_path;
-static Slave *slave;
-typedef QMap <uint64_t, Stream *> SlaveMap;
-static SlaveMap slave_map;
+static Agent *agent;
+typedef QMap <uint64_t, Stream *> AgentMap;
+static AgentMap agent_map;
 
-Slave::Slave () : stay_alive_timer (0) {
+Agent::Agent ()
+    : stay_alive_timer (0)
+{
     QString service = QString ("org.kde.kphononplayer-%1").arg (getpid ());
-    (void) new SlaveAdaptor (this);
+    (void) new AgentAdaptor (this);
     QDBusConnection::sessionBus().registerObject ("/phonon", this);
     if (QDBusConnection::sessionBus().interface()->registerService (service) ==
             QDBusConnectionInterface::ServiceNotRegistered) {
@@ -54,26 +56,30 @@ Slave::Slave () : stay_alive_timer (0) {
     }
 }
 
-void Slave::newStream (const QString &url, uint64_t wid) {
+void Agent::newStream (const QString &url, uint64_t wid)
+{
     if (stay_alive_timer) {
         killTimer (stay_alive_timer);
         stay_alive_timer = 0;
     }
-    slave_map.insert (wid, new Stream (nullptr, url, wid));
+    agent_map.insert (wid, new Stream (nullptr, url, wid));
 }
 
-void Slave::quit () {
+void Agent::quit ()
+{
     qDebug ("quit");
     qApp->quit ();
 }
 
-void Slave::streamDestroyed (uint64_t wid) {
-    slave_map.remove (wid);
-    if (!slave_map.size ())
+void Agent::streamDestroyed (uint64_t wid)
+{
+    agent_map.remove (wid);
+    if (!agent_map.size ())
         stay_alive_timer = startTimer (5000);
 }
 
-void Slave::timerEvent (QTimerEvent *) {
+void Agent::timerEvent (QTimerEvent *)
+{
     quit ();
 }
 
@@ -93,7 +99,7 @@ Stream::Stream (QWidget *parent, const QString &url, unsigned long wid)
 }
 
 void Stream::init () {
-    (void) new StreamSlaveAdaptor (this);
+    (void) new StreamAgentAdaptor (this);
     QDBusConnection::sessionBus().registerObject (
             QString ("/stream_%1").arg (video_handle), this);
 
@@ -132,7 +138,7 @@ void Stream::init () {
 
 Stream::~Stream () {
     delete m_media;
-    slave->streamDestroyed (video_handle);
+    agent->streamDestroyed (video_handle);
 }
 
 /*bool Stream::x11Event (XEvent *event) {
@@ -247,7 +253,7 @@ void Stream::finished () {
 int main (int argc, char **argv) {
     QString url;
     QApplication app (argc, argv);
-    QApplication::setApplicationName ("Phonon Slave");
+    QApplication::setApplicationName ("Phonon Agent");
     for (int i = 1; i < argc; i++) {
         if (!strcmp (argv[i], "-cb") && ++i < argc) {
             QString s (argv[i]);
@@ -260,7 +266,7 @@ int main (int argc, char **argv) {
             url = argv[i];
         }
     }
-    slave = new Slave;
+    agent = new Agent;
     if (!url.isEmpty ()) {
         new Stream (nullptr, url, 0);
         //mw.show ();
