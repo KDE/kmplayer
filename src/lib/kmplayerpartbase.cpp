@@ -139,10 +139,11 @@ void PartBase::addBookMark (const QString & t, const QString & url) {
 void PartBase::init (KActionCollection * action_collection, const QString &objname, bool transparent) {
     KParts::Part::setWidget (m_view);
     m_view->init (action_collection, transparent);
-    connect(m_settings, SIGNAL(configChanged()), this, SLOT(settingsChanged()));
+    connect(m_settings, &Settings::configChanged, this, &PartBase::settingsChanged);
     m_settings->readConfig ();
     m_settings->applyColorSetting (false);
-    connect (m_view, SIGNAL(urlDropped(const QList<QUrl>&)), this, SLOT(openUrl(const QList<QUrl>&)));
+    connect (m_view, &View::urlDropped,
+             this, QOverload<const QList<QUrl>&>::of(&PartBase::openUrl));
     connectPlaylist (m_view->playList ());
     connectInfoPanel (m_view->infoPanel ());
 
@@ -156,39 +157,40 @@ void PartBase::connectPanel (ControlPanel * panel) {
     panel->hueSlider ()->setValue (m_settings->hue);
     panel->saturationSlider ()->setValue (m_settings->saturation);
     panel->volumeBar ()->setValue (m_settings->volume);*/
-    connect (panel->button (ControlPanel::button_playlist), SIGNAL (clicked ()), this, SLOT (showPlayListWindow ()));
-    connect (panel->button (ControlPanel::button_back), SIGNAL (clicked ()), this, SLOT (back ()));
-    connect (panel->button (ControlPanel::button_play), SIGNAL (clicked ()), this, SLOT (play ()));
-    connect (panel->button (ControlPanel::button_forward), SIGNAL (clicked ()), this, SLOT (forward ()));
-    connect (panel->button (ControlPanel::button_pause), SIGNAL (clicked ()), this, SLOT (pause ()));
-    connect (panel->button (ControlPanel::button_stop), SIGNAL (clicked ()), this, SLOT (stop ()));
-    connect (panel->button (ControlPanel::button_record), SIGNAL (clicked()), this, SLOT (record()));
-    connect (panel->volumeBar (), SIGNAL (volumeChanged (int)), this, SLOT (volumeChanged (int)));
-    connect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positionValueChanged (int)));
-    connect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
-    connect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
-    connect (this, SIGNAL (positioned (int, int)), panel, SLOT (setPlayingProgress (int, int)));
-    connect (this, SIGNAL (loading(int)), panel, SLOT(setLoadingProgress(int)));
+    connect (panel->button (ControlPanel::button_playlist), &QPushButton::clicked, this, &PartBase::showPlayListWindow);
+    connect (panel->button (ControlPanel::button_back), &QPushButton::clicked, this, &PartBase::back);
+    connect (panel->button (ControlPanel::button_play), &QPushButton::clicked, this, &PartBase::play);
+    connect (panel->button (ControlPanel::button_forward), &QPushButton::clicked, this, &PartBase::forward);
+    connect (panel->button (ControlPanel::button_pause), &QPushButton::clicked, this, &PartBase::pause);
+    connect (panel->button (ControlPanel::button_stop), &QPushButton::clicked, this, &PartBase::stop);
+    connect (panel->button (ControlPanel::button_record), &QPushButton::clicked, this, QOverload<>::of(&PartBase::record));
+    connect (panel->volumeBar (), &VolumeBar::volumeChanged, this, &PartBase::volumeChanged);
+    connect (panel->positionSlider (), &QSlider::valueChanged, this, &PartBase::positionValueChanged);
+    connect (panel->positionSlider (), &QSlider::sliderPressed, this, &PartBase::posSliderPressed);
+    connect (panel->positionSlider (), &QSlider::sliderReleased, this, &PartBase::posSliderReleased);
+    connect (this, &PartBase::positioned, panel, &ControlPanel::setPlayingProgress);
+    connect (this, &PartBase::loading, panel, &ControlPanel::setLoadingProgress);
     /*connect (panel->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
     connect (panel->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
     connect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
     connect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));*/
-    connect (this, SIGNAL (languagesUpdated(const QStringList &, const QStringList &)), panel, SLOT (setLanguages (const QStringList &, const QStringList &)));
-    connect (panel->audioMenu, SIGNAL (triggered (QAction*)), this, SLOT (audioSelected (QAction*)));
-    connect (panel->subtitleMenu, SIGNAL (triggered (QAction*)), this, SLOT (subtitleSelected (QAction*)));
-    connect (panel->playerMenu, SIGNAL (triggered (QAction*)), this, SLOT (slotPlayerMenu (QAction*)));
-    connect (this, SIGNAL (panelActionToggled (QAction*)), panel, SLOT (actionToggled (QAction*)));
-    connect (panel->fullscreenAction, SIGNAL (triggered (bool)),
-            this, SLOT (fullScreen ()));
-    connect (panel->configureAction, SIGNAL (triggered (bool)),
-            this, SLOT (showConfigDialog ()));
-    connect (panel->videoConsoleAction, SIGNAL (triggered (bool)),
-            m_view, SLOT(toggleVideoConsoleWindow ()));
-    connect (panel->playlistAction, SIGNAL (triggered (bool)),
-            m_view, SLOT (toggleShowPlaylist ()));
-    connect (this, SIGNAL (statusUpdated (const QString &)),
-             panel->view (), SLOT (setStatusMessage (const QString &)));
-    //connect (panel (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
+    connect (this, &PartBase::languagesUpdated,
+             panel, &ControlPanel::setLanguages);
+    connect (panel->audioMenu, &QMenu::triggered, this, &PartBase::audioSelected);
+    connect (panel->subtitleMenu, &QMenu::triggered, this, &PartBase::subtitleSelected);
+    connect (panel->playerMenu, &QMenu::triggered, this, &PartBase::slotPlayerMenu);
+    connect (this, &PartBase::panelActionToggled, panel, &ControlPanel::actionToggled);
+    connect (panel->fullscreenAction, &QAction::triggered,
+            this, &PartBase::fullScreen);
+    connect (panel->configureAction, &QAction::triggered,
+            this, &PartBase::showConfigDialog);
+    connect (panel->videoConsoleAction, &QAction::triggered,
+            m_view, &View::toggleVideoConsoleWindow);
+    connect (panel->playlistAction, &QAction::triggered,
+            m_view, &View::toggleShowPlaylist);
+    connect (this, &PartBase::statusUpdated,
+             panel->view (), &View::setStatusMessage);
+    //connect (panel (), &QPushButton::clicked, m_settings, SLOT (show ()));
 }
 
 void PartBase::createBookmarkMenu(QMenu *owner, KActionCollection *ac) {
@@ -197,25 +199,25 @@ void PartBase::createBookmarkMenu(QMenu *owner, KActionCollection *ac) {
 
 void PartBase::connectPlaylist (PlayListView * playlist) {
     playlist->setModel (m_play_model);
-    connect (m_play_model, SIGNAL (updating (const QModelIndex &)),
-             playlist, SLOT(modelUpdating (const QModelIndex &)));
-    connect (m_play_model, SIGNAL (updated (const QModelIndex&, const QModelIndex&, bool, bool)),
-             playlist, SLOT(modelUpdated (const QModelIndex&, const QModelIndex&, bool, bool)));
-    connect (playlist->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
-             playlist, SLOT(slotCurrentItemChanged(QModelIndex,QModelIndex)));
-    connect (playlist, SIGNAL (addBookMark (const QString &, const QString &)),
-             this, SLOT (addBookMark (const QString &, const QString &)));
-    connect (playlist, SIGNAL (activated (const QModelIndex &)),
-             this, SLOT (playListItemActivated (const QModelIndex &)));
-    connect (playlist, SIGNAL (clicked (const QModelIndex&)),
-             this, SLOT (playListItemClicked (const QModelIndex&)));
-    connect (this, SIGNAL (treeChanged (int, NodePtr, NodePtr, bool, bool)),
-             playlist->model (), SLOT (updateTree (int, NodePtr, NodePtr, bool, bool)));
+    connect (m_play_model, &PlayModel::updating,
+             playlist, &PlayListView::modelUpdating);
+    connect (m_play_model, &PlayModel::updated,
+             playlist, &PlayListView::modelUpdated);
+    connect (playlist->selectionModel(), &QItemSelectionModel::currentChanged,
+             playlist, &PlayListView::slotCurrentItemChanged);
+    connect (playlist, QOverload<const QString &, const QString &>::of(&PlayListView::addBookMark),
+             this, &PartBase::addBookMark);
+    connect (playlist, &QTreeView::activated,
+             this, &PartBase::playListItemActivated);
+    connect (playlist, &QTreeView::clicked,
+             this, &PartBase::playListItemClicked);
+    connect (this, &PartBase::treeChanged,
+             m_play_model, QOverload<int, NodePtr, NodePtr, bool, bool>::of(&PlayModel::updateTree));
 }
 
 void PartBase::connectInfoPanel (InfoWindow * infopanel) {
-    connect (this, SIGNAL (infoUpdated (const QString &)),
-             infopanel->view (), SLOT (setInfoMessage (const QString &)));
+    connect (this, &PartBase::infoUpdated,
+             infopanel->view (), &View::setInfoMessage);
 }
 
 PartBase::~PartBase () {
@@ -374,22 +376,24 @@ void PartBase::updatePlayerMenu (ControlPanel *panel, const QString &backend) {
 
 void PartBase::connectSource (Source * old_source, Source * source) {
     if (old_source) {
-        disconnect (old_source, SIGNAL(endOfPlayItems ()), this, SLOT(stop ()));
-        disconnect (old_source, SIGNAL (dimensionsChanged ()),
-                    this, SLOT (sourceHasChangedAspects ()));
-        disconnect (old_source, SIGNAL (startPlaying ()),
-                    this, SLOT (slotPlayingStarted ()));
-        disconnect (old_source, SIGNAL (stopPlaying ()),
-                    this, SLOT (slotPlayingStopped ()));
+        disconnect (old_source, &Source::endOfPlayItems,
+                    this, &PartBase::stop);
+        disconnect (old_source, &Source::dimensionsChanged,
+                    this, &PartBase::sourceHasChangedAspects);
+        disconnect (old_source, &Source::startPlaying,
+                    this, &PartBase::slotPlayingStarted);
+        disconnect (old_source, &Source::stopPlaying,
+                    this, &PartBase::slotPlayingStopped);
     }
     if (source) {
-        connect (source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
-        connect (source, SIGNAL (dimensionsChanged ()),
-                this, SLOT (sourceHasChangedAspects ()));
-        connect (source, SIGNAL (startPlaying ()),
-                this, SLOT (slotPlayingStarted ()));
-        connect (source, SIGNAL (stopPlaying ()),
-                this, SLOT (slotPlayingStopped ()));
+        connect (source, &Source::endOfPlayItems,
+                 this, &PartBase::stop);
+        connect (source, &Source::dimensionsChanged,
+                this, &PartBase::sourceHasChangedAspects);
+        connect (source, &Source::startPlaying,
+                this, &PartBase::slotPlayingStarted);
+        connect (source, &Source::stopPlaying,
+                this, &PartBase::slotPlayingStopped);
     }
 }
 
@@ -402,10 +406,10 @@ void PartBase::setSource (Source * _source) {
             m_view->reset ();
             Q_EMIT infoUpdated (QString ());
         }
-        disconnect (this, SIGNAL (audioIsSelected (int)),
-                    m_source, SLOT (setAudioLang (int)));
-        disconnect (this, SIGNAL (subtitleIsSelected (int)),
-                    m_source, SLOT (setSubtitle (int)));
+        disconnect (this, &PartBase::audioIsSelected,
+                    m_source, &Source::setAudioLang);
+        disconnect (this, &PartBase::subtitleIsSelected,
+                    m_source, &Source::setSubtitle);
     }
     if (m_view) {
         if (m_auto_controls)
@@ -418,16 +422,16 @@ void PartBase::setSource (Source * _source) {
     }
     m_source = _source;
     connectSource (old_source, m_source);
-    connect (this, SIGNAL (audioIsSelected (int)),
-             m_source, SLOT (setAudioLang (int)));
-    connect (this, SIGNAL (subtitleIsSelected (int)),
-             m_source, SLOT (setSubtitle (int)));
+    connect (this, &PartBase::audioIsSelected,
+             m_source, &Source::setAudioLang);
+    connect (this, &PartBase::subtitleIsSelected,
+             m_source, &Source::setSubtitle);
     m_source->init ();
     m_source->setIdentified (false);
     if (m_view)
         updatePlayerMenu (m_view->controlPanel ());
     if (m_source && !m_source->avoidRedirects ())
-        QTimer::singleShot (0, m_source, SLOT (slotActivate ()));
+        QTimer::singleShot (0, m_source, &Source::slotActivate);
     updateTree (true, true);
     Q_EMIT sourceChanged (old_source, m_source);
 }
@@ -1116,7 +1120,7 @@ void Source::setUrl (const QString &url) {
     if (m_player->source () == this)
         m_player->updateTree ();
 
-    QTimer::singleShot (0, this, SLOT(changedUrl ()));
+    QTimer::singleShot (0, this, &Source::changedUrl);
 }
 
 void Source::changedUrl()

@@ -165,8 +165,8 @@ void Process::init () {
 void Process::initProcess () {
     setupProcess (&m_process);
     m_process_state = QProcess::NotRunning;
-    connect (m_process, SIGNAL (stateChanged (QProcess::ProcessState)),
-            this, SLOT (processStateChanged (QProcess::ProcessState)));
+    connect (m_process, &QProcess::stateChanged,
+            this, &Process::processStateChanged);
     if (m_source) m_source->setPosition (0);
 }
 
@@ -243,7 +243,7 @@ void Process::setState (IProcess::State newstate) {
         m_old_state = m_state;
         m_state = newstate;
         if (need_timer)
-            QTimer::singleShot (0, this, SLOT (rescheduledStateChanged ()));
+            QTimer::singleShot (0, this, &Process::rescheduledStateChanged);
     }
 }
 
@@ -279,7 +279,7 @@ bool Process::play () {
             (m_source && m_source->avoidRedirects ()))
         return deMediafiedPlay ();
     m_job = KIO::stat (u, KIO::HideProgressInfo);
-    connect (m_job, SIGNAL (result (KJob *)), this, SLOT (result (KJob *)));
+    connect (m_job, &KJob::result, this, &Process::result);
     return true;
 }
 
@@ -398,10 +398,10 @@ void MPlayerBase::initProcess () {
             m_process->setEnvironment (env);
         }
     }
-    connect (m_process, SIGNAL (bytesWritten (qint64)),
-            this, SLOT (dataWritten (qint64)));
-    connect (m_process, SIGNAL (finished (int, QProcess::ExitStatus)),
-            this, SLOT (processStopped (int, QProcess::ExitStatus)));
+    connect (m_process, &QProcess::bytesWritten,
+            this, &MPlayerBase::dataWritten);
+    connect (m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, QOverload<int, QProcess::ExitStatus>::of(&MPlayerBase::processStopped));
 }
 
 bool MPlayerBase::removeQueued (const char *cmd) {
@@ -434,8 +434,8 @@ void MPlayerBase::quit () {
     if (running ()) {
         qCDebug(LOG_KMPLAYER_COMMON) << "MPlayerBase::quit";
         stop ();
-        disconnect (m_process, SIGNAL (finished (int, QProcess::ExitStatus)),
-                this, SLOT (processStopped (int, QProcess::ExitStatus)));
+        disconnect (m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                    this, QOverload<int, QProcess::ExitStatus>::of(&MPlayerBase::processStopped));
         m_process->waitForFinished (2000);
         if (running ())
             Process::quit ();
@@ -513,10 +513,10 @@ bool MPlayer::deMediafiedPlay () {
         quit (); // rescheduling of setState will reset state just-in-time
 
     initProcess ();
-    connect (m_process, SIGNAL (readyReadStandardOutput ()),
-            this, SLOT (processOutput ()));
-    connect (m_process, SIGNAL (readyReadStandardError ()),
-            this, SLOT (processOutput ()));
+    connect (m_process, &QProcess::readyReadStandardOutput,
+            this, &MPlayer::processOutput);
+    connect (m_process, &QProcess::readyReadStandardError,
+            this, &MPlayer::processOutput);
 
     m_process_output = QString ();
     m_source->setPosition (0);
@@ -1258,12 +1258,12 @@ void MasterProcessInfo::initAgent ()
         m_service = QDBusConnection::sessionBus().baseService ();
     }
     setupProcess (&m_agent);
-    connect (m_agent, SIGNAL (finished (int, QProcess::ExitStatus)),
-            this, SLOT (agentStopped (int, QProcess::ExitStatus)));
-    connect (m_agent, SIGNAL (readyReadStandardOutput ()),
-            this, SLOT (agentOutput ()));
-    connect (m_agent, SIGNAL (readyReadStandardError ()),
-            this, SLOT (agentOutput ()));
+    connect (m_agent, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, &MasterProcessInfo::agentStopped);
+    connect (m_agent, &QProcess::readyReadStandardOutput,
+            this, &MasterProcessInfo::agentOutput);
+    connect (m_agent, &QProcess::readyReadStandardError,
+            this, &MasterProcessInfo::agentOutput);
 }
 
 void MasterProcessInfo::quitProcesses () {
@@ -1620,8 +1620,8 @@ bool FFMpeg::deMediafiedPlay () {
     if (!rd)
         return false;
     initProcess ();
-    connect (m_process, SIGNAL (finished (int, QProcess::ExitStatus)),
-            this, SLOT (processStopped (int, QProcess::ExitStatus)));
+    connect (m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, &FFMpeg::processStopped);
     QString outurl = encodeFileOrUrl (rd->record_file);
     if (outurl.startsWith (QChar ('/')))
         QFile (outurl).remove ();
@@ -1784,16 +1784,16 @@ void NpStream::open () {
                 job->addMetaData (name[i].trimmed (), value[i].trimmed ());
         }
         job->addMetaData ("errorPage", "false");
-        connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
-                this, SLOT (slotData (KIO::Job *, const QByteArray &)));
-        connect (job, SIGNAL (result (KJob *)),
-                this, SLOT (slotResult (KJob *)));
-        connect (job, SIGNAL(redirection(KIO::Job*, const QUrl&)),
-                this, SLOT (redirection (KIO::Job *, const QUrl &)));
-        connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
-                SLOT (slotMimetype (KIO::Job *, const QString &)));
-        connect (job, SIGNAL (totalSize (KJob *, qulonglong)),
-                SLOT (slotTotalSize (KJob *, qulonglong)));
+        connect (job, &KIO::TransferJob::data,
+                this, &NpStream::slotData);
+        connect (job, &KJob::result,
+                this, &NpStream::slotResult);
+        connect (job, &KIO::TransferJob::redirection,
+                this, &NpStream::redirection);
+        connect (job, QOverload<KIO::Job*, const QString&>::of(&KIO::TransferJob::mimetype),
+                this, &NpStream::slotMimetype);
+        connect (job, &KIO::TransferJob::totalSize,
+                this, &NpStream::slotTotalSize);
     }
 }
 
@@ -1871,12 +1871,12 @@ void NpPlayer::init () {
 void NpPlayer::initProcess () {
     setupProcess (&m_process);
     m_process_state = QProcess::NotRunning;
-    connect (m_process, SIGNAL (finished (int, QProcess::ExitStatus)),
-            this, SLOT (processStopped (int, QProcess::ExitStatus)));
-    connect (m_process, SIGNAL (readyReadStandardError ()),
-            this, SLOT (processOutput ()));
-    connect (m_process, SIGNAL (bytesWritten (qint64)),
-            this, SLOT (wroteStdin (qint64)));
+    connect (m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, &NpPlayer::processStopped);
+    connect (m_process, &QProcess::readyReadStandardError,
+            this, &NpPlayer::processOutput);
+    connect (m_process, &QProcess::bytesWritten,
+            this, &NpPlayer::wroteStdin);
     if (iface.isEmpty ()) {
         iface = QString ("org.kde.kmplayer.callback");
         static int count = 0;
@@ -1938,8 +1938,8 @@ bool NpPlayer::ready () {
             }
         }
     }
-    connect (m_process, SIGNAL (readyReadStandardOutput ()),
-            this, SLOT (processOutput ()));
+    connect (m_process, &QProcess::readyReadStandardOutput,
+            this, &NpPlayer::processOutput);
     if (!remote_service.isEmpty ()) {
         QString mime = "text/plain";
         QString plugin;
@@ -2037,7 +2037,7 @@ void NpPlayer::request_stream (const QString &path, const QString &url, const QS
             sendFinish (sid, 0, NpStream::BecauseDone);
         } else {
             NpStream * ns = new NpStream (this, sid, uri, post);
-            connect (ns, SIGNAL (stateChanged ()), this, SLOT (streamStateChanged ()));
+            connect (ns, &NpStream::stateChanged, this, &NpPlayer::streamStateChanged);
             streams[sid] = ns;
             if (url != uri)
                 streamRedirected (sid, QUrl(uri));
@@ -2049,7 +2049,7 @@ void NpPlayer::request_stream (const QString &path, const QString &url, const QS
 
 QString NpPlayer::evaluate (const QString &script, bool store) {
     QString result ("undefined");
-    Q_EMIT evaluate (script, store, result);
+    Q_EMIT evaluateRequested (script, store, result);
     //qCDebug(LOG_KMPLAYER_COMMON) << "evaluate " << script << " => " << result;
     return result;
 }
@@ -2198,8 +2198,8 @@ void NpPlayer::processStreams () {
             ns->open ();
             write_in_progress = false;
             if (ns->job) {
-                connect(ns, SIGNAL(redirected(uint32_t, const QUrl&)),
-                        this, SLOT(streamRedirected(uint32_t, const QUrl&)));
+                connect(ns, &NpStream::redirected,
+                        this, &NpPlayer::streamRedirected);
                 active_count++;
             }
         }

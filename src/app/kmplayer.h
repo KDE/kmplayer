@@ -42,8 +42,11 @@ namespace KMPlayer {
 } // namespace
 
 
-class KMPlayerApp : public KXmlGuiWindow {
+class KMPlayerApp : public KXmlGuiWindow
+{
     Q_OBJECT
+    friend struct IntroSource;
+
 public:
     KMPlayerApp (QWidget* parent=nullptr);
     ~KMPlayerApp () override;

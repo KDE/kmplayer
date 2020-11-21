@@ -397,8 +397,8 @@ void MediaInfo::killWGet () {
         job = nullptr;
         memory_cache->unpreserve (url);
     } else if (preserve_wait) {
-        disconnect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
-                    this, SLOT (cachePreserveRemoved (const QString &)));
+        disconnect (memory_cache, &DataCache::preserveRemoved,
+                    this, &MediaInfo::cachePreserveRemoved);
         preserve_wait = false;
     }
 }
@@ -524,17 +524,17 @@ bool MediaInfo::wget(const QString& str, const QString& domain) {
         job = KIO::get (kurl, KIO::NoReload, KIO::HideProgressInfo);
         job->addMetaData ("PropagateHttpHeader", "true");
         job->addMetaData ("errorPage", "false");
-        connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
-                this, SLOT (slotData (KIO::Job *, const QByteArray &)));
-        connect (job, SIGNAL (result (KJob *)),
-                this, SLOT (slotResult (KJob *)));
+        connect (job, &KIO::TransferJob::data,
+                this, &MediaInfo::slotData);
+        connect (job, &KJob::result,
+                this, &MediaInfo::slotResult);
         if (!check_access)
-            connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
-                    this, SLOT (slotMimetype (KIO::Job *, const QString &)));
+            connect (job, QOverload<KIO::Job*, const QString&>::of(&KIO::TransferJob::mimetype),
+                    this, &MediaInfo::slotMimetype);
     } else {
         //qCDebug(LOG_KMPLAYER_COMMON) << "download preserved " << str;
-        connect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
-                 this, SLOT (cachePreserveRemoved (const QString &)));
+        connect (memory_cache, &DataCache::preserveRemoved,
+                 this, &MediaInfo::cachePreserveRemoved);
         preserve_wait = true;
     }
     return false;
@@ -788,8 +788,8 @@ void MediaInfo::slotResult (KJob *kjob) {
 void MediaInfo::cachePreserveRemoved (const QString & str) {
     if (str == url && !memory_cache->isPreserved (str)) {
         preserve_wait = false;
-        disconnect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
-                    this, SLOT (cachePreserveRemoved (const QString &)));
+        disconnect (memory_cache, &DataCache::preserveRemoved,
+                    this, &MediaInfo::cachePreserveRemoved);
         wget (str);
     }
 }
@@ -1036,8 +1036,8 @@ ImageMedia::ImageMedia (Node *node, ImageDataPtr id)
                 cached_img = new ImageData (QString ());
                 cached_img->flags = ImageData::ImageScalable;
                 if (svg_renderer->animated())
-                    connect(svg_renderer, SIGNAL(repaintNeeded()),
-                            this, SLOT(svgUpdated()));
+                    connect(svg_renderer, &QSvgRenderer::repaintNeeded,
+                            this, &ImageMedia::svgUpdated);
             } else {
                 delete svg_renderer;
                 svg_renderer = nullptr;
@@ -1070,8 +1070,8 @@ void ImageMedia::stop () {
 
 void ImageMedia::pause () {
     if (!paused && svg_renderer && svg_renderer->animated())
-        disconnect(svg_renderer, SIGNAL(repaintNeeded()),
-                this, SLOT(svgUpdated()));
+        disconnect(svg_renderer, &QSvgRenderer::repaintNeeded,
+                this, &ImageMedia::svgUpdated);
     if (img_movie && img_movie->state () != QMovie::Paused)
         img_movie->setPaused (true);
     paused = true;
@@ -1079,8 +1079,8 @@ void ImageMedia::pause () {
 
 void ImageMedia::unpause () {
     if (paused && svg_renderer && svg_renderer->animated())
-        connect(svg_renderer, SIGNAL(repaintNeeded()),
-                this, SLOT(svgUpdated()));
+        connect(svg_renderer, &QSvgRenderer::repaintNeeded,
+                this, &ImageMedia::svgUpdated);
     if (img_movie && QMovie::Paused == img_movie->state ())
         img_movie->setPaused (false);
     paused = false;
@@ -1102,12 +1102,12 @@ void ImageMedia::setupImage (const QString &url) {
         //qCDebug(LOG_KMPLAYER_COMMON) << img_movie->frameCount ();
         if (img_movie->frameCount () > 1) {
             cached_img->flags |= (short)ImageData::ImagePixmap | ImageData::ImageAnimated;
-            connect (img_movie, SIGNAL (updated (const QRect &)),
-                    this, SLOT (movieUpdated (const QRect &)));
-            connect (img_movie, SIGNAL (stateChanged (QMovie::MovieState)),
-                    this, SLOT (movieStatus (QMovie::MovieState)));
-            connect (img_movie, SIGNAL (resized (const QSize &)),
-                    this, SLOT (movieResize (const QSize &)));
+            connect (img_movie, &QMovie::updated,
+                    this, &ImageMedia::movieUpdated);
+            connect (img_movie, &QMovie::stateChanged,
+                    this, &ImageMedia::movieStatus);
+            connect (img_movie, &QMovie::resized,
+                    this, &ImageMedia::movieResize);
         } else {
             delete img_movie;
             img_movie = nullptr;

@@ -110,7 +110,7 @@ public Q_SLOTS:
     void setSize (int w, int h);
     void started ();
     void finished ();
-    void evaluate (const QString & script, bool store, QString & result);
+    void handleEvaluateRequest (const QString & script, bool store, QString & result);
 private:
     KMPlayerPart * player;
     QString script_result;

@@ -290,7 +290,7 @@ public Q_SLOTS:
     void adjustVolume (int incdec);
     bool playing () const;
     void showConfigDialog ();
-    void showPlayListWindow () KMPLAYERCOMMON_NO_EXPORT;
+    void showPlayListWindow ();
     void slotPlayerMenu (QAction*) KMPLAYERCOMMON_NO_EXPORT;
     void back ();
     void forward ();

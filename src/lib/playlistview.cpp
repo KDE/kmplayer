@@ -118,15 +118,15 @@ PlayListView::PlayListView (QWidget *, View *view, KActionCollection * ac)
     palette.setColor (backgroundRole(), QColor (0xB2, 0xB2, 0xB2));
     setPalette (palette);
     m_itemmenu = new QMenu (this);
-    m_find = KStandardAction::find (this, SLOT (slotFind ()), this);
-    m_find_next = KStandardAction::findNext (this, SLOT(slotFindNext()), this);
+    m_find = KStandardAction::find (this, &PlayListView::slotFind, this);
+    m_find_next = KStandardAction::findNext (this, &PlayListView::slotFindNext, this);
     m_find_next->setEnabled (false);
     m_edit_playlist_item = ac->addAction ("edit_playlist_item");
     m_edit_playlist_item->setText (i18n ("Edit &item"));
-    connect (m_edit_playlist_item, SIGNAL (triggered (bool)),
-             this, SLOT (renameSelected ()));
-    connect (this, SIGNAL (expanded (const QModelIndex&)),
-             this, SLOT (slotItemExpanded (const QModelIndex&)));
+    connect (m_edit_playlist_item, &QAction::triggered,
+             this, &PlayListView::renameSelected);
+    connect (this, &QTreeView::expanded,
+             this, &PlayListView::slotItemExpanded);
 }
 
 PlayListView::~PlayListView () {
@@ -238,17 +238,17 @@ void PlayListView::contextMenuEvent (QContextMenuEvent *event)
             }
             m_itemmenu->addAction (QIcon::fromTheme("edit-copy"),
                     i18n ("&Copy to Clipboard"),
-                    this, SLOT (copyToClipboard ()));
+                    this, &PlayListView::copyToClipboard);
             if (item->attribute ||
                     (item->node && (item->node->isPlayable () ||
                                     item->node->isDocument ()) &&
                      item->node->mrl ()->bookmarkable))
                 m_itemmenu->addAction (QIcon::fromTheme("bookmark-new"),
                         i18n ("&Add Bookmark"),
-                        this, SLOT (addBookMark ()));
+                        this, QOverload<>::of(&PlayListView::addBookMark));
             if (ritem->have_dark_nodes) {
                 QAction *act = m_itemmenu->addAction (i18n ("&Show all"),
-                        this, SLOT (toggleShowAllNodes ()));
+                        this, &PlayListView::toggleShowAllNodes);
                 act->setCheckable (true);
                 act->setChecked (ritem->show_all_nodes);
             }

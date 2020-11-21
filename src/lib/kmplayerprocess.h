@@ -452,7 +452,7 @@ public:
     IProcess *create (PartBase*, ProcessUser*) override;
 };
 
-class NpPlayer : public Process
+class KMPLAYERCOMMON_EXPORT NpPlayer : public Process
 {
     Q_OBJECT
 public:
@@ -484,7 +484,7 @@ public:
     void quit () override;
     bool ready () override;
 Q_SIGNALS:
-    void evaluate (const QString & scr, bool store, QString & result);
+    void evaluateRequested(const QString & scr, bool store, QString & result);
     void loaded ();
 public Q_SLOTS:
     void requestGet (const uint32_t, const QString &, QString *);

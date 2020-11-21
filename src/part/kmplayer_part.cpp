@@ -27,6 +27,7 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #if KCOREADDONS_VERSION >= QT_VERSION_CHECK(5, 77, 0)
 #include <KPluginMetaData>
 #endif
+#include <KIO/Job>
 
 #include "kmplayerpart_log.h"
 #include "kmplayerview.h"
@@ -383,8 +384,8 @@ KMPlayerPart::KMPlayerPart (QWidget *wparent,
         connectPanel (m_view->controlPanel ());
         if (m_features & Feat_StatusBar) {
             last_time_left = 0;
-            connect (this, SIGNAL (positioned (int, int)),
-                     this, SLOT (statusPosition (int, int)));
+            connect (this, &KMPlayer::PartBase::positioned,
+                     this, &KMPlayerPart::statusPosition);
             m_playtime_info = new QLabel("--:--");
             m_view->statusBar()->addPermanentWidget(m_playtime_info);
         }
@@ -431,18 +432,15 @@ KMPlayerPart::~KMPlayerPart () {
 
 void KMPlayerPart::processCreated (KMPlayer::Process *p) {
 #ifdef KMPLAYER_WITH_NPP
-    if (p->objectName() == "npp") {
+    if (KMPlayer::NpPlayer* nppProcess = qobject_cast<KMPlayer::NpPlayer*>(p)) {
         if (m_wait_npp_loaded)
-            connect (p, SIGNAL (loaded ()), this, SLOT (nppLoaded ()));
-        connect (p, SIGNAL (evaluate (const QString &, bool, QString &)),
-                m_liveconnectextension,
-                SLOT (evaluate (const QString &, bool, QString &)));
-        connect (m_liveconnectextension,
-                SIGNAL (requestGet (const uint32_t, const QString &, QString *)),
-                p, SLOT (requestGet (const uint32_t, const QString &, QString *)));
-        connect (m_liveconnectextension,
-                SIGNAL (requestCall (const uint32_t, const QString &, const QStringList, QString *)),
-                p, SLOT (requestCall (const uint32_t, const QString &, const QStringList, QString *)));
+            connect (nppProcess, &KMPlayer::NpPlayer::loaded, this, &KMPlayerPart::nppLoaded);
+        connect (nppProcess, &KMPlayer::NpPlayer::evaluateRequested,
+                m_liveconnectextension, &KMPlayerLiveConnectExtension::handleEvaluateRequest);
+        connect (m_liveconnectextension, &KMPlayerLiveConnectExtension::requestGet,
+                nppProcess, &KMPlayer::NpPlayer::requestGet);
+        connect (m_liveconnectextension, &KMPlayerLiveConnectExtension::requestCall,
+                nppProcess, &KMPlayer::NpPlayer::requestCall);
     }
 #endif
 }
@@ -541,7 +539,7 @@ bool KMPlayerPart::openUrl(const QUrl& _url) {
     if (url.isEmpty ()) {
         if (!m_master && !(m_features & Feat_Viewer))
             // no master set, wait for a viewer to attach or timeout
-            QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
+            QTimer::singleShot (50, this, &KMPlayerPart::waitForImageWindowTimeOut);
         return true;
     }
     m_src_url = url.url ();
@@ -553,7 +551,7 @@ bool KMPlayerPart::openUrl(const QUrl& _url) {
                 i = std::find_if (++i, e, pred))
             if ((*i)->url ().isEmpty ()) // image window created w/o url
                 return (*i)->startUrl (_url);
-        QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
+        QTimer::singleShot (50, this, &KMPlayerPart::waitForImageWindowTimeOut);
         //qCCritical(LOG_KMPLAYER_PART) << "Not the ImageWindow and no ImageWindow found" << endl;
         return true;
     }
@@ -687,8 +685,8 @@ bool KMPlayerPart::startUrl(const QUrl &uri, const QString &img)
         }
 #else
         if (m_view->setPicture (img)) {
-            connect (m_view, SIGNAL (pictureClicked ()),
-                     this, SLOT (pictureClicked ()));
+            connect (m_view, &KMPlayer::View::pictureClicked,
+                     this, &KMPlayerPart::pictureClicked);
             Q_EMIT completed ();
             m_started_emited = false;
         } else {
@@ -747,16 +745,16 @@ void KMPlayerPart::connectToPart (KMPlayerPart * m) {
     if (m_features & Feat_InfoPanel)
         m->connectInfoPanel (m_view->infoPanel ());
     connectSource (m_source, m->source ());
-    connect (m, SIGNAL (destroyed (QObject *)),
-            this, SLOT (viewerPartDestroyed (QObject *)));
-    connect (m, SIGNAL (processChanged (const char *)),
-            this, SLOT (viewerPartProcessChanged (const char *)));
-    connect (m, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)),
-            this, SLOT (viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *)));
+    connect (m, &QObject::destroyed,
+            this, &KMPlayerPart::viewerPartDestroyed);
+    connect (m, &KMPlayer::PartBase::processChanged,
+            this, &KMPlayerPart::viewerPartProcessChanged);
+    connect (m, &KMPlayer::PartBase::sourceChanged,
+            this, &KMPlayerPart::viewerPartSourceChanged);
     if (m_features & Feat_StatusBar) {
         last_time_left = 0;
-        connect (m, SIGNAL (positioned (int, int)),
-                 this, SLOT (statusPosition (int, int)));
+        connect (m, &KMPlayer::PartBase::positioned,
+                 this, &KMPlayerPart::statusPosition);
         m_playtime_info = new QLabel("--:--");
         m_view->statusBar()->addPermanentWidget(m_playtime_info);
     }
@@ -1070,7 +1068,7 @@ KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (KMPlayerPart * paren
     m_enablefinish (false),
     m_evaluating (false),
     m_skip_put (false) {
-      connect (parent, SIGNAL (started (KIO::Job *)), this, SLOT (started ()));
+      connect (parent, &KParts::ReadOnlyPart::started, this, &KMPlayerLiveConnectExtension::started);
 }
 
 KMPlayerLiveConnectExtension::~KMPlayerLiveConnectExtension() {
@@ -1100,7 +1098,7 @@ QString KMPlayerLiveConnectExtension::evaluate (const QString &script) {
     return script_result;
 }
 
-void KMPlayerLiveConnectExtension::evaluate (
+void KMPlayerLiveConnectExtension::handleEvaluateRequest (
         const QString & scr, bool store, QString & result) {
     m_evaluating = true;
 

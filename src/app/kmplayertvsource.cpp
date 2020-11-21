@@ -108,7 +108,7 @@ TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodePtr dev)
         inputsTab->addTab (widget, input->mrl ()->title);
     }
     QPushButton* delButton = new QPushButton(i18n("Delete"));
-    connect (delButton, SIGNAL (clicked ()), this, SLOT (slotDelete ()));
+    connect (delButton, &QPushButton::clicked, this, &TVDevicePage::slotDelete);
     QGridLayout* gridlayout = new QGridLayout;
     gridlayout->addWidget (audioLabel, 0, 0);
     gridlayout->addWidget (audiodevice, 0, 0, 1, 3);
@@ -394,7 +394,7 @@ void KMPlayerTVSource::activate () {
     if (m_cur_tvdevice) {
         QString playback = static_cast <KMPlayer::Element *> (m_cur_tvdevice.ptr ())->getAttribute (QString::fromLatin1 ("playback"));
         if (playback.isEmpty () || playback.toInt ())
-            QTimer::singleShot (0, m_player, SLOT (play ()));
+            QTimer::singleShot (0, m_player, &KMPlayer::PartBase::play);
     }
 }
 /* TODO: playback by
@@ -574,7 +574,7 @@ QFrame * KMPlayerTVSource::prefPage (QWidget * parent) {
     if (!m_configpage) {
         m_configpage = new KMPlayerPrefSourcePageTV (parent, this);
         scanner = new TVDeviceScannerSource (this);
-        connect (m_configpage->scan, SIGNAL(clicked()), this, SLOT(slotScan()));
+        connect (m_configpage->scan, &QPushButton::clicked, this, &KMPlayerTVSource::slotScan);
     }
     return m_configpage;
 }
@@ -591,16 +591,16 @@ void KMPlayerTVSource::slotScan () {
     QString devstr = m_configpage->device->lineEdit()->text ();
     if (!hasTVDevice(m_document, devstr)) {
         scanner->scan (devstr, m_configpage->driver->text());
-        connect (scanner, SIGNAL (scanFinished (TVDevice *)),
-                this, SLOT (slotScanFinished (TVDevice *)));
+        connect (scanner, &TVDeviceScannerSource::scanFinished,
+                this, &KMPlayerTVSource::slotScanFinished);
     } else
         KMessageBox::error (m_configpage, i18n ("Device already present."),
                 i18n ("Error"));
 }
 
 void KMPlayerTVSource::slotScanFinished (TVDevice * tvdevice) {
-    disconnect (scanner, SIGNAL (scanFinished (TVDevice *)),
-                this, SLOT (slotScanFinished (TVDevice *)));
+    disconnect (scanner, &TVDeviceScannerSource::scanFinished,
+                this, &KMPlayerTVSource::slotScanFinished);
     if (tvdevice) {
         tvdevice->zombie = false;
         addTVDevicePage (tvdevice, true);
@@ -614,8 +614,8 @@ void KMPlayerTVSource::addTVDevicePage(TVDevice *dev, bool show) {
         dev->device_page->deleteLater ();
     dev->device_page = new TVDevicePage (m_configpage->notebook, dev);
     m_configpage->notebook->addTab(dev->device_page, dev->title);
-    connect (dev->device_page, SIGNAL (deleted (TVDevicePage *)),
-             this, SLOT (slotDeviceDeleted (TVDevicePage *)));
+    connect (dev->device_page, &TVDevicePage::deleted,
+             this, &KMPlayerTVSource::slotDeviceDeleted);
     if (show)
         m_configpage->notebook->setCurrentIndex(m_configpage->notebook->count()-1);
 }
@@ -766,7 +766,7 @@ void TVDeviceScannerSource::stateChange (KMPlayer::IProcess *,
                    KMPlayer::IProcess::State os, KMPlayer::IProcess::State ns) {
     if (KMPlayer::IProcess::Ready == ns) {
         if (os > KMPlayer::IProcess::Ready)
-            QTimer::singleShot (0, this, SLOT (scanningFinished()));
+            QTimer::singleShot (0, this, &TVDeviceScannerSource::scanningFinished);
         else if (m_process && os < KMPlayer::IProcess::Ready)
             m_process->play ();
     }

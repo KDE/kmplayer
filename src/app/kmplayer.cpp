@@ -133,61 +133,61 @@ void KMPlayerApp::initActions () {
     fileNewWindow = ac->addAction ("new_window");
     fileNewWindow->setText( i18n( "New window" ) );
     //fileNewWindow->setIcon (QIcon::fromTheme("window-new"));
-    connect (fileNewWindow, SIGNAL (triggered (bool)), this, SLOT (slotFileNewWindow ()));
-    fileOpen = KStandardAction::open (this, SLOT (slotFileOpen()), ac);
-    fileOpenRecent = KStandardAction::openRecent(this, SLOT(slotFileOpenRecent(const QUrl&)), ac);
-    KStandardAction::saveAs (this, SLOT (slotSaveAs ()), ac);
-    fileClose = KStandardAction::close (this, SLOT (slotFileClose ()), ac);
-    fileQuit = KStandardAction::quit (this, SLOT (slotFileQuit ()), ac);
+    connect (fileNewWindow, &QAction::triggered, this, &KMPlayerApp::slotFileNewWindow);
+    fileOpen = KStandardAction::open (this, &KMPlayerApp::slotFileOpen, ac);
+    fileOpenRecent = KStandardAction::openRecent(this, &KMPlayerApp::slotFileOpenRecent, ac);
+    KStandardAction::saveAs (this, &KMPlayerApp::slotSaveAs, ac);
+    fileClose = KStandardAction::close (this, &KMPlayerApp::slotFileClose, ac);
+    fileQuit = KStandardAction::quit (this, &KMPlayerApp::slotFileQuit, ac);
     viewEditMode = ac->addAction ("edit_mode");
     viewEditMode->setCheckable (true);
     viewEditMode->setText (i18n ("&Edit mode"));
-    connect (viewEditMode, SIGNAL (triggered (bool)), this, SLOT (editMode ()));
+    connect (viewEditMode, &QAction::triggered, this, &KMPlayerApp::editMode);
     QAction *viewplaylist = ac->addAction ( "view_playlist");
     viewplaylist->setText (i18n ("Pla&y List"));
     //viewplaylist->setIcon (QIcon::fromTheme("media-playlist"));
-    connect (viewplaylist, SIGNAL(triggered(bool)), m_player, SLOT(showPlayListWindow()));
-    KStandardAction::preferences (m_player, SLOT (showConfigDialog ()), ac);
+    connect (viewplaylist, &QAction::triggered, m_player, &KMPlayer::PartBase::showPlayListWindow);
+    KStandardAction::preferences (m_player, &KMPlayer::PartBase::showConfigDialog, ac);
     QAction *playmedia = ac->addAction ("play");
     playmedia->setText (i18n ("P&lay"));
-    connect (playmedia, SIGNAL (triggered (bool)), m_player, SLOT (play ()));
+    connect (playmedia, &QAction::triggered, m_player, &KMPlayer::PartBase::play);
     QAction *pausemedia = ac->addAction ("pause");
     pausemedia->setText (i18n ("&Pause"));
-    connect (pausemedia, SIGNAL (triggered (bool)), m_player, SLOT (pause ()));
+    connect (pausemedia, &QAction::triggered, m_player, &KMPlayer::PartBase::pause);
     QAction *stopmedia = ac->addAction ("stop");
     stopmedia->setText (i18n ("&Stop"));
-    connect (stopmedia, SIGNAL (triggered (bool)), m_player, SLOT (stop ()));
-    KStandardAction::keyBindings (this, SLOT (slotConfigureKeys()), ac);
-    //KStandardAction::configureToolbars (this, SLOT (slotConfigureToolbars ()), ac);
+    connect (stopmedia, &QAction::triggered, m_player, &KMPlayer::PartBase::stop);
+    KStandardAction::keyBindings (this, &KMPlayerApp::slotConfigureKeys, ac);
+    //KStandardAction::configureToolbars (this, &KMPlayerApp::slotConfigureToolbars, ac);
     viewFullscreen = ac->addAction ("view_fullscreen");
     viewFullscreen->setCheckable (true);
     viewFullscreen->setText (i18n("Fullscreen"));
-    connect (viewFullscreen, SIGNAL (triggered (bool)), this, SLOT (fullScreen ()));
+    connect (viewFullscreen, &QAction::triggered, this, &KMPlayerApp::fullScreen);
     toggleView = ac->addAction ("view_video");
     toggleView->setText (i18n ("C&onsole"));
     toggleView->setIcon (QIcon::fromTheme("utilities-terminal"));
-    connect (toggleView, SIGNAL (triggered (bool)),
-            m_player->view (), SLOT (toggleVideoConsoleWindow ()));
+    connect (toggleView, &QAction::triggered,
+            qobject_cast<KMPlayer::View*>(m_player->view ()), &KMPlayer::View::toggleVideoConsoleWindow);
     viewSyncEditMode = ac->addAction ("sync_edit_mode");
     viewSyncEditMode->setText (i18n ("Reload"));
     viewSyncEditMode->setIcon (QIcon::fromTheme("view-refresh"));
-    connect (viewSyncEditMode, SIGNAL (triggered (bool)), this, SLOT (syncEditMode ()));
+    connect (viewSyncEditMode, &QAction::triggered, this, &KMPlayerApp::syncEditMode);
     viewSyncEditMode->setEnabled (false);
     viewToolBar = KStandardAction::create (KStandardAction::ShowToolbar,
-            this, SLOT (slotViewToolBar ()), ac);
+            this, &KMPlayerApp::slotViewToolBar, ac);
     viewStatusBar = KStandardAction::create (KStandardAction::ShowStatusbar,
-            this,SLOT (slotViewStatusBar ()),ac);
+            this, &KMPlayerApp::slotViewStatusBar, ac);
     viewMenuBar = KStandardAction::create (KStandardAction::ShowMenubar,
-            this, SLOT (slotViewMenuBar ()), ac);
+            this, &KMPlayerApp::slotViewMenuBar, ac);
     QAction *act = ac->addAction ("clear_history");
     act->setText (i18n ("Clear &History"));
-    connect (act, SIGNAL (triggered (bool)), this, SLOT (slotClearHistory ()));
+    connect (act, &QAction::triggered, this, &KMPlayerApp::slotClearHistory);
 #if defined(KMPLAYER_WITH_NPP) && defined(KMPLAYER_WITH_CAIRO)
     act = ac->addAction ("generators");
     act->setText (i18n ("&Generators"));
     m_generatormenu = new QMenu (this);
-    connect (m_generatormenu, SIGNAL (aboutToShow ()),
-             this, SLOT (slotGeneratorMenu ()));
+    connect (m_generatormenu, &QMenu::aboutToShow,
+             this, &KMPlayerApp::slotGeneratorMenu);
     act->setMenu (m_generatormenu);
 #endif
 
@@ -248,17 +248,18 @@ void KMPlayerApp::initView () {
     initMenu ();
     //new KAction (i18n ("Increase Volume"), editVolumeInc->shortcut (), m_player, SLOT (increaseVolume ()), m_view->viewArea ()->actionCollection (), "edit_volume_up");
     //new KAction (i18n ("Decrease Volume"), editVolumeDec->shortcut (), m_player, SLOT(decreaseVolume ()), m_view->viewArea ()->actionCollection (), "edit_volume_down");
-    connect (m_player->settings (), SIGNAL (configChanged ()),
-             this, SLOT (configChanged ()));
-    connect (m_player, SIGNAL (loading (int)),
-             this, SLOT (loadingProgress (int)));
-    connect (m_player, SIGNAL (positioned (int, int)),
-             this, SLOT (positioned (int, int)));
-    connect (m_player, SIGNAL (statusUpdated (const QString &)),
-             this, SLOT (slotStatusMsg (const QString &)));
-    connect (m_view, SIGNAL (windowVideoConsoleToggled (bool)),
-             this, SLOT (windowVideoConsoleToggled (bool)));
-    connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)), this, SLOT (slotSourceChanged(KMPlayer::Source *, KMPlayer::Source *)));
+    connect (m_player->settings (), &KMPlayer::Settings::configChanged,
+             this, &KMPlayerApp::configChanged);
+    connect (m_player, &KMPlayer::PartBase::loading,
+             this, &KMPlayerApp::loadingProgress);
+    connect (m_player, &KMPlayer::PartBase::positioned,
+             this, &KMPlayerApp::positioned);
+    connect (m_player, &KMPlayer::PartBase::statusUpdated,
+             this, &KMPlayerApp::slotStatusMsg);
+    connect (m_view, &KMPlayer::View::windowVideoConsoleToggled,
+             this, &KMPlayerApp::windowVideoConsoleToggled);
+    connect (m_player, &KMPlayer::PartBase::sourceChanged,
+             this, &KMPlayerApp::slotSourceChanged);
     /*m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom50,
             this, SLOT (zoom50 ()));
     m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom100,
@@ -269,24 +270,25 @@ void KMPlayerApp::initView () {
             this, SLOT (broadcastClicked ()));*/
     m_auto_resize = m_player->settings ()->autoresize;
     if (m_auto_resize)
-        connect (m_player, SIGNAL (sourceDimensionChanged ()),
-                 this, SLOT (zoom100 ()));
-    connect (m_view, SIGNAL (fullScreenChanged ()),
-            this, SLOT (fullScreen ()));
-    connect (m_view->playList (), SIGNAL (activated (const QModelIndex&)),
-            this, SLOT (playListItemActivated (const QModelIndex&)));
-    connect (m_view->playList(), SIGNAL (dropped (QDropEvent*, KMPlayer::PlayItem*)),
-            this, SLOT (playListItemDropped (QDropEvent *, KMPlayer::PlayItem *)));
-    connect (m_view->playList(), SIGNAL (prepareMenu (KMPlayer::PlayItem *, QMenu *)), this, SLOT (preparePlaylistMenu (KMPlayer::PlayItem *, QMenu *)));
+        connect (m_player, &KMPlayer::PartBase::sourceDimensionChanged,
+                 this, &KMPlayerApp::zoom100);
+    connect (m_view, &KMPlayer::View::fullScreenChanged,
+            this, &KMPlayerApp::fullScreen);
+    connect (m_view->playList (), &QTreeView::activated,
+            this, &KMPlayerApp::playListItemActivated);
+    connect (m_view->playList(), &KMPlayer::PlayListView::dropped,
+            this, &KMPlayerApp::playListItemDropped);
+    connect (m_view->playList(), &KMPlayer::PlayListView::prepareMenu,
+             this, &KMPlayerApp::preparePlaylistMenu);
     m_dropmenu = new QMenu (m_view->playList ());
     dropAdd = m_dropmenu->addAction(QIcon::fromTheme("view-media-playlist"),
-                i18n ("&Add to list"), this, SLOT (menuDropInList ()));
+                i18n ("&Add to list"), this, &KMPlayerApp::menuDropInList);
     dropAddGroup = m_dropmenu->addAction(QIcon::fromTheme("folder-grey"),
-        i18n ("Add in new &Group"), this, SLOT (menuDropInGroup ()));
+        i18n ("Add in new &Group"), this, &KMPlayerApp::menuDropInGroup);
     dropCopy = m_dropmenu->addAction(QIcon::fromTheme("edit-copy"),
-            i18n ("&Copy here"), this, SLOT (menuCopyDrop ()));
+            i18n ("&Copy here"), this, &KMPlayerApp::menuCopyDrop);
     dropDelete = m_dropmenu->addAction(QIcon::fromTheme("edit-delete"),
-            i18n ("&Delete"), this, SLOT (menuDeleteNode ()));
+            i18n ("&Delete"), this, &KMPlayerApp::menuDeleteNode);
     /*QMenu * viewmenu = new QMenu;
     viewmenu->addAction(i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -395,17 +397,17 @@ void KMPlayerApp::playerStarted () {
 
 void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPlayer::Source * news) {
     if (olds) {
-        disconnect (olds, SIGNAL (titleChanged (const QString &)), this,
-                    SLOT (setCaption (const QString &)));
-        disconnect (olds, SIGNAL (startPlaying ()),
-                    this, SLOT (playerStarted ()));
+        disconnect (olds, &KMPlayer::Source::titleChanged,
+                    this, QOverload<const QString&>::of(&KMPlayerApp::setCaption));
+        disconnect (olds, &KMPlayer::Source::startPlaying,
+                    this, &KMPlayerApp::playerStarted);
     }
     if (news) {
         setCaption (news->prettyName (), false);
-        connect (news, SIGNAL (titleChanged (const QString &)),
-                 this, SLOT (setCaption (const QString &)));
-        connect (news, SIGNAL (startPlaying ()),
-                 this, SLOT (playerStarted ()));
+        connect (news, &KMPlayer::Source::titleChanged,
+                 this, QOverload<const QString&>::of(&KMPlayerApp::setCaption));
+        connect (news, &KMPlayer::Source::startPlaying,
+                 this, &KMPlayerApp::playerStarted);
         viewSyncEditMode->setEnabled (m_view->editMode () ||
                 !strcmp (m_player->source ()->name (), "urlsource"));
     }
@@ -541,7 +543,8 @@ QString makeNumber (int i) {
 
 void IntroSource::activate () {
     if (m_player->settings ()->autoresize)
-        m_app->disconnect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
+        m_app->disconnect(m_player, &KMPlayer::PartBase::sourceDimensionChanged,
+                          m_app, &KMPlayerApp::zoom100);
     m_document = new KMPlayer::SourceDocument (this, QString ());
     QString introfile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "kmplayer/intro.xml");
     QFile file (introfile);
@@ -637,7 +640,8 @@ void IntroSource::stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::St
 void IntroSource::deactivate () {
     deactivated = true;
     if (m_player->settings ()->autoresize)
-        m_app->connect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
+        m_app->connect(m_player, &KMPlayer::PartBase::sourceDimensionChanged,
+                       m_app, &KMPlayerApp::zoom100);
     if (!finished && m_document) // user opens a source while introducing
         m_document->reset ();
 }
@@ -1001,7 +1005,8 @@ bool KMPlayerApp::queryClose () {
         return true;
     }
     if (m_auto_resize)
-        disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
+        disconnect(m_player, &KMPlayer::PartBase::sourceDimensionChanged,
+                   this, &KMPlayerApp::zoom100);
     m_played_exit = true;
     if (!m_minimal_mode)
         minimalMode (false);
@@ -1018,8 +1023,8 @@ void KMPlayerApp::aboutToCloseWindow()
 {
     if (!m_minimal_mode)
         saveOptions();
-    disconnect (m_player->settings (), SIGNAL (configChanged ()),
-                this, SLOT (configChanged ()));
+    disconnect (m_player->settings (), &KMPlayer::Settings::configChanged,
+                this, &KMPlayerApp::configChanged);
     m_player->settings ()->writeConfig ();
 }
 
@@ -1140,7 +1145,7 @@ void KMPlayerApp::slotGeneratorMenu () {
                     if (name.isEmpty())
                         name = QFile(file).fileName();
                     generators.append(new KMPlayer::NodeStoreItem(doc));
-                    m_generatormenu->addAction(name, this, SLOT(slotGenerator()));
+                    m_generatormenu->addAction(name, this, &KMPlayerApp::slotGenerator);
                 } else {
                     gen->dispose();
                 }
@@ -1225,7 +1230,7 @@ void KMPlayerApp::slotViewMenuBar() {
                     viewMenuBar->shortcut ().toString ()));
         if (!m_showStatusbar) {
             statusBar()->show();
-            QTimer::singleShot (3000, statusBar(), SLOT (hide ()));
+            QTimer::singleShot (3000, statusBar(), &QWidget::hide);
         }
     }
 }
@@ -1420,12 +1425,12 @@ void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayItem * item, QMenu * pm) {
         pm->addSeparator();
         manip_node = item->node;
         if (ri->item_flags & KMPlayer::PlayModel::Deleteable)
-            pm->addAction(QIcon::fromTheme("edit-delete"), i18n("&Delete item"), this, SLOT(menuDeleteNode()));
+            pm->addAction(QIcon::fromTheme("edit-delete"), i18n("&Delete item"), this, &KMPlayerApp::menuDeleteNode);
         if (ri->item_flags & KMPlayer::PlayModel::Moveable) {
             if (manip_node->previousSibling ())
-                pm->addAction(QIcon::fromTheme("go-up"), i18n("&Move up"), this, SLOT(menuMoveUpNode()));
+                pm->addAction(QIcon::fromTheme("go-up"), i18n("&Move up"), this, &KMPlayerApp::menuMoveUpNode);
             if (manip_node->nextSibling ())
-                pm->addAction(QIcon::fromTheme("go-down"), i18n("Move &down"), this, SLOT(menuMoveDownNode()));
+                pm->addAction(QIcon::fromTheme("go-down"), i18n("Move &down"), this, &KMPlayerApp::menuMoveDownNode);
         }
     }
 }
@@ -1440,9 +1445,11 @@ void KMPlayerApp::configChanged () {
         m_systray = nullptr;
     }
     if (m_player->settings ()->autoresize && !m_auto_resize)
-        connect(m_player,SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
+        connect(m_player, &KMPlayer::PartBase::sourceDimensionChanged,
+                this, &KMPlayerApp::zoom100);
     else if (!m_player->settings ()->autoresize && m_auto_resize)
-        disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
+        disconnect(m_player, &KMPlayer::PartBase::sourceDimensionChanged,
+                   this, &KMPlayerApp::zoom100);
     m_auto_resize = m_player->settings ()->autoresize;
 }
 
@@ -1558,7 +1565,7 @@ bool KMPlayerDVDSource::processOutput (const QString & str) {
 void KMPlayerDVDSource::activate () {
     m_start_play = m_auto_play;
     setUrl ("dvd://");
-    QTimer::singleShot (0, m_player, SLOT (play ()));
+    QTimer::singleShot (0, m_player, &KMPlayer::PartBase::play);
 }
 
 void KMPlayerDVDSource::setIdentified (bool b) {
@@ -1684,7 +1691,7 @@ void KMPlayerVCDSource::activate () {
     m_start_play = m_auto_play;
     setUrl ("vcd://");
     if (m_start_play)
-        QTimer::singleShot (0, m_player, SLOT (play ()));
+        QTimer::singleShot (0, m_player, &KMPlayer::PartBase::play);
 }
 
 void KMPlayerVCDSource::deactivate () {
@@ -1782,7 +1789,7 @@ void KMPlayerAudioCDSource::activate () {
     //m_start_play = m_auto_play;
     setUrl ("cdda://");
     //if (m_start_play)
-        QTimer::singleShot (0, m_player, SLOT (play ()));
+        QTimer::singleShot (0, m_player, &KMPlayer::PartBase::play);
 }
 
 void KMPlayerAudioCDSource::deactivate () {
@@ -1844,7 +1851,7 @@ void KMPlayerPipeSource::activate () {
     m_recordcmd = m_options = QString ("-"); // or m_url?
     m_identified = true;
     reset ();
-    QTimer::singleShot (0, m_player, SLOT (play ()));
+    QTimer::singleShot (0, m_player, &KMPlayer::PartBase::play);
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 

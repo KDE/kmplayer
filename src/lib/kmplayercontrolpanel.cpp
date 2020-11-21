@@ -466,21 +466,21 @@ ControlPanel::ControlPanel(QWidget * parent, View * view)
     pal.setColor(backgroundRole(), view->palette().color(QPalette::Background));
     setPalette (pal);
     setAutoControls (true);
-    connect (m_buttons [button_config], SIGNAL (clicked ()),
-            this, SLOT (buttonClicked ()));
-    connect (m_buttons [button_language], SIGNAL (clicked ()),
-            this, SLOT (buttonClicked ()));
-    connect (m_buttons [button_config], SIGNAL (mouseEntered ()),
-             this, SLOT (buttonMouseEntered ()));
-    connect (m_buttons [button_language], SIGNAL (mouseEntered ()),
-             this, SLOT (buttonMouseEntered ()));
-    connect (popupMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
-    connect (playerMenu, SIGNAL (mouseLeft ()), this, SLOT(menuMouseLeft ()));
-    connect (zoomMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
-    connect (colorMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
-    connect (languageMenu, SIGNAL(mouseLeft ()), this, SLOT(menuMouseLeft()));
-    connect (subtitleMenu, SIGNAL(mouseLeft ()), this, SLOT(menuMouseLeft()));
-    connect (audioMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
+    connect (m_buttons [button_config], &QPushButton::clicked,
+            this, &ControlPanel::buttonClicked);
+    connect (m_buttons [button_language], &QPushButton::clicked,
+            this, &ControlPanel::buttonClicked);
+    connect (qobject_cast<KMPlayerMenuButton*>(m_buttons [button_config]), &KMPlayerMenuButton::mouseEntered,
+             this, &ControlPanel::buttonMouseEntered);
+    connect (qobject_cast<KMPlayerMenuButton*>(m_buttons [button_language]), &KMPlayerMenuButton::mouseEntered,
+             this, &ControlPanel::buttonMouseEntered);
+    connect (popupMenu, &KMPlayerPopupMenu::mouseLeft, this, &ControlPanel::menuMouseLeft);
+    connect (playerMenu, &KMPlayerPopupMenu::mouseLeft, this, &ControlPanel::menuMouseLeft);
+    connect (zoomMenu, &KMPlayerPopupMenu::mouseLeft, this, &ControlPanel::menuMouseLeft);
+    connect (colorMenu, &KMPlayerPopupMenu::mouseLeft, this, &ControlPanel::menuMouseLeft);
+    connect (languageMenu, &KMPlayerPopupMenu::mouseLeft, this, &ControlPanel::menuMouseLeft);
+    connect (subtitleMenu, &KMPlayerPopupMenu::mouseLeft, this, &ControlPanel::menuMouseLeft);
+    connect (audioMenu, &KMPlayerPopupMenu::mouseLeft, this, &ControlPanel::menuMouseLeft);
 }
 
 void ControlPanel::setPalette (const QPalette & pal) {

@@ -94,7 +94,7 @@ Stream::Stream (QWidget *parent, const QString &url, unsigned long wid)
     //embedInto (wid);
     show ();
     m_master_stream_path = QString ("%1/stream_%2").arg(control_path).arg (wid);
-    QTimer::singleShot (0, this, SLOT (init ()));
+    QTimer::singleShot (0, this, &Stream::init);
     qDebug ("newStream xembed cont: %lu", wid);
 }
 
@@ -115,13 +115,12 @@ void Stream::init () {
     layout->addWidget(m_vwidget);
     m_vwidget->hide();
 
-    connect(m_media,SIGNAL(hasVideoChanged(bool)), SLOT(hasVideoChanged(bool)));
-    connect (m_media, SIGNAL (bufferStatus (int)), SLOT (bufferStatus (int)));
-    connect (m_media, SIGNAL (metaDataChanged ()), SLOT (metaDataChanged ()));
-    connect (m_media, SIGNAL (tick (qint64)), SLOT (tick (qint64)));
-    connect (m_media, SIGNAL (stateChanged(Phonon::State, Phonon::State)),
-            SLOT (stateChanged (Phonon::State, Phonon::State)));
-    connect (m_media, SIGNAL (finished ()), SLOT (finished ()));
+    connect(m_media, &Phonon::MediaObject::hasVideoChanged, this, &Stream::hasVideoChanged);
+    connect (m_media, &Phonon::MediaObject::bufferStatus, this, &Stream::bufferStatus);
+    connect (m_media, &Phonon::MediaObject::metaDataChanged, this, &Stream::metaDataChanged);
+    connect (m_media, &Phonon::MediaObject::tick, this, &Stream::tick);
+    connect (m_media, &Phonon::MediaObject::stateChanged, this, &Stream::stateChanged);
+    connect (m_media, &Phonon::MediaObject::finished, this, &Stream::finished);
 
     if (m_url.startsWith ("dvd:"))
         m_media->setCurrentSource (Phonon::Dvd);

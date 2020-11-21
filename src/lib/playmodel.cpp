@@ -421,7 +421,7 @@ void PlayModel::updateTree (int id, NodePtr root, NodePtr active,
         bool need_timer = !tree_update;
         tree_update = new TreeUpdate (ritem, active, select, open, tree_update);
         if (need_timer)
-            QTimer::singleShot (0, this, SLOT (updateTrees ()));
+            QTimer::singleShot (0, this, &PlayModel::updateTrees);
     } else
         qCDebug(LOG_KMPLAYER_COMMON) << "updateTree root item not found";
 }

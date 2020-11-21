@@ -567,14 +567,14 @@ void Generator::activate () {
 void Generator::begin () {
     if (!qprocess) {
         qprocess = new QProcess (app);
-        connect (qprocess, SIGNAL (started ()),
-                 this, SLOT (started ()));
-        connect (qprocess, SIGNAL (error (QProcess::ProcessError)),
-                 this, SLOT (error (QProcess::ProcessError)));
-        connect (qprocess, SIGNAL (finished (int, QProcess::ExitStatus)),
-                 this, SLOT (finished ()));
-        connect (qprocess, SIGNAL (readyReadStandardOutput ()),
-                 this, SLOT (readyRead ()));
+        connect (qprocess, &QProcess::started,
+                 this, &Generator::started);
+        connect (qprocess, QOverload<QProcess::ProcessError>::of(&QProcess::error),
+                 this, &Generator::error);
+        connect (qprocess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                 this, &Generator::finished);
+        connect (qprocess, &QProcess::readyReadStandardOutput,
+                 this, &Generator::readyRead);
     }
     QString info;
     if (media_info)
@@ -589,14 +589,14 @@ void Generator::begin () {
 
 void Generator::deactivate () {
     if (qprocess) {
-        disconnect (qprocess, SIGNAL (started ()),
-                    this, SLOT (started ()));
-        disconnect (qprocess, SIGNAL (error (QProcess::ProcessError)),
-                    this, SLOT (error (QProcess::ProcessError)));
-        disconnect (qprocess, SIGNAL (finished (int, QProcess::ExitStatus)),
-                    this, SLOT (finished ()));
-        disconnect (qprocess, SIGNAL (readyReadStandardOutput ()),
-                    this, SLOT (readyRead ()));
+        disconnect (qprocess, &QProcess::started,
+                    this, &Generator::started);
+        disconnect (qprocess, QOverload<QProcess::ProcessError>::of(&QProcess::error),
+                    this, &Generator::error);
+        disconnect (qprocess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                    this, &Generator::finished);
+        disconnect (qprocess, &QProcess::readyReadStandardOutput,
+                    this, &Generator::readyRead);
         qprocess->kill ();
         qprocess->deleteLater ();
     }

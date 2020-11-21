@@ -36,6 +36,7 @@ class TopPlayItem;
 class KMPLAYERCOMMON_EXPORT PlayListView : public QTreeView
 {
     Q_OBJECT
+    friend class PartBase;
 public:
     PlayListView(QWidget* parent, View* view, KActionCollection* ac);
     ~PlayListView() override;

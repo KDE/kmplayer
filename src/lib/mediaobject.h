@@ -28,6 +28,7 @@ class QByteArray;
 class KJob;
 namespace KIO {
     class Job;
+    class TransferJob;
 }
 
 namespace KMPlayer {
@@ -235,7 +236,7 @@ private:
     void setMimetype(const QString&) KMPLAYERCOMMON_NO_EXPORT;
 
     Node *node;
-    KIO::Job *job;
+    KIO::TransferJob *job;
     QString cross_domain;
     QString access_from;
     bool preserve_wait;

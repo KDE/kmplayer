@@ -371,10 +371,10 @@ bool Settings::createDialog () {
         }
     }
     assert(configdialog->m_SourcePageURL->backend->count() > 0);
-    connect (configdialog, SIGNAL (accepted ()),
-            this, SLOT (okPressed ()));
-    connect (configdialog->button(QDialogButtonBox::Apply), SIGNAL(clicked ()),
-            this, SLOT (okPressed ()));
+    connect (configdialog, &QDialog::accepted,
+            this, &Settings::okPressed);
+    connect (configdialog->button(QDialogButtonBox::Apply), &QAbstractButton::clicked,
+            this, &Settings::okPressed);
     /*if (KApplication::kApplication())
         connect (configdialog, SIGNAL (helpClicked ()),
                 this, SLOT (getHelp ()));*/

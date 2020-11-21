@@ -199,8 +199,8 @@ void View::init (KActionCollection *action_collection, bool transparent) {
 
     m_infopanel = new InfoWindow (nullptr, this);
 
-    connect (m_control_panel->scale_slider, SIGNAL (valueChanged (int)),
-             m_view_area, SLOT (scale (int)));
+    connect (m_control_panel->scale_slider, &QSlider::valueChanged,
+             m_view_area, &ViewArea::scale);
     setFocusPolicy (Qt::ClickFocus);
 
     setAcceptDrops (true);

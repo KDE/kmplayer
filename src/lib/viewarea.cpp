@@ -2443,8 +2443,8 @@ VideoOutput::VideoOutput (QWidget *parent, View * view)
     m_view (view)
 {
     setAcceptDrops (true);
-    connect (view->viewArea (), SIGNAL (fullScreenChanged ()),
-             this, SLOT (fullScreenChanged ()));
+    connect (view->viewArea (), &ViewArea::fullScreenChanged,
+             this, &VideoOutput::fullScreenChanged);
     qCDebug(LOG_KMPLAYER_COMMON) << "VideoOutput::VideoOutput" << endl;
     setMonitoring (MonitorAll);
     setAttribute (Qt::WA_NoSystemBackground, true);

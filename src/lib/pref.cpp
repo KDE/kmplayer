@@ -283,12 +283,12 @@ PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent, Settings * settings
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         colorscombo->addItem (colors[i].title);
     colorscombo->setCurrentIndex (0);
-    connect (colorscombo, SIGNAL (activated (int)),
-            this, SLOT (colorItemChanged(int)));
+    connect (colorscombo, QOverload<int>::of(&QComboBox::activated),
+            this, &PrefGeneralPageLooks::colorItemChanged);
     colorbutton = new KColorButton;
     colorbutton->setColor (colors[0].color);
-    connect (colorbutton, SIGNAL (changed (const QColor &)),
-            this, SLOT (colorCanged (const QColor &)));
+    connect (colorbutton, &KColorButton::changed,
+            this, &PrefGeneralPageLooks::colorCanged);
     QHBoxLayout* hbox = new QHBoxLayout;
     hbox->addWidget(colorscombo);
     hbox->addWidget(colorbutton);
@@ -299,12 +299,12 @@ PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent, Settings * settings
     for (int i = 0; i < int (FontSetting::last_target); i++)
         fontscombo->addItem (fonts[i].title);
     fontscombo->setCurrentIndex (0);
-    connect (fontscombo, SIGNAL (activated (int)),
-            this, SLOT (fontItemChanged(int)));
+    connect (fontscombo, QOverload<int>::of(&QComboBox::activated),
+            this, &PrefGeneralPageLooks::fontItemChanged);
     fontbutton = new QPushButton(i18n ("AaBbCc"));
     fontbutton->setFlat (true);
     fontbutton->setFont (fonts[0].font);
-    connect (fontbutton, SIGNAL (clicked ()), this, SLOT (fontClicked ()));
+    connect (fontbutton, &QPushButton::clicked, this, &PrefGeneralPageLooks::fontClicked);
     hbox = new QHBoxLayout;
     hbox->addWidget(fontscombo);
     hbox->addWidget(fontbutton);
@@ -414,10 +414,10 @@ PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     vbox->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     setLayout(vbox);
 
-    connect (url, SIGNAL(textChanged(const QString&)),
-             this, SLOT (slotTextChanged (const QString &)));
-    connect (sub_url, SIGNAL(textChanged(const QString&)),
-             this, SLOT (slotTextChanged (const QString &)));
+    connect (url, &KUrlRequester::textChanged,
+             this, &PrefSourcePageURL::slotTextChanged);
+    connect (sub_url, &KUrlRequester::textChanged,
+             this, &PrefSourcePageURL::slotTextChanged);
 }
 
 void PrefSourcePageURL::slotBrowse () {
@@ -488,8 +488,8 @@ PrefRecordPage::PrefRecordPage(QWidget* parent,
     connect (recorder, SIGNAL (clicked(int)), this, SLOT(recorderClicked(int)));
 #endif
     //connect(replay, SIGNAL(buttonClicked (int)), this, SLOT (replayClicked (int)));
-    connect (player, SIGNAL (recording (bool)), this, SLOT (recording (bool)));
-    connect(recordButton, SIGNAL(clicked()), this, SLOT(slotRecord()));
+    connect (player, &PartBase::recording, this, &PrefRecordPage::recording);
+    connect(recordButton, &QPushButton::clicked, this, &PrefRecordPage::slotRecord);
 
     QVBoxLayout* pagelayout = new QVBoxLayout;
     pagelayout->setMargin(5);
@@ -603,7 +603,7 @@ PrefMEncoderPage::PrefMEncoderPage(QWidget* parent, PartBase* player)
     gridlayout->addWidget (arguments, 0, 1);
     vbox->addLayout(gridlayout);
     formatbox->setLayout(vbox);
-    connect (format, SIGNAL (buttonClicked (int)), this, SLOT (formatClicked (int)));
+    connect (format, QOverload<int>::of(&QButtonGroup::buttonClicked), this, &PrefMEncoderPage::formatClicked);
 
     QVBoxLayout* pagelayout = new QVBoxLayout;
     pagelayout->setMargin(5);
