@@ -166,7 +166,7 @@ public:
     using KMPlayer::PartBase::openUrl;
 public Q_SLOTS:
     bool openUrl(const QUrl& url) override;
-    virtual void openUrl(const QUrl&, const QString& t, const QString& srv);
+    void openUrl(const QUrl&, const QString& t, const QString& srv) override;
     bool closeUrl () override;
     void setMenuZoom (int id);
 protected:
