@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE gui SYSTEM "kpartgui.dtd">
-<kpartgui name="kmplayer" version="30">
+<gui name="kmplayer" version="30">
 <MenuBar>
   <Menu name="file"><text>&amp;File</text>
     <Action name="open"/>
@@ -96,4 +96,4 @@
   <Action name="vdr_key_ok"/>
   <Action name="vdr_key_menu"/>
 </ToolBar>
-</kpartgui>
+</gui>

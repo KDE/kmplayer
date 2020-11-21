@@ -1,5 +1,6 @@
-<!DOCTYPE kpartgui>
-<kpartgui name="kmplayer" version="8">
+<?xml version="1.0"?>
+<!DOCTYPE gui SYSTEM "kpartgui.dtd">
+<gui name="kmplayer" version="8">
 <MenuBar>
   <Menu name="view"><text>&amp;View</text>
     <Action name="play"/>
@@ -16,4 +17,4 @@
   <Action name="pause"/>
   <Action name="stop"/>
 </ToolBar>
-</kpartgui>
+</gui>
