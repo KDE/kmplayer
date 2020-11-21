@@ -94,8 +94,6 @@ if(NOT WIN32)
 
 endif(NOT WIN32)
 
-configure_file (config-kmplayer.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kmplayer.h )
-
 add_subdirectory(src)
 add_subdirectory(icons)
 add_subdirectory(doc)
