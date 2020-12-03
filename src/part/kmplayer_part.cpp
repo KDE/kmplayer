@@ -111,6 +111,7 @@ KAboutData& KMPlayerFactory::aboutData() {
 QObject* KMPlayerFactory::create(const char *iface, QWidget* parentWidget, QObject* parent,
         const QVariantList& args, const QString&)
 {
+    Q_UNUSED(iface)
 #if KCOREADDONS_VERSION >= QT_VERSION_CHECK(5, 77, 0)
     return new KMPlayerPart(parentWidget, parent, metaData(), args);
 #else
