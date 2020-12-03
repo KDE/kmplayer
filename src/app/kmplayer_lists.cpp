@@ -569,7 +569,7 @@ void Generator::begin () {
         qprocess = new QProcess (app);
         connect (qprocess, &QProcess::started,
                  this, &Generator::started);
-        connect (qprocess, QOverload<QProcess::ProcessError>::of(&QProcess::error),
+        connect (qprocess, &QProcess::errorOccurred,
                  this, &Generator::error);
         connect (qprocess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
                  this, &Generator::finished);
@@ -591,7 +591,7 @@ void Generator::deactivate () {
     if (qprocess) {
         disconnect (qprocess, &QProcess::started,
                     this, &Generator::started);
-        disconnect (qprocess, QOverload<QProcess::ProcessError>::of(&QProcess::error),
+        disconnect (qprocess, &QProcess::errorOccurred,
                     this, &Generator::error);
         disconnect (qprocess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
                     this, &Generator::finished);
