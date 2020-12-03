@@ -171,7 +171,14 @@ private Q_SLOTS:
     void finished ();
 
 private:
-    QString genReadProcess (KMPlayer::Node *n);
+    struct ProgramCmd
+    {
+        QString program;
+        QStringList args;
+        bool isEmpty() const { return program.isEmpty(); }
+        QString toString() const;
+    };
+    ProgramCmd genReadProgramCmd (KMPlayer::Node *n);
     QString genReadInput (KMPlayer::Node *n);
     QString genReadString (KMPlayer::Node *n);
     QString genReadUriGet (KMPlayer::Node *n);
@@ -180,7 +187,7 @@ private:
     KMPlayerApp *app;
     QProcess *qprocess;
     QTextStream *data;
-    QString process;
+    ProgramCmd process;
     QString buffer;
     bool canceled;
     bool quote;

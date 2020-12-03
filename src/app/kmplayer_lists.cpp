@@ -510,20 +510,24 @@ QString Generator::genReadInput (KMPlayer::Node *n) {
     return genReadString (n);
 }
 
-QString Generator::genReadProcess (KMPlayer::Node *n) {
-    QString process;
-    QString str;
+QString Generator::ProgramCmd::toString() const
+{
+    return program + QLatin1Char(' ') + args.join(QLatin1Char(' '));
+}
+Generator::ProgramCmd Generator::genReadProgramCmd (KMPlayer::Node *n)
+{
+    ProgramCmd programCmd;
     quote = true;
     for (KMPlayer::Node *c = n->firstChild (); c && !canceled; c = c->nextSibling ())
         switch (c->id) {
         case id_node_gen_program:
-            process = QString (genReadString (c));
+            programCmd.program = QString (genReadString (c));
             break;
         case id_node_gen_argument:
-            process += QChar (' ') + genReadString (c);
+            programCmd.args.append(genReadString(c));
             break;
         }
-    return process;
+    return programCmd;
 }
 
 void Generator::activate () {
@@ -539,7 +543,7 @@ void Generator::activate () {
                 input = genReadInput (c);
                 break;
             case id_node_gen_process:
-                process = genReadProcess (c);
+                process = genReadProgramCmd (c);
             }
     }
     if (canceled)
@@ -550,10 +554,11 @@ void Generator::activate () {
     } else if (!process.isEmpty ()) {
         data = new QTextStream (&buffer);
         if (input.isEmpty ()) {
-            message (KMPlayer::MsgInfoString, &process);
+            QString cmd = process.toString();
+            message (KMPlayer::MsgInfoString, &cmd);
             begin ();
         } else {
-            QString cmdline (input + " | " + process);
+            QString cmdline (input + " | " + process.toString());
             message (KMPlayer::MsgInfoString, &cmdline);
             if (!media_info)
                 media_info = new KMPlayer::MediaInfo (
@@ -580,10 +585,10 @@ void Generator::begin () {
     if (media_info)
         info = QString ("Input data ") +
             QString::number (media_info->rawData ().size () / 1024.0) + "kb | ";
-    info += process;
+    info += process.toString();
     message (KMPlayer::MsgInfoString, &info);
-    qCDebug(LOG_KMPLAYER_APP) << process;
-    qprocess->start (process);
+    qCDebug(LOG_KMPLAYER_APP) << process.toString();
+    qprocess->start (process.program, process.args);
     state = state_began;
 }
 
@@ -661,7 +666,8 @@ void Generator::started () {
         qprocess->closeWriteChannel ();
         return;
     }
-    message (KMPlayer::MsgInfoString, &process);
+    QString cmd = process.toString();
+    message (KMPlayer::MsgInfoString, &cmd);
 }
 
 void Generator::error (QProcess::ProcessError err) {
