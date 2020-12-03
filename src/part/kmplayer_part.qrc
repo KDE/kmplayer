@@ -1,6 +1,6 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
-    <qresource prefix="/kxmlgui5/kmplayer">
+    <qresource prefix="/kxmlgui5/kmplayerpart">
         <file>kmplayerpartui.rc</file>
     </qresource>
 </RCC>

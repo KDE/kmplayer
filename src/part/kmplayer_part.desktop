@@ -100,7 +100,7 @@ X-KDE-ServiceTypes=KParts/ReadOnlyPart,Browser/View,KMediaPlayer/Player
 X-KDE-BrowserView-PluginsInfo=kmplayer/pluginsinfo
 InitialPreference=9
 
-X-KDE-PluginInfo-Name=kmplayer
+X-KDE-PluginInfo-Name=kmplayerpart
 X-KDE-PluginInfo-Version=@KMPLAYER_VERSION_STRING@
 X-KDE-PluginInfo-License=LGPL v2
 X-KDE-PluginInfo-Copyright=
