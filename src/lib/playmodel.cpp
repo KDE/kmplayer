@@ -120,6 +120,7 @@ QVariant PlayModel::data (const QModelIndex &index, int role) const
     case Qt::EditRole:
         if (item->item_flags & Qt::ItemIsEditable)
             return item->title;
+        Q_FALLTHROUGH();
 
     default:
         return QVariant ();
