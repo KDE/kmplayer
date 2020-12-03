@@ -130,7 +130,7 @@ public:
         VirtualVoid *payload;
         ConnectionLink connection;
         DurationItem *next;
-    } durations [(const int) DurTimeLast];
+    } durations [(int) DurTimeLast];
     void setDuration ();
     bool started () const;
     bool active () const {
