@@ -1624,7 +1624,7 @@ struct Parser {
     Parser(const char* s) : source(s), cur(source) {}
     void nextToken(bool skip_whitespace=true);
     void setError(const char* err) {
-        fprintf(stderr, "Error at %d: %s\n", cur-source, err);
+        fprintf(stderr, "Error at %td: %s\n", cur-source, err);
     }
 };
 
