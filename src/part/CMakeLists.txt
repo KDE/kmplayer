@@ -1,4 +1,4 @@
-configure_file(kmplayer_part.desktop ${CMAKE_CURRENT_BINARY_DIR}/kmplayer_part.desktop @ONLY)
+configure_file(kmplayer_part.desktop.in ${CMAKE_CURRENT_BINARY_DIR}/kmplayer_part.desktop @ONLY)
 
 add_definitions(-DTRANSLATION_DOMAIN=\"kmplayer\")
 
