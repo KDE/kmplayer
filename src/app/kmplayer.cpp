@@ -1507,7 +1507,7 @@ void Disks::message (KMPlayer::MessageType msg, void *data) {
     if (KMPlayer::MsgChildFinished == msg)
         finish ();
     else
-        return KMPlayer::Document::message (msg, data);
+        KMPlayer::Document::message (msg, data);
 }
 
 Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url, const QString &pn)
