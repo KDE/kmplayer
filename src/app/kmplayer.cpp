@@ -1504,7 +1504,7 @@ Disks::Disks (KMPlayerApp * a)
 }
 
 void Disks::message (KMPlayer::MessageType msg, void *data) {
-    if (KMPlayer::MsgChildFinished)
+    if (KMPlayer::MsgChildFinished == msg)
         finish ();
     else
         return KMPlayer::Document::message (msg, data);
