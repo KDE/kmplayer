@@ -1824,6 +1824,8 @@ public:
 
     xcb_visualtype_t* visual_of_screen(xcb_connection_t* c, xcb_screen_t* screen)
     {
+        Q_UNUSED(c)
+
         if (!visual) {
             xcb_depth_iterator_t depth_iter = xcb_screen_allowed_depths_iterator (screen);
             for (; depth_iter.rem; xcb_depth_next (&depth_iter)) {
@@ -2342,6 +2344,8 @@ static void setXSelectInput(WId wid, uint32_t mask) {
 }
 
 bool ViewArea::nativeEventFilter(const QByteArray& eventType, void * message, long *result) {
+    Q_UNUSED(result)
+
     if (eventType != "xcb_generic_event_t")
         return false;
 
