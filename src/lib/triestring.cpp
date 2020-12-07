@@ -151,7 +151,7 @@ static int trieStringCompare(TrieNode* node, const char* s, int& pos, int len)
             return 1;
         if (pos == len)
             return node->length ? 1 : 0;
-        if (len - pos < node->length) {
+        if (len - pos < static_cast<int>(node->length)) {
             cmp = memcmp(trieCharPtr(node), s + pos, len - pos);
             if (!cmp)
                 cmp = 1;
