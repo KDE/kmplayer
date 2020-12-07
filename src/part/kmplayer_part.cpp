@@ -843,9 +843,9 @@ void KMPlayerPart::statusPosition (int pos, int length) {
             int m = (left % 3600) / 60;
             int s = left % 60;
             if (h > 0)
-                text.sprintf ("%d:%02d:%02d", h, m, s);
+                text = QString::asprintf ("%d:%02d:%02d", h, m, s);
             else
-                text.sprintf ("%02d:%02d", m, s);
+                text = QString::asprintf ("%02d:%02d", m, s);
         }
         m_playtime_info->setText(text);
     }
@@ -1526,8 +1526,7 @@ void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     KMPlayer::View * view = static_cast <KMPlayer::View*> (player->view ());
     if (view->controlPanelMode () == KMPlayer::View::CP_Show)
         h += view->controlPanel()->height();
-    QString jscode;
-    jscode.sprintf("try { eval(\"this.setAttribute('WIDTH',%d);this.setAttribute('HEIGHT',%d)\"); } catch(e){}", w, h);
+    const QString jscode = QString::asprintf("try { eval(\"this.setAttribute('WIDTH',%d);this.setAttribute('HEIGHT',%d)\"); } catch(e){}", w, h);
     KParts::LiveConnectExtension::ArgList args;
     args.push_back (qMakePair (KParts::LiveConnectExtension::TypeString, jscode));
     Q_EMIT partEvent (0, "eval", args);

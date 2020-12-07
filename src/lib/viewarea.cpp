@@ -996,9 +996,9 @@ void SmilTextInfo::span (float scale) {
         s += "font-size:" + QString::number ((int)(scale * props.font_size.size ())) + "px;";
     s += "font-family:" + props.font_family + ";";
     if (props.font_color > -1)
-        s += QString().sprintf ("color:#%06x;", props.font_color);
+        s += QString::asprintf ("color:#%06x;", props.font_color);
     if (props.background_color > -1)
-        s += QString().sprintf ("background-color:#%06x;", props.background_color);
+        s += QString::asprintf ("background-color:#%06x;", props.background_color);
     if (SmilTextProperties::StyleInherit != props.font_style) {
         s += "font-style:";
         switch (props.font_style) {

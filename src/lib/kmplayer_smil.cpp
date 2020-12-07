@@ -5471,8 +5471,8 @@ void SMIL::AnimateColor::finish () {
 void SMIL::AnimateColor::applyStep () {
     Node *target = target_element.ptr ();
     if (target) {
-        QString val; // TODO make more efficient
-        val.sprintf ("#%08x", cur_c.argb ());
+        // TODO make more efficient
+        const  QString val = QString::asprintf ("#%08x", cur_c.argb ());
         static_cast <Element *> (target)->setParam (changed_attribute, val);
     }
 }

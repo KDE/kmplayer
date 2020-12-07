@@ -681,8 +681,7 @@ bool MPlayer::seek (int pos, bool absolute) {
         return false;
     }
     m_request_seek = pos;
-    QString cmd;
-    cmd.sprintf ("seek %d %d", pos/10, absolute ? 2 : 0);
+    const QString cmd = QString::asprintf ("seek %d %d", pos/10, absolute ? 2 : 0);
     if (!absolute)
         pos = m_source->position () + pos;
     m_source->setPosition (pos);
@@ -699,26 +698,22 @@ void MPlayer::volume (int incdec, bool absolute) {
 }
 
 bool MPlayer::saturation (int val, bool absolute) {
-    QString cmd;
-    cmd.sprintf ("saturation %d %d", val, absolute ? 1 : 0);
+    const QString cmd = QString::asprintf ("saturation %d %d", val, absolute ? 1 : 0);
     return sendCommand (cmd);
 }
 
 bool MPlayer::hue (int val, bool absolute) {
-    QString cmd;
-    cmd.sprintf ("hue %d %d", val, absolute ? 1 : 0);
+    const QString cmd = QString::asprintf ("hue %d %d", val, absolute ? 1 : 0);
     return sendCommand (cmd);
 }
 
 bool MPlayer::contrast (int val, bool /*absolute*/) {
-    QString cmd;
-    cmd.sprintf ("contrast %d 1", val);
+    const QString cmd = QString::asprintf ("contrast %d 1", val);
     return sendCommand (cmd);
 }
 
 bool MPlayer::brightness (int val, bool /*absolute*/) {
-    QString cmd;
-    cmd.sprintf ("brightness %d 1", val);
+    const QString cmd = QString::asprintf ("brightness %d 1", val);
     return sendCommand (cmd);
 }
 

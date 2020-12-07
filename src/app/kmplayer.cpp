@@ -314,9 +314,9 @@ void KMPlayerApp::positioned (int pos, int length) {
             int m = (left % 3600) / 60;
             int s = left % 60;
             if (h > 0)
-                text.sprintf ("%d:%02d:%02d", h, m, s);
+                text = QString::asprintf ("%d:%02d:%02d", h, m, s);
             else
-                text.sprintf ("%02d:%02d", m, s);
+                text = QString::asprintf ("%02d:%02d", m, s);
         }
         playtime_info->setText(text);
     }
