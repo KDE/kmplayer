@@ -174,6 +174,18 @@ Matrix::Matrix (const Matrix & m)
 Matrix::Matrix (Single xoff, Single yoff, float xscale, float yscale)
  : a (xscale), b (0.0), c (0.0), d (yscale), tx (xoff), ty (yoff) {}
 
+Matrix & Matrix::operator = (const Matrix& m)
+{
+    a = m.a;
+    b = m.b;
+    c = m.c;
+    d = m.d;
+    tx = m.tx;
+    ty = m.ty;
+
+    return *this;
+}
+
 void Matrix::getXY (Single & x, Single & y) const {
     x = Single (x * a) + tx;
     y = Single (y * d) + ty;

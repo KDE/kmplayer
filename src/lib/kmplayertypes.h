@@ -50,6 +50,8 @@ public:
     Single (const int v) : value (v << 8) {}
     Single (const float v) : value (int (256 * v)) {}
     Single (const double v) : value (int (256 * v)) {}
+    Single(const Single& other) : value(other.value) {}
+
     Single & operator = (const Single s) { value = s.value; return *this; }
     Single & operator = (const int v) { value = v << 8; return *this; }
     Single & operator = (const float v) { value = int (256 * v); return *this; }
@@ -139,6 +141,8 @@ public:
     Matrix ();
     Matrix (const Matrix & matrix);
     Matrix (Single xoff, Single yoff, float xscale, float yscale);
+    Matrix & operator = (const Matrix& other);
+
     void getXY (Single & x, Single & y) const;
     void getWH (Single & w, Single & h) const;
     IRect toScreen (const SRect &rect) const;
