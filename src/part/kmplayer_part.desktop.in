@@ -2,6 +2,7 @@
 Name=Embedded MPlayer by KDE
 Name[ca]=MPlayer incrustat, creat per la comunitat KDE
 Name[ca@valencia]=MPlayer incrustat, creat per la comunitat KDE
+Name[cs]=Zapouzdřený MPlayer od KDE
 Name[da]=Indlejret MPlayer af KDE
 Name[de]=Eingebetteter MPlayer von KDE
 Name[el]=Ενσωματωμένο MPlayer από το KDE
@@ -41,6 +42,7 @@ Comment[bg]=Приставка за видео плеър (QuickTime, XMovie, Wi
 Comment[bs]=Priključak za puštanje videa (saglasan sa Kviktajmom, Iks‑filmom, Vindouz medijom i Rilplejerom)
 Comment[ca]=Connector de reproductor de vídeo (compatible amb QuickTime, XMovie, Windows Media i RealPlayer)
 Comment[ca@valencia]=Connector de reproductor de vídeo (compatible amb QuickTime, XMovie, Windows Media i RealPlayer)
+Comment[cs]=Modul video přehrávače (kompatibilní s QuickTime, XMovie, Windows Media a RealPlayer)
 Comment[csb]=Wtëkôcze grôcza wideò (zgódno z QickTime, XMovie, Windows Media ë RealPlayer)
 Comment[da]=Videoafspiller-plugin (kompatibelt med QuickTime, XMovie, Windows Media og RealPlayer)
 Comment[de]=Video-Wiedergabemodul (Kompatibel zu QuickTime, XMovie, Windows Media und RealPlayer)
