@@ -17,6 +17,7 @@
   <name xml:lang="fi">KMPlayer</name>
   <name xml:lang="fr">KMPlayer</name>
   <name xml:lang="gl">KMPlayer</name>
+  <name xml:lang="ia">KMPlayer</name>
   <name xml:lang="id">KMPlayer</name>
   <name xml:lang="it">KMPlayer</name>
   <name xml:lang="ko">KMPlayer</name>
@@ -44,6 +45,7 @@
   <summary xml:lang="fi">KDE:n MPlayer-käyttöliittymä</summary>
   <summary xml:lang="fr">Interface pour MPlayer par KDE</summary>
   <summary xml:lang="gl">Interface para MPlayer de KDE</summary>
+  <summary xml:lang="ia">Interfacie de KDE per MPlayer</summary>
   <summary xml:lang="id">Antarmuka untuk MPlayer oleh KDE</summary>
   <summary xml:lang="it">Interfaccia per MPlayer di KDE</summary>
   <summary xml:lang="ko">KDE MPlayer 인터페이스</summary>
