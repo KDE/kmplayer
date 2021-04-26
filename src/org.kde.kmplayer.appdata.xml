@@ -117,6 +117,7 @@
       <li>play DVD/VCD movies (from file or url and from a video device)</li>
       <li xml:lang="ca">reprodueix pel·lícules en DVD/VCD (des d'un fitxer o URL i des d'un dispositiu de vídeo)</li>
       <li xml:lang="ca-valencia">reprodueix pel·lícules en DVD/VCD (des d'un fitxer o URL i des d'un dispositiu de vídeo)</li>
+      <li xml:lang="de">Wiedergabe von DVD/VCD-Filmen aus einer Datei oder URL und von Videogeräten</li>
       <li xml:lang="el">αναπαραγωγή ταινιών DVD/VCD (από αρχείο ή url και από συσκευή βίντεο)</li>
       <li xml:lang="en-GB">play DVD/VCD movies (from file or URL and from a video device)</li>
       <li xml:lang="es">Reproducir películas de DVD/VCD (desde archivos, URL o dispositivos de vídeo).</li>
@@ -216,6 +217,7 @@
       <li>No video during recording, but you can always open a new window and play it</li>
       <li xml:lang="ca">No hi ha vídeo durant l'enregistrament, però sempre es pot obrir una finestra nova i reproduir-lo</li>
       <li xml:lang="ca-valencia">No hi ha vídeo durant l'enregistrament, però sempre es pot obrir una finestra nova i reproduir-lo</li>
+      <li xml:lang="de">Keine Video-Wiedergabe während einer Aufnahme, aber Sie können immer ein neues Fenster zur Wiedergabe öffnen</li>
       <li xml:lang="el">Δεν υπάρχει βίντεο κατά την εγγραφή, αλλά μπορείτε πάντα να ανοίξετε ένα νέο παράθυρο για αναπαραγωγή</li>
       <li xml:lang="en-GB">No video during recording, but you can always open a new window and play it</li>
       <li xml:lang="es">Sin vídeo durante la grabación, aunque siempre se puede abrir una nueva ventana para reproducirlo.</li>
@@ -240,6 +242,7 @@
       <li>Broadcasting, http streaming, using ffserver/ffmpeg</li>
       <li xml:lang="ca">Difusió, flux de dades per «http», usa «ffserver»/«ffmpeg»</li>
       <li xml:lang="ca-valencia">Difusió, flux de dades per «http», usa «ffserver»/«ffmpeg»</li>
+      <li xml:lang="de">Broadcasting und HTTP-Streaming mit ffserver/ffmpeg</li>
       <li xml:lang="el">Μετάδοση, ροή http, με χρήση ffserver/ffmpeg</li>
       <li xml:lang="en-GB">Broadcasting, http streaming, using ffserver/ffmpeg</li>
       <li xml:lang="es">Emisión y retransmisión HTTP, mediante el uso de ffserver/ffmpeg.</li>
@@ -264,6 +267,7 @@
       <li>For TV sources, you need v4lctl (part of the xawtv package)</li>
       <li xml:lang="ca">Per a les fonts de TV, cal «v4lctl» (part del paquet «xawtv»)</li>
       <li xml:lang="ca-valencia">Per a les fonts de TV, cal «v4lctl» (part del paquet «xawtv»)</li>
+      <li xml:lang="de">Für TV-Quellen brauchen Sie die Bibliothek v4lctl, die im Paket xawtv enthalten ist</li>
       <li xml:lang="el">Για πηγές TV, χρειάζεστε v4lctl (τμήμα του πακέτου xmltv)</li>
       <li xml:lang="en-GB">For TV sources, you need v4lctl (part of the xawtv package)</li>
       <li xml:lang="es">Para las fuentes de TV necesita v4lctl (que es parte del paquete xawtv).</li>
