@@ -1,15 +1,15 @@
-include_directories(
+add_executable(knpplayer)
+
+target_include_directories(knpplayer PRIVATE
     ${GLibDBus_INCLUDE_DIRS}
     ${GTK_INCLUDE_DIRS}
     ${GThread_INCLUDE_DIRS}
     ${GModule_INCLUDE_DIRS}
 )
 
-set(knpplayer_SRCS
+target_sources(knpplayer PRIVATE
     npplayer.cpp
 )
-
-add_executable(knpplayer ${knpplayer_SRCS})
 
 target_link_libraries(knpplayer
     ${GLibDBus_LIBRARIES}

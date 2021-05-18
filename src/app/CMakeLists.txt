@@ -1,14 +1,17 @@
-add_definitions(-DKMPLAYER_VERSION_STRING="\\\"${KMPLAYER_VERSION_STRING}\\\"")
+kf5_add_kdeinit_executable(kmplayer)
 
-set(kmplayer_SRCS
+target_sources(kdeinit_kmplayer PRIVATE
     kmplayer.cpp
     kmplayer_lists.cpp
     kmplayertvsource.cpp
 #kmplayerbroadcast.cpp
 #kmplayervdr.cpp
+    main.cpp
+
+    kmplayer.qrc
 )
 
-ecm_qt_declare_logging_category(kmplayer_SRCS
+ecm_qt_declare_logging_category(kdeinit_kmplayer
     HEADER kmplayerapp_log.h
     IDENTIFIER LOG_KMPLAYER_APP
     CATEGORY_NAME kmplayer.app
@@ -16,19 +19,15 @@ ecm_qt_declare_logging_category(kmplayer_SRCS
     EXPORT KMPLAYER
 )
 
-qt5_add_resources(kmplayer_SRCS
-    kmplayer.qrc
+target_compile_definitions(kdeinit_kmplayer PRIVATE
+    -DKMPLAYER_VERSION_STRING="\\\"${KMPLAYER_VERSION_STRING}\\\""
 )
-
-kf5_add_kdeinit_executable(kmplayer ${kmplayer_SRCS} main.cpp)
 
 target_link_libraries(kdeinit_kmplayer
     kmplayercommon
     KF5::IconThemes
     Qt5::X11Extras
 )
-
-target_link_libraries(kmplayer kdeinit_kmplayer)
 
 install(TARGETS kdeinit_kmplayer ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 

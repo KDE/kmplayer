@@ -1,17 +1,19 @@
-set(kphononplayer_SRCS
-    phononplayer.cpp
-)
+add_executable(kphononplayer)
 
-qt5_add_dbus_adaptor(kphononplayer_SRCS
+set(kphononplayer_dbus_SRCS)
+qt5_add_dbus_adaptor(kphononplayer_dbus_SRCS
     ${CMAKE_SOURCE_DIR}/src/lib/org.kde.kmplayer.agent.xml
     phononplayer.h Agent
 )
-qt5_add_dbus_adaptor(kphononplayer_SRCS
+qt5_add_dbus_adaptor(kphononplayer_dbus_SRCS
     ${CMAKE_SOURCE_DIR}/src/lib/org.kde.kmplayer.streamagent.xml
     phononplayer.h Stream
 )
 
-add_executable(kphononplayer ${kphononplayer_SRCS})
+target_sources(kphononplayer PRIVATE
+    phononplayer.cpp
+    ${kphononplayer_dbus_SRCS}
+)
 
 target_link_libraries(kphononplayer
     Phonon::phonon4qt5

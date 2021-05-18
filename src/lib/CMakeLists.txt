@@ -1,11 +1,8 @@
-add_definitions(-DTRANSLATION_DOMAIN=\"kmplayer\")
+add_library(kmplayercommon SHARED)
 
-include_directories(
-    ${CAIRO_INCLUDE_DIRS}
-    ${EXPAT_INCLUDE_DIRS}
-)
+target_compile_definitions(kmplayercommon PRIVATE -DTRANSLATION_DOMAIN=\"kmplayer\")
 
-set(libkmplayercommon_SRCS
+target_sources(kmplayercommon PRIVATE
     kmplayerview.cpp
     playmodel.cpp
     playlistview.cpp
@@ -29,7 +26,7 @@ set(libkmplayercommon_SRCS
     viewarea.cpp
 )
 
-ecm_qt_declare_logging_category(libkmplayercommon_SRCS
+ecm_qt_declare_logging_category(kmplayercommon
     HEADER kmplayercommon_log.h
     IDENTIFIER LOG_KMPLAYER_COMMON
     CATEGORY_NAME kmplayer.common
@@ -37,39 +34,49 @@ ecm_qt_declare_logging_category(libkmplayercommon_SRCS
     EXPORT KMPLAYER
 )
 
-qt5_add_dbus_adaptor(libkmplayercommon_SRCS
+set(libkmplayercommon_dbus_SRCS)
+qt5_add_dbus_adaptor(libkmplayercommon_dbus_SRCS
     org.kde.kmplayer.master.xml
     kmplayerprocess.h KMPlayer::MasterProcessInfo
 )
-qt5_add_dbus_adaptor(libkmplayercommon_SRCS
+qt5_add_dbus_adaptor(libkmplayercommon_dbus_SRCS
     org.kde.kmplayer.streammaster.xml
     kmplayerprocess.h KMPlayer::MasterProcess
 )
-qt5_add_dbus_adaptor(libkmplayercommon_SRCS
+qt5_add_dbus_adaptor(libkmplayercommon_dbus_SRCS
     org.kde.kmplayer.part.xml
     kmplayerpartbase.h KMPlayer::PartBase
 )
 
 if (KMPLAYER_WITH_NPP)
-    qt5_add_dbus_adaptor(libkmplayercommon_SRCS
+    qt5_add_dbus_adaptor(libkmplayercommon_dbus_SRCS
         org.kde.kmplayer.callback.xml
         kmplayerprocess.h KMPlayer::NpPlayer
     )
-    qt5_add_dbus_adaptor(libkmplayercommon_SRCS
+    qt5_add_dbus_adaptor(libkmplayercommon_dbus_SRCS
         org.kde.kmplayer.stream.xml
         kmplayerprocess.h KMPlayer::NpStream
     )
-endif (KMPLAYER_WITH_NPP)
+endif ()
 
 set_source_files_properties(org.freedesktop.PowerManagement.Inhibit.xml
     PROPERTIES NO_NAMESPACE TRUE
 )
-qt5_add_dbus_interfaces(libkmplayercommon_SRCS org.freedesktop.PowerManagement.Inhibit.xml)
+qt5_add_dbus_interfaces(libkmplayercommon_dbus_SRCS org.freedesktop.PowerManagement.Inhibit.xml)
 
-add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
+target_sources(kmplayercommon PRIVATE
+    ${libkmplayercommon_dbus_SRCS}
+)
 
 generate_export_header(kmplayercommon)
 
+target_include_directories(kmplayercommon
+    PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/..>" # config file
+    PRIVATE
+        ${CAIRO_INCLUDE_DIRS}
+        ${EXPAT_INCLUDE_DIRS}
+)
 target_link_libraries(kmplayercommon
     PUBLIC
         KF5::MediaPlayer
