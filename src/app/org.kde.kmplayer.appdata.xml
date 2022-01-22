@@ -4,6 +4,7 @@
   <metadata_license>FSFAP</metadata_license>
   <project_license>GPL-2.0-or-later</project_license>
   <name>KMPlayer</name>
+  <name xml:lang="ar">كي ام بلاير</name>
   <name xml:lang="ca">KMPlayer</name>
   <name xml:lang="ca-valencia">KMPlayer</name>
   <name xml:lang="cs">KMPlayer</name>
@@ -33,6 +34,7 @@
   <name xml:lang="x-test">xxKMPlayerxx</name>
   <name xml:lang="zh-TW">KMPlayer</name>
   <summary>Interface for MPlayer by KDE</summary>
+  <summary xml:lang="ar">واجهة كدي لبرنامج MPlayer</summary>
   <summary xml:lang="ca">Interfície per al MPlayer, creada per la comunitat KDE</summary>
   <summary xml:lang="ca-valencia">Interfície per al MPlayer, creada per la comunitat KDE</summary>
   <summary xml:lang="cs">Rozhraní pro MPlayer od KDE</summary>
@@ -63,6 +65,7 @@
   <summary xml:lang="zh-TW">來自 KDE 的 MPlayer 介面</summary>
   <description>
     <p>KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="ar">برنامج كي ام بلاير هو واجهة أمامية بسيطة لـ MPlayer / FFMpeg / Phonon.</p>
     <p xml:lang="ca">El KMPlayer és un frontal senzill per al MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="ca-valencia">El KMPlayer és un frontal senzill per al MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="de">KMPlayer ist eine einfache Benutzeroberfläche für MPlayer, FFMpeg oder Phonon.</p>
@@ -88,6 +91,7 @@
     <p xml:lang="x-test">xxKMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.xx</p>
     <p xml:lang="zh-TW">KMPlayer 是個 MPlayer/FFMpeg/Phonon 的簡易前端。</p>
     <p>Some features:</p>
+    <p xml:lang="ar">بعض المزايا:</p>
     <p xml:lang="ca">Algunes característiques:</p>
     <p xml:lang="ca-valencia">Algunes característiques:</p>
     <p xml:lang="de">Einige Funktionen:</p>
@@ -115,6 +119,7 @@
     <p xml:lang="zh-TW">部份功能：</p>
     <ul>
       <li>play DVD/VCD movies (from file or url and from a video device)</li>
+      <li xml:lang="ar">تشغيل أفلام DVD / VCD (من ملف أو عنوان ومن جهاز فيديو)</li>
       <li xml:lang="ca">reprodueix pel·lícules en DVD/VCD (des d'un fitxer o URL i des d'un dispositiu de vídeo)</li>
       <li xml:lang="ca-valencia">reprodueix pel·lícules en DVD/VCD (des d'un fitxer o URL i des d'un dispositiu de vídeo)</li>
       <li xml:lang="de">Wiedergabe von DVD/VCD-Filmen aus einer Datei oder URL und von Videogeräten</li>
@@ -140,6 +145,7 @@
       <li xml:lang="x-test">xxplay DVD/VCD movies (from file or url and from a video device)xx</li>
       <li xml:lang="zh-TW">播放 DVD/VCD 影片（從檔案或網址，及從影片裝置）</li>
       <li>embed inside konqueror (movie is played inside konqueror)</li>
+      <li xml:lang="ar">تضمين داخل كونكيور (يشغل الفيلم داخل كونكيور)</li>
       <li xml:lang="ca">incrustat dins el Konqueror (la pel·lícula es reprodueix dins el Konqueror)</li>
       <li xml:lang="ca-valencia">incrustat dins el Konqueror (la pel·lícula es reprodueix dins el Konqueror)</li>
       <li xml:lang="de">Eingebettet in Konqueror, der Film wird in Konqueror abgespielt</li>
@@ -165,6 +171,7 @@
       <li xml:lang="x-test">xxembed inside konqueror (movie is played inside konqueror)xx</li>
       <li xml:lang="zh-TW">在 Konqueror 嵌入（在 Konqueror 中播放影片）</li>
       <li>embed inside khtml (movie playback inside a html page)</li>
+      <li xml:lang="ar">التضمين داخل khtml (تشغيل الفيلم داخل صفحة html)</li>
       <li xml:lang="ca">incrustat dins el «khtml» (la pel·lícula es reprodueix dins una pàgina HTML)</li>
       <li xml:lang="ca-valencia">incrustat dins el «khtml» (la pel·lícula es reprodueix dins una pàgina HTML)</li>
       <li xml:lang="de">Eingebettet in KHTML, der Film wird in einer HTML-Seite abgespielt</li>
@@ -190,6 +197,7 @@
       <li xml:lang="x-test">xxembed inside khtml (movie playback inside a html page)xx</li>
       <li xml:lang="zh-TW">在 khtml 中嵌入（在 html 頁面中播放影片）</li>
       <li>Movie recording using mencoder (part of the mplayer package)</li>
+      <li xml:lang="ar">تسجيل الفيلم باستخدام Mencoder (جزء من حزمة mplayer)</li>
       <li xml:lang="ca">Enregistrament de pel·lícules usant el «mencoder» (part del paquet «mplayer»)</li>
       <li xml:lang="ca-valencia">Enregistrament de pel·lícules usant el «mencoder» (part del paquet «mplayer»)</li>
       <li xml:lang="de">Filmaufnahme mit dem Programm mencoder, einem Bestandteil des Pakets MPlayer</li>
@@ -215,6 +223,7 @@
       <li xml:lang="x-test">xxMovie recording using mencoder (part of the mplayer package)xx</li>
       <li xml:lang="zh-TW">使用 memcoder 錄製影片（mplayer 軟體包的一部分）</li>
       <li>No video during recording, but you can always open a new window and play it</li>
+      <li xml:lang="ar">لا يوجد فيديو أثناء التسجيل، ولكن يمكنك دائمًا فتح نافذة جديدة وتشغيلها</li>
       <li xml:lang="ca">No hi ha vídeo durant l'enregistrament, però sempre es pot obrir una finestra nova i reproduir-lo</li>
       <li xml:lang="ca-valencia">No hi ha vídeo durant l'enregistrament, però sempre es pot obrir una finestra nova i reproduir-lo</li>
       <li xml:lang="de">Keine Video-Wiedergabe während einer Aufnahme, aber Sie können immer ein neues Fenster zur Wiedergabe öffnen</li>
@@ -240,6 +249,7 @@
       <li xml:lang="x-test">xxNo video during recording, but you can always open a new window and play itxx</li>
       <li xml:lang="zh-TW">錄影途中不會有影片，但你永遠皆可開啟新視窗播放</li>
       <li>Broadcasting, http streaming, using ffserver/ffmpeg</li>
+      <li xml:lang="ar">البث، تدفق http، باستخدام ffserver / ffmpeg</li>
       <li xml:lang="ca">Difusió, flux de dades per «http», usa «ffserver»/«ffmpeg»</li>
       <li xml:lang="ca-valencia">Difusió, flux de dades per «http», usa «ffserver»/«ffmpeg»</li>
       <li xml:lang="de">Broadcasting und HTTP-Streaming mit ffserver/ffmpeg</li>
@@ -265,6 +275,7 @@
       <li xml:lang="x-test">xxBroadcasting, http streaming, using ffserver/ffmpegxx</li>
       <li xml:lang="zh-TW">使用 ffserver 或 ffmpeg 廣播和 HTTP 串流</li>
       <li>For TV sources, you need v4lctl (part of the xawtv package)</li>
+      <li xml:lang="ar">بالنسبة لمصادر التلفاز ، تحتاج إلى v4lctl (جزء من حزمة xawtv)</li>
       <li xml:lang="ca">Per a les fonts de TV, cal «v4lctl» (part del paquet «xawtv»)</li>
       <li xml:lang="ca-valencia">Per a les fonts de TV, cal «v4lctl» (part del paquet «xawtv»)</li>
       <li xml:lang="de">Für TV-Quellen brauchen Sie die Bibliothek v4lctl, die im Paket xawtv enthalten ist</li>
