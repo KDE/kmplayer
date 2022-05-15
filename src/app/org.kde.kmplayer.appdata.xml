@@ -211,7 +211,7 @@
       <li>Movie recording using mencoder (part of the mplayer package)</li>
       <li xml:lang="ar">تسجيل الفيلم باستخدام Mencoder (جزء من حزمة mplayer)</li>
       <li xml:lang="ca">Enregistrament de pel·lícules usant el «mencoder» (part del paquet «mplayer»)</li>
-      <li xml:lang="ca-valencia">Gravació de pel·lícules usant «mencoder» (part del paquet «mplayer»)</li>
+      <li xml:lang="ca-valencia">Gravació de pel·lícules utilitzant «mencoder» (part del paquet «mplayer»)</li>
       <li xml:lang="de">Filmaufnahme mit dem Programm mencoder, einem Bestandteil des Pakets MPlayer</li>
       <li xml:lang="el">Η εγγραφή της ταινίας γίνεται με mencoder (τμήμα του πακέτου mplayer)</li>
       <li xml:lang="en-GB">Movie recording using mencoder (part of the mplayer package)</li>
@@ -239,7 +239,7 @@
       <li>No video during recording, but you can always open a new window and play it</li>
       <li xml:lang="ar">لا يوجد فيديو أثناء التسجيل، ولكن يمكنك دائمًا فتح نافذة جديدة وتشغيلها</li>
       <li xml:lang="ca">No hi ha vídeo durant l'enregistrament, però sempre es pot obrir una finestra nova i reproduir-lo</li>
-      <li xml:lang="ca-valencia">No hi ha vídeo durant la gravació, però sempre es pot obri una finestra nova i reproduir-lo</li>
+      <li xml:lang="ca-valencia">No hi ha vídeo durant la gravació, però sempre es pot obrir una finestra nova i reproduir-lo</li>
       <li xml:lang="de">Keine Video-Wiedergabe während einer Aufnahme, aber Sie können immer ein neues Fenster zur Wiedergabe öffnen</li>
       <li xml:lang="el">Δεν υπάρχει βίντεο κατά την εγγραφή, αλλά μπορείτε πάντα να ανοίξετε ένα νέο παράθυρο για αναπαραγωγή</li>
       <li xml:lang="en-GB">No video during recording, but you can always open a new window and play it</li>
@@ -267,7 +267,7 @@
       <li>Broadcasting, http streaming, using ffserver/ffmpeg</li>
       <li xml:lang="ar">البث، تدفق http، باستخدام ffserver / ffmpeg</li>
       <li xml:lang="ca">Difusió, flux de dades per «http», usa «ffserver»/«ffmpeg»</li>
-      <li xml:lang="ca-valencia">Difusió, flux de dades per «http», usa «ffserver»/«ffmpeg»</li>
+      <li xml:lang="ca-valencia">Difusió, flux de dades per «http», utilitza «ffserver»/«ffmpeg»</li>
       <li xml:lang="de">Broadcasting und HTTP-Streaming mit ffserver/ffmpeg</li>
       <li xml:lang="el">Μετάδοση, ροή http, με χρήση ffserver/ffmpeg</li>
       <li xml:lang="en-GB">Broadcasting, http streaming, using ffserver/ffmpeg</li>
