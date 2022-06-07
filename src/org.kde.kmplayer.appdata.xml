@@ -117,7 +117,7 @@
     <ul>
       <li>play DVD/VCD movies (from file or url and from a video device)</li>
       <li xml:lang="ca">reprodueix pel·lícules en DVD/VCD (des d'un fitxer o URL i des d'un dispositiu de vídeo)</li>
-      <li xml:lang="ca-valencia">reprodueix películes en DVD/VCD (des d'un fitxer o URL i des d'un dispositiu de vídeo)</li>
+      <li xml:lang="ca-valencia">reproduïx películes en DVD/VCD (des d'un ficher o URL i des d'un dispositiu de vídeo)</li>
       <li xml:lang="de">Wiedergabe von DVD/VCD-Filmen aus einer Datei oder URL und von Videogeräten</li>
       <li xml:lang="el">αναπαραγωγή ταινιών DVD/VCD (από αρχείο ή url και από συσκευή βίντεο)</li>
       <li xml:lang="en-GB">play DVD/VCD movies (from file or URL and from a video device)</li>
@@ -143,7 +143,7 @@
       <li xml:lang="zh-TW">播放 DVD/VCD 影片（從檔案或網址，及從影片裝置）</li>
       <li>embed inside konqueror (movie is played inside konqueror)</li>
       <li xml:lang="ca">incrustat dins el Konqueror (la pel·lícula es reprodueix dins el Konqueror)</li>
-      <li xml:lang="ca-valencia">incrustat dins Konqueror (la película es reprodueix dins Konqueror)</li>
+      <li xml:lang="ca-valencia">incrustat dins Konqueror (la película es reproduïx dins Konqueror)</li>
       <li xml:lang="de">Eingebettet in Konqueror, der Film wird in Konqueror abgespielt</li>
       <li xml:lang="el">ενσωμάτωση στον konqueror (η ταινία αναπαράγεται μέσα στον konqueror)</li>
       <li xml:lang="en-GB">embed inside konqueror (movie is played inside konqueror)</li>
@@ -169,7 +169,7 @@
       <li xml:lang="zh-TW">在 Konqueror 嵌入（在 Konqueror 中播放影片）</li>
       <li>embed inside khtml (movie playback inside a html page)</li>
       <li xml:lang="ca">incrustat dins el «khtml» (la pel·lícula es reprodueix dins una pàgina HTML)</li>
-      <li xml:lang="ca-valencia">incrustat dins «khtml» (la película es reprodueix dins una pàgina HTML)</li>
+      <li xml:lang="ca-valencia">incrustat dins «khtml» (la película es reproduïx dins una pàgina HTML)</li>
       <li xml:lang="de">Eingebettet in KHTML, der Film wird in einer HTML-Seite abgespielt</li>
       <li xml:lang="el">ενσωμάτωση σε khtml (η ταινία αναπαράγεται μέσα σε σελίδα html)</li>
       <li xml:lang="en-GB">embed inside khtml (movie playback inside a html page)</li>
