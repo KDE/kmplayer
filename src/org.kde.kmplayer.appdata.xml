@@ -35,7 +35,7 @@
   <name xml:lang="zh-TW">KMPlayer</name>
   <summary>Interface for MPlayer by KDE</summary>
   <summary xml:lang="ca">Interfície per al MPlayer, creada per la comunitat KDE</summary>
-  <summary xml:lang="ca-valencia">Interfície per al MPlayer, creada per la comunitat KDE</summary>
+  <summary xml:lang="ca-valencia">Interfície per a MPlayer, creada per la comunitat KDE</summary>
   <summary xml:lang="cs">Rozhraní pro MPlayer od KDE</summary>
   <summary xml:lang="de">Oberfläche für MPlayer</summary>
   <summary xml:lang="el">Περιβάλλον χρήσης για το MPlayer από το KDE</summary>
@@ -64,7 +64,7 @@
   <description>
     <p>KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="ca">El KMPlayer és un frontal senzill per al MPlayer/FFMpeg/Phonon.</p>
-    <p xml:lang="ca-valencia">KMPlayer és un frontal senzill per al MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="ca-valencia">KMPlayer és un frontal senzill per a MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="de">KMPlayer ist eine einfache Benutzeroberfläche für MPlayer, FFMpeg oder Phonon.</p>
     <p xml:lang="el">Το KMPlayer είναι ένα απλό περιβάλλον χρήσης για τα MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="en-GB">KMPlayer is a simple frontend for MPlayer/FFMpeg/Phonon.</p>
@@ -117,7 +117,7 @@
     <ul>
       <li>play DVD/VCD movies (from file or url and from a video device)</li>
       <li xml:lang="ca">reprodueix pel·lícules en DVD/VCD (des d'un fitxer o URL i des d'un dispositiu de vídeo)</li>
-      <li xml:lang="ca-valencia">reproduïx películes en DVD/VCD (des d'un ficher o URL i des d'un dispositiu de vídeo)</li>
+      <li xml:lang="ca-valencia">reproduïx películes en DVD/VCD (des d'un fitxer o URL i des d'un dispositiu de vídeo)</li>
       <li xml:lang="de">Wiedergabe von DVD/VCD-Filmen aus einer Datei oder URL und von Videogeräten</li>
       <li xml:lang="el">αναπαραγωγή ταινιών DVD/VCD (από αρχείο ή url και από συσκευή βίντεο)</li>
       <li xml:lang="en-GB">play DVD/VCD movies (from file or URL and from a video device)</li>
