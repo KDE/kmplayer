@@ -1059,7 +1059,7 @@ void KMPlayerApp::slotFileOpen () {
         dir = QString("/");
     }
     QList<QUrl> urls = QFileDialog::getOpenFileUrls(this, i18n("Open File"),
-            QUrl::fromLocalFile(dir), i18n ("*|All Files"));
+            QUrl::fromLocalFile(dir), QString());
     if (urls.size () == 1) {
         openDocumentFile (urls [0]);
     } else if (urls.size () > 1) {
