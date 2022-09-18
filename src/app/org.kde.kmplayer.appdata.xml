@@ -21,6 +21,7 @@
   <name xml:lang="ia">KMPlayer</name>
   <name xml:lang="id">KMPlayer</name>
   <name xml:lang="it">KMPlayer</name>
+  <name xml:lang="ka">KMPlayer</name>
   <name xml:lang="ko">KMPlayer</name>
   <name xml:lang="nl">KMPlayer</name>
   <name xml:lang="nn">KMPlayer</name>
@@ -53,6 +54,7 @@
   <summary xml:lang="ia">Interfacie de KDE per MPlayer</summary>
   <summary xml:lang="id">Antarmuka untuk MPlayer oleh KDE</summary>
   <summary xml:lang="it">Interfaccia per MPlayer di KDE</summary>
+  <summary xml:lang="ka">MPlayer-ის ინტერფეისი KDE-სთვის</summary>
   <summary xml:lang="ko">KDE MPlayer 인터페이스</summary>
   <summary xml:lang="nl">Interface voor MPlayer door KDE</summary>
   <summary xml:lang="nn">Brukargrensesnitt laga av KDE for MPlayer</summary>
@@ -84,6 +86,7 @@
     <p xml:lang="gl">KMPlayer é unha interface sinxela para MPlayer, FFMpeg e Phonon.</p>
     <p xml:lang="id">KMPlayer adalah sebuah frontend sederhana untuk MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="it">KMPlayer è una semplice interfaccia per MPlayer/FFMpeg/Phonon.</p>
+    <p xml:lang="ka">KMPlayer მარტივი ინტერფეისია MPlayer/FFMpeg/Phonon– ისთვის.</p>
     <p xml:lang="ko">KMPlayer는 MPlayer/FFmpeg/Phonon 프론트엔드입니다.</p>
     <p xml:lang="nl">KMPlayer is een eenvoudige frontend voor MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="nn">KMPlayer er eit enkelt brukar­grensesnitt til MPlayer/FFMpeg/Phonon.</p>
@@ -113,6 +116,7 @@
     <p xml:lang="gl">Algunhas funcionalidades:</p>
     <p xml:lang="id">Beberapa fitur:</p>
     <p xml:lang="it">Alcune funzionalità:</p>
+    <p xml:lang="ka">ზოგერთი ფუნქცია:</p>
     <p xml:lang="ko">주요 기능:</p>
     <p xml:lang="nl">Enkele mogelijkheden:</p>
     <p xml:lang="nn">Nokre funksjonar:</p>
@@ -143,6 +147,7 @@
       <li xml:lang="gl">reproducir películas de DVD ou VCD (desde un ficheiro, URL ou dispositivo de vídeo)</li>
       <li xml:lang="id">putar film DVD/VCD (dari file atau url dan dari peranti video)</li>
       <li xml:lang="it">riproduci film su DVD/VCD (da file o URL o da un dispositivo video)</li>
+      <li xml:lang="ka">"DVD/VCD" ფილმების ყურება (ფაილიდან, URL-იდან ან ვიდეომოწყობილობიდან)</li>
       <li xml:lang="ko">DVD/VCD 재생(파일이나 비디오 장치 URL에서)</li>
       <li xml:lang="nl">dvd/vcd films afspelen (uit bestand of URL en vanaf een videoapparaat)</li>
       <li xml:lang="nn">Avspeling av DVD- og VCD-filmar (frå fil, nettadresse eller fysisk plate)</li>
@@ -172,6 +177,7 @@
       <li xml:lang="gl">incrustar en konqueror (a película reprodúcese dentro de konqueror)</li>
       <li xml:lang="id">tertanam di dalam konqueror (film diputar di dalam konqueror)</li>
       <li xml:lang="it">integrato in konqueror (il film viene riprodotto dentro konqueror)</li>
+      <li xml:lang="ka">conqueror-ში ჩაშენება (ფილმი konqueror-ში იქნება დაკრული)</li>
       <li xml:lang="ko">Konqueror 내장(Konqueror 내에서 동영상 재생)</li>
       <li xml:lang="nl">ingebed in konqueror (film wordt afgespeeld binnen konqueror)</li>
       <li xml:lang="nn">Kan byggjast inn i Konqueror (filmen vert avspela inni programmet)</li>
@@ -201,6 +207,7 @@
       <li xml:lang="gl">incrustar en khtml (reprodución da película nunha páxina html)</li>
       <li xml:lang="id">tertanam di dalam khtml (film diputar di dalam halaman khtml)</li>
       <li xml:lang="it">integrato in khtml (il film viene riprodotto in una pagina html)</li>
+      <li xml:lang="ka">khtml-ში ჩაშენება (ფილმი HTML გვერდში დაიკვრება)</li>
       <li xml:lang="ko">KHTML 내장(HTML 페이지 내에서 동영상 재생)</li>
       <li xml:lang="nl">ingebed in khtml ( film afspelen binnen een html-pagina)</li>
       <li xml:lang="nn">Kan byggjast inn i KHTML (filmen vert avspela inni ei HTML-nettside)</li>
@@ -230,6 +237,7 @@
       <li xml:lang="gl">Gravación de películas con mencoder (parte do paquete mplayer)</li>
       <li xml:lang="id">Perekaman film menggunakan mencoder (bagian dari paket mplayer)</li>
       <li xml:lang="it">Registrazione dei file utilizzando mencoder (parte del pacchetto mplayer)</li>
+      <li xml:lang="ka">ფილმების კოდირება mencoder-ით (წარმოადგენს mplayaer-ის პაკეტის ნაწილს)</li>
       <li xml:lang="ko">mencoder로 동영상 녹화(mplayer 패키지의 일부)</li>
       <li xml:lang="nl">Film opnemen met mencoder (onderdeel van het pakket mplayer)</li>
       <li xml:lang="nn">Filmopptak med Mencoder (del av «mplayer»-pakken)</li>
@@ -259,6 +267,7 @@
       <li xml:lang="gl">Non hai vídeo mentres se grava, pero pode abrir unha nova xanela e reproducilo</li>
       <li xml:lang="id">Tidak ada video selagi merekam, tetapi kamu selalu bisa membuka window baru dan memutarnya</li>
       <li xml:lang="it">Nessun video durante la registrazione, ma puoi sempre aprire una nuova finestra e riprodurlo</li>
+      <li xml:lang="ka">ჩაწერის დროს ვიდეოს ვერ დაინახავთ, მაგრამ დასაკრავად ახალი ფანჯრის გასხსნას არავინ გიშლით</li>
       <li xml:lang="ko">녹화 중에는 영상을 자동으로 재생하지 않지만 새 창으로 영상을 볼 수 있습니다</li>
       <li xml:lang="nl">Geen video gedurende opnemen, maar u kunt altijd een nieuw venster openen en het afspelen</li>
       <li xml:lang="nn">Kan ikkje visa video ved opptak, men du kan opna eit nytt vindauge av spela han av der</li>
@@ -288,6 +297,7 @@
       <li xml:lang="gl">Emisión regular e por https usando ffserver ou ffmpeg</li>
       <li xml:lang="id">Menyiarkan, http streaming, menggunakan ffserver/ffmpeg</li>
       <li xml:lang="it">Trasmissione, trasmissione http, utilizzando ffserver/ffmpeg</li>
+      <li xml:lang="ka">მაუწყებლობა და http სტრიმინგი, ffserver/ffmpeg-ის გამოყენებით</li>
       <li xml:lang="ko">ffserver/ffmpeg를 사용한 방송 및 HTTP 스트리밍</li>
       <li xml:lang="nl">Uitzending, http-streaming, met ffserver/ffmpeg</li>
       <li xml:lang="nn">Kringkasting/HTTP-strauming med ffserver/ffmpeg</li>
@@ -317,6 +327,7 @@
       <li xml:lang="gl">Para fontes de TV necesita v4lctl (parte do paquete xawtv)</li>
       <li xml:lang="id">Untuk sumber TV, kamu perlu v4lctl (bagian dari paket xawtv)</li>
       <li xml:lang="it">Per le sorgenti TV, hai bisogno di v4lctl (parte del pacchetto xawtv)</li>
+      <li xml:lang="ka">TV-ის წყაროსთვის v4cl გჭირდებათ (წარმოადგენს xawtv პაკეტის ნაწილს)</li>
       <li xml:lang="ko">TV를 보려면 v4lctl이 필요합니다(xawtv 패키지에 포함됨)</li>
       <li xml:lang="nl">Voor tv-bronnen, u hebt v4lctl nodig (onderdeel van het pakket xawtv)</li>
       <li xml:lang="nn">For TV-kjelder treng du v4lctl (del av «xawtv»-pakken)</li>
