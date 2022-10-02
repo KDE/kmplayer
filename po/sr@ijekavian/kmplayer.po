@@ -1,0 +1,2082 @@
+# Translation of kmplayer.po into Serbian.
+# Slobodan Simic <slsimic@gmail.com>, 2009, 2010.
+# Chusslove Illich <caslav.ilic@gmx.net>, 2010, 2011, 2012, 2013, 2016, 2017.
+# Dalibor Djuric <daliborddjuric@gmail.com>, 2010, 2011.
+msgid ""
+msgstr ""
+"Project-Id-Version: kmplayer\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2020-03-26 02:51+0100\n"
+"PO-Revision-Date: 2017-09-28 17:57+0200\n"
+"Last-Translator: Chusslove Illich <caslav.ilic@gmx.net>\n"
+"Language-Team: Serbian <kde-i18n-sr@kde.org>\n"
+"Language: sr@ijekavian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=n==1 ? 3 : n%10==1 && n%100!=11 ? 0 : n"
+"%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Accelerator-Marker: &\n"
+"X-Text-Markup: kde4\n"
+"X-Generator: Lokalize 1.0\n"
+"X-Environment: kde\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Слободан Симић"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "slsimic@gmail.com"
+
+#: kmplayer.cpp:151
+#, kde-format
+msgid "New window"
+msgstr "Нови прозор"
+
+#: kmplayer.cpp:161
+#, kde-format
+msgid "&Edit mode"
+msgstr "Режим &уређивања"
+
+#: kmplayer.cpp:164
+#, kde-format
+msgid "Pla&y List"
+msgstr "&Листа пуштања"
+
+#: kmplayer.cpp:169
+#, kde-format
+msgid "P&lay"
+msgstr "&Пусти"
+
+#: kmplayer.cpp:172
+#, kde-format
+msgid "&Pause"
+msgstr "П&аузирај"
+
+#: kmplayer.cpp:175
+#, kde-format
+msgid "&Stop"
+msgstr "&Заустави"
+
+#: kmplayer.cpp:181
+#, kde-format
+msgid "Fullscreen"
+msgstr "Цео екран"
+
+#: kmplayer.cpp:184 kmplayer.cpp:345
+#, kde-format
+msgid "C&onsole"
+msgstr "&Конзола"
+
+#: kmplayer.cpp:189
+#, kde-format
+msgid "Reload"
+msgstr "Учитај поново"
+
+#: kmplayer.cpp:200
+#, kde-format
+msgid "Clear &History"
+msgstr "Очисти &историјат"
+
+#: kmplayer.cpp:204
+#, kde-format
+msgid "&Generators"
+msgstr "&Генератори"
+
+#. i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
+#. new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
+#. new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
+#. new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
+#. new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
+#. //KIconLoader::global ()->loadIconSet (QString ("video-television"), K3Icon::Small, 0,true)
+#. new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
+#. editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), ac, "edit_volume_up");
+#. editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), ac, "edit_volume_down");
+#. //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), ac, "view_video");
+#. new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), ac, "view_playlist");
+#. new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (slotMinimalMode ()), ac, "view_minimal");
+#. new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
+#. new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
+#. new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
+#. new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
+#. new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
+#. viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
+#. fileNewWindow->setStatusText(i18n("Opens a new application window"));
+#. fileOpen->setStatusText(i18n("Opens an existing file"));
+#. fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
+#. fileClose->setStatusText(i18n("Closes the actual source"));
+#. fileQuit->setStatusText(i18n("Quits the application"));
+#: kmplayer.cpp:235
+#, kde-format
+msgid "Enables/disables the status bar"
+msgstr "Укључује/искључује траку стања"
+
+#: kmplayer.cpp:236
+#, kde-format
+msgid "Enables/disables the menu bar"
+msgstr "Укључује/искључује траку менија"
+
+#: kmplayer.cpp:237
+#, kde-format
+msgid "Enables/disables the toolbar"
+msgstr "Укључује/искључује траку алатки"
+
+#: kmplayer.cpp:244 kmplayer.cpp:452 kmplayer.cpp:706 kmplayer.cpp:1050
+#: kmplayer.cpp:1199 kmplayer.cpp:1584 kmplayer.cpp:1716 kmplayer.cpp:1818
+#: kmplayer.cpp:1864
+#, kde-format
+msgid "Ready."
+msgstr "Спреман."
+
+#: kmplayer.cpp:255 kmplayercontrolpanel.cpp:450
+#, kde-format
+msgid "&Bookmarks"
+msgstr "&Обиљеживачи"
+
+#: kmplayer.cpp:300 kmplayer.cpp:1321
+#, kde-format
+msgid "&Add to list"
+msgstr "&Додај на листу"
+
+#: kmplayer.cpp:302
+#, kde-format
+msgid "Add in new &Group"
+msgstr "Додај у нову &групу"
+
+#: kmplayer.cpp:304
+#, kde-format
+msgid "&Copy here"
+msgstr "&Копирај овде"
+
+#: kmplayer.cpp:306
+#, kde-format
+msgid "&Delete"
+msgstr "&Обриши"
+
+#: kmplayer.cpp:342 kmplayerview.cpp:339
+#, kde-format
+msgid "V&ideo"
+msgstr "&Видео"
+
+#: kmplayer.cpp:383
+#, kde-format
+msgid "More..."
+msgstr "Још..."
+
+#: kmplayer.cpp:432
+#, kde-format
+msgid "Opening DVD..."
+msgstr "Отварам ДВД..."
+
+#: kmplayer.cpp:437
+#, kde-format
+msgid "Opening VCD..."
+msgstr "Отварам ВЦД..."
+
+#: kmplayer.cpp:442
+#, kde-format
+msgid "Opening Audio CD..."
+msgstr "Отварам аудио ЦД..."
+
+#: kmplayer.cpp:447
+#, kde-format
+msgid "Opening pipe..."
+msgstr "Отварам цијев..."
+
+# >> @title:window
+#: kmplayer.cpp:449
+#, kde-format
+msgid "Read From Pipe"
+msgstr "Читање из цијеви"
+
+#: kmplayer.cpp:450
+#, kde-format
+msgid ""
+"Enter a command that will output an audio/video stream\n"
+"to the stdout. This will be piped to a player's stdin.\n"
+"\n"
+"Command:"
+msgstr ""
+"Унесите наредбу која ће исписивати аудио/видео ток\n"
+"на стандардни излаз, што ће бити прослеђивано на\n"
+"стандардни улаз плејера.\n"
+"\n"
+"Наредба:"
+
+#: kmplayer.cpp:538 kmplayer.cpp:541
+#, kde-format
+msgid "Intro"
+msgstr "Увод"
+
+#: kmplayer.cpp:694 kmplayer.cpp:1086
+#, kde-format
+msgid "Opening file..."
+msgstr "Отварам фајл..."
+
+#: kmplayer.cpp:956 kmplayer.cpp:957
+#, kde-format
+msgid "Exit"
+msgstr "Изађи"
+
+#: kmplayer.cpp:1045
+#, kde-format
+msgid "Opening a new application window..."
+msgstr "Отварам нови програмски прозор..."
+
+# >> @title:window
+#: kmplayer.cpp:1073
+#, kde-format
+msgid "Open File"
+msgstr "Отварање фајла"
+
+#: kmplayer.cpp:1074
+#, kde-format
+msgid "*|All Files"
+msgstr "*|сви фајлови"
+
+# >> @title:window
+#: kmplayer.cpp:1106
+#, kde-format
+msgid "Save File"
+msgstr "Уписивање фајла"
+
+#: kmplayer.cpp:1110 kmplayerbroadcast.cpp:531 kmplayerbroadcast.cpp:548
+#: kmplayerbroadcast.cpp:561 kmplayerconfig.cpp:655 kmplayerconfig.cpp:666
+#: kmplayerprocess.cpp:150 kmplayertvsource.cpp:611 kmplayertvsource.cpp:622
+#: kmplayervdr.cpp:444 kmplayervdr.cpp:446
+#, kde-format
+msgid "Error"
+msgstr "Грешка"
+
+#: kmplayer.cpp:1110
+#, kde-format
+msgid ""
+"Error opening file %1.\n"
+"%2."
+msgstr ""
+"Грешка при отварању фајла %1.\n"
+"%2."
+
+#: kmplayer.cpp:1195
+#, kde-format
+msgid "Closing file..."
+msgstr "Затварам фајл..."
+
+#: kmplayer.cpp:1238 kmplayerpartbase.cpp:845 mediaobject.cpp:168
+#, kde-format
+msgid "Ready"
+msgstr "Спреман"
+
+# >> %1 keyboard shortcut
+#: kmplayer.cpp:1241
+#, kde-format
+msgid "Show Menu Bar with %1"
+msgstr "Прикажи траку менија на %1"
+
+#: kmplayer.cpp:1321
+#, kde-format
+msgid "Move here"
+msgstr "Помјери овдје"
+
+#: kmplayer.cpp:1354
+#, kde-format
+msgid "New group"
+msgstr "Нова група"
+
+#: kmplayer.cpp:1441
+#, kde-format
+msgid "&Delete item"
+msgstr "&Обриши ставку"
+
+#: kmplayer.cpp:1444
+#, kde-format
+msgid "&Move up"
+msgstr "Помјери на&горе"
+
+#: kmplayer.cpp:1446
+#, kde-format
+msgid "Move &down"
+msgstr "Помјери на&доље"
+
+#: kmplayer.cpp:1478
+#, kde-format
+msgid "Auto play after opening DVD"
+msgstr "Аутоматски пусти по отварању ДВД‑а"
+
+#: kmplayer.cpp:1479
+#, kde-format
+msgid "Start playing DVD right after opening DVD"
+msgstr "Пусти ДВД одмах по отварању"
+
+#: kmplayer.cpp:1480
+#, kde-format
+msgid "DVD device:"
+msgstr "ДВД уређај:"
+
+#: kmplayer.cpp:1482
+#, kde-format
+msgid "Path to your DVD device, you must have read rights to this device"
+msgstr "Путања до ДВД уређаја. Морате имати дозволу читања за овај уређај."
+
+#: kmplayer.cpp:1512
+#, kde-format
+msgid "Optical Disks"
+msgstr "Оптички дискови"
+
+#: kmplayer.cpp:1543 kmplayer.cpp:1617 kmplayer.cpp:1643
+#, kde-format
+msgid "DVD"
+msgstr "ДВД"
+
+#: kmplayer.cpp:1548
+#, kde-format
+msgid "CDROM - Audio Compact Disk"
+msgstr "ЦД‑РОМ — аудио компакт диск"
+
+#: kmplayer.cpp:1549
+#, kde-format
+msgid "VCD - Video Compact Disk"
+msgstr "ВЦД — видео компакт диск"
+
+#: kmplayer.cpp:1550
+#, kde-format
+msgid "DVD - Digital Video Disk"
+msgstr "ДВД — дигитални видео диск"
+
+#: kmplayer.cpp:1568 kmplayer.cpp:1789
+#, kde-format
+msgid "Track %1"
+msgstr "Стаза %1"
+
+#: kmplayer.cpp:1641 kmplayer.cpp:1755 kmplayertvsource.cpp:581
+#: kmplayervdr.cpp:718 pref.cpp:87 pref.cpp:92
+#, kde-format
+msgid "Source"
+msgstr "Извор"
+
+#: kmplayer.cpp:1656
+#, kde-format
+msgid "Auto play after opening a VCD"
+msgstr "Аутоматски пусти по отварању ВЦД‑а"
+
+#: kmplayer.cpp:1657
+#, kde-format
+msgid "Start playing VCD right after opening VCD"
+msgstr "Пусти ВЦД одмах по отварању"
+
+#: kmplayer.cpp:1658
+#, kde-format
+msgid "VCD (CDROM) device:"
+msgstr "ВЦД (ЦД‑РОМ) уређај:"
+
+#: kmplayer.cpp:1660
+#, kde-format
+msgid "Path to your CDROM/DVD device, you must have read rights to this device"
+msgstr ""
+"Путања до ЦД‑РОМ/ДВД уређаја. Морате имати дозволу читања за овај уређај."
+
+#: kmplayer.cpp:1672 kmplayer.cpp:1731 kmplayer.cpp:1757
+#, kde-format
+msgid "VCD"
+msgstr "ВЦД"
+
+#: kmplayer.cpp:1690
+#, kde-format
+msgid "Track "
+msgstr "Стаза "
+
+#: kmplayer.cpp:1768 kmplayer.cpp:1833
+#, kde-format
+msgid "Audio CD"
+msgstr "Аудио ЦД"
+
+#: kmplayer.cpp:1839
+#, kde-format
+msgid "Pipe"
+msgstr "Цијев"
+
+#: kmplayer.cpp:1871
+#, kde-format
+msgid "Pipe - %1"
+msgstr "Цијев — %1"
+
+#: kmplayer_lists.cpp:95
+#, kde-format
+msgid "Most Recent"
+msgstr "Недавни"
+
+#: kmplayer_lists.cpp:194
+#, kde-format
+msgid "Persistent Playlists"
+msgstr "Трајне листе пуштања"
+
+#: kmplayer_part.cpp:112 main.cpp:46
+#, kde-format
+msgid "KMPlayer"
+msgstr "КМ‑плејер"
+
+#: kmplayer_part.cpp:113
+#, kde-format
+msgid "Embedded MPlayer by KDE"
+msgstr "Угнежђени М‑плејер из КДЕ‑а"
+
+# >! Unpuzzle.
+#: kmplayer_part.cpp:768
+#, no-c-format, kde-format
+msgid "% Cache fill"
+msgstr "% попуњености кеша"
+
+#: kmplayer_part.cpp:793
+#, kde-format
+msgid "KMPlayer: Playing"
+msgstr "КМ‑плејер: пуштам"
+
+#: kmplayer_part.cpp:804
+#, kde-format
+msgid "KMPlayer: Stop Playing"
+msgstr "КМ‑плејер: заустављам пуштање"
+
+#: kmplayerbroadcast.cpp:160
+#, kde-format
+msgid "Bind address:"
+msgstr "Адреса везивања:"
+
+# >> @info:whatsthis
+#: kmplayerbroadcast.cpp:162
+#, kde-format
+msgid "If you have multiple network devices, you can limit access"
+msgstr "Ако имате више мрежних уређаја, можете ограничити приступ."
+
+#: kmplayerbroadcast.cpp:165
+#, kde-format
+msgid "Listen port:"
+msgstr "Порт за слушање:"
+
+#: kmplayerbroadcast.cpp:169
+#, kde-format
+msgid "Maximum connections:"
+msgstr "Највећи број веза:"
+
+#: kmplayerbroadcast.cpp:173
+#, kde-format
+msgid "Maximum bandwidth (kbit):"
+msgstr "Највећа пропусност (kbit):"
+
+#: kmplayerbroadcast.cpp:177
+#, kde-format
+msgid "Temporary feed file:"
+msgstr "Привремени фајл за довод:"
+
+#: kmplayerbroadcast.cpp:181
+#, kde-format
+msgid "Feed file size (kB):"
+msgstr "Величина фајла за довод (kB):"
+
+#: kmplayerbroadcast.cpp:204
+#, kde-format
+msgid "Format:"
+msgstr "Формат:"
+
+#: kmplayerbroadcast.cpp:212
+#, kde-format
+msgid "Only avi, mpeg and rm work for mplayer playback"
+msgstr "М‑плејер може да пушта само АВИ, МПЕГ и реалвидео."
+
+#: kmplayerbroadcast.cpp:215
+#, kde-format
+msgid "Audio codec:"
+msgstr "Аудио кодек:"
+
+#: kmplayerbroadcast.cpp:216
+#, kde-format
+msgid "Audio bit rate (kbit):"
+msgstr "Битски проток звука (kbit):"
+
+#: kmplayerbroadcast.cpp:217
+#, kde-format
+msgid "Audio sample rate (Hz):"
+msgstr "Учестаност узорковања звука (Hz):"
+
+#: kmplayerbroadcast.cpp:218
+#, kde-format
+msgid "Video codec:"
+msgstr "Видео кодек:"
+
+#: kmplayerbroadcast.cpp:219
+#, kde-format
+msgid "Video bit rate (kbit):"
+msgstr "Битски проток видеа (kbit):"
+
+#: kmplayerbroadcast.cpp:220
+#, kde-format
+msgid "Quality (1-31):"
+msgstr "Квалитет (1-31):"
+
+#: kmplayerbroadcast.cpp:221
+#, kde-format
+msgid "Frame rate (Hz):"
+msgstr "Учестаност кадрова (Hz):"
+
+#: kmplayerbroadcast.cpp:222
+#, kde-format
+msgid "Gop size:"
+msgstr "Величина ГОП‑а:"
+
+#: kmplayerbroadcast.cpp:223
+#, kde-format
+msgid "Width (pixels):"
+msgstr "Ширина (у пикселима):"
+
+#: kmplayerbroadcast.cpp:224
+#, kde-format
+msgid "Height (pixels):"
+msgstr "Висина (у пикселима):"
+
+#: kmplayerbroadcast.cpp:225
+#, kde-format
+msgid "Allow access from:"
+msgstr "Дозволи приступ са:"
+
+# >> @info:whatsthis
+#: kmplayerbroadcast.cpp:230
+#, kde-format
+msgid "'Single IP' or 'start-IP end-IP' for IP ranges"
+msgstr "„Један ИП“ или „почетни‑ИП крајњи‑ИП“ за ИП опсеге."
+
+#: kmplayerbroadcast.cpp:232
+#, kde-format
+msgid "Host/IP or IP Range"
+msgstr "Домаћин/ИП или ИП опсег"
+
+#: kmplayerbroadcast.cpp:245
+#, kde-format
+msgid "Load"
+msgstr "Учитај"
+
+#: kmplayerbroadcast.cpp:246
+#, kde-format
+msgid "Save"
+msgstr "Сачувај"
+
+#: kmplayerbroadcast.cpp:247 kmplayertvsource.cpp:122
+#, kde-format
+msgid "Delete"
+msgstr "Обриши"
+
+#: kmplayerbroadcast.cpp:261 kmplayerbroadcast.cpp:597
+#, kde-format
+msgid "Start"
+msgstr "Покрени"
+
+#: kmplayerbroadcast.cpp:454 kmplayerbroadcast.cpp:654
+#, kde-format
+msgid "Broadcasting"
+msgstr "Емитовање"
+
+#: kmplayerbroadcast.cpp:456
+#, kde-format
+msgid "Profiles"
+msgstr "Профили"
+
+#: kmplayerbroadcast.cpp:519
+#, kde-format
+msgid "Stop"
+msgstr "Заустави"
+
+#: kmplayerbroadcast.cpp:531
+#, kde-format
+msgid "Failed to end ffserver process."
+msgstr "Не могу да прекинем процес ФФсервера."
+
+#: kmplayerbroadcast.cpp:548
+#, kde-format
+msgid "Failed to start ffserver.\n"
+msgstr "Не могу да покренем ФФсервер.\n"
+
+#: kmplayerbroadcast.cpp:561
+#, kde-format
+msgid "Failed to start ffmpeg."
+msgstr "Не могу да покренем ФФмпег."
+
+#: kmplayerbroadcast.cpp:656
+#, kde-format
+msgid "FFServer"
+msgstr "ФФсервер"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:60 kmplayerconfig.cpp:76
+#, kde-format
+msgid "Auto"
+msgstr "аутоматски"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:61
+#, kde-format
+msgid "Open Sound System"
+msgstr "ОСС (Отворени звучни систем)"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:62
+#, kde-format
+msgid "Simple DirectMedia Layer"
+msgstr "СДЛ (Једноставни дајректмедија слој)"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:63
+#, kde-format
+msgid "Advanced Linux Sound Architecture"
+msgstr "Алса (Напредна звучна архитектура Линукса)"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:64
+#, kde-format
+msgid "Analog Real-Time Synthesizer"
+msgstr "Артс (Аналогни синтетизатор у реалном времену)"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:65
+#, kde-format
+msgid "JACK Audio Connection Kit"
+msgstr "Џек (Прибор за аудио везивање Џек)"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:66
+#, kde-format
+msgid "OpenAL"
+msgstr "опенАЛ"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:67
+#, kde-format
+msgid "Enlightened Sound Daemon"
+msgstr "ЕСД (Просветљени звучни демон)"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:68
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.5"
+msgstr "Алса 0.5 (Напредна звучна архитектура Линукса изд. 0.5)"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:69
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.9"
+msgstr "Алса 0.9 (Напредна звучна архитектура Линукса изд. 0.9)"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:70
+#, kde-format
+msgid "Use back-end defaults"
+msgstr "подразумијевано према позадини"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:71
+#, kde-format
+msgid "PulseAudio"
+msgstr "Пулс‑аудио"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:77
+#, kde-format
+msgid "X11Shm"
+msgstr "Икс11‑схм"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:78
+#, kde-format
+msgid "XVidix"
+msgstr "Икс‑видикс"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:79
+#, kde-format
+msgid "XvMC"
+msgstr "ИксвМЦ"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:80
+#, kde-format
+msgid "SDL"
+msgstr "СДЛ"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:81
+#, kde-format
+msgid "OpenGL"
+msgstr "опенГЛ"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:82
+#, kde-format
+msgid "OpenGL MT"
+msgstr "опенГЛ МТ"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:83
+#, kde-format
+msgid "XVideo"
+msgstr "Икс‑видео"
+
+# >> @item output driver
+#: kmplayerconfig.cpp:84
+#, kde-format
+msgid "Video Decode and Presentation API for Unix"
+msgstr "ВДПАУ (АПИ за приказивање и декодирање видеа за Уникс)"
+
+#: kmplayerconfig.cpp:95
+#, kde-format
+msgid "Playlist background"
+msgstr "Позадина листе пуштања"
+
+#: kmplayerconfig.cpp:99
+#, kde-format
+msgid "Playlist foreground"
+msgstr "Текст листе пуштања"
+
+#: kmplayerconfig.cpp:103
+#, kde-format
+msgid "Console background"
+msgstr "Позадина конзоле"
+
+#: kmplayerconfig.cpp:104
+#, kde-format
+msgid "Playlist active item"
+msgstr "Активна ставка у листи пуштања"
+
+#: kmplayerconfig.cpp:110
+#, kde-format
+msgid "Console foreground"
+msgstr "Текст конзоле"
+
+#: kmplayerconfig.cpp:113
+#, kde-format
+msgid "Video background"
+msgstr "Позадина видеа"
+
+#: kmplayerconfig.cpp:116
+#, kde-format
+msgid "Viewing area background"
+msgstr "Позадина зоне приказивања"
+
+#: kmplayerconfig.cpp:119
+#, kde-format
+msgid "Info window background"
+msgstr "Позадина прозора обавјештења"
+
+#: kmplayerconfig.cpp:123
+#, kde-format
+msgid "Info window foreground"
+msgstr "Текст прозора обавјештења"
+
+#: kmplayerconfig.cpp:127 kmplayerview.cpp:165
+#, kde-format
+msgid "Playlist"
+msgstr "Листа пуштања"
+
+#: kmplayerconfig.cpp:131
+#, kde-format
+msgid "Info window"
+msgstr "Прозор обавјештења"
+
+#: kmplayerconfig.cpp:655
+#, kde-format
+msgid "File %1 does not exist."
+msgstr "Фајл %1 не постоји."
+
+#: kmplayerconfig.cpp:666
+#, kde-format
+msgid "Sub title file %1 does not exist."
+msgstr "Фајл титла %1 не постоји."
+
+# >! Unpuzzle.
+#: kmplayercontrolpanel.cpp:311 kmplayercontrolpanel.cpp:325
+#, kde-format
+msgid "Volume is "
+msgstr "Јачина је "
+
+#: kmplayercontrolpanel.cpp:410
+#, kde-format
+msgid "&Play with"
+msgstr "&Пусти помоћу"
+
+#: kmplayercontrolpanel.cpp:413 kmplayerview.cpp:335
+#, kde-format
+msgid "Con&sole"
+msgstr "&Конзола"
+
+#: kmplayercontrolpanel.cpp:415
+#, kde-format
+msgid "Play&list"
+msgstr "&Листа пуштања"
+
+#: kmplayercontrolpanel.cpp:417
+#, kde-format
+msgid "&Zoom"
+msgstr "&Увеличање"
+
+#: kmplayercontrolpanel.cpp:420
+#, kde-format
+msgid "50%"
+msgstr "50%"
+
+#: kmplayercontrolpanel.cpp:421
+#, kde-format
+msgid "100%"
+msgstr "100%"
+
+#: kmplayercontrolpanel.cpp:422
+#, kde-format
+msgid "150%"
+msgstr "150%"
+
+#: kmplayercontrolpanel.cpp:424
+#, kde-format
+msgid "&Full Screen"
+msgstr "&Цио екран"
+
+#: kmplayercontrolpanel.cpp:429
+#, kde-format
+msgid "Co&lors"
+msgstr "&Боје"
+
+#: kmplayercontrolpanel.cpp:454 kmplayercontrolpanel.cpp:456
+#, kde-format
+msgid "&Audio languages"
+msgstr "&Језици звука"
+
+#: kmplayercontrolpanel.cpp:457
+#, kde-format
+msgid "&Subtitles"
+msgstr "&Титлови"
+
+#: kmplayercontrolpanel.cpp:465
+#, kde-format
+msgid "Scale:"
+msgstr "Размјера:"
+
+#: kmplayercontrolpanel.cpp:477
+#, kde-format
+msgid "&Configure KMPlayer..."
+msgstr "&Подеси КМ‑плејер..."
+
+# >> unknown source
+#: kmplayerpartbase.cpp:1446
+#, kde-format
+msgid "Unknown"
+msgstr "непознат"
+
+#: kmplayerpartbase.cpp:1457 kmplayerpartbase.cpp:1526 pref.cpp:91
+#, kde-format
+msgid "URL"
+msgstr "УРЛ"
+
+#: kmplayerpartbase.cpp:1550 kmplayerpartbase.cpp:1553
+#: kmplayerpartbase.cpp:1554
+#, kde-format
+msgid "URL - "
+msgstr "УРЛ — "
+
+#. i18n: ectx: Menu (view)
+#: kmplayerpartui.rc:4 kmplayerui.rc:31
+#, kde-format
+msgid "&View"
+msgstr "&Приказ"
+
+#: kmplayerprocess.cpp:150
+#, kde-format
+msgid "Failed to end player process."
+msgstr "Не могу да прекинем процес плејера."
+
+#: kmplayerprocess.cpp:489
+#, kde-format
+msgid "&MPlayer"
+msgstr "&М‑плејер"
+
+#: kmplayerprocess.cpp:1012
+#, kde-format
+msgid "Size pattern"
+msgstr "Образац величине"
+
+# >> @item regex pattern for parsing output
+#: kmplayerprocess.cpp:1013
+#, kde-format
+msgid "Cache pattern"
+msgstr "образац кеша"
+
+# >> @item regex pattern for parsing output
+#: kmplayerprocess.cpp:1014
+#, kde-format
+msgid "Position pattern"
+msgstr "образац положаја"
+
+# >> @item regex pattern for parsing output
+#: kmplayerprocess.cpp:1015
+#, kde-format
+msgid "Index pattern"
+msgstr "образац индекса"
+
+# >> @item regex pattern for parsing output
+#: kmplayerprocess.cpp:1016
+#, kde-format
+msgid "Reference URL pattern"
+msgstr "образац УРЛ упућивача"
+
+# >> @item regex pattern for parsing output
+#: kmplayerprocess.cpp:1017
+#, kde-format
+msgid "Reference pattern"
+msgstr "образац упућивача"
+
+# >> @item regex pattern for parsing output
+#: kmplayerprocess.cpp:1018
+#, kde-format
+msgid "Start pattern"
+msgstr "образац покретања"
+
+# >> @item regex pattern for parsing output
+#: kmplayerprocess.cpp:1019
+#, kde-format
+msgid "VCD track pattern"
+msgstr "образац стазе ВЦД‑а"
+
+# >> @item regex pattern for parsing output
+#: kmplayerprocess.cpp:1020
+#, kde-format
+msgid "Audio CD tracks pattern"
+msgstr "образац стазе аудио ЦД‑а"
+
+#: kmplayerprocess.cpp:1040
+#, kde-format
+msgid "MPlayer command:"
+msgstr "Наредба М‑плејера:"
+
+#: kmplayerprocess.cpp:1042
+#, kde-format
+msgid "Additional command line arguments:"
+msgstr "Додатни аргументи командне линије:"
+
+#: kmplayerprocess.cpp:1044
+#, kde-format
+msgid "Cache size:"
+msgstr "Величина кеша:"
+
+#: kmplayerprocess.cpp:1044
+#, kde-format
+msgid "kB"
+msgstr "kB"
+
+#: kmplayerprocess.cpp:1049
+#, kde-format
+msgid "Build new index when possible"
+msgstr "Изгради нови индекс када је могуће"
+
+#: kmplayerprocess.cpp:1051
+#, kde-format
+msgid "Allows seeking in indexed files (AVIs)"
+msgstr "Омогућава тражење у индексираним фајловима (АВИ)"
+
+#: kmplayerprocess.cpp:1117 pref.cpp:74 pref.cpp:84
+#, kde-format
+msgid "General Options"
+msgstr "Опште опције"
+
+# >> @title:tab
+#: kmplayerprocess.cpp:1119
+#, kde-format
+msgid "MPlayer"
+msgstr "М‑плејер"
+
+#: kmplayerprocess.cpp:1135
+#, kde-format
+msgid "M&Encoder"
+msgstr "&Менкодер"
+
+#: kmplayerprocess.cpp:1201
+#, kde-format
+msgid "&MPlayerDumpstream"
+msgstr "&Излазни ток М‑плејера"
+
+#: kmplayerprocess.cpp:1463
+#, kde-format
+msgid "&Phonon"
+msgstr "&Фонон"
+
+#: kmplayerprocess.cpp:1610 pref.cpp:674
+#, kde-format
+msgid "&FFMpeg"
+msgstr "&ФФмпег"
+
+#: kmplayerprocess.cpp:1709
+#, kde-format
+msgid "&Ice Ape"
+msgstr "&Ајс ејп"
+
+#: kmplayertvsource.cpp:65
+#, kde-format
+msgid "Video device:"
+msgstr "Видео уређај:"
+
+#: kmplayertvsource.cpp:66
+#, kde-format
+msgid "Audio device:"
+msgstr "Аудио уређај:"
+
+#: kmplayertvsource.cpp:68
+#, kde-format
+msgid "Name:"
+msgstr "Име:"
+
+#: kmplayertvsource.cpp:70
+#, kde-format
+msgid "Width:"
+msgstr "Ширина:"
+
+#: kmplayertvsource.cpp:72
+#, kde-format
+msgid "Height:"
+msgstr "Висина:"
+
+#: kmplayertvsource.cpp:74
+#, kde-format
+msgid "Do not immediately play"
+msgstr "Не пуштај одмах"
+
+# >> @info:whatsthis
+#: kmplayertvsource.cpp:76
+#, kde-format
+msgid "Only start playing after clicking the play button"
+msgstr "Пуштање почиње тек кликом на дугме за пуштање."
+
+# >> analog television standard (NTSC, PAL, etc)
+#: kmplayertvsource.cpp:87
+#, kde-format
+msgid "Norm:"
+msgstr "Стандард:"
+
+# >> @title:column
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Channel"
+msgstr "канал"
+
+# >> @title:column
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Frequency (MHz)"
+msgstr "учестаност (MHz)"
+
+#: kmplayertvsource.cpp:148
+#, kde-format
+msgid ""
+"You are about to remove this device from the Source menu.\n"
+"Continue?"
+msgstr ""
+"Спремате се да уклоните овај уређај из менија извора.\n"
+"Желите ли да наставите?"
+
+# >> @title:window
+#: kmplayertvsource.cpp:148
+#, kde-format
+msgid "Confirm"
+msgstr "Потврда"
+
+#: kmplayertvsource.cpp:159
+#, kde-format
+msgid "Driver:"
+msgstr "Драјвер:"
+
+#: kmplayertvsource.cpp:161
+#, kde-format
+msgid "dummy, v4l or bsdbt848"
+msgstr "dummy, v4l или bsdbt848"
+
+#: kmplayertvsource.cpp:162
+#, kde-format
+msgid "Device:"
+msgstr "Уређај:"
+
+#: kmplayertvsource.cpp:164
+#, kde-format
+msgid "Path to your video device, eg. /dev/video0"
+msgstr "Путања до уређаја, нпр. ‘/dev/video0’."
+
+#: kmplayertvsource.cpp:165
+#, kde-format
+msgid "Scan..."
+msgstr "Скенирај..."
+
+#: kmplayertvsource.cpp:179 pref.cpp:78 pref.cpp:118 pref.cpp:736
+#, kde-format
+msgid "General"
+msgstr "Опште"
+
+#: kmplayertvsource.cpp:259
+#, kde-format
+msgid "tv device"
+msgstr "ТВ уређај"
+
+#: kmplayertvsource.cpp:346
+#, kde-format
+msgid "Television"
+msgstr "Телевизија"
+
+#: kmplayertvsource.cpp:374 kmplayertvsource.cpp:532 kmplayertvsource.cpp:583
+#, kde-format
+msgid "TV"
+msgstr "ТВ"
+
+#: kmplayertvsource.cpp:499
+#, kde-format
+msgid "TV: "
+msgstr "ТВ: "
+
+#: kmplayertvsource.cpp:610
+#, kde-format
+msgid "Device already present."
+msgstr "Уређај је већ присутан."
+
+#: kmplayertvsource.cpp:622
+#, kde-format
+msgid "No device found."
+msgstr "Није пронађен ниједан уређај."
+
+#: kmplayertvsource.cpp:645
+#, kde-format
+msgid "TVScanner"
+msgstr "ТВ скенер"
+
+#. i18n: ectx: Menu (file)
+#: kmplayerui.rc:5
+#, kde-format
+msgid "&File"
+msgstr "&Фајл"
+
+#. i18n: ectx: Menu (vdr)
+#: kmplayerui.rc:15
+#, kde-format
+msgid "VD&R"
+msgstr "&ВДР"
+
+#. i18n: ectx: Menu (settings)
+#: kmplayerui.rc:51
+#, kde-format
+msgid "&Settings"
+msgstr "&Подешавање"
+
+#: kmplayervdr.cpp:87
+#, kde-format
+msgid "XVideo port"
+msgstr "Порт за Икс‑видео"
+
+#: kmplayervdr.cpp:89
+#, kde-format
+msgid ""
+"Port base of the X Video extension.\n"
+"If left to default (0), the first available port will be used. However if "
+"you have multiple XVideo instances, you might have to provide the port to "
+"use here.\n"
+"See the output from 'xvinfo' for more information"
+msgstr ""
+"Основни порт проширења Икс‑видео.\n"
+"Ако се остави подразумевано (0), узима се први доступан порт. Међутим, ако "
+"имате више примјерака Икс‑видеоа, овде можете одредити порт који ће се "
+"користити.\n"
+"За више детаља погледајте излаз наредбе xvinfo."
+
+#: kmplayervdr.cpp:90
+#, kde-format
+msgid "Communication port:"
+msgstr "Комуникациони порт:"
+
+#: kmplayervdr.cpp:93
+#, kde-format
+msgid ""
+"Communication port with VDR. Default is port 2001.\n"
+"If you use another port, with the '-p' option of 'vdr', you must set it here "
+"too."
+msgstr ""
+"Комуникациони порт за ВДР. Подразумеван је 2001.\n"
+"Ако користите други порт, опцијом -p уз vdr, онда га и овдје морате "
+"поставити."
+
+#: kmplayervdr.cpp:97
+#, kde-format
+msgid "Scale"
+msgstr "Размјера"
+
+#: kmplayervdr.cpp:98
+#, kde-format
+msgid "4:3"
+msgstr "4:3"
+
+#: kmplayervdr.cpp:99
+#, kde-format
+msgid "16:9"
+msgstr "16:9"
+
+#: kmplayervdr.cpp:100
+#, kde-format
+msgid "Aspects to use when viewing VDR"
+msgstr "Пропорције за приказивање ВДР‑а"
+
+#: kmplayervdr.cpp:171 kmplayervdr.cpp:720
+#, kde-format
+msgid "VDR"
+msgstr "ВДР"
+
+#: kmplayervdr.cpp:236
+#, kde-format
+msgid "Dis&connect"
+msgstr "Пре&кини везу"
+
+#: kmplayervdr.cpp:237
+#, kde-format
+msgid "VDR Key Up"
+msgstr "ВДР тастер „Горе“"
+
+#: kmplayervdr.cpp:238
+#, kde-format
+msgid "VDR Key Down"
+msgstr "ВДР тастер „Доле“"
+
+#: kmplayervdr.cpp:239
+#, kde-format
+msgid "VDR Key Back"
+msgstr "ВДР тастер „Назад“"
+
+#: kmplayervdr.cpp:240
+#, kde-format
+msgid "VDR Key Ok"
+msgstr "ВДР тастер „У реду“"
+
+#: kmplayervdr.cpp:241
+#, kde-format
+msgid "VDR Key Setup"
+msgstr "ВДР тастер „Подешавање“"
+
+#: kmplayervdr.cpp:242
+#, kde-format
+msgid "VDR Key Channels"
+msgstr "ВДР тастер „Канали“"
+
+#: kmplayervdr.cpp:243
+#, kde-format
+msgid "VDR Key Menu"
+msgstr "ВДР тастер „Мени“"
+
+#: kmplayervdr.cpp:244
+#, kde-format
+msgid "VDR Key Red"
+msgstr "ВДР тастер црвени"
+
+#: kmplayervdr.cpp:245
+#, kde-format
+msgid "VDR Key Green"
+msgstr "ВДР тастер зелени"
+
+#: kmplayervdr.cpp:246
+#, kde-format
+msgid "VDR Key Yellow"
+msgstr "ВДР тастер жути"
+
+#: kmplayervdr.cpp:247
+#, kde-format
+msgid "VDR Key Blue"
+msgstr "ВДР тастер плави"
+
+#: kmplayervdr.cpp:250
+#, kde-format
+msgid "VDR Key 0"
+msgstr "ВДР тастер 0"
+
+#: kmplayervdr.cpp:251
+#, kde-format
+msgid "VDR Key 1"
+msgstr "ВДР тастер 1"
+
+#: kmplayervdr.cpp:252
+#, kde-format
+msgid "VDR Key 2"
+msgstr "ВДР тастер 2"
+
+#: kmplayervdr.cpp:253
+#, kde-format
+msgid "VDR Key 3"
+msgstr "ВДР тастер 3"
+
+#: kmplayervdr.cpp:254
+#, kde-format
+msgid "VDR Key 4"
+msgstr "ВДР тастер 4"
+
+#: kmplayervdr.cpp:255
+#, kde-format
+msgid "VDR Key 5"
+msgstr "ВДР тастер 5"
+
+#: kmplayervdr.cpp:256
+#, kde-format
+msgid "VDR Key 6"
+msgstr "ВДР тастер 6"
+
+#: kmplayervdr.cpp:257
+#, kde-format
+msgid "VDR Key 7"
+msgstr "ВДР тастер 7"
+
+#: kmplayervdr.cpp:258
+#, kde-format
+msgid "VDR Key 8"
+msgstr "ВДР тастер 8"
+
+#: kmplayervdr.cpp:259
+#, kde-format
+msgid "VDR Key 9"
+msgstr "ВДР тастер 9"
+
+#: kmplayervdr.cpp:281
+#, kde-format
+msgid "&Connect"
+msgstr "&Повежи се"
+
+#: kmplayervdr.cpp:444
+#, kde-format
+msgid "Host not found"
+msgstr "Домаћин није нађен"
+
+#: kmplayervdr.cpp:446
+#, kde-format
+msgid "Connection refused"
+msgstr "Веза је одбијена"
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid "Custom VDR command"
+msgstr "Посебна ВДР наредба"
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid ""
+"You can pass commands to VDR.\n"
+"Enter 'HELP' to see a list of available commands.\n"
+"You can see VDR response in the console window.\n"
+"\n"
+"VDR Command:"
+msgstr ""
+"Можете проследити наредбе ВДР‑у.\n"
+"Укуцајте „HELP“ за списак доступних наредби.\n"
+"Одговор ВДР‑а можете видети у конзолном прозору.\n"
+"\n"
+"ВДР наредба:"
+
+#: kmplayervdr.cpp:685
+#, kde-format
+msgid "Port "
+msgstr "Порт "
+
+#: kmplayervdr.cpp:739
+#, kde-format
+msgid "X&Video"
+msgstr "&Икс‑видео"
+
+#: kmplayerview.cpp:170
+#, kde-format
+msgid "Information"
+msgstr "Подаци"
+
+#: main.cpp:48
+#, kde-format
+msgid "Media player"
+msgstr "Медија плејер"
+
+#: main.cpp:49
+#, kde-format
+msgid "(c) 2002-2016, Koos Vriezen"
+msgstr "© 2002–2016, Кос Вризен"
+
+#: main.cpp:50
+#, kde-format
+msgid "Koos Vriezen"
+msgstr "Кос Вризен"
+
+#: main.cpp:50
+#, kde-format
+msgid "Maintainer"
+msgstr "Одржавалац"
+
+#: main.cpp:63
+#, kde-format
+msgid "file to open"
+msgstr "фајл за отварање"
+
+#: main.cpp:63
+#, kde-format
+msgid "+[File]"
+msgstr "+[фајл]"
+
+# >> @item player state
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Not Running"
+msgstr "ван погона"
+
+# >> @item player state
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Buffering"
+msgstr "пуни бафер"
+
+# >> @item player state
+#: mediaobject.cpp:168 pref.cpp:231
+#, kde-format
+msgid "Playing"
+msgstr "пушта"
+
+# >> @item player state
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Paused"
+msgstr "паузира"
+
+# %1 process name, %2 player state
+#: mediaobject.cpp:190
+#, kde-format
+msgid "Player %1 %2"
+msgstr "Плејер %1 %2"
+
+#: playlistview.cpp:140
+#, kde-format
+msgid "Edit &item"
+msgstr "&Уреди ставку"
+
+#: playlistview.cpp:255
+#, kde-format
+msgid "&Copy to Clipboard"
+msgstr "&Копирај у клипборд"
+
+#: playlistview.cpp:262
+#, kde-format
+msgid "&Add Bookmark"
+msgstr "&Додај обиљеживач"
+
+#: playlistview.cpp:265
+#, kde-format
+msgid "&Show all"
+msgstr "Прикажи &све"
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "unnamed"
+msgstr "неименовано"
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "none"
+msgstr "ништа"
+
+#: playmodel.cpp:378
+#, kde-format
+msgid "[attributes]"
+msgstr "[атрибути]"
+
+# >> @title:window
+#: pref.cpp:69
+#, kde-format
+msgid "Preferences"
+msgstr "Поставке"
+
+# >> @title:tab
+#: pref.cpp:80
+#, kde-format
+msgid "Looks"
+msgstr "Изглед"
+
+# >> @title:tab
+#: pref.cpp:83
+#, kde-format
+msgid "Output"
+msgstr "Излаз"
+
+# >> @title:tab
+#: pref.cpp:95 pref.cpp:120
+#, kde-format
+msgid "Recording"
+msgstr "Снимање"
+
+# >> @title:tab
+#: pref.cpp:101
+#, kde-format
+msgid "MEncoder"
+msgstr "Менкодер"
+
+# >> @title:tab
+#: pref.cpp:105
+#, kde-format
+msgid "FFMpeg"
+msgstr "ФФмпег"
+
+# >> @title:window
+#: pref.cpp:123
+#, kde-format
+msgid "Output Plugins"
+msgstr "Излазни прикључци"
+
+# >> @title:tab
+#: pref.cpp:127 pref.cpp:128
+#, kde-format
+msgid "Postprocessing"
+msgstr "Постобрада"
+
+# >> @title:group
+#: pref.cpp:208
+#, kde-format
+msgid "Window"
+msgstr "Прозор"
+
+#: pref.cpp:211
+#, kde-format
+msgid "Keep size ratio"
+msgstr "Задржи пропорцију"
+
+#: pref.cpp:212
+#, kde-format
+msgid ""
+"When checked, the movie will keep its aspect ratio\n"
+"when the window is resized."
+msgstr ""
+"Када је попуњено, филм ће задржати пропорцију\n"
+"при промијени величине прозора."
+
+#: pref.cpp:213
+#, kde-format
+msgid "Dock in system tray"
+msgstr "Усидри у системску касету"
+
+#: pref.cpp:214
+#, kde-format
+msgid ""
+"When checked, an icon for KMPlayer will be added to the system tray.\n"
+"When clicked, it will hide KMPlayer's main window and remove KMPlayer's task "
+"bar button."
+msgstr ""
+"Када је попуњено, иконица КМ‑плејера ће бити додата у системску касету.\n"
+"Када се на иконицу кликне, сакриће КМ‑плејеров главни прозор и уклонити "
+"његово дугме на траци задатака."
+
+#: pref.cpp:215
+#, kde-format
+msgid "Auto resize to video sizes"
+msgstr "Прилагоди величини видеа"
+
+#: pref.cpp:216
+#, kde-format
+msgid ""
+"When checked, KMPlayer will resize to movie sizes\n"
+"when video starts."
+msgstr ""
+"Када је попуњено, КМ‑плејер ће при пуштању\n"
+"прилагодити величину прозора величини филма."
+
+#: pref.cpp:220
+#, kde-format
+msgid "Remember window size on exit"
+msgstr "Упамти величину прозора при изласку"
+
+#: pref.cpp:221
+#, kde-format
+msgid "Always start with fixed size"
+msgstr "Увек пуштај са датом величином"
+
+#: pref.cpp:232
+#, kde-format
+msgid "Loop"
+msgstr "Понављај"
+
+#: pref.cpp:233
+#, kde-format
+msgid "Makes current movie loop"
+msgstr "Чини да се текући филм понавља."
+
+#: pref.cpp:234
+#, kde-format
+msgid "Allow frame drops"
+msgstr "Дозволи испуштање кадрова"
+
+#: pref.cpp:235
+#, kde-format
+msgid "Allow dropping frames for better audio and video synchronization"
+msgstr "Дозвољава испуштање кадрова ради боље аудио-видео синхронизације."
+
+#: pref.cpp:236
+#, kde-format
+msgid "Auto set volume on start"
+msgstr "Аутоматски постави јачину звука на покретању"
+
+#: pref.cpp:237
+#, kde-format
+msgid ""
+"When a new source is selected, the volume will be set according the volume "
+"control"
+msgstr ""
+"Када се изабере нови извор, јачина звука ће бити постављена према контроли "
+"јачине."
+
+#: pref.cpp:238
+#, kde-format
+msgid "Auto set colors on start"
+msgstr "Аутоматски постави боје на покретању"
+
+#: pref.cpp:239
+#, kde-format
+msgid ""
+"When a movie starts, the colors will be set according the sliders for colors"
+msgstr ""
+"Када филм почне, боје ће бити постављене у складу са клизачима за боје."
+
+#: pref.cpp:247
+#, kde-format
+msgid "Control Panel"
+msgstr "Контролни панел"
+
+#: pref.cpp:248
+#, kde-format
+msgid "Show config button"
+msgstr "Дугме за подешавање"
+
+#: pref.cpp:249
+#, kde-format
+msgid "Add a button that will popup a config menu"
+msgstr "Додаје дугме које даје искачући мени за подешавање."
+
+#: pref.cpp:250
+#, kde-format
+msgid "Show playlist button"
+msgstr "Дугме листе пуштања"
+
+#: pref.cpp:251
+#, kde-format
+msgid "Add a playlist button to the control buttons"
+msgstr "Додаје дугме листе пуштања међу управљачку дугмад."
+
+#: pref.cpp:252
+#, kde-format
+msgid "Show record button"
+msgstr "Дугме за снимање"
+
+#: pref.cpp:253
+#, kde-format
+msgid "Add a record button to the control buttons"
+msgstr "Додаје дугме за снимање међу управљачку дугмад."
+
+#: pref.cpp:254
+#, kde-format
+msgid "Show broadcast button"
+msgstr "Дугме за емитовање"
+
+#: pref.cpp:255
+#, kde-format
+msgid "Add a broadcast button to the control buttons"
+msgstr "Додаје дугме за емитовање међу управљачку дугмад."
+
+#: pref.cpp:262
+#, kde-format
+msgid "Forward/backward seek time:"
+msgstr "Вријеме тражења напред/назад:"
+
+#: pref.cpp:269 pref.cpp:485
+#, kde-format
+msgid " second"
+msgid_plural " seconds"
+msgstr[0] " секунду"
+msgstr[1] " секунде"
+msgstr[2] " секунди"
+msgstr[3] " секунда"
+
+#: pref.cpp:271 pref.cpp:487
+#, kde-format
+msgid " seconds"
+msgstr " секунди"
+
+# >> @title:group
+#: pref.cpp:292
+#, kde-format
+msgid "Colors"
+msgstr "Боје"
+
+# >> @title:group
+#: pref.cpp:308
+#, kde-format
+msgid "Fonts"
+msgstr "Фонтови"
+
+# |, no-check-spell
+#: pref.cpp:315
+#, kde-format
+msgid "AaBbCc"
+msgstr "АаБбВв"
+
+#: pref.cpp:365
+#, kde-format
+msgid "Location:"
+msgstr "Локација:"
+
+# >> @info:whatsthis
+#: pref.cpp:370
+#, kde-format
+msgid "Location of the playable item"
+msgstr "Локација ставке за пуштање."
+
+#: pref.cpp:373
+#, kde-format
+msgid "Sub title:"
+msgstr "Титл:"
+
+#: pref.cpp:378
+#, kde-format
+msgid "Optional location of a file containing the subtitles of the URL above"
+msgstr "Опциона локација фајла који садржи титлове за горе наведени УРЛ."
+
+#: pref.cpp:381
+#, kde-format
+msgid "Load on demand"
+msgstr "Учитај на захтјев"
+
+#: pref.cpp:382
+#, kde-format
+msgid ""
+"When enabled, all embedded movies will start with a image that needs to be "
+"clicked to start the video playback"
+msgstr ""
+"Када је укључено, сви угнежђени филмови почињу са сликом на коју треба "
+"кликнути да би се покренуло пуштање."
+
+#: pref.cpp:383
+#, kde-format
+msgid "Grab image when 'Click to Play' detected"
+msgstr "Ухвати слику на „кликните за пуштање“"
+
+#: pref.cpp:384
+#, kde-format
+msgid ""
+"When enabled and a HTML object has a HREF attribute, grab and save an image "
+"of the first frame of initial link. This image will be shown instead of a "
+"default picture."
+msgstr ""
+"Када је укључено и ХТМЛ објекат има атрибут „href“, хвата и уписује слику "
+"првог кадра почетне везе. Та слика ће бити приказана умјесто подразумијеване "
+"слике."
+
+#: pref.cpp:391
+#, kde-format
+msgid "Use movie player:"
+msgstr "Плејер филмова:"
+
+#: pref.cpp:397
+#, kde-format
+msgid "Network bandwidth"
+msgstr "Мрежна пропусност"
+
+#: pref.cpp:400
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets how much bandwidth you would prefer to allocate to video."
+msgstr ""
+"Некада је могуће бирати између различитих токова, при датом битском "
+"протоку.\n"
+"Ова опција поставља колико мрежне пропусности желите да одвојите за видео."
+
+#: pref.cpp:403
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets the maximum bandwidth you have available for video."
+msgstr ""
+"Некада је могуће бирати између различитих токова, при датом битском "
+"протоку.\n"
+"Ова опција поставља колико је највише мрежне пропусности расположиво за "
+"видео."
+
+#: pref.cpp:405
+#, kde-format
+msgid "Preferred bitrate:"
+msgstr "Жељени проток:"
+
+#: pref.cpp:407 pref.cpp:410
+#, kde-format
+msgid "kbit/s"
+msgstr "kbit/s"
+
+#: pref.cpp:408
+#, kde-format
+msgid "Maximum bitrate:"
+msgstr "Највећи проток:"
+
+#: pref.cpp:450
+#, kde-format
+msgid "Output file:"
+msgstr "Излазни фајл:"
+
+#: pref.cpp:455
+#, kde-format
+msgid "Current source: "
+msgstr "Тренутни извор: "
+
+#: pref.cpp:457
+#, kde-format
+msgid "Recorder"
+msgstr "Снимач"
+
+#: pref.cpp:469
+#, kde-format
+msgid "Auto Playback"
+msgstr "Аутоматско пуштање"
+
+#: pref.cpp:472
+#, kde-format
+msgid "&No"
+msgstr "&Не"
+
+#: pref.cpp:475
+#, kde-format
+msgid "&When recording finished"
+msgstr "&Када се снимање заврши"
+
+#: pref.cpp:478
+#, kde-format
+msgid "A&fter"
+msgstr "На&кон"
+
+#: pref.cpp:491
+#, kde-format
+msgid "Time:"
+msgstr "Вријеме:"
+
+#: pref.cpp:498 pref.cpp:532 pref.cpp:540
+#, kde-format
+msgid "Start &Recording"
+msgstr "&Отпочни снимање"
+
+#: pref.cpp:531
+#, kde-format
+msgid "Stop &Recording"
+msgstr "&Заустави снимање"
+
+#: pref.cpp:552
+#, kde-format
+msgid "Current Source: "
+msgstr "Тренутни извор: "
+
+#: pref.cpp:605
+#, kde-format
+msgid "Format"
+msgstr "Формат"
+
+#: pref.cpp:608
+#, kde-format
+msgid "Same as source"
+msgstr "Исти као извора"
+
+# >! Contexts.
+# >> custom format
+# >> @option:radio preset filter group
+#: pref.cpp:611 pref.cpp:723
+#, kde-format
+msgid "Custom"
+msgstr "Посебан"
+
+#: pref.cpp:615
+#, kde-format
+msgid "Mencoder arguments:"
+msgstr "Аргументи за Менкодер:"
+
+#: pref.cpp:641
+#, kde-format
+msgid "&MEncoder"
+msgstr "&Менкодер"
+
+#: pref.cpp:649
+#, kde-format
+msgid "MPlayer -&dumpstream"
+msgstr "Излазни ток М‑плејера"
+
+#: pref.cpp:656
+#, kde-format
+msgid "FFMpeg arguments:"
+msgstr "Аргументи за ФФмпег:"
+
+#: pref.cpp:683
+#, kde-format
+msgid "&Xine"
+msgstr "&Ксин"
+
+#: pref.cpp:693
+#, kde-format
+msgid ""
+"Sets video driver. Recommended is XVideo, or, if it is not supported, X11, "
+"which is slower."
+msgstr ""
+"Поставља видео драјвер. Препоручен је Икс‑видео или, ако није подржан, "
+"Икс11, који је спорији."
+
+#: pref.cpp:711
+#, kde-format
+msgid "Enable use of postprocessing filters"
+msgstr "Постобрадни филтери"
+
+#: pref.cpp:713
+#, kde-format
+msgid "Disable use of postprocessing when watching TV/DVD"
+msgstr "Без постобраде када се гледа ТВ/ДВД"
+
+# >> @option:radio preset postprocessing filter group
+#: pref.cpp:722
+#, kde-format
+msgid "Default"
+msgstr "Подразумијевани"
+
+# >> @option:radio preset postprocessing filter group
+#: pref.cpp:724
+#, kde-format
+msgid "Fast"
+msgstr "Брзи"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:751
+#, kde-format
+msgid "Horizontal deblocking"
+msgstr "Водоравно деблокирање"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:752 pref.cpp:770 pref.cpp:788
+#, kde-format
+msgid "Auto quality"
+msgstr "Аутоматски квалитет"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:754 pref.cpp:772 pref.cpp:790
+#, kde-format
+msgid "Chrominance filtering"
+msgstr "Филтрирање хроматичности"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:769
+#, kde-format
+msgid "Vertical deblocking"
+msgstr "Усправно деблокирање"
+
+# >> @option:check postprocessing filter
+# rewrite-msgid: /filter//
+#: pref.cpp:787
+#, kde-format
+msgid "Dering filter"
+msgstr "Уклањање прстенова"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:805
+#, kde-format
+msgid "Auto brightness/contrast"
+msgstr "Аутоматски освјетљај/контраст"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:806
+#, kde-format
+msgid "Stretch luminance to full range"
+msgstr "Растезање луминансе на пун опсег"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:814
+#, kde-format
+msgid "Temporal noise reducer"
+msgstr "Отклањач темпоралног шума"
+
+#: pref.cpp:836
+#, kde-format
+msgid "Custom Preset"
+msgstr "Посебни преподешени"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:842
+#, kde-format
+msgid "Linear blend deinterlacer"
+msgstr "Линеарно стапајући расплитач"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:843
+#, kde-format
+msgid "Linear interpolating deinterlacer"
+msgstr "Линеарно интерполациони расплитач"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:844
+#, kde-format
+msgid "Cubic interpolating deinterlacer"
+msgstr "Кубно интерполациони расплитач"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:845
+#, kde-format
+msgid "Median deinterlacer"
+msgstr "Медијански расплитач"
+
+# >> @option:check postprocessing filter
+#: pref.cpp:846
+#, kde-format
+msgid "FFmpeg deinterlacer"
+msgstr "ФФмпегов расплитач"
+
+#: pref.cpp:854
+#, kde-format
+msgid "Deinterlacing"
+msgstr "Расплитање"
+
+# >> @info:whatsthis
+#: pref.cpp:879
+#, kde-format
+msgid "Enable mplayer's default postprocessing filters"
+msgstr "Укључите М‑плејерове подразумијеване постобрадне филтере."
+
+# >> @info:whatsthis
+#: pref.cpp:880
+#, kde-format
+msgid "Enable custom postprocessing filters (See: Custom preset -tab)"
+msgstr ""
+"Укључите посебне постобрадне филтере (види језичак „Посебни преподешени“)."
+
+# >> @info:whatsthis
+#: pref.cpp:881
+#, kde-format
+msgid "Enable mplayer's fast postprocessing filters"
+msgstr "Укључите М‑плејерове брзе постобрадне филтере."
+
+# >> @info:whatsthis
+#: pref.cpp:882 pref.cpp:883 pref.cpp:884
+#, kde-format
+msgid "Filter is used if there is enough CPU"
+msgstr "Филтер се користи ако има довољно процесорског времена."
+
+# >> @info:whatsthis
+#. i18n( "Strength of the noise reducer" ) );
+#: pref.cpp:886
+#, kde-format
+msgid "Stretches luminance to full range (0..255)"
+msgstr "Растеже луминансу на пун опсег (0 до 255)."
+
+#: pref.cpp:892
+#, kde-format
+msgid ""
+"You are about to have all your settings overwritten with defaults.\n"
+"Please confirm.\n"
+msgstr ""
+"Спремате се да све тренутне поставке пребришете подразумијеваним.\n"
+"Потврдите ово.\n"
+
+#: pref.cpp:893
+#, kde-format
+msgid "Reset Settings?"
+msgstr "Ресетовати поставке?"

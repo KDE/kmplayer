@@ -1,0 +1,573 @@
+<?xml version="1.0" ?>
+<!DOCTYPE book PUBLIC "-//KDE//DTD DocBook XML V4.5-Based Variant V1.1//EN" "dtd/kdedbx45.dtd" [
+  <!ENTITY kmplayer "<application
+>KMPlayer</application
+>">
+  <!ENTITY kappname "&kmplayer;"
+><!-- replace kmplayer here -->
+  <!ENTITY package "kdeextragear-2">
+  <!ENTITY % addindex "IGNORE">
+  <!ENTITY % Swedish "INCLUDE"
+><!-- change language only here -->
+ 
+]>
+
+<book id="kmplayer" lang="&language;">
+
+
+<bookinfo>
+<title
+>Handbok &kmplayer;</title>
+
+<authorgroup>
+<author
+><firstname
+>Koos</firstname
+> <surname
+>Vriezen</surname
+> <email
+>koos dot vriezen at gmail dot com</email
+> </author>
+</authorgroup>
+
+<othercredit role="translator"
+><firstname
+>Stefan</firstname
+><surname
+>Asserhäll</surname
+><affiliation
+><address
+><email
+>stefan.asserhall@bredband.net</email
+></address
+></affiliation
+><contrib
+>Översättare</contrib
+></othercredit
+> 
+
+<copyright>
+<year
+>2002</year>
+<year
+>2006</year>
+<year
+>2007</year>
+<year
+>2008</year>
+<holder
+>Koos Vriezen</holder>
+</copyright>
+<!-- Translators: put here the copyright notice of the translation -->
+<!-- Put here the FDL notice.  Read the explanation in fdl-notice.docbook 
+     and in the FDL itself on how to use it. -->
+<legalnotice
+>&FDLNotice;</legalnotice>
+
+
+<date
+>2008-01-13</date>
+<releaseinfo
+>0.07.00</releaseinfo>
+
+<!-- Abstract about this handbook -->
+
+<abstract>
+<para
+>&kmplayer; är ett program som är ett &kde;-gränssnitt till <application
+>Mplayer</application
+> och &phonon;. </para>
+</abstract>
+
+
+<keywordset>
+<keyword
+>KDE</keyword>
+<keyword
+>kdemultimedia</keyword>
+<keyword
+>Mplayer</keyword>
+<keyword
+>konqueror</keyword>
+<keyword
+>video</keyword>
+</keywordset>
+
+</bookinfo>
+
+<chapter id="introduction">
+<title
+>Inledning</title>
+<para
+>&kmplayer; är ett enkelt gränssnitt till <application
+>Mplayer</application
+>, &phonon; och <application
+>FFMpeg</application
+>. Du kan använda det för att titta på alla filmfilformat som <application
+>Mplayer</application
+> eller &phonon; stöder, samt titta på en <acronym
+>dvd</acronym
+>, <acronym
+>vcd</acronym
+> eller <acronym
+>tv</acronym
+> och kamera. </para>
+<para
+>Dokumentationen för &kappname; var inte klar när &kde; installerades på den här datorn.</para
+> <para
+>Om du behöver mer hjälp, titta på <ulink url="http://www.kde.org"
+>&kde;:s hemsida</ulink
+> för uppdateringar, eller skicka din fråga till <ulink url="mailto:kde-user@kde.org"
+>&kde;:s e-postlista för användare</ulink
+>. </para>
+<para
+><emphasis
+>&kde;-gruppen</emphasis
+></para>
+
+</chapter>
+<chapter id="gui">
+<title
+>Användargränssnittet</title>
+<para
+>Programfönstret består av så kallade dockningsbara fönster. Det centrala visningsfönstret finns alltid. Dessutom finns ett valfritt spellistefönster. Slutligen finns ett informationsfönster, som bara visas när det finns någon information att visa. </para>
+<section id="playlistwindow">
+<title
+>Spellistefönstret</title>
+<para
+>Spellistefönstret har fem kategorier när det här skrivs, aktuella objekt, <guilabel
+>Optiska skivor</guilabel
+>, <guilabel
+>Television</guilabel
+>, <guilabel
+>Bevarade spellistor</guilabel
+> och <guilabel
+>Senaste</guilabel
+>. Vid ett klick på en kategoris text visas dess innehåll under linjen. Det måste förstås finnas något innehåll, se till exempel <link linkend="tvsource"
+><acronym
+>TV</acronym
+>-inställningar</link
+> om hur man lägger till innehåll för kategorin <guilabel
+>Television</guilabel
+>. Kategorin <guilabel
+>Senaste</guilabel
+> fylls i när lokala mediafiler eller nätverkswebbadresser spelas upp. Kategorin kan innehålla 60 objekt, varav de sista 50 är under grenen <guilabel
+>Mer...</guilabel
+>. </para>
+<section>
+<title
+>Kategorin Bevarade spellistor</title>
+<para
+>Det är möjligt att lagra dina favoritlänkar i menyn <guilabel
+>Bokmärken</guilabel
+>, men de är enskilda objekt. Om du vill skapa en lista med objekt som spelas i tur och ordning, ska du använda kategorin <guilabel
+>Bevarade spellistor</guilabel
+>. </para>
+<para
+>Det enklaste sättet att lägga till ett objekt i listan är att dra det från <guilabel
+>Senaste</guilabel
+> och släppa det på <guilabel
+>Bevarade spellistor</guilabel
+>. Som du märker, visas en meny när du släpper det, där du kan välja att lägga till det i den här listan eller skapa en ny grupp. Objekt på översta nivån beter sig som bokmärkesobjekt, men objekt i grupper spelar upp hela gruppen som de ingår i. Objekt i kategorin kan enkelt flyttas, kopieras, läggas till i en ny grupp eller tas bort, bara genom att dra objektet till en annan plats i kategorin. Dessutom finns alternativen <guimenu
+>Ta bort objekt</guimenu
+>, <guimenu
+>Flytta upp</guimenu
+> och <guimenu
+>Flytta ner</guimenu
+> i den sammanhangsberoende menyn (vid klick med höger musknapp på ett objekt). </para>
+<para
+>Du kan förstås lägga till grupper i grupper för att få en djupare hierarki. Vid klick på ett objekt, kopieras dess grupp och alla undergrupper till den aktuella kategorin, och uppspelning börjar på det klickade objektets position. </para>
+<section>
+<title
+>Lagringsformat</title>
+<para
+>Data lagras i <filename
+>~/.kde/share/apps/kmplayer/playlist.xml</filename
+>, och dess format är som i exemplet. Titta <link linkend="XML-editing"
+>här</link
+> om hur man hanterar denna data direkt. <programlisting>
+&lt;playlist&gt;
+    &lt;group title="feeds"&gt;
+        &lt;item url="http://www.lugradio.org/episodes.rss"/&gt;
+        &lt;item url="http://science.nasa.gov/podcast.xml"/&gt;
+        &lt;item url="http://www.theworld.org/rss/tech.xml"/&gt;
+    &lt;/group&gt;
+    &lt;group title="iradio"&gt;
+        &lt;group title="sunny"&gt;
+            &lt;item mplayeropts="-cache 256" url="http://www.swissgroove.ch/listen.m3u"/&gt;
+            &lt;item url="http://www.boombasticradio.com/shoutcast/64.pls"/&gt;
+        &lt;/group&gt;
+        &lt;group title="rainy"&gt;
+            &lt;item url="http://www.radioparadise.com/musiclinks/rp_64.m3u"/&gt;
+            &lt;item url="http://www.woxy.com/stream/wma64.asx"/&gt;
+            &lt;item url="http://radionigel.com/winmedia.asx"/&gt;
+            &lt;item url="rtsp://livestreams.omroep.nl/live/vpro/vpro3voor12radioalt.rm"/&gt;
+        &lt;/group&gt;
+    &lt;/group&gt;
+&lt;/playlist&gt;
+</programlisting
+> Observera också att egna alternativ kan ställas in med väljaren <computeroutput
+>mplayeropts</computeroutput
+> för <application
+>Mplayer</application
+>. &kmplayer; söker uppåt i trädet efter väljaren, så du kan ställa in den för en hel grupp och överskrida den för en undergrupp eller för ett objekt. </para>
+</section>
+</section>
+</section>
+<section id="XML-editing">
+<title
+>Direkt &XML;-redigering</title>
+<para
+>De nuvarande kategorierna <guilabel
+>Television</guilabel
+> och <guilabel
+>Bevarade spellistor</guilabel
+> kan också hanteras genom att redigera deras &XML;-lagring. Man kan förstås göra det när &kmplayer; inte kör, och redigera de olika filerna i <filename
+>~/.kde/share/apps/kmplayer/</filename
+>, men också i själva programmet. Klicka helt enkelt på en kategorirubrik, välj därefter <guimenu
+>Visa</guimenu
+> och sedan <guimenu
+>Redigeringsläge</guimenu
+>. Du kan också klicka på en undergren och då ser du bara &XML;-innehållet för grenen. </para>
+<para
+>Efter du har redigerat en del &XML;, klicka på <guilabel
+>Synkronisera med spellista</guilabel
+> och avmarkera antingen alternativet <guimenu
+>Redigeringsläge</guimenu
+> eller klicka på en annan kategori. <caution
+><para
+>Alla ändringar går förlorade om du lämnar redigeringsläge eller väljer en annan gren utan att synkronisera med spellistan. </para
+></caution>
+</para>
+<para
+>På grund av lättja hos &kmplayer;s upphovsmän, kan vissa funktioner bara aktiveras genom att redigera &XML;. </para>
+</section>
+</chapter>
+<chapter id="settings">
+<title
+>Inställningar</title>
+<section>
+    <title
+>Animering vid start och avslutning</title>
+    <para
+>Att inaktivera start- och slutanimeringen kan utföras genom att redigera <filename
+>~/.kde/share/config/kmplayerrc</filename
+> och ändra <programlisting>
+[General Options]
+  No Intro=0
+    </programlisting
+> ovanstående alternativ till '1'. Lägg bara till alternativet om det inte redan finns där. </para>
+<para
+>Det är också möjligt att ange alternativa animeringar. &kmplayer; tittar på <filename
+>~/.kde/share/apps/kmplayer/intro.xml</filename
+> och <filename
+>~/.kde/share/apps/kmplayer/exit.xml</filename
+>. Formatet måste vara en &XML;-fil som stöds. </para>
+<para
+>Den inledande animeringen behöver inte vara kort, eftersom den automatiskt slutar när en annan källa öppnas. Det skulle förstås vara något irriterande för slutanimeringen, men användaren kan alltid avsluta programmet två gånger. </para>
+<para
+>Ett enkelt exempel på en inledning, som visar ditt favoritfoto skulle kunna vara <programlisting>
+&lt;smil&gt;
+  &lt;body&gt;
+    &lt;img dur="indefinite" src="///home/användare/mamma.gif" fit="meet"/&gt;
+  &lt;/body&gt;
+&lt;/smil&gt;
+    </programlisting
+> I &kmplayer;s källkodspaket, under <filename
+>tests/</filename
+> finns några exempel på <acronym
+>SMIL</acronym
+> som &kmplayer; stöder. </para>
+</section>
+</chapter>
+<chapter id="backends">
+<title
+>Uppspelningsgränssnitten</title>
+<para
+>&kmplayer; använder externa program för att utföra själva uppspelningen. </para>
+<section id="mplayer">
+<title
+>Mplayer</title>
+<para
+>Det finns en inställningsflik för Mplayer i &kmplayer;s inställnigsdialogruta. Där kan man bland annat ställa in sökvägen till Mplayer och dess cachestorlek för nätverksströmmar. </para>
+<para
+>Spelarens inställningsnamn är <parameter
+>mplayer</parameter
+>. </para>
+<section id="mplayer-debug">
+<title
+>Felsökning</title>
+<para
+>Det bästa sättet att felsöka i gränssnittet är att starta &kmplayer; från ett terminalprogram som konsole. Starta därefter en film med &kmplayer; och se exakt den kommandorad som används för att starta Mplayer i terminalprogrammet. Kopiera och klistra nu in den i ett annat terminalprogram, ta bort väljaren '-wid 12344' och spela den. Troligen är det bara att välja rätt parametrar för -ao och -vo. Försäkra dig också om att Mplayer inte är förinställt att starta med ett grafiskt gränssnitt. </para>
+<para
+>Ett annat felsökningsverktyg är knappen 'Terminal' i &kmplayer;s verktygsrad. Där kan du se utmatningen från Mplayer. </para>
+</section>
+</section>
+<section id="phonon">
+<title
+>Phonon</title>
+<para
+>&phonon; är &kde;:s multimediaramverk för hela skrivbordet, som kan ställas in i <application
+>systeminställningar</application
+>. </para>
+<para
+>Spelarens inställningsnamn är <parameter
+>phonon</parameter
+>. </para>
+<section id="phonon-debug">
+<title
+>Felsökning</title>
+<para
+>Huvudsakligen samma sätt att felsöka som för <link linkend="mplayer-debug"
+>Mplayer</link
+>, men med programnamnet <filename
+>kphononplayer</filename
+>. </para>
+</section>
+</section>
+<section id="npp">
+<title
+>Insticksprogram för bläddring</title>
+<para
+>Det finns ingen inställningsflik för spelaren i &kmplayer;s inställningsdialogruta. Allting måste ställas in genom att redigera <filename
+>~/.kde/share/config/kmplayerrc</filename
+> för hand, liksom vid inställning av <link linkend="backend-mimetype"
+>uppspelningsgränssnitt per Mime-typ</link
+>. Här är ett exempel på hur man kan få Flash att spelas upp med insticksprogrammet swfdec-mozilla: <programlisting
+>[application/x-shockwave-flash]
+player=npp
+plugin=/usr/lib/mozilla/plugins/libswfdecmozilla.so
+</programlisting>
+</para>
+<para
+>Du kan spela upp Flash inne i &kmplayer;. I själva verket kan du till och med klistra in det särskilda fältet <parameter
+>embed</parameter
+> för <ulink url="http://www.youtube.com"
+>YouTube</ulink
+> i <link linkend="XML-editing"
+>spellistans &XML;</link
+>. </para>
+<para
+>För att låta &kmplayer; spela upp Flash på HTML-sidor, ska du ställa in &kmplayer;-insticksprogrammet att vara den tjänst som tillhandahåller Mime-typen <parameter
+>application/x-shockwave-flash</parameter
+> i &kde;:s inställningsdialogruta <guilabel
+>Filbindningar</guilabel
+>. </para>
+<para
+>Som i föregående exempel, är spelarens inställningsnamn <parameter
+>npp</parameter
+>. </para>
+<section id="npp-debug">
+<title
+>Felsökning</title>
+<para
+>Starta &konqueror; eller &kmplayer; i ett terminalprogram och titta efter fel när biblioteket för insticksprogrammet för bläddring laddas. Processen som startas kallas <filename
+>knpplayer</filename
+>. Om det inte finns några fel, kontrollera uppspelningsgränssnittets utmatning inne i &kmplayer; (<guimenu
+>Visa</guimenu
+> <guimenuitem
+>Terminal</guimenuitem
+>, eller <guimenuitem
+>Terminal</guimenuitem
+> i den sammanhangsberoende menyn). </para>
+</section>
+</section>
+<section id="backend-mimetype">
+<title
+>Tvinga uppspelningsgränssnitt för en viss Mime-typ</title>
+<para
+>Att ändra inställningen så att ett givet gränssnitt alltid används för en viss Mime-typ (naturligtvis enbart om den har detekterats) kan göras genom att redigera filen <filename
+>~/.kde/share/config/kmplayerrc</filename
+> för hand. För att till exempel låta Phonon spela upp alla ogg-filer: <programlisting
+>[audio/ogg]
+player=phonon
+</programlisting>
+</para>
+</section>
+</chapter>
+<chapter id="sources">
+<title
+>Källor som kan spelas upp</title>
+<para
+>&kmplayer; kan spela upp olika källor. Dessa källor listas i menyn Källa. </para>
+<section id="tvsource">
+    <title
+>Tv</title>
+    <para
+>&kmplayer; kan spela från tv-kort med <application
+>Mplayer</application
+> eller <acronym
+>Xvideo</acronym
+> (med användning av <application
+>kxvplayer</application
+>). Innan du kan titta på tv måste du ställa in vilken enhet som ska användas, och tv-kanalerna. Du kan använda sökfunktionen i inställningsdialogrutan för detta, eller redigera inställningsfilen för hand. </para>
+<para
+>Inställningsfilen för tv-inställningarna är en &XML;-fil, med namnet <filename
+>~/.kde/share/apps/kmplayer/tv.xml</filename
+>. Titta <link linkend="XML-editing"
+>här</link
+> om hur man hanterar denna data direkt. &XML;-formatet är som följande exempel: <programlisting>
+&lt;tvdevices&gt;
+    &lt;device path="/dev/video0" width="320" height="240" name="BT878 video (Hauppauge (bt878))" audio=""
+              minwidth="48" minheight="32" maxwidth="924" maxheight="576" playback="0" xvport="240"&gt;
+        &lt;input name="Television" id="0" tuner="1" norm="PAL" xvenc="0"&gt;
+            &lt;channel name="Ned1" frequency="21600"/&gt;
+            &lt;channel name="VCR" frequency="59490"/&gt;
+        &lt;/input&gt;
+        &lt;input name="Composite1" id="1" xvenc="7"/&gt;
+        &lt;input name="S-Video" id="2" xvenc="14"/&gt;
+        &lt;input name="Composite3" id="3"/&gt;
+    &lt;/device&gt;
+    &lt;device path="/dev/video1" width="640" height="480" name="Philips 740 webcam" audio=""
+              minwidth="160" minheight="120" maxwidth="640" maxheight="480" playback="1"&gt;
+        &lt;input name="Webcam" id="0"/&gt;
+    &lt;/device&gt;
+&lt;/tvdevices&gt;
+</programlisting
+> Observera att elementen <quote
+>input</quote
+> som har kanaler, ska ha egenskapen <quote
+>tuner</quote
+> inställd till <quote
+>1</quote
+>. </para>
+<para
+><acronym
+>Xvideo</acronym
+> använder bara egenskaperna <quote
+>xvport</quote
+> och <quote
+>xvenc</quote
+> och kan bara ställas in genom att redigera filen för hand. Värden för de två egenskaperna kan hämtas genom att köra <quote
+>kxvplayer</quote
+> i ett terminalfönster som <quote
+>konsole</quote
+>. För varje port skriver <quote
+>kxvplayer</quote
+> ut rader som visas nedan, och värdena kan ställas in för de nämnda egenskaperna. <programlisting>
+    xvport 240
+    ....
+    encoding: 0 PAL-television
+    encoding: 1 NTSC-television
+    encoding: 2 SECAM-television
+    ....   
+</programlisting
+> Dessutom ignoreras egenskaperna bredd och höjd av <acronym
+>Xvideo</acronym
+>-spelaren. Spelaren hämtar storlekarna från X-servern. En av de trevliga sakerna med <acronym
+>Xvideo</acronym
+> är att skalning görs i hårdvara av videokortet, vilket ger stöd för fullskärmsvisning utan processoranvändning och utan att ändra bildskärmens upplösning. Dessutom uppstår inget irriterande flimmer när ett annat fönster överlappar videofönstret. </para>
+<para
+>Se avsnittet VDR för mer information om att använda <acronym
+>Xvideo</acronym
+>. </para>
+</section>
+<section id="vdrsource">
+    <title
+>VDR</title>
+<para
+>För att ställa in VDR-inställningar i &kmplayer;, använd inställningsrutan Källa -> VDR -> Xvideo port. Det ska finnas detekterade portar, där du ska välja en. Du måste räkna ut vilken kodning du ska använda (i västeuropa är det t.ex. PAL) och troligen har den rätta ett namn som innehåller <quote
+>dvb</quote
+>. </para>
+<para
+>Jag har till exempel ett tv-kort, ett DVB-S kort och en webbkamera inkopplade i mitt system. Med dessa har mina inställningar tre portar. Den första har en lång lista med NTSC(-JP)/PAL(-M)/SECAM-poster som alla innehåller något med television/composite/svideo (mitt tv-kort). Den andra har NTSC-dvb/PAL-dvb/SECAM-dvb (mitt DVB-S kort). Den tredje har slutligen bara ntsc/pal (troligen min webbkamera). Därför ska jag ställa in (bara genom att markera den) den andra porten och andra posten (PAL-dvb). </para>
+<para
+>Eftersom VDR-stöd i &kmplayer; bara kan använda <acronym
+>Xvideo</acronym
+>, måste förstås <acronym
+>Xvideo</acronym
+> fungera (och jag tror att detta sätt att titta på videoenheter bara fungerar med Linux). Detta fungerar också bara på den första skärmen (:0.0). Försäkra dig alltså om att utökningen <quote
+>videoforlinux</quote
+> fungerar med X-servern. För XFree86-servern, ska följande finnas i inställningsfilen (<filename
+>/etc/X11/XF86Config</filename
+>): <programlisting
+>Section "Module" 
+     .... 
+     Load    "v4l" 
+EndSection
+</programlisting>
+</para>
+<para
+>Tyvärr måste du ställa in det här alternativet igen så fort du uppdaterar din videodrivrutin. </para>
+</section>
+<section id="kmplayer_url">
+    <title
+>Kommandorad</title>
+<para
+>Internt använder &kmplayer; distinkta namn för källor. När det här skrivs är de "dvdnavsource", "dvdsource", "exitsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource" och "vdrsource". När de aktiveras börjar de oftast spela listan med spelbara objekt. </para>
+<para
+>Du kan aktivera en viss källa med webbadressen <filename
+>kmplayer://</filename
+>. Ange bara värddatordelen som källans namn och den valfria delen som extra argument, vilket skulle kunna se ut som <filename
+>kmplayer://vdrsource/22 MTV 2</filename
+> för en kanal från "vdrsource". Till exempel startar följande skript &kmplayer; med "dvdnavsource" och använder &DBus; för att spela upp med fullskärmsläge. <programlisting>
+/bin/bash
+kmplayer kmplayer://dvdnavsource/ &amp;
+PID=$!
+sleep 2
+qdbus org.kde.kmplayer-$PID /kmplayer/MainWindow_1 showFullScreen
+    </programlisting
+> Det gör inte mycket för vissa källor, eftersom de inte är avsedda för normal uppspelning. Det är inaktiverat för "pipesource", eftersom det naturligtvis skulle vara ett allvarligt säkerhetshål. </para>
+</section>
+</chapter>
+<chapter id="questionsanswersandtips">
+    <title
+>Frågor, svar och tips</title>
+
+    <qandaset id="faq">
+      <title
+>Vanliga frågor</title>
+      <qandaentry>
+        <question>
+            <para
+>Några tips för att göra cdrom-enheten tystare när den används för uppspelning (inte VCD://)?</para>
+        </question>
+        <answer>
+            <para
+>Visst, prova <command
+>hdparm -E 8 /dev/cdrom</command
+> som systemadministratör, efter att ha monterat enheten. Men försäkra dig om att du dubbelkollar att <filename
+>/dev/cdrom</filename
+> pekar på cdrom-enheten. </para>
+        </answer>
+      </qandaentry>
+    </qandaset>
+
+  </chapter>
+<chapter id="credits-and-license">
+<title
+>Tack till och licens</title>
+
+<para
+>&kmplayer; copyright 2002, 2003 Koos Vriezen</para>
+
+<para
+>Översättning Stefan Asserhäll <email
+>stefan.asserhall@bredband.net</email
+></para
+> &underFDL; &underGPL; </chapter>
+
+&documentation.index;
+</book>
+<!--
+Local Variables:
+mode: sgml
+sgml-minimize-attributes:nil
+sgml-general-insert-case:lower
+sgml-indent-step:0
+sgml-indent-data:nil
+End:
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+

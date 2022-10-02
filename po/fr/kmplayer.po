@@ -1,0 +1,2032 @@
+# translation of kmplayer.po to Français
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+# Joëlle Cornavin <jcorn@free.fr>, 2008, 2009, 2010, 2011, 2012, 2013.
+# Simon Depiets <sdepiets@gmail.com>, 2018.
+# Xavier Besnard <xavier.besnard@neuf.fr>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kmplayer\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2022-07-06 00:45+0000\n"
+"PO-Revision-Date: 2021-01-12 19:34+0100\n"
+"Last-Translator: Xavier Besnard <xavier.besnard@neuf.fr>\n"
+"Language-Team: French <kde-francophone@kde.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Lokalize 20.12.0\n"
+"X-Environment: kde\n"
+"X-Accelerator-Marker: &\n"
+"X-Text-Markup: kde4\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Joëlle Cornavin, Simon Depiets"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "jcorn@free.fr, sdepiets@gmail.com"
+
+#: app/kmplayer.cpp:134
+#, kde-format
+msgid "New window"
+msgstr "Nouvelle fenêtre"
+
+#: app/kmplayer.cpp:144
+#, kde-format
+msgid "&Edit mode"
+msgstr "Mode &édition"
+
+#: app/kmplayer.cpp:147
+#, kde-format
+msgid "Pla&y List"
+msgstr "Liste de lec&ture"
+
+#: app/kmplayer.cpp:152
+#, kde-format
+msgid "P&lay"
+msgstr "&Lecture"
+
+#: app/kmplayer.cpp:155
+#, kde-format
+msgid "&Pause"
+msgstr "&Pause"
+
+#: app/kmplayer.cpp:158
+#, kde-format
+msgid "&Stop"
+msgstr "&Arrêter"
+
+#: app/kmplayer.cpp:164
+#, kde-format
+msgid "Fullscreen"
+msgstr "Plein écran"
+
+#: app/kmplayer.cpp:167 app/kmplayer.cpp:330
+#, kde-format
+msgid "C&onsole"
+msgstr "C&onsole"
+
+#: app/kmplayer.cpp:172
+#, kde-format
+msgid "Reload"
+msgstr "Recharger"
+
+#: app/kmplayer.cpp:183
+#, kde-format
+msgid "Clear &History"
+msgstr "Effacer l'&historique"
+
+#: app/kmplayer.cpp:187
+#, kde-format
+msgid "&Generators"
+msgstr "&Générateurs"
+
+#. i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
+#. new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
+#. new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
+#. new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
+#. new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
+#. //KIconLoader::global ()->loadIconSet (QString ("video-television"), K3Icon::Small, 0,true)
+#. new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
+#. editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), ac, "edit_volume_up");
+#. editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), ac, "edit_volume_down");
+#. //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), ac, "view_video");
+#. new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), ac, "view_playlist");
+#. new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (slotMinimalMode ()), ac, "view_minimal");
+#. new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
+#. new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
+#. new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
+#. new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
+#. new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
+#. viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
+#. fileNewWindow->setStatusText(i18n("Opens a new application window"));
+#. fileOpen->setStatusText(i18n("Opens an existing file"));
+#. fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
+#. fileClose->setStatusText(i18n("Closes the actual source"));
+#. fileQuit->setStatusText(i18n("Quits the application"));
+#: app/kmplayer.cpp:218
+#, kde-format
+msgid "Enables/disables the status bar"
+msgstr "Active/Désactive la barre d'état"
+
+#: app/kmplayer.cpp:219
+#, kde-format
+msgid "Enables/disables the menu bar"
+msgstr "Active/Désactive la barre de menus"
+
+#: app/kmplayer.cpp:220
+#, kde-format
+msgid "Enables/disables the toolbar"
+msgstr "Active / Désactive la barre d'outils"
+
+#: app/kmplayer.cpp:227 app/kmplayer.cpp:437 app/kmplayer.cpp:693
+#: app/kmplayer.cpp:1038 app/kmplayer.cpp:1187 app/kmplayer.cpp:1575
+#: app/kmplayer.cpp:1707 app/kmplayer.cpp:1809 app/kmplayer.cpp:1855
+#, kde-format
+msgid "Ready."
+msgstr "Prêt."
+
+#: app/kmplayer.cpp:238 lib/kmplayercontrolpanel.cpp:436
+#, kde-format
+msgid "&Bookmarks"
+msgstr "&Signets"
+
+#: app/kmplayer.cpp:285 app/kmplayer.cpp:1308
+#, kde-format
+msgid "&Add to list"
+msgstr "&Ajouter à la liste"
+
+#: app/kmplayer.cpp:287
+#, kde-format
+msgid "Add in new &Group"
+msgstr "Ajouter dans le nouveau &groupe"
+
+#: app/kmplayer.cpp:289
+#, kde-format
+msgid "&Copy here"
+msgstr "&Copier ici"
+
+#: app/kmplayer.cpp:291
+#, kde-format
+msgid "&Delete"
+msgstr "&Supprimer"
+
+#: app/kmplayer.cpp:327 lib/kmplayerview.cpp:326
+#, kde-format
+msgid "V&ideo"
+msgstr "V&idéo"
+
+#: app/kmplayer.cpp:368
+#, kde-format
+msgid "More..."
+msgstr "Plus..."
+
+#: app/kmplayer.cpp:417
+#, kde-format
+msgid "Opening DVD..."
+msgstr "Ouverture du DVD..."
+
+#: app/kmplayer.cpp:422
+#, kde-format
+msgid "Opening VCD..."
+msgstr "Ouverture du VCD..."
+
+#: app/kmplayer.cpp:427
+#, kde-format
+msgid "Opening Audio CD..."
+msgstr "Ouverture du CD audio..."
+
+#: app/kmplayer.cpp:432
+#, kde-format
+msgid "Opening pipe..."
+msgstr "Ouverture du tube..."
+
+#: app/kmplayer.cpp:434
+#, kde-format
+msgid "Read From Pipe"
+msgstr "Lire depuis le tube"
+
+#: app/kmplayer.cpp:435
+#, kde-format
+msgid ""
+"Enter a command that will output an audio/video stream\n"
+"to the stdout. This will be piped to a player's stdin.\n"
+"\n"
+"Command:"
+msgstr ""
+"Saisissez une commande qui produira un flux audio/vidéo\n"
+"sur la sortie standard. Celle-ci sera redirigée vers l'entrée standard d'un "
+"lecteur.\n"
+"\n"
+"Commande :"
+
+#: app/kmplayer.cpp:523 app/kmplayer.cpp:526
+#, kde-format
+msgid "Intro"
+msgstr "Intro"
+
+#: app/kmplayer.cpp:681 app/kmplayer.cpp:1074
+#, kde-format
+msgid "Opening file..."
+msgstr "Ouverture du fichier..."
+
+#: app/kmplayer.cpp:943 app/kmplayer.cpp:944
+#, kde-format
+msgid "Exit"
+msgstr "Quitter"
+
+#: app/kmplayer.cpp:1033
+#, kde-format
+msgid "Opening a new application window..."
+msgstr "Ouverture d'une nouvelle fenêtre de l'application..."
+
+#: app/kmplayer.cpp:1061
+#, kde-format
+msgid "Open File"
+msgstr "Ouvrir le fichier"
+
+#: app/kmplayer.cpp:1094
+#, kde-format
+msgid "Save File"
+msgstr "Enregistrer le fichier"
+
+#: app/kmplayer.cpp:1098 app/kmplayerbroadcast.cpp:520
+#: app/kmplayerbroadcast.cpp:537 app/kmplayerbroadcast.cpp:550
+#: app/kmplayertvsource.cpp:597 app/kmplayertvsource.cpp:608
+#: app/kmplayervdr.cpp:430 app/kmplayervdr.cpp:432 lib/kmplayerconfig.cpp:644
+#: lib/kmplayerconfig.cpp:655 lib/kmplayerprocess.cpp:134
+#, kde-format
+msgid "Error"
+msgstr "Erreur"
+
+#: app/kmplayer.cpp:1098
+#, kde-format
+msgid ""
+"Error opening file %1.\n"
+"%2."
+msgstr ""
+"Erreur lors de l'ouverture du fichier %1.\n"
+"%2."
+
+#: app/kmplayer.cpp:1183
+#, kde-format
+msgid "Closing file..."
+msgstr "Fermeture du fichier..."
+
+#: app/kmplayer.cpp:1226 lib/kmplayerpartbase.cpp:831 lib/mediaobject.cpp:169
+#, kde-format
+msgid "Ready"
+msgstr "Prêt"
+
+#: app/kmplayer.cpp:1229
+#, kde-format
+msgid "Show Menu Bar with %1"
+msgstr "Afficher la barre de menus avec %1"
+
+#: app/kmplayer.cpp:1308
+#, kde-format
+msgid "Move here"
+msgstr "Se déplacer ici"
+
+#: app/kmplayer.cpp:1341
+#, kde-format
+msgid "New group"
+msgstr "Nouveau groupe"
+
+#: app/kmplayer.cpp:1428
+#, kde-format
+msgid "&Delete item"
+msgstr "&Supprimer un élément"
+
+#: app/kmplayer.cpp:1431
+#, kde-format
+msgid "&Move up"
+msgstr "&Monter"
+
+#: app/kmplayer.cpp:1433
+#, kde-format
+msgid "Move &down"
+msgstr "Descen&dre"
+
+#: app/kmplayer.cpp:1467
+#, kde-format
+msgid "Auto play after opening DVD"
+msgstr "Lecture automatique après ouverture du DVD"
+
+#: app/kmplayer.cpp:1468
+#, kde-format
+msgid "Start playing DVD right after opening DVD"
+msgstr "Commencer à lire le DVD juste après son ouverture"
+
+#: app/kmplayer.cpp:1469
+#, kde-format
+msgid "DVD device:"
+msgstr "Périphérique DVD :"
+
+#: app/kmplayer.cpp:1471
+#, kde-format
+msgid "Path to your DVD device, you must have read rights to this device"
+msgstr ""
+"Emplacement de votre périphérique DVD, vous devez disposer des droits de "
+"lecture sur ce périphérique"
+
+#: app/kmplayer.cpp:1503
+#, kde-format
+msgid "Optical Disks"
+msgstr "Disques optiques"
+
+#: app/kmplayer.cpp:1534 app/kmplayer.cpp:1608 app/kmplayer.cpp:1634
+#, kde-format
+msgid "DVD"
+msgstr "DVD"
+
+#: app/kmplayer.cpp:1539
+#, kde-format
+msgid "CDROM - Audio Compact Disk"
+msgstr "CD-ROM - CD audio"
+
+#: app/kmplayer.cpp:1540
+#, kde-format
+msgid "VCD - Video Compact Disk"
+msgstr "VCD - CD vidéo"
+
+#: app/kmplayer.cpp:1541
+#, kde-format
+msgid "DVD - Digital Video Disk"
+msgstr "DVD - Vidéodisque numérique"
+
+#: app/kmplayer.cpp:1559 app/kmplayer.cpp:1780
+#, kde-format
+msgid "Track %1"
+msgstr "Piste %1"
+
+#: app/kmplayer.cpp:1632 app/kmplayer.cpp:1746 app/kmplayertvsource.cpp:567
+#: app/kmplayervdr.cpp:704 lib/pref.cpp:73 lib/pref.cpp:79
+#, kde-format
+msgid "Source"
+msgstr "Source"
+
+#: app/kmplayer.cpp:1647
+#, kde-format
+msgid "Auto play after opening a VCD"
+msgstr "Lecture automatique après ouverture d'un VCD"
+
+#: app/kmplayer.cpp:1648
+#, kde-format
+msgid "Start playing VCD right after opening VCD"
+msgstr "Démarre la lecture d'un VCD juste après son ouverture"
+
+#: app/kmplayer.cpp:1649
+#, kde-format
+msgid "VCD (CDROM) device:"
+msgstr "Périphérique VCD (CD-ROM) :"
+
+#: app/kmplayer.cpp:1651
+#, kde-format
+msgid "Path to your CDROM/DVD device, you must have read rights to this device"
+msgstr ""
+"Emplacement de votre périphérique CD-ROM / DVD, vous devez disposer des "
+"droits de lecture sur ce périphérique"
+
+#: app/kmplayer.cpp:1663 app/kmplayer.cpp:1722 app/kmplayer.cpp:1748
+#, kde-format
+msgid "VCD"
+msgstr "VCD"
+
+#: app/kmplayer.cpp:1681
+#, kde-format
+msgid "Track "
+msgstr "Piste "
+
+#: app/kmplayer.cpp:1759 app/kmplayer.cpp:1824
+#, kde-format
+msgid "Audio CD"
+msgstr "CD audio"
+
+#: app/kmplayer.cpp:1830
+#, kde-format
+msgid "Pipe"
+msgstr "Tube"
+
+#: app/kmplayer.cpp:1862
+#, kde-format
+msgid "Pipe - %1"
+msgstr "Tube - %1"
+
+#: app/kmplayer_lists.cpp:83
+#, kde-format
+msgid "Most Recent"
+msgstr "Le plus récent"
+
+#: app/kmplayer_lists.cpp:180
+#, kde-format
+msgid "Persistent Playlists"
+msgstr "Listes de lecture persistantes"
+
+#: app/kmplayerbroadcast.cpp:149
+#, kde-format
+msgid "Bind address:"
+msgstr "Lier l'adresse :"
+
+#: app/kmplayerbroadcast.cpp:151
+#, kde-format
+msgid "If you have multiple network devices, you can limit access"
+msgstr ""
+"Si vous avez plusieurs périphériques réseau, vous pouvez limiter l'accès"
+
+#: app/kmplayerbroadcast.cpp:154
+#, kde-format
+msgid "Listen port:"
+msgstr "Écouter le port :"
+
+#: app/kmplayerbroadcast.cpp:158
+#, kde-format
+msgid "Maximum connections:"
+msgstr "Nombre max. de connexions :"
+
+#: app/kmplayerbroadcast.cpp:162
+#, kde-format
+msgid "Maximum bandwidth (kbit):"
+msgstr "Largeur de bande maximale (kbit) :"
+
+#: app/kmplayerbroadcast.cpp:166
+#, kde-format
+msgid "Temporary feed file:"
+msgstr "Fichier de flux temporaire :"
+
+#: app/kmplayerbroadcast.cpp:170
+#, kde-format
+msgid "Feed file size (kB):"
+msgstr "Taille du fichier de flux (ko) :"
+
+#: app/kmplayerbroadcast.cpp:193
+#, kde-format
+msgid "Format:"
+msgstr "Format :"
+
+#: app/kmplayerbroadcast.cpp:201
+#, kde-format
+msgid "Only avi, mpeg and rm work for mplayer playback"
+msgstr ""
+"Seuls les formats avi, mpeg et rm fonctionnent pour la lecture sur mplayer"
+
+#: app/kmplayerbroadcast.cpp:204
+#, kde-format
+msgid "Audio codec:"
+msgstr "Code audio :"
+
+#: app/kmplayerbroadcast.cpp:205
+#, kde-format
+msgid "Audio bit rate (kbit):"
+msgstr "Débit audio (kbit) :"
+
+#: app/kmplayerbroadcast.cpp:206
+#, kde-format
+msgid "Audio sample rate (Hz):"
+msgstr "Taux d'échantillonnage audio (Hz) :"
+
+#: app/kmplayerbroadcast.cpp:207
+#, kde-format
+msgid "Video codec:"
+msgstr "Codec vidéo :"
+
+#: app/kmplayerbroadcast.cpp:208
+#, kde-format
+msgid "Video bit rate (kbit):"
+msgstr "Débit vidéo (kbit) :"
+
+#: app/kmplayerbroadcast.cpp:209
+#, kde-format
+msgid "Quality (1-31):"
+msgstr "Qualité (1-31) :"
+
+#: app/kmplayerbroadcast.cpp:210
+#, kde-format
+msgid "Frame rate (Hz):"
+msgstr "Taux d'affichage (Hz) :"
+
+#: app/kmplayerbroadcast.cpp:211
+#, kde-format
+msgid "Gop size:"
+msgstr "Taille du fichier « GOP » :"
+
+#: app/kmplayerbroadcast.cpp:212
+#, kde-format
+msgid "Width (pixels):"
+msgstr "Largeur (pixels) :"
+
+#: app/kmplayerbroadcast.cpp:213
+#, kde-format
+msgid "Height (pixels):"
+msgstr "Hauteur (pixels) :"
+
+#: app/kmplayerbroadcast.cpp:214
+#, kde-format
+msgid "Allow access from:"
+msgstr "Autoriser l'accès depuis :"
+
+#: app/kmplayerbroadcast.cpp:219
+#, kde-format
+msgid "'Single IP' or 'start-IP end-IP' for IP ranges"
+msgstr "« IP unique » ou « IP de départ-IP de fin » pour les plages IP"
+
+#: app/kmplayerbroadcast.cpp:221
+#, kde-format
+msgid "Host/IP or IP Range"
+msgstr "Hôte/IP ou plage IP"
+
+#: app/kmplayerbroadcast.cpp:234
+#, kde-format
+msgid "Load"
+msgstr "Charger"
+
+#: app/kmplayerbroadcast.cpp:235
+#, kde-format
+msgid "Save"
+msgstr "Enregistrer"
+
+#: app/kmplayerbroadcast.cpp:236 app/kmplayertvsource.cpp:110
+#, kde-format
+msgid "Delete"
+msgstr "Supprimer"
+
+#: app/kmplayerbroadcast.cpp:250 app/kmplayerbroadcast.cpp:586
+#, kde-format
+msgid "Start"
+msgstr "Démarrer"
+
+#: app/kmplayerbroadcast.cpp:443 app/kmplayerbroadcast.cpp:643
+#, kde-format
+msgid "Broadcasting"
+msgstr "Diffusion"
+
+#: app/kmplayerbroadcast.cpp:445
+#, kde-format
+msgid "Profiles"
+msgstr "Profils"
+
+#: app/kmplayerbroadcast.cpp:508
+#, kde-format
+msgid "Stop"
+msgstr "Arrêter"
+
+#: app/kmplayerbroadcast.cpp:520
+#, kde-format
+msgid "Failed to end ffserver process."
+msgstr "Impossible de mettre fin au processus ffserver."
+
+#: app/kmplayerbroadcast.cpp:537
+#, kde-format
+msgid "Failed to start ffserver.\n"
+msgstr "Impossible de démarrer ffserver.\n"
+
+#: app/kmplayerbroadcast.cpp:550
+#, kde-format
+msgid "Failed to start ffmpeg."
+msgstr "Impossible de démarrer ffmpeg."
+
+#: app/kmplayerbroadcast.cpp:645
+#, kde-format
+msgid "FFServer"
+msgstr "FFServer"
+
+#: app/kmplayertvsource.cpp:53
+#, kde-format
+msgid "Video device:"
+msgstr "Périphérique vidéo :"
+
+#: app/kmplayertvsource.cpp:54
+#, kde-format
+msgid "Audio device:"
+msgstr "Périphérique audio :"
+
+#: app/kmplayertvsource.cpp:56
+#, kde-format
+msgid "Name:"
+msgstr "Nom :"
+
+#: app/kmplayertvsource.cpp:58
+#, kde-format
+msgid "Width:"
+msgstr "Largeur :"
+
+#: app/kmplayertvsource.cpp:60
+#, kde-format
+msgid "Height:"
+msgstr "Hauteur :"
+
+#: app/kmplayertvsource.cpp:62
+#, kde-format
+msgid "Do not immediately play"
+msgstr "Ne pas lire immédiatement"
+
+#: app/kmplayertvsource.cpp:64
+#, kde-format
+msgid "Only start playing after clicking the play button"
+msgstr "Ne démarre la lecture qu'après avoir cliqué sur le bouton « Lire »"
+
+#: app/kmplayertvsource.cpp:75
+#, kde-format
+msgid "Norm:"
+msgstr "Norme :"
+
+#: app/kmplayertvsource.cpp:89
+#, kde-format
+msgid "Channel"
+msgstr "Canal"
+
+#: app/kmplayertvsource.cpp:89
+#, kde-format
+msgid "Frequency (MHz)"
+msgstr "Fréquence (MHz)"
+
+#: app/kmplayertvsource.cpp:136
+#, kde-format
+msgid ""
+"You are about to remove this device from the Source menu.\n"
+"Continue?"
+msgstr ""
+"Vous êtes sur le point de supprimer ce périphérique depuis le menu "
+"« Source ».\n"
+"Continuer ?"
+
+#: app/kmplayertvsource.cpp:136
+#, kde-format
+msgid "Confirm"
+msgstr "Confirmer"
+
+#: app/kmplayertvsource.cpp:147
+#, kde-format
+msgid "Driver:"
+msgstr "Pilote :"
+
+#: app/kmplayertvsource.cpp:149
+#, kde-format
+msgid "dummy, v4l or bsdbt848"
+msgstr "factice, v4l ou bsdbt848"
+
+#: app/kmplayertvsource.cpp:150
+#, kde-format
+msgid "Device:"
+msgstr "Périphérique :"
+
+#: app/kmplayertvsource.cpp:152
+#, kde-format
+msgid "Path to your video device, eg. /dev/video0"
+msgstr "Emplacement de votre périphérique vidéo, par ex. /dev/video0"
+
+#: app/kmplayertvsource.cpp:153
+#, kde-format
+msgid "Scan..."
+msgstr "Analyse..."
+
+#: app/kmplayertvsource.cpp:167 lib/pref.cpp:62 lib/pref.cpp:106
+#: lib/pref.cpp:721
+#, kde-format
+msgid "General"
+msgstr "Général"
+
+#: app/kmplayertvsource.cpp:247
+#, kde-format
+msgid "tv device"
+msgstr "Périphérique TV"
+
+#: app/kmplayertvsource.cpp:333
+#, kde-format
+msgid "Television"
+msgstr "Télévision"
+
+#: app/kmplayertvsource.cpp:361 app/kmplayertvsource.cpp:518
+#: app/kmplayertvsource.cpp:569
+#, kde-format
+msgid "TV"
+msgstr "TV"
+
+#: app/kmplayertvsource.cpp:485
+#, kde-format
+msgid "TV: "
+msgstr "TV : "
+
+#: app/kmplayertvsource.cpp:596
+#, kde-format
+msgid "Device already present."
+msgstr "Périphérique déjà présent."
+
+#: app/kmplayertvsource.cpp:608
+#, kde-format
+msgid "No device found."
+msgstr "Impossible de trouver un périphérique."
+
+#: app/kmplayertvsource.cpp:631
+#, kde-format
+msgid "TVScanner"
+msgstr "TVScanner"
+
+#. i18n: ectx: Menu (file)
+#: app/kmplayerui.rc:5
+#, kde-format
+msgid "&File"
+msgstr "&Fichier"
+
+#. i18n: ectx: Menu (vdr)
+#: app/kmplayerui.rc:15
+#, kde-format
+msgid "VD&R"
+msgstr "VD&R"
+
+#. i18n: ectx: Menu (view)
+#: app/kmplayerui.rc:31 part/kmplayerpartui.rc:5
+#, kde-format
+msgid "&View"
+msgstr "&Affichage"
+
+#. i18n: ectx: Menu (settings)
+#: app/kmplayerui.rc:51
+#, kde-format
+msgid "&Settings"
+msgstr "&Configuration"
+
+#: app/kmplayervdr.cpp:73
+#, kde-format
+msgid "XVideo port"
+msgstr "Port XVideo"
+
+#: app/kmplayervdr.cpp:75
+#, kde-format
+msgid ""
+"Port base of the X Video extension.\n"
+"If left to default (0), the first available port will be used. However if "
+"you have multiple XVideo instances, you might have to provide the port to "
+"use here.\n"
+"See the output from 'xvinfo' for more information"
+msgstr ""
+"Port de l'extension X Video.\n"
+"Si elle est laissée par défaut (0), le premier port disponible sera utilisé. "
+"Cependant si vous avez plusieurs instances XVideo, vous pourriez avoir à "
+"indiquer le port à utiliser ici.\n"
+"Consultez la sortie de « xvinfo » pour plus d'informations"
+
+#: app/kmplayervdr.cpp:76
+#, kde-format
+msgid "Communication port:"
+msgstr "Port de communication :"
+
+#: app/kmplayervdr.cpp:79
+#, kde-format
+msgid ""
+"Communication port with VDR. Default is port 2001.\n"
+"If you use another port, with the '-p' option of 'vdr', you must set it here "
+"too."
+msgstr ""
+"Le port de communication avec VDR. La valeur par défaut est le port 2001.\n"
+"Si vous utilisez un autre port, avec l'option « -p » de « vdr », vous devez "
+"la définir ici aussi."
+
+#: app/kmplayervdr.cpp:83
+#, kde-format
+msgid "Scale"
+msgstr "Échelle"
+
+#: app/kmplayervdr.cpp:84
+#, kde-format
+msgid "4:3"
+msgstr "4:3"
+
+#: app/kmplayervdr.cpp:85
+#, kde-format
+msgid "16:9"
+msgstr "16:9"
+
+#: app/kmplayervdr.cpp:86
+#, kde-format
+msgid "Aspects to use when viewing VDR"
+msgstr "Aspects à utiliser pour visionner un VDR"
+
+#: app/kmplayervdr.cpp:157 app/kmplayervdr.cpp:706
+#, kde-format
+msgid "VDR"
+msgstr "VDR"
+
+#: app/kmplayervdr.cpp:222
+#, kde-format
+msgid "Dis&connect"
+msgstr "Dé&connecter"
+
+#: app/kmplayervdr.cpp:223
+#, kde-format
+msgid "VDR Key Up"
+msgstr "Touche haut VDR"
+
+#: app/kmplayervdr.cpp:224
+#, kde-format
+msgid "VDR Key Down"
+msgstr "Touche bas VDR"
+
+#: app/kmplayervdr.cpp:225
+#, kde-format
+msgid "VDR Key Back"
+msgstr "Touche Retour VDR"
+
+#: app/kmplayervdr.cpp:226
+#, kde-format
+msgid "VDR Key Ok"
+msgstr "Touche Ok VDR"
+
+#: app/kmplayervdr.cpp:227
+#, kde-format
+msgid "VDR Key Setup"
+msgstr "Touche de configuration VDR"
+
+#: app/kmplayervdr.cpp:228
+#, kde-format
+msgid "VDR Key Channels"
+msgstr "Touche canaux VDR"
+
+#: app/kmplayervdr.cpp:229
+#, kde-format
+msgid "VDR Key Menu"
+msgstr "Touche menu VDR"
+
+#: app/kmplayervdr.cpp:230
+#, kde-format
+msgid "VDR Key Red"
+msgstr "Touche rouge VDR"
+
+#: app/kmplayervdr.cpp:231
+#, kde-format
+msgid "VDR Key Green"
+msgstr "Touche verte VDR"
+
+#: app/kmplayervdr.cpp:232
+#, kde-format
+msgid "VDR Key Yellow"
+msgstr "Touche jaune VDR"
+
+#: app/kmplayervdr.cpp:233
+#, kde-format
+msgid "VDR Key Blue"
+msgstr "Touche bleue VDR"
+
+#: app/kmplayervdr.cpp:236
+#, kde-format
+msgid "VDR Key 0"
+msgstr "Touche 0 VDR"
+
+#: app/kmplayervdr.cpp:237
+#, kde-format
+msgid "VDR Key 1"
+msgstr "Touche 1 VDR"
+
+#: app/kmplayervdr.cpp:238
+#, kde-format
+msgid "VDR Key 2"
+msgstr "Touche 2 VDR"
+
+#: app/kmplayervdr.cpp:239
+#, kde-format
+msgid "VDR Key 3"
+msgstr "Touche 3 VDR"
+
+#: app/kmplayervdr.cpp:240
+#, kde-format
+msgid "VDR Key 4"
+msgstr "Touche 4 VDR"
+
+#: app/kmplayervdr.cpp:241
+#, kde-format
+msgid "VDR Key 5"
+msgstr "Touche 5 VDR"
+
+#: app/kmplayervdr.cpp:242
+#, kde-format
+msgid "VDR Key 6"
+msgstr "Touche 6 VDR"
+
+#: app/kmplayervdr.cpp:243
+#, kde-format
+msgid "VDR Key 7"
+msgstr "Touche 7 VDR"
+
+#: app/kmplayervdr.cpp:244
+#, kde-format
+msgid "VDR Key 8"
+msgstr "Touche 8 VDR"
+
+#: app/kmplayervdr.cpp:245
+#, kde-format
+msgid "VDR Key 9"
+msgstr "Touche 9 VDR"
+
+#: app/kmplayervdr.cpp:267
+#, kde-format
+msgid "&Connect"
+msgstr "&Se connecter"
+
+#: app/kmplayervdr.cpp:430
+#, kde-format
+msgid "Host not found"
+msgstr "Impossible de trouver l'hôte"
+
+#: app/kmplayervdr.cpp:432
+#, kde-format
+msgid "Connection refused"
+msgstr "Connexion refusée"
+
+#: app/kmplayervdr.cpp:473
+#, kde-format
+msgid "Custom VDR command"
+msgstr "Commande VDR personnalisée"
+
+#: app/kmplayervdr.cpp:473
+#, kde-format
+msgid ""
+"You can pass commands to VDR.\n"
+"Enter 'HELP' to see a list of available commands.\n"
+"You can see VDR response in the console window.\n"
+"\n"
+"VDR Command:"
+msgstr ""
+"Vous pouvez transmettre des commande au VDR.\n"
+"Saisissez « HELP » pour voir une liste des commandes disponibles.\n"
+"Vous pouvez voir la réponse de VDR dans la fenêtre de la console.\n"
+"\n"
+"Commande VDR :"
+
+#: app/kmplayervdr.cpp:671
+#, kde-format
+msgid "Port "
+msgstr "Port "
+
+#: app/kmplayervdr.cpp:725
+#, kde-format
+msgid "X&Video"
+msgstr "X&Video"
+
+#: app/main.cpp:36 part/kmplayer_part.cpp:102
+#, kde-format
+msgid "KMPlayer"
+msgstr "KMPlayer"
+
+#: app/main.cpp:38
+#, kde-format
+msgid "Media player"
+msgstr "Lecteur multimédia"
+
+#: app/main.cpp:39
+#, kde-format
+msgid "(c) 2002-2016, Koos Vriezen"
+msgstr "(c) 2002-2016, Koos Vriezen"
+
+#: app/main.cpp:40
+#, kde-format
+msgid "Koos Vriezen"
+msgstr "Koos Vriezen"
+
+#: app/main.cpp:40
+#, kde-format
+msgid "Maintainer"
+msgstr "Mainteneur"
+
+#: app/main.cpp:50
+#, kde-format
+msgid "file to open"
+msgstr "fichier à ouvrir"
+
+#: app/main.cpp:50
+#, kde-format
+msgid "+[File]"
+msgstr "+[Fichier]"
+
+#: lib/kmplayerconfig.cpp:46 lib/kmplayerconfig.cpp:62
+#, kde-format
+msgid "Auto"
+msgstr "Auto"
+
+#: lib/kmplayerconfig.cpp:47
+#, kde-format
+msgid "Open Sound System"
+msgstr "Ouvrir le système de son"
+
+#: lib/kmplayerconfig.cpp:48
+#, kde-format
+msgid "Simple DirectMedia Layer"
+msgstr "Couche DirectMedia simple (SDL)"
+
+#: lib/kmplayerconfig.cpp:49
+#, kde-format
+msgid "Advanced Linux Sound Architecture"
+msgstr "Architecture son avancée pour Linux (ALSA)"
+
+#: lib/kmplayerconfig.cpp:50
+#, kde-format
+msgid "Analog Real-Time Synthesizer"
+msgstr "Synthétiseur analogique en temps réel (aRts)"
+
+#: lib/kmplayerconfig.cpp:51
+#, kde-format
+msgid "JACK Audio Connection Kit"
+msgstr "Lit de connexion audio JACK"
+
+#: lib/kmplayerconfig.cpp:52
+#, kde-format
+msgid "OpenAL"
+msgstr "OpenAL"
+
+#: lib/kmplayerconfig.cpp:53
+#, kde-format
+msgid "Enlightened Sound Daemon"
+msgstr "Démon de son éclairé (ESD)"
+
+#: lib/kmplayerconfig.cpp:54
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.5"
+msgstr "Architecture son avancée pour Linux v0.5"
+
+#: lib/kmplayerconfig.cpp:55
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.9"
+msgstr "Architecture son avancée pour Linux v0.9"
+
+#: lib/kmplayerconfig.cpp:56
+#, kde-format
+msgid "Use back-end defaults"
+msgstr "Utiliser les paramètres par défaut du programme principal"
+
+#: lib/kmplayerconfig.cpp:57
+#, kde-format
+msgid "PulseAudio"
+msgstr "PulseAudio"
+
+#: lib/kmplayerconfig.cpp:63
+#, kde-format
+msgid "X11Shm"
+msgstr "X11Shm"
+
+#: lib/kmplayerconfig.cpp:64
+#, kde-format
+msgid "XVidix"
+msgstr "XVidix"
+
+#: lib/kmplayerconfig.cpp:65
+#, kde-format
+msgid "XvMC"
+msgstr "XvMC"
+
+#: lib/kmplayerconfig.cpp:66
+#, kde-format
+msgid "SDL"
+msgstr "SDL"
+
+#: lib/kmplayerconfig.cpp:67
+#, kde-format
+msgid "OpenGL"
+msgstr "OpenGL"
+
+#: lib/kmplayerconfig.cpp:68
+#, kde-format
+msgid "OpenGL MT"
+msgstr "OpenGL MT"
+
+#: lib/kmplayerconfig.cpp:69
+#, kde-format
+msgid "XVideo"
+msgstr "XVideo"
+
+#: lib/kmplayerconfig.cpp:70
+#, kde-format
+msgid "Video Decode and Presentation API for Unix"
+msgstr "VDPAU (Video Decode and Presentation API for Unix)"
+
+#: lib/kmplayerconfig.cpp:81
+#, kde-format
+msgid "Playlist background"
+msgstr "Fond de la liste de lecture"
+
+#: lib/kmplayerconfig.cpp:85
+#, kde-format
+msgid "Playlist foreground"
+msgstr "Premier plan de la liste de lecture"
+
+#: lib/kmplayerconfig.cpp:89
+#, kde-format
+msgid "Console background"
+msgstr "Fond de la console"
+
+#: lib/kmplayerconfig.cpp:90
+#, kde-format
+msgid "Playlist active item"
+msgstr "Élément actif de la liste de lecture"
+
+#: lib/kmplayerconfig.cpp:96
+#, kde-format
+msgid "Console foreground"
+msgstr "Premier plan de la console"
+
+#: lib/kmplayerconfig.cpp:99
+#, kde-format
+msgid "Video background"
+msgstr "Fond de la vidéo"
+
+#: lib/kmplayerconfig.cpp:102
+#, kde-format
+msgid "Viewing area background"
+msgstr "Fond de la zone de visionnement"
+
+#: lib/kmplayerconfig.cpp:105
+#, kde-format
+msgid "Info window background"
+msgstr "Fond de la fenêtre d'infos"
+
+#: lib/kmplayerconfig.cpp:109
+#, kde-format
+msgid "Info window foreground"
+msgstr "Premier plan de la fenêtre d'infos"
+
+#: lib/kmplayerconfig.cpp:113 lib/kmplayerview.cpp:152
+#, kde-format
+msgid "Playlist"
+msgstr "Liste de lecture"
+
+#: lib/kmplayerconfig.cpp:117
+#, kde-format
+msgid "Info window"
+msgstr "Fenêtre d'infos"
+
+#: lib/kmplayerconfig.cpp:644
+#, kde-format
+msgid "File %1 does not exist."
+msgstr "Le fichier %1 n'existe pas."
+
+#: lib/kmplayerconfig.cpp:655
+#, kde-format
+msgid "Sub title file %1 does not exist."
+msgstr "Le fichier de sous-titre %1 n'existe pas."
+
+#: lib/kmplayercontrolpanel.cpp:297 lib/kmplayercontrolpanel.cpp:311
+#, kde-format
+msgid "Volume is "
+msgstr "Le volume est "
+
+#: lib/kmplayercontrolpanel.cpp:396
+#, kde-format
+msgid "&Play with"
+msgstr "&Lire avec"
+
+#: lib/kmplayercontrolpanel.cpp:399 lib/kmplayerview.cpp:322
+#, kde-format
+msgid "Con&sole"
+msgstr "Con&sole"
+
+#: lib/kmplayercontrolpanel.cpp:401
+#, kde-format
+msgid "Play&list"
+msgstr "Liste de &lecture"
+
+#: lib/kmplayercontrolpanel.cpp:403
+#, kde-format
+msgid "&Zoom"
+msgstr "&Zoom"
+
+#: lib/kmplayercontrolpanel.cpp:406
+#, kde-format
+msgid "50%"
+msgstr "50 %"
+
+#: lib/kmplayercontrolpanel.cpp:407
+#, kde-format
+msgid "100%"
+msgstr "100 %"
+
+#: lib/kmplayercontrolpanel.cpp:408
+#, kde-format
+msgid "150%"
+msgstr "150 %"
+
+#: lib/kmplayercontrolpanel.cpp:410
+#, kde-format
+msgid "&Full Screen"
+msgstr "&Plein écran"
+
+#: lib/kmplayercontrolpanel.cpp:415
+#, kde-format
+msgid "Co&lors"
+msgstr "Cou&leurs"
+
+#: lib/kmplayercontrolpanel.cpp:440 lib/kmplayercontrolpanel.cpp:442
+#, kde-format
+msgid "&Audio languages"
+msgstr "Langues &audio"
+
+#: lib/kmplayercontrolpanel.cpp:443
+#, kde-format
+msgid "&Subtitles"
+msgstr "&Sous-titres"
+
+#: lib/kmplayercontrolpanel.cpp:451
+#, kde-format
+msgid "Scale:"
+msgstr "Échelle :"
+
+#: lib/kmplayercontrolpanel.cpp:463
+#, kde-format
+msgid "&Configure KMPlayer..."
+msgstr "&Configurer KMPlayer..."
+
+#: lib/kmplayerpartbase.cpp:1432
+#, kde-format
+msgid "Unknown"
+msgstr "Inconnu"
+
+#: lib/kmplayerpartbase.cpp:1443 lib/kmplayerpartbase.cpp:1512 lib/pref.cpp:77
+#, kde-format
+msgid "URL"
+msgstr "URL"
+
+#: lib/kmplayerpartbase.cpp:1540 lib/kmplayerpartbase.cpp:1543
+#: lib/kmplayerpartbase.cpp:1544
+#, kde-format
+msgid "URL - "
+msgstr "URL - "
+
+#: lib/kmplayerprocess.cpp:134
+#, kde-format
+msgid "Failed to end player process."
+msgstr "Impossible de mettre fin au processus player."
+
+#: lib/kmplayerprocess.cpp:474
+#, kde-format
+msgid "&MPlayer"
+msgstr "&MPlayer"
+
+#: lib/kmplayerprocess.cpp:991
+#, kde-format
+msgid "Size pattern"
+msgstr "Motif de taille"
+
+#: lib/kmplayerprocess.cpp:992
+#, kde-format
+msgid "Cache pattern"
+msgstr "Motif de cache"
+
+#: lib/kmplayerprocess.cpp:993
+#, kde-format
+msgid "Position pattern"
+msgstr "Motif de position"
+
+#: lib/kmplayerprocess.cpp:994
+#, kde-format
+msgid "Index pattern"
+msgstr "Motif d'index"
+
+#: lib/kmplayerprocess.cpp:995
+#, kde-format
+msgid "Reference URL pattern"
+msgstr "Motif d'URL de référence"
+
+#: lib/kmplayerprocess.cpp:996
+#, kde-format
+msgid "Reference pattern"
+msgstr "Motif de référence"
+
+#: lib/kmplayerprocess.cpp:997
+#, kde-format
+msgid "Start pattern"
+msgstr "Motif de démarrage"
+
+#: lib/kmplayerprocess.cpp:998
+#, kde-format
+msgid "VCD track pattern"
+msgstr "Motif de pistes pour les VCD"
+
+#: lib/kmplayerprocess.cpp:999
+#, kde-format
+msgid "Audio CD tracks pattern"
+msgstr "Motif de pistes pour les CD audio"
+
+#: lib/kmplayerprocess.cpp:1020
+#, kde-format
+msgid "MPlayer command:"
+msgstr "Commande MPlayer :"
+
+#: lib/kmplayerprocess.cpp:1022
+#, kde-format
+msgid "Additional command line arguments:"
+msgstr "Arguments de ligne de commande supplémentaires :"
+
+#: lib/kmplayerprocess.cpp:1024
+#, kde-format
+msgid "Cache size:"
+msgstr "Taille du cache :"
+
+#: lib/kmplayerprocess.cpp:1024
+#, kde-format
+msgid "kB"
+msgstr "ko"
+
+#: lib/kmplayerprocess.cpp:1029
+#, kde-format
+msgid "Build new index when possible"
+msgstr "Construire un nouvel index lorsque c'est possible"
+
+#: lib/kmplayerprocess.cpp:1031
+#, kde-format
+msgid "Allows seeking in indexed files (AVIs)"
+msgstr "Permet d'aller à une position dans les fichiers indexés (AVI)"
+
+#: lib/kmplayerprocess.cpp:1097 lib/pref.cpp:58 lib/pref.cpp:69
+#, kde-format
+msgid "General Options"
+msgstr "Options générales"
+
+#: lib/kmplayerprocess.cpp:1099
+#, kde-format
+msgid "MPlayer"
+msgstr "MPlayer"
+
+#: lib/kmplayerprocess.cpp:1115
+#, kde-format
+msgid "M&Encoder"
+msgstr "M&Encoder"
+
+#: lib/kmplayerprocess.cpp:1180
+#, kde-format
+msgid "&MPlayerDumpstream"
+msgstr "&MPlayerDumpstream"
+
+#: lib/kmplayerprocess.cpp:1445
+#, kde-format
+msgid "&Phonon"
+msgstr "&Phonon"
+
+#: lib/kmplayerprocess.cpp:1593 lib/pref.cpp:659
+#, kde-format
+msgid "&FFMpeg"
+msgstr "&FFMpeg"
+
+#: lib/kmplayerprocess.cpp:1692
+#, kde-format
+msgid "&Ice Ape"
+msgstr "&Ice Ape"
+
+#: lib/kmplayerview.cpp:157
+#, kde-format
+msgid "Information"
+msgstr "Informations"
+
+#: lib/mediaobject.cpp:169
+#, kde-format
+msgid "Not Running"
+msgstr "Non actif"
+
+#: lib/mediaobject.cpp:169
+#, kde-format
+msgid "Buffering"
+msgstr "Mise en tampon"
+
+#: lib/mediaobject.cpp:169 lib/pref.cpp:224
+#, kde-format
+msgid "Playing"
+msgstr "Lecture"
+
+#: lib/mediaobject.cpp:169
+#, kde-format
+msgid "Paused"
+msgstr "Pause"
+
+#: lib/mediaobject.cpp:191
+#, kde-format
+msgid "Player %1 %2"
+msgstr "Lecteur %1 %2"
+
+#: lib/playlistview.cpp:125
+#, kde-format
+msgid "Edit &item"
+msgstr "Modifier un &élément"
+
+#: lib/playlistview.cpp:240
+#, kde-format
+msgid "&Copy to Clipboard"
+msgstr "&Copier dans le presse-papiers"
+
+#: lib/playlistview.cpp:247
+#, kde-format
+msgid "&Add Bookmark"
+msgstr "&Ajouter un signet"
+
+#: lib/playlistview.cpp:250
+#, kde-format
+msgid "&Show all"
+msgstr "&Tout afficher"
+
+#: lib/playmodel.cpp:350
+#, kde-format
+msgid "unnamed"
+msgstr "sans nom"
+
+#: lib/playmodel.cpp:350
+#, kde-format
+msgid "none"
+msgstr "aucun"
+
+#: lib/playmodel.cpp:368
+#, kde-format
+msgid "[attributes]"
+msgstr "[attributs]"
+
+#: lib/pref.cpp:52
+#, kde-format
+msgid "Preferences"
+msgstr "Préférences"
+
+#: lib/pref.cpp:64
+#, kde-format
+msgid "Looks"
+msgstr "Apparence"
+
+#: lib/pref.cpp:67
+#, kde-format
+msgid "Output"
+msgstr "Sortie"
+
+#: lib/pref.cpp:83 lib/pref.cpp:109
+#, kde-format
+msgid "Recording"
+msgstr "Enregistrement"
+
+#: lib/pref.cpp:89
+#, kde-format
+msgid "MEncoder"
+msgstr "MEncoder"
+
+#: lib/pref.cpp:93
+#, kde-format
+msgid "FFMpeg"
+msgstr "FFMpeg"
+
+#: lib/pref.cpp:113
+#, kde-format
+msgid "Output Plugins"
+msgstr "Modules externes de sortie"
+
+#: lib/pref.cpp:117 lib/pref.cpp:119
+#, kde-format
+msgid "Postprocessing"
+msgstr "Post-traitement"
+
+#: lib/pref.cpp:201
+#, kde-format
+msgid "Window"
+msgstr "Fenêtre"
+
+#: lib/pref.cpp:204
+#, kde-format
+msgid "Keep size ratio"
+msgstr "Conserver le rapport de taille"
+
+#: lib/pref.cpp:205
+#, kde-format
+msgid ""
+"When checked, the movie will keep its aspect ratio\n"
+"when the window is resized."
+msgstr ""
+"Lorsque cette option est cochée, le film conserve son rapport hauteur/"
+"largeur\n"
+"lors du redimensionnement de la fenêtre."
+
+#: lib/pref.cpp:206
+#, kde-format
+msgid "Dock in system tray"
+msgstr "Intégrer dans la boîte à miniatures"
+
+#: lib/pref.cpp:207
+#, kde-format
+msgid ""
+"When checked, an icon for KMPlayer will be added to the system tray.\n"
+"When clicked, it will hide KMPlayer's main window and remove KMPlayer's task "
+"bar button."
+msgstr ""
+"Lorsque cette option est cochée, une icône de KMPlayer est ajoutée dans la "
+"boîte à miniatures.\n"
+"Cliquer dessus cachera la fenêtre principale de KMPlayer et supprimera le "
+"bouton de barre de tâches de KMPlayer."
+
+#: lib/pref.cpp:208
+#, kde-format
+msgid "Auto resize to video sizes"
+msgstr "Redimensionner automatiquement à la taille de la vidéo"
+
+#: lib/pref.cpp:209
+#, kde-format
+msgid ""
+"When checked, KMPlayer will resize to movie sizes\n"
+"when video starts."
+msgstr ""
+"Lorsque cette option est cochée, KMPlayer se redimensionne à la taille du "
+"film\n"
+"quand la vidéo démarre."
+
+#: lib/pref.cpp:213
+#, kde-format
+msgid "Remember window size on exit"
+msgstr "Mémoriser la taille de la fermeture lors de la fermeture"
+
+#: lib/pref.cpp:214
+#, kde-format
+msgid "Always start with fixed size"
+msgstr "Toujours démarrer avec une taille fixe"
+
+#: lib/pref.cpp:225
+#, kde-format
+msgid "Loop"
+msgstr "En boucle"
+
+#: lib/pref.cpp:226
+#, kde-format
+msgid "Makes current movie loop"
+msgstr "Lit en boucle le film actuel"
+
+#: lib/pref.cpp:227
+#, kde-format
+msgid "Allow frame drops"
+msgstr "Autoriser les sauts d'images"
+
+#: lib/pref.cpp:228
+#, kde-format
+msgid "Allow dropping frames for better audio and video synchronization"
+msgstr ""
+"Autorise les sauts d'images pour une meilleure synchronisation audio et vidéo"
+
+#: lib/pref.cpp:229
+#, kde-format
+msgid "Auto set volume on start"
+msgstr "Définir automatiquement le volume au démarrage"
+
+#: lib/pref.cpp:230
+#, kde-format
+msgid ""
+"When a new source is selected, the volume will be set according the volume "
+"control"
+msgstr ""
+"Lorsqu'une nouvelle source est choisie, le volume sera réglé en fonction du "
+"contrôle du volume"
+
+#: lib/pref.cpp:231
+#, kde-format
+msgid "Auto set colors on start"
+msgstr "Définir automatiquement les couleurs au démarrage"
+
+#: lib/pref.cpp:232
+#, kde-format
+msgid ""
+"When a movie starts, the colors will be set according the sliders for colors"
+msgstr ""
+"Lorsqu'un film démarre, les couleurs seront réglées en fonction des curseurs "
+"de couleurs"
+
+#: lib/pref.cpp:240
+#, kde-format
+msgid "Control Panel"
+msgstr "Tableau de bord"
+
+#: lib/pref.cpp:241
+#, kde-format
+msgid "Show config button"
+msgstr "Afficher le bouton Configuration"
+
+#: lib/pref.cpp:242
+#, kde-format
+msgid "Add a button that will popup a config menu"
+msgstr "Ajoute un bouton qui fera apparaître un menu de configuration"
+
+#: lib/pref.cpp:243
+#, kde-format
+msgid "Show playlist button"
+msgstr "Afficher le bouton Liste de lecture"
+
+#: lib/pref.cpp:244
+#, kde-format
+msgid "Add a playlist button to the control buttons"
+msgstr "Ajoute un bouton de liste de lecture aux boutons de contrôles"
+
+#: lib/pref.cpp:245
+#, kde-format
+msgid "Show record button"
+msgstr "Afficher un bouton Enregistrement"
+
+#: lib/pref.cpp:246
+#, kde-format
+msgid "Add a record button to the control buttons"
+msgstr "Ajoute un bouton d'enregistrement aux boutons de contrôles"
+
+#: lib/pref.cpp:247
+#, kde-format
+msgid "Show broadcast button"
+msgstr "Afficher un bouton Diffusion"
+
+#: lib/pref.cpp:248
+#, kde-format
+msgid "Add a broadcast button to the control buttons"
+msgstr "Affiche un bouton de diffusion aux boutons de contrôles"
+
+#: lib/pref.cpp:255
+#, kde-format
+msgid "Forward/backward seek time:"
+msgstr "Temps de positionnement d'avance/retour :"
+
+#: lib/pref.cpp:261 lib/pref.cpp:473
+#, kde-format
+msgid " second"
+msgid_plural " seconds"
+msgstr[0] " seconde"
+msgstr[1] " secondes"
+
+#: lib/pref.cpp:281
+#, kde-format
+msgid "Colors"
+msgstr "Couleurs"
+
+#: lib/pref.cpp:297
+#, kde-format
+msgid "Fonts"
+msgstr "Polices"
+
+#: lib/pref.cpp:304
+#, kde-format
+msgid "AaBbCc"
+msgstr "AaBbCc"
+
+#: lib/pref.cpp:354
+#, kde-format
+msgid "Location:"
+msgstr "Emplacement :"
+
+#: lib/pref.cpp:359
+#, kde-format
+msgid "Location of the playable item"
+msgstr "Emplacement de l'élément à lire"
+
+#: lib/pref.cpp:362
+#, kde-format
+msgid "Sub title:"
+msgstr "Sous-titre :"
+
+#: lib/pref.cpp:367
+#, kde-format
+msgid "Optional location of a file containing the subtitles of the URL above"
+msgstr ""
+"Emplacement optionnel d'un fichier contenant les sous-titres de l'URL ci-"
+"dessus"
+
+#: lib/pref.cpp:370
+#, kde-format
+msgid "Load on demand"
+msgstr "Charger à la demande"
+
+#: lib/pref.cpp:371
+#, kde-format
+msgid ""
+"When enabled, all embedded movies will start with a image that needs to be "
+"clicked to start the video playback"
+msgstr ""
+"Lorsque cette case est cochée, tous les films chargés débuteront avec une "
+"image sur laquelle il faut cliquer pour démarrer la lecture de la vidéo"
+
+#: lib/pref.cpp:372
+#, kde-format
+msgid "Grab image when 'Click to Play' detected"
+msgstr "Capturer une image lorsque l'option « Cliquer pour lire » est détectée"
+
+#: lib/pref.cpp:373
+#, kde-format
+msgid ""
+"When enabled and a HTML object has a HREF attribute, grab and save an image "
+"of the first frame of initial link. This image will be shown instead of a "
+"default picture."
+msgstr ""
+"Lorsque cette option est cochée et qu'un objet HTML contient un attribut "
+"« HREF », vous pouvez effectuer une capture de la première image ou du "
+"premier lien et l'enregistrer. Cette image sera affichée à la place d'une "
+"image par défaut."
+
+#: lib/pref.cpp:380
+#, kde-format
+msgid "Use movie player:"
+msgstr "Utiliser un lecteur multimédia :"
+
+#: lib/pref.cpp:386
+#, kde-format
+msgid "Network bandwidth"
+msgstr "Bande passante du réseau"
+
+#: lib/pref.cpp:389
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets how much bandwidth you would prefer to allocate to video."
+msgstr ""
+"Parfois il est possible de choisir entre divers flux donnés dans un débit "
+"particulier.\n"
+"Cette option définit la quantité de bande passante que vous préférez allouer "
+"à la vidéo."
+
+#: lib/pref.cpp:392
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets the maximum bandwidth you have available for video."
+msgstr ""
+"Parfois il est possible de choisir entre divers flux donnés dans un débit "
+"particulier.\n"
+"Cette option définit la bande passante maximale que vous rendrez disponible "
+"pour la vidéo."
+
+#: lib/pref.cpp:394
+#, kde-format
+msgid "Preferred bitrate:"
+msgstr "Débit préféré :"
+
+#: lib/pref.cpp:396 lib/pref.cpp:399
+#, kde-format
+msgid "kbit/s"
+msgstr "kbit/s"
+
+#: lib/pref.cpp:397
+#, kde-format
+msgid "Maximum bitrate:"
+msgstr "Débit maximal :"
+
+#: lib/pref.cpp:439
+#, kde-format
+msgid "Output file:"
+msgstr "Fichier de sortie :"
+
+#: lib/pref.cpp:444
+#, kde-format
+msgid "Current source: "
+msgstr "Source actuelle : "
+
+#: lib/pref.cpp:446
+#, kde-format
+msgid "Recorder"
+msgstr "Enregistreur"
+
+#: lib/pref.cpp:458
+#, kde-format
+msgid "Auto Playback"
+msgstr "Lecture automatique"
+
+#: lib/pref.cpp:461
+#, kde-format
+msgid "&No"
+msgstr "&Non"
+
+#: lib/pref.cpp:464
+#, kde-format
+msgid "&When recording finished"
+msgstr "&Quand l'enregistrement est terminé"
+
+#: lib/pref.cpp:467
+#, kde-format
+msgid "A&fter"
+msgstr "A&près"
+
+#: lib/pref.cpp:476
+#, kde-format
+msgid "Time:"
+msgstr "Temps :"
+
+#: lib/pref.cpp:483 lib/pref.cpp:517 lib/pref.cpp:525
+#, kde-format
+msgid "Start &Recording"
+msgstr "Démarrer l'en&registrement"
+
+#: lib/pref.cpp:516
+#, kde-format
+msgid "Stop &Recording"
+msgstr "Arrêter l'e&nregistrement"
+
+#: lib/pref.cpp:537
+#, kde-format
+msgid "Current Source: "
+msgstr "Source actuelle : "
+
+#: lib/pref.cpp:590
+#, kde-format
+msgid "Format"
+msgstr "Format"
+
+#: lib/pref.cpp:593
+#, kde-format
+msgid "Same as source"
+msgstr "Identique à la source"
+
+#: lib/pref.cpp:596 lib/pref.cpp:708
+#, kde-format
+msgid "Custom"
+msgstr "Personnalisé"
+
+#: lib/pref.cpp:600
+#, kde-format
+msgid "Mencoder arguments:"
+msgstr "Arguments Mencoder :"
+
+#: lib/pref.cpp:626
+#, kde-format
+msgid "&MEncoder"
+msgstr "&MEncoder"
+
+#: lib/pref.cpp:634
+#, kde-format
+msgid "MPlayer -&dumpstream"
+msgstr "MPlayer -&dumpstream"
+
+#: lib/pref.cpp:641
+#, kde-format
+msgid "FFMpeg arguments:"
+msgstr "Arguments FFMpeg :"
+
+#: lib/pref.cpp:668
+#, kde-format
+msgid "&Xine"
+msgstr "&Xine"
+
+#: lib/pref.cpp:678
+#, kde-format
+msgid ""
+"Sets video driver. Recommended is XVideo, or, if it is not supported, X11, "
+"which is slower."
+msgstr ""
+"Définit le pilote vidéo. XVideo est le choix recommandé ou, s'il n'est pas "
+"pris en charge, X11, qui est plus lent."
+
+#: lib/pref.cpp:696
+#, kde-format
+msgid "Enable use of postprocessing filters"
+msgstr "Activer l'utilisation de filtres de post-traitement"
+
+#: lib/pref.cpp:698
+#, kde-format
+msgid "Disable use of postprocessing when watching TV/DVD"
+msgstr ""
+"Désactiver l'utilisation du post-traitement lors de la lecture d'un DVD ou "
+"de la TV"
+
+#: lib/pref.cpp:707
+#, kde-format
+msgid "Default"
+msgstr "Par défaut"
+
+#: lib/pref.cpp:709
+#, kde-format
+msgid "Fast"
+msgstr "Rapide"
+
+#: lib/pref.cpp:736
+#, kde-format
+msgid "Horizontal deblocking"
+msgstr "Déblocage horizontal"
+
+#: lib/pref.cpp:737 lib/pref.cpp:755 lib/pref.cpp:773
+#, kde-format
+msgid "Auto quality"
+msgstr "Qualité automatique"
+
+#: lib/pref.cpp:739 lib/pref.cpp:757 lib/pref.cpp:775
+#, kde-format
+msgid "Chrominance filtering"
+msgstr "Filtrage de la chrominance"
+
+#: lib/pref.cpp:754
+#, kde-format
+msgid "Vertical deblocking"
+msgstr "Déblocage vertical"
+
+#: lib/pref.cpp:772
+#, kde-format
+msgid "Dering filter"
+msgstr "Filtre Dering"
+
+#: lib/pref.cpp:790
+#, kde-format
+msgid "Auto brightness/contrast"
+msgstr "Luminosité/contraste automatique"
+
+#: lib/pref.cpp:791
+#, kde-format
+msgid "Stretch luminance to full range"
+msgstr "Étirer la luminance à l'intervalle entier"
+
+#: lib/pref.cpp:799
+#, kde-format
+msgid "Temporal noise reducer"
+msgstr "Réducteur de bruit temporel"
+
+#: lib/pref.cpp:821
+#, kde-format
+msgid "Custom Preset"
+msgstr "Préréglage personnalisé"
+
+#: lib/pref.cpp:827
+#, kde-format
+msgid "Linear blend deinterlacer"
+msgstr "Désentrelaceur à mélange linéaire"
+
+#: lib/pref.cpp:828
+#, kde-format
+msgid "Linear interpolating deinterlacer"
+msgstr "Désentrelaceur à interpolation linéaire"
+
+#: lib/pref.cpp:829
+#, kde-format
+msgid "Cubic interpolating deinterlacer"
+msgstr "Désentrelaceur à interpolation cubique"
+
+#: lib/pref.cpp:830
+#, kde-format
+msgid "Median deinterlacer"
+msgstr "Désentrelaceur médian"
+
+#: lib/pref.cpp:831
+#, kde-format
+msgid "FFmpeg deinterlacer"
+msgstr "Désentrelaceur FFmpeg"
+
+#: lib/pref.cpp:839
+#, kde-format
+msgid "Deinterlacing"
+msgstr "Désentrelacement"
+
+#: lib/pref.cpp:864
+#, kde-format
+msgid "Enable mplayer's default postprocessing filters"
+msgstr "Activer les filtres de post-traitement par défaut de mplayer"
+
+#: lib/pref.cpp:865
+#, kde-format
+msgid "Enable custom postprocessing filters (See: Custom preset -tab)"
+msgstr ""
+"Activer les filtres de post-traitement personnalisés (voir : onglet "
+"Préréglage personnalisé -tab)"
+
+#: lib/pref.cpp:866
+#, kde-format
+msgid "Enable mplayer's fast postprocessing filters"
+msgstr "Activer les filtres de post-traitement rapide de mplayer"
+
+#: lib/pref.cpp:867 lib/pref.cpp:868 lib/pref.cpp:869
+#, kde-format
+msgid "Filter is used if there is enough CPU"
+msgstr "Le filtre est utilisé si le processeur est suffisant"
+
+#. i18n( "Strength of the noise reducer" ) );
+#: lib/pref.cpp:871
+#, kde-format
+msgid "Stretches luminance to full range (0..255)"
+msgstr "Étire la luminance à l'intervalle entier (0..255)"
+
+#: lib/pref.cpp:877
+#, kde-format
+msgid ""
+"You are about to have all your settings overwritten with defaults.\n"
+"Please confirm.\n"
+msgstr ""
+"Vos paramètres sont sur le point d'être écrasés par les valeurs par défaut.\n"
+"Veuillez confirmer.\n"
+
+#: lib/pref.cpp:878
+#, kde-format
+msgid "Reset Settings?"
+msgstr "Réinitialiser les paramètres ?"
+
+#: part/kmplayer_part.cpp:103
+#, kde-format
+msgid "Embedded MPlayer by KDE"
+msgstr "MPlayer intégré par KDE"
+
+#: part/kmplayer_part.cpp:770
+#, no-c-format, kde-format
+msgid "% Cache fill"
+msgstr "Pourcentage de remplissage du cache"
+
+#: part/kmplayer_part.cpp:795
+#, kde-format
+msgid "KMPlayer: Playing"
+msgstr "KMPlayer : lecture"
+
+#: part/kmplayer_part.cpp:806
+#, kde-format
+msgid "KMPlayer: Stop Playing"
+msgstr "KMPlayer : arrêt de la lecture"
+
+#~ msgid "*|All Files"
+#~ msgstr "*|Tous les fichiers"
+
+#~ msgid " seconds"
+#~ msgstr " secondes"
+
+#~ msgid "plugin"
+#~ msgstr "module externe"
+
+#~ msgid "http://kmplayer.kde.org"
+#~ msgstr "http://kmplayer.kde.org"
+
+#~ msgid "&OK"
+#~ msgstr "&Ok"
+
+#~ msgid "&Cancel"
+#~ msgstr "&Annuler"
+
+#~ msgid "Exiting..."
+#~ msgstr "Fermeture..."
+
+#~ msgid "Url - "
+#~ msgstr "Url - "
