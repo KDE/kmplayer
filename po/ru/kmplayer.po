@@ -4,19 +4,20 @@
 # Artem Sereda <overmind88@gmail.com>, 2008, 2009.
 # Артём Середа <overmind88@gmail.com>, 2009.
 # Alexander Potashev <aspotashev@gmail.com>, 2010, 2012.
+# Olesya Gerasimenko <translation-team@basealt.ru>, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-07-06 00:45+0000\n"
-"PO-Revision-Date: 2012-08-12 23:33+0400\n"
-"Last-Translator: Alexander Potashev <aspotashev@gmail.com>\n"
-"Language-Team: Russian <kde-russian@lists.kde.ru>\n"
+"PO-Revision-Date: 2022-10-04 12:14+0300\n"
+"Last-Translator: Olesya Gerasimenko <translation-team@basealt.ru>\n"
+"Language-Team: Basealt Translation Team\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Lokalize 22.04.3\n"
 "Plural-Forms: nplurals=4; plural=n==1 ? 3 : n%10==1 && n%100!=11 ? 0 : n"
 "%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Environment: kde\n"
@@ -26,14 +27,16 @@ msgstr ""
 #, kde-format
 msgctxt "NAME OF TRANSLATORS"
 msgid "Your names"
-msgstr "Григорий Мохин,Николай Шафоростов,Калимуллин Артур,Артём Середа"
+msgstr ""
+"Григорий Мохин,Николай Шафоростов,Калимуллин Артур,Артём Середа,Олеся "
+"Герасименко"
 
 #, kde-format
 msgctxt "EMAIL OF TRANSLATORS"
 msgid "Your emails"
 msgstr ""
 "mok@kde.ru,shaforostoff@users.sourceforge.net,kalimullin@gmail.com,"
-"overmind88@gmail.com"
+"overmind88@gmail.com,translation-team@basealt.ru"
 
 #: app/kmplayer.cpp:134
 #, kde-format
@@ -86,10 +89,9 @@ msgid "Clear &History"
 msgstr "О&чистить журнал"
 
 #: app/kmplayer.cpp:187
-#, fuzzy, kde-format
-#| msgid "General Options"
+#, kde-format
 msgid "&Generators"
-msgstr "Общие параметры"
+msgstr "&Генераторы"
 
 #. i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
 #. new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
@@ -948,16 +950,14 @@ msgid "KMPlayer"
 msgstr "KMPlayer"
 
 #: app/main.cpp:38
-#, fuzzy, kde-format
-#| msgid "Media player."
+#, kde-format
 msgid "Media player"
 msgstr "Проигрыватель мультимедиа"
 
 #: app/main.cpp:39
-#, fuzzy, kde-format
-#| msgid "(c) 2002-2009, Koos Vriezen"
+#, kde-format
 msgid "(c) 2002-2016, Koos Vriezen"
-msgstr "© Koos Vriezen, 2002-2009"
+msgstr "© Koos Vriezen, 2002-2016"
 
 #: app/main.cpp:40
 #, kde-format
@@ -975,10 +975,9 @@ msgid "file to open"
 msgstr "открываемый файл"
 
 #: app/main.cpp:50
-#, fuzzy, kde-format
-#| msgid "&File"
+#, kde-format
 msgid "+[File]"
-msgstr "&Файл"
+msgstr "+[Файл]"
 
 #: lib/kmplayerconfig.cpp:46 lib/kmplayerconfig.cpp:62
 #, kde-format
@@ -1038,7 +1037,7 @@ msgstr "Использовать параметры базовой програ�
 #: lib/kmplayerconfig.cpp:57
 #, kde-format
 msgid "PulseAudio"
-msgstr ""
+msgstr "PulseAudio"
 
 #: lib/kmplayerconfig.cpp:63
 #, kde-format
@@ -1078,7 +1077,7 @@ msgstr "XVideo"
 #: lib/kmplayerconfig.cpp:70
 #, kde-format
 msgid "Video Decode and Presentation API for Unix"
-msgstr ""
+msgstr "Программный интерфейс декодирования и представления видеоданных в Unix"
 
 #: lib/kmplayerconfig.cpp:81
 #, kde-format
@@ -1229,7 +1228,7 @@ msgstr "URL"
 #: lib/kmplayerpartbase.cpp:1544
 #, kde-format
 msgid "URL - "
-msgstr ""
+msgstr "URL — "
 
 #: lib/kmplayerprocess.cpp:134
 #, kde-format
@@ -1372,10 +1371,9 @@ msgid "Playing"
 msgstr "Воспроизведение"
 
 #: lib/mediaobject.cpp:169
-#, fuzzy, kde-format
-#| msgid "&Pause"
+#, kde-format
 msgid "Paused"
-msgstr "&Пауза"
+msgstr "Приостановлено"
 
 #: lib/mediaobject.cpp:191
 #, kde-format
@@ -1383,10 +1381,9 @@ msgid "Player %1 %2"
 msgstr "Проигрыватель %1 %2"
 
 #: lib/playlistview.cpp:125
-#, fuzzy, kde-format
-#| msgid "&Edit mode"
+#, kde-format
 msgid "Edit &item"
-msgstr "Р&ежим редактирования"
+msgstr "Изменить &элемент"
 
 #: lib/playlistview.cpp:240
 #, kde-format
@@ -1563,6 +1560,8 @@ msgstr "Автоматически задавать цвета при запус
 msgid ""
 "When a movie starts, the colors will be set according the sliders for colors"
 msgstr ""
+"При запуске видео будут установлены цвета, соответствующие положению "
+"ползунков"
 
 #: lib/pref.cpp:240
 #, kde-format
@@ -1669,11 +1668,15 @@ msgid ""
 "When enabled, all embedded movies will start with a image that needs to be "
 "clicked to start the video playback"
 msgstr ""
+"Если этот параметр включён, все встроенные видеозаписи будут показывать "
+"изображение, по которому потребуется щёлкнуть для начала воспроизведения "
+"видео"
 
 #: lib/pref.cpp:372
 #, kde-format
 msgid "Grab image when 'Click to Play' detected"
 msgstr ""
+"Захватить изображение при обнаружении параметра «Нажмите для воспроизведения»"
 
 #: lib/pref.cpp:373
 #, kde-format
@@ -1682,6 +1685,9 @@ msgid ""
 "of the first frame of initial link. This image will be shown instead of a "
 "default picture."
 msgstr ""
+"Если этот параметр включён и у объекта HTML имеется атрибут HREF, будет "
+"захвачено и сохранено изображение первого кадра по начальной ссылке. Это "
+"изображение будет показано вместо стандартного."
 
 #: lib/pref.cpp:380
 #, kde-format
@@ -1767,10 +1773,9 @@ msgid "A&fter"
 msgstr "&После"
 
 #: lib/pref.cpp:476
-#, fuzzy, kde-format
-#| msgid "Name:"
+#, kde-format
 msgid "Time:"
-msgstr "Имя:"
+msgstr "Время:"
 
 #: lib/pref.cpp:483 lib/pref.cpp:517 lib/pref.cpp:525
 #, kde-format
@@ -1949,7 +1954,7 @@ msgstr "Включить быстрые фильтры постобработк�
 #: lib/pref.cpp:867 lib/pref.cpp:868 lib/pref.cpp:869
 #, kde-format
 msgid "Filter is used if there is enough CPU"
-msgstr ""
+msgstr "Фильтр используется, если достаточно ресурсов ЦПУ"
 
 #. i18n( "Strength of the noise reducer" ) );
 #: lib/pref.cpp:871
@@ -1974,7 +1979,7 @@ msgstr "Сбросить все параметры?"
 #: part/kmplayer_part.cpp:103
 #, kde-format
 msgid "Embedded MPlayer by KDE"
-msgstr ""
+msgstr "Встраиваемый компонент MPlayer от KDE"
 
 #: part/kmplayer_part.cpp:770
 #, no-c-format, kde-format
