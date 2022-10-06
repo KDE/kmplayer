@@ -50,7 +50,7 @@ msgstr "&Llista de reproducció"
 #: app/kmplayer.cpp:152
 #, kde-format
 msgid "P&lay"
-msgstr "&Reproduïx"
+msgstr "Re&produïx"
 
 #: app/kmplayer.cpp:155
 #, kde-format
@@ -140,7 +140,7 @@ msgstr "&Punts"
 #: app/kmplayer.cpp:285 app/kmplayer.cpp:1308
 #, kde-format
 msgid "&Add to list"
-msgstr "&Afig a la llista"
+msgstr "Afi&g a la llista"
 
 #: app/kmplayer.cpp:287
 #, kde-format
@@ -708,7 +708,7 @@ msgstr "TVScanner"
 #: app/kmplayerui.rc:5
 #, kde-format
 msgid "&File"
-msgstr "&Fitxer"
+msgstr "Fi&txer"
 
 #. i18n: ectx: Menu (vdr)
 #: app/kmplayerui.rc:15
@@ -720,13 +720,13 @@ msgstr "VD&R"
 #: app/kmplayerui.rc:31 part/kmplayerpartui.rc:5
 #, kde-format
 msgid "&View"
-msgstr "&Visualitza"
+msgstr "Vi&sualitza"
 
 #. i18n: ectx: Menu (settings)
 #: app/kmplayerui.rc:51
 #, kde-format
 msgid "&Settings"
-msgstr "&Configuració"
+msgstr "Con&figuració"
 
 #: app/kmplayervdr.cpp:73
 #, kde-format
@@ -1393,7 +1393,7 @@ msgstr "&Copia al porta-retalls"
 #: lib/playlistview.cpp:247
 #, kde-format
 msgid "&Add Bookmark"
-msgstr "&Afig un punt"
+msgstr "Afi&g un punt"
 
 #: lib/playlistview.cpp:250
 #, kde-format
