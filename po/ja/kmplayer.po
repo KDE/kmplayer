@@ -1984,6 +1984,3 @@ msgstr "KMPlayer: 再生中"
 #, kde-format
 msgid "KMPlayer: Stop Playing"
 msgstr "KMPlayer: 停止中"
-
-#~ msgid "*|All Files"
-#~ msgstr "*|すべてのファイル"
