@@ -972,7 +972,7 @@ msgstr "Mantenidor"
 #: app/main.cpp:50
 #, kde-format
 msgid "file to open"
-msgstr "fitxer que s'obrirà"
+msgstr "fitxer que s'ha d'obrir"
 
 #: app/main.cpp:50
 #, kde-format
@@ -1643,7 +1643,7 @@ msgstr "Ubicació:"
 #: lib/pref.cpp:359
 #, kde-format
 msgid "Location of the playable item"
-msgstr "Ubicació de l'element a reproduir"
+msgstr "Ubicació de l'element que s'ha de reproduir"
 
 #: lib/pref.cpp:362
 #, kde-format
