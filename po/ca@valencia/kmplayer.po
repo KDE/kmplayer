@@ -782,7 +782,7 @@ msgstr "16:9"
 #: app/kmplayervdr.cpp:86
 #, kde-format
 msgid "Aspects to use when viewing VDR"
-msgstr "Aspecte a utilitzar en visualitzar un VDR"
+msgstr "Aspecte que s'ha d'utilitzar en visualitzar un VDR"
 
 #: app/kmplayervdr.cpp:157 app/kmplayervdr.cpp:706
 #, kde-format
