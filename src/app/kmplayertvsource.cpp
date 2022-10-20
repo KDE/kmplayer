@@ -23,6 +23,7 @@
 #include <QStandardPaths>
 #include <QFontMetrics>
 
+#include <kwidgetsaddons_version.h>
 #include <KLocalizedString>
 #include <KMessageBox>
 #include <KLineEdit>
@@ -133,7 +134,19 @@ TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodePtr dev)
 }
 
 void TVDevicePage::slotDelete () {
-    if (KMessageBox::warningYesNo (this, i18n ("You are about to remove this device from the Source menu.\nContinue?"), i18n ("Confirm")) == KMessageBox::Yes)
+#if KWIDGETSADDONS_VERSION >= QT_VERSION_CHECK(5, 100, 0)
+    if (KMessageBox::warningTwoActions (this,
+#else
+    if (KMessageBox::warningYesNo (this,
+#endif
+                                   i18n ("You are about to delete this device from the Source menu.\nContinue?"),
+                                   i18n ("Confirm"),
+                                   KStandardGuiItem::del(), KStandardGuiItem::cancel())
+#if KWIDGETSADDONS_VERSION >= QT_VERSION_CHECK(5, 100, 0)
+        == KMessageBox::PrimaryAction)
+#else
+        == KMessageBox::Yes)
+#endif
         Q_EMIT deleted (this);
 }
 
