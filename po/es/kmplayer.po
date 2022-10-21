@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
-"POT-Creation-Date: 2022-07-06 00:45+0000\n"
+"POT-Creation-Date: 2022-10-21 00:46+0000\n"
 "PO-Revision-Date: 2017-08-29 22:24+0100\n"
 "Last-Translator: Eloy Cuadra <ecuadra@eloihr.net>\n"
 "Language-Team: Spanish <kde-l10n-es@kde.org>\n"
@@ -236,7 +236,7 @@ msgstr "Guardar archivo"
 
 #: app/kmplayer.cpp:1098 app/kmplayerbroadcast.cpp:520
 #: app/kmplayerbroadcast.cpp:537 app/kmplayerbroadcast.cpp:550
-#: app/kmplayertvsource.cpp:597 app/kmplayertvsource.cpp:608
+#: app/kmplayertvsource.cpp:610 app/kmplayertvsource.cpp:621
 #: app/kmplayervdr.cpp:430 app/kmplayervdr.cpp:432 lib/kmplayerconfig.cpp:644
 #: lib/kmplayerconfig.cpp:655 lib/kmplayerprocess.cpp:134
 #, kde-format
@@ -344,7 +344,7 @@ msgstr "DVD - Disco de vídeo digital"
 msgid "Track %1"
 msgstr "Pista %1"
 
-#: app/kmplayer.cpp:1632 app/kmplayer.cpp:1746 app/kmplayertvsource.cpp:567
+#: app/kmplayer.cpp:1632 app/kmplayer.cpp:1746 app/kmplayertvsource.cpp:580
 #: app/kmplayervdr.cpp:704 lib/pref.cpp:73 lib/pref.cpp:79
 #, kde-format
 msgid "Source"
@@ -527,7 +527,7 @@ msgstr "Cargar"
 msgid "Save"
 msgstr "Guardar"
 
-#: app/kmplayerbroadcast.cpp:236 app/kmplayertvsource.cpp:110
+#: app/kmplayerbroadcast.cpp:236 app/kmplayertvsource.cpp:111
 #, kde-format
 msgid "Delete"
 msgstr "Borrar"
@@ -572,134 +572,137 @@ msgstr "No ha sido posible iniciar ffmpeg."
 msgid "FFServer"
 msgstr "FFServer"
 
-#: app/kmplayertvsource.cpp:53
+#: app/kmplayertvsource.cpp:54
 #, kde-format
 msgid "Video device:"
 msgstr "Dispositivo de vídeo:"
 
-#: app/kmplayertvsource.cpp:54
+#: app/kmplayertvsource.cpp:55
 #, kde-format
 msgid "Audio device:"
 msgstr "Dispositivo de sonido:"
 
-#: app/kmplayertvsource.cpp:56
+#: app/kmplayertvsource.cpp:57
 #, kde-format
 msgid "Name:"
 msgstr "Nombre:"
 
-#: app/kmplayertvsource.cpp:58
+#: app/kmplayertvsource.cpp:59
 #, kde-format
 msgid "Width:"
 msgstr "Anchura:"
 
-#: app/kmplayertvsource.cpp:60
+#: app/kmplayertvsource.cpp:61
 #, kde-format
 msgid "Height:"
 msgstr "Altura:"
 
-#: app/kmplayertvsource.cpp:62
+#: app/kmplayertvsource.cpp:63
 #, kde-format
 msgid "Do not immediately play"
 msgstr "No reproducir inmediatamente"
 
-#: app/kmplayertvsource.cpp:64
+#: app/kmplayertvsource.cpp:65
 #, kde-format
 msgid "Only start playing after clicking the play button"
 msgstr ""
 "Iniciar la reproducción únicamente al pulsar sobre el botón de reproducción"
 
-#: app/kmplayertvsource.cpp:75
+#: app/kmplayertvsource.cpp:76
 #, kde-format
 msgid "Norm:"
 msgstr "Norma:"
 
-#: app/kmplayertvsource.cpp:89
+#: app/kmplayertvsource.cpp:90
 #, kde-format
 msgid "Channel"
 msgstr "Canal"
 
-#: app/kmplayertvsource.cpp:89
+#: app/kmplayertvsource.cpp:90
 #, kde-format
 msgid "Frequency (MHz)"
 msgstr "Frecuencia (MHz)"
 
-#: app/kmplayertvsource.cpp:136
-#, kde-format
+#: app/kmplayertvsource.cpp:142
+#, fuzzy, kde-format
+#| msgid ""
+#| "You are about to remove this device from the Source menu.\n"
+#| "Continue?"
 msgid ""
-"You are about to remove this device from the Source menu.\n"
+"You are about to delete this device from the Source menu.\n"
 "Continue?"
 msgstr ""
 "Se dispone a eliminar este dispositivo del menú Fuentes.\n"
 "¿Continuar?"
 
-#: app/kmplayertvsource.cpp:136
+#: app/kmplayertvsource.cpp:143
 #, kde-format
 msgid "Confirm"
 msgstr "Confirmar"
 
-#: app/kmplayertvsource.cpp:147
+#: app/kmplayertvsource.cpp:160
 #, kde-format
 msgid "Driver:"
 msgstr "Controlador:"
 
-#: app/kmplayertvsource.cpp:149
+#: app/kmplayertvsource.cpp:162
 #, kde-format
 msgid "dummy, v4l or bsdbt848"
 msgstr "vacío, v4l o bsdbt848"
 
-#: app/kmplayertvsource.cpp:150
+#: app/kmplayertvsource.cpp:163
 #, kde-format
 msgid "Device:"
 msgstr "Dispositivo:"
 
-#: app/kmplayertvsource.cpp:152
+#: app/kmplayertvsource.cpp:165
 #, kde-format
 msgid "Path to your video device, eg. /dev/video0"
 msgstr "Ruta a su dispositivo de vídeo (por ejemplo, /dev/video0)"
 
-#: app/kmplayertvsource.cpp:153
+#: app/kmplayertvsource.cpp:166
 #, kde-format
 msgid "Scan..."
 msgstr "Explorar..."
 
-#: app/kmplayertvsource.cpp:167 lib/pref.cpp:62 lib/pref.cpp:106
+#: app/kmplayertvsource.cpp:180 lib/pref.cpp:62 lib/pref.cpp:106
 #: lib/pref.cpp:721
 #, kde-format
 msgid "General"
 msgstr "General"
 
-#: app/kmplayertvsource.cpp:247
+#: app/kmplayertvsource.cpp:260
 #, kde-format
 msgid "tv device"
 msgstr "Dispositivo de TV"
 
-#: app/kmplayertvsource.cpp:333
+#: app/kmplayertvsource.cpp:346
 #, kde-format
 msgid "Television"
 msgstr "Televisión"
 
-#: app/kmplayertvsource.cpp:361 app/kmplayertvsource.cpp:518
-#: app/kmplayertvsource.cpp:569
+#: app/kmplayertvsource.cpp:374 app/kmplayertvsource.cpp:531
+#: app/kmplayertvsource.cpp:582
 #, kde-format
 msgid "TV"
 msgstr "TV"
 
-#: app/kmplayertvsource.cpp:485
+#: app/kmplayertvsource.cpp:498
 #, kde-format
 msgid "TV: "
 msgstr "TV: "
 
-#: app/kmplayertvsource.cpp:596
+#: app/kmplayertvsource.cpp:609
 #, kde-format
 msgid "Device already present."
 msgstr "Dispositivo ya presente."
 
-#: app/kmplayertvsource.cpp:608
+#: app/kmplayertvsource.cpp:621
 #, kde-format
 msgid "No device found."
 msgstr "No se ha encontrado ningún dispositivo."
 
-#: app/kmplayertvsource.cpp:631
+#: app/kmplayertvsource.cpp:644
 #, kde-format
 msgid "TVScanner"
 msgstr "TVScanner"

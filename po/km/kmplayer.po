@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
-"POT-Creation-Date: 2022-07-06 00:45+0000\n"
+"POT-Creation-Date: 2022-10-21 00:46+0000\n"
 "PO-Revision-Date: 2012-06-11 10:21+0700\n"
 "Last-Translator: Khoem Sokhem <khoemsokhem@khmeros.info>\n"
 "Language-Team: Khmer\n"
@@ -236,7 +236,7 @@ msgstr "រក្សាទុក​ឯកសារ"
 
 #: app/kmplayer.cpp:1098 app/kmplayerbroadcast.cpp:520
 #: app/kmplayerbroadcast.cpp:537 app/kmplayerbroadcast.cpp:550
-#: app/kmplayertvsource.cpp:597 app/kmplayertvsource.cpp:608
+#: app/kmplayertvsource.cpp:610 app/kmplayertvsource.cpp:621
 #: app/kmplayervdr.cpp:430 app/kmplayervdr.cpp:432 lib/kmplayerconfig.cpp:644
 #: lib/kmplayerconfig.cpp:655 lib/kmplayerprocess.cpp:134
 #, kde-format
@@ -342,7 +342,7 @@ msgstr "ឌីវីឌី - ថាស​វីដេអូ​ឌីជីថល
 msgid "Track %1"
 msgstr "បទ %1"
 
-#: app/kmplayer.cpp:1632 app/kmplayer.cpp:1746 app/kmplayertvsource.cpp:567
+#: app/kmplayer.cpp:1632 app/kmplayer.cpp:1746 app/kmplayertvsource.cpp:580
 #: app/kmplayervdr.cpp:704 lib/pref.cpp:73 lib/pref.cpp:79
 #, kde-format
 msgid "Source"
@@ -523,7 +523,7 @@ msgstr "ផ្ទុក"
 msgid "Save"
 msgstr "រក្សាទុក"
 
-#: app/kmplayerbroadcast.cpp:236 app/kmplayertvsource.cpp:110
+#: app/kmplayerbroadcast.cpp:236 app/kmplayertvsource.cpp:111
 #, kde-format
 msgid "Delete"
 msgstr "លុប"
@@ -568,133 +568,136 @@ msgstr "បាន​បរាជ័យ​ក្នុងការ​ចាប់
 msgid "FFServer"
 msgstr "FFServer"
 
-#: app/kmplayertvsource.cpp:53
+#: app/kmplayertvsource.cpp:54
 #, kde-format
 msgid "Video device:"
 msgstr "ឧបករណ៍​វីដេអូ ៖"
 
-#: app/kmplayertvsource.cpp:54
+#: app/kmplayertvsource.cpp:55
 #, kde-format
 msgid "Audio device:"
 msgstr "ឧបករណ៍​អូឌីយ៉ូ ៖"
 
-#: app/kmplayertvsource.cpp:56
+#: app/kmplayertvsource.cpp:57
 #, kde-format
 msgid "Name:"
 msgstr "ឈ្មោះ ៖"
 
-#: app/kmplayertvsource.cpp:58
+#: app/kmplayertvsource.cpp:59
 #, kde-format
 msgid "Width:"
 msgstr "ទទឹង ៖"
 
-#: app/kmplayertvsource.cpp:60
+#: app/kmplayertvsource.cpp:61
 #, kde-format
 msgid "Height:"
 msgstr "កម្ពស់ ៖"
 
-#: app/kmplayertvsource.cpp:62
+#: app/kmplayertvsource.cpp:63
 #, kde-format
 msgid "Do not immediately play"
 msgstr "កុំ​ចាក់​ភ្លាមៗ"
 
-#: app/kmplayertvsource.cpp:64
+#: app/kmplayertvsource.cpp:65
 #, kde-format
 msgid "Only start playing after clicking the play button"
 msgstr "ចាប់ផ្ដើម​ចាក់​បន្ទាប់​តែ​ពី​ចុច​ប៊ូតុង​ចាក់​ប៉ុណ្ណោះ"
 
-#: app/kmplayertvsource.cpp:75
+#: app/kmplayertvsource.cpp:76
 #, kde-format
 msgid "Norm:"
 msgstr "ធម្មតា ៖"
 
-#: app/kmplayertvsource.cpp:89
+#: app/kmplayertvsource.cpp:90
 #, kde-format
 msgid "Channel"
 msgstr "ឆានែល"
 
-#: app/kmplayertvsource.cpp:89
+#: app/kmplayertvsource.cpp:90
 #, kde-format
 msgid "Frequency (MHz)"
 msgstr "ប្រេកង់ (MHz)"
 
-#: app/kmplayertvsource.cpp:136
-#, kde-format
+#: app/kmplayertvsource.cpp:142
+#, fuzzy, kde-format
+#| msgid ""
+#| "You are about to remove this device from the Source menu.\n"
+#| "Continue?"
 msgid ""
-"You are about to remove this device from the Source menu.\n"
+"You are about to delete this device from the Source menu.\n"
 "Continue?"
 msgstr ""
 "អ្នក​រៀប​នឹង​យក​ឧបករណ៍​នេះ​ចេញ​ពី​ម៉ឺនុយ​ប្រភព ។\n"
 "បន្ត ?"
 
-#: app/kmplayertvsource.cpp:136
+#: app/kmplayertvsource.cpp:143
 #, kde-format
 msgid "Confirm"
 msgstr "អះអាង"
 
-#: app/kmplayertvsource.cpp:147
+#: app/kmplayertvsource.cpp:160
 #, kde-format
 msgid "Driver:"
 msgstr "កម្មវិធី​បញ្ជា ៖"
 
-#: app/kmplayertvsource.cpp:149
+#: app/kmplayertvsource.cpp:162
 #, kde-format
 msgid "dummy, v4l or bsdbt848"
 msgstr "dummy, v4l or bsdbt848"
 
-#: app/kmplayertvsource.cpp:150
+#: app/kmplayertvsource.cpp:163
 #, kde-format
 msgid "Device:"
 msgstr "ឧបករណ៍ ៖"
 
-#: app/kmplayertvsource.cpp:152
+#: app/kmplayertvsource.cpp:165
 #, kde-format
 msgid "Path to your video device, eg. /dev/video0"
 msgstr "ផ្លូវ​ទៅកាន់​ឧបករណ៍​វីដេអូ​របស់​អ្នក ឧ. /dev/video0"
 
-#: app/kmplayertvsource.cpp:153
+#: app/kmplayertvsource.cpp:166
 #, kde-format
 msgid "Scan..."
 msgstr "ស្កេន..."
 
-#: app/kmplayertvsource.cpp:167 lib/pref.cpp:62 lib/pref.cpp:106
+#: app/kmplayertvsource.cpp:180 lib/pref.cpp:62 lib/pref.cpp:106
 #: lib/pref.cpp:721
 #, kde-format
 msgid "General"
 msgstr "ទូទៅ"
 
-#: app/kmplayertvsource.cpp:247
+#: app/kmplayertvsource.cpp:260
 #, kde-format
 msgid "tv device"
 msgstr "ឧបករណ៍​ទូរទស្សន៍"
 
-#: app/kmplayertvsource.cpp:333
+#: app/kmplayertvsource.cpp:346
 #, kde-format
 msgid "Television"
 msgstr "ទូរទស្សន៍"
 
-#: app/kmplayertvsource.cpp:361 app/kmplayertvsource.cpp:518
-#: app/kmplayertvsource.cpp:569
+#: app/kmplayertvsource.cpp:374 app/kmplayertvsource.cpp:531
+#: app/kmplayertvsource.cpp:582
 #, kde-format
 msgid "TV"
 msgstr "ទូរទស្សន៍"
 
-#: app/kmplayertvsource.cpp:485
+#: app/kmplayertvsource.cpp:498
 #, kde-format
 msgid "TV: "
 msgstr "ទូរទស្សន៍ ៖ "
 
-#: app/kmplayertvsource.cpp:596
+#: app/kmplayertvsource.cpp:609
 #, kde-format
 msgid "Device already present."
 msgstr "ឧប​ករណ៍​បង្ហាញ​រួច​ហើយ ​។"
 
-#: app/kmplayertvsource.cpp:608
+#: app/kmplayertvsource.cpp:621
 #, kde-format
 msgid "No device found."
 msgstr "រក​មិនឃើញ​ឧបករណ៍ ។"
 
-#: app/kmplayertvsource.cpp:631
+#: app/kmplayertvsource.cpp:644
 #, kde-format
 msgid "TVScanner"
 msgstr "TVScanner"
