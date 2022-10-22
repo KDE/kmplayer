@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-10-21 00:46+0000\n"
-"PO-Revision-Date: 2022-10-21 08:07+0200\n"
+"PO-Revision-Date: 2022-10-22 08:23+0200\n"
 "Last-Translator: Matjaž Jeran <matjaz.jeran@amis.net>\n"
 "Language-Team: Slovenian <lugos-slo@lugos.si>\n"
 "Language: sl\n"
@@ -621,16 +621,13 @@ msgid "Frequency (MHz)"
 msgstr "Frekvenca (MHz)"
 
 #: app/kmplayertvsource.cpp:142
-#, fuzzy, kde-format
-#| msgid ""
-#| "You are about to remove this device from the Source menu.\n"
-#| "Continue?"
+#, kde-format
 msgid ""
 "You are about to delete this device from the Source menu.\n"
 "Continue?"
 msgstr ""
 "To napravo boste odstranili iz menija vir.\n"
-"Nadaljujem?"
+"Naj nadaljujem?"
 
 #: app/kmplayertvsource.cpp:143
 #, kde-format
