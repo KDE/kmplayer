@@ -17,7 +17,7 @@ msgstr ""
 "Project-Id-Version: extragear-multimedia-kde4\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-10-21 00:46+0000\n"
-"PO-Revision-Date: 2022-04-13 10:25+0300\n"
+"PO-Revision-Date: 2022-10-21 11:01+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
 "Language: tr\n"
@@ -25,7 +25,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Lokalize 21.12.3\n"
+"X-Generator: Lokalize 22.08.1\n"
 
 #, kde-format
 msgctxt "NAME OF TRANSLATORS"
@@ -50,12 +50,12 @@ msgstr "&Düzenleme Kipi"
 #: app/kmplayer.cpp:147
 #, kde-format
 msgid "Pla&y List"
-msgstr "Çalm&a Listesi"
+msgstr "Çalma/Oynatm&a Listesi"
 
 #: app/kmplayer.cpp:152
 #, kde-format
 msgid "P&lay"
-msgstr "&Oynat"
+msgstr "Çal/&Oynat"
 
 #: app/kmplayer.cpp:155
 #, kde-format
@@ -626,16 +626,13 @@ msgid "Frequency (MHz)"
 msgstr "Frekans (MHz)"
 
 #: app/kmplayertvsource.cpp:142
-#, fuzzy, kde-format
-#| msgid ""
-#| "You are about to remove this device from the Source menu.\n"
-#| "Continue?"
+#, kde-format
 msgid ""
 "You are about to delete this device from the Source menu.\n"
 "Continue?"
 msgstr ""
 "Kaynak menüsünden bu aygıtı silmek üzeresiniz.\n"
-"Devam edilsin mi?"
+"Sürdürülsün mü?"
 
 #: app/kmplayertvsource.cpp:143
 #, kde-format

@@ -1,24 +1,24 @@
-# Translation of kmplayer.po to Euskara/Basque (eu).
-# Copyright (C) 2011-2019, This file is copyright:
+# Translation for kmplayer.po to Euskara/Basque (eu).
+# Copyright (C) 2011-2022, This file is copyright:
 # This file is distributed under the same license as the kmplayer package.
-# KDE euskaratzeko proiektuaren arduraduna <xalba@euskalnet.net>
+# KDE euskaratzeko proiektuko arduraduna <xalba@ni.eust>.
 #
 # Translators:
 # Iñaki Larrañaga Murgoitio <dooteo@euskalgnu.org>, 2011.
-# Iñigo Salvador Azurmendi <xalba@euskalnet.net>, 2019.
+# Iñigo Salvador Azurmendi <xalba@euskalnet.net>, 2019, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-10-21 00:46+0000\n"
-"PO-Revision-Date: 2019-11-03 12:27+0100\n"
-"Last-Translator: Iñigo Salvador Azurmendi <xalba@euskalnet.net>\n"
+"PO-Revision-Date: 2022-10-21 19:47+0200\n"
+"Last-Translator: Iñigo Salvador Azurmendi <xalba@ni.eus>\n"
 "Language-Team: Basque <kde-i18n-eu@kde.org>\n"
 "Language: eu\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 19.08.2\n"
+"X-Generator: Lokalize 22.08.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #, kde-format
@@ -624,15 +624,12 @@ msgid "Frequency (MHz)"
 msgstr "Maiztasuna (Mhz)"
 
 #: app/kmplayertvsource.cpp:142
-#, fuzzy, kde-format
-#| msgid ""
-#| "You are about to remove this device from the Source menu.\n"
-#| "Continue?"
+#, kde-format
 msgid ""
 "You are about to delete this device from the Source menu.\n"
 "Continue?"
 msgstr ""
-"Gailu hau sorburu menutik kentzera zoaz.\n"
+"Gailu hau Sorburu menutik ezabatzera zoaz.\n"
 "Jarraitu?"
 
 #: app/kmplayertvsource.cpp:143

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-10-21 00:46+0000\n"
-"PO-Revision-Date: 2017-08-16 14:35+0100\n"
+"PO-Revision-Date: 2022-10-21 23:38+0100\n"
 "Last-Translator: Pedro Morais <morais@kde.org>\n"
 "Language-Team: Portuguese <kde-i18n-pt@kde.org>\n"
 "Language: pt\n"
@@ -628,10 +628,7 @@ msgid "Frequency (MHz)"
 msgstr "Frequência (MHz)"
 
 #: app/kmplayertvsource.cpp:142
-#, fuzzy, kde-format
-#| msgid ""
-#| "You are about to remove this device from the Source menu.\n"
-#| "Continue?"
+#, kde-format
 msgid ""
 "You are about to delete this device from the Source menu.\n"
 "Continue?"
@@ -2000,9 +1997,3 @@ msgstr "KMPlayer: A Reproduzir"
 #, kde-format
 msgid "KMPlayer: Stop Playing"
 msgstr "KMPlayer: Parar Reprodução"
-
-#~ msgid "*|All Files"
-#~ msgstr "*|Todos os Ficheiros"
-
-#~ msgid " seconds"
-#~ msgstr " segundos"
