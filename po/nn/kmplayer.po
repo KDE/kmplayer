@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
-"POT-Creation-Date: 2022-07-06 00:45+0000\n"
+"POT-Creation-Date: 2022-10-21 00:46+0000\n"
 "PO-Revision-Date: 2022-01-23 11:52+0100\n"
 "Last-Translator: Øystein Steffensen-Alværvik <oysteins.omsetting@protonmail."
 "com>\n"
@@ -237,7 +237,7 @@ msgstr "Lagra fil"
 
 #: app/kmplayer.cpp:1098 app/kmplayerbroadcast.cpp:520
 #: app/kmplayerbroadcast.cpp:537 app/kmplayerbroadcast.cpp:550
-#: app/kmplayertvsource.cpp:597 app/kmplayertvsource.cpp:608
+#: app/kmplayertvsource.cpp:610 app/kmplayertvsource.cpp:621
 #: app/kmplayervdr.cpp:430 app/kmplayervdr.cpp:432 lib/kmplayerconfig.cpp:644
 #: lib/kmplayerconfig.cpp:655 lib/kmplayerprocess.cpp:134
 #, kde-format
@@ -343,7 +343,7 @@ msgstr "DVD – video-DVD"
 msgid "Track %1"
 msgstr "Spor %1"
 
-#: app/kmplayer.cpp:1632 app/kmplayer.cpp:1746 app/kmplayertvsource.cpp:567
+#: app/kmplayer.cpp:1632 app/kmplayer.cpp:1746 app/kmplayertvsource.cpp:580
 #: app/kmplayervdr.cpp:704 lib/pref.cpp:73 lib/pref.cpp:79
 #, kde-format
 msgid "Source"
@@ -524,7 +524,7 @@ msgstr "Last"
 msgid "Save"
 msgstr "Lagra"
 
-#: app/kmplayerbroadcast.cpp:236 app/kmplayertvsource.cpp:110
+#: app/kmplayerbroadcast.cpp:236 app/kmplayertvsource.cpp:111
 #, kde-format
 msgid "Delete"
 msgstr "Slett"
@@ -569,133 +569,131 @@ msgstr "Klarte ikkje starta «ffmpeg»."
 msgid "FFServer"
 msgstr "FFServer"
 
-#: app/kmplayertvsource.cpp:53
+#: app/kmplayertvsource.cpp:54
 #, kde-format
 msgid "Video device:"
 msgstr "Videoeining:"
 
-#: app/kmplayertvsource.cpp:54
+#: app/kmplayertvsource.cpp:55
 #, kde-format
 msgid "Audio device:"
 msgstr "Lydeining:"
 
-#: app/kmplayertvsource.cpp:56
+#: app/kmplayertvsource.cpp:57
 #, kde-format
 msgid "Name:"
 msgstr "Namn:"
 
-#: app/kmplayertvsource.cpp:58
+#: app/kmplayertvsource.cpp:59
 #, kde-format
 msgid "Width:"
 msgstr "Breidd:"
 
-#: app/kmplayertvsource.cpp:60
+#: app/kmplayertvsource.cpp:61
 #, kde-format
 msgid "Height:"
 msgstr "Høgd:"
 
-#: app/kmplayertvsource.cpp:62
+#: app/kmplayertvsource.cpp:63
 #, kde-format
 msgid "Do not immediately play"
 msgstr "Ikkje spel av automatisk"
 
-#: app/kmplayertvsource.cpp:64
+#: app/kmplayertvsource.cpp:65
 #, kde-format
 msgid "Only start playing after clicking the play button"
 msgstr "Berre start avspeling ved trykk på «Spel av»-knappen"
 
-#: app/kmplayertvsource.cpp:75
+#: app/kmplayertvsource.cpp:76
 #, kde-format
 msgid "Norm:"
 msgstr "Norm:"
 
-#: app/kmplayertvsource.cpp:89
+#: app/kmplayertvsource.cpp:90
 #, kde-format
 msgid "Channel"
 msgstr "Kanal"
 
-#: app/kmplayertvsource.cpp:89
+#: app/kmplayertvsource.cpp:90
 #, kde-format
 msgid "Frequency (MHz)"
 msgstr "Frekvens (MHz)"
 
-#: app/kmplayertvsource.cpp:136
+#: app/kmplayertvsource.cpp:142
 #, kde-format
 msgid ""
-"You are about to remove this device from the Source menu.\n"
+"You are about to delete this device from the Source menu.\n"
 "Continue?"
 msgstr ""
-"Du er i ferd med å fjerna eininga frå kjeldemenyen.\n"
-"Vil du halda fram?"
 
-#: app/kmplayertvsource.cpp:136
+#: app/kmplayertvsource.cpp:143
 #, kde-format
 msgid "Confirm"
 msgstr "Stadfest"
 
-#: app/kmplayertvsource.cpp:147
+#: app/kmplayertvsource.cpp:160
 #, kde-format
 msgid "Driver:"
 msgstr "Drivar:"
 
-#: app/kmplayertvsource.cpp:149
+#: app/kmplayertvsource.cpp:162
 #, kde-format
 msgid "dummy, v4l or bsdbt848"
 msgstr "«dummy», «v4l» eller «bsdbt848»"
 
-#: app/kmplayertvsource.cpp:150
+#: app/kmplayertvsource.cpp:163
 #, kde-format
 msgid "Device:"
 msgstr "Eining:"
 
-#: app/kmplayertvsource.cpp:152
+#: app/kmplayertvsource.cpp:165
 #, kde-format
 msgid "Path to your video device, eg. /dev/video0"
 msgstr "Adresse til videoeininga, for eksempel /dev/video0"
 
-#: app/kmplayertvsource.cpp:153
+#: app/kmplayertvsource.cpp:166
 #, kde-format
 msgid "Scan..."
 msgstr "Skann …"
 
-#: app/kmplayertvsource.cpp:167 lib/pref.cpp:62 lib/pref.cpp:106
+#: app/kmplayertvsource.cpp:180 lib/pref.cpp:62 lib/pref.cpp:106
 #: lib/pref.cpp:721
 #, kde-format
 msgid "General"
 msgstr "Generelt"
 
-#: app/kmplayertvsource.cpp:247
+#: app/kmplayertvsource.cpp:260
 #, kde-format
 msgid "tv device"
 msgstr "«tv»-eining"
 
-#: app/kmplayertvsource.cpp:333
+#: app/kmplayertvsource.cpp:346
 #, kde-format
 msgid "Television"
 msgstr "Fjernsyn"
 
-#: app/kmplayertvsource.cpp:361 app/kmplayertvsource.cpp:518
-#: app/kmplayertvsource.cpp:569
+#: app/kmplayertvsource.cpp:374 app/kmplayertvsource.cpp:531
+#: app/kmplayertvsource.cpp:582
 #, kde-format
 msgid "TV"
 msgstr "Fjernsyn"
 
-#: app/kmplayertvsource.cpp:485
+#: app/kmplayertvsource.cpp:498
 #, kde-format
 msgid "TV: "
 msgstr "Fjernsyn:"
 
-#: app/kmplayertvsource.cpp:596
+#: app/kmplayertvsource.cpp:609
 #, kde-format
 msgid "Device already present."
 msgstr "Eininga finst frå før."
 
-#: app/kmplayertvsource.cpp:608
+#: app/kmplayertvsource.cpp:621
 #, kde-format
 msgid "No device found."
 msgstr "Fann inga eining."
 
-#: app/kmplayertvsource.cpp:631
+#: app/kmplayertvsource.cpp:644
 #, kde-format
 msgid "TVScanner"
 msgstr "TV-skannar"
