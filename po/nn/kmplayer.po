@@ -1,21 +1,20 @@
 # Translation of kmplayer to Norwegian Nynorsk
 #
-# Karl Ove Hufthammer <karl@huftis.org>, 2007, 2008, 2016, 2018, 2021.
+# Karl Ove Hufthammer <karl@huftis.org>, 2007, 2008, 2016, 2018, 2021, 2022.
 # Øystein Steffensen-Alværvik <oysteins.omsetting@protonmail.com>, 2018, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-10-21 00:46+0000\n"
-"PO-Revision-Date: 2022-01-23 11:52+0100\n"
-"Last-Translator: Øystein Steffensen-Alværvik <oysteins.omsetting@protonmail."
-"com>\n"
+"PO-Revision-Date: 2022-10-30 09:41+0100\n"
+"Last-Translator: Karl Ove Hufthammer <karl@huftis.org>\n"
 "Language-Team: Norwegian Nynorsk <l10n-no@lister.huftis.org>\n"
 "Language: nn\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 21.12.1\n"
+"X-Generator: Lokalize 22.08.2\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Environment: kde\n"
 "X-Accelerator-Marker: &\n"
@@ -625,6 +624,8 @@ msgid ""
 "You are about to delete this device from the Source menu.\n"
 "Continue?"
 msgstr ""
+"Du er i ferd med å sletta eininga frå kjeldemenyen.\n"
+"Vil du halda fram?"
 
 #: app/kmplayertvsource.cpp:143
 #, kde-format
