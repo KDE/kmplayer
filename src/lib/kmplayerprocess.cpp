@@ -33,6 +33,7 @@
 #include <KShell>
 #include <KIO/Job>
 #include <KIO/AccessManager>
+#include <kio_version.h>
 
 #include "kmplayercommon_log.h"
 #include "kmplayerconfig.h"
@@ -372,7 +373,11 @@ static RecordDocument *recordDocument (ProcessUser *user) {
 //-----------------------------------------------------------------------------
 
 static bool proxyForURL (const QUrl &url, QString &proxy) {
+#if KIO_VERSION >= QT_VERSION_CHECK(5, 101, 0)
+    KProtocolManager::workerProtocol (url, proxy);
+#else
     KProtocolManager::slaveProtocol (url, proxy);
+#endif
     return !proxy.isNull ();
 }
 
