@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer.pot\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
-"POT-Creation-Date: 2022-10-21 00:46+0000\n"
+"POT-Creation-Date: 2022-11-12 00:46+0000\n"
 "PO-Revision-Date: 2018-05-19 14:19+0800\n"
 "Last-Translator: pan93412 <pan93412@gmail.com>\n"
 "Language-Team: Chinese <zh-l10n@lists.linux.org.tw>\n"
@@ -235,7 +235,7 @@ msgstr "儲存檔案"
 #: app/kmplayerbroadcast.cpp:537 app/kmplayerbroadcast.cpp:550
 #: app/kmplayertvsource.cpp:610 app/kmplayertvsource.cpp:621
 #: app/kmplayervdr.cpp:430 app/kmplayervdr.cpp:432 lib/kmplayerconfig.cpp:644
-#: lib/kmplayerconfig.cpp:655 lib/kmplayerprocess.cpp:134
+#: lib/kmplayerconfig.cpp:655 lib/kmplayerprocess.cpp:135
 #, kde-format
 msgid "Error"
 msgstr "錯誤"
@@ -1223,122 +1223,122 @@ msgstr "網址"
 msgid "URL - "
 msgstr "網址 - "
 
-#: lib/kmplayerprocess.cpp:134
+#: lib/kmplayerprocess.cpp:135
 #, kde-format
 msgid "Failed to end player process."
 msgstr "終止播放器程序失敗。"
 
-#: lib/kmplayerprocess.cpp:474
+#: lib/kmplayerprocess.cpp:479
 #, kde-format
 msgid "&MPlayer"
 msgstr "MPlayer(&M)"
 
-#: lib/kmplayerprocess.cpp:991
+#: lib/kmplayerprocess.cpp:996
 #, kde-format
 msgid "Size pattern"
 msgstr "尺寸樣式"
 
-#: lib/kmplayerprocess.cpp:992
+#: lib/kmplayerprocess.cpp:997
 #, kde-format
 msgid "Cache pattern"
 msgstr "快取樣式"
 
-#: lib/kmplayerprocess.cpp:993
+#: lib/kmplayerprocess.cpp:998
 #, kde-format
 msgid "Position pattern"
 msgstr "定位樣式"
 
-#: lib/kmplayerprocess.cpp:994
+#: lib/kmplayerprocess.cpp:999
 #, kde-format
 msgid "Index pattern"
 msgstr "索引樣式"
 
-#: lib/kmplayerprocess.cpp:995
+#: lib/kmplayerprocess.cpp:1000
 #, kde-format
 msgid "Reference URL pattern"
 msgstr "參考網址樣式"
 
-#: lib/kmplayerprocess.cpp:996
+#: lib/kmplayerprocess.cpp:1001
 #, kde-format
 msgid "Reference pattern"
 msgstr "參考樣式"
 
-#: lib/kmplayerprocess.cpp:997
+#: lib/kmplayerprocess.cpp:1002
 #, kde-format
 msgid "Start pattern"
 msgstr "開始樣式"
 
-#: lib/kmplayerprocess.cpp:998
+#: lib/kmplayerprocess.cpp:1003
 #, kde-format
 msgid "VCD track pattern"
 msgstr "VCD 影音軌樣式"
 
-#: lib/kmplayerprocess.cpp:999
+#: lib/kmplayerprocess.cpp:1004
 #, kde-format
 msgid "Audio CD tracks pattern"
 msgstr "音效 CD 音軌樣式"
 
-#: lib/kmplayerprocess.cpp:1020
+#: lib/kmplayerprocess.cpp:1025
 #, kde-format
 msgid "MPlayer command:"
 msgstr "MPlayer 指令："
 
-#: lib/kmplayerprocess.cpp:1022
+#: lib/kmplayerprocess.cpp:1027
 #, kde-format
 msgid "Additional command line arguments:"
 msgstr "額外的命令列參數： "
 
-#: lib/kmplayerprocess.cpp:1024
+#: lib/kmplayerprocess.cpp:1029
 #, kde-format
 msgid "Cache size:"
 msgstr "快取大小："
 
-#: lib/kmplayerprocess.cpp:1024
+#: lib/kmplayerprocess.cpp:1029
 #, kde-format
 msgid "kB"
 msgstr "kB"
 
-#: lib/kmplayerprocess.cpp:1029
+#: lib/kmplayerprocess.cpp:1034
 #, kde-format
 msgid "Build new index when possible"
 msgstr "當情況允許時建立新的索引"
 
-#: lib/kmplayerprocess.cpp:1031
+#: lib/kmplayerprocess.cpp:1036
 #, kde-format
 msgid "Allows seeking in indexed files (AVIs)"
 msgstr "允許在已建立索引的檔案中搜尋(AVIs)"
 
-#: lib/kmplayerprocess.cpp:1097 lib/pref.cpp:58 lib/pref.cpp:69
+#: lib/kmplayerprocess.cpp:1102 lib/pref.cpp:58 lib/pref.cpp:69
 #, kde-format
 msgid "General Options"
 msgstr "一般選項"
 
-#: lib/kmplayerprocess.cpp:1099
+#: lib/kmplayerprocess.cpp:1104
 #, kde-format
 msgid "MPlayer"
 msgstr "MPlayer"
 
-#: lib/kmplayerprocess.cpp:1115
+#: lib/kmplayerprocess.cpp:1120
 #, kde-format
 msgid "M&Encoder"
 msgstr "MEncoder(&E)"
 
-#: lib/kmplayerprocess.cpp:1180
+#: lib/kmplayerprocess.cpp:1185
 #, kde-format
 msgid "&MPlayerDumpstream"
 msgstr "MPlayerDumpstream(&M)"
 
-#: lib/kmplayerprocess.cpp:1445
+#: lib/kmplayerprocess.cpp:1450
 #, kde-format
 msgid "&Phonon"
 msgstr "Phonon(&P)"
 
-#: lib/kmplayerprocess.cpp:1593 lib/pref.cpp:659
+#: lib/kmplayerprocess.cpp:1598 lib/pref.cpp:659
 #, kde-format
 msgid "&FFMpeg"
 msgstr "FFMpeg(&F)"
 
-#: lib/kmplayerprocess.cpp:1692
+#: lib/kmplayerprocess.cpp:1697
 #, kde-format
 msgid "&Ice Ape"
 msgstr "Ice Ape(&I)"

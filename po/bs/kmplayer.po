@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
-"POT-Creation-Date: 2022-10-21 00:46+0000\n"
+"POT-Creation-Date: 2022-11-12 00:46+0000\n"
 "PO-Revision-Date: 2014-10-20 20:10+0000\n"
 "Last-Translator: Samir Ribić <Unknown>\n"
 "Language-Team: Bosnian<kde-i18n-bs@kde.org>\n"
@@ -239,7 +239,7 @@ msgstr "Sačuvaj datoteku"
 #: app/kmplayerbroadcast.cpp:537 app/kmplayerbroadcast.cpp:550
 #: app/kmplayertvsource.cpp:610 app/kmplayertvsource.cpp:621
 #: app/kmplayervdr.cpp:430 app/kmplayervdr.cpp:432 lib/kmplayerconfig.cpp:644
-#: lib/kmplayerconfig.cpp:655 lib/kmplayerprocess.cpp:134
+#: lib/kmplayerconfig.cpp:655 lib/kmplayerprocess.cpp:135
 #, kde-format
 msgid "Error"
 msgstr "Greška"
@@ -1235,122 +1235,122 @@ msgstr "URL"
 msgid "URL - "
 msgstr "URL - "
 
-#: lib/kmplayerprocess.cpp:134
+#: lib/kmplayerprocess.cpp:135
 #, kde-format
 msgid "Failed to end player process."
 msgstr "Ne mogu da prekinem proces plejera."
 
-#: lib/kmplayerprocess.cpp:474
+#: lib/kmplayerprocess.cpp:479
 #, kde-format
 msgid "&MPlayer"
 msgstr "&M‑plejer"
 
-#: lib/kmplayerprocess.cpp:991
+#: lib/kmplayerprocess.cpp:996
 #, kde-format
 msgid "Size pattern"
 msgstr "Obrazac veličine"
 
-#: lib/kmplayerprocess.cpp:992
+#: lib/kmplayerprocess.cpp:997
 #, kde-format
 msgid "Cache pattern"
 msgstr "Obrazac keša"
 
-#: lib/kmplayerprocess.cpp:993
+#: lib/kmplayerprocess.cpp:998
 #, kde-format
 msgid "Position pattern"
 msgstr "Obrazac pozicije"
 
-#: lib/kmplayerprocess.cpp:994
+#: lib/kmplayerprocess.cpp:999
 #, kde-format
 msgid "Index pattern"
 msgstr "Obrazac indeksa"
 
-#: lib/kmplayerprocess.cpp:995
+#: lib/kmplayerprocess.cpp:1000
 #, kde-format
 msgid "Reference URL pattern"
 msgstr "Obrazac URL reference"
 
-#: lib/kmplayerprocess.cpp:996
+#: lib/kmplayerprocess.cpp:1001
 #, kde-format
 msgid "Reference pattern"
 msgstr "Obrazac reference"
 
-#: lib/kmplayerprocess.cpp:997
+#: lib/kmplayerprocess.cpp:1002
 #, kde-format
 msgid "Start pattern"
 msgstr "Obrazac pokretanja"
 
-#: lib/kmplayerprocess.cpp:998
+#: lib/kmplayerprocess.cpp:1003
 #, kde-format
 msgid "VCD track pattern"
 msgstr "Obrazac numere VCD‑a"
 
-#: lib/kmplayerprocess.cpp:999
+#: lib/kmplayerprocess.cpp:1004
 #, kde-format
 msgid "Audio CD tracks pattern"
 msgstr "Obrazac numere audio CD‑a"
 
-#: lib/kmplayerprocess.cpp:1020
+#: lib/kmplayerprocess.cpp:1025
 #, kde-format
 msgid "MPlayer command:"
 msgstr "Naredba M‑plejera:"
 
-#: lib/kmplayerprocess.cpp:1022
+#: lib/kmplayerprocess.cpp:1027
 #, kde-format
 msgid "Additional command line arguments:"
 msgstr "Dodatni argumenti komandne linije:"
 
-#: lib/kmplayerprocess.cpp:1024
+#: lib/kmplayerprocess.cpp:1029
 #, kde-format
 msgid "Cache size:"
 msgstr "Veličina keša:"
 
-#: lib/kmplayerprocess.cpp:1024
+#: lib/kmplayerprocess.cpp:1029
 #, kde-format
 msgid "kB"
 msgstr "kB"
 
-#: lib/kmplayerprocess.cpp:1029
+#: lib/kmplayerprocess.cpp:1034
 #, kde-format
 msgid "Build new index when possible"
 msgstr "Izgradi novi indeks kada je moguće"
 
-#: lib/kmplayerprocess.cpp:1031
+#: lib/kmplayerprocess.cpp:1036
 #, kde-format
 msgid "Allows seeking in indexed files (AVIs)"
 msgstr "Dozvoljava traženje u indeksiranim datotekema (AVI)"
 
-#: lib/kmplayerprocess.cpp:1097 lib/pref.cpp:58 lib/pref.cpp:69
+#: lib/kmplayerprocess.cpp:1102 lib/pref.cpp:58 lib/pref.cpp:69
 #, kde-format
 msgid "General Options"
 msgstr "Opšte opcije"
 
-#: lib/kmplayerprocess.cpp:1099
+#: lib/kmplayerprocess.cpp:1104
 #, kde-format
 msgid "MPlayer"
 msgstr "M‑plejer"
 
-#: lib/kmplayerprocess.cpp:1115
+#: lib/kmplayerprocess.cpp:1120
 #, kde-format
 msgid "M&Encoder"
 msgstr "&Menkoder"
 
-#: lib/kmplayerprocess.cpp:1180
+#: lib/kmplayerprocess.cpp:1185
 #, kde-format
 msgid "&MPlayerDumpstream"
 msgstr "&Izbačeni tok iz M‑plejera"
 
-#: lib/kmplayerprocess.cpp:1445
+#: lib/kmplayerprocess.cpp:1450
 #, kde-format
 msgid "&Phonon"
 msgstr "&Fonon"
 
-#: lib/kmplayerprocess.cpp:1593 lib/pref.cpp:659
+#: lib/kmplayerprocess.cpp:1598 lib/pref.cpp:659
 #, kde-format
 msgid "&FFMpeg"
 msgstr "&FFmpeg"
 
-#: lib/kmplayerprocess.cpp:1692
+#: lib/kmplayerprocess.cpp:1697
 #, kde-format
 msgid "&Ice Ape"
 msgstr "&Ajs ejp"

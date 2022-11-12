@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
-"POT-Creation-Date: 2022-10-21 00:46+0000\n"
+"POT-Creation-Date: 2022-11-12 00:46+0000\n"
 "PO-Revision-Date: 2022-10-22 09:38+0200\n"
 "Last-Translator: Xavier Besnard <xavier.besnard@neuf.fr>\n"
 "Language-Team: French <kde-francophone@kde.org>\n"
@@ -241,7 +241,7 @@ msgstr "Enregistrer le fichier"
 #: app/kmplayerbroadcast.cpp:537 app/kmplayerbroadcast.cpp:550
 #: app/kmplayertvsource.cpp:610 app/kmplayertvsource.cpp:621
 #: app/kmplayervdr.cpp:430 app/kmplayervdr.cpp:432 lib/kmplayerconfig.cpp:644
-#: lib/kmplayerconfig.cpp:655 lib/kmplayerprocess.cpp:134
+#: lib/kmplayerconfig.cpp:655 lib/kmplayerprocess.cpp:135
 #, kde-format
 msgid "Error"
 msgstr "Erreur"
@@ -1235,122 +1235,122 @@ msgstr "URL"
 msgid "URL - "
 msgstr "URL - "
 
-#: lib/kmplayerprocess.cpp:134
+#: lib/kmplayerprocess.cpp:135
 #, kde-format
 msgid "Failed to end player process."
 msgstr "Impossible de mettre fin au processus player."
 
-#: lib/kmplayerprocess.cpp:474
+#: lib/kmplayerprocess.cpp:479
 #, kde-format
 msgid "&MPlayer"
 msgstr "&MPlayer"
 
-#: lib/kmplayerprocess.cpp:991
+#: lib/kmplayerprocess.cpp:996
 #, kde-format
 msgid "Size pattern"
 msgstr "Motif de taille"
 
-#: lib/kmplayerprocess.cpp:992
+#: lib/kmplayerprocess.cpp:997
 #, kde-format
 msgid "Cache pattern"
 msgstr "Motif de cache"
 
-#: lib/kmplayerprocess.cpp:993
+#: lib/kmplayerprocess.cpp:998
 #, kde-format
 msgid "Position pattern"
 msgstr "Motif de position"
 
-#: lib/kmplayerprocess.cpp:994
+#: lib/kmplayerprocess.cpp:999
 #, kde-format
 msgid "Index pattern"
 msgstr "Motif d'index"
 
-#: lib/kmplayerprocess.cpp:995
+#: lib/kmplayerprocess.cpp:1000
 #, kde-format
 msgid "Reference URL pattern"
 msgstr "Motif d'URL de référence"
 
-#: lib/kmplayerprocess.cpp:996
+#: lib/kmplayerprocess.cpp:1001
 #, kde-format
 msgid "Reference pattern"
 msgstr "Motif de référence"
 
-#: lib/kmplayerprocess.cpp:997
+#: lib/kmplayerprocess.cpp:1002
 #, kde-format
 msgid "Start pattern"
 msgstr "Motif de démarrage"
 
-#: lib/kmplayerprocess.cpp:998
+#: lib/kmplayerprocess.cpp:1003
 #, kde-format
 msgid "VCD track pattern"
 msgstr "Motif de pistes pour les VCD"
 
-#: lib/kmplayerprocess.cpp:999
+#: lib/kmplayerprocess.cpp:1004
 #, kde-format
 msgid "Audio CD tracks pattern"
 msgstr "Motif de pistes pour les CD audio"
 
-#: lib/kmplayerprocess.cpp:1020
+#: lib/kmplayerprocess.cpp:1025
 #, kde-format
 msgid "MPlayer command:"
 msgstr "Commande MPlayer :"
 
-#: lib/kmplayerprocess.cpp:1022
+#: lib/kmplayerprocess.cpp:1027
 #, kde-format
 msgid "Additional command line arguments:"
 msgstr "Arguments de ligne de commande supplémentaires :"
 
-#: lib/kmplayerprocess.cpp:1024
+#: lib/kmplayerprocess.cpp:1029
 #, kde-format
 msgid "Cache size:"
 msgstr "Taille du cache :"
 
-#: lib/kmplayerprocess.cpp:1024
+#: lib/kmplayerprocess.cpp:1029
 #, kde-format
 msgid "kB"
 msgstr "ko"
 
-#: lib/kmplayerprocess.cpp:1029
+#: lib/kmplayerprocess.cpp:1034
 #, kde-format
 msgid "Build new index when possible"
 msgstr "Construire un nouvel index lorsque c'est possible"
 
-#: lib/kmplayerprocess.cpp:1031
+#: lib/kmplayerprocess.cpp:1036
 #, kde-format
 msgid "Allows seeking in indexed files (AVIs)"
 msgstr "Permet d'aller à une position dans les fichiers indexés (AVI)"
 
-#: lib/kmplayerprocess.cpp:1097 lib/pref.cpp:58 lib/pref.cpp:69
+#: lib/kmplayerprocess.cpp:1102 lib/pref.cpp:58 lib/pref.cpp:69
 #, kde-format
 msgid "General Options"
 msgstr "Options générales"
 
-#: lib/kmplayerprocess.cpp:1099
+#: lib/kmplayerprocess.cpp:1104
 #, kde-format
 msgid "MPlayer"
 msgstr "MPlayer"
 
-#: lib/kmplayerprocess.cpp:1115
+#: lib/kmplayerprocess.cpp:1120
 #, kde-format
 msgid "M&Encoder"
 msgstr "M&Encoder"
 
-#: lib/kmplayerprocess.cpp:1180
+#: lib/kmplayerprocess.cpp:1185
 #, kde-format
 msgid "&MPlayerDumpstream"
 msgstr "&MPlayerDumpstream"
 
-#: lib/kmplayerprocess.cpp:1445
+#: lib/kmplayerprocess.cpp:1450
 #, kde-format
 msgid "&Phonon"
 msgstr "&Phonon"
 
-#: lib/kmplayerprocess.cpp:1593 lib/pref.cpp:659
+#: lib/kmplayerprocess.cpp:1598 lib/pref.cpp:659
 #, kde-format
 msgid "&FFMpeg"
 msgstr "&FFMpeg"
 
-#: lib/kmplayerprocess.cpp:1692
+#: lib/kmplayerprocess.cpp:1697
 #, kde-format
 msgid "&Ice Ape"
 msgstr "&Ice Ape"
