@@ -6,19 +6,21 @@
 # Burkhard Lück <lueck@hube-lueck.de>, 2008, 2009, 2011, 2013, 2017.
 # Frederik Schwarzer <schwarzer@kde.org>, 2009, 2010, 2011.
 # Panagiotis Papadopoulos <pano_90@gmx.net>, 2010.
+# Frank Steinmetzger <dev-kde@felsenfleischer.de>, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-11-12 00:46+0000\n"
-"PO-Revision-Date: 2017-08-17 15:26+0100\n"
-"Last-Translator: Burkhard Lück <lueck@hube-lueck.de>\n"
+"PO-Revision-Date: 2022-11-10 20:32+0100\n"
+"Last-Translator: Frank Steinmetzger <dev-kde@felsenfleischer.de>\n"
 "Language-Team: German <kde-i18n-de@kde.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 22.08.3\n"
 
 #, kde-format
 msgctxt "NAME OF TRANSLATORS"
@@ -623,15 +625,12 @@ msgid "Frequency (MHz)"
 msgstr "Frequenz (MHz)"
 
 #: app/kmplayertvsource.cpp:142
-#, fuzzy, kde-format
-#| msgid ""
-#| "You are about to remove this device from the Source menu.\n"
-#| "Continue?"
+#, kde-format
 msgid ""
 "You are about to delete this device from the Source menu.\n"
 "Continue?"
 msgstr ""
-"Das Gerät wird aus dem Quellen-Menü zu entfernt.\n"
+"Das Gerät wird aus dem Quellen-Menü entfernt.\n"
 "Fortfahren?"
 
 #: app/kmplayertvsource.cpp:143
