@@ -2,22 +2,23 @@
 # Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 # Pino Toscano <toscano.pino@tiscali.it>, 2003.
 # Federico Zenith <federico.zenith@member.fsf.org>, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2013.
-# Valter Mura <valtermura@gmail.com>, 2017.
+# Valter Mura <valtermura@gmail.com>, 2017, 2022.
+# Vincenzo Reale <smart2128vr@gmail.com>, 2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-11-12 00:46+0000\n"
-"PO-Revision-Date: 2017-10-11 18:11+0100\n"
-"Last-Translator: Valter Mura <valtermura@gmail.com>\n"
+"PO-Revision-Date: 2022-11-06 16:35+0100\n"
+"Last-Translator: Vincenzo Reale <smart2128vr@gmail.com>\n"
 "Language-Team: Italian <kde-i18n-it@kde.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Lokalize 2.0\n"
+"X-Generator: Lokalize 22.08.3\n"
 
 #, kde-format
 msgctxt "NAME OF TRANSLATORS"
@@ -438,7 +439,7 @@ msgstr "File temporaneo di avanzamento:"
 #: app/kmplayerbroadcast.cpp:170
 #, kde-format
 msgid "Feed file size (kB):"
-msgstr "Dimensione del file di avanzamento (kByte):"
+msgstr "Dimensione del file di avanzamento (kB):"
 
 #: app/kmplayerbroadcast.cpp:193
 #, kde-format
@@ -621,15 +622,12 @@ msgid "Frequency (MHz)"
 msgstr "Frequenza (MHz)"
 
 #: app/kmplayertvsource.cpp:142
-#, fuzzy, kde-format
-#| msgid ""
-#| "You are about to remove this device from the Source menu.\n"
-#| "Continue?"
+#, kde-format
 msgid ""
 "You are about to delete this device from the Source menu.\n"
 "Continue?"
 msgstr ""
-"Stai per rimuovere questo dispositivo dal menu Origine.\n"
+"Stai per eliminare questo dispositivo dal menu Origine.\n"
 "Continuare?"
 
 #: app/kmplayertvsource.cpp:143
