@@ -17,7 +17,7 @@ msgstr ""
 "Project-Id-Version: extragear-multimedia-kde4\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-11-12 00:46+0000\n"
-"PO-Revision-Date: 2022-11-21 22:32+0300\n"
+"PO-Revision-Date: 2022-11-24 17:03+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
 "Language: tr\n"
@@ -155,7 +155,7 @@ msgstr "Yeni &Grup'a ekle"
 #: app/kmplayer.cpp:289
 #, kde-format
 msgid "&Copy here"
-msgstr "Buraya &kopyala"
+msgstr "Buraya ko&pyala"
 
 #: app/kmplayer.cpp:291
 #, kde-format
@@ -1390,7 +1390,7 @@ msgstr "Ögeyi &düzenle"
 #: lib/playlistview.cpp:240
 #, kde-format
 msgid "&Copy to Clipboard"
-msgstr "Panoya &kopyala"
+msgstr "Panoya ko&pyala"
 
 #: lib/playlistview.cpp:247
 #, kde-format
