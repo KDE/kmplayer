@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-11-12 00:46+0000\n"
-"PO-Revision-Date: 2022-09-17 10:32+0200\n"
+"PO-Revision-Date: 2022-11-29 06:41+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <kde-i18n-doc@kde.org>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.2\n"
 
 #, kde-format
 msgctxt "NAME OF TRANSLATORS"
@@ -288,12 +288,12 @@ msgstr "&ჩამოწევა"
 #: app/kmplayer.cpp:1467
 #, kde-format
 msgid "Auto play after opening DVD"
-msgstr ""
+msgstr "ავტომატური დაკვრა DVD-ის გახსნის შემდეგ"
 
 #: app/kmplayer.cpp:1468
 #, kde-format
 msgid "Start playing DVD right after opening DVD"
-msgstr ""
+msgstr "DVD-ის დაუყოვნებლივ დაკვრა მისი გახსნის შემდეგ"
 
 #: app/kmplayer.cpp:1469
 #, kde-format
@@ -349,7 +349,7 @@ msgstr "VCD– ის გახსნის შემდეგ ავტომ�
 #: app/kmplayer.cpp:1648
 #, kde-format
 msgid "Start playing VCD right after opening VCD"
-msgstr ""
+msgstr "VCD-ის დაუყოვნებლივ დაკვრა მისი გახსნის შემდეგ"
 
 #: app/kmplayer.cpp:1649
 #, kde-format
@@ -760,7 +760,7 @@ msgstr "16:9"
 #: app/kmplayervdr.cpp:86
 #, kde-format
 msgid "Aspects to use when viewing VDR"
-msgstr ""
+msgstr "VDR-ის დათვალიერებისას გამოყენებული ასპექტები"
 
 #: app/kmplayervdr.cpp:157 app/kmplayervdr.cpp:706
 #, kde-format
@@ -1050,7 +1050,7 @@ msgstr "XVideo"
 #: lib/kmplayerconfig.cpp:70
 #, kde-format
 msgid "Video Decode and Presentation API for Unix"
-msgstr ""
+msgstr "ვიდეო დეკოდერისა და წარმოდგენის API-ი Unix-სთვის"
 
 #: lib/kmplayerconfig.cpp:81
 #, kde-format
@@ -1461,7 +1461,7 @@ msgstr ""
 #: lib/pref.cpp:208
 #, kde-format
 msgid "Auto resize to video sizes"
-msgstr ""
+msgstr "ავტომატური ზომა ვიდეოს ზომებამდე"
 
 #: lib/pref.cpp:209
 #, kde-format
@@ -1473,12 +1473,12 @@ msgstr ""
 #: lib/pref.cpp:213
 #, kde-format
 msgid "Remember window size on exit"
-msgstr ""
+msgstr "გასვლისას ფანჯრის ზომისა და მდებარეობის დამახსოვრება"
 
 #: lib/pref.cpp:214
 #, kde-format
 msgid "Always start with fixed size"
-msgstr ""
+msgstr "ყოველთვის მითითებული ზომით გაშვება"
 
 #: lib/pref.cpp:225
 #, kde-format
@@ -1488,7 +1488,7 @@ msgstr "მარყუჟი"
 #: lib/pref.cpp:226
 #, kde-format
 msgid "Makes current movie loop"
-msgstr ""
+msgstr "მიმდინარე ფაილის თავიდან დაკვრა მისი დასრულების შემდეგ"
 
 #: lib/pref.cpp:227
 #, kde-format
@@ -1536,7 +1536,7 @@ msgstr "კონფიგურაციის ღილაკის ჩვე�
 #: lib/pref.cpp:242
 #, kde-format
 msgid "Add a button that will popup a config menu"
-msgstr ""
+msgstr "ღილაკის დამატება, რომელიც კონფიგურაციის მენიუს გაჩვენებთ"
 
 #: lib/pref.cpp:243
 #, kde-format
@@ -1546,7 +1546,7 @@ msgstr "დასაკრავი სიის ღილაკის ჩვე
 #: lib/pref.cpp:244
 #, kde-format
 msgid "Add a playlist button to the control buttons"
-msgstr ""
+msgstr "საკონტროლო ღილაკებისთვის დასაკრავი სიის ღილაკის დამატება"
 
 #: lib/pref.cpp:245
 #, kde-format
@@ -1556,7 +1556,7 @@ msgstr "ჩაწერის ღილაკის ჩვენება"
 #: lib/pref.cpp:246
 #, kde-format
 msgid "Add a record button to the control buttons"
-msgstr ""
+msgstr "საკონტროლი ღილაკებისთვის ჩაწერის ღილაკის დამატება"
 
 #: lib/pref.cpp:247
 #, kde-format
@@ -1566,7 +1566,7 @@ msgstr "მაუწყებლობის ღიაკის ჩვენე�
 #: lib/pref.cpp:248
 #, kde-format
 msgid "Add a broadcast button to the control buttons"
-msgstr ""
+msgstr "საკონტროლო ღილაკებისთვის გადაცემის ღილაკის დამატება"
 
 #: lib/pref.cpp:255
 #, kde-format
@@ -1786,12 +1786,12 @@ msgstr ""
 #: lib/pref.cpp:696
 #, kde-format
 msgid "Enable use of postprocessing filters"
-msgstr ""
+msgstr "პოსტპროცესინგის ფილტრების გამოყენების ჩართვა"
 
 #: lib/pref.cpp:698
 #, kde-format
 msgid "Disable use of postprocessing when watching TV/DVD"
-msgstr ""
+msgstr "TV/DVD-ის ყურებისას პოსტპროცესინგის გამორთვა"
 
 #: lib/pref.cpp:707
 #, kde-format
@@ -1806,7 +1806,7 @@ msgstr "სწრაფი"
 #: lib/pref.cpp:736
 #, kde-format
 msgid "Horizontal deblocking"
-msgstr ""
+msgstr "ჰორიზონტალური განბლოკვა"
 
 #: lib/pref.cpp:737 lib/pref.cpp:755 lib/pref.cpp:773
 #, kde-format
@@ -1821,7 +1821,7 @@ msgstr ""
 #: lib/pref.cpp:754
 #, kde-format
 msgid "Vertical deblocking"
-msgstr ""
+msgstr "ვერტიკალური განბლოკვა"
 
 #: lib/pref.cpp:772
 #, kde-format
@@ -1831,7 +1831,7 @@ msgstr ""
 #: lib/pref.cpp:790
 #, kde-format
 msgid "Auto brightness/contrast"
-msgstr ""
+msgstr "ავტომატური სიკაშკაშე/კონტრასტი"
 
 #: lib/pref.cpp:791
 #, kde-format
@@ -1881,7 +1881,7 @@ msgstr ""
 #: lib/pref.cpp:864
 #, kde-format
 msgid "Enable mplayer's default postprocessing filters"
-msgstr ""
+msgstr "Mplayer-ის ნაგულისხმები პოსტპროცესინგის ფილტრების გამოყენების ჩართვა"
 
 #: lib/pref.cpp:865
 #, kde-format
