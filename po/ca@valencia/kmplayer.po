@@ -1683,7 +1683,7 @@ msgid ""
 msgstr ""
 "En activar-ho i quan un objecte HTML tinga un atribut HREF, es gravarà i "
 "guardarà una imatge del primer fotograma de l'enllaç inicial. Esta imatge es "
-"mostrarà en lloc de la imatge per defecte."
+"mostrarà en lloc de la imatge predeterminada."
 
 #: lib/pref.cpp:380
 #, kde-format
