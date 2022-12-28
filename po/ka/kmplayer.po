@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-11-12 00:46+0000\n"
-"PO-Revision-Date: 2022-11-29 06:41+0100\n"
+"PO-Revision-Date: 2022-12-27 03:25+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <kde-i18n-doc@kde.org>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.2\n"
+"X-Generator: Poedit 3.2.2\n"
 
 #, kde-format
 msgctxt "NAME OF TRANSLATORS"
@@ -196,6 +196,10 @@ msgid ""
 "\n"
 "Command:"
 msgstr ""
+"შეიყვანეთ ბრძანება, რომელიც აუდიო/ვიდეო ნაკადს\n"
+"stdout-ზე გამოიტანს. ნაკადი დამკვრელის std-ინში გადამისამართდება.\n"
+"\n"
+"ბრძანება:"
 
 #: app/kmplayer.cpp:523 app/kmplayer.cpp:526
 #, kde-format
@@ -304,6 +308,8 @@ msgstr "DVD მოწყობილობა:"
 #, kde-format
 msgid "Path to your DVD device, you must have read rights to this device"
 msgstr ""
+"ბილიკი თქვენს DVD მოწყობილობამდე. მოწყობილობის კითხვის წვდომის ქონა "
+"აუცილებელია"
 
 #: app/kmplayer.cpp:1503
 #, kde-format
@@ -360,6 +366,8 @@ msgstr "VCD (CDROM) მოწყობილობა:"
 #, kde-format
 msgid "Path to your CDROM/DVD device, you must have read rights to this device"
 msgstr ""
+"ბილიკი თქვენს CD/DVD მოწყობილობამდე. მოწყობილობის კითხვის წვდომის ქონა "
+"აუცილებელია"
 
 #: app/kmplayer.cpp:1663 app/kmplayer.cpp:1722 app/kmplayer.cpp:1748
 #, kde-format
@@ -404,7 +412,7 @@ msgstr "მისაბმელი მისამართი:"
 #: app/kmplayerbroadcast.cpp:151
 #, kde-format
 msgid "If you have multiple network devices, you can limit access"
-msgstr ""
+msgstr "თუ გაქვთ მრავალი ქსელური მოწყობილობა, შეგიძლიათ შეზღუდოთ წვდომა"
 
 #: app/kmplayerbroadcast.cpp:154
 #, kde-format
@@ -499,7 +507,7 @@ msgstr "დაშვება:"
 #: app/kmplayerbroadcast.cpp:219
 #, kde-format
 msgid "'Single IP' or 'start-IP end-IP' for IP ranges"
-msgstr ""
+msgstr "'ერთი IP' ან 'საწყისი-IP ბოლო-IP ', დიაპაზონებისთვის"
 
 #: app/kmplayerbroadcast.cpp:221
 #, kde-format
@@ -594,7 +602,7 @@ msgstr "დაკვრა დაუყოვნებლივ არ დაი
 #: app/kmplayertvsource.cpp:65
 #, kde-format
 msgid "Only start playing after clicking the play button"
-msgstr ""
+msgstr "დაკვრის მხოლოდ ღილაკზე დაწოლის შემდეგ დაწყება"
 
 #: app/kmplayertvsource.cpp:76
 #, kde-format
@@ -617,6 +625,8 @@ msgid ""
 "You are about to delete this device from the Source menu.\n"
 "Continue?"
 msgstr ""
+"აპირებთ წაშალოთ მოწყობილობა წყაროების მენიუდან.\n"
+"გააგრძელებთ?"
 
 #: app/kmplayertvsource.cpp:143
 #, kde-format
@@ -1816,7 +1826,7 @@ msgstr "ავტო ხარისხი"
 #: lib/pref.cpp:739 lib/pref.cpp:757 lib/pref.cpp:775
 #, kde-format
 msgid "Chrominance filtering"
-msgstr ""
+msgstr "ფერადობის ფილტრი"
 
 #: lib/pref.cpp:754
 #, kde-format
@@ -1826,7 +1836,7 @@ msgstr "ვერტიკალური განბლოკვა"
 #: lib/pref.cpp:772
 #, kde-format
 msgid "Dering filter"
-msgstr ""
+msgstr "დერინგის ფილტრი"
 
 #: lib/pref.cpp:790
 #, kde-format
@@ -1836,12 +1846,12 @@ msgstr "ავტომატური სიკაშკაშე/კონტ�
 #: lib/pref.cpp:791
 #, kde-format
 msgid "Stretch luminance to full range"
-msgstr ""
+msgstr "სიკაშკაშის მასშტაბირება სრული დიაპაზონისთვის"
 
 #: lib/pref.cpp:799
 #, kde-format
 msgid "Temporal noise reducer"
-msgstr ""
+msgstr "დროებითი ხმაურის მოცილება"
 
 #: lib/pref.cpp:821
 #, kde-format
@@ -1871,12 +1881,12 @@ msgstr ""
 #: lib/pref.cpp:831
 #, kde-format
 msgid "FFmpeg deinterlacer"
-msgstr ""
+msgstr "FFmpeg დეინტერლეისინგი"
 
 #: lib/pref.cpp:839
 #, kde-format
 msgid "Deinterlacing"
-msgstr ""
+msgstr "დეინტერლეისინგის"
 
 #: lib/pref.cpp:864
 #, kde-format
