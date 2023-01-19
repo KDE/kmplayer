@@ -1,0 +1,576 @@
+<?xml version="1.0" ?>
+<!DOCTYPE book PUBLIC "-//KDE//DTD DocBook XML V4.5-Based Variant V1.1//EN" "dtd/kdedbx45.dtd" [
+  <!ENTITY kmplayer "<application
+>KMPlayer</application
+>">
+  <!ENTITY kappname "&kmplayer;"
+><!-- replace kmplayer here -->
+  <!ENTITY package "kdeextragear-2">
+  <!ENTITY % addindex "IGNORE">
+  <!ENTITY % Brazilian-Portuguese "INCLUDE"
+><!-- change language only here -->
+ 
+]>
+
+<book id="kmplayer" lang="&language;">
+
+
+<bookinfo>
+<title
+>Manual do &kmplayer;</title>
+
+<authorgroup>
+<author
+><firstname
+>Koos</firstname
+> <surname
+>Vriezen</surname
+> <email
+>koos dot vriezen at gmail dot com</email
+> </author>
+</authorgroup>
+
+<othercredit role="translator"
+><firstname
+>Marcus</firstname
+><surname
+>Gama</surname
+><affiliation
+><address
+><email
+>marcus.gama@gmail.com</email
+></address
+></affiliation
+><contrib
+>Tradução</contrib
+></othercredit
+> 
+
+<copyright>
+<year
+>2002</year>
+<year
+>2006</year>
+<year
+>2007</year>
+<year
+>2008</year>
+<holder
+>Koos Vriezen</holder>
+</copyright>
+<!-- Translators: put here the copyright notice of the translation -->
+<!-- Put here the FDL notice.  Read the explanation in fdl-notice.docbook 
+     and in the FDL itself on how to use it. -->
+<legalnotice
+>&FDLNotice;</legalnotice>
+
+
+<date
+>13/01/2008</date>
+<releaseinfo
+>0.07.00</releaseinfo>
+
+<!-- Abstract about this handbook -->
+
+<abstract>
+<para
+>O &kmplayer; é uma interface &kde; para o <application
+>MPlayer</application
+> e o &phonon;. </para>
+</abstract>
+
+
+<keywordset>
+<keyword
+>KDE</keyword>
+<keyword
+>kdemultimedia</keyword>
+<keyword
+>MPlayer</keyword>
+<keyword
+>konqueror</keyword>
+<keyword
+>vídeo</keyword>
+</keywordset>
+
+</bookinfo>
+
+<chapter id="introduction">
+<title
+>Introdução</title>
+<para
+>O &kmplayer; é uma interface simples para o <application
+>MPlayer</application
+>, o &phonon; e o <application
+>FFMpeg</application
+>. Você poderá usá-lo para assistir todos os tipos de formatos de arquivos que o <application
+>MPlayer</application
+> ou o &phonon; suportam, assim como assistir a partir de <acronym
+>DVD</acronym
+>, <acronym
+>VCD</acronym
+> ou <acronym
+>TV</acronym
+> e <acronym
+>câmera</acronym
+>. </para>
+<para
+>A documentação do &kappname; não estava terminada quando o &kde; foi instalado neste computador.</para
+> <para
+>Se você precisar de ajuda, procure na <ulink url="http://www.kde.org"
+>Página do &kde;</ulink
+> atualizações, ou envie perguntas para <ulink url="mailto:kde-user@kde.org"
+>A lista de discussão dos usuários do &kde;</ulink
+>. </para>
+<para
+><emphasis
+>A Equipe do &kde;</emphasis
+></para>
+
+</chapter>
+<chapter id="gui">
+<title
+>A interface do usuário</title>
+<para
+>A janela da aplicação é composta por janelas acopláveis. Existe sempre a janela central. Uma janela opcional é a janela da lista de reprodução. Finalmente, existe uma janela de informação, que aparece simplesmente quando existe alguma informação para ser apresentada. </para>
+<section id="playlistwindow">
+<title
+>Janela da lista de reprodução</title>
+<para
+>A janela da lista de reprodução tem, no momento em que este documento foi escrito, cinco categorias, sendo os itens atuais, os <guilabel
+>Discos Óticos</guilabel
+>, a <guilabel
+>Televisão</guilabel
+>, as <guilabel
+>Listas Persistentes</guilabel
+> e o <guilabel
+>Mais Recente</guilabel
+>. Quando clicar no texto de uma categoria, o mesmo irá mostrar os conteúdos abaixo desta linha. Obviamente, terão que existir conteúdos; p.ex., veja a <link linkend="tvsource"
+>configuração da <acronym
+>TV</acronym
+></link
+> para adicionar conteúdos à categoria <guilabel
+>Televisão</guilabel
+>. A categoria <guilabel
+>Mais Recente</guilabel
+> será preenchida à medida que vão sendo tocados arquivos multimídia locais ou &URL;s remotas. Esta categoria poderá conter 60 itens, dos quais os últimos 50 se encontram no ramo <guilabel
+>Mais ..</guilabel
+>. </para>
+<section>
+<title
+>Categoria das Listas Persistentes</title>
+<para
+>É possível gravar as suas referências favoritas no menu <guilabel
+>Favorito</guilabel
+>, mas estes são itens únicos. Se você quiser criar uma lista de itens que sejam reproduzidos uns atrás dos outros, então deverá usar a categoria de <guilabel
+>Listas Persistentes</guilabel
+>. </para>
+<para
+>A forma mais simples de adicionar um item nesta lista é arrastá-la da categoria <guilabel
+>Mais Recente</guilabel
+> e soltá-la nas <guilabel
+>Listas Persistentes</guilabel
+>. Como você poderá ver, ao soltar os itens, irá aparecer um menu onde poderá escolher entre adicionar a esta lista ou criar um grupo novo. Os itens do nível de topo comportam-se como um item de favorito, mas os itens nos grupos irão tocar o grupo inteiro onde residem. Os itens desta categoria poderão ser movidos, copiados, adicionados a um novo grupo ou removidos facilmente, bastando para isso arrastar este item para outro local nesta categoria. Além disso, existem os itens <guimenu
+>Apagar o item</guimenu
+>, <guimenu
+>Subir</guimenu
+> e <guimenu
+>Descer</guimenu
+> no menu de contexto (ao clicar com o botão direito do mouse num item). </para>
+<para
+>Obviamente, você poderá adicionar grupos aos grupos, para obter uma hierarquia mais profunda. Quando clicar num item, o seu grupo e todos os grupos-filhos serão copiados para a categoria atual e a reprodução começa na posição do item selecionado. </para>
+<section>
+<title
+>Formato de armazenamento</title>
+<para
+>Os dados são gravados em <filename
+>~/.kde/share/apps/kmplayer/playlist.xml</filename
+> e o seu formato é semelhante ao exemplo seguinte. Veja <link linkend="XML-editing"
+>aqui</link
+> como manipular estes dados diretamente. <programlisting>
+&lt;playlist&gt;
+    &lt;group title="feeds"&gt;
+        &lt;item url="http://www.lugradio.org/episodes.rss"/&gt;
+        &lt;item url="http://science.nasa.gov/podcast.xml"/&gt;
+        &lt;item url="http://www.theworld.org/rss/tech.xml"/&gt;
+    &lt;/group&gt;
+    &lt;group title="iradio"&gt;
+        &lt;group title="sunny"&gt;
+            &lt;item mplayeropts="-cache 256" url="http://www.swissgroove.ch/listen.m3u"/&gt;
+            &lt;item url="http://www.boombasticradio.com/shoutcast/64.pls"/&gt;
+        &lt;/group&gt;
+        &lt;group title="rainy"&gt;
+            &lt;item url="http://www.radioparadise.com/musiclinks/rp_64.m3u"/&gt;
+            &lt;item url="http://www.woxy.com/stream/wma64.asx"/&gt;
+            &lt;item url="http://radionigel.com/winmedia.asx"/&gt;
+            &lt;item url="rtsp://livestreams.omroep.nl/live/vpro/vpro3voor12radioalt.rm"/&gt;
+        &lt;/group&gt;
+    &lt;/group&gt;
+&lt;/playlist&gt;
+</programlisting
+> Repare também que as opções personalizadas do <application
+>MPlayer</application
+> podem ser definidas com o argumento <computeroutput
+>mplayeropts</computeroutput
+>. O &kmplayer; procura por esta opção para cima na árvore, para que a possa definir para um grupo inteiro e substituí-la por um grupo ou item-filho. </para>
+</section>
+</section>
+</section>
+<section id="XML-editing">
+<title
+>Edição direta do &XML;</title>
+<para
+>As categorias <guilabel
+>Televisão</guilabel
+> e <guilabel
+>Listas Persistentes</guilabel
+> atuais podem também ser manipuladas editando-se seus arquivos &XML;. Alguém pode fazer isto quando o &kmplayer; não estiver rodando e editar vários arquivos em <filename
+>~/.kde/share/apps/kmplayer/</filename
+>, mas também é possível fazer isso a partir da aplicação propriamente dita. Basta clicar no rótulo da categoria e então selecionar <guimenu
+>Ver</guimenu
+> e em seguida <guimenu
+>Modo edição</guimenu
+>. Você pode também clicar em um ramo filho e então verá somente o conteúdo &XML; deste ramo. </para>
+<para
+>Após ter editado algum &XML;, clique na opção <guilabel
+>Sincronizar com a lista</guilabel
+> e depois desligue o item <guimenu
+>modo de Edição</guimenu
+> ou clique em outra categoria. <caution
+><para
+>Todas as alterações serão perdidas, quando sair do modo de edição, ou selecionar outro ramo, sem sincronizar com a lista. </para
+></caution>
+</para>
+<para
+>Devido à preguiça dos autores do &kmplayer;, algumas funcionalidades só poderão ser ativadas se editar o &XML;. </para>
+</section>
+</chapter>
+<chapter id="settings">
+<title
+>Configurações</title>
+<section>
+    <title
+>Animação na inicialização/saída</title>
+    <para
+>A desativação da animação inicial/final poderá ser configurada se editar o arquivo <filename
+>~/.kde/share/config/kmplayerrc</filename
+> e modificar <programlisting>
+[General Options]
+  No Intro=0
+    </programlisting
+> a opção anterior para '1'. Basta adicionar a opção se não existir no arquivo. </para>
+<para
+>Também é possível definir uma animação alternativa. O &kmplayer; irá ver, respectivamente, em <filename
+>~/.kde/share/apps/kmplayer/intro.xml</filename
+> e <filename
+>~/.kde/share/apps/kmplayer/exit.xml</filename
+>. O formato terá que ser um arquivo &XML; suportado. </para>
+<para
+>A animação inicial não terá que ser reduzida, uma vez que irá terminar imediatamente, quando for aberto outro arquivo. Claro que, para a animação final, isso poderá se tornar incômodo; contudo, o usuário poderá terminar a aplicação duas vezes. </para>
+<para
+>Um exemplo simples de uma introdução que mostre a sua fotografia favorita poderá ser<programlisting>
+&lt;smil&gt;
+  &lt;body&gt;
+    &lt;img dur="indefinite" src="file:///home/jose/namorada.gif" fit="meet"/&gt;
+  &lt;/body&gt;
+&lt;/smil&gt;
+    </programlisting
+> No pacote de código do &kmplayer;, em <filename
+>tests/</filename
+> existem alguns exemplos de arquivos <acronym
+>SMIL</acronym
+> que o &kmplayer; suporta. </para>
+</section>
+</chapter>
+<chapter id="backends">
+<title
+>Os leitores das infraestruturas</title>
+<para
+>O &kmplayer; usa programas externos para efetuar a reprodução em si. </para>
+<section id="mplayer">
+<title
+>MPlayer</title>
+<para
+>Existe uma página de configuração do MPlayer na janela de configuração do &kmplayer;. Aqui, você poderá configurar a localização do MPlayer e o tamanho da sua 'cache', para as transmissões pela rede, entre outras coisas. </para>
+<para
+>O nome da configuração deste leitor é <parameter
+>mplayer</parameter
+>. </para>
+<section id="mplayer-debug">
+<title
+>Resolução de problemas</title>
+<para
+>A melhor forma de depurar esta infraestrutura é iniciar o &kmplayer; a partir de uma aplicação de console, como o 'konsole'. Depois, inicie um filme com o &kmplayer; e veja a linha de comando exata que é usada para iniciar o 'mplayer' na aplicação de console. Em seguida, copie/cole essa informação para outro console, remova as opções '-wid 12344' e ponha-o a tocar. Provavelmente, basta apenas escolher os parâmetros '-ao'/'-vo' corretos. Verifique também se o 'mplayer' não inicia por padrão com uma &GUI;. </para>
+<para
+>Outra ferramenta de depuração é o botão de 'console' da barra de ferramentas do &kmplayer;. Aí você poderá ver o resultado do 'mplayer'. </para>
+</section>
+</section>
+<section id="phonon">
+<title
+>Phonon</title>
+<para
+>O &phonon; é a plataforma multimídia do &kde; e pode ser configurada na &systemsettings;. </para>
+<para
+>O nome da configuração deste leitor é <parameter
+>phonon</parameter
+>. </para>
+<section id="phonon-debug">
+<title
+>Resolução de problemas</title>
+<para
+>Basicamente, a mesma forma de resolver os problemas do <link linkend="mplayer-debug"
+>MPlayer</link
+>, com o nome da aplicação a ser <filename
+>kphononplayer</filename
+>. </para>
+</section>
+</section>
+<section id="npp">
+<title
+>Plugin de navegação</title>
+<para
+>Não existe nenhuma página de configuração para este leitor na janela de configuração do &kmplayer;. Tudo deverá ser configurado manualmente ao editar o arquivo <filename
+>~/.kde/share/config/kmplayerrc</filename
+>, como na configuração da <link linkend="backend-mimetype"
+>infraestrutura por tipo MIME</link
+>. Existe um exemplo em como pode deixar o Flash a ser reproduzido com o plugin 'swfdec-mozilla': <programlisting
+>[application/x-shockwave-flash]
+player=npp
+plugin=/usr/lib/mozilla/plugins/libswfdecmozilla.so
+</programlisting>
+</para>
+<para
+>Você poderá reproduzir Flash dentro do &kmplayer;; de fato, até poderá colar o campo especial <parameter
+>embed</parameter
+> do <ulink url="http://www.youtube.com"
+>YouTube</ulink
+> no <link linkend="XML-editing"
+>&XML; da lista de reprodução</link
+>. </para>
+<para
+>Para que o &kmplayer; reproduza o Flash nas páginas HTML, você deverá fazer com que o &kmplayer; seja o fornecedor do serviço para o tipo MIME <parameter
+>application/x-shockwave-flash</parameter
+>, na janela de configuração das <guilabel
+>Associações de Arquivos</guilabel
+> do &kde;. </para>
+<para
+>No exemplo acima, o nome da configuração deste leitor é <parameter
+>npp</parameter
+>. </para>
+<section id="npp-debug">
+<title
+>Resolução de problemas</title>
+<para
+>Inicie o &konqueror; ou o &kmplayer; numa aplicação de console e procure por erros no carregamento da biblioteca do 'plugin' de navegação. O processo iniciado chama-se <filename
+>knpplayer</filename
+>. Se não indicar quaisquer erros, verifique o resultado da captura da infraestrutura dentro do &kmplayer; (<guimenu
+>Ver</guimenu
+>, <guimenuitem
+>Console</guimenuitem
+>, ou <guimenuitem
+>Console</guimenuitem
+> no menu de contexto). </para>
+</section>
+</section>
+<section id="backend-mimetype">
+<title
+>Forçar o leitor da infraestrutura para um tipo MIME</title>
+<para
+>A indicação do uso de uma dada infraestrutura para um determinado tipo MIME (se este for detectado, claro), poderá ser feita ao editar manualmente o arquivo <filename
+>~/.kde/share/config/kmplayerrc</filename
+>. Por exemplo, fazer com que o 'xine' leia todos os arquivos OGG: <programlisting
+>[audio/ogg]
+player=phonon
+</programlisting>
+</para>
+</section>
+</chapter>
+<chapter id="sources">
+<title
+>Fontes que podem ser lidas</title>
+<para
+>O &kmplayer; pode ler a partir de várias fontes. Estas estão listadas no menu Fonte. </para>
+<section id="tvsource">
+    <title
+>TV</title>
+    <para
+>O &kmplayer; poderá ver o conteúdo das placas de TV com o <application
+>MPlayer</application
+> ou o <acronym
+>XVideo</acronym
+> (usando o <application
+>kxvplayer</application
+>). Antes de poder ver televisão, você terá que configurar o dispositivo a usar e os canais de TV. Você poderá usar o sintonizador da janela de configuração para tal ou editar o arquivo de configuração manualmente. </para>
+<para
+>O arquivo de configuração da TV é um arquivo em &XML;, localizado em <filename
+>~/.kde/share/apps/kmplayer/tv.xml</filename
+>. Veja <link linkend="XML-editing"
+>aqui</link
+> como manipular diretamente estes dados. O formato em &XML; é mais ou menos como neste exemplo: <programlisting>
+&lt;tvdevices&gt;
+    &lt;device path="/dev/video0" width="320" height="240" name="BT878 video (Hauppauge (bt878))" audio=""
+              minwidth="48" minheight="32" maxwidth="924" maxheight="576" playback="0" xvport="240"&gt;
+        &lt;input name="Television" id="0" tuner="1" norm="PAL" xvenc="0"&gt;
+            &lt;channel name="Ned1" frequency="216"/&gt;
+            &lt;channel name="VCR" frequency="594.90"/&gt;
+        &lt;/input&gt;
+        &lt;input name="Composite1" id="1" xvenc="7"/&gt;
+        &lt;input name="S-Video" id="2" xvenc="14"/&gt;
+        &lt;input name="Composite3" id="3"/&gt;
+    &lt;/device&gt;
+    &lt;device path="/dev/video1" width="640" height="480" name="Philips 740 webcam" audio=""
+              minwidth="160" minheight="120" maxwidth="640" maxheight="480" playback="1"&gt;
+        &lt;input name="Webcam" id="0"/&gt;
+    &lt;/device&gt;
+&lt;/tvdevices&gt;
+</programlisting
+> Repare que os elementos <quote
+>input</quote
+> que têm canais, deverão ter o atributo <quote
+>tuner</quote
+> igual a <quote
+>1</quote
+>. </para>
+<para
+>O <acronym
+>XVideo</acronym
+> somente usa os atributos <quote
+>xvport</quote
+> e <quote
+>xvenc</quote
+> e eles somente podem ser definidos editando-se manualmente este arquivo. Os valores destes dois atributos podem ser obtidos executando o <quote
+>kxvplayer</quote
+> em uma aplicação de console como o <quote
+>konsole</quote
+>. Para cada porta, o <quote
+>kxvplayer</quote
+> gerará linhas de saída como as abaixo e os números podem ser configurados pelos atributos mencionados.<programlisting>
+    xvport 240
+    ....
+    encoding: 0 PAL-television
+    encoding: 1 NTSC-television
+    encoding: 2 SECAM-television
+    ....   
+</programlisting
+> Os atributos 'width' e 'height' são ignorados pelo reprodutor <acronym
+>XVideo</acronym
+>. Este reprodutor obtém os tamanhos a partir do servidor de X. Uma das coisas legais do <acronym
+>XVideo</acronym
+> é que o escalonamento é feito pelo hardware, pela placa de vídeo, assim a suporte à tela inteira ocorre sem uso da CPU e sem a mudança de resolução do seu monitor. Com isto, nenhum efeito negativo é gerado quando outra janela sobrepõe a janela de vídeo. </para>
+<para
+>Veja a seção de VDR para mais informações sobre o uso do <acronym
+>XVideo</acronym
+>. </para>
+</section>
+<section id="vdrsource">
+    <title
+>VDR</title>
+<para
+>Para configurar as suas opções de VDR no &kmplayer;, veja o painel Configurar->Fonte->VDR->XVideo. Deverão existir portas detectadas, nos quais você deverá selecionar uma delas. Você terá que descobrir a codificação que deverá usar (p.ex., para a Europa ocidental, este é o PAL) e, provavelmente, a correta terá um nome com <quote
+>dvb</quote
+> incluído. </para>
+<para
+>Por exemplo, eu tenho uma placa de TC, um placa DVB-S e uma webcam conectada em meu sistema. Com estes dispositivos, munha configuração terá três Portas. A primeira possui uma longa lista de entradas NTSC(-JP)/PAL(-M)/SECAM, todas dizendo alguma coisa sobre televisão/composto/svideo (minha placa de TV). A segunda tem NTSC-dvb/PAL-dvb/SECAM-dvb (minha placa DVB-S). E finalmente a terceira possui somente ntsc/pal (provavelmente minha webcam). Eu devo então configurar (apenas selecionar) a segunda porta e a segunda entrada (PAL-dvb). </para>
+<para
+>Uma vez que o suporte de VDR do &kmplayer; só poderá usar o <acronym
+>XVideo</acronym
+>, claro que o <acronym
+>XVideo</acronym
+> deverá funcionar (no caso dos dispositivos, segundo a opinião do autor, esta forma de visualização só funciona no Linux). Do mesmo modo, também só funciona na sua primeira tela (:0.0). Assim, você deverá certificar-se de que a extensão <quote
+>videoforlinux</quote
+> funciona para o servidor do X. Para o servidor XFree86, na sua configuração (em <filename
+>/etc/X11/XF86Config</filename
+>), deverá existir <programlisting
+>Section "Module" 
+     .... 
+     Load    "v4l" 
+EndSection
+</programlisting>
+</para>
+<para
+>Infelizmente, sempre que atualizar o seu controlador de vídeo, você terá que configurar de novo esta opção. </para>
+</section>
+<section id="kmplayer_url">
+    <title
+>Linha de comando</title>
+<para
+>Internamente, para as fontes, o &kmplayer; usa nomes distintos. No momento em que este documento foi escrito, são os seguintes: "dvdnavsource", "dvdsource", "exitsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource" e "vdrsource". Quando estiver ativado, o programa irá executar a lista de itens com possibilidade de reprodução. </para>
+<para
+>Você poderá ativar uma fonte em particular com uma <acronym
+>URL</acronym
+> do tipo <filename
+>kmplayer://</filename
+>. Basta definir o nome da máquina como nome da fonte e uma localização opcional como argumento extra, como tal, para um canal da fonte "vdrsource", isto poderá ficar algo do gênero <filename
+>kmplayer://vdrsource/22 MTV 2</filename
+>. P.ex., este programa inicia o &kmplayer; com o "dvdnavsource" e a usar o &DBus; para mostrar em toda a tela.<programlisting>
+/bin/bash
+kmplayer kmplayer://dvdnavsource/ &amp;
+PID=$!
+sleep 2
+qdbus org.kde.kmplayer-$PID /kmplayer/MainWindow_1 showFullScreen
+    </programlisting
+> Para algumas fontes, isto não fará muita coisa, porque não se pretende usá-las na reprodução normal. Na "pipesource", esta opção está desativada, porque poderia ser um grave problema de segurança. </para>
+</section>
+</chapter>
+<chapter id="questionsanswersandtips">
+    <title
+>Perguntas, respostas e dicas</title>
+
+    <qandaset id="faq">
+      <title
+>Perguntas frequentes</title>
+      <qandaentry>
+        <question>
+            <para
+>Algumas dicas em como tornar o CDROM menos barulhento quando é utilizado (não com VCD://)?</para>
+        </question>
+        <answer>
+            <para
+>Claro, tente o comando <command
+>hdparm -E 8 /dev/cdrom</command
+> como 'root' depois de montar o dispositivo. Mas certifique-se de que tem o <filename
+>/dev/cdrom</filename
+> apontando para a sua unidade de CDROM. </para>
+        </answer>
+      </qandaentry>
+    </qandaset>
+
+  </chapter>
+<chapter id="credits-and-license">
+<title
+>Créditos e licença</title>
+
+<para
+>Direitos autorais do &kmplayer; 2002,2003 Koos Vriezen</para>
+
+<para
+>Tradução de Marcus Gama <email
+>marcus.gama@gmail.com</email
+></para
+> 
+&underFDL; &underGPL; </chapter>
+
+&documentation.index;
+</book>
+<!--
+Local Variables:
+mode: sgml
+sgml-minimize-attributes:nil
+sgml-general-insert-case:lower
+sgml-indent-step:0
+sgml-indent-data:nil
+End:
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+

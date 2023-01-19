@@ -1,0 +1,2004 @@
+# translation of kmplayer.po to Slovak
+# Richard Fric <Richard.Fric@kdemail.net>, 2009.
+# Roman Paholík <wizzardsk@gmail.com>, 2012, 2013, 2017.
+# Ferdinand Galko <galko.ferdinand@gmail.com>, 2015.
+msgid ""
+msgstr ""
+"Project-Id-Version: kmplayer\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2019-08-30 07:39+0200\n"
+"PO-Revision-Date: 2017-05-14 09:56+0100\n"
+"Last-Translator: Roman Paholik <wizzardsk@gmail.com>\n"
+"Language-Team: Slovak <kde-sk@linux.sk>\n"
+"Language: sk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Lokalize 2.0\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Roman Paholík"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "wizzardsk@gmail.com"
+
+#: kmplayer.cpp:151
+#, kde-format
+msgid "New window"
+msgstr "Nové okno"
+
+#: kmplayer.cpp:161
+#, kde-format
+msgid "&Edit mode"
+msgstr "Režim úprav"
+
+#: kmplayer.cpp:164
+#, kde-format
+msgid "Pla&y List"
+msgstr "Prehrať zoznam"
+
+#: kmplayer.cpp:169
+#, kde-format
+msgid "P&lay"
+msgstr "Prehrať"
+
+#: kmplayer.cpp:172
+#, kde-format
+msgid "&Pause"
+msgstr "&Pozastaviť"
+
+#: kmplayer.cpp:175
+#, kde-format
+msgid "&Stop"
+msgstr "Za&staviť"
+
+#: kmplayer.cpp:181
+#, kde-format
+msgid "Fullscreen"
+msgstr "Celá obrazovka"
+
+#: kmplayer.cpp:184 kmplayer.cpp:345
+#, kde-format
+msgid "C&onsole"
+msgstr "Konzola"
+
+#: kmplayer.cpp:189
+#, kde-format
+msgid "Reload"
+msgstr "Znovu načítať"
+
+#: kmplayer.cpp:200
+#, kde-format
+msgid "Clear &History"
+msgstr "Vyčistiť &históriu"
+
+#: kmplayer.cpp:204
+#, kde-format
+msgid "&Generators"
+msgstr "Generátory"
+
+#. i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
+#. new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
+#. new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
+#. new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
+#. new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
+#. //KIconLoader::global ()->loadIconSet (QString ("video-television"), K3Icon::Small, 0,true)
+#. new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
+#. editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), ac, "edit_volume_up");
+#. editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), ac, "edit_volume_down");
+#. //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), ac, "view_video");
+#. new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), ac, "view_playlist");
+#. new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (slotMinimalMode ()), ac, "view_minimal");
+#. new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
+#. new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
+#. new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
+#. new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
+#. new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
+#. viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
+#. fileNewWindow->setStatusText(i18n("Opens a new application window"));
+#. fileOpen->setStatusText(i18n("Opens an existing file"));
+#. fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
+#. fileClose->setStatusText(i18n("Closes the actual source"));
+#. fileQuit->setStatusText(i18n("Quits the application"));
+#: kmplayer.cpp:235
+#, kde-format
+msgid "Enables/disables the status bar"
+msgstr "Povolí/zakáže stavový riadok"
+
+#: kmplayer.cpp:236
+#, kde-format
+msgid "Enables/disables the menu bar"
+msgstr "Povolí/zakáže panel ponuky"
+
+#: kmplayer.cpp:237
+#, kde-format
+msgid "Enables/disables the toolbar"
+msgstr "Povolí/zakáže panel nástrojov"
+
+#: kmplayer.cpp:244 kmplayer.cpp:452 kmplayer.cpp:706 kmplayer.cpp:1050
+#: kmplayer.cpp:1199 kmplayer.cpp:1584 kmplayer.cpp:1716 kmplayer.cpp:1818
+#: kmplayer.cpp:1864
+#, kde-format
+msgid "Ready."
+msgstr "Pripravený."
+
+#: kmplayer.cpp:255 kmplayercontrolpanel.cpp:452
+#, kde-format
+msgid "&Bookmarks"
+msgstr "Zá&ložky"
+
+#: kmplayer.cpp:300 kmplayer.cpp:1321
+#, kde-format
+msgid "&Add to list"
+msgstr "Pridať do zoznamu"
+
+#: kmplayer.cpp:302
+#, kde-format
+msgid "Add in new &Group"
+msgstr "Pridať do novej skupiny"
+
+#: kmplayer.cpp:304
+#, kde-format
+msgid "&Copy here"
+msgstr "Skopírovať sem"
+
+#: kmplayer.cpp:306
+#, kde-format
+msgid "&Delete"
+msgstr "Odstrá&niť"
+
+#: kmplayer.cpp:342 kmplayerview.cpp:341
+#, kde-format
+msgid "V&ideo"
+msgstr "V&ideo"
+
+#: kmplayer.cpp:383
+#, kde-format
+msgid "More..."
+msgstr "Viac..."
+
+#: kmplayer.cpp:432
+#, kde-format
+msgid "Opening DVD..."
+msgstr "Otváranie DVD..."
+
+#: kmplayer.cpp:437
+#, kde-format
+msgid "Opening VCD..."
+msgstr "Otváranie VCD..."
+
+#: kmplayer.cpp:442
+#, kde-format
+msgid "Opening Audio CD..."
+msgstr "Otváranie zvukového CD..."
+
+#: kmplayer.cpp:447
+#, kde-format
+msgid "Opening pipe..."
+msgstr "Otváranie rúry..."
+
+#: kmplayer.cpp:449
+#, kde-format
+msgid "Read From Pipe"
+msgstr "Čítať z rúry"
+
+#: kmplayer.cpp:450
+#, kde-format
+msgid ""
+"Enter a command that will output an audio/video stream\n"
+"to the stdout. This will be piped to a player's stdin.\n"
+"\n"
+"Command:"
+msgstr ""
+"Zadať príkaz, ktorý nasmeruje audio/video stream\n"
+"na stdout. Tento bude presmerovaný na stdin prehrávača.\n"
+"\n"
+"Príkaz:"
+
+#: kmplayer.cpp:538 kmplayer.cpp:541
+#, kde-format
+msgid "Intro"
+msgstr "Úvod"
+
+#: kmplayer.cpp:694 kmplayer.cpp:1086
+#, kde-format
+msgid "Opening file..."
+msgstr "Otváram súbor..."
+
+#: kmplayer.cpp:956 kmplayer.cpp:957
+#, kde-format
+msgid "Exit"
+msgstr "Ukončiť"
+
+#: kmplayer.cpp:1045
+#, kde-format
+msgid "Opening a new application window..."
+msgstr "Otvára sa nové okno aplikácie..."
+
+#: kmplayer.cpp:1073
+#, kde-format
+msgid "Open File"
+msgstr "Otvoriť súbor"
+
+#: kmplayer.cpp:1074
+#, kde-format
+msgid "*|All Files"
+msgstr "*|Všetky súbory"
+
+#: kmplayer.cpp:1106
+#, kde-format
+msgid "Save File"
+msgstr "Uložiť súbor"
+
+#: kmplayer.cpp:1110 kmplayerbroadcast.cpp:535 kmplayerbroadcast.cpp:552
+#: kmplayerbroadcast.cpp:565 kmplayerconfig.cpp:655 kmplayerconfig.cpp:666
+#: kmplayerprocess.cpp:150 kmplayertvsource.cpp:611 kmplayertvsource.cpp:622
+#: kmplayervdr.cpp:444 kmplayervdr.cpp:446
+#, kde-format
+msgid "Error"
+msgstr "Chyba"
+
+#: kmplayer.cpp:1110
+#, kde-format
+msgid ""
+"Error opening file %1.\n"
+"%2."
+msgstr ""
+"Chyba otvárania súboru %1.\n"
+"%2."
+
+#: kmplayer.cpp:1195
+#, kde-format
+msgid "Closing file..."
+msgstr "Zatváram súbor..."
+
+#: kmplayer.cpp:1238 kmplayerpartbase.cpp:845 mediaobject.cpp:168
+#, kde-format
+msgid "Ready"
+msgstr "Pripravený"
+
+#: kmplayer.cpp:1241
+#, kde-format
+msgid "Show Menu Bar with %1"
+msgstr "Ukázať panel ponuky s %1"
+
+#: kmplayer.cpp:1321
+#, kde-format
+msgid "Move here"
+msgstr "Presunúť sem"
+
+#: kmplayer.cpp:1354
+#, kde-format
+msgid "New group"
+msgstr "Nová skupina"
+
+#: kmplayer.cpp:1441
+#, kde-format
+msgid "&Delete item"
+msgstr "Odstrániť položku"
+
+#: kmplayer.cpp:1444
+#, kde-format
+msgid "&Move up"
+msgstr "Posunúť &vyššie"
+
+#: kmplayer.cpp:1446
+#, kde-format
+msgid "Move &down"
+msgstr "Posunúť &nižšie"
+
+#: kmplayer.cpp:1478
+#, kde-format
+msgid "Auto play after opening DVD"
+msgstr "Automaticky prehrať po otvorení DVD"
+
+#: kmplayer.cpp:1479
+#, kde-format
+msgid "Start playing DVD right after opening DVD"
+msgstr "Spustiť prehrávanie DVD hneď po otvorení DVD"
+
+#: kmplayer.cpp:1480
+#, kde-format
+msgid "DVD device:"
+msgstr "Jednotka DVD:"
+
+#: kmplayer.cpp:1482
+#, kde-format
+msgid "Path to your DVD device, you must have read rights to this device"
+msgstr ""
+"Cesta k vášmu DVD zariadeniu, musíte mať práva na čítanie z tohto zariadenia"
+
+#: kmplayer.cpp:1512
+#, kde-format
+msgid "Optical Disks"
+msgstr "Optické disky"
+
+#: kmplayer.cpp:1543 kmplayer.cpp:1617 kmplayer.cpp:1643
+#, kde-format
+msgid "DVD"
+msgstr "DVD"
+
+#: kmplayer.cpp:1548
+#, kde-format
+msgid "CDROM - Audio Compact Disk"
+msgstr "CDROM - zvukový kompaktný disk"
+
+#: kmplayer.cpp:1549
+#, kde-format
+msgid "VCD - Video Compact Disk"
+msgstr "VCD - Video Compact Disk"
+
+#: kmplayer.cpp:1550
+#, kde-format
+msgid "DVD - Digital Video Disk"
+msgstr "DVD - Digital Video Disk"
+
+#: kmplayer.cpp:1568 kmplayer.cpp:1789
+#, kde-format
+msgid "Track %1"
+msgstr "Stopa %1"
+
+#: kmplayer.cpp:1641 kmplayer.cpp:1755 kmplayertvsource.cpp:581
+#: kmplayervdr.cpp:718 pref.cpp:87 pref.cpp:92
+#, kde-format
+msgid "Source"
+msgstr "Zdroj"
+
+#: kmplayer.cpp:1656
+#, kde-format
+msgid "Auto play after opening a VCD"
+msgstr "Automaticky prehrať po otvorení VCD"
+
+#: kmplayer.cpp:1657
+#, kde-format
+msgid "Start playing VCD right after opening VCD"
+msgstr "Spustiť prehrávanie VCD hneď po otvorení VCD"
+
+#: kmplayer.cpp:1658
+#, kde-format
+msgid "VCD (CDROM) device:"
+msgstr "VCD (CDROM) zariadenie:"
+
+#: kmplayer.cpp:1660
+#, kde-format
+msgid "Path to your CDROM/DVD device, you must have read rights to this device"
+msgstr ""
+"Cesta k vášmu zariadeniu CDROM/DVD, musíte mať práva na čítanie z tohto "
+"zariadenia"
+
+#: kmplayer.cpp:1672 kmplayer.cpp:1731 kmplayer.cpp:1757
+#, kde-format
+msgid "VCD"
+msgstr "VCD"
+
+#: kmplayer.cpp:1690
+#, kde-format
+msgid "Track "
+msgstr "Stopa"
+
+#: kmplayer.cpp:1768 kmplayer.cpp:1833
+#, kde-format
+msgid "Audio CD"
+msgstr "Audio CD"
+
+#: kmplayer.cpp:1839
+#, kde-format
+msgid "Pipe"
+msgstr "Rúra"
+
+#: kmplayer.cpp:1871
+#, kde-format
+msgid "Pipe - %1"
+msgstr "Rúra - %1"
+
+#: kmplayer_lists.cpp:95
+#, kde-format
+msgid "Most Recent"
+msgstr "Nedávne"
+
+#: kmplayer_lists.cpp:194
+#, kde-format
+msgid "Persistent Playlists"
+msgstr "Perzistentné zoznamy skladieb"
+
+#: kmplayer_part.cpp:112 main.cpp:46
+#, kde-format
+msgid "KMPlayer"
+msgstr "KMPlayer"
+
+#: kmplayer_part.cpp:113
+#, kde-format
+msgid "Embedded MPlayer for KDE"
+msgstr "Vstavaný MPlayer pre KDE"
+
+#: kmplayer_part.cpp:768
+#, no-c-format, kde-format
+msgid "% Cache fill"
+msgstr "% naplnenie cache"
+
+#: kmplayer_part.cpp:793
+#, kde-format
+msgid "KMPlayer: Playing"
+msgstr "KMPlayer: Prehrávanie"
+
+#: kmplayer_part.cpp:804
+#, kde-format
+msgid "KMPlayer: Stop Playing"
+msgstr "KMPlayer: Zastaviť prehrávanie"
+
+#: kmplayerbroadcast.cpp:160
+#, kde-format
+msgid "Bind address:"
+msgstr "Adresa pripojenia:"
+
+#: kmplayerbroadcast.cpp:162
+#, kde-format
+msgid "If you have multiple network devices, you can limit access"
+msgstr "Ak máte viac sieťových zariadení, môžete obmedziť prístup"
+
+#: kmplayerbroadcast.cpp:165
+#, kde-format
+msgid "Listen port:"
+msgstr "Načúvací port:"
+
+#: kmplayerbroadcast.cpp:169
+#, kde-format
+msgid "Maximum connections:"
+msgstr "Maximum pripojení:"
+
+#: kmplayerbroadcast.cpp:173
+#, kde-format
+msgid "Maximum bandwidth (kbit):"
+msgstr "Maximum priepustnosť (kbit):"
+
+#: kmplayerbroadcast.cpp:177
+#, kde-format
+msgid "Temporary feed file:"
+msgstr "Dočasný zásobovací súbor:"
+
+#: kmplayerbroadcast.cpp:181
+#, kde-format
+msgid "Feed file size (kB):"
+msgstr "Veľkosť zásobovacieho súboru (kB):"
+
+#: kmplayerbroadcast.cpp:204
+#, kde-format
+msgid "Format:"
+msgstr "Formát:"
+
+#: kmplayerbroadcast.cpp:212
+#, kde-format
+msgid "Only avi, mpeg and rm work for mplayer playback"
+msgstr "Iba avi, mpeg a rm sa dajú prehrávať cez mplayer"
+
+#: kmplayerbroadcast.cpp:215
+#, kde-format
+msgid "Audio codec:"
+msgstr "Kodek pre zvuk:"
+
+#: kmplayerbroadcast.cpp:216
+#, kde-format
+msgid "Audio bit rate (kbit):"
+msgstr "Dátový tok pre audio (kbit):"
+
+#: kmplayerbroadcast.cpp:217
+#, kde-format
+msgid "Audio sample rate (Hz):"
+msgstr "Vzorkovacia frekvencia zvuku (Hz):"
+
+#: kmplayerbroadcast.cpp:218
+#, kde-format
+msgid "Video codec:"
+msgstr "Kodek pre video:"
+
+#: kmplayerbroadcast.cpp:219
+#, kde-format
+msgid "Video bit rate (kbit):"
+msgstr "Dátový tok videa (kbit):"
+
+#: kmplayerbroadcast.cpp:220
+#, kde-format
+msgid "Quality (1-31):"
+msgstr "Kvalita (1-31):"
+
+#: kmplayerbroadcast.cpp:221
+#, kde-format
+msgid "Frame rate (Hz):"
+msgstr "Snímková frekvencia (Hz):"
+
+#: kmplayerbroadcast.cpp:222
+#, kde-format
+msgid "Gop size:"
+msgstr "Veľkosť gop:"
+
+#: kmplayerbroadcast.cpp:223
+#, kde-format
+msgid "Width (pixels):"
+msgstr "Šírka (body):"
+
+#: kmplayerbroadcast.cpp:224
+#, kde-format
+msgid "Height (pixels):"
+msgstr "Výška (body):"
+
+#: kmplayerbroadcast.cpp:225
+#, kde-format
+msgid "Allow access from:"
+msgstr "Povoliť prístup z:"
+
+#: kmplayerbroadcast.cpp:230
+#, kde-format
+msgid "'Single IP' or 'start-IP end-IP' for IP ranges"
+msgstr "'Jednotlivé IP' alebo 'počiatočné IP koncové IP' pre IP rozsahy"
+
+#: kmplayerbroadcast.cpp:232
+#, kde-format
+msgid "Host/IP or IP Range"
+msgstr "Hostiteľ/IP alebo IP rozsah"
+
+#: kmplayerbroadcast.cpp:245
+#, kde-format
+msgid "Load"
+msgstr "Načítať"
+
+#: kmplayerbroadcast.cpp:246
+#, kde-format
+msgid "Save"
+msgstr "Uložiť"
+
+#: kmplayerbroadcast.cpp:247 kmplayertvsource.cpp:122
+#, kde-format
+msgid "Delete"
+msgstr "Vymazať"
+
+#: kmplayerbroadcast.cpp:265 kmplayerbroadcast.cpp:601
+#, kde-format
+msgid "Start"
+msgstr "Spustiť"
+
+#: kmplayerbroadcast.cpp:458 kmplayerbroadcast.cpp:658
+#, kde-format
+msgid "Broadcasting"
+msgstr "Vysielanie"
+
+#: kmplayerbroadcast.cpp:460
+#, kde-format
+msgid "Profiles"
+msgstr "Profily"
+
+#: kmplayerbroadcast.cpp:523
+#, kde-format
+msgid "Stop"
+msgstr "Zastaviť"
+
+#: kmplayerbroadcast.cpp:535
+#, kde-format
+msgid "Failed to end ffserver process."
+msgstr "Zlyhalo ukončenie procesu ffserver."
+
+#: kmplayerbroadcast.cpp:552
+#, kde-format
+msgid "Failed to start ffserver.\n"
+msgstr "Zlyhalo spustenie ffserver.\n"
+
+#: kmplayerbroadcast.cpp:565
+#, kde-format
+msgid "Failed to start ffmpeg."
+msgstr "Zlyhalo spustenie ffmpeg."
+
+#: kmplayerbroadcast.cpp:660
+#, kde-format
+msgid "FFServer"
+msgstr "FFServer"
+
+#: kmplayerconfig.cpp:60 kmplayerconfig.cpp:76
+#, kde-format
+msgid "Auto"
+msgstr "Auto"
+
+#: kmplayerconfig.cpp:61
+#, kde-format
+msgid "Open Sound System"
+msgstr "Open Sound System"
+
+#: kmplayerconfig.cpp:62
+#, kde-format
+msgid "Simple DirectMedia Layer"
+msgstr "Simple DirectMedia Layer"
+
+#: kmplayerconfig.cpp:63
+#, kde-format
+msgid "Advanced Linux Sound Architecture"
+msgstr "Advanced Linux Sound Architecture"
+
+#: kmplayerconfig.cpp:64
+#, kde-format
+msgid "Analog Real-Time Synthesizer"
+msgstr "Analógový syntetizátor v reálnom čase"
+
+#: kmplayerconfig.cpp:65
+#, kde-format
+msgid "JACK Audio Connection Kit"
+msgstr "Súprava pripojenia JACK audio"
+
+#: kmplayerconfig.cpp:66
+#, kde-format
+msgid "OpenAL"
+msgstr "OpenAL"
+
+#: kmplayerconfig.cpp:67
+#, kde-format
+msgid "Enlightened Sound Daemon"
+msgstr "Enlightened Sound Daemon"
+
+#: kmplayerconfig.cpp:68
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.5"
+msgstr "Advanced Linux Sound Architecture v0.5"
+
+#: kmplayerconfig.cpp:69
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.9"
+msgstr "Advanced Linux Sound Architecture v0.9"
+
+#: kmplayerconfig.cpp:70
+#, kde-format
+msgid "Use back-end defaults"
+msgstr "Použiť predvolené hodnoty pre backend"
+
+#: kmplayerconfig.cpp:71
+#, kde-format
+msgid "PulseAudio"
+msgstr "PulseAudio"
+
+#: kmplayerconfig.cpp:77
+#, kde-format
+msgid "X11Shm"
+msgstr "X11Shm"
+
+#: kmplayerconfig.cpp:78
+#, kde-format
+msgid "XVidix"
+msgstr "XVidix"
+
+#: kmplayerconfig.cpp:79
+#, kde-format
+msgid "XvMC"
+msgstr "XvMC"
+
+#: kmplayerconfig.cpp:80
+#, kde-format
+msgid "SDL"
+msgstr "SDL"
+
+#: kmplayerconfig.cpp:81
+#, kde-format
+msgid "OpenGL"
+msgstr "OpenGL"
+
+#: kmplayerconfig.cpp:82
+#, kde-format
+msgid "OpenGL MT"
+msgstr "OpenGL MT"
+
+#: kmplayerconfig.cpp:83
+#, kde-format
+msgid "XVideo"
+msgstr "XVideo"
+
+#: kmplayerconfig.cpp:84
+#, kde-format
+msgid "Video Decode and Presentation API for Unix"
+msgstr "API pre Unix na dekódovanie a prezentáciu videa"
+
+#: kmplayerconfig.cpp:95
+#, kde-format
+msgid "Playlist background"
+msgstr "Pozadie zoznamu skladieb"
+
+#: kmplayerconfig.cpp:99
+#, kde-format
+msgid "Playlist foreground"
+msgstr "Popredie zoznamu skladieb"
+
+#: kmplayerconfig.cpp:103
+#, kde-format
+msgid "Console background"
+msgstr "Pozadie konzoly"
+
+#: kmplayerconfig.cpp:104
+#, kde-format
+msgid "Playlist active item"
+msgstr "Aktívna položka zoznamu skladieb"
+
+#: kmplayerconfig.cpp:110
+#, kde-format
+msgid "Console foreground"
+msgstr "Popredie konzoly"
+
+#: kmplayerconfig.cpp:113
+#, kde-format
+msgid "Video background"
+msgstr "Pozadie videa"
+
+#: kmplayerconfig.cpp:116
+#, kde-format
+msgid "Viewing area background"
+msgstr "Pozadie prezeracej oblasti"
+
+#: kmplayerconfig.cpp:119
+#, kde-format
+msgid "Info window background"
+msgstr "Pozadie informačného okna"
+
+#: kmplayerconfig.cpp:123
+#, kde-format
+msgid "Info window foreground"
+msgstr "Popredie informačného okna"
+
+#: kmplayerconfig.cpp:127 kmplayerview.cpp:167
+#, kde-format
+msgid "Playlist"
+msgstr "Zoznam skladieb"
+
+#: kmplayerconfig.cpp:131
+#, kde-format
+msgid "Info window"
+msgstr "Informačné okno"
+
+#: kmplayerconfig.cpp:655
+#, kde-format
+msgid "File %1 does not exist."
+msgstr "Súbor %1 neexistuje."
+
+#: kmplayerconfig.cpp:666
+#, kde-format
+msgid "Sub title file %1 does not exist."
+msgstr "Súbor tituliek %1 neexistuje."
+
+#: kmplayercontrolpanel.cpp:311 kmplayercontrolpanel.cpp:325
+#, kde-format
+msgid "Volume is "
+msgstr "Hlasitosť je"
+
+#: kmplayercontrolpanel.cpp:412
+#, kde-format
+msgid "&Play with"
+msgstr "Prehrať s"
+
+#: kmplayercontrolpanel.cpp:415 kmplayerview.cpp:337
+#, kde-format
+msgid "Con&sole"
+msgstr "Konzola"
+
+#: kmplayercontrolpanel.cpp:417
+#, kde-format
+msgid "Play&list"
+msgstr "Zoznam skladieb"
+
+#: kmplayercontrolpanel.cpp:419
+#, kde-format
+msgid "&Zoom"
+msgstr "Pri&blížiť"
+
+#: kmplayercontrolpanel.cpp:422
+#, kde-format
+msgid "50%"
+msgstr "50%"
+
+#: kmplayercontrolpanel.cpp:423
+#, kde-format
+msgid "100%"
+msgstr "100%"
+
+#: kmplayercontrolpanel.cpp:424
+#, kde-format
+msgid "150%"
+msgstr "150%"
+
+#: kmplayercontrolpanel.cpp:426
+#, kde-format
+msgid "&Full Screen"
+msgstr "Celá obrazovka"
+
+#: kmplayercontrolpanel.cpp:431
+#, kde-format
+msgid "Co&lors"
+msgstr "&Farby:"
+
+#: kmplayercontrolpanel.cpp:456 kmplayercontrolpanel.cpp:458
+#, kde-format
+msgid "&Audio languages"
+msgstr "&Jazyky pre audio"
+
+#: kmplayercontrolpanel.cpp:459
+#, kde-format
+msgid "&Subtitles"
+msgstr "&Titulky"
+
+#: kmplayercontrolpanel.cpp:467
+#, kde-format
+msgid "Scale:"
+msgstr "Mierka:"
+
+#: kmplayercontrolpanel.cpp:479
+#, kde-format
+msgid "&Configure KMPlayer..."
+msgstr "&Nastaviť KMPlayer..."
+
+#: kmplayerpartbase.cpp:1450
+#, kde-format
+msgid "Unknown"
+msgstr "Neznáme"
+
+#: kmplayerpartbase.cpp:1461 kmplayerpartbase.cpp:1530 pref.cpp:91
+#, kde-format
+msgid "URL"
+msgstr "URL"
+
+#: kmplayerpartbase.cpp:1554 kmplayerpartbase.cpp:1557
+#: kmplayerpartbase.cpp:1558
+#, kde-format
+msgid "URL - "
+msgstr "URL - "
+
+#. i18n: ectx: Menu (view)
+#: kmplayerpartui.rc:4 kmplayerui.rc:31
+#, kde-format
+msgid "&View"
+msgstr "P&ohľad"
+
+#: kmplayerprocess.cpp:150
+#, kde-format
+msgid "Failed to end player process."
+msgstr "Zlyhalo ukončenie procesu prehrávača."
+
+#: kmplayerprocess.cpp:489
+#, kde-format
+msgid "&MPlayer"
+msgstr "&MPlayer"
+
+#: kmplayerprocess.cpp:1012
+#, kde-format
+msgid "Size pattern"
+msgstr "Vzor veľkosti"
+
+#: kmplayerprocess.cpp:1013
+#, kde-format
+msgid "Cache pattern"
+msgstr "Vzor vyrovnávacej pamäte"
+
+#: kmplayerprocess.cpp:1014
+#, kde-format
+msgid "Position pattern"
+msgstr "Vzor umiestnenia"
+
+#: kmplayerprocess.cpp:1015
+#, kde-format
+msgid "Index pattern"
+msgstr "Vzor indexu"
+
+#: kmplayerprocess.cpp:1016
+#, kde-format
+msgid "Reference URL pattern"
+msgstr "Vzor referenčného URL"
+
+#: kmplayerprocess.cpp:1017
+#, kde-format
+msgid "Reference pattern"
+msgstr "Referenčný vzor"
+
+#: kmplayerprocess.cpp:1018
+#, kde-format
+msgid "Start pattern"
+msgstr "Vzor zásobníka"
+
+#: kmplayerprocess.cpp:1019
+#, kde-format
+msgid "VCD track pattern"
+msgstr "Vzor VCD stopy"
+
+#: kmplayerprocess.cpp:1020
+#, kde-format
+msgid "Audio CD tracks pattern"
+msgstr "Vzor stopy zvukového CD"
+
+#: kmplayerprocess.cpp:1040
+#, kde-format
+msgid "MPlayer command:"
+msgstr "Príkaz MPlayer:"
+
+#: kmplayerprocess.cpp:1042
+#, kde-format
+msgid "Additional command line arguments:"
+msgstr "Dodatočné parametre príkazového riadku:"
+
+#: kmplayerprocess.cpp:1044
+#, kde-format
+msgid "Cache size:"
+msgstr "Veľkosť vyrovnávacej pamäte:"
+
+#: kmplayerprocess.cpp:1044
+#, kde-format
+msgid "kB"
+msgstr "kB"
+
+#: kmplayerprocess.cpp:1049
+#, kde-format
+msgid "Build new index when possible"
+msgstr "Zostaviť nový index, ak je to možné"
+
+#: kmplayerprocess.cpp:1051
+#, kde-format
+msgid "Allows seeking in indexed files (AVIs)"
+msgstr "Povolí posúvanie v indexovaných súboroch (AVI)"
+
+#: kmplayerprocess.cpp:1117 pref.cpp:74 pref.cpp:84
+#, kde-format
+msgid "General Options"
+msgstr "Všeobecné možnosti"
+
+#: kmplayerprocess.cpp:1119
+#, kde-format
+msgid "MPlayer"
+msgstr "MPlayer"
+
+#: kmplayerprocess.cpp:1135
+#, kde-format
+msgid "M&Encoder"
+msgstr "M&Encoder"
+
+#: kmplayerprocess.cpp:1201
+#, kde-format
+msgid "&MPlayerDumpstream"
+msgstr "&MPlayerDumpstream"
+
+#: kmplayerprocess.cpp:1463
+#, kde-format
+msgid "&Phonon"
+msgstr "&Phonon"
+
+#: kmplayerprocess.cpp:1610 pref.cpp:674
+#, kde-format
+msgid "&FFMpeg"
+msgstr "&FFMpeg"
+
+#: kmplayerprocess.cpp:1709
+#, kde-format
+msgid "&Ice Ape"
+msgstr "&Ice Ape"
+
+#: kmplayertvsource.cpp:65
+#, kde-format
+msgid "Video device:"
+msgstr "Video zariadenie:"
+
+#: kmplayertvsource.cpp:66
+#, kde-format
+msgid "Audio device:"
+msgstr "Zvukové zariadenie:"
+
+#: kmplayertvsource.cpp:68
+#, kde-format
+msgid "Name:"
+msgstr "Názov:"
+
+#: kmplayertvsource.cpp:70
+#, kde-format
+msgid "Width:"
+msgstr "Šírka:"
+
+#: kmplayertvsource.cpp:72
+#, kde-format
+msgid "Height:"
+msgstr "Výška:"
+
+#: kmplayertvsource.cpp:74
+#, kde-format
+msgid "Do not immediately play"
+msgstr "Neprehrávať okamžite"
+
+#: kmplayertvsource.cpp:76
+#, kde-format
+msgid "Only start playing after clicking the play button"
+msgstr "Začať prehrávanie iba po kliknutí na tlačidlo prehrávania"
+
+#: kmplayertvsource.cpp:87
+#, kde-format
+msgid "Norm:"
+msgstr "Norma:"
+
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Channel"
+msgstr "Kanál"
+
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Frequency (MHz)"
+msgstr "Frekvencia (MHz)"
+
+#: kmplayertvsource.cpp:148
+#, kde-format
+msgid ""
+"You are about to remove this device from the Source menu.\n"
+"Continue?"
+msgstr ""
+"Chystáte sa odstrániť toto zariadenie z menu Zdroj.\n"
+"Pokračovať?"
+
+#: kmplayertvsource.cpp:148
+#, kde-format
+msgid "Confirm"
+msgstr "Potvrdiť"
+
+#: kmplayertvsource.cpp:159
+#, kde-format
+msgid "Driver:"
+msgstr "Ovládač:"
+
+#: kmplayertvsource.cpp:161
+#, kde-format
+msgid "dummy, v4l or bsdbt848"
+msgstr "prázdne, v4l alebo bsdbt848"
+
+#: kmplayertvsource.cpp:162
+#, kde-format
+msgid "Device:"
+msgstr "Zariadenie:"
+
+#: kmplayertvsource.cpp:164
+#, kde-format
+msgid "Path to your video device, eg. /dev/video0"
+msgstr "Cesta k vášmu video zariadeniu, napr. /dev/video0"
+
+#: kmplayertvsource.cpp:165
+#, kde-format
+msgid "Scan..."
+msgstr "Skenovať..."
+
+#: kmplayertvsource.cpp:179 pref.cpp:78 pref.cpp:118 pref.cpp:736
+#, kde-format
+msgid "General"
+msgstr "Všeobecné"
+
+#: kmplayertvsource.cpp:259
+#, kde-format
+msgid "tv device"
+msgstr "tv zariadenie"
+
+#: kmplayertvsource.cpp:346
+#, kde-format
+msgid "Television"
+msgstr "Televízia"
+
+#: kmplayertvsource.cpp:374 kmplayertvsource.cpp:532 kmplayertvsource.cpp:583
+#, kde-format
+msgid "TV"
+msgstr "TV"
+
+#: kmplayertvsource.cpp:499
+#, kde-format
+msgid "TV: "
+msgstr "TV: "
+
+#: kmplayertvsource.cpp:610
+#, kde-format
+msgid "Device already present."
+msgstr "Zariadenie už prítomné."
+
+#: kmplayertvsource.cpp:622
+#, kde-format
+msgid "No device found."
+msgstr "Nenájdené žiadne zariadenie."
+
+#: kmplayertvsource.cpp:645
+#, kde-format
+msgid "TVScanner"
+msgstr "TVScanner"
+
+#. i18n: ectx: Menu (file)
+#: kmplayerui.rc:5
+#, kde-format
+msgid "&File"
+msgstr "&Súbor"
+
+#. i18n: ectx: Menu (vdr)
+#: kmplayerui.rc:15
+#, kde-format
+msgid "VD&R"
+msgstr "VD&R"
+
+#. i18n: ectx: Menu (settings)
+#: kmplayerui.rc:51
+#, kde-format
+msgid "&Settings"
+msgstr "Na&stavenia"
+
+#: kmplayervdr.cpp:87
+#, kde-format
+msgid "XVideo port"
+msgstr "Port XVideo"
+
+#: kmplayervdr.cpp:89
+#, kde-format
+msgid ""
+"Port base of the X Video extension.\n"
+"If left to default (0), the first available port will be used. However if "
+"you have multiple XVideo instances, you might have to provide the port to "
+"use here.\n"
+"See the output from 'xvinfo' for more information"
+msgstr ""
+"Základ portov rozšírenia X Video.\n"
+"Ak necháte predvolenú hodnotu (0), bude použitý prvý dostupný port. Ak však "
+"máte viac inštancií XVideo, budete musieť stanoviť port, ktorý sa tu "
+"použije.\n"
+"Pre viac informácií si pozrite výstup z 'xvinfo'"
+
+#: kmplayervdr.cpp:90
+#, kde-format
+msgid "Communication port:"
+msgstr "Komunikačný port:"
+
+#: kmplayervdr.cpp:93
+#, kde-format
+msgid ""
+"Communication port with VDR. Default is port 2001.\n"
+"If you use another port, with the '-p' option of 'vdr', you must set it here "
+"too."
+msgstr ""
+"Komunikačný port s VDR. Predvolený port je 2001.\n"
+"Ak používate iný port, s voľbou '-p' z 'vdr' ho tu musíte nastaviť aj tu."
+
+#: kmplayervdr.cpp:97
+#, kde-format
+msgid "Scale"
+msgstr "Mierka"
+
+#: kmplayervdr.cpp:98
+#, kde-format
+msgid "4:3"
+msgstr "4:3"
+
+#: kmplayervdr.cpp:99
+#, kde-format
+msgid "16:9"
+msgstr "16:9"
+
+#: kmplayervdr.cpp:100
+#, kde-format
+msgid "Aspects to use when viewing VDR"
+msgstr "Pomery strán, ktoré sa použijú pri pozeraní VDR"
+
+#: kmplayervdr.cpp:171 kmplayervdr.cpp:720
+#, kde-format
+msgid "VDR"
+msgstr "VDR"
+
+#: kmplayervdr.cpp:236
+#, kde-format
+msgid "Dis&connect"
+msgstr "Odpojiť"
+
+#: kmplayervdr.cpp:237
+#, kde-format
+msgid "VDR Key Up"
+msgstr "VDR kláves Hore"
+
+#: kmplayervdr.cpp:238
+#, kde-format
+msgid "VDR Key Down"
+msgstr "VDR kláves Dolu"
+
+#: kmplayervdr.cpp:239
+#, kde-format
+msgid "VDR Key Back"
+msgstr "VDR kláves Späť"
+
+#: kmplayervdr.cpp:240
+#, kde-format
+msgid "VDR Key Ok"
+msgstr "VDR kláves Ok"
+
+#: kmplayervdr.cpp:241
+#, kde-format
+msgid "VDR Key Setup"
+msgstr "VDR kláves Nastavenie"
+
+#: kmplayervdr.cpp:242
+#, kde-format
+msgid "VDR Key Channels"
+msgstr "VDR kláves Kanály"
+
+#: kmplayervdr.cpp:243
+#, kde-format
+msgid "VDR Key Menu"
+msgstr "VDR kláves Ponuk"
+
+#: kmplayervdr.cpp:244
+#, kde-format
+msgid "VDR Key Red"
+msgstr "VDR kláves Červený"
+
+#: kmplayervdr.cpp:245
+#, kde-format
+msgid "VDR Key Green"
+msgstr "VDR kláves Zelený"
+
+#: kmplayervdr.cpp:246
+#, kde-format
+msgid "VDR Key Yellow"
+msgstr "VDR kláves Žltý"
+
+#: kmplayervdr.cpp:247
+#, kde-format
+msgid "VDR Key Blue"
+msgstr "VDR kláves Modrý"
+
+#: kmplayervdr.cpp:250
+#, kde-format
+msgid "VDR Key 0"
+msgstr "VDR kláves 0"
+
+#: kmplayervdr.cpp:251
+#, kde-format
+msgid "VDR Key 1"
+msgstr "VDR kláves 1"
+
+#: kmplayervdr.cpp:252
+#, kde-format
+msgid "VDR Key 2"
+msgstr "VDR kláves 2"
+
+#: kmplayervdr.cpp:253
+#, kde-format
+msgid "VDR Key 3"
+msgstr "VDR kláves 3"
+
+#: kmplayervdr.cpp:254
+#, kde-format
+msgid "VDR Key 4"
+msgstr "VDR kláves 4"
+
+#: kmplayervdr.cpp:255
+#, kde-format
+msgid "VDR Key 5"
+msgstr "VDR kláves 5"
+
+#: kmplayervdr.cpp:256
+#, kde-format
+msgid "VDR Key 6"
+msgstr "VDR kláves 6"
+
+#: kmplayervdr.cpp:257
+#, kde-format
+msgid "VDR Key 7"
+msgstr "VDR kláves 7"
+
+#: kmplayervdr.cpp:258
+#, kde-format
+msgid "VDR Key 8"
+msgstr "VDR kláves 8"
+
+#: kmplayervdr.cpp:259
+#, kde-format
+msgid "VDR Key 9"
+msgstr "VDR kláves 9"
+
+#: kmplayervdr.cpp:281
+#, kde-format
+msgid "&Connect"
+msgstr "&Pripojiť"
+
+#: kmplayervdr.cpp:444
+#, kde-format
+msgid "Host not found"
+msgstr "Hostiteľ nenájdený"
+
+#: kmplayervdr.cpp:446
+#, kde-format
+msgid "Connection refused"
+msgstr "Spojenie odmietnuté"
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid "Custom VDR command"
+msgstr "Custom VDR príkaz"
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid ""
+"You can pass commands to VDR.\n"
+"Enter 'HELP' to see a list of available commands.\n"
+"You can see VDR response in the console window.\n"
+"\n"
+"VDR Command:"
+msgstr ""
+"Môžete poslať príkazy do VDR.\n"
+"Zadaním 'HELP' zobrazíte zoznam dostupných príkazov.\n"
+"Reakciu VDR môžete vidieť v okne konzoly.\n"
+"\n"
+"Príkaz VDR:"
+
+#: kmplayervdr.cpp:685
+#, kde-format
+msgid "Port "
+msgstr "Port "
+
+#: kmplayervdr.cpp:739
+#, kde-format
+msgid "X&Video"
+msgstr "X&Video"
+
+#: kmplayerview.cpp:172
+#, kde-format
+msgid "Information"
+msgstr "Informácia"
+
+#: main.cpp:48
+#, kde-format
+msgid "Media player"
+msgstr "Prehrávač médií"
+
+#: main.cpp:49
+#, kde-format
+msgid "(c) 2002-2016, Koos Vriezen"
+msgstr "(c) 2002-2016, Koos Vriezen"
+
+#: main.cpp:50
+#, kde-format
+msgid "Koos Vriezen"
+msgstr "Koos Vriezen"
+
+#: main.cpp:50
+#, kde-format
+msgid "Maintainer"
+msgstr "Správca"
+
+#: main.cpp:63
+#, kde-format
+msgid "file to open"
+msgstr "súbor na otvorenie"
+
+#: main.cpp:63
+#, kde-format
+msgid "+[File]"
+msgstr "+[Súbor]"
+
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Not Running"
+msgstr "Nebeží"
+
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Buffering"
+msgstr "Vyrovnávanie"
+
+#: mediaobject.cpp:168 pref.cpp:231
+#, kde-format
+msgid "Playing"
+msgstr "Prehrávanie"
+
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Paused"
+msgstr "Pozastavené"
+
+#: mediaobject.cpp:190
+#, kde-format
+msgid "Player %1 %2"
+msgstr "Prehrávač %1 %2"
+
+#: playlistview.cpp:140
+#, kde-format
+msgid "Edit &item"
+msgstr "Upraviť položku"
+
+#: playlistview.cpp:255
+#, kde-format
+msgid "&Copy to Clipboard"
+msgstr "&Kopírovať do schránky"
+
+#: playlistview.cpp:262
+#, kde-format
+msgid "&Add Bookmark"
+msgstr "&Pridať záložku"
+
+#: playlistview.cpp:265
+#, kde-format
+msgid "&Show all"
+msgstr "Zobraziť všetko"
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "unnamed"
+msgstr "bez mena"
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "none"
+msgstr "žiadne"
+
+#: playmodel.cpp:378
+#, kde-format
+msgid "[attributes]"
+msgstr "[atribúty]"
+
+#: pref.cpp:69
+#, kde-format
+msgid "Preferences"
+msgstr "Predvoľby"
+
+#: pref.cpp:80
+#, kde-format
+msgid "Looks"
+msgstr "Pohľady"
+
+#: pref.cpp:83
+#, kde-format
+msgid "Output"
+msgstr "Výstup"
+
+#: pref.cpp:95 pref.cpp:120
+#, kde-format
+msgid "Recording"
+msgstr "Nahrávanie"
+
+#: pref.cpp:101
+#, kde-format
+msgid "MEncoder"
+msgstr "MEncoder"
+
+#: pref.cpp:105
+#, kde-format
+msgid "FFMpeg"
+msgstr "FFMpeg"
+
+#: pref.cpp:123
+#, kde-format
+msgid "Output Plugins"
+msgstr "Výstupné zásuvné moduly"
+
+#: pref.cpp:127 pref.cpp:128
+#, kde-format
+msgid "Postprocessing"
+msgstr "Postprocessing"
+
+#: pref.cpp:208
+#, kde-format
+msgid "Window"
+msgstr "Okno"
+
+#: pref.cpp:211
+#, kde-format
+msgid "Keep size ratio"
+msgstr "Zachovať pomer strán"
+
+#: pref.cpp:212
+#, kde-format
+msgid ""
+"When checked, the movie will keep its aspect ratio\n"
+"when the window is resized."
+msgstr ""
+"Ak je zaškrtnuté, film si ponechá pomer strán,\n"
+"keď sa zmení veľkosti okna."
+
+#: pref.cpp:213
+#, kde-format
+msgid "Dock in system tray"
+msgstr "&Dokovať v systémovej lište"
+
+#: pref.cpp:214
+#, kde-format
+msgid ""
+"When checked, an icon for KMPlayer will be added to the system tray.\n"
+"When clicked, it will hide KMPlayer's main window and remove KMPlayer's task "
+"bar button."
+msgstr ""
+"Ak je zaškrtnuté, bude pridaná ikona KMPlayer na systémovej lište.\n"
+"Po kliknutí sa hlavné okno KMPlayer skryje a odstráni sa tlačidlo KMPlayer "
+"na paneli úloh."
+
+#: pref.cpp:215
+#, kde-format
+msgid "Auto resize to video sizes"
+msgstr "Automaticky zmeniť veľkosť na veľkosť videa"
+
+#: pref.cpp:216
+#, kde-format
+msgid ""
+"When checked, KMPlayer will resize to movie sizes\n"
+"when video starts."
+msgstr ""
+"Ak je zaškrtnuté, KMPlayer sa prispôsobí veľkosti filmu\n"
+"pri spustení videa."
+
+#: pref.cpp:220
+#, kde-format
+msgid "Remember window size on exit"
+msgstr "Zapamätať si veľkosť okna pri ukončení"
+
+#: pref.cpp:221
+#, kde-format
+msgid "Always start with fixed size"
+msgstr "Vždy spustiť s pevnou veľkosťou"
+
+#: pref.cpp:232
+#, kde-format
+msgid "Loop"
+msgstr "Opakovať"
+
+#: pref.cpp:233
+#, kde-format
+msgid "Makes current movie loop"
+msgstr "Robí slučku aktuálneho filmu"
+
+#: pref.cpp:234
+#, kde-format
+msgid "Allow frame drops"
+msgstr "Povoliť vynechanie snímok"
+
+#: pref.cpp:235
+#, kde-format
+msgid "Allow dropping frames for better audio and video synchronization"
+msgstr "Povoliť vynechávanie snímok pre lepšiu synchronizáciu obrazu a zvuku"
+
+#: pref.cpp:236
+#, kde-format
+msgid "Auto set volume on start"
+msgstr "Automaticky nastaviť hlasitosť pri spustení"
+
+#: pref.cpp:237
+#, kde-format
+msgid ""
+"When a new source is selected, the volume will be set according the volume "
+"control"
+msgstr ""
+"Ak je vybraný nový zdroj, bude hlasitosť nastavená podľa ovládanie hlasitosti"
+
+#: pref.cpp:238
+#, kde-format
+msgid "Auto set colors on start"
+msgstr "Automaticky nastaviť farby pri spustení"
+
+#: pref.cpp:239
+#, kde-format
+msgid ""
+"When a movie starts, the colors will be set according the sliders for colors"
+msgstr "Pri spustení filmu, budú farby sa nastavené podľa posuvníkov pre farby"
+
+#: pref.cpp:247
+#, kde-format
+msgid "Control Panel"
+msgstr "Ovládací panel"
+
+#: pref.cpp:248
+#, kde-format
+msgid "Show config button"
+msgstr "Zobraziť tlačidlo nastavenia"
+
+#: pref.cpp:249
+#, kde-format
+msgid "Add a button that will popup a config menu"
+msgstr "Pridať tlačidlo, ktoré otvorí ponuku nastavení"
+
+#: pref.cpp:250
+#, kde-format
+msgid "Show playlist button"
+msgstr "Zobraziť tlačidlo zoznamu skladieb"
+
+#: pref.cpp:251
+#, kde-format
+msgid "Add a playlist button to the control buttons"
+msgstr "Pridať tlačidlo zoznamu skladieb k ovládacím tlačidlám"
+
+#: pref.cpp:252
+#, kde-format
+msgid "Show record button"
+msgstr "Zobraziť tlačidlo nahrávania"
+
+#: pref.cpp:253
+#, kde-format
+msgid "Add a record button to the control buttons"
+msgstr "Pridať tlačidlo záznamu k ovládacím tlačidlám"
+
+#: pref.cpp:254
+#, kde-format
+msgid "Show broadcast button"
+msgstr "Zobraziť tlačidlo vysielania"
+
+#: pref.cpp:255
+#, kde-format
+msgid "Add a broadcast button to the control buttons"
+msgstr "Pridať tlačidlo vysielania k ovládacím tlačidlám"
+
+#: pref.cpp:262
+#, kde-format
+msgid "Forward/backward seek time:"
+msgstr "Čas vyhľadávania dopredu/dozadu:"
+
+#: pref.cpp:269 pref.cpp:485
+#, kde-format
+msgid " second"
+msgid_plural " seconds"
+msgstr[0] " sekunda"
+msgstr[1] " sekundy"
+msgstr[2] " sekúnd"
+
+#: pref.cpp:271 pref.cpp:487
+#, kde-format
+msgid " seconds"
+msgstr " sekúnd"
+
+#: pref.cpp:292
+#, kde-format
+msgid "Colors"
+msgstr "Farby"
+
+#: pref.cpp:308
+#, kde-format
+msgid "Fonts"
+msgstr "Písma"
+
+#: pref.cpp:315
+#, kde-format
+msgid "AaBbCc"
+msgstr "AaBbCc"
+
+#: pref.cpp:365
+#, kde-format
+msgid "Location:"
+msgstr "Umiestnenie:"
+
+#: pref.cpp:370
+#, kde-format
+msgid "Location of the playable item"
+msgstr "Umiestnenie prehrateľnej položky"
+
+#: pref.cpp:373
+#, kde-format
+msgid "Sub title:"
+msgstr "Titulky:"
+
+#: pref.cpp:378
+#, kde-format
+msgid "Optional location of a file containing the subtitles of the URL above"
+msgstr ""
+"Voliteľné umiestnenie súboru, ktorý obsahuje titulky vyššie uvedeného odkazu "
+"URL"
+
+#: pref.cpp:381
+#, kde-format
+msgid "Load on demand"
+msgstr "Načítať na požiadanie"
+
+#: pref.cpp:382
+#, kde-format
+msgid ""
+"When enabled, all embedded movies will start with a image that needs to be "
+"clicked to start the video playback"
+msgstr ""
+"Ak je povolené, budú všetky vložené filmy spustené s obrázkom, na ktorý je "
+"potrebné kliknúť, aby sa spustilo prehrávanie videa"
+
+#: pref.cpp:383
+#, kde-format
+msgid "Grab image when 'Click to Play' detected"
+msgstr "Získať obrázok, keď  je zistené 'Kliknúť pre prehrávanie'"
+
+#: pref.cpp:384
+#, kde-format
+msgid ""
+"When enabled and a HTML object has a HREF attribute, grab and save an image "
+"of the first frame of initial link. This image will be shown instead of a "
+"default picture."
+msgstr ""
+"Ak je povolené a objekt HTML má atribút HREF, získať a uložiť obrázok prvej "
+"snímky počiatočného odkazu. Tento obrázok sa zobrazí namiesto predvoleného "
+"obrázka."
+
+#: pref.cpp:391
+#, kde-format
+msgid "Use movie player:"
+msgstr "Použiť prehrávač filmov:"
+
+#: pref.cpp:397
+#, kde-format
+msgid "Network bandwidth"
+msgstr "Priepustnosť siete"
+
+#: pref.cpp:400
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets how much bandwidth you would prefer to allocate to video."
+msgstr ""
+"Niekedy je možné voliť medzi rôznymi stream položkami danými konkrétnym "
+"dátovým tokom.\n"
+"Táto voľba nastaví, koľko šírky pásma by ste chceli prideliť pre video."
+
+#: pref.cpp:403
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets the maximum bandwidth you have available for video."
+msgstr ""
+"Niekedy je možné voliť medzi rôznymi stream položkami danými konkrétnym "
+"dátovým tokom.\n"
+"Táto voľba nastaví maximálnu šírku pásma, ktorú máte k dispozícii pre video."
+
+#: pref.cpp:405
+#, kde-format
+msgid "Preferred bitrate:"
+msgstr "Preferovaný dátový tok:"
+
+#: pref.cpp:407 pref.cpp:410
+#, kde-format
+msgid "kbit/s"
+msgstr "kbit/s"
+
+#: pref.cpp:408
+#, kde-format
+msgid "Maximum bitrate:"
+msgstr "Maximálny dátový tok:"
+
+#: pref.cpp:450
+#, kde-format
+msgid "Output file:"
+msgstr "Výstupný súbor:"
+
+#: pref.cpp:455
+#, kde-format
+msgid "Current source: "
+msgstr "Aktuálny zdroj:"
+
+#: pref.cpp:457
+#, kde-format
+msgid "Recorder"
+msgstr "Záznamník"
+
+#: pref.cpp:469
+#, kde-format
+msgid "Auto Playback"
+msgstr "Automatické prehrávanie"
+
+#: pref.cpp:472
+#, kde-format
+msgid "&No"
+msgstr "&Nie"
+
+#: pref.cpp:475
+#, kde-format
+msgid "&When recording finished"
+msgstr "Po ukončení nahrávania"
+
+#: pref.cpp:478
+#, kde-format
+msgid "A&fter"
+msgstr "Potom"
+
+#: pref.cpp:491
+#, kde-format
+msgid "Time:"
+msgstr "Čas:"
+
+#: pref.cpp:498 pref.cpp:532 pref.cpp:540
+#, kde-format
+msgid "Start &Recording"
+msgstr "Spustiť nahrávanie"
+
+#: pref.cpp:531
+#, kde-format
+msgid "Stop &Recording"
+msgstr "Ukončiť nahrávanie"
+
+#: pref.cpp:552
+#, kde-format
+msgid "Current Source: "
+msgstr "Aktuálny zdroj:"
+
+#: pref.cpp:605
+#, kde-format
+msgid "Format"
+msgstr "Formát"
+
+#: pref.cpp:608
+#, kde-format
+msgid "Same as source"
+msgstr "Rovnako ako zdroj"
+
+#: pref.cpp:611 pref.cpp:723
+#, kde-format
+msgid "Custom"
+msgstr "Vlastné"
+
+#: pref.cpp:615
+#, kde-format
+msgid "Mencoder arguments:"
+msgstr "Parametre Mencoder:"
+
+#: pref.cpp:641
+#, kde-format
+msgid "&MEncoder"
+msgstr "&MEncoder"
+
+#: pref.cpp:649
+#, kde-format
+msgid "MPlayer -&dumpstream"
+msgstr "MPlayer -&dumpstream"
+
+#: pref.cpp:656
+#, kde-format
+msgid "FFMpeg arguments:"
+msgstr "Parametre FFMpeg:"
+
+#: pref.cpp:683
+#, kde-format
+msgid "&Xine"
+msgstr "&Xine"
+
+#: pref.cpp:693
+#, kde-format
+msgid ""
+"Sets video driver. Recommended is XVideo, or, if it is not supported, X11, "
+"which is slower."
+msgstr ""
+"Nastaví video ovládač. Odporúčané je XVideo, alebo, ak nie je podporované, "
+"X11, čo je pomalšie."
+
+#: pref.cpp:711
+#, kde-format
+msgid "Enable use of postprocessing filters"
+msgstr "Povoliť použitie filtrov pre postprocessing"
+
+#: pref.cpp:713
+#, kde-format
+msgid "Disable use of postprocessing when watching TV/DVD"
+msgstr "Zakázať použitie pre posprocessing pri pozeraní TV/DVD"
+
+#: pref.cpp:722
+#, kde-format
+msgid "Default"
+msgstr "Predvolené"
+
+#: pref.cpp:724
+#, kde-format
+msgid "Fast"
+msgstr "Rýchlo"
+
+#: pref.cpp:751
+#, kde-format
+msgid "Horizontal deblocking"
+msgstr "Vodorovné deblokovanie"
+
+#: pref.cpp:752 pref.cpp:770 pref.cpp:788
+#, kde-format
+msgid "Auto quality"
+msgstr "Automatická kvalita"
+
+#: pref.cpp:754 pref.cpp:772 pref.cpp:790
+#, kde-format
+msgid "Chrominance filtering"
+msgstr "Filtrovanie chrominancie"
+
+#: pref.cpp:769
+#, kde-format
+msgid "Vertical deblocking"
+msgstr "Zvislé deblokovanie"
+
+#: pref.cpp:787
+#, kde-format
+msgid "Dering filter"
+msgstr "Dering filter"
+
+#: pref.cpp:805
+#, kde-format
+msgid "Auto brightness/contrast"
+msgstr "Automatický jas/kontrast"
+
+#: pref.cpp:806
+#, kde-format
+msgid "Stretch luminance to full range"
+msgstr "Roztiahnuť jas na celý rozsah"
+
+#: pref.cpp:814
+#, kde-format
+msgid "Temporal noise reducer"
+msgstr "Časové potlačenie šumu"
+
+#: pref.cpp:836
+#, kde-format
+msgid "Custom Preset"
+msgstr "Vlastné nastavenie"
+
+#: pref.cpp:842
+#, kde-format
+msgid "Linear blend deinterlacer"
+msgstr "Lineárny zmiešaný deinterlacer"
+
+#: pref.cpp:843
+#, kde-format
+msgid "Linear interpolating deinterlacer"
+msgstr "Lineárny interpolačný deinterlacer"
+
+#: pref.cpp:844
+#, kde-format
+msgid "Cubic interpolating deinterlacer"
+msgstr "Kubický interpolačný deinterlacer"
+
+#: pref.cpp:845
+#, kde-format
+msgid "Median deinterlacer"
+msgstr "Mediánový deinterlacer"
+
+#: pref.cpp:846
+#, kde-format
+msgid "FFmpeg deinterlacer"
+msgstr "Deinterlacer FFmpeg"
+
+#: pref.cpp:854
+#, kde-format
+msgid "Deinterlacing"
+msgstr "Odstránenie prekladania"
+
+#: pref.cpp:879
+#, kde-format
+msgid "Enable mplayer's default postprocessing filters"
+msgstr "Povoliť predvolené filtre pre mplayer postprocesing"
+
+#: pref.cpp:880
+#, kde-format
+msgid "Enable custom postprocessing filters (See: Custom preset -tab)"
+msgstr ""
+"Povoliť vlastné filtre pre postprocessing (Pozrieť: Karta vlastných "
+"nastavení)"
+
+#: pref.cpp:881
+#, kde-format
+msgid "Enable mplayer's fast postprocessing filters"
+msgstr "Povoliť rýchle filtre pre mplayer postprocesing"
+
+#: pref.cpp:882 pref.cpp:883 pref.cpp:884
+#, kde-format
+msgid "Filter is used if there is enough CPU"
+msgstr "Filter sa použije, ak stačí CPU"
+
+#. i18n( "Strength of the noise reducer" ) );
+#: pref.cpp:886
+#, kde-format
+msgid "Stretches luminance to full range (0..255)"
+msgstr "Roztiahne jas na celý rozsah (0..255)"
+
+#: pref.cpp:892
+#, kde-format
+msgid ""
+"You are about to have all your settings overwritten with defaults.\n"
+"Please confirm.\n"
+msgstr ""
+"Chystáte sa prepísať všetky vaše nastavenia predvolenými hodnotami.\n"
+"Prosím potvrďte.\n"
+
+#: pref.cpp:893
+#, kde-format
+msgid "Reset Settings?"
+msgstr "Vynulovať nastavenia?"
+
+#~ msgid "plugin"
+#~ msgstr "modul"
+
+#~ msgid "http://kmplayer.kde.org"
+#~ msgstr "http://kmplayer.kde.org"
+
+#~ msgid "&OK"
+#~ msgstr "&OK"
+
+#~ msgid "&Cancel"
+#~ msgstr "Zrušiť"

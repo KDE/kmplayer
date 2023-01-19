@@ -1,0 +1,576 @@
+<?xml version="1.0" ?>
+<!DOCTYPE book PUBLIC "-//KDE//DTD DocBook XML V4.5-Based Variant V1.1//EN" "dtd/kdedbx45.dtd" [
+  <!ENTITY kmplayer "<application
+>KMPlayer</application
+>">
+  <!ENTITY kappname "&kmplayer;"
+><!-- replace kmplayer here -->
+  <!ENTITY package "kdeextragear-2">
+  <!ENTITY % addindex "IGNORE">
+  <!ENTITY % Ukrainian "INCLUDE"
+><!-- change language only here -->
+ 
+]>
+
+<book id="kmplayer" lang="&language;">
+
+
+<bookinfo>
+<title
+>Підручник з &kmplayer;</title>
+
+<authorgroup>
+<author
+><firstname
+>Koos</firstname
+> <surname
+>Vriezen</surname
+> <email
+>koos dot vriezen at gmail dot com</email
+> </author>
+</authorgroup>
+
+<othercredit role="translator"
+><firstname
+>Чорноіван</firstname
+><surname
+>Юрій</surname
+><affiliation
+><address
+><email
+>yurchor@ukr.net</email
+></address
+></affiliation
+><contrib
+>Переклад українською</contrib
+></othercredit
+> 
+
+<copyright>
+<year
+>2002</year>
+<year
+>2006</year>
+<year
+>2007</year>
+<year
+>2008</year>
+<holder
+>Koos Vriezen</holder>
+</copyright>
+<!-- Translators: put here the copyright notice of the translation -->
+<!-- Put here the FDL notice.  Read the explanation in fdl-notice.docbook 
+     and in the FDL itself on how to use it. -->
+<legalnotice
+>&FDLNotice;</legalnotice>
+
+
+<date
+>13 січня 2008 року</date>
+<releaseinfo
+>0.07.00</releaseinfo>
+
+<!-- Abstract about this handbook -->
+
+<abstract>
+<para
+>&kmplayer; — це програма, яка є графічною оболонкою під &kde; до <application
+>MPlayer</application
+> і &phonon;. </para>
+</abstract>
+
+
+<keywordset>
+<keyword
+>KDE</keyword>
+<keyword
+>kdemultimedia</keyword>
+<keyword
+>MPlayer</keyword>
+<keyword
+>konqueror</keyword>
+<keyword
+>відео</keyword>
+</keywordset>
+
+</bookinfo>
+
+<chapter id="introduction">
+<title
+>Вступ</title>
+<para
+>&kmplayer; — це проста оболонка для <application
+>MPlayer</application
+>, &phonon; і <application
+>FFMpeg</application
+>. Ви можете використовувати цю програму для перегляду файлів фільмів у всіх форматах, які підтримуються <application
+>MPlayer</application
+> або &phonon;, а також переглядати <acronym
+>DVD</acronym
+>, <acronym
+>VCD</acronym
+> <acronym
+>ТБ</acronym
+> та зображення з <acronym
+>відеокамери</acronym
+>. </para>
+<para
+>Коли &kde; було встановлено на цей комп’ютер, документацію &kappname; ще не було завершено.</para
+> <para
+>Якщо вам все ж потрібна довідка, будь ласка, перевірте, чи немає оновлень на <ulink url="http://www.kde.org"
+>вебсайті &kde;</ulink
+>, або задайте своє питання у <ulink url="mailto:kde-user@kde.org"
+>списку листування користувачів &kde;</ulink
+>. </para>
+<para
+><emphasis
+>Команда &kde;</emphasis
+></para>
+
+</chapter>
+<chapter id="gui">
+<title
+>Інтерфейс користувача</title>
+<para
+>Вікно програми створено з так званих придатних для швартування вікон. Центральне вікно перегляду присутнє завжди. Додатково може бути показано вікно списку відтворення. І, нарешті, у програми є інформаційне вікно, яке буде показано, якщо потрібно показати якусь інформацію. </para>
+<section id="playlistwindow">
+<title
+>Вікно списку відтворення</title>
+<para
+>На час написання цього підручника у вікні відтворення було п’ять категорій: поточні пункти, <guilabel
+>Оптичні диски</guilabel
+>, <guilabel
+>Телебачення</guilabel
+>, <guilabel
+>Постійні списки відтворення</guilabel
+> і <guilabel
+>Найсвіжіші</guilabel
+>. Після натискання тексту з назвою категорії під ним відображається вміст категорії. Звичайно ж для цього має бути наявним такий вміст, перегляньте, наприклад, розділ, присвячений <link linkend="tvsource"
+>Параметрам <acronym
+>ТБ</acronym
+></link
+>, щоб дізнатися, як додати елементи до категорії <guilabel
+>Телебачення</guilabel
+>. Категорія <guilabel
+>Найсвіжіші</guilabel
+> заповнюється автоматично під час відтворення локальних мультимедійних файлів або мережевих адрес &URL;. У цій категорії може бути до 60 елементів, з яких 50 знаходяться у гілці <guilabel
+>Більше...</guilabel
+>. </para>
+<section>
+<title
+>Категорія постійних списків відтворення</title>
+<para
+>Ваші улюблені посилання можна зберігати за допомогою меню <guilabel
+>Закладки</guilabel
+>, але у цьому меню зберігаються окремі елементи. Якщо ви бажаєте створити список елементів, які відтворюватимуться один за одним, вам слід звернутися до категорії <guilabel
+>Постійні списки відтворення</guilabel
+>. </para>
+<para
+>Найпростішим способом додавання елемента до цього списку є перетягування його зі списку <guilabel
+>Найсвіжіші</guilabel
+> і скидання до <guilabel
+>Постійних списків відтворення</guilabel
+>. Як ви можете переконатися, після скидання з’явиться контекстне меню, з якого ви зможете обрати дію, яку слід виконати: додати до поточного списку чи створити нову групу. Пункти верхнього рівня поводять себе як елементи закладок, але відтворення елементів груп призводитиме до відтворення всієї групи, до якої вони належать. Пункти у цій категорії можна легко пересувати, копіювати і додавати до нової групи або вилучати перетягуванням бажаних елементів до інших місць цієї категорії. Крім того, у контекстному меню є пункти <guimenu
+>Вилучити пункт</guimenu
+>, <guimenu
+>Пересунути вгору</guimenu
+> та <guimenu
+>Пересунути вниз</guimenu
+> (це меню з’являється після наведення вказівника на відповідний пункт меню з наступним клацанням правою кнопкою). </para>
+<para
+>Звичайно ж, ви можете додавати групи у групи, щоб отримати додаткові рівні вкладеності. Після наведення вказівника на пункт у категорії і подвійного клацання лівою кнопкою миші пункт і всі його дочірні групи буде скопійовано до поточної категорії, відтворення почнеться з позиції пункту, на якому ви клацали кнопкою миші. </para>
+<section>
+<title
+>Формат збереження даних</title>
+<para
+>Дані зберігаються у файлі <filename
+>~/.kde/share/apps/kmplayer/playlist.xml</filename
+>, формат якого схожий на наведений нижче приклад. Щоб дізнатися, як працювати з цими даними напряму, прочитайте <link linkend="XML-editing"
+>це</link
+>. <programlisting>
+&lt;playlist&gt;
+    &lt;group title="feeds"&gt;
+        &lt;item url="http://www.lugradio.org/episodes.rss"/&gt;
+        &lt;item url="http://science.nasa.gov/podcast.xml"/&gt;
+        &lt;item url="http://www.theworld.org/rss/tech.xml"/&gt;
+    &lt;/group&gt;
+    &lt;group title="iradio"&gt;
+        &lt;group title="sunny"&gt;
+            &lt;item mplayeropts="-cache 256" url="http://www.swissgroove.ch/listen.m3u"/&gt;
+            &lt;item url="http://www.boombasticradio.com/shoutcast/64.pls"/&gt;
+        &lt;/group&gt;
+        &lt;group title="rainy"&gt;
+            &lt;item url="http://www.radioparadise.com/musiclinks/rp_64.m3u"/&gt;
+            &lt;item url="http://www.woxy.com/stream/wma64.asx"/&gt;
+            &lt;item url="http://radionigel.com/winmedia.asx"/&gt;
+            &lt;item url="rtsp://livestreams.omroep.nl/live/vpro/vpro3voor12radioalt.rm"/&gt;
+        &lt;/group&gt;
+    &lt;/group&gt;
+&lt;/playlist&gt;
+</programlisting
+> Крім того, пам’ятайте, що нетипові параметри <application
+>MPlayer</application
+> можна встановити за допомогою аргументу <computeroutput
+>mplayeropts</computeroutput
+>. &kmplayer; буде вести пошук цього параметра у напрямку до вершини дерева, отже, ви можете встановити його для цілої групи або перевизначити його для дочірньої групи або елемента. </para>
+</section>
+</section>
+</section>
+<section id="XML-editing">
+<title
+>Безпосереднє редагування &XML;</title>
+<para
+>Виконувати дії з категоріями поточних пунктів, <guilabel
+>Телебачення</guilabel
+> і <guilabel
+>Постійних списків відтворення</guilabel
+> можна за допомогою редагування збереженого файла з цими категоріями у вигляді &XML;. Звичайно ж, це можна робити, коли &kmplayer; не виконує відтворення, і не лише шляхом безпосереднього редагування різноманітних файлів у <filename
+>~/.kde/share/apps/kmplayer/</filename
+>, але й за допомогою самої програми. Щоб змінити категорію, просто натисніть мітку категорії, а потім оберіть послідовно пункти <guimenu
+>Перегляд</guimenu
+> і <guimenu
+>Режим редагування</guimenu
+>. Ви також можете натиснути дочірню гілку — ви побачите &XML;-вміст цієї гілки. </para>
+<para
+>Після змінити якоїсь з частин &XML;, натисніть кнопку <guilabel
+>Синхронізувати зі списком відтворення</guilabel
+>, а потім зніміть позначку з пункту <guimenu
+>Режим редагування</guimenu
+> або перейдіть до іншої категорії, яку ви бажаєте змінити. <caution
+><para
+>Без синхронізації зі списком відтворення після виходу з режиму редагування або вибору іншої гілки категорій всі зміни буде втрачено. </para
+></caution>
+</para>
+<para
+>Через лінощі авторів &kmplayer; деякі з можливостей можна увімкнути лише безпосереднім редагуванням &XML;. </para>
+</section>
+</chapter>
+<chapter id="settings">
+<title
+>Параметри</title>
+<section>
+    <title
+>Вступна/Завершальна анімація</title>
+    <para
+>Вимкнути початкову або завершальну анімацію можна шляхом зміни файла <filename
+>~/.kde/share/config/kmplayerrc</filename
+>, а саме зміни значення параметра <programlisting>
+[General Options]
+  No Intro=0
+    </programlisting
+> на значення «1». Якщо цього параметра ще немає у файлів, просто додайте його. </para>
+<para
+>Можна також вказати альтернативну анімацію. Параметри анімації зберігаються у файлах <filename
+>~/.kde/share/apps/kmplayer/intro.xml</filename
+> і <filename
+>~/.kde/share/apps/kmplayer/exit.xml</filename
+>, відповідно. Файли мають бути у форматі &XML;, оскільки лише цей формат підтримується програмою. </para>
+<para
+>Вступна анімація не повинна бути короткою, оскільки її все одно буде автоматично завершено під час відкриття джерела для відтворення. Звичайно ж, якщо ви забажаєте одразу вийти, довга анімація може дратувати, але, у такому разі, ви завжди можете повторно виконати дію для завершення роботи програми. </para>
+<para
+>Ось простий приклад вступної анімації, який демонструє вашу улюблену фотографію: <programlisting>
+&lt;smil&gt;
+  &lt;body&gt;
+    &lt;img dur="indefinite" src="file:///home/koos/mum.gif" fit="meet"/&gt;
+  &lt;/body&gt;
+&lt;/smil&gt;
+    </programlisting
+> У пакунку з початковими кодами &kmplayer; є тека <filename
+>tests/</filename
+>, де ви можете знайти декілька прикладів <acronym
+>SMIL</acronym
+>, які підтримує &kmplayer;. </para>
+</section>
+</chapter>
+<chapter id="backends">
+<title
+>Рушії відтворення</title>
+<para
+>Для відтворення файлів &kmplayer; використовує зовнішні програми. </para>
+<section id="mplayer">
+<title
+>MPlayer</title>
+<para
+>У діалоговому вікні налаштування &kmplayer; є вкладка для налаштування MPlayer. На цій вкладці ви зможете вказати шлях до виконуваного файла MPlayer, розмір кешу для мережевого потоку та інші параметри. </para>
+<para
+>Налаштування цього засобу відтворення мають назву <parameter
+>mplayer</parameter
+>. </para>
+<section id="mplayer-debug">
+<title
+>Усунення проблем</title>
+<para
+>Найкращим зі способів боротьби з помилками для цього програмного засобу відтворення є запуск &kmplayer; з консольної програми на зразок konsole. Після такого запуску запустіть відтворення відео у kmplayer і зауважте, який командний рядок було використано для запуску mplayer у вікні консолі. Скопіюйте цей рядок і вставте його у іншому вікні консолі, прибравши параметри «-wid 12344», а потім виконайте змінену команду. Можливо, для усунення помилки достатньо вибрати правильні параметри -ao/-vo. Також переконайтеся, що mplayer типово не запускається з власною графічною оболонкою. </para>
+<para
+>Іншим інструментом налагоджування є кнопка «консоль» на панелі інструментів kmplayer. За її допомогою ви можете переглядати вивід програми mplayer у відповідь на вашу команду. </para>
+</section>
+</section>
+<section id="phonon">
+<title
+>Phonon</title>
+<para
+>&phonon; — це загальна мультимедійна оболонка для стільниці &kde;, її можна налаштувати у <application
+>Параметрах системи</application
+>. </para>
+<para
+>Налаштування цього засобу відтворення мають назву <parameter
+>phonon</parameter
+>. </para>
+<section id="phonon-debug">
+<title
+>Усунення проблем</title>
+<para
+>Спосіб налагодження той самий, що і для <link linkend="mplayer-debug"
+>MPlayer</link
+>, але назва програми інша: <filename
+>kphononplayer</filename
+>. </para>
+</section>
+</section>
+<section id="npp">
+<title
+>Додаток до переглядача</title>
+<para
+>У діалоговому вікні налаштування &kmplayer; немає вкладки для налаштування цього засобу для відтворення. Всі налаштування слід виконувати вручну редагуванням файла <filename
+>~/.kde/share/config/kmplayerrc</filename
+>, так само, як і налаштування <link linkend="backend-mimetype"
+>розподілу засобів відтворення за типами mime</link
+>. Ось приклад того, як вказати, що відтворення flash слід виконувати за допомогою додатка swfdec-mozilla: <programlisting
+>[application/x-shockwave-flash]
+player=npp
+plugin=/usr/lib/mozilla/plugins/libswfdecmozilla.so
+</programlisting>
+</para>
+<para
+>Файли flash можна відтворювати у &kmplayer;, навіть можна вставити окреме поле <parameter
+>embed</parameter
+> для <ulink url="http://www.youtube.com"
+>YouTube</ulink
+> у <link linkend="XML-editing"
+>&XML; списку відтворення</link
+>. </para>
+<para
+>Щоб призначити &kmplayer; для відтворення файлів flash на сторінках HTML, вам слід зробити додаток &kmplayer; засобом обробки типу MIME <parameter
+>application/x-shockwave-flash</parameter
+> у діалоговому вікні <guilabel
+>Прив’язки файлів</guilabel
+> &kde;. </para>
+<para
+>Як випливає з наведеного вище прикладу, налаштування цього засобу відтворення мають назву  <parameter
+>npp</parameter
+>. </para>
+<section id="npp-debug">
+<title
+>Усунення проблем</title>
+<para
+>Запустіть &konqueror; або &kmplayer; за допомогою емулятора консолі і пошукайте у виводі програм повідомлення про помилки, пов’язані з завантаженням бібліотек додатків переглядача. Запущений процес має називатися <filename
+>knpplayer</filename
+>. Якщо повідомлень про помилки немає, перегляньте вивід засобу відтворення, перехоплений у &kmplayer; (<guimenu
+>Перегляд</guimenu
+>, <guimenuitem
+>Консоль</guimenuitem
+>, або пункт <guimenuitem
+>Консоль</guimenuitem
+> з контекстного меню). </para>
+</section>
+</section>
+<section id="backend-mimetype">
+<title
+>Визначення засобів відтворення для типів MIME</title>
+<para
+>Щоб вказати, що для окремого типу MIME слід завжди використовувати вказаний засіб відтворення (якщо цей тип визначається), можна вручну змінити файл <filename
+>~/.kde/share/config/kmplayerrc</filename
+>. Наприклад, щоб phonon відтворював всі файли ogg, там слід вказати: <programlisting
+>[audio/ogg]
+player=phonon
+</programlisting>
+</para>
+</section>
+</chapter>
+<chapter id="sources">
+<title
+>Джерела, придатні для відтворення</title>
+<para
+>&kmplayer; може відтворювати різні джерела мультимедійної інформації. Список цих джерел міститься у меню «Джерело». </para>
+<section id="tvsource">
+    <title
+>ТБ</title>
+    <para
+>&kmplayer; може відтворювати зображення з карток ТБ за допомогою <application
+>MPlayer</application
+> або <acronym
+>XVideo</acronym
+> (з використанням <application
+>kxvplayer</application
+>). Перш ніж розпочати перегляд телебачення, вам слід вказати, який пристрій слід використовувати, і надати перелік телевізійних каналів. Для цього ви можете скористатися відповідним засобом визначення, розташованим у цьому діалоговому вікні налаштування, або змінити файл налаштувань вручну. </para>
+<para
+>Файлом, де зберігаються параметри ТБ, є файл &XML;, розташований за адресою <filename
+>~/.kde/share/apps/kmplayer/tv.xml</filename
+>. Прочитайте <link linkend="XML-editing"
+>цей розділ</link
+>, що дізнатися про те, як працювати з даними у цьому файлі напряму. Формат &XML; подібний до такого прикладу: <programlisting>
+&lt;tvdevices&gt;
+    &lt;device path="/dev/video0" width="320" height="240" name="BT878 video (Hauppauge (bt878))" audio=""
+              minwidth="48" minheight="32" maxwidth="924" maxheight="576" playback="0" xvport="240"&gt;
+        &lt;input name="Television" id="0" tuner="1" norm="PAL" xvenc="0"&gt;
+            &lt;channel name="Ned1" frequency="216"/&gt;
+            &lt;channel name="VCR" frequency="594.90"/&gt;
+        &lt;/input&gt;
+        &lt;input name="Composite1" id="1" xvenc="7"/&gt;
+        &lt;input name="S-Video" id="2" xvenc="14"/&gt;
+        &lt;input name="Composite3" id="3"/&gt;
+    &lt;/device&gt;
+    &lt;device path="/dev/video1" width="640" height="480" name="Philips 740 webcam" audio=""
+              minwidth="160" minheight="120" maxwidth="640" maxheight="480" playback="1"&gt;
+        &lt;input name="Webcam" id="0"/&gt;
+    &lt;/device&gt;
+&lt;/tvdevices&gt;
+</programlisting
+> Зверніть увагу, що елементи <quote
+>input</quote
+>, яким відповідають канали, повинні мати атрибут <quote
+>tuner</quote
+>, значенням якого є <quote
+>1</quote
+>. </para>
+<para
+>За відтворення у <acronym
+>XVideo</acronym
+> буде використано лише атрибути <quote
+>xvport</quote
+> і <quote
+>xvenc</quote
+>, ці атрибути можна встановити лише за допомогою безпосереднього редагування файла. Значення для цих двох атрибутів можна дізнатися за допомогою запуску <quote
+>kxvplayer</quote
+> у програмі-емуляторі термінала на зразок <quote
+>konsole</quote
+>. Для кожного з портів, <quote
+>kxvplayer</quote
+> виведе рядки, схожі на наведені нижче, числа з них відповідають раніше згаданим атрибутам. <programlisting>
+    xvport 240
+    ....
+    encoding: 0 PAL-television
+    encoding: 1 NTSC-television
+    encoding: 2 SECAM-television
+    ....   
+</programlisting
+> Крім того, засобом відтворення <acronym
+>XVideo</acronym
+> не беруться до уваги атрибути ширини і висоти. Цей засіб отримує розміри з сервера X. Однією з приємних можливостей <acronym
+>XVideo</acronym
+> є те, що масштабування виконується на апаратному рівні, відеокарткою, отже, підтримується повноекранний режим без задіяння центрального процесора і зміни роздільної здатності вашого дисплея. Також не буде надокучливого смикання зображення, коли інше вікно перекриває вікно відтворення відео. </para>
+<para
+>Щоб дізнатися більше про використання <acronym
+>XVideo</acronym
+>, перегляньте розділ підручника щодо VDR. </para>
+</section>
+<section id="vdrsource">
+    <title
+>VDR</title>
+<para
+>Налаштування параметрів VDR &kmplayer; можна виконати за допомогою панелі порту XVideo, розташованої на панелі налаштування -> Джерело -> VDR. На цій панелі має бути список виявлених портів, серед яких ви можете обрати потрібний. Там ви можете знайти кодування, яке слід використовувати (наприклад, в Україні це SECAM), а також, за потреби, вибрати кодування з <quote
+>dvb</quote
+> у назві. </para>
+<para
+>Наприклад, якщо на вашому комп’ютері встановлено картку ТБ, картку DVB-S і вебкамеру. За таких умов, у параметрах слід вказати три порти. Для першого ви матимете довгий список записів типу NTSC(-JP)/PAL(-M)/SECAM, кожен з який відповідає один з виходів телебачення/композитний/svideo (картка ТБ). Для другого маємо NTSC-dvb/PAL-dvb/SECAM-dvb (картка DVB-S). І, нарешті, у третього буде лише ntsc/pal (ймовірно, вебкамера). Тому ви, наприклад, можете налаштувати (просто вибрати) другий порт і другий запис (PAL-dvb). </para>
+<para
+>Оскільки підтримку VDR з боку &kmplayer; можна використовувати лише для <acronym
+>XVideo</acronym
+>, очевидно має працювати <acronym
+>XVideo</acronym
+> (і, як видається авторові, для відео-пристроїв це працює лише у linux). Також все це працює лише для вашого першого дисплея (:0.0). Отже, переконайтеся що у сервері X працює додаток <quote
+>videoforlinux</quote
+>. Тому для сервера XFree86, у налаштуваннях (<filename
+>/etc/X11/XF86Config</filename
+>) має бути щось таке <programlisting
+>Section "Module" 
+     .... 
+     Load    "v4l" 
+EndSection
+</programlisting>
+</para>
+<para
+>На жаль, після кожного з оновлень драйвера для вашої відеокартки вам слід буде поновлювати цей параметр. </para>
+</section>
+<section id="kmplayer_url">
+    <title
+>Командний рядок</title>
+<para
+>Для внутрішнього використання у &kmplayer; використовуються визначені назви джерел зображення. На час написання цього підручника цими назвами були: "dvdnavsource", "dvdsource", "exitsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource" і "vdrsource". Якщо задіяти одне з джерел, швидше за все розпочнеться відтворення списку пунктів, які придатні до відтворення. </para>
+<para
+>Задіяти окреме джерело можна вказавши потрібну адресу після <filename
+>kmplayer://</filename
+>. Просто встановіть назву вузла як назву джерела, а бажаний шлях як додатковий параметр, наприклад, для каналу з "vdrsource" це може виглядати як <filename
+>kmplayer://vdrsource/22 MTV 2</filename
+>. Ось приклад скрипту, що запускає &kmplayer; для "dvdnavsource" з використанням &DBus; для повноекранного показу: <programlisting>
+/bin/bash
+kmplayer kmplayer://dvdnavsource/ &amp;
+PID=$!
+sleep 2
+dcop kmplayer-$PID KMediaPlayer toggleFullScreen
+    </programlisting
+> Для деяких з джерел такий спосіб може не дати бажаних результатів, оскільки ці джерела не призначено для звичайного відтворення. Для "pipesource" це, звичайно ж, вимкнено, оскільки увімкнення цього джерела може призвести до серйозної дірки у безпеці системи. </para>
+</section>
+</chapter>
+<chapter id="questionsanswersandtips">
+    <title
+>Питання. відповіді і підказки</title>
+
+    <qandaset id="faq">
+      <title
+>Часті запитання</title>
+      <qandaentry>
+        <question>
+            <para
+>Чи не підкажете чогось, щоб обертання CDROM було менш шумним під час відтворення (не VCD://)?</para>
+        </question>
+        <answer>
+            <para
+>Звичайно, спробуйте виконати команду <command
+>hdparm -E 8 /dev/cdrom</command
+> від імені користувача root після монтування пристрою. Але перед цим двічі переконайтеся, що <filename
+>/dev/cdrom</filename
+> вказує на потрібний пристрій читання КД. </para>
+        </answer>
+      </qandaentry>
+    </qandaset>
+
+  </chapter>
+<chapter id="credits-and-license">
+<title
+>Подяки і ліцензування</title>
+
+<para
+>Авторські права на програму &kmplayer; належать Koos Vriezen, ©2002, 2003.</para>
+
+<para
+>Переклад українською: Юрій Чорноіван <email
+>yurchor@ukr.net</email
+></para
+> 
+&underFDL; &underGPL; </chapter>
+
+&documentation.index;
+</book>
+<!--
+Local Variables:
+mode: sgml
+sgml-minimize-attributes:nil
+sgml-general-insert-case:lower
+sgml-indent-step:0
+sgml-indent-data:nil
+End:
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+

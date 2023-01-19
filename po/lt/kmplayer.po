@@ -1,0 +1,2016 @@
+# Lithuanian translations for kmplayer package.
+#
+# Andrius Štikonas <andrius@stikonas.eu>, 2009.
+# Tomas Straupis <tomasstraupis@gmail.com>, 2011.
+msgid ""
+msgstr ""
+"Project-Id-Version: kmplayer\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2019-08-30 07:39+0200\n"
+"PO-Revision-Date: 2011-06-22 19:10+0300\n"
+"Last-Translator: Tomas Straupis <tomasstraupis@gmail.com>\n"
+"Language-Team: Lithuanian <kde-i18n-lt@kde.org>\n"
+"Language: lt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n==1 ? 0 : n%10>=2 && (n%100<10 || n"
+"%100>=20) ? 1 : n%10==0 || (n%100>10 && n%100<20) ? 2 : 3);\n"
+"X-Generator: Lokalize 1.2\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Andrius Štikonas"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "andrius@stikonas.eu"
+
+#: kmplayer.cpp:151
+#, kde-format
+msgid "New window"
+msgstr "Naujas langas"
+
+#: kmplayer.cpp:161
+#, kde-format
+msgid "&Edit mode"
+msgstr "&Keitimo režimas"
+
+#: kmplayer.cpp:164
+#, kde-format
+msgid "Pla&y List"
+msgstr "&Grojaraštis"
+
+#: kmplayer.cpp:169
+#, kde-format
+msgid "P&lay"
+msgstr "&Groti"
+
+#: kmplayer.cpp:172
+#, kde-format
+msgid "&Pause"
+msgstr "&Pristabdyti"
+
+#: kmplayer.cpp:175
+#, kde-format
+msgid "&Stop"
+msgstr "&Stabdyti"
+
+#: kmplayer.cpp:181
+#, kde-format
+msgid "Fullscreen"
+msgstr "Visas ekranas"
+
+#: kmplayer.cpp:184 kmplayer.cpp:345
+#, kde-format
+msgid "C&onsole"
+msgstr "&Konsolė"
+
+#: kmplayer.cpp:189
+#, kde-format
+msgid "Reload"
+msgstr "Įkelti iš naujo"
+
+#: kmplayer.cpp:200
+#, kde-format
+msgid "Clear &History"
+msgstr "&Išvalyti istoriją"
+
+#: kmplayer.cpp:204
+#, kde-format
+msgid "&Generators"
+msgstr "&Generatoriai"
+
+#. i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
+#. new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
+#. new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
+#. new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
+#. new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
+#. //KIconLoader::global ()->loadIconSet (QString ("video-television"), K3Icon::Small, 0,true)
+#. new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
+#. editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), ac, "edit_volume_up");
+#. editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), ac, "edit_volume_down");
+#. //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), ac, "view_video");
+#. new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), ac, "view_playlist");
+#. new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (slotMinimalMode ()), ac, "view_minimal");
+#. new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
+#. new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
+#. new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
+#. new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
+#. new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
+#. viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
+#. fileNewWindow->setStatusText(i18n("Opens a new application window"));
+#. fileOpen->setStatusText(i18n("Opens an existing file"));
+#. fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
+#. fileClose->setStatusText(i18n("Closes the actual source"));
+#. fileQuit->setStatusText(i18n("Quits the application"));
+#: kmplayer.cpp:235
+#, kde-format
+msgid "Enables/disables the status bar"
+msgstr "Įjungia/išjungia būsenos juostą"
+
+#: kmplayer.cpp:236
+#, kde-format
+msgid "Enables/disables the menu bar"
+msgstr "Įjungia/išjungia meniu juostą"
+
+#: kmplayer.cpp:237
+#, kde-format
+msgid "Enables/disables the toolbar"
+msgstr "Įjungia/išjungia įrankinę"
+
+#: kmplayer.cpp:244 kmplayer.cpp:452 kmplayer.cpp:706 kmplayer.cpp:1050
+#: kmplayer.cpp:1199 kmplayer.cpp:1584 kmplayer.cpp:1716 kmplayer.cpp:1818
+#: kmplayer.cpp:1864
+#, kde-format
+msgid "Ready."
+msgstr "Pasiruošęs."
+
+#: kmplayer.cpp:255 kmplayercontrolpanel.cpp:452
+#, kde-format
+msgid "&Bookmarks"
+msgstr "Ž&ymelės"
+
+#: kmplayer.cpp:300 kmplayer.cpp:1321
+#, kde-format
+msgid "&Add to list"
+msgstr "&Pridėti į sąrašą"
+
+#: kmplayer.cpp:302
+#, kde-format
+msgid "Add in new &Group"
+msgstr "Pridėti naujoje &grupėje"
+
+#: kmplayer.cpp:304
+#, kde-format
+msgid "&Copy here"
+msgstr "&Kopijuoti čia"
+
+#: kmplayer.cpp:306
+#, kde-format
+msgid "&Delete"
+msgstr "&Trinti"
+
+#: kmplayer.cpp:342 kmplayerview.cpp:341
+#, kde-format
+msgid "V&ideo"
+msgstr "V&ideo"
+
+#: kmplayer.cpp:383
+#, kde-format
+msgid "More..."
+msgstr "Daugiau..."
+
+#: kmplayer.cpp:432
+#, kde-format
+msgid "Opening DVD..."
+msgstr "Atveriamas DVD..."
+
+#: kmplayer.cpp:437
+#, kde-format
+msgid "Opening VCD..."
+msgstr "Atveriamas VCD..."
+
+#: kmplayer.cpp:442
+#, kde-format
+msgid "Opening Audio CD..."
+msgstr "Atveriamas Audio CD..."
+
+#: kmplayer.cpp:447
+#, kde-format
+msgid "Opening pipe..."
+msgstr "Atveriamas kanalas..."
+
+#: kmplayer.cpp:449
+#, kde-format
+msgid "Read From Pipe"
+msgstr "Skaityti iš kanalo"
+
+#: kmplayer.cpp:450
+#, kde-format
+msgid ""
+"Enter a command that will output an audio/video stream\n"
+"to the stdout. This will be piped to a player's stdin.\n"
+"\n"
+"Command:"
+msgstr ""
+"Įveskite komandą, kuri išves garso/vaizdo srautą\n"
+"į standartinę išvestį. Tai bus perduota grotuvui.\n"
+"\n"
+"Komanda:"
+
+#: kmplayer.cpp:538 kmplayer.cpp:541
+#, kde-format
+msgid "Intro"
+msgstr "Įvadas"
+
+#: kmplayer.cpp:694 kmplayer.cpp:1086
+#, kde-format
+msgid "Opening file..."
+msgstr "Atveriamas failas..."
+
+#: kmplayer.cpp:956 kmplayer.cpp:957
+#, kde-format
+msgid "Exit"
+msgstr "Išeiti"
+
+#: kmplayer.cpp:1045
+#, kde-format
+msgid "Opening a new application window..."
+msgstr "Atveriamas naujas programos langas..."
+
+#: kmplayer.cpp:1073
+#, kde-format
+msgid "Open File"
+msgstr "Atverti failą"
+
+#: kmplayer.cpp:1074
+#, kde-format
+msgid "*|All Files"
+msgstr "*|Visi failai"
+
+#: kmplayer.cpp:1106
+#, kde-format
+msgid "Save File"
+msgstr "Įrašyti failą"
+
+#: kmplayer.cpp:1110 kmplayerbroadcast.cpp:535 kmplayerbroadcast.cpp:552
+#: kmplayerbroadcast.cpp:565 kmplayerconfig.cpp:655 kmplayerconfig.cpp:666
+#: kmplayerprocess.cpp:150 kmplayertvsource.cpp:611 kmplayertvsource.cpp:622
+#: kmplayervdr.cpp:444 kmplayervdr.cpp:446
+#, kde-format
+msgid "Error"
+msgstr "Klaida"
+
+#: kmplayer.cpp:1110
+#, kde-format
+msgid ""
+"Error opening file %1.\n"
+"%2."
+msgstr ""
+"Klaida atidarant failą %1.\n"
+"%2."
+
+#: kmplayer.cpp:1195
+#, kde-format
+msgid "Closing file..."
+msgstr "Uždaromas failas..."
+
+#: kmplayer.cpp:1238 kmplayerpartbase.cpp:845 mediaobject.cpp:168
+#, kde-format
+msgid "Ready"
+msgstr "Pasiruošęs"
+
+#: kmplayer.cpp:1241
+#, kde-format
+msgid "Show Menu Bar with %1"
+msgstr "Rodyti meniu juostą su %1"
+
+#: kmplayer.cpp:1321
+#, kde-format
+msgid "Move here"
+msgstr "Perkelti čia"
+
+#: kmplayer.cpp:1354
+#, kde-format
+msgid "New group"
+msgstr "Nauja grupė"
+
+#: kmplayer.cpp:1441
+#, kde-format
+msgid "&Delete item"
+msgstr "&Trinti objektą"
+
+#: kmplayer.cpp:1444
+#, kde-format
+msgid "&Move up"
+msgstr "Perkelti &aukštyn"
+
+#: kmplayer.cpp:1446
+#, kde-format
+msgid "Move &down"
+msgstr "Perkelti ž&emyn"
+
+#: kmplayer.cpp:1478
+#, kde-format
+msgid "Auto play after opening DVD"
+msgstr "Automatiškai groti atidarius DVD"
+
+#: kmplayer.cpp:1479
+#, kde-format
+msgid "Start playing DVD right after opening DVD"
+msgstr "Pradėti groti DVD iš karto po DVD atidarymo"
+
+#: kmplayer.cpp:1480
+#, kde-format
+msgid "DVD device:"
+msgstr "DVD įrenginys:"
+
+#: kmplayer.cpp:1482
+#, kde-format
+msgid "Path to your DVD device, you must have read rights to this device"
+msgstr ""
+"Kelias iki jūsų DVD įrenginio. Jūs privalote turėti šio įrenginio skaitymo "
+"teises"
+
+#: kmplayer.cpp:1512
+#, kde-format
+msgid "Optical Disks"
+msgstr "Optiniai diskai"
+
+#: kmplayer.cpp:1543 kmplayer.cpp:1617 kmplayer.cpp:1643
+#, kde-format
+msgid "DVD"
+msgstr "DVD"
+
+#: kmplayer.cpp:1548
+#, kde-format
+msgid "CDROM - Audio Compact Disk"
+msgstr "CDROM – garso kompaktinė plokštelė"
+
+#: kmplayer.cpp:1549
+#, kde-format
+msgid "VCD - Video Compact Disk"
+msgstr "VCD – vaizdo kompaktinė plokštelė"
+
+#: kmplayer.cpp:1550
+#, kde-format
+msgid "DVD - Digital Video Disk"
+msgstr "DVD – skaitmeninis vaizdo diskas"
+
+#: kmplayer.cpp:1568 kmplayer.cpp:1789
+#, kde-format
+msgid "Track %1"
+msgstr "Takelis %1"
+
+#: kmplayer.cpp:1641 kmplayer.cpp:1755 kmplayertvsource.cpp:581
+#: kmplayervdr.cpp:718 pref.cpp:87 pref.cpp:92
+#, kde-format
+msgid "Source"
+msgstr "Šaltinis"
+
+#: kmplayer.cpp:1656
+#, kde-format
+msgid "Auto play after opening a VCD"
+msgstr "Automatiškai groti atidarius VCD"
+
+#: kmplayer.cpp:1657
+#, kde-format
+msgid "Start playing VCD right after opening VCD"
+msgstr "Pradėti groti VCD iš karto po jo atidarymo"
+
+#: kmplayer.cpp:1658
+#, kde-format
+msgid "VCD (CDROM) device:"
+msgstr "VCD (CDROM) įrenginys:"
+
+#: kmplayer.cpp:1660
+#, kde-format
+msgid "Path to your CDROM/DVD device, you must have read rights to this device"
+msgstr ""
+"Kelias iki jūsų CDROM/DVD įrenginio. Jūs privalote turėti šio įrenginio "
+"skaitymo teises"
+
+#: kmplayer.cpp:1672 kmplayer.cpp:1731 kmplayer.cpp:1757
+#, kde-format
+msgid "VCD"
+msgstr "VCD"
+
+#: kmplayer.cpp:1690
+#, kde-format
+msgid "Track "
+msgstr "Takelis"
+
+#: kmplayer.cpp:1768 kmplayer.cpp:1833
+#, kde-format
+msgid "Audio CD"
+msgstr "Audio CD"
+
+#: kmplayer.cpp:1839
+#, kde-format
+msgid "Pipe"
+msgstr "Kanalas"
+
+#: kmplayer.cpp:1871
+#, kde-format
+msgid "Pipe - %1"
+msgstr "Kanalas – %1"
+
+#: kmplayer_lists.cpp:95
+#, kde-format
+msgid "Most Recent"
+msgstr "Vėliausias"
+
+#: kmplayer_lists.cpp:194
+#, kde-format
+msgid "Persistent Playlists"
+msgstr "Pastovūs grojaraščiai"
+
+#: kmplayer_part.cpp:112 main.cpp:46
+#, kde-format
+msgid "KMPlayer"
+msgstr "KMPlayer"
+
+#: kmplayer_part.cpp:113
+#, kde-format
+msgid "Embedded MPlayer for KDE"
+msgstr ""
+
+#: kmplayer_part.cpp:768
+#, no-c-format, kde-format
+msgid "% Cache fill"
+msgstr "% dėklo užpildymas"
+
+#: kmplayer_part.cpp:793
+#, kde-format
+msgid "KMPlayer: Playing"
+msgstr "KMPlayer: Grojama"
+
+#: kmplayer_part.cpp:804
+#, kde-format
+msgid "KMPlayer: Stop Playing"
+msgstr "KMPlayer: Stabdyti grojimą"
+
+#: kmplayerbroadcast.cpp:160
+#, kde-format
+msgid "Bind address:"
+msgstr "Susietas adresas:"
+
+#: kmplayerbroadcast.cpp:162
+#, kde-format
+msgid "If you have multiple network devices, you can limit access"
+msgstr "Jei turite kelis tinklo įrenginius, galite riboti prieigą"
+
+#: kmplayerbroadcast.cpp:165
+#, kde-format
+msgid "Listen port:"
+msgstr "Klausymosi prievadas:"
+
+#: kmplayerbroadcast.cpp:169
+#, kde-format
+msgid "Maximum connections:"
+msgstr "Maksimalus jungčių skaičius:"
+
+#: kmplayerbroadcast.cpp:173
+#, kde-format
+msgid "Maximum bandwidth (kbit):"
+msgstr "Maksimalus pralaidumas (kbit):"
+
+#: kmplayerbroadcast.cpp:177
+#, kde-format
+msgid "Temporary feed file:"
+msgstr "Laikinas padavimo failas:"
+
+#: kmplayerbroadcast.cpp:181
+#, kde-format
+msgid "Feed file size (kB):"
+msgstr "Padavimo failo dydis (kB):"
+
+#: kmplayerbroadcast.cpp:204
+#, kde-format
+msgid "Format:"
+msgstr "Formatas:"
+
+#: kmplayerbroadcast.cpp:212
+#, kde-format
+msgid "Only avi, mpeg and rm work for mplayer playback"
+msgstr "Mplayer groja tik avi, mpeg ir rm."
+
+#: kmplayerbroadcast.cpp:215
+#, kde-format
+msgid "Audio codec:"
+msgstr "Audio kodekas:"
+
+#: kmplayerbroadcast.cpp:216
+#, kde-format
+msgid "Audio bit rate (kbit):"
+msgstr "Garso bitų dažnis (kbit):"
+
+#: kmplayerbroadcast.cpp:217
+#, kde-format
+msgid "Audio sample rate (Hz):"
+msgstr "Garso gabalų dažnis (Hz):"
+
+#: kmplayerbroadcast.cpp:218
+#, kde-format
+msgid "Video codec:"
+msgstr "Video kodekas:"
+
+#: kmplayerbroadcast.cpp:219
+#, kde-format
+msgid "Video bit rate (kbit):"
+msgstr "Vaizdo bitų dažnis (kbit):"
+
+#: kmplayerbroadcast.cpp:220
+#, kde-format
+msgid "Quality (1-31):"
+msgstr "Kokybė (1-31):"
+
+#: kmplayerbroadcast.cpp:221
+#, kde-format
+msgid "Frame rate (Hz):"
+msgstr "Kadrų dažnis (Hz):"
+
+#: kmplayerbroadcast.cpp:222
+#, kde-format
+msgid "Gop size:"
+msgstr "Gop dydis:"
+
+#: kmplayerbroadcast.cpp:223
+#, kde-format
+msgid "Width (pixels):"
+msgstr "Plotis (pikseliais):"
+
+#: kmplayerbroadcast.cpp:224
+#, kde-format
+msgid "Height (pixels):"
+msgstr "Aukštis (pikseliais):"
+
+#: kmplayerbroadcast.cpp:225
+#, kde-format
+msgid "Allow access from:"
+msgstr "Leisti prieigą iš:"
+
+#: kmplayerbroadcast.cpp:230
+#, kde-format
+msgid "'Single IP' or 'start-IP end-IP' for IP ranges"
+msgstr "„Vienas IP“ arba „pirmas-IP paskutinis-IP“ intervalams"
+
+#: kmplayerbroadcast.cpp:232
+#, kde-format
+msgid "Host/IP or IP Range"
+msgstr "Stotis/IP arba IP intervalas"
+
+#: kmplayerbroadcast.cpp:245
+#, kde-format
+msgid "Load"
+msgstr "Įkelti"
+
+#: kmplayerbroadcast.cpp:246
+#, kde-format
+msgid "Save"
+msgstr "Įrašyti"
+
+#: kmplayerbroadcast.cpp:247 kmplayertvsource.cpp:122
+#, kde-format
+msgid "Delete"
+msgstr "Trinti"
+
+#: kmplayerbroadcast.cpp:265 kmplayerbroadcast.cpp:601
+#, kde-format
+msgid "Start"
+msgstr "Pradėti"
+
+#: kmplayerbroadcast.cpp:458 kmplayerbroadcast.cpp:658
+#, kde-format
+msgid "Broadcasting"
+msgstr "Transliavimas"
+
+#: kmplayerbroadcast.cpp:460
+#, kde-format
+msgid "Profiles"
+msgstr "Profiliai"
+
+#: kmplayerbroadcast.cpp:523
+#, kde-format
+msgid "Stop"
+msgstr "Stabdyti"
+
+#: kmplayerbroadcast.cpp:535
+#, kde-format
+msgid "Failed to end ffserver process."
+msgstr "Nepavyko baigti ffserver proceso."
+
+#: kmplayerbroadcast.cpp:552
+#, kde-format
+msgid "Failed to start ffserver.\n"
+msgstr "Nepavyko paleisti ffserver.\n"
+
+#: kmplayerbroadcast.cpp:565
+#, kde-format
+msgid "Failed to start ffmpeg."
+msgstr "Nepavyko paleisti ffmpeg."
+
+#: kmplayerbroadcast.cpp:660
+#, kde-format
+msgid "FFServer"
+msgstr "FFServer"
+
+#: kmplayerconfig.cpp:60 kmplayerconfig.cpp:76
+#, kde-format
+msgid "Auto"
+msgstr "Automatinis"
+
+#: kmplayerconfig.cpp:61
+#, kde-format
+msgid "Open Sound System"
+msgstr "Atvira garso sistema (OSS)"
+
+#: kmplayerconfig.cpp:62
+#, kde-format
+msgid "Simple DirectMedia Layer"
+msgstr "Paprastas DirectMedia sluoksnis"
+
+#: kmplayerconfig.cpp:63
+#, kde-format
+msgid "Advanced Linux Sound Architecture"
+msgstr "Sudėtinga Linux Garso Architektūra (ALSA)"
+
+#: kmplayerconfig.cpp:64
+#, kde-format
+msgid "Analog Real-Time Synthesizer"
+msgstr "Analoginis realaus laiko sintezatorius"
+
+#: kmplayerconfig.cpp:65
+#, kde-format
+msgid "JACK Audio Connection Kit"
+msgstr "Garso kištuko prijungimo komplektas"
+
+#: kmplayerconfig.cpp:66
+#, kde-format
+msgid "OpenAL"
+msgstr "OpenAL"
+
+#: kmplayerconfig.cpp:67
+#, kde-format
+msgid "Enlightened Sound Daemon"
+msgstr "Enlightened garso demonas"
+
+#: kmplayerconfig.cpp:68
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.5"
+msgstr "Sudėtinga Linux Garso Architektūra v0.5 (ALSA)"
+
+#: kmplayerconfig.cpp:69
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.9"
+msgstr "Sudėtinga Linux Garso Architektūra v0.9 (ALSA)"
+
+#: kmplayerconfig.cpp:70
+#, kde-format
+msgid "Use back-end defaults"
+msgstr "Naudoti foninės paslaugos numatytas parinktis"
+
+#: kmplayerconfig.cpp:71
+#, kde-format
+msgid "PulseAudio"
+msgstr "PulseAudio"
+
+#: kmplayerconfig.cpp:77
+#, kde-format
+msgid "X11Shm"
+msgstr "X11Shm"
+
+#: kmplayerconfig.cpp:78
+#, kde-format
+msgid "XVidix"
+msgstr "XVidix"
+
+#: kmplayerconfig.cpp:79
+#, kde-format
+msgid "XvMC"
+msgstr "XvMC"
+
+#: kmplayerconfig.cpp:80
+#, kde-format
+msgid "SDL"
+msgstr "SDL"
+
+#: kmplayerconfig.cpp:81
+#, kde-format
+msgid "OpenGL"
+msgstr "OpenGL"
+
+#: kmplayerconfig.cpp:82
+#, kde-format
+msgid "OpenGL MT"
+msgstr "OpenGL MT"
+
+#: kmplayerconfig.cpp:83
+#, kde-format
+msgid "XVideo"
+msgstr "XVideo"
+
+#: kmplayerconfig.cpp:84
+#, kde-format
+msgid "Video Decode and Presentation API for Unix"
+msgstr "Vaizdo iškodavimo ir pristatymo Unix API"
+
+#: kmplayerconfig.cpp:95
+#, kde-format
+msgid "Playlist background"
+msgstr "Grojaraščio fonas"
+
+#: kmplayerconfig.cpp:99
+#, kde-format
+msgid "Playlist foreground"
+msgstr "Grojaraščio priekinis planas"
+
+#: kmplayerconfig.cpp:103
+#, kde-format
+msgid "Console background"
+msgstr "Konsolės fonas"
+
+#: kmplayerconfig.cpp:104
+#, kde-format
+msgid "Playlist active item"
+msgstr "Aktyvus grojaraščio elementas"
+
+#: kmplayerconfig.cpp:110
+#, kde-format
+msgid "Console foreground"
+msgstr "Konsolės priekinis planas"
+
+#: kmplayerconfig.cpp:113
+#, kde-format
+msgid "Video background"
+msgstr "Video fonas"
+
+#: kmplayerconfig.cpp:116
+#, kde-format
+msgid "Viewing area background"
+msgstr "Rodymo zonos fonas"
+
+#: kmplayerconfig.cpp:119
+#, kde-format
+msgid "Info window background"
+msgstr "Informacijos lango fonas"
+
+#: kmplayerconfig.cpp:123
+#, kde-format
+msgid "Info window foreground"
+msgstr "Informacijos lango priekinis planas"
+
+#: kmplayerconfig.cpp:127 kmplayerview.cpp:167
+#, kde-format
+msgid "Playlist"
+msgstr "Grojaraštis"
+
+#: kmplayerconfig.cpp:131
+#, kde-format
+msgid "Info window"
+msgstr "Informacijos langas"
+
+#: kmplayerconfig.cpp:655
+#, kde-format
+msgid "File %1 does not exist."
+msgstr "Failas %1 neegzistuoja."
+
+#: kmplayerconfig.cpp:666
+#, kde-format
+msgid "Sub title file %1 does not exist."
+msgstr "Subtitrų failas %1 neegzistuoja."
+
+#: kmplayercontrolpanel.cpp:311 kmplayercontrolpanel.cpp:325
+#, kde-format
+msgid "Volume is "
+msgstr "Garsumas yra "
+
+#: kmplayercontrolpanel.cpp:412
+#, kde-format
+msgid "&Play with"
+msgstr "&Groti su"
+
+#: kmplayercontrolpanel.cpp:415 kmplayerview.cpp:337
+#, kde-format
+msgid "Con&sole"
+msgstr "&Konsolė"
+
+#: kmplayercontrolpanel.cpp:417
+#, kde-format
+msgid "Play&list"
+msgstr "&Grojaraštis"
+
+#: kmplayercontrolpanel.cpp:419
+#, kde-format
+msgid "&Zoom"
+msgstr "&Mastelis"
+
+#: kmplayercontrolpanel.cpp:422
+#, kde-format
+msgid "50%"
+msgstr "50%"
+
+#: kmplayercontrolpanel.cpp:423
+#, kde-format
+msgid "100%"
+msgstr "100%"
+
+#: kmplayercontrolpanel.cpp:424
+#, kde-format
+msgid "150%"
+msgstr "150%"
+
+#: kmplayercontrolpanel.cpp:426
+#, kde-format
+msgid "&Full Screen"
+msgstr "&Viso ekrano plotas"
+
+#: kmplayercontrolpanel.cpp:431
+#, kde-format
+msgid "Co&lors"
+msgstr "&Spalvos"
+
+#: kmplayercontrolpanel.cpp:456 kmplayercontrolpanel.cpp:458
+#, kde-format
+msgid "&Audio languages"
+msgstr "&Garso kalbos"
+
+#: kmplayercontrolpanel.cpp:459
+#, kde-format
+msgid "&Subtitles"
+msgstr "&Subtitrai"
+
+#: kmplayercontrolpanel.cpp:467
+#, kde-format
+msgid "Scale:"
+msgstr "Skalė:"
+
+#: kmplayercontrolpanel.cpp:479
+#, kde-format
+msgid "&Configure KMPlayer..."
+msgstr "&Konfigūruoti KMPlayer..."
+
+#: kmplayerpartbase.cpp:1450
+#, kde-format
+msgid "Unknown"
+msgstr "Nežinomas"
+
+#: kmplayerpartbase.cpp:1461 kmplayerpartbase.cpp:1530 pref.cpp:91
+#, kde-format
+msgid "URL"
+msgstr "URL"
+
+#: kmplayerpartbase.cpp:1554 kmplayerpartbase.cpp:1557
+#: kmplayerpartbase.cpp:1558
+#, kde-format
+msgid "URL - "
+msgstr ""
+
+#. i18n: ectx: Menu (view)
+#: kmplayerpartui.rc:4 kmplayerui.rc:31
+#, kde-format
+msgid "&View"
+msgstr "&Rodymas"
+
+#: kmplayerprocess.cpp:150
+#, kde-format
+msgid "Failed to end player process."
+msgstr "Nepavyko baigti grotuvo proceso."
+
+#: kmplayerprocess.cpp:489
+#, kde-format
+msgid "&MPlayer"
+msgstr "&MPlayer"
+
+#: kmplayerprocess.cpp:1012
+#, kde-format
+msgid "Size pattern"
+msgstr "Dydžio šablonas"
+
+#: kmplayerprocess.cpp:1013
+#, kde-format
+msgid "Cache pattern"
+msgstr "Dėklo šablonas"
+
+#: kmplayerprocess.cpp:1014
+#, kde-format
+msgid "Position pattern"
+msgstr "Vietos šablonas"
+
+#: kmplayerprocess.cpp:1015
+#, kde-format
+msgid "Index pattern"
+msgstr "Indekso šablonas"
+
+#: kmplayerprocess.cpp:1016
+#, kde-format
+msgid "Reference URL pattern"
+msgstr "Nuorodos URL šablonas"
+
+#: kmplayerprocess.cpp:1017
+#, kde-format
+msgid "Reference pattern"
+msgstr "Nuorodos šablonas"
+
+#: kmplayerprocess.cpp:1018
+#, kde-format
+msgid "Start pattern"
+msgstr "Pradžios šablonas"
+
+#: kmplayerprocess.cpp:1019
+#, kde-format
+msgid "VCD track pattern"
+msgstr "VCD takelio šablonas"
+
+#: kmplayerprocess.cpp:1020
+#, kde-format
+msgid "Audio CD tracks pattern"
+msgstr "Garso CD dainos šablonas"
+
+#: kmplayerprocess.cpp:1040
+#, kde-format
+msgid "MPlayer command:"
+msgstr "MPlayer komanda:"
+
+#: kmplayerprocess.cpp:1042
+#, kde-format
+msgid "Additional command line arguments:"
+msgstr "Papildoma komandinės eilutės parametrai:"
+
+#: kmplayerprocess.cpp:1044
+#, kde-format
+msgid "Cache size:"
+msgstr "Podėlio dydis:"
+
+#: kmplayerprocess.cpp:1044
+#, kde-format
+msgid "kB"
+msgstr "kB"
+
+#: kmplayerprocess.cpp:1049
+#, kde-format
+msgid "Build new index when possible"
+msgstr "Jei įmanoma, kurti naują indeksą"
+
+#: kmplayerprocess.cpp:1051
+#, kde-format
+msgid "Allows seeking in indexed files (AVIs)"
+msgstr "Leidžia paiešką indeksuotuose failuose (AVI)"
+
+#: kmplayerprocess.cpp:1117 pref.cpp:74 pref.cpp:84
+#, kde-format
+msgid "General Options"
+msgstr "Bendri nustatymai"
+
+#: kmplayerprocess.cpp:1119
+#, kde-format
+msgid "MPlayer"
+msgstr "MPlayer"
+
+#: kmplayerprocess.cpp:1135
+#, kde-format
+msgid "M&Encoder"
+msgstr "M&Encoder"
+
+#: kmplayerprocess.cpp:1201
+#, kde-format
+msgid "&MPlayerDumpstream"
+msgstr "&MPlayerDumpstream"
+
+#: kmplayerprocess.cpp:1463
+#, kde-format
+msgid "&Phonon"
+msgstr "&Phonon"
+
+#: kmplayerprocess.cpp:1610 pref.cpp:674
+#, kde-format
+msgid "&FFMpeg"
+msgstr "&FFMpeg"
+
+#: kmplayerprocess.cpp:1709
+#, kde-format
+msgid "&Ice Ape"
+msgstr "&Ice Ape"
+
+#: kmplayertvsource.cpp:65
+#, kde-format
+msgid "Video device:"
+msgstr "Video įrenginys:"
+
+#: kmplayertvsource.cpp:66
+#, kde-format
+msgid "Audio device:"
+msgstr "Audio įrenginys:"
+
+#: kmplayertvsource.cpp:68
+#, kde-format
+msgid "Name:"
+msgstr "Pavadinimas:"
+
+#: kmplayertvsource.cpp:70
+#, kde-format
+msgid "Width:"
+msgstr "Plotis:"
+
+#: kmplayertvsource.cpp:72
+#, kde-format
+msgid "Height:"
+msgstr "Aukštis:"
+
+#: kmplayertvsource.cpp:74
+#, kde-format
+msgid "Do not immediately play"
+msgstr "Nepradėti groti iš karto"
+
+#: kmplayertvsource.cpp:76
+#, kde-format
+msgid "Only start playing after clicking the play button"
+msgstr "Pradėti groti tik paspaudus grojimo mygtuką"
+
+#: kmplayertvsource.cpp:87
+#, kde-format
+msgid "Norm:"
+msgstr "Norm:"
+
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Channel"
+msgstr "Kanalas"
+
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Frequency (MHz)"
+msgstr "Dažnis (MHz)"
+
+#: kmplayertvsource.cpp:148
+#, kde-format
+msgid ""
+"You are about to remove this device from the Source menu.\n"
+"Continue?"
+msgstr ""
+"Jūs ruošiatės pašalinti šį įrenginį iš šaltinių meniu.\n"
+"Tęsti?"
+
+#: kmplayertvsource.cpp:148
+#, kde-format
+msgid "Confirm"
+msgstr "Patvirtinti"
+
+#: kmplayertvsource.cpp:159
+#, kde-format
+msgid "Driver:"
+msgstr "Tvarkyklė:"
+
+#: kmplayertvsource.cpp:161
+#, kde-format
+msgid "dummy, v4l or bsdbt848"
+msgstr "dummy, v4l arba bsdbt848"
+
+#: kmplayertvsource.cpp:162
+#, kde-format
+msgid "Device:"
+msgstr "Įrenginys:"
+
+#: kmplayertvsource.cpp:164
+#, kde-format
+msgid "Path to your video device, eg. /dev/video0"
+msgstr "Kelias iki jūsų vaizdo įrenginio. Pvz.: /dev/video0"
+
+#: kmplayertvsource.cpp:165
+#, kde-format
+msgid "Scan..."
+msgstr "Skanuoti..."
+
+#: kmplayertvsource.cpp:179 pref.cpp:78 pref.cpp:118 pref.cpp:736
+#, kde-format
+msgid "General"
+msgstr "Bendra"
+
+#: kmplayertvsource.cpp:259
+#, kde-format
+msgid "tv device"
+msgstr "tv įrenginys"
+
+#: kmplayertvsource.cpp:346
+#, kde-format
+msgid "Television"
+msgstr "Televizija"
+
+#: kmplayertvsource.cpp:374 kmplayertvsource.cpp:532 kmplayertvsource.cpp:583
+#, kde-format
+msgid "TV"
+msgstr "TV"
+
+#: kmplayertvsource.cpp:499
+#, kde-format
+msgid "TV: "
+msgstr "TV: "
+
+#: kmplayertvsource.cpp:610
+#, kde-format
+msgid "Device already present."
+msgstr "Įrenginys jau yra."
+
+#: kmplayertvsource.cpp:622
+#, kde-format
+msgid "No device found."
+msgstr "Įrenginys nerastas."
+
+#: kmplayertvsource.cpp:645
+#, kde-format
+msgid "TVScanner"
+msgstr "TVSkeneris"
+
+#. i18n: ectx: Menu (file)
+#: kmplayerui.rc:5
+#, kde-format
+msgid "&File"
+msgstr "&Failas"
+
+#. i18n: ectx: Menu (vdr)
+#: kmplayerui.rc:15
+#, kde-format
+msgid "VD&R"
+msgstr "VD&R"
+
+#. i18n: ectx: Menu (settings)
+#: kmplayerui.rc:51
+#, kde-format
+msgid "&Settings"
+msgstr "&Nustatymai"
+
+#: kmplayervdr.cpp:87
+#, kde-format
+msgid "XVideo port"
+msgstr "XVideo prievadas"
+
+#: kmplayervdr.cpp:89
+#, kde-format
+msgid ""
+"Port base of the X Video extension.\n"
+"If left to default (0), the first available port will be used. However if "
+"you have multiple XVideo instances, you might have to provide the port to "
+"use here.\n"
+"See the output from 'xvinfo' for more information"
+msgstr ""
+"X Video plėtinio prievado bazė.\n"
+"Jei paliktas pradinė reikšmė (0), bus naudojamas pirmas laisvas prievadas. "
+"Jei turite kelis XVideo egzempliorius, jums gali tekti nurodyti konkretų "
+"prievadą.\n"
+"Daugiau informacijos rasite įvykdę „xvinfo“"
+
+#: kmplayervdr.cpp:90
+#, kde-format
+msgid "Communication port:"
+msgstr "Ryšio prievadas:"
+
+#: kmplayervdr.cpp:93
+#, kde-format
+msgid ""
+"Communication port with VDR. Default is port 2001.\n"
+"If you use another port, with the '-p' option of 'vdr', you must set it here "
+"too."
+msgstr ""
+"Ryšio su VDR prievadas. Numatytasis prievadas yra 2001.\n"
+"Jei programos „vdr“ parinkties „-p“ komandos pagalba naudojate kitą "
+"prievadą, turite jį čia nurodyti."
+
+#: kmplayervdr.cpp:97
+#, kde-format
+msgid "Scale"
+msgstr "Skalė"
+
+#: kmplayervdr.cpp:98
+#, kde-format
+msgid "4:3"
+msgstr "4:3"
+
+#: kmplayervdr.cpp:99
+#, kde-format
+msgid "16:9"
+msgstr "16:9"
+
+#: kmplayervdr.cpp:100
+#, kde-format
+msgid "Aspects to use when viewing VDR"
+msgstr "VDR rodymo metu naudojamos proporcijos"
+
+#: kmplayervdr.cpp:171 kmplayervdr.cpp:720
+#, kde-format
+msgid "VDR"
+msgstr "VDR"
+
+#: kmplayervdr.cpp:236
+#, kde-format
+msgid "Dis&connect"
+msgstr "&Atsijungti"
+
+#: kmplayervdr.cpp:237
+#, kde-format
+msgid "VDR Key Up"
+msgstr "VDR mygtukas aukštyn"
+
+#: kmplayervdr.cpp:238
+#, kde-format
+msgid "VDR Key Down"
+msgstr "VDR mygtukas žemyn"
+
+#: kmplayervdr.cpp:239
+#, kde-format
+msgid "VDR Key Back"
+msgstr "VDR mygtukas atgal"
+
+#: kmplayervdr.cpp:240
+#, kde-format
+msgid "VDR Key Ok"
+msgstr "VDR mygtukas gerai"
+
+#: kmplayervdr.cpp:241
+#, kde-format
+msgid "VDR Key Setup"
+msgstr "VDR mygtukas nustatymai"
+
+#: kmplayervdr.cpp:242
+#, kde-format
+msgid "VDR Key Channels"
+msgstr "VDR mygtukas kanalai"
+
+#: kmplayervdr.cpp:243
+#, kde-format
+msgid "VDR Key Menu"
+msgstr "VDR mygtukas meniu"
+
+#: kmplayervdr.cpp:244
+#, kde-format
+msgid "VDR Key Red"
+msgstr "VDR raudonas mygtukas"
+
+#: kmplayervdr.cpp:245
+#, kde-format
+msgid "VDR Key Green"
+msgstr "VDR žalias mygtukas"
+
+#: kmplayervdr.cpp:246
+#, kde-format
+msgid "VDR Key Yellow"
+msgstr "VDR geltonas mygtukas"
+
+#: kmplayervdr.cpp:247
+#, kde-format
+msgid "VDR Key Blue"
+msgstr "VDR mėlynas mygtukas"
+
+#: kmplayervdr.cpp:250
+#, kde-format
+msgid "VDR Key 0"
+msgstr "VDR mygtukas 0"
+
+#: kmplayervdr.cpp:251
+#, kde-format
+msgid "VDR Key 1"
+msgstr "VDR mygtukas 1"
+
+#: kmplayervdr.cpp:252
+#, kde-format
+msgid "VDR Key 2"
+msgstr "VDR mygtukas 2"
+
+#: kmplayervdr.cpp:253
+#, kde-format
+msgid "VDR Key 3"
+msgstr "VDR mygtukas 3"
+
+#: kmplayervdr.cpp:254
+#, kde-format
+msgid "VDR Key 4"
+msgstr "VDR mygtukas 4"
+
+#: kmplayervdr.cpp:255
+#, kde-format
+msgid "VDR Key 5"
+msgstr "VDR mygtukas 5"
+
+#: kmplayervdr.cpp:256
+#, kde-format
+msgid "VDR Key 6"
+msgstr "VDR mygtukas 6"
+
+#: kmplayervdr.cpp:257
+#, kde-format
+msgid "VDR Key 7"
+msgstr "VDR mygtukas 7"
+
+#: kmplayervdr.cpp:258
+#, kde-format
+msgid "VDR Key 8"
+msgstr "VDR mygtukas 8"
+
+#: kmplayervdr.cpp:259
+#, kde-format
+msgid "VDR Key 9"
+msgstr "VDR mygtukas 9"
+
+#: kmplayervdr.cpp:281
+#, kde-format
+msgid "&Connect"
+msgstr "&Prisijungti"
+
+#: kmplayervdr.cpp:444
+#, kde-format
+msgid "Host not found"
+msgstr "Nerasta stotis"
+
+#: kmplayervdr.cpp:446
+#, kde-format
+msgid "Connection refused"
+msgstr "Prisijungimas atmestas"
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid "Custom VDR command"
+msgstr "Sava VDR komanda"
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid ""
+"You can pass commands to VDR.\n"
+"Enter 'HELP' to see a list of available commands.\n"
+"You can see VDR response in the console window.\n"
+"\n"
+"VDR Command:"
+msgstr ""
+"Jūs galite perduoti komandas į VDR.\n"
+"Norėdami gauti komandų sąrašą įveskite „HELP“.\n"
+"VDR atsakymą matysite konsolės lange.\n"
+"\n"
+"VDR komanda:"
+
+#: kmplayervdr.cpp:685
+#, kde-format
+msgid "Port "
+msgstr "Prievadas "
+
+#: kmplayervdr.cpp:739
+#, kde-format
+msgid "X&Video"
+msgstr "X&Video"
+
+#: kmplayerview.cpp:172
+#, kde-format
+msgid "Information"
+msgstr "Informacija"
+
+#: main.cpp:48
+#, fuzzy, kde-format
+#| msgid "Media player."
+msgid "Media player"
+msgstr "Media grotuvas."
+
+#: main.cpp:49
+#, fuzzy, kde-format
+#| msgid "(c) 2002-2009, Koos Vriezen"
+msgid "(c) 2002-2016, Koos Vriezen"
+msgstr "(c) 2002-2009, Koos Vriezen"
+
+#: main.cpp:50
+#, kde-format
+msgid "Koos Vriezen"
+msgstr "Koos Vriezen"
+
+#: main.cpp:50
+#, kde-format
+msgid "Maintainer"
+msgstr "Prižiūrėtojas"
+
+#: main.cpp:63
+#, kde-format
+msgid "file to open"
+msgstr "atvertinas failas"
+
+#: main.cpp:63
+#, fuzzy, kde-format
+#| msgid "&File"
+msgid "+[File]"
+msgstr "&Failas"
+
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Not Running"
+msgstr "Neįjungtas"
+
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Buffering"
+msgstr "Kraunama į buferį"
+
+#: mediaobject.cpp:168 pref.cpp:231
+#, kde-format
+msgid "Playing"
+msgstr "Grojama"
+
+#: mediaobject.cpp:168
+#, fuzzy, kde-format
+#| msgid "&Pause"
+msgid "Paused"
+msgstr "&Pristabdyti"
+
+#: mediaobject.cpp:190
+#, kde-format
+msgid "Player %1 %2"
+msgstr "Grotuvas %1 %2"
+
+#: playlistview.cpp:140
+#, kde-format
+msgid "Edit &item"
+msgstr "&Keisti elementą"
+
+#: playlistview.cpp:255
+#, kde-format
+msgid "&Copy to Clipboard"
+msgstr "&Kuopijuoti į iškarpinę"
+
+#: playlistview.cpp:262
+#, kde-format
+msgid "&Add Bookmark"
+msgstr "&Pridėti žymelę"
+
+#: playlistview.cpp:265
+#, kde-format
+msgid "&Show all"
+msgstr "&Rodyti viską"
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "unnamed"
+msgstr "bevardis"
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "none"
+msgstr "jokio"
+
+#: playmodel.cpp:378
+#, kde-format
+msgid "[attributes]"
+msgstr "[atributai]"
+
+#: pref.cpp:69
+#, kde-format
+msgid "Preferences"
+msgstr "Nustatymai"
+
+#: pref.cpp:80
+#, kde-format
+msgid "Looks"
+msgstr "Išvaizda"
+
+#: pref.cpp:83
+#, kde-format
+msgid "Output"
+msgstr "Išvestis"
+
+#: pref.cpp:95 pref.cpp:120
+#, kde-format
+msgid "Recording"
+msgstr "Įrašymas"
+
+#: pref.cpp:101
+#, kde-format
+msgid "MEncoder"
+msgstr "MEncoder"
+
+#: pref.cpp:105
+#, kde-format
+msgid "FFMpeg"
+msgstr "FFMpeg"
+
+#: pref.cpp:123
+#, kde-format
+msgid "Output Plugins"
+msgstr "Išvesties priedai"
+
+#: pref.cpp:127 pref.cpp:128
+#, kde-format
+msgid "Postprocessing"
+msgstr "Papildomas apdorojimas"
+
+#: pref.cpp:208
+#, kde-format
+msgid "Window"
+msgstr "Langas"
+
+#: pref.cpp:211
+#, kde-format
+msgid "Keep size ratio"
+msgstr "Išlaikyti dydžio proporcijas"
+
+#: pref.cpp:212
+#, kde-format
+msgid ""
+"When checked, the movie will keep its aspect ratio\n"
+"when the window is resized."
+msgstr ""
+"Įjungus šią parinktį, pakeitus lango dydį\n"
+"filmas išlaikys proporcijas"
+
+#: pref.cpp:213
+#, kde-format
+msgid "Dock in system tray"
+msgstr "Įkelti į sistemos dėklą"
+
+#: pref.cpp:214
+#, kde-format
+msgid ""
+"When checked, an icon for KMPlayer will be added to the system tray.\n"
+"When clicked, it will hide KMPlayer's main window and remove KMPlayer's task "
+"bar button."
+msgstr ""
+"Įjungus šią parinktį, KMplayer ženkliukas bus pridėtas į sistemos dėklą.\n"
+"Paspaudus, KMplayer pagrindinis langas bus paslėptas ir bus pašalintas "
+"KMplayer užduočių juostos mygtukas."
+
+#: pref.cpp:215
+#, kde-format
+msgid "Auto resize to video sizes"
+msgstr "Automatiškai keisti dydį pagal vaizdo matmenis"
+
+#: pref.cpp:216
+#, kde-format
+msgid ""
+"When checked, KMPlayer will resize to movie sizes\n"
+"when video starts."
+msgstr ""
+"Įjungus šią parinktį, KMPlayeris pradėjus žiūrėti filmą\n"
+"pakeis lango dydį."
+
+#: pref.cpp:220
+#, kde-format
+msgid "Remember window size on exit"
+msgstr "Išeinant atsiminti lango dydį"
+
+#: pref.cpp:221
+#, kde-format
+msgid "Always start with fixed size"
+msgstr "Visada pasileisti fiksuotu dydžiu"
+
+#: pref.cpp:232
+#, kde-format
+msgid "Loop"
+msgstr "Kartoti"
+
+#: pref.cpp:233
+#, kde-format
+msgid "Makes current movie loop"
+msgstr "Groja dabartinį filmą iš naujo be galo"
+
+#: pref.cpp:234
+#, kde-format
+msgid "Allow frame drops"
+msgstr "Leisti išmesti kadrus"
+
+#: pref.cpp:235
+#, kde-format
+msgid "Allow dropping frames for better audio and video synchronization"
+msgstr "Leisti išmesti kadrus geresniam garso ir vaizdo sinchronizavimui"
+
+#: pref.cpp:236
+#, kde-format
+msgid "Auto set volume on start"
+msgstr "Pradedant automatiškai nustatyti garsumą"
+
+#: pref.cpp:237
+#, kde-format
+msgid ""
+"When a new source is selected, the volume will be set according the volume "
+"control"
+msgstr "Parinkus naują šaltinį, garsumas bus sureguliuotas pagal garso valdymą"
+
+#: pref.cpp:238
+#, kde-format
+msgid "Auto set colors on start"
+msgstr "Pradedant automatiškai nustatyti spalvas"
+
+#: pref.cpp:239
+#, kde-format
+msgid ""
+"When a movie starts, the colors will be set according the sliders for colors"
+msgstr ""
+"Pradedant rodyti filmą, spalvos nustatomos automatiškai pagal spalvų "
+"slankiklius"
+
+#: pref.cpp:247
+#, kde-format
+msgid "Control Panel"
+msgstr "Valdymo skydelis"
+
+#: pref.cpp:248
+#, kde-format
+msgid "Show config button"
+msgstr "Rodyti konfigūravimo mygtuką"
+
+#: pref.cpp:249
+#, kde-format
+msgid "Add a button that will popup a config menu"
+msgstr "Pridėti mygtuką, kuris rodys konfigūravimo meniu"
+
+#: pref.cpp:250
+#, kde-format
+msgid "Show playlist button"
+msgstr "Rodyti grojaraščio mygtuką"
+
+#: pref.cpp:251
+#, kde-format
+msgid "Add a playlist button to the control buttons"
+msgstr "Pridėti grojaraščio mygtuką prie valdymo mygtukų"
+
+#: pref.cpp:252
+#, kde-format
+msgid "Show record button"
+msgstr "Rodyti įrašymo mygtuką"
+
+#: pref.cpp:253
+#, kde-format
+msgid "Add a record button to the control buttons"
+msgstr "Pridėti įrašymo mygtuką prie valdymo mygtukų"
+
+#: pref.cpp:254
+#, kde-format
+msgid "Show broadcast button"
+msgstr "Rodyti transliavimo mygtuką"
+
+#: pref.cpp:255
+#, kde-format
+msgid "Add a broadcast button to the control buttons"
+msgstr "Pridėti transliavimo mygtuką prie valdymo mygtukų"
+
+#: pref.cpp:262
+#, kde-format
+msgid "Forward/backward seek time:"
+msgstr "Pirmyn/atgal paieškos laikas:"
+
+#: pref.cpp:269 pref.cpp:485
+#, kde-format
+msgid " second"
+msgid_plural " seconds"
+msgstr[0] " sekundė"
+msgstr[1] " sekundės"
+msgstr[2] " sekundžių"
+msgstr[3] " sekundė"
+
+#: pref.cpp:271 pref.cpp:487
+#, kde-format
+msgid " seconds"
+msgstr " sekundės"
+
+#: pref.cpp:292
+#, kde-format
+msgid "Colors"
+msgstr "Spalvos"
+
+#: pref.cpp:308
+#, kde-format
+msgid "Fonts"
+msgstr "Šriftai"
+
+#: pref.cpp:315
+#, kde-format
+msgid "AaBbCc"
+msgstr "AaBbCc"
+
+#: pref.cpp:365
+#, kde-format
+msgid "Location:"
+msgstr "Vieta:"
+
+#: pref.cpp:370
+#, kde-format
+msgid "Location of the playable item"
+msgstr "Grojamo elemento vieta"
+
+#: pref.cpp:373
+#, kde-format
+msgid "Sub title:"
+msgstr "Subtitras:"
+
+#: pref.cpp:378
+#, kde-format
+msgid "Optional location of a file containing the subtitles of the URL above"
+msgstr "Neprivaloma aukščiau esančio URL subtitrų failo vieta"
+
+#: pref.cpp:381
+#, kde-format
+msgid "Load on demand"
+msgstr "Įkrauti, kai prireiks"
+
+#: pref.cpp:382
+#, kde-format
+msgid ""
+"When enabled, all embedded movies will start with a image that needs to be "
+"clicked to start the video playback"
+msgstr ""
+"Įjungus šią parinktį, visi vidiniai filmai prasidės piešinuku, kurį reikės "
+"paspausti tam, kad būtų pradėtas filmo rodymas"
+
+#: pref.cpp:383
+#, kde-format
+msgid "Grab image when 'Click to Play' detected"
+msgstr "Užfiksuoti vaizdą aptikus „Paspausti peržiūrai“"
+
+#: pref.cpp:384
+#, kde-format
+msgid ""
+"When enabled and a HTML object has a HREF attribute, grab and save an image "
+"of the first frame of initial link. This image will be shown instead of a "
+"default picture."
+msgstr ""
+"Įjungus šią parinktį, jei HTML objektas turi HREF atributą, užfiksuoti ir "
+"įrašyti pradinės nuorodos pirmo kadro vaizdą. Šis vaizdas bus rodomas "
+"vietoje numatytojo piešinuko."
+
+#: pref.cpp:391
+#, kde-format
+msgid "Use movie player:"
+msgstr "Naudoti filmų grotuvą:"
+
+#: pref.cpp:397
+#, kde-format
+msgid "Network bandwidth"
+msgstr "Tinklo pralaidumas"
+
+#: pref.cpp:400
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets how much bandwidth you would prefer to allocate to video."
+msgstr ""
+"Kartais galima pasirinkti iš kelių srautų priklausomai nuo konkretaus bitų "
+"dažnio.\n"
+"Šioje parinktyje nurodoma, kiek pralaidumo norite skirti vaizdui."
+
+#: pref.cpp:403
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets the maximum bandwidth you have available for video."
+msgstr ""
+"Kartais galima pasirinkti iš kelių srautų priklausomai nuo konkretaus bitų "
+"dažnio.\n"
+"Šioje parinktyje nurodomas didžiausias pralaidumas, kurį sutinkate skirti "
+"vaizdui."
+
+#: pref.cpp:405
+#, kde-format
+msgid "Preferred bitrate:"
+msgstr "Pageidaujamas bitų dažnis:"
+
+#: pref.cpp:407 pref.cpp:410
+#, kde-format
+msgid "kbit/s"
+msgstr "kbit/s"
+
+#: pref.cpp:408
+#, kde-format
+msgid "Maximum bitrate:"
+msgstr "Maksimalus bitų dažnis:"
+
+#: pref.cpp:450
+#, kde-format
+msgid "Output file:"
+msgstr "Išvesties failas:"
+
+#: pref.cpp:455
+#, kde-format
+msgid "Current source: "
+msgstr "Dabartinis šaltinis: "
+
+#: pref.cpp:457
+#, kde-format
+msgid "Recorder"
+msgstr "Įrašinėtojas"
+
+#: pref.cpp:469
+#, kde-format
+msgid "Auto Playback"
+msgstr "Automatinis grojimas"
+
+#: pref.cpp:472
+#, kde-format
+msgid "&No"
+msgstr "&Ne"
+
+#: pref.cpp:475
+#, kde-format
+msgid "&When recording finished"
+msgstr "&Baigus įrašinėjimą"
+
+#: pref.cpp:478
+#, kde-format
+msgid "A&fter"
+msgstr "&Po"
+
+#: pref.cpp:491
+#, kde-format
+msgid "Time:"
+msgstr "Laikas:"
+
+#: pref.cpp:498 pref.cpp:532 pref.cpp:540
+#, kde-format
+msgid "Start &Recording"
+msgstr "&Pradėti įrašinėjimą"
+
+#: pref.cpp:531
+#, kde-format
+msgid "Stop &Recording"
+msgstr "&Stabdyti įrašinėjimą"
+
+#: pref.cpp:552
+#, kde-format
+msgid "Current Source: "
+msgstr "Dabartinis šaltinis: "
+
+#: pref.cpp:605
+#, kde-format
+msgid "Format"
+msgstr "Formatas"
+
+#: pref.cpp:608
+#, kde-format
+msgid "Same as source"
+msgstr "Toks pat, kaip šaltinis"
+
+#: pref.cpp:611 pref.cpp:723
+#, kde-format
+msgid "Custom"
+msgstr "Adaptuotas"
+
+#: pref.cpp:615
+#, kde-format
+msgid "Mencoder arguments:"
+msgstr "Mencoder argumentai:"
+
+#: pref.cpp:641
+#, kde-format
+msgid "&MEncoder"
+msgstr "&MEncoder"
+
+#: pref.cpp:649
+#, kde-format
+msgid "MPlayer -&dumpstream"
+msgstr "MPlayer -&dumpstream"
+
+#: pref.cpp:656
+#, kde-format
+msgid "FFMpeg arguments:"
+msgstr "FFMpeg argumentai:"
+
+#: pref.cpp:683
+#, kde-format
+msgid "&Xine"
+msgstr "&Xine"
+
+#: pref.cpp:693
+#, kde-format
+msgid ""
+"Sets video driver. Recommended is XVideo, or, if it is not supported, X11, "
+"which is slower."
+msgstr ""
+"Nustato vaizdo tvarkyklę. Rekomenduojama XVideo arba, jei palaikoma, X11, "
+"kuris yra lėtesnis."
+
+#: pref.cpp:711
+#, kde-format
+msgid "Enable use of postprocessing filters"
+msgstr "Įgalinti filtrų naudojimą po apdorojimo"
+
+#: pref.cpp:713
+#, kde-format
+msgid "Disable use of postprocessing when watching TV/DVD"
+msgstr "Išjungti veiksmus po apdorojimo žiūrint TV/DVD"
+
+#: pref.cpp:722
+#, kde-format
+msgid "Default"
+msgstr "Numatytasis"
+
+#: pref.cpp:724
+#, kde-format
+msgid "Fast"
+msgstr "Greitas"
+
+#: pref.cpp:751
+#, kde-format
+msgid "Horizontal deblocking"
+msgstr "Horizontalus atblokavimas"
+
+#: pref.cpp:752 pref.cpp:770 pref.cpp:788
+#, kde-format
+msgid "Auto quality"
+msgstr "Automatinė kokybė"
+
+#: pref.cpp:754 pref.cpp:772 pref.cpp:790
+#, kde-format
+msgid "Chrominance filtering"
+msgstr "Vektorių filtravimas"
+
+#: pref.cpp:769
+#, kde-format
+msgid "Vertical deblocking"
+msgstr "Vertikalus atblokavimas"
+
+#: pref.cpp:787
+#, kde-format
+msgid "Dering filter"
+msgstr "Dering filtras"
+
+#: pref.cpp:805
+#, kde-format
+msgid "Auto brightness/contrast"
+msgstr "Automatinis ryškumas ir kontrastas"
+
+#: pref.cpp:806
+#, kde-format
+msgid "Stretch luminance to full range"
+msgstr "Ištempti švytėjimą iki pilno intervalo"
+
+#: pref.cpp:814
+#, kde-format
+msgid "Temporal noise reducer"
+msgstr "Laikinas triukšmo sumažintojas"
+
+#: pref.cpp:836
+#, kde-format
+msgid "Custom Preset"
+msgstr "Adaptuotas išankstinis nustatymų rinkinys"
+
+#: pref.cpp:842
+#, kde-format
+msgid "Linear blend deinterlacer"
+msgstr ""
+
+#: pref.cpp:843
+#, kde-format
+msgid "Linear interpolating deinterlacer"
+msgstr ""
+
+#: pref.cpp:844
+#, kde-format
+msgid "Cubic interpolating deinterlacer"
+msgstr ""
+
+#: pref.cpp:845
+#, kde-format
+msgid "Median deinterlacer"
+msgstr ""
+
+#: pref.cpp:846
+#, kde-format
+msgid "FFmpeg deinterlacer"
+msgstr ""
+
+#: pref.cpp:854
+#, kde-format
+msgid "Deinterlacing"
+msgstr ""
+
+#: pref.cpp:879
+#, kde-format
+msgid "Enable mplayer's default postprocessing filters"
+msgstr ""
+
+#: pref.cpp:880
+#, kde-format
+msgid "Enable custom postprocessing filters (See: Custom preset -tab)"
+msgstr ""
+
+#: pref.cpp:881
+#, kde-format
+msgid "Enable mplayer's fast postprocessing filters"
+msgstr ""
+
+#: pref.cpp:882 pref.cpp:883 pref.cpp:884
+#, kde-format
+msgid "Filter is used if there is enough CPU"
+msgstr "Filtras naudojamas tada, kai užtenka CPU pajėgumo"
+
+#. i18n( "Strength of the noise reducer" ) );
+#: pref.cpp:886
+#, kde-format
+msgid "Stretches luminance to full range (0..255)"
+msgstr ""
+
+#: pref.cpp:892
+#, kde-format
+msgid ""
+"You are about to have all your settings overwritten with defaults.\n"
+"Please confirm.\n"
+msgstr ""
+"Jūs ruošiatės perrašyti jūsų nustatymus pradinėmis reikšmėmis.\n"
+"Prašome patvirtinti.\n"
+
+#: pref.cpp:893
+#, kde-format
+msgid "Reset Settings?"
+msgstr "Atstatyti nustatymus?"
+
+#~ msgid "plugin"
+#~ msgstr "priedas"
+
+#~ msgid "http://kmplayer.kde.org"
+#~ msgstr "http://kmplayer.kde.org"
+
+#~ msgid "&OK"
+#~ msgstr "&Gerai"
+
+#~ msgid "&Cancel"
+#~ msgstr "&Atšaukti"
+
+#~ msgid "Exiting..."
+#~ msgstr "Išeinama..."
+
+#~ msgid "Url - "
+#~ msgstr "Url – "

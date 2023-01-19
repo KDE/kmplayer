@@ -1,0 +1,1986 @@
+# Shinjo Park <kde@peremen.name>, 2014, 2015, 2019, 2020, 2022.
+msgid ""
+msgstr ""
+"Project-Id-Version: kmplayer\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2019-08-30 07:39+0200\n"
+"PO-Revision-Date: 2022-05-15 22:33+0200\n"
+"Last-Translator: Shinjo Park <kde@peremen.name>\n"
+"Language-Team: Korean <kde-kr@kde.org>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Lokalize 21.12.3\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "박신조"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "kde@peremen.name"
+
+#: kmplayer.cpp:151
+#, kde-format
+msgid "New window"
+msgstr "새 창"
+
+#: kmplayer.cpp:161
+#, kde-format
+msgid "&Edit mode"
+msgstr "편집 모드(&E)"
+
+#: kmplayer.cpp:164
+#, kde-format
+msgid "Pla&y List"
+msgstr "목록 재생(&Y)"
+
+#: kmplayer.cpp:169
+#, kde-format
+msgid "P&lay"
+msgstr "재생(&L)"
+
+#: kmplayer.cpp:172
+#, kde-format
+msgid "&Pause"
+msgstr "일시 정지(&P)"
+
+#: kmplayer.cpp:175
+#, kde-format
+msgid "&Stop"
+msgstr "정지(&S)"
+
+#: kmplayer.cpp:181
+#, kde-format
+msgid "Fullscreen"
+msgstr "전체 화면"
+
+#: kmplayer.cpp:184 kmplayer.cpp:345
+#, kde-format
+msgid "C&onsole"
+msgstr "콘솔(&O)"
+
+#: kmplayer.cpp:189
+#, kde-format
+msgid "Reload"
+msgstr "새로 고침"
+
+#: kmplayer.cpp:200
+#, kde-format
+msgid "Clear &History"
+msgstr "과거 기록 삭제(&H)"
+
+#: kmplayer.cpp:204
+#, kde-format
+msgid "&Generators"
+msgstr "생성기(&G)"
+
+#. i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
+#. new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
+#. new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
+#. new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
+#. new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
+#. //KIconLoader::global ()->loadIconSet (QString ("video-television"), K3Icon::Small, 0,true)
+#. new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
+#. editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), ac, "edit_volume_up");
+#. editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), ac, "edit_volume_down");
+#. //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), ac, "view_video");
+#. new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), ac, "view_playlist");
+#. new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (slotMinimalMode ()), ac, "view_minimal");
+#. new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
+#. new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
+#. new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
+#. new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
+#. new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
+#. viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
+#. fileNewWindow->setStatusText(i18n("Opens a new application window"));
+#. fileOpen->setStatusText(i18n("Opens an existing file"));
+#. fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
+#. fileClose->setStatusText(i18n("Closes the actual source"));
+#. fileQuit->setStatusText(i18n("Quits the application"));
+#: kmplayer.cpp:235
+#, kde-format
+msgid "Enables/disables the status bar"
+msgstr "상태 표시줄 사용/사용 안 함"
+
+#: kmplayer.cpp:236
+#, kde-format
+msgid "Enables/disables the menu bar"
+msgstr "메뉴 표시줄 사용/사용 안 함"
+
+#: kmplayer.cpp:237
+#, kde-format
+msgid "Enables/disables the toolbar"
+msgstr "도구 모음 사용/사용 안 함"
+
+#: kmplayer.cpp:244 kmplayer.cpp:452 kmplayer.cpp:706 kmplayer.cpp:1050
+#: kmplayer.cpp:1199 kmplayer.cpp:1584 kmplayer.cpp:1716 kmplayer.cpp:1818
+#: kmplayer.cpp:1864
+#, kde-format
+msgid "Ready."
+msgstr "준비."
+
+#: kmplayer.cpp:255 kmplayercontrolpanel.cpp:452
+#, kde-format
+msgid "&Bookmarks"
+msgstr "책갈피(&B)"
+
+#: kmplayer.cpp:300 kmplayer.cpp:1321
+#, kde-format
+msgid "&Add to list"
+msgstr "목록에 추가(&A)"
+
+#: kmplayer.cpp:302
+#, kde-format
+msgid "Add in new &Group"
+msgstr "새 그룹에 추가(&G)"
+
+#: kmplayer.cpp:304
+#, kde-format
+msgid "&Copy here"
+msgstr "여기로 복사(&C)"
+
+#: kmplayer.cpp:306
+#, kde-format
+msgid "&Delete"
+msgstr "삭제(&D)"
+
+#: kmplayer.cpp:342 kmplayerview.cpp:341
+#, kde-format
+msgid "V&ideo"
+msgstr "동영상(&I)"
+
+#: kmplayer.cpp:383
+#, kde-format
+msgid "More..."
+msgstr "더 보기..."
+
+#: kmplayer.cpp:432
+#, kde-format
+msgid "Opening DVD..."
+msgstr "DVD 여는 중..."
+
+#: kmplayer.cpp:437
+#, kde-format
+msgid "Opening VCD..."
+msgstr "VCD 여는 중..."
+
+#: kmplayer.cpp:442
+#, kde-format
+msgid "Opening Audio CD..."
+msgstr "오디오 CD 여는 중..."
+
+#: kmplayer.cpp:447
+#, kde-format
+msgid "Opening pipe..."
+msgstr "파이프 여는 중..."
+
+#: kmplayer.cpp:449
+#, kde-format
+msgid "Read From Pipe"
+msgstr "파이프에서 읽기"
+
+#: kmplayer.cpp:450
+#, kde-format
+msgid ""
+"Enter a command that will output an audio/video stream\n"
+"to the stdout. This will be piped to a player's stdin.\n"
+"\n"
+"Command:"
+msgstr ""
+"표준 출력으로 오디오/비디오 스트림을 출력하는 명령어를\n"
+"입력하십시오. 재생기의 표준 입력으로 파이프됩니다.\n"
+"\n"
+"명령어:"
+
+#: kmplayer.cpp:538 kmplayer.cpp:541
+#, kde-format
+msgid "Intro"
+msgstr "전주"
+
+#: kmplayer.cpp:694 kmplayer.cpp:1086
+#, kde-format
+msgid "Opening file..."
+msgstr "파일 여는 중..."
+
+#: kmplayer.cpp:956 kmplayer.cpp:957
+#, kde-format
+msgid "Exit"
+msgstr "종료"
+
+#: kmplayer.cpp:1045
+#, kde-format
+msgid "Opening a new application window..."
+msgstr "새 프로그램 창 열기..."
+
+#: kmplayer.cpp:1073
+#, kde-format
+msgid "Open File"
+msgstr "파일 열기"
+
+#: kmplayer.cpp:1074
+#, kde-format
+msgid "*|All Files"
+msgstr "*|모든 파일"
+
+#: kmplayer.cpp:1106
+#, kde-format
+msgid "Save File"
+msgstr "파일 저장"
+
+#: kmplayer.cpp:1110 kmplayerbroadcast.cpp:535 kmplayerbroadcast.cpp:552
+#: kmplayerbroadcast.cpp:565 kmplayerconfig.cpp:655 kmplayerconfig.cpp:666
+#: kmplayerprocess.cpp:150 kmplayertvsource.cpp:611 kmplayertvsource.cpp:622
+#: kmplayervdr.cpp:444 kmplayervdr.cpp:446
+#, kde-format
+msgid "Error"
+msgstr "오류"
+
+#: kmplayer.cpp:1110
+#, kde-format
+msgid ""
+"Error opening file %1.\n"
+"%2."
+msgstr ""
+"%1 파일 열기 오류.\n"
+"%2."
+
+#: kmplayer.cpp:1195
+#, kde-format
+msgid "Closing file..."
+msgstr "파일 닫기..."
+
+#: kmplayer.cpp:1238 kmplayerpartbase.cpp:845 mediaobject.cpp:168
+#, kde-format
+msgid "Ready"
+msgstr "준비"
+
+#: kmplayer.cpp:1241
+#, kde-format
+msgid "Show Menu Bar with %1"
+msgstr "%1의 메뉴 표시줄 보기"
+
+#: kmplayer.cpp:1321
+#, kde-format
+msgid "Move here"
+msgstr "여기로 이동"
+
+#: kmplayer.cpp:1354
+#, kde-format
+msgid "New group"
+msgstr "새 그룹"
+
+#: kmplayer.cpp:1441
+#, kde-format
+msgid "&Delete item"
+msgstr "항목 삭제(&D)"
+
+#: kmplayer.cpp:1444
+#, kde-format
+msgid "&Move up"
+msgstr "위로 이동(&M)"
+
+#: kmplayer.cpp:1446
+#, kde-format
+msgid "Move &down"
+msgstr "아래로 이동(&D)"
+
+#: kmplayer.cpp:1478
+#, kde-format
+msgid "Auto play after opening DVD"
+msgstr "DVD 열기 후 자동 실행"
+
+#: kmplayer.cpp:1479
+#, kde-format
+msgid "Start playing DVD right after opening DVD"
+msgstr "DVD 열기 후 바로 DVD 실행 시작"
+
+#: kmplayer.cpp:1480
+#, kde-format
+msgid "DVD device:"
+msgstr "DVD 장치:"
+
+#: kmplayer.cpp:1482
+#, kde-format
+msgid "Path to your DVD device, you must have read rights to this device"
+msgstr "사용자의 DVD 장치 경로, 해당 장치 읽기 권한이 필요합니다"
+
+#: kmplayer.cpp:1512
+#, kde-format
+msgid "Optical Disks"
+msgstr "광학 디스크"
+
+#: kmplayer.cpp:1543 kmplayer.cpp:1617 kmplayer.cpp:1643
+#, kde-format
+msgid "DVD"
+msgstr "DVD"
+
+#: kmplayer.cpp:1548
+#, kde-format
+msgid "CDROM - Audio Compact Disk"
+msgstr "CDROM - 오디오 콤팩트 디스크"
+
+#: kmplayer.cpp:1549
+#, kde-format
+msgid "VCD - Video Compact Disk"
+msgstr "VCD - 비디오 콤팩트 디스크"
+
+#: kmplayer.cpp:1550
+#, kde-format
+msgid "DVD - Digital Video Disk"
+msgstr "DVD - 디지털 비디오 디스크"
+
+#: kmplayer.cpp:1568 kmplayer.cpp:1789
+#, kde-format
+msgid "Track %1"
+msgstr "트랙 %1"
+
+#: kmplayer.cpp:1641 kmplayer.cpp:1755 kmplayertvsource.cpp:581
+#: kmplayervdr.cpp:718 pref.cpp:87 pref.cpp:92
+#, kde-format
+msgid "Source"
+msgstr "원본"
+
+#: kmplayer.cpp:1656
+#, kde-format
+msgid "Auto play after opening a VCD"
+msgstr "VCD 열기 후 자동 실행"
+
+#: kmplayer.cpp:1657
+#, kde-format
+msgid "Start playing VCD right after opening VCD"
+msgstr "VCD 열기 후 바로 VCD 실행 시작"
+
+#: kmplayer.cpp:1658
+#, kde-format
+msgid "VCD (CDROM) device:"
+msgstr "VCD(CDROM) 장치:"
+
+#: kmplayer.cpp:1660
+#, kde-format
+msgid "Path to your CDROM/DVD device, you must have read rights to this device"
+msgstr "사용자의 CD ROM/DVD 장치 경로, 해당 장치 읽기 권한이 필요합니다"
+
+#: kmplayer.cpp:1672 kmplayer.cpp:1731 kmplayer.cpp:1757
+#, kde-format
+msgid "VCD"
+msgstr "VCD"
+
+#: kmplayer.cpp:1690
+#, kde-format
+msgid "Track "
+msgstr "트랙"
+
+#: kmplayer.cpp:1768 kmplayer.cpp:1833
+#, kde-format
+msgid "Audio CD"
+msgstr "오디오 CD"
+
+#: kmplayer.cpp:1839
+#, kde-format
+msgid "Pipe"
+msgstr "파이프"
+
+#: kmplayer.cpp:1871
+#, kde-format
+msgid "Pipe - %1"
+msgstr "파이프 - %1"
+
+#: kmplayer_lists.cpp:95
+#, kde-format
+msgid "Most Recent"
+msgstr "최신"
+
+#: kmplayer_lists.cpp:194
+#, kde-format
+msgid "Persistent Playlists"
+msgstr "계속적인 재생 목록"
+
+#: kmplayer_part.cpp:112 main.cpp:46
+#, kde-format
+msgid "KMPlayer"
+msgstr "KMPlayer"
+
+#: kmplayer_part.cpp:113
+#, kde-format
+msgid "Embedded MPlayer for KDE"
+msgstr "KDE의 임베드된 MPlayer"
+
+#: kmplayer_part.cpp:768
+#, no-c-format, kde-format
+msgid "% Cache fill"
+msgstr "캐시 메모리 사용 %"
+
+#: kmplayer_part.cpp:793
+#, kde-format
+msgid "KMPlayer: Playing"
+msgstr "KMPlayer: 재생 중"
+
+#: kmplayer_part.cpp:804
+#, kde-format
+msgid "KMPlayer: Stop Playing"
+msgstr "KMPlayer: 재생 중지됨"
+
+#: kmplayerbroadcast.cpp:160
+#, kde-format
+msgid "Bind address:"
+msgstr "바인드 주소:"
+
+#: kmplayerbroadcast.cpp:162
+#, kde-format
+msgid "If you have multiple network devices, you can limit access"
+msgstr "네트워크 장치 여러 개가 있으면 접근을 제한할 수 있습니다"
+
+#: kmplayerbroadcast.cpp:165
+#, kde-format
+msgid "Listen port:"
+msgstr "대기 포트:"
+
+#: kmplayerbroadcast.cpp:169
+#, kde-format
+msgid "Maximum connections:"
+msgstr "최대 연결:"
+
+#: kmplayerbroadcast.cpp:173
+#, kde-format
+msgid "Maximum bandwidth (kbit):"
+msgstr "최대 대역폭(kbit):"
+
+#: kmplayerbroadcast.cpp:177
+#, kde-format
+msgid "Temporary feed file:"
+msgstr "임시 피드 파일:"
+
+#: kmplayerbroadcast.cpp:181
+#, kde-format
+msgid "Feed file size (kB):"
+msgstr "피드 파일 크기(kB):"
+
+#: kmplayerbroadcast.cpp:204
+#, kde-format
+msgid "Format:"
+msgstr "형식:"
+
+#: kmplayerbroadcast.cpp:212
+#, kde-format
+msgid "Only avi, mpeg and rm work for mplayer playback"
+msgstr "MPlayer 재생 시 avi, mpeg,rm만 사용 가능"
+
+#: kmplayerbroadcast.cpp:215
+#, kde-format
+msgid "Audio codec:"
+msgstr "오디오 코덱:"
+
+#: kmplayerbroadcast.cpp:216
+#, kde-format
+msgid "Audio bit rate (kbit):"
+msgstr "오디오 비트 전송률(kbit):"
+
+#: kmplayerbroadcast.cpp:217
+#, kde-format
+msgid "Audio sample rate (Hz):"
+msgstr "오디오 샘플링 레이트(Hz):"
+
+#: kmplayerbroadcast.cpp:218
+#, kde-format
+msgid "Video codec:"
+msgstr "비디오 코덱:"
+
+#: kmplayerbroadcast.cpp:219
+#, kde-format
+msgid "Video bit rate (kbit):"
+msgstr "비디오 비트 전송률(kbit):"
+
+#: kmplayerbroadcast.cpp:220
+#, kde-format
+msgid "Quality (1-31):"
+msgstr "품질(1-31):"
+
+#: kmplayerbroadcast.cpp:221
+#, kde-format
+msgid "Frame rate (Hz):"
+msgstr "프레임 레이트(Hz):"
+
+#: kmplayerbroadcast.cpp:222
+#, kde-format
+msgid "Gop size:"
+msgstr "Gop 크기:"
+
+#: kmplayerbroadcast.cpp:223
+#, kde-format
+msgid "Width (pixels):"
+msgstr "너비(픽셀):"
+
+#: kmplayerbroadcast.cpp:224
+#, kde-format
+msgid "Height (pixels):"
+msgstr "높이(픽셀):"
+
+#: kmplayerbroadcast.cpp:225
+#, kde-format
+msgid "Allow access from:"
+msgstr "다음에서 접속 허가:"
+
+#: kmplayerbroadcast.cpp:230
+#, kde-format
+msgid "'Single IP' or 'start-IP end-IP' for IP ranges"
+msgstr "'단일 IP' 또는 IP 범위의 '시작 IP 끝 IP'"
+
+#: kmplayerbroadcast.cpp:232
+#, kde-format
+msgid "Host/IP or IP Range"
+msgstr "호스트/IP 및 IP 범위"
+
+#: kmplayerbroadcast.cpp:245
+#, kde-format
+msgid "Load"
+msgstr "불러오기"
+
+#: kmplayerbroadcast.cpp:246
+#, kde-format
+msgid "Save"
+msgstr "저장"
+
+#: kmplayerbroadcast.cpp:247 kmplayertvsource.cpp:122
+#, kde-format
+msgid "Delete"
+msgstr "삭제"
+
+#: kmplayerbroadcast.cpp:265 kmplayerbroadcast.cpp:601
+#, kde-format
+msgid "Start"
+msgstr "시작"
+
+#: kmplayerbroadcast.cpp:458 kmplayerbroadcast.cpp:658
+#, kde-format
+msgid "Broadcasting"
+msgstr "방송"
+
+#: kmplayerbroadcast.cpp:460
+#, kde-format
+msgid "Profiles"
+msgstr "프로필"
+
+#: kmplayerbroadcast.cpp:523
+#, kde-format
+msgid "Stop"
+msgstr "정지"
+
+#: kmplayerbroadcast.cpp:535
+#, kde-format
+msgid "Failed to end ffserver process."
+msgstr "ffserver 프로세스를 종료할 수 없습니다."
+
+#: kmplayerbroadcast.cpp:552
+#, kde-format
+msgid "Failed to start ffserver.\n"
+msgstr "ffserver를 시작할 수 없습니다.\n"
+
+#: kmplayerbroadcast.cpp:565
+#, kde-format
+msgid "Failed to start ffmpeg."
+msgstr "ffmpeg를 시작할 수 없습니다."
+
+#: kmplayerbroadcast.cpp:660
+#, kde-format
+msgid "FFServer"
+msgstr "FFServer"
+
+#: kmplayerconfig.cpp:60 kmplayerconfig.cpp:76
+#, kde-format
+msgid "Auto"
+msgstr "자동"
+
+#: kmplayerconfig.cpp:61
+#, kde-format
+msgid "Open Sound System"
+msgstr "OSS(열린 사운드 시스템)"
+
+#: kmplayerconfig.cpp:62
+#, kde-format
+msgid "Simple DirectMedia Layer"
+msgstr "SDL(단순한 DirectMedia 레이어)"
+
+#: kmplayerconfig.cpp:63
+#, kde-format
+msgid "Advanced Linux Sound Architecture"
+msgstr "ALSA(고급 Linux 사운드 구조)"
+
+#: kmplayerconfig.cpp:64
+#, kde-format
+msgid "Analog Real-Time Synthesizer"
+msgstr "aRTs(아날로그 실시간 신시사이저)"
+
+#: kmplayerconfig.cpp:65
+#, kde-format
+msgid "JACK Audio Connection Kit"
+msgstr "JACK 오디오 연결 도구"
+
+#: kmplayerconfig.cpp:66
+#, kde-format
+msgid "OpenAL"
+msgstr "OpenAL"
+
+#: kmplayerconfig.cpp:67
+#, kde-format
+msgid "Enlightened Sound Daemon"
+msgstr "ESD(Enlightened Sound Daemon)"
+
+#: kmplayerconfig.cpp:68
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.5"
+msgstr "ALSA(고급 Linux 사운드 구조) v0.5"
+
+#: kmplayerconfig.cpp:69
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.9"
+msgstr "ALSA(고급 Linux 사운드 구조) v0.9"
+
+#: kmplayerconfig.cpp:70
+#, kde-format
+msgid "Use back-end defaults"
+msgstr "백엔드 기본값 사용"
+
+#: kmplayerconfig.cpp:71
+#, kde-format
+msgid "PulseAudio"
+msgstr "PulseAudio"
+
+#: kmplayerconfig.cpp:77
+#, kde-format
+msgid "X11Shm"
+msgstr "X11Shm"
+
+#: kmplayerconfig.cpp:78
+#, kde-format
+msgid "XVidix"
+msgstr "XVidix"
+
+#: kmplayerconfig.cpp:79
+#, kde-format
+msgid "XvMC"
+msgstr "XvMC"
+
+#: kmplayerconfig.cpp:80
+#, kde-format
+msgid "SDL"
+msgstr "SDL"
+
+#: kmplayerconfig.cpp:81
+#, kde-format
+msgid "OpenGL"
+msgstr "OpenGL"
+
+#: kmplayerconfig.cpp:82
+#, kde-format
+msgid "OpenGL MT"
+msgstr "OpenGL MT"
+
+#: kmplayerconfig.cpp:83
+#, kde-format
+msgid "XVideo"
+msgstr "XVideo"
+
+#: kmplayerconfig.cpp:84
+#, kde-format
+msgid "Video Decode and Presentation API for Unix"
+msgstr "VDPAU(UNIX용 비디오 디코드 및 재생 API)"
+
+#: kmplayerconfig.cpp:95
+#, kde-format
+msgid "Playlist background"
+msgstr "재생 목록 배경"
+
+#: kmplayerconfig.cpp:99
+#, kde-format
+msgid "Playlist foreground"
+msgstr "재생 목록 전경"
+
+#: kmplayerconfig.cpp:103
+#, kde-format
+msgid "Console background"
+msgstr "콘솔 배경"
+
+#: kmplayerconfig.cpp:104
+#, kde-format
+msgid "Playlist active item"
+msgstr "재생 목록 활성 항목"
+
+#: kmplayerconfig.cpp:110
+#, kde-format
+msgid "Console foreground"
+msgstr "콘솔 전경"
+
+#: kmplayerconfig.cpp:113
+#, kde-format
+msgid "Video background"
+msgstr "비디오 배경"
+
+#: kmplayerconfig.cpp:116
+#, kde-format
+msgid "Viewing area background"
+msgstr "보기 영역 배경"
+
+#: kmplayerconfig.cpp:119
+#, kde-format
+msgid "Info window background"
+msgstr "정보 창 배경"
+
+#: kmplayerconfig.cpp:123
+#, kde-format
+msgid "Info window foreground"
+msgstr "정보 창 전경"
+
+#: kmplayerconfig.cpp:127 kmplayerview.cpp:167
+#, kde-format
+msgid "Playlist"
+msgstr "재생 목록"
+
+#: kmplayerconfig.cpp:131
+#, kde-format
+msgid "Info window"
+msgstr "정보 창"
+
+#: kmplayerconfig.cpp:655
+#, kde-format
+msgid "File %1 does not exist."
+msgstr "파일 %1이(가) 없습니다."
+
+#: kmplayerconfig.cpp:666
+#, kde-format
+msgid "Sub title file %1 does not exist."
+msgstr "자막 파일 %1이(가) 없습니다."
+
+#: kmplayercontrolpanel.cpp:311 kmplayercontrolpanel.cpp:325
+#, kde-format
+msgid "Volume is "
+msgstr "현재 음량"
+
+#: kmplayercontrolpanel.cpp:412
+#, kde-format
+msgid "&Play with"
+msgstr "다음으로 재생(&P)"
+
+#: kmplayercontrolpanel.cpp:415 kmplayerview.cpp:337
+#, kde-format
+msgid "Con&sole"
+msgstr "콘솔(&S)"
+
+#: kmplayercontrolpanel.cpp:417
+#, kde-format
+msgid "Play&list"
+msgstr "재생 목록(&L)"
+
+#: kmplayercontrolpanel.cpp:419
+#, kde-format
+msgid "&Zoom"
+msgstr "확대/축소(&Z)"
+
+#: kmplayercontrolpanel.cpp:422
+#, kde-format
+msgid "50%"
+msgstr "50%"
+
+#: kmplayercontrolpanel.cpp:423
+#, kde-format
+msgid "100%"
+msgstr "100%"
+
+#: kmplayercontrolpanel.cpp:424
+#, kde-format
+msgid "150%"
+msgstr "150%"
+
+#: kmplayercontrolpanel.cpp:426
+#, kde-format
+msgid "&Full Screen"
+msgstr "전체 화면(&F)"
+
+#: kmplayercontrolpanel.cpp:431
+#, kde-format
+msgid "Co&lors"
+msgstr "색상(&L)"
+
+#: kmplayercontrolpanel.cpp:456 kmplayercontrolpanel.cpp:458
+#, kde-format
+msgid "&Audio languages"
+msgstr "오디오 언어(&A)"
+
+#: kmplayercontrolpanel.cpp:459
+#, kde-format
+msgid "&Subtitles"
+msgstr "자막(&S)"
+
+#: kmplayercontrolpanel.cpp:467
+#, kde-format
+msgid "Scale:"
+msgstr "크기:"
+
+#: kmplayercontrolpanel.cpp:479
+#, kde-format
+msgid "&Configure KMPlayer..."
+msgstr "KMPlayer 설정(&C)..."
+
+#: kmplayerpartbase.cpp:1450
+#, kde-format
+msgid "Unknown"
+msgstr "알 수 없음"
+
+#: kmplayerpartbase.cpp:1461 kmplayerpartbase.cpp:1530 pref.cpp:91
+#, kde-format
+msgid "URL"
+msgstr "URL"
+
+#: kmplayerpartbase.cpp:1554 kmplayerpartbase.cpp:1557
+#: kmplayerpartbase.cpp:1558
+#, kde-format
+msgid "URL - "
+msgstr "URL - "
+
+#. i18n: ectx: Menu (view)
+#: kmplayerpartui.rc:4 kmplayerui.rc:31
+#, kde-format
+msgid "&View"
+msgstr "보기(&V)"
+
+#: kmplayerprocess.cpp:150
+#, kde-format
+msgid "Failed to end player process."
+msgstr "재생기 프로세스를 종료할 수 없습니다."
+
+#: kmplayerprocess.cpp:489
+#, kde-format
+msgid "&MPlayer"
+msgstr "MPlayer(&M)"
+
+#: kmplayerprocess.cpp:1012
+#, kde-format
+msgid "Size pattern"
+msgstr "크기 패턴"
+
+#: kmplayerprocess.cpp:1013
+#, kde-format
+msgid "Cache pattern"
+msgstr "캐시 패턴"
+
+#: kmplayerprocess.cpp:1014
+#, kde-format
+msgid "Position pattern"
+msgstr "위치 패턴"
+
+#: kmplayerprocess.cpp:1015
+#, kde-format
+msgid "Index pattern"
+msgstr "색인 패턴"
+
+#: kmplayerprocess.cpp:1016
+#, kde-format
+msgid "Reference URL pattern"
+msgstr "참조 URL 패턴"
+
+#: kmplayerprocess.cpp:1017
+#, kde-format
+msgid "Reference pattern"
+msgstr "참조 패턴"
+
+#: kmplayerprocess.cpp:1018
+#, kde-format
+msgid "Start pattern"
+msgstr "시작 패턴"
+
+#: kmplayerprocess.cpp:1019
+#, kde-format
+msgid "VCD track pattern"
+msgstr "VCD 트랙 패턴"
+
+#: kmplayerprocess.cpp:1020
+#, kde-format
+msgid "Audio CD tracks pattern"
+msgstr "오디오 CD 트랙 패턴"
+
+#: kmplayerprocess.cpp:1040
+#, kde-format
+msgid "MPlayer command:"
+msgstr "MPlayer 명령어:"
+
+#: kmplayerprocess.cpp:1042
+#, kde-format
+msgid "Additional command line arguments:"
+msgstr "기타 명령행 인자:"
+
+#: kmplayerprocess.cpp:1044
+#, kde-format
+msgid "Cache size:"
+msgstr "캐시 크기:"
+
+#: kmplayerprocess.cpp:1044
+#, kde-format
+msgid "kB"
+msgstr "kB"
+
+#: kmplayerprocess.cpp:1049
+#, kde-format
+msgid "Build new index when possible"
+msgstr "가능하면 새로운 인덱스 만들기"
+
+#: kmplayerprocess.cpp:1051
+#, kde-format
+msgid "Allows seeking in indexed files (AVIs)"
+msgstr "인덱스된 파일에서 검색 허용(AVI)"
+
+#: kmplayerprocess.cpp:1117 pref.cpp:74 pref.cpp:84
+#, kde-format
+msgid "General Options"
+msgstr "일반 옵션"
+
+#: kmplayerprocess.cpp:1119
+#, kde-format
+msgid "MPlayer"
+msgstr "MPlayer"
+
+#: kmplayerprocess.cpp:1135
+#, kde-format
+msgid "M&Encoder"
+msgstr "MEncoder(&E)"
+
+#: kmplayerprocess.cpp:1201
+#, kde-format
+msgid "&MPlayerDumpstream"
+msgstr "MPlayerDumpstream(&M)"
+
+#: kmplayerprocess.cpp:1463
+#, kde-format
+msgid "&Phonon"
+msgstr "Phonon(&P)"
+
+#: kmplayerprocess.cpp:1610 pref.cpp:674
+#, kde-format
+msgid "&FFMpeg"
+msgstr "FFMpeg(&F)"
+
+#: kmplayerprocess.cpp:1709
+#, kde-format
+msgid "&Ice Ape"
+msgstr "Ice Ape(&I)"
+
+#: kmplayertvsource.cpp:65
+#, kde-format
+msgid "Video device:"
+msgstr "비디오 장치:"
+
+#: kmplayertvsource.cpp:66
+#, kde-format
+msgid "Audio device:"
+msgstr "오디오 장치:"
+
+#: kmplayertvsource.cpp:68
+#, kde-format
+msgid "Name:"
+msgstr "이름:"
+
+#: kmplayertvsource.cpp:70
+#, kde-format
+msgid "Width:"
+msgstr "너비:"
+
+#: kmplayertvsource.cpp:72
+#, kde-format
+msgid "Height:"
+msgstr "높이:"
+
+#: kmplayertvsource.cpp:74
+#, kde-format
+msgid "Do not immediately play"
+msgstr "바로 재생하지 않기"
+
+#: kmplayertvsource.cpp:76
+#, kde-format
+msgid "Only start playing after clicking the play button"
+msgstr "재생 단추를 클릭한 뒤에만 재생 시작"
+
+#: kmplayertvsource.cpp:87
+#, kde-format
+msgid "Norm:"
+msgstr "표준:"
+
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Channel"
+msgstr "채널"
+
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Frequency (MHz)"
+msgstr "주파수(MHz)"
+
+#: kmplayertvsource.cpp:148
+#, kde-format
+msgid ""
+"You are about to remove this device from the Source menu.\n"
+"Continue?"
+msgstr ""
+"원본 메뉴에서 이 장치를 삭제하려고 합니다.\n"
+"계속 진행하시겠습니까?"
+
+#: kmplayertvsource.cpp:148
+#, kde-format
+msgid "Confirm"
+msgstr "확인"
+
+#: kmplayertvsource.cpp:159
+#, kde-format
+msgid "Driver:"
+msgstr "드라이버:"
+
+#: kmplayertvsource.cpp:161
+#, kde-format
+msgid "dummy, v4l or bsdbt848"
+msgstr "더미, v4l, bsdbt848"
+
+#: kmplayertvsource.cpp:162
+#, kde-format
+msgid "Device:"
+msgstr "장치:"
+
+#: kmplayertvsource.cpp:164
+#, kde-format
+msgid "Path to your video device, eg. /dev/video0"
+msgstr "사용자 비디오 장치 경로, 예: /dev/video0"
+
+#: kmplayertvsource.cpp:165
+#, kde-format
+msgid "Scan..."
+msgstr "검색..."
+
+#: kmplayertvsource.cpp:179 pref.cpp:78 pref.cpp:118 pref.cpp:736
+#, kde-format
+msgid "General"
+msgstr "일반"
+
+#: kmplayertvsource.cpp:259
+#, kde-format
+msgid "tv device"
+msgstr "TV 장치"
+
+#: kmplayertvsource.cpp:346
+#, kde-format
+msgid "Television"
+msgstr "텔레비전"
+
+#: kmplayertvsource.cpp:374 kmplayertvsource.cpp:532 kmplayertvsource.cpp:583
+#, kde-format
+msgid "TV"
+msgstr "TV"
+
+#: kmplayertvsource.cpp:499
+#, kde-format
+msgid "TV: "
+msgstr "TV: "
+
+#: kmplayertvsource.cpp:610
+#, kde-format
+msgid "Device already present."
+msgstr "장치가 이미 존재합니다."
+
+#: kmplayertvsource.cpp:622
+#, kde-format
+msgid "No device found."
+msgstr "장치를 찾을 수 없습니다."
+
+#: kmplayertvsource.cpp:645
+#, kde-format
+msgid "TVScanner"
+msgstr "TV스캐너"
+
+#. i18n: ectx: Menu (file)
+#: kmplayerui.rc:5
+#, kde-format
+msgid "&File"
+msgstr "파일(&F)"
+
+#. i18n: ectx: Menu (vdr)
+#: kmplayerui.rc:15
+#, kde-format
+msgid "VD&R"
+msgstr "VDR(&R)"
+
+#. i18n: ectx: Menu (settings)
+#: kmplayerui.rc:51
+#, kde-format
+msgid "&Settings"
+msgstr "설정(&S)"
+
+#: kmplayervdr.cpp:87
+#, kde-format
+msgid "XVideo port"
+msgstr "XVideo 포트"
+
+#: kmplayervdr.cpp:89
+#, kde-format
+msgid ""
+"Port base of the X Video extension.\n"
+"If left to default (0), the first available port will be used. However if "
+"you have multiple XVideo instances, you might have to provide the port to "
+"use here.\n"
+"See the output from 'xvinfo' for more information"
+msgstr ""
+"XVideo 확장의 기반 포트입니다.\n"
+"초기값(0)으로 두면 처음으로 사용할 수 있는 포트를 사용합니다. XVideo 인스턴"
+"스 여러 개가 있다면 사용하려고 하는 포트를 여기에 지정할 수 있습니다.\n"
+"더 많은 정보는 'xvinfo'의 출력 정보를 참조하십시오"
+
+#: kmplayervdr.cpp:90
+#, kde-format
+msgid "Communication port:"
+msgstr "통신 포트:"
+
+#: kmplayervdr.cpp:93
+#, kde-format
+msgid ""
+"Communication port with VDR. Default is port 2001.\n"
+"If you use another port, with the '-p' option of 'vdr', you must set it here "
+"too."
+msgstr ""
+"VDR의 통신 포트입니다. 기본 포트는 2001입니다.\n"
+"다른 포트를 사용하려면 'vdr'의 '-p' 옵션을 설정해야 합니다."
+
+#: kmplayervdr.cpp:97
+#, kde-format
+msgid "Scale"
+msgstr "크기"
+
+#: kmplayervdr.cpp:98
+#, kde-format
+msgid "4:3"
+msgstr "4:3"
+
+#: kmplayervdr.cpp:99
+#, kde-format
+msgid "16:9"
+msgstr "16:9"
+
+#: kmplayervdr.cpp:100
+#, kde-format
+msgid "Aspects to use when viewing VDR"
+msgstr "VDR을 볼 때 사용할 비율"
+
+#: kmplayervdr.cpp:171 kmplayervdr.cpp:720
+#, kde-format
+msgid "VDR"
+msgstr "VDR"
+
+#: kmplayervdr.cpp:236
+#, kde-format
+msgid "Dis&connect"
+msgstr "연결 끊기(&C)"
+
+#: kmplayervdr.cpp:237
+#, kde-format
+msgid "VDR Key Up"
+msgstr "VDR 위 키"
+
+#: kmplayervdr.cpp:238
+#, kde-format
+msgid "VDR Key Down"
+msgstr "VDR 아래 키"
+
+#: kmplayervdr.cpp:239
+#, kde-format
+msgid "VDR Key Back"
+msgstr "VDR 뒤로 키"
+
+#: kmplayervdr.cpp:240
+#, kde-format
+msgid "VDR Key Ok"
+msgstr "VDR 확인 키"
+
+#: kmplayervdr.cpp:241
+#, kde-format
+msgid "VDR Key Setup"
+msgstr "VDR 설정 키"
+
+#: kmplayervdr.cpp:242
+#, kde-format
+msgid "VDR Key Channels"
+msgstr "VDR 채널 키"
+
+#: kmplayervdr.cpp:243
+#, kde-format
+msgid "VDR Key Menu"
+msgstr "VDR 메뉴 키"
+
+#: kmplayervdr.cpp:244
+#, kde-format
+msgid "VDR Key Red"
+msgstr "VDR 빨강 키"
+
+#: kmplayervdr.cpp:245
+#, kde-format
+msgid "VDR Key Green"
+msgstr "VDR 녹색 키"
+
+#: kmplayervdr.cpp:246
+#, kde-format
+msgid "VDR Key Yellow"
+msgstr "VDR 노랑 키"
+
+#: kmplayervdr.cpp:247
+#, kde-format
+msgid "VDR Key Blue"
+msgstr "VDR 파랑 키"
+
+#: kmplayervdr.cpp:250
+#, kde-format
+msgid "VDR Key 0"
+msgstr "VDR 0 키"
+
+#: kmplayervdr.cpp:251
+#, kde-format
+msgid "VDR Key 1"
+msgstr "VDR 1 키"
+
+#: kmplayervdr.cpp:252
+#, kde-format
+msgid "VDR Key 2"
+msgstr "VDR 2 키"
+
+#: kmplayervdr.cpp:253
+#, kde-format
+msgid "VDR Key 3"
+msgstr "VDR 3 키"
+
+#: kmplayervdr.cpp:254
+#, kde-format
+msgid "VDR Key 4"
+msgstr "VDR 4 키"
+
+#: kmplayervdr.cpp:255
+#, kde-format
+msgid "VDR Key 5"
+msgstr "VDR 5 키"
+
+#: kmplayervdr.cpp:256
+#, kde-format
+msgid "VDR Key 6"
+msgstr "VDR 6 키"
+
+#: kmplayervdr.cpp:257
+#, kde-format
+msgid "VDR Key 7"
+msgstr "VDR 7 키"
+
+#: kmplayervdr.cpp:258
+#, kde-format
+msgid "VDR Key 8"
+msgstr "VDR 8 키"
+
+#: kmplayervdr.cpp:259
+#, kde-format
+msgid "VDR Key 9"
+msgstr "VDR 9 키"
+
+#: kmplayervdr.cpp:281
+#, kde-format
+msgid "&Connect"
+msgstr "연결(&C)"
+
+#: kmplayervdr.cpp:444
+#, kde-format
+msgid "Host not found"
+msgstr "호스트를 찾을 수 없음"
+
+#: kmplayervdr.cpp:446
+#, kde-format
+msgid "Connection refused"
+msgstr "연결 거부됨"
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid "Custom VDR command"
+msgstr "사용자 정의 VDR 명령어"
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid ""
+"You can pass commands to VDR.\n"
+"Enter 'HELP' to see a list of available commands.\n"
+"You can see VDR response in the console window.\n"
+"\n"
+"VDR Command:"
+msgstr ""
+"VDR에 명령어를 입력하십시오.\n"
+"'HELP'를 입력하면 사용 가능한 명령어 목록을 볼 수 있습니다.\n"
+"콘솔 창으로 VDR 응답을 확인할 수 있습니다.\n"
+"\n"
+"VDR 명령어:"
+
+#: kmplayervdr.cpp:685
+#, kde-format
+msgid "Port "
+msgstr "포트"
+
+#: kmplayervdr.cpp:739
+#, kde-format
+msgid "X&Video"
+msgstr "XVideo(&V)"
+
+#: kmplayerview.cpp:172
+#, kde-format
+msgid "Information"
+msgstr "정보"
+
+#: main.cpp:48
+#, kde-format
+msgid "Media player"
+msgstr "미디어 재생기"
+
+#: main.cpp:49
+#, kde-format
+msgid "(c) 2002-2016, Koos Vriezen"
+msgstr "(c) 2002-2016, Koos Vriezen"
+
+#: main.cpp:50
+#, kde-format
+msgid "Koos Vriezen"
+msgstr "Koos Vriezen"
+
+#: main.cpp:50
+#, kde-format
+msgid "Maintainer"
+msgstr "관리자"
+
+#: main.cpp:63
+#, kde-format
+msgid "file to open"
+msgstr "열 파일"
+
+#: main.cpp:63
+#, kde-format
+msgid "+[File]"
+msgstr "+[파일]"
+
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Not Running"
+msgstr "실행하지 않음"
+
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Buffering"
+msgstr "버퍼링"
+
+#: mediaobject.cpp:168 pref.cpp:231
+#, kde-format
+msgid "Playing"
+msgstr "재생 중"
+
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Paused"
+msgstr "일시 정지됨"
+
+#: mediaobject.cpp:190
+#, kde-format
+msgid "Player %1 %2"
+msgstr "재생기 %1 %2"
+
+#: playlistview.cpp:140
+#, kde-format
+msgid "Edit &item"
+msgstr "항목 편집(&I)"
+
+#: playlistview.cpp:255
+#, kde-format
+msgid "&Copy to Clipboard"
+msgstr "클립보드에 복사(&C)"
+
+#: playlistview.cpp:262
+#, kde-format
+msgid "&Add Bookmark"
+msgstr "책갈피에 추가(&A)"
+
+#: playlistview.cpp:265
+#, kde-format
+msgid "&Show all"
+msgstr "모두 보기(&S)"
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "unnamed"
+msgstr "이름 없음"
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "none"
+msgstr "없음"
+
+#: playmodel.cpp:378
+#, kde-format
+msgid "[attributes]"
+msgstr "[속성]"
+
+#: pref.cpp:69
+#, kde-format
+msgid "Preferences"
+msgstr "설정"
+
+#: pref.cpp:80
+#, kde-format
+msgid "Looks"
+msgstr "모양"
+
+#: pref.cpp:83
+#, kde-format
+msgid "Output"
+msgstr "출력"
+
+#: pref.cpp:95 pref.cpp:120
+#, kde-format
+msgid "Recording"
+msgstr "녹화"
+
+#: pref.cpp:101
+#, kde-format
+msgid "MEncoder"
+msgstr "MEncoder"
+
+#: pref.cpp:105
+#, kde-format
+msgid "FFMpeg"
+msgstr "FFMpeg"
+
+#: pref.cpp:123
+#, kde-format
+msgid "Output Plugins"
+msgstr "출력 플러그인"
+
+#: pref.cpp:127 pref.cpp:128
+#, kde-format
+msgid "Postprocessing"
+msgstr "후처리"
+
+#: pref.cpp:208
+#, kde-format
+msgid "Window"
+msgstr "창"
+
+#: pref.cpp:211
+#, kde-format
+msgid "Keep size ratio"
+msgstr "종횡비 유지"
+
+#: pref.cpp:212
+#, kde-format
+msgid ""
+"When checked, the movie will keep its aspect ratio\n"
+"when the window is resized."
+msgstr ""
+"이 옵션을 선택하면 창 크기를 조절할 때\n"
+"동영상 종횡비를 유지합니다."
+
+#: pref.cpp:213
+#, kde-format
+msgid "Dock in system tray"
+msgstr "시스템 트레이에 아이콘 표시"
+
+#: pref.cpp:214
+#, kde-format
+msgid ""
+"When checked, an icon for KMPlayer will be added to the system tray.\n"
+"When clicked, it will hide KMPlayer's main window and remove KMPlayer's task "
+"bar button."
+msgstr ""
+"이 옵션을 선택하면 KMPlayer 아이콘을 시스템 트레이에 추가합니다.\n"
+"클릭했을 때 KMPlayer의 주 창을 숨기고 작업 표시줄 단추를 표시하지 않습니다."
+
+#: pref.cpp:215
+#, kde-format
+msgid "Auto resize to video sizes"
+msgstr "동영상 크기로 자동 조절"
+
+#: pref.cpp:216
+#, kde-format
+msgid ""
+"When checked, KMPlayer will resize to movie sizes\n"
+"when video starts."
+msgstr ""
+"이 옵션을 선택하면 KMPlayer에서 동영상을 재생할 때\n"
+"창 크기를 동영상에 따라 조절합니다."
+
+#: pref.cpp:220
+#, kde-format
+msgid "Remember window size on exit"
+msgstr "프로그램 종료 시 창의 크기 기억"
+
+#: pref.cpp:221
+#, kde-format
+msgid "Always start with fixed size"
+msgstr "항상 고정된 크기로 시작"
+
+#: pref.cpp:232
+#, kde-format
+msgid "Loop"
+msgstr "반복"
+
+#: pref.cpp:233
+#, kde-format
+msgid "Makes current movie loop"
+msgstr "현재 동영상 반복"
+
+#: pref.cpp:234
+#, kde-format
+msgid "Allow frame drops"
+msgstr "프레임 드롭 허용"
+
+#: pref.cpp:235
+#, kde-format
+msgid "Allow dropping frames for better audio and video synchronization"
+msgstr "오디오와 비디오 동기화를 개선할 수 있도록 프레임 드롭 허용"
+
+#: pref.cpp:236
+#, kde-format
+msgid "Auto set volume on start"
+msgstr "시작할 때 자동으로 음량 설정"
+
+#: pref.cpp:237
+#, kde-format
+msgid ""
+"When a new source is selected, the volume will be set according the volume "
+"control"
+msgstr "새로운 원본 선택 시 음량 컨트롤에 따라 음량 설정"
+
+#: pref.cpp:238
+#, kde-format
+msgid "Auto set colors on start"
+msgstr "시작할 때 자동으로 색상 설정"
+
+#: pref.cpp:239
+#, kde-format
+msgid ""
+"When a movie starts, the colors will be set according the sliders for colors"
+msgstr "동영상을 시작할 때 색 슬라이더의 색에 따라 조정"
+
+#: pref.cpp:247
+#, kde-format
+msgid "Control Panel"
+msgstr "제어 패널"
+
+#: pref.cpp:248
+#, kde-format
+msgid "Show config button"
+msgstr "설정 단추 보기"
+
+#: pref.cpp:249
+#, kde-format
+msgid "Add a button that will popup a config menu"
+msgstr "설정 메뉴를 표시하는 단추 추가"
+
+#: pref.cpp:250
+#, kde-format
+msgid "Show playlist button"
+msgstr "재생 목록 단추 보기"
+
+#: pref.cpp:251
+#, kde-format
+msgid "Add a playlist button to the control buttons"
+msgstr "제어 단추에 재생 목록 단추 추가"
+
+#: pref.cpp:252
+#, kde-format
+msgid "Show record button"
+msgstr "녹음 단추 보기"
+
+#: pref.cpp:253
+#, kde-format
+msgid "Add a record button to the control buttons"
+msgstr "제어 단추에 녹음 단추 추가"
+
+#: pref.cpp:254
+#, kde-format
+msgid "Show broadcast button"
+msgstr "방송 단추 보기"
+
+#: pref.cpp:255
+#, kde-format
+msgid "Add a broadcast button to the control buttons"
+msgstr "제어 단추에 방송 단추 추가"
+
+#: pref.cpp:262
+#, kde-format
+msgid "Forward/backward seek time:"
+msgstr "앞/뒤 탐색 시간:"
+
+#: pref.cpp:269 pref.cpp:485
+#, kde-format
+msgid " second"
+msgid_plural " seconds"
+msgstr[0] " 초"
+
+#: pref.cpp:271 pref.cpp:487
+#, kde-format
+msgid " seconds"
+msgstr " 초"
+
+#: pref.cpp:292
+#, kde-format
+msgid "Colors"
+msgstr "색상"
+
+#: pref.cpp:308
+#, kde-format
+msgid "Fonts"
+msgstr "글꼴"
+
+#: pref.cpp:315
+#, kde-format
+msgid "AaBbCc"
+msgstr "AaBbCc"
+
+#: pref.cpp:365
+#, kde-format
+msgid "Location:"
+msgstr "위치:"
+
+#: pref.cpp:370
+#, kde-format
+msgid "Location of the playable item"
+msgstr "재생 가능한 아이템의 위치"
+
+#: pref.cpp:373
+#, kde-format
+msgid "Sub title:"
+msgstr "하위 제목:"
+
+#: pref.cpp:378
+#, kde-format
+msgid "Optional location of a file containing the subtitles of the URL above"
+msgstr "위 URL의 자막이 들어 있는 파일의 위치(선택적)"
+
+#: pref.cpp:381
+#, kde-format
+msgid "Load on demand"
+msgstr "필요할 때 불러오기"
+
+#: pref.cpp:382
+#, kde-format
+msgid ""
+"When enabled, all embedded movies will start with a image that needs to be "
+"clicked to start the video playback"
+msgstr ""
+"이 옵션을 선택하면 임베드된 동영상의 재생을 시작하려면 미리 표시된 이미지를 "
+"클릭해야 합니다"
+
+#: pref.cpp:383
+#, kde-format
+msgid "Grab image when 'Click to Play' detected"
+msgstr "'클릭해서 재생'이 감지되었을 때 이미지 추출"
+
+#: pref.cpp:384
+#, kde-format
+msgid ""
+"When enabled and a HTML object has a HREF attribute, grab and save an image "
+"of the first frame of initial link. This image will be shown instead of a "
+"default picture."
+msgstr ""
+"이 옵션을 사용하면 HTML 객체에 HREF 속성이 있을 때 첫 링크의 첫 프레임을 이미"
+"지로 캡처합니다. 그 다음 기본 그림 대신 해당 이미지를 표시합니다."
+
+#: pref.cpp:391
+#, kde-format
+msgid "Use movie player:"
+msgstr "동영상 재생기 사용:"
+
+#: pref.cpp:397
+#, kde-format
+msgid "Network bandwidth"
+msgstr "네트워크 대역폭"
+
+#: pref.cpp:400
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets how much bandwidth you would prefer to allocate to video."
+msgstr ""
+"때때로 하나의 비트 전송률 내에 여러 스트림이 들어 있을 수 있습니다.\n"
+"이 옵션은 동영상에 할당할 대역폭을 설정합니다."
+
+#: pref.cpp:403
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets the maximum bandwidth you have available for video."
+msgstr ""
+"때때로 하나의 비트 전송률 내에 여러 스트림이 들어 있을 수 있습니다.\n"
+"이 옵션은 동영상에 할당할 최대 대역폭을 설정합니다."
+
+#: pref.cpp:405
+#, kde-format
+msgid "Preferred bitrate:"
+msgstr "선호하는 비트 전송률:"
+
+#: pref.cpp:407 pref.cpp:410
+#, kde-format
+msgid "kbit/s"
+msgstr "kbit/s"
+
+#: pref.cpp:408
+#, kde-format
+msgid "Maximum bitrate:"
+msgstr "최대 비트 전송률:"
+
+#: pref.cpp:450
+#, kde-format
+msgid "Output file:"
+msgstr "출력 파일:"
+
+#: pref.cpp:455
+#, kde-format
+msgid "Current source: "
+msgstr "현재 원본: "
+
+#: pref.cpp:457
+#, kde-format
+msgid "Recorder"
+msgstr "녹음기"
+
+#: pref.cpp:469
+#, kde-format
+msgid "Auto Playback"
+msgstr "자동 재생"
+
+#: pref.cpp:472
+#, kde-format
+msgid "&No"
+msgstr "안 함(&N)"
+
+#: pref.cpp:475
+#, kde-format
+msgid "&When recording finished"
+msgstr "녹음 종료 시(&W)"
+
+#: pref.cpp:478
+#, kde-format
+msgid "A&fter"
+msgstr "나중에(&F)"
+
+#: pref.cpp:491
+#, kde-format
+msgid "Time:"
+msgstr "시간:"
+
+#: pref.cpp:498 pref.cpp:532 pref.cpp:540
+#, kde-format
+msgid "Start &Recording"
+msgstr "녹음 시작(&R)"
+
+#: pref.cpp:531
+#, kde-format
+msgid "Stop &Recording"
+msgstr "녹음 중지(&R)"
+
+#: pref.cpp:552
+#, kde-format
+msgid "Current Source: "
+msgstr "현재 원본: "
+
+#: pref.cpp:605
+#, kde-format
+msgid "Format"
+msgstr "형식"
+
+#: pref.cpp:608
+#, kde-format
+msgid "Same as source"
+msgstr "원본과 동일"
+
+#: pref.cpp:611 pref.cpp:723
+#, kde-format
+msgid "Custom"
+msgstr "사용자 정의"
+
+#: pref.cpp:615
+#, kde-format
+msgid "Mencoder arguments:"
+msgstr "MEncoder 인자:"
+
+#: pref.cpp:641
+#, kde-format
+msgid "&MEncoder"
+msgstr "MEncoder(&M)"
+
+#: pref.cpp:649
+#, kde-format
+msgid "MPlayer -&dumpstream"
+msgstr "MPlayer -dumpstream(&D)"
+
+#: pref.cpp:656
+#, kde-format
+msgid "FFMpeg arguments:"
+msgstr "FFMpeg 인자:"
+
+#: pref.cpp:683
+#, kde-format
+msgid "&Xine"
+msgstr "Xine(&X)"
+
+#: pref.cpp:693
+#, kde-format
+msgid ""
+"Sets video driver. Recommended is XVideo, or, if it is not supported, X11, "
+"which is slower."
+msgstr ""
+"비디오 드라이버를 설정합니다. 사용 가능한 경우 빠른 XVideo를 추천하며, 그렇"
+"지 않으면 느린 X11을 사용하십시오."
+
+#: pref.cpp:711
+#, kde-format
+msgid "Enable use of postprocessing filters"
+msgstr "후처리 필터 사용"
+
+#: pref.cpp:713
+#, kde-format
+msgid "Disable use of postprocessing when watching TV/DVD"
+msgstr "TV/DVD를 볼 때 후처리 사용 해제"
+
+#: pref.cpp:722
+#, kde-format
+msgid "Default"
+msgstr "기본값"
+
+#: pref.cpp:724
+#, kde-format
+msgid "Fast"
+msgstr "빠른"
+
+#: pref.cpp:751
+#, kde-format
+msgid "Horizontal deblocking"
+msgstr "수평 디블로킹"
+
+#: pref.cpp:752 pref.cpp:770 pref.cpp:788
+#, kde-format
+msgid "Auto quality"
+msgstr "자동 품질"
+
+#: pref.cpp:754 pref.cpp:772 pref.cpp:790
+#, kde-format
+msgid "Chrominance filtering"
+msgstr "색차 필터링"
+
+#: pref.cpp:769
+#, kde-format
+msgid "Vertical deblocking"
+msgstr "수직 디블로킹"
+
+#: pref.cpp:787
+#, kde-format
+msgid "Dering filter"
+msgstr "Dering 필터"
+
+#: pref.cpp:805
+#, kde-format
+msgid "Auto brightness/contrast"
+msgstr "자동 밝기/명암"
+
+#: pref.cpp:806
+#, kde-format
+msgid "Stretch luminance to full range"
+msgstr "휘도를 전체 범위로 확대(0.255)"
+
+#: pref.cpp:814
+#, kde-format
+msgid "Temporal noise reducer"
+msgstr "일시적인 소음 감소기"
+
+#: pref.cpp:836
+#, kde-format
+msgid "Custom Preset"
+msgstr "사용자 설정"
+
+#: pref.cpp:842
+#, kde-format
+msgid "Linear blend deinterlacer"
+msgstr "선형 혼합 디인터레이서"
+
+#: pref.cpp:843
+#, kde-format
+msgid "Linear interpolating deinterlacer"
+msgstr "선형 보간 디인터레이서"
+
+#: pref.cpp:844
+#, kde-format
+msgid "Cubic interpolating deinterlacer"
+msgstr "큐빅 보간 디인터레이서"
+
+#: pref.cpp:845
+#, kde-format
+msgid "Median deinterlacer"
+msgstr "중앙값 디인터레이서"
+
+#: pref.cpp:846
+#, kde-format
+msgid "FFmpeg deinterlacer"
+msgstr "FFmpeg 디인터레이서"
+
+#: pref.cpp:854
+#, kde-format
+msgid "Deinterlacing"
+msgstr "디인터레이싱"
+
+#: pref.cpp:879
+#, kde-format
+msgid "Enable mplayer's default postprocessing filters"
+msgstr "MPlayer의 기본 후처리 필터 사용"
+
+#: pref.cpp:880
+#, kde-format
+msgid "Enable custom postprocessing filters (See: Custom preset -tab)"
+msgstr "사용자 정의 후처리 필터 사용(참조: 사용자 설정 탭)"
+
+#: pref.cpp:881
+#, kde-format
+msgid "Enable mplayer's fast postprocessing filters"
+msgstr "MPlayer의 빠른 후처리 필터 사용"
+
+#: pref.cpp:882 pref.cpp:883 pref.cpp:884
+#, kde-format
+msgid "Filter is used if there is enough CPU"
+msgstr "CPU가 충분할 때 필터를 사용합니다"
+
+#. i18n( "Strength of the noise reducer" ) );
+#: pref.cpp:886
+#, kde-format
+msgid "Stretches luminance to full range (0..255)"
+msgstr "휘도를 전체 범위로 확대(0..255)"
+
+#: pref.cpp:892
+#, kde-format
+msgid ""
+"You are about to have all your settings overwritten with defaults.\n"
+"Please confirm.\n"
+msgstr ""
+"모든 설정을 기본값으로 되돌립니다.\n"
+"계속 진행하시겠습니까?\n"
+
+#: pref.cpp:893
+#, kde-format
+msgid "Reset Settings?"
+msgstr "설정을 초기화하시겠습니까?"
+
+#~ msgid "plugin"
+#~ msgstr "플러그인"
+
+#~ msgid "&OK"
+#~ msgstr "확인(&O)"
+
+#~ msgid "&Cancel"
+#~ msgstr "취소(&C)"
+
+#~ msgid "Exiting..."
+#~ msgstr "종료 중..."

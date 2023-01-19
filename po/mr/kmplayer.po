@@ -1,0 +1,1957 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Chetan Khona <chetan@kompkin.com>, 2013.
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2019-08-30 07:39+0200\n"
+"PO-Revision-Date: 2013-03-29 15:06+0530\n"
+"Last-Translator: Chetan Khona <chetan@kompkin.com>\n"
+"Language-Team: Marathi <kde-i18n-doc@kde.org>\n"
+"Language: mr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"X-Generator: Lokalize 1.5\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "चेतन खोना"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "chetan@kompkin.com"
+
+#: kmplayer.cpp:151
+#, kde-format
+msgid "New window"
+msgstr "नवीन चौकट"
+
+#: kmplayer.cpp:161
+#, fuzzy, kde-format
+msgid "&Edit mode"
+msgstr "संपादन पद्धत"
+
+#: kmplayer.cpp:164
+#, kde-format
+msgid "Pla&y List"
+msgstr ""
+
+#: kmplayer.cpp:169
+#, fuzzy, kde-format
+msgid "P&lay"
+msgstr "सुरु करा"
+
+#: kmplayer.cpp:172
+#, fuzzy, kde-format
+msgid "&Pause"
+msgstr "स्तब्ध करा (&P)"
+
+#: kmplayer.cpp:175
+#, kde-format
+msgid "&Stop"
+msgstr "थांबा (&S)"
+
+#: kmplayer.cpp:181
+#, fuzzy, kde-format
+msgid "Fullscreen"
+msgstr "पूर्णस्क्रीन (&F)"
+
+#: kmplayer.cpp:184 kmplayer.cpp:345
+#, fuzzy, kde-format
+msgid "C&onsole"
+msgstr "कन्सोल"
+
+#: kmplayer.cpp:189
+#, fuzzy, kde-format
+msgid "Reload"
+msgstr "पुन्हा दाखल करा"
+
+#: kmplayer.cpp:200
+#, kde-format
+msgid "Clear &History"
+msgstr "यादी रिकामी करा (&H)"
+
+#: kmplayer.cpp:204
+#, kde-format
+msgid "&Generators"
+msgstr ""
+
+#. i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
+#. new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
+#. new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
+#. new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
+#. new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
+#. //KIconLoader::global ()->loadIconSet (QString ("video-television"), K3Icon::Small, 0,true)
+#. new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
+#. editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), ac, "edit_volume_up");
+#. editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), ac, "edit_volume_down");
+#. //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), ac, "view_video");
+#. new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), ac, "view_playlist");
+#. new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (slotMinimalMode ()), ac, "view_minimal");
+#. new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
+#. new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
+#. new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
+#. new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
+#. new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
+#. viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
+#. fileNewWindow->setStatusText(i18n("Opens a new application window"));
+#. fileOpen->setStatusText(i18n("Opens an existing file"));
+#. fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
+#. fileClose->setStatusText(i18n("Closes the actual source"));
+#. fileQuit->setStatusText(i18n("Quits the application"));
+#: kmplayer.cpp:235
+#, kde-format
+msgid "Enables/disables the status bar"
+msgstr ""
+
+#: kmplayer.cpp:236
+#, kde-format
+msgid "Enables/disables the menu bar"
+msgstr ""
+
+#: kmplayer.cpp:237
+#, kde-format
+msgid "Enables/disables the toolbar"
+msgstr ""
+
+#: kmplayer.cpp:244 kmplayer.cpp:452 kmplayer.cpp:706 kmplayer.cpp:1050
+#: kmplayer.cpp:1199 kmplayer.cpp:1584 kmplayer.cpp:1716 kmplayer.cpp:1818
+#: kmplayer.cpp:1864
+#, kde-format
+msgid "Ready."
+msgstr "तयार."
+
+#: kmplayer.cpp:255 kmplayercontrolpanel.cpp:452
+#, fuzzy, kde-format
+msgid "&Bookmarks"
+msgstr "ओळखचिन्ह (&B)"
+
+#: kmplayer.cpp:300 kmplayer.cpp:1321
+#, kde-format
+msgid "&Add to list"
+msgstr ""
+
+#: kmplayer.cpp:302
+#, kde-format
+msgid "Add in new &Group"
+msgstr ""
+
+#: kmplayer.cpp:304
+#, fuzzy, kde-format
+msgid "&Copy here"
+msgstr "येथे प्रत करा (&C)"
+
+#: kmplayer.cpp:306
+#, fuzzy, kde-format
+msgid "&Delete"
+msgstr "काढून टाका (&D)"
+
+#: kmplayer.cpp:342 kmplayerview.cpp:341
+#, fuzzy, kde-format
+msgid "V&ideo"
+msgstr "दृश्य"
+
+#: kmplayer.cpp:383
+#, fuzzy, kde-format
+msgid "More..."
+msgstr "अधिक....."
+
+#: kmplayer.cpp:432
+#, kde-format
+msgid "Opening DVD..."
+msgstr ""
+
+#: kmplayer.cpp:437
+#, kde-format
+msgid "Opening VCD..."
+msgstr ""
+
+#: kmplayer.cpp:442
+#, kde-format
+msgid "Opening Audio CD..."
+msgstr ""
+
+#: kmplayer.cpp:447
+#, kde-format
+msgid "Opening pipe..."
+msgstr ""
+
+#: kmplayer.cpp:449
+#, kde-format
+msgid "Read From Pipe"
+msgstr ""
+
+#: kmplayer.cpp:450
+#, kde-format
+msgid ""
+"Enter a command that will output an audio/video stream\n"
+"to the stdout. This will be piped to a player's stdin.\n"
+"\n"
+"Command:"
+msgstr ""
+
+#: kmplayer.cpp:538 kmplayer.cpp:541
+#, kde-format
+msgid "Intro"
+msgstr ""
+
+#: kmplayer.cpp:694 kmplayer.cpp:1086
+#, kde-format
+msgid "Opening file..."
+msgstr ""
+
+#: kmplayer.cpp:956 kmplayer.cpp:957
+#, kde-format
+msgid "Exit"
+msgstr "बाहेर पडा"
+
+#: kmplayer.cpp:1045
+#, kde-format
+msgid "Opening a new application window..."
+msgstr ""
+
+#: kmplayer.cpp:1073
+#, kde-format
+msgid "Open File"
+msgstr "फाईल उघडा"
+
+#: kmplayer.cpp:1074
+#, fuzzy, kde-format
+msgid "*|All Files"
+msgstr "*|सर्व फाईल्स"
+
+#: kmplayer.cpp:1106
+#, kde-format
+msgid "Save File"
+msgstr ""
+
+#: kmplayer.cpp:1110 kmplayerbroadcast.cpp:535 kmplayerbroadcast.cpp:552
+#: kmplayerbroadcast.cpp:565 kmplayerconfig.cpp:655 kmplayerconfig.cpp:666
+#: kmplayerprocess.cpp:150 kmplayertvsource.cpp:611 kmplayertvsource.cpp:622
+#: kmplayervdr.cpp:444 kmplayervdr.cpp:446
+#, kde-format
+msgid "Error"
+msgstr "त्रुटी"
+
+#: kmplayer.cpp:1110
+#, kde-format
+msgid ""
+"Error opening file %1.\n"
+"%2."
+msgstr ""
+
+#: kmplayer.cpp:1195
+#, kde-format
+msgid "Closing file..."
+msgstr ""
+
+#: kmplayer.cpp:1238 kmplayerpartbase.cpp:845 mediaobject.cpp:168
+#, fuzzy, kde-format
+msgid "Ready"
+msgstr "तयार"
+
+#: kmplayer.cpp:1241
+#, kde-format
+msgid "Show Menu Bar with %1"
+msgstr ""
+
+#: kmplayer.cpp:1321
+#, fuzzy, kde-format
+msgid "Move here"
+msgstr "येथे हलवा (&M)"
+
+#: kmplayer.cpp:1354
+#, fuzzy, kde-format
+msgid "New group"
+msgstr "नवीन समूह"
+
+#: kmplayer.cpp:1441
+#, kde-format
+msgid "&Delete item"
+msgstr ""
+
+#: kmplayer.cpp:1444
+#, fuzzy, kde-format
+msgid "&Move up"
+msgstr "वर हलवा"
+
+#: kmplayer.cpp:1446
+#, fuzzy, kde-format
+msgid "Move &down"
+msgstr "खाली हलवा"
+
+#: kmplayer.cpp:1478
+#, kde-format
+msgid "Auto play after opening DVD"
+msgstr ""
+
+#: kmplayer.cpp:1479
+#, kde-format
+msgid "Start playing DVD right after opening DVD"
+msgstr ""
+
+#: kmplayer.cpp:1480
+#, kde-format
+msgid "DVD device:"
+msgstr ""
+
+#: kmplayer.cpp:1482
+#, kde-format
+msgid "Path to your DVD device, you must have read rights to this device"
+msgstr ""
+
+#: kmplayer.cpp:1512
+#, kde-format
+msgid "Optical Disks"
+msgstr ""
+
+#: kmplayer.cpp:1543 kmplayer.cpp:1617 kmplayer.cpp:1643
+#, kde-format
+msgid "DVD"
+msgstr "डिव्हीडी"
+
+#: kmplayer.cpp:1548
+#, kde-format
+msgid "CDROM - Audio Compact Disk"
+msgstr ""
+
+#: kmplayer.cpp:1549
+#, kde-format
+msgid "VCD - Video Compact Disk"
+msgstr ""
+
+#: kmplayer.cpp:1550
+#, kde-format
+msgid "DVD - Digital Video Disk"
+msgstr ""
+
+#: kmplayer.cpp:1568 kmplayer.cpp:1789
+#, kde-format
+msgid "Track %1"
+msgstr "ट्रॅक %1"
+
+#: kmplayer.cpp:1641 kmplayer.cpp:1755 kmplayertvsource.cpp:581
+#: kmplayervdr.cpp:718 pref.cpp:87 pref.cpp:92
+#, kde-format
+msgid "Source"
+msgstr "स्रोत"
+
+#: kmplayer.cpp:1656
+#, kde-format
+msgid "Auto play after opening a VCD"
+msgstr ""
+
+#: kmplayer.cpp:1657
+#, kde-format
+msgid "Start playing VCD right after opening VCD"
+msgstr ""
+
+#: kmplayer.cpp:1658
+#, kde-format
+msgid "VCD (CDROM) device:"
+msgstr ""
+
+#: kmplayer.cpp:1660
+#, kde-format
+msgid "Path to your CDROM/DVD device, you must have read rights to this device"
+msgstr ""
+
+#: kmplayer.cpp:1672 kmplayer.cpp:1731 kmplayer.cpp:1757
+#, kde-format
+msgid "VCD"
+msgstr ""
+
+#: kmplayer.cpp:1690
+#, fuzzy, kde-format
+msgid "Track "
+msgstr "ट्रॅक"
+
+#: kmplayer.cpp:1768 kmplayer.cpp:1833
+#, fuzzy, kde-format
+msgid "Audio CD"
+msgstr "ऑडिओ सीडी"
+
+#: kmplayer.cpp:1839
+#, kde-format
+msgid "Pipe"
+msgstr ""
+
+#: kmplayer.cpp:1871
+#, kde-format
+msgid "Pipe - %1"
+msgstr ""
+
+#: kmplayer_lists.cpp:95
+#, kde-format
+msgid "Most Recent"
+msgstr ""
+
+#: kmplayer_lists.cpp:194
+#, kde-format
+msgid "Persistent Playlists"
+msgstr ""
+
+#: kmplayer_part.cpp:112 main.cpp:46
+#, kde-format
+msgid "KMPlayer"
+msgstr ""
+
+#: kmplayer_part.cpp:113
+#, kde-format
+msgid "Embedded MPlayer for KDE"
+msgstr ""
+
+#: kmplayer_part.cpp:768
+#, no-c-format, kde-format
+msgid "% Cache fill"
+msgstr ""
+
+#: kmplayer_part.cpp:793
+#, kde-format
+msgid "KMPlayer: Playing"
+msgstr ""
+
+#: kmplayer_part.cpp:804
+#, kde-format
+msgid "KMPlayer: Stop Playing"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:160
+#, kde-format
+msgid "Bind address:"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:162
+#, kde-format
+msgid "If you have multiple network devices, you can limit access"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:165
+#, kde-format
+msgid "Listen port:"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:169
+#, kde-format
+msgid "Maximum connections:"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:173
+#, kde-format
+msgid "Maximum bandwidth (kbit):"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:177
+#, kde-format
+msgid "Temporary feed file:"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:181
+#, kde-format
+msgid "Feed file size (kB):"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:204
+#, kde-format
+msgid "Format:"
+msgstr "स्वरूप :"
+
+#: kmplayerbroadcast.cpp:212
+#, kde-format
+msgid "Only avi, mpeg and rm work for mplayer playback"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:215
+#, kde-format
+msgid "Audio codec:"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:216
+#, kde-format
+msgid "Audio bit rate (kbit):"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:217
+#, kde-format
+msgid "Audio sample rate (Hz):"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:218
+#, kde-format
+msgid "Video codec:"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:219
+#, kde-format
+msgid "Video bit rate (kbit):"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:220
+#, fuzzy, kde-format
+msgid "Quality (1-31):"
+msgstr "गुणवत्ता"
+
+#: kmplayerbroadcast.cpp:221
+#, kde-format
+msgid "Frame rate (Hz):"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:222
+#, kde-format
+msgid "Gop size:"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:223
+#, kde-format
+msgid "Width (pixels):"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:224
+#, kde-format
+msgid "Height (pixels):"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:225
+#, kde-format
+msgid "Allow access from:"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:230
+#, kde-format
+msgid "'Single IP' or 'start-IP end-IP' for IP ranges"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:232
+#, kde-format
+msgid "Host/IP or IP Range"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:245
+#, fuzzy, kde-format
+msgid "Load"
+msgstr "लोड"
+
+#: kmplayerbroadcast.cpp:246
+#, kde-format
+msgid "Save"
+msgstr "साठवा"
+
+#: kmplayerbroadcast.cpp:247 kmplayertvsource.cpp:122
+#, fuzzy, kde-format
+msgid "Delete"
+msgstr "काढून टाका"
+
+#: kmplayerbroadcast.cpp:265 kmplayerbroadcast.cpp:601
+#, fuzzy, kde-format
+msgid "Start"
+msgstr "सुरु करा"
+
+#: kmplayerbroadcast.cpp:458 kmplayerbroadcast.cpp:658
+#, kde-format
+msgid "Broadcasting"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:460
+#, fuzzy, kde-format
+msgid "Profiles"
+msgstr "रूपरेषा :"
+
+#: kmplayerbroadcast.cpp:523
+#, kde-format
+msgid "Stop"
+msgstr "थांबा"
+
+#: kmplayerbroadcast.cpp:535
+#, kde-format
+msgid "Failed to end ffserver process."
+msgstr ""
+
+#: kmplayerbroadcast.cpp:552
+#, kde-format
+msgid "Failed to start ffserver.\n"
+msgstr ""
+
+#: kmplayerbroadcast.cpp:565
+#, kde-format
+msgid "Failed to start ffmpeg."
+msgstr ""
+
+#: kmplayerbroadcast.cpp:660
+#, kde-format
+msgid "FFServer"
+msgstr ""
+
+#: kmplayerconfig.cpp:60 kmplayerconfig.cpp:76
+#, kde-format
+msgid "Auto"
+msgstr "स्वयंचलित"
+
+#: kmplayerconfig.cpp:61
+#, kde-format
+msgid "Open Sound System"
+msgstr ""
+
+#: kmplayerconfig.cpp:62
+#, kde-format
+msgid "Simple DirectMedia Layer"
+msgstr ""
+
+#: kmplayerconfig.cpp:63
+#, kde-format
+msgid "Advanced Linux Sound Architecture"
+msgstr ""
+
+#: kmplayerconfig.cpp:64
+#, kde-format
+msgid "Analog Real-Time Synthesizer"
+msgstr ""
+
+#: kmplayerconfig.cpp:65
+#, kde-format
+msgid "JACK Audio Connection Kit"
+msgstr ""
+
+#: kmplayerconfig.cpp:66
+#, kde-format
+msgid "OpenAL"
+msgstr ""
+
+#: kmplayerconfig.cpp:67
+#, kde-format
+msgid "Enlightened Sound Daemon"
+msgstr ""
+
+#: kmplayerconfig.cpp:68
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.5"
+msgstr ""
+
+#: kmplayerconfig.cpp:69
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.9"
+msgstr ""
+
+#: kmplayerconfig.cpp:70
+#, kde-format
+msgid "Use back-end defaults"
+msgstr ""
+
+#: kmplayerconfig.cpp:71
+#, kde-format
+msgid "PulseAudio"
+msgstr ""
+
+#: kmplayerconfig.cpp:77
+#, kde-format
+msgid "X11Shm"
+msgstr ""
+
+#: kmplayerconfig.cpp:78
+#, kde-format
+msgid "XVidix"
+msgstr ""
+
+#: kmplayerconfig.cpp:79
+#, kde-format
+msgid "XvMC"
+msgstr ""
+
+#: kmplayerconfig.cpp:80
+#, kde-format
+msgid "SDL"
+msgstr ""
+
+#: kmplayerconfig.cpp:81
+#, kde-format
+msgid "OpenGL"
+msgstr "OpenGL"
+
+#: kmplayerconfig.cpp:82
+#, kde-format
+msgid "OpenGL MT"
+msgstr ""
+
+#: kmplayerconfig.cpp:83
+#, kde-format
+msgid "XVideo"
+msgstr ""
+
+#: kmplayerconfig.cpp:84
+#, kde-format
+msgid "Video Decode and Presentation API for Unix"
+msgstr ""
+
+#: kmplayerconfig.cpp:95
+#, kde-format
+msgid "Playlist background"
+msgstr ""
+
+#: kmplayerconfig.cpp:99
+#, kde-format
+msgid "Playlist foreground"
+msgstr ""
+
+#: kmplayerconfig.cpp:103
+#, kde-format
+msgid "Console background"
+msgstr ""
+
+#: kmplayerconfig.cpp:104
+#, kde-format
+msgid "Playlist active item"
+msgstr ""
+
+#: kmplayerconfig.cpp:110
+#, kde-format
+msgid "Console foreground"
+msgstr ""
+
+#: kmplayerconfig.cpp:113
+#, kde-format
+msgid "Video background"
+msgstr ""
+
+#: kmplayerconfig.cpp:116
+#, kde-format
+msgid "Viewing area background"
+msgstr ""
+
+#: kmplayerconfig.cpp:119
+#, kde-format
+msgid "Info window background"
+msgstr ""
+
+#: kmplayerconfig.cpp:123
+#, kde-format
+msgid "Info window foreground"
+msgstr ""
+
+#: kmplayerconfig.cpp:127 kmplayerview.cpp:167
+#, kde-format
+msgid "Playlist"
+msgstr "प्ले यादी"
+
+#: kmplayerconfig.cpp:131
+#, kde-format
+msgid "Info window"
+msgstr ""
+
+#: kmplayerconfig.cpp:655
+#, fuzzy, kde-format
+msgid "File %1 does not exist."
+msgstr "फाईल अस्तित्वात नाही :<br>%1"
+
+#: kmplayerconfig.cpp:666
+#, kde-format
+msgid "Sub title file %1 does not exist."
+msgstr ""
+
+#: kmplayercontrolpanel.cpp:311 kmplayercontrolpanel.cpp:325
+#, kde-format
+msgid "Volume is "
+msgstr ""
+
+#: kmplayercontrolpanel.cpp:412
+#, kde-format
+msgid "&Play with"
+msgstr ""
+
+#: kmplayercontrolpanel.cpp:415 kmplayerview.cpp:337
+#, fuzzy, kde-format
+msgid "Con&sole"
+msgstr "कन्सोल"
+
+#: kmplayercontrolpanel.cpp:417
+#, fuzzy, kde-format
+msgid "Play&list"
+msgstr "प्ले यादी"
+
+#: kmplayercontrolpanel.cpp:419
+#, kde-format
+msgid "&Zoom"
+msgstr "झूम (&Z)"
+
+#: kmplayercontrolpanel.cpp:422
+#, kde-format
+msgid "50%"
+msgstr ""
+
+#: kmplayercontrolpanel.cpp:423
+#, kde-format
+msgid "100%"
+msgstr ""
+
+#: kmplayercontrolpanel.cpp:424
+#, kde-format
+msgid "150%"
+msgstr ""
+
+#: kmplayercontrolpanel.cpp:426
+#, fuzzy, kde-format
+msgid "&Full Screen"
+msgstr "पूर्ण स्क्रीन"
+
+#: kmplayercontrolpanel.cpp:431
+#, fuzzy, kde-format
+msgid "Co&lors"
+msgstr "रंग"
+
+#: kmplayercontrolpanel.cpp:456 kmplayercontrolpanel.cpp:458
+#, kde-format
+msgid "&Audio languages"
+msgstr ""
+
+#: kmplayercontrolpanel.cpp:459
+#, kde-format
+msgid "&Subtitles"
+msgstr "सबटायटल्स (&S)"
+
+#: kmplayercontrolpanel.cpp:467
+#, kde-format
+msgid "Scale:"
+msgstr "प्रमाण :"
+
+#: kmplayercontrolpanel.cpp:479
+#, kde-format
+msgid "&Configure KMPlayer..."
+msgstr ""
+
+#: kmplayerpartbase.cpp:1450
+#, fuzzy, kde-format
+msgid "Unknown"
+msgstr "अपरिचीत"
+
+#: kmplayerpartbase.cpp:1461 kmplayerpartbase.cpp:1530 pref.cpp:91
+#, kde-format
+msgid "URL"
+msgstr "URL"
+
+#: kmplayerpartbase.cpp:1554 kmplayerpartbase.cpp:1557
+#: kmplayerpartbase.cpp:1558
+#, kde-format
+msgid "URL - "
+msgstr ""
+
+#. i18n: ectx: Menu (view)
+#: kmplayerpartui.rc:4 kmplayerui.rc:31
+#, fuzzy, kde-format
+msgid "&View"
+msgstr "दृश्य (&V)"
+
+#: kmplayerprocess.cpp:150
+#, kde-format
+msgid "Failed to end player process."
+msgstr ""
+
+#: kmplayerprocess.cpp:489
+#, fuzzy, kde-format
+msgid "&MPlayer"
+msgstr "एम-प्लेयर"
+
+#: kmplayerprocess.cpp:1012
+#, kde-format
+msgid "Size pattern"
+msgstr ""
+
+#: kmplayerprocess.cpp:1013
+#, kde-format
+msgid "Cache pattern"
+msgstr ""
+
+#: kmplayerprocess.cpp:1014
+#, kde-format
+msgid "Position pattern"
+msgstr ""
+
+#: kmplayerprocess.cpp:1015
+#, kde-format
+msgid "Index pattern"
+msgstr ""
+
+#: kmplayerprocess.cpp:1016
+#, kde-format
+msgid "Reference URL pattern"
+msgstr ""
+
+#: kmplayerprocess.cpp:1017
+#, kde-format
+msgid "Reference pattern"
+msgstr ""
+
+#: kmplayerprocess.cpp:1018
+#, kde-format
+msgid "Start pattern"
+msgstr ""
+
+#: kmplayerprocess.cpp:1019
+#, kde-format
+msgid "VCD track pattern"
+msgstr ""
+
+#: kmplayerprocess.cpp:1020
+#, kde-format
+msgid "Audio CD tracks pattern"
+msgstr ""
+
+#: kmplayerprocess.cpp:1040
+#, kde-format
+msgid "MPlayer command:"
+msgstr ""
+
+#: kmplayerprocess.cpp:1042
+#, kde-format
+msgid "Additional command line arguments:"
+msgstr ""
+
+#: kmplayerprocess.cpp:1044
+#, kde-format
+msgid "Cache size:"
+msgstr ""
+
+#: kmplayerprocess.cpp:1044
+#, fuzzy, kde-format
+msgid "kB"
+msgstr " kB"
+
+#: kmplayerprocess.cpp:1049
+#, kde-format
+msgid "Build new index when possible"
+msgstr ""
+
+#: kmplayerprocess.cpp:1051
+#, kde-format
+msgid "Allows seeking in indexed files (AVIs)"
+msgstr ""
+
+#: kmplayerprocess.cpp:1117 pref.cpp:74 pref.cpp:84
+#, kde-format
+msgid "General Options"
+msgstr "सामान्य पर्याय"
+
+#: kmplayerprocess.cpp:1119
+#, kde-format
+msgid "MPlayer"
+msgstr "एम-प्लेयर"
+
+#: kmplayerprocess.cpp:1135
+#, kde-format
+msgid "M&Encoder"
+msgstr ""
+
+#: kmplayerprocess.cpp:1201
+#, kde-format
+msgid "&MPlayerDumpstream"
+msgstr ""
+
+#: kmplayerprocess.cpp:1463
+#, fuzzy, kde-format
+msgid "&Phonon"
+msgstr "फोनॉन"
+
+#: kmplayerprocess.cpp:1610 pref.cpp:674
+#, kde-format
+msgid "&FFMpeg"
+msgstr ""
+
+#: kmplayerprocess.cpp:1709
+#, kde-format
+msgid "&Ice Ape"
+msgstr ""
+
+#: kmplayertvsource.cpp:65
+#, kde-format
+msgid "Video device:"
+msgstr ""
+
+#: kmplayertvsource.cpp:66
+#, kde-format
+msgid "Audio device:"
+msgstr ""
+
+#: kmplayertvsource.cpp:68
+#, fuzzy, kde-format
+msgid "Name:"
+msgstr "नाव :"
+
+#: kmplayertvsource.cpp:70
+#, fuzzy, kde-format
+msgid "Width:"
+msgstr "रुंदी :"
+
+#: kmplayertvsource.cpp:72
+#, fuzzy, kde-format
+msgid "Height:"
+msgstr "उंची :"
+
+#: kmplayertvsource.cpp:74
+#, kde-format
+msgid "Do not immediately play"
+msgstr ""
+
+#: kmplayertvsource.cpp:76
+#, kde-format
+msgid "Only start playing after clicking the play button"
+msgstr ""
+
+#: kmplayertvsource.cpp:87
+#, fuzzy, kde-format
+msgid "Norm:"
+msgstr "NORM"
+
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Channel"
+msgstr "मार्ग"
+
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Frequency (MHz)"
+msgstr ""
+
+#: kmplayertvsource.cpp:148
+#, kde-format
+msgid ""
+"You are about to remove this device from the Source menu.\n"
+"Continue?"
+msgstr ""
+
+#: kmplayertvsource.cpp:148
+#, fuzzy, kde-format
+msgid "Confirm"
+msgstr "खात्री करा"
+
+#: kmplayertvsource.cpp:159
+#, kde-format
+msgid "Driver:"
+msgstr "ड्राइव्हर :"
+
+#: kmplayertvsource.cpp:161
+#, kde-format
+msgid "dummy, v4l or bsdbt848"
+msgstr ""
+
+#: kmplayertvsource.cpp:162
+#, kde-format
+msgid "Device:"
+msgstr "साधन :"
+
+#: kmplayertvsource.cpp:164
+#, kde-format
+msgid "Path to your video device, eg. /dev/video0"
+msgstr ""
+
+#: kmplayertvsource.cpp:165
+#, kde-format
+msgid "Scan..."
+msgstr "स्कॅन करा..."
+
+#: kmplayertvsource.cpp:179 pref.cpp:78 pref.cpp:118 pref.cpp:736
+#, fuzzy, kde-format
+msgid "General"
+msgstr "सामान्य"
+
+#: kmplayertvsource.cpp:259
+#, kde-format
+msgid "tv device"
+msgstr ""
+
+#: kmplayertvsource.cpp:346
+#, kde-format
+msgid "Television"
+msgstr ""
+
+#: kmplayertvsource.cpp:374 kmplayertvsource.cpp:532 kmplayertvsource.cpp:583
+#, kde-format
+msgid "TV"
+msgstr ""
+
+#: kmplayertvsource.cpp:499
+#, kde-format
+msgid "TV: "
+msgstr ""
+
+#: kmplayertvsource.cpp:610
+#, kde-format
+msgid "Device already present."
+msgstr ""
+
+#: kmplayertvsource.cpp:622
+#, kde-format
+msgid "No device found."
+msgstr ""
+
+#: kmplayertvsource.cpp:645
+#, kde-format
+msgid "TVScanner"
+msgstr ""
+
+#. i18n: ectx: Menu (file)
+#: kmplayerui.rc:5
+#, fuzzy, kde-format
+msgid "&File"
+msgstr "फाईल (&F)"
+
+#. i18n: ectx: Menu (vdr)
+#: kmplayerui.rc:15
+#, kde-format
+msgid "VD&R"
+msgstr ""
+
+#. i18n: ectx: Menu (settings)
+#: kmplayerui.rc:51
+#, fuzzy, kde-format
+msgid "&Settings"
+msgstr "संयोजना (&S)"
+
+#: kmplayervdr.cpp:87
+#, kde-format
+msgid "XVideo port"
+msgstr ""
+
+#: kmplayervdr.cpp:89
+#, kde-format
+msgid ""
+"Port base of the X Video extension.\n"
+"If left to default (0), the first available port will be used. However if "
+"you have multiple XVideo instances, you might have to provide the port to "
+"use here.\n"
+"See the output from 'xvinfo' for more information"
+msgstr ""
+
+#: kmplayervdr.cpp:90
+#, kde-format
+msgid "Communication port:"
+msgstr ""
+
+#: kmplayervdr.cpp:93
+#, kde-format
+msgid ""
+"Communication port with VDR. Default is port 2001.\n"
+"If you use another port, with the '-p' option of 'vdr', you must set it here "
+"too."
+msgstr ""
+
+#: kmplayervdr.cpp:97
+#, kde-format
+msgid "Scale"
+msgstr "प्रमाण"
+
+#: kmplayervdr.cpp:98
+#, kde-format
+msgid "4:3"
+msgstr ""
+
+#: kmplayervdr.cpp:99
+#, kde-format
+msgid "16:9"
+msgstr ""
+
+#: kmplayervdr.cpp:100
+#, kde-format
+msgid "Aspects to use when viewing VDR"
+msgstr ""
+
+#: kmplayervdr.cpp:171 kmplayervdr.cpp:720
+#, kde-format
+msgid "VDR"
+msgstr ""
+
+#: kmplayervdr.cpp:236
+#, fuzzy, kde-format
+msgid "Dis&connect"
+msgstr "जुळवणी तोडा"
+
+#: kmplayervdr.cpp:237
+#, kde-format
+msgid "VDR Key Up"
+msgstr ""
+
+#: kmplayervdr.cpp:238
+#, kde-format
+msgid "VDR Key Down"
+msgstr ""
+
+#: kmplayervdr.cpp:239
+#, kde-format
+msgid "VDR Key Back"
+msgstr ""
+
+#: kmplayervdr.cpp:240
+#, kde-format
+msgid "VDR Key Ok"
+msgstr ""
+
+#: kmplayervdr.cpp:241
+#, kde-format
+msgid "VDR Key Setup"
+msgstr ""
+
+#: kmplayervdr.cpp:242
+#, kde-format
+msgid "VDR Key Channels"
+msgstr ""
+
+#: kmplayervdr.cpp:243
+#, kde-format
+msgid "VDR Key Menu"
+msgstr ""
+
+#: kmplayervdr.cpp:244
+#, kde-format
+msgid "VDR Key Red"
+msgstr ""
+
+#: kmplayervdr.cpp:245
+#, kde-format
+msgid "VDR Key Green"
+msgstr ""
+
+#: kmplayervdr.cpp:246
+#, kde-format
+msgid "VDR Key Yellow"
+msgstr ""
+
+#: kmplayervdr.cpp:247
+#, kde-format
+msgid "VDR Key Blue"
+msgstr ""
+
+#: kmplayervdr.cpp:250
+#, kde-format
+msgid "VDR Key 0"
+msgstr ""
+
+#: kmplayervdr.cpp:251
+#, kde-format
+msgid "VDR Key 1"
+msgstr ""
+
+#: kmplayervdr.cpp:252
+#, kde-format
+msgid "VDR Key 2"
+msgstr ""
+
+#: kmplayervdr.cpp:253
+#, kde-format
+msgid "VDR Key 3"
+msgstr ""
+
+#: kmplayervdr.cpp:254
+#, kde-format
+msgid "VDR Key 4"
+msgstr ""
+
+#: kmplayervdr.cpp:255
+#, kde-format
+msgid "VDR Key 5"
+msgstr ""
+
+#: kmplayervdr.cpp:256
+#, kde-format
+msgid "VDR Key 6"
+msgstr ""
+
+#: kmplayervdr.cpp:257
+#, kde-format
+msgid "VDR Key 7"
+msgstr ""
+
+#: kmplayervdr.cpp:258
+#, kde-format
+msgid "VDR Key 8"
+msgstr ""
+
+#: kmplayervdr.cpp:259
+#, kde-format
+msgid "VDR Key 9"
+msgstr ""
+
+#: kmplayervdr.cpp:281
+#, kde-format
+msgid "&Connect"
+msgstr "जोडा (&C)"
+
+#: kmplayervdr.cpp:444
+#, kde-format
+msgid "Host not found"
+msgstr "यजमान सापडला नाही"
+
+#: kmplayervdr.cpp:446
+#, kde-format
+msgid "Connection refused"
+msgstr "जुळवणी नाकारले गेले"
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid "Custom VDR command"
+msgstr ""
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid ""
+"You can pass commands to VDR.\n"
+"Enter 'HELP' to see a list of available commands.\n"
+"You can see VDR response in the console window.\n"
+"\n"
+"VDR Command:"
+msgstr ""
+
+#: kmplayervdr.cpp:685
+#, fuzzy, kde-format
+msgid "Port "
+msgstr "पोर्ट"
+
+#: kmplayervdr.cpp:739
+#, kde-format
+msgid "X&Video"
+msgstr ""
+
+#: kmplayerview.cpp:172
+#, kde-format
+msgid "Information"
+msgstr "माहिती"
+
+#: main.cpp:48
+#, fuzzy, kde-format
+msgid "Media player"
+msgstr "मीडिया प्लेयर"
+
+#: main.cpp:49
+#, fuzzy, kde-format
+#| msgid "Koos Vriezen"
+msgid "(c) 2002-2016, Koos Vriezen"
+msgstr "Koos Vriezen"
+
+#: main.cpp:50
+#, kde-format
+msgid "Koos Vriezen"
+msgstr "Koos Vriezen"
+
+#: main.cpp:50
+#, fuzzy, kde-format
+msgid "Maintainer"
+msgstr "पालक"
+
+#: main.cpp:63
+#, kde-format
+msgid "file to open"
+msgstr "उघडावयाची फाईल"
+
+#: main.cpp:63
+#, fuzzy, kde-format
+msgid "+[File]"
+msgstr "फाईल (&F)"
+
+#: mediaobject.cpp:168
+#, fuzzy, kde-format
+msgid "Not Running"
+msgstr "कार्यरत नाही"
+
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Buffering"
+msgstr ""
+
+#: mediaobject.cpp:168 pref.cpp:231
+#, kde-format
+msgid "Playing"
+msgstr "प्ले करत आहे"
+
+#: mediaobject.cpp:168
+#, fuzzy, kde-format
+msgid "Paused"
+msgstr "स्तब्ध केले"
+
+#: mediaobject.cpp:190
+#, fuzzy, kde-format
+msgid "Player %1 %2"
+msgstr "खेळाडू"
+
+#: playlistview.cpp:140
+#, kde-format
+msgid "Edit &item"
+msgstr ""
+
+#: playlistview.cpp:255
+#, kde-format
+msgid "&Copy to Clipboard"
+msgstr "प्रत क्लिपबोर्ड मधे टाका (&C)"
+
+#: playlistview.cpp:262
+#, kde-format
+msgid "&Add Bookmark"
+msgstr "ओळखचिन्ह जोडा (&A)"
+
+#: playlistview.cpp:265
+#, kde-format
+msgid "&Show all"
+msgstr ""
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "unnamed"
+msgstr "निनावी"
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "none"
+msgstr "काही नाही"
+
+#: playmodel.cpp:378
+#, kde-format
+msgid "[attributes]"
+msgstr ""
+
+#: pref.cpp:69
+#, fuzzy, kde-format
+msgid "Preferences"
+msgstr "प्राधान्ये"
+
+#: pref.cpp:80
+#, kde-format
+msgid "Looks"
+msgstr ""
+
+#: pref.cpp:83
+#, fuzzy, kde-format
+msgid "Output"
+msgstr "आउटपुट"
+
+#: pref.cpp:95 pref.cpp:120
+#, fuzzy, kde-format
+msgid "Recording"
+msgstr "रेकॉर्ड करत आहे (%1)"
+
+#: pref.cpp:101
+#, kde-format
+msgid "MEncoder"
+msgstr ""
+
+#: pref.cpp:105
+#, kde-format
+msgid "FFMpeg"
+msgstr ""
+
+#: pref.cpp:123
+#, kde-format
+msgid "Output Plugins"
+msgstr ""
+
+#: pref.cpp:127 pref.cpp:128
+#, kde-format
+msgid "Postprocessing"
+msgstr ""
+
+#: pref.cpp:208
+#, kde-format
+msgid "Window"
+msgstr "चौकट"
+
+#: pref.cpp:211
+#, kde-format
+msgid "Keep size ratio"
+msgstr ""
+
+#: pref.cpp:212
+#, kde-format
+msgid ""
+"When checked, the movie will keep its aspect ratio\n"
+"when the window is resized."
+msgstr ""
+
+#: pref.cpp:213
+#, fuzzy, kde-format
+msgid "Dock in system tray"
+msgstr "प्रणाली ट्रे मध्ये व डॉक करा (&D)"
+
+#: pref.cpp:214
+#, kde-format
+msgid ""
+"When checked, an icon for KMPlayer will be added to the system tray.\n"
+"When clicked, it will hide KMPlayer's main window and remove KMPlayer's task "
+"bar button."
+msgstr ""
+
+#: pref.cpp:215
+#, kde-format
+msgid "Auto resize to video sizes"
+msgstr ""
+
+#: pref.cpp:216
+#, kde-format
+msgid ""
+"When checked, KMPlayer will resize to movie sizes\n"
+"when video starts."
+msgstr ""
+
+#: pref.cpp:220
+#, kde-format
+msgid "Remember window size on exit"
+msgstr ""
+
+#: pref.cpp:221
+#, kde-format
+msgid "Always start with fixed size"
+msgstr ""
+
+#: pref.cpp:232
+#, fuzzy, kde-format
+msgid "Loop"
+msgstr "चक्राकार फिरणे"
+
+#: pref.cpp:233
+#, kde-format
+msgid "Makes current movie loop"
+msgstr ""
+
+#: pref.cpp:234
+#, kde-format
+msgid "Allow frame drops"
+msgstr ""
+
+#: pref.cpp:235
+#, kde-format
+msgid "Allow dropping frames for better audio and video synchronization"
+msgstr ""
+
+#: pref.cpp:236
+#, kde-format
+msgid "Auto set volume on start"
+msgstr ""
+
+#: pref.cpp:237
+#, kde-format
+msgid ""
+"When a new source is selected, the volume will be set according the volume "
+"control"
+msgstr ""
+
+#: pref.cpp:238
+#, kde-format
+msgid "Auto set colors on start"
+msgstr ""
+
+#: pref.cpp:239
+#, kde-format
+msgid ""
+"When a movie starts, the colors will be set according the sliders for colors"
+msgstr ""
+
+#: pref.cpp:247
+#, kde-format
+msgid "Control Panel"
+msgstr ""
+
+#: pref.cpp:248
+#, kde-format
+msgid "Show config button"
+msgstr ""
+
+#: pref.cpp:249
+#, kde-format
+msgid "Add a button that will popup a config menu"
+msgstr ""
+
+#: pref.cpp:250
+#, kde-format
+msgid "Show playlist button"
+msgstr ""
+
+#: pref.cpp:251
+#, kde-format
+msgid "Add a playlist button to the control buttons"
+msgstr ""
+
+#: pref.cpp:252
+#, kde-format
+msgid "Show record button"
+msgstr ""
+
+#: pref.cpp:253
+#, kde-format
+msgid "Add a record button to the control buttons"
+msgstr ""
+
+#: pref.cpp:254
+#, kde-format
+msgid "Show broadcast button"
+msgstr ""
+
+#: pref.cpp:255
+#, kde-format
+msgid "Add a broadcast button to the control buttons"
+msgstr ""
+
+#: pref.cpp:262
+#, kde-format
+msgid "Forward/backward seek time:"
+msgstr ""
+
+#: pref.cpp:269 pref.cpp:485
+#, fuzzy, kde-format
+msgid " second"
+msgid_plural " seconds"
+msgstr[0] " सेकंद"
+msgstr[1] " सेकंद"
+
+#: pref.cpp:271 pref.cpp:487
+#, fuzzy, kde-format
+msgid " seconds"
+msgstr " सेकंद"
+
+#: pref.cpp:292
+#, kde-format
+msgid "Colors"
+msgstr "रंग"
+
+#: pref.cpp:308
+#, kde-format
+msgid "Fonts"
+msgstr "फॉन्ट"
+
+#: pref.cpp:315
+#, kde-format
+msgid "AaBbCc"
+msgstr ""
+
+#: pref.cpp:365
+#, fuzzy, kde-format
+msgid "Location:"
+msgstr "स्थान :"
+
+#: pref.cpp:370
+#, kde-format
+msgid "Location of the playable item"
+msgstr ""
+
+#: pref.cpp:373
+#, kde-format
+msgid "Sub title:"
+msgstr ""
+
+#: pref.cpp:378
+#, kde-format
+msgid "Optional location of a file containing the subtitles of the URL above"
+msgstr ""
+
+#: pref.cpp:381
+#, kde-format
+msgid "Load on demand"
+msgstr ""
+
+#: pref.cpp:382
+#, kde-format
+msgid ""
+"When enabled, all embedded movies will start with a image that needs to be "
+"clicked to start the video playback"
+msgstr ""
+
+#: pref.cpp:383
+#, kde-format
+msgid "Grab image when 'Click to Play' detected"
+msgstr ""
+
+#: pref.cpp:384
+#, kde-format
+msgid ""
+"When enabled and a HTML object has a HREF attribute, grab and save an image "
+"of the first frame of initial link. This image will be shown instead of a "
+"default picture."
+msgstr ""
+
+#: pref.cpp:391
+#, kde-format
+msgid "Use movie player:"
+msgstr ""
+
+#: pref.cpp:397
+#, kde-format
+msgid "Network bandwidth"
+msgstr ""
+
+#: pref.cpp:400
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets how much bandwidth you would prefer to allocate to video."
+msgstr ""
+
+#: pref.cpp:403
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets the maximum bandwidth you have available for video."
+msgstr ""
+
+#: pref.cpp:405
+#, kde-format
+msgid "Preferred bitrate:"
+msgstr ""
+
+#: pref.cpp:407 pref.cpp:410
+#, kde-format
+msgid "kbit/s"
+msgstr ""
+
+#: pref.cpp:408
+#, kde-format
+msgid "Maximum bitrate:"
+msgstr ""
+
+#: pref.cpp:450
+#, kde-format
+msgid "Output file:"
+msgstr "आउटपुट फाईल :"
+
+#: pref.cpp:455
+#, kde-format
+msgid "Current source: "
+msgstr ""
+
+#: pref.cpp:457
+#, kde-format
+msgid "Recorder"
+msgstr ""
+
+#: pref.cpp:469
+#, kde-format
+msgid "Auto Playback"
+msgstr ""
+
+#: pref.cpp:472
+#, kde-format
+msgid "&No"
+msgstr "नाही (&N)"
+
+#: pref.cpp:475
+#, kde-format
+msgid "&When recording finished"
+msgstr ""
+
+#: pref.cpp:478
+#, fuzzy, kde-format
+msgid "A&fter"
+msgstr "नंतर :"
+
+#: pref.cpp:491
+#, kde-format
+msgid "Time:"
+msgstr "वेळ :"
+
+#: pref.cpp:498 pref.cpp:532 pref.cpp:540
+#, kde-format
+msgid "Start &Recording"
+msgstr ""
+
+#: pref.cpp:531
+#, kde-format
+msgid "Stop &Recording"
+msgstr ""
+
+#: pref.cpp:552
+#, kde-format
+msgid "Current Source: "
+msgstr ""
+
+#: pref.cpp:605
+#, fuzzy, kde-format
+msgid "Format"
+msgstr "स्वरूप"
+
+#: pref.cpp:608
+#, kde-format
+msgid "Same as source"
+msgstr ""
+
+#: pref.cpp:611 pref.cpp:723
+#, kde-format
+msgid "Custom"
+msgstr "ऐच्छिक"
+
+#: pref.cpp:615
+#, kde-format
+msgid "Mencoder arguments:"
+msgstr ""
+
+#: pref.cpp:641
+#, kde-format
+msgid "&MEncoder"
+msgstr ""
+
+#: pref.cpp:649
+#, kde-format
+msgid "MPlayer -&dumpstream"
+msgstr ""
+
+#: pref.cpp:656
+#, kde-format
+msgid "FFMpeg arguments:"
+msgstr ""
+
+#: pref.cpp:683
+#, kde-format
+msgid "&Xine"
+msgstr ""
+
+#: pref.cpp:693
+#, kde-format
+msgid ""
+"Sets video driver. Recommended is XVideo, or, if it is not supported, X11, "
+"which is slower."
+msgstr ""
+
+#: pref.cpp:711
+#, kde-format
+msgid "Enable use of postprocessing filters"
+msgstr ""
+
+#: pref.cpp:713
+#, kde-format
+msgid "Disable use of postprocessing when watching TV/DVD"
+msgstr ""
+
+#: pref.cpp:722
+#, kde-format
+msgid "Default"
+msgstr "मूलभूत"
+
+#: pref.cpp:724
+#, kde-format
+msgid "Fast"
+msgstr "गतीशील"
+
+#: pref.cpp:751
+#, kde-format
+msgid "Horizontal deblocking"
+msgstr ""
+
+#: pref.cpp:752 pref.cpp:770 pref.cpp:788
+#, kde-format
+msgid "Auto quality"
+msgstr ""
+
+#: pref.cpp:754 pref.cpp:772 pref.cpp:790
+#, kde-format
+msgid "Chrominance filtering"
+msgstr ""
+
+#: pref.cpp:769
+#, kde-format
+msgid "Vertical deblocking"
+msgstr ""
+
+#: pref.cpp:787
+#, kde-format
+msgid "Dering filter"
+msgstr ""
+
+#: pref.cpp:805
+#, kde-format
+msgid "Auto brightness/contrast"
+msgstr ""
+
+#: pref.cpp:806
+#, kde-format
+msgid "Stretch luminance to full range"
+msgstr ""
+
+#: pref.cpp:814
+#, kde-format
+msgid "Temporal noise reducer"
+msgstr ""
+
+#: pref.cpp:836
+#, kde-format
+msgid "Custom Preset"
+msgstr ""
+
+#: pref.cpp:842
+#, kde-format
+msgid "Linear blend deinterlacer"
+msgstr ""
+
+#: pref.cpp:843
+#, kde-format
+msgid "Linear interpolating deinterlacer"
+msgstr ""
+
+#: pref.cpp:844
+#, kde-format
+msgid "Cubic interpolating deinterlacer"
+msgstr ""
+
+#: pref.cpp:845
+#, kde-format
+msgid "Median deinterlacer"
+msgstr ""
+
+#: pref.cpp:846
+#, kde-format
+msgid "FFmpeg deinterlacer"
+msgstr ""
+
+#: pref.cpp:854
+#, kde-format
+msgid "Deinterlacing"
+msgstr ""
+
+#: pref.cpp:879
+#, kde-format
+msgid "Enable mplayer's default postprocessing filters"
+msgstr ""
+
+#: pref.cpp:880
+#, kde-format
+msgid "Enable custom postprocessing filters (See: Custom preset -tab)"
+msgstr ""
+
+#: pref.cpp:881
+#, kde-format
+msgid "Enable mplayer's fast postprocessing filters"
+msgstr ""
+
+#: pref.cpp:882 pref.cpp:883 pref.cpp:884
+#, kde-format
+msgid "Filter is used if there is enough CPU"
+msgstr ""
+
+#. i18n( "Strength of the noise reducer" ) );
+#: pref.cpp:886
+#, kde-format
+msgid "Stretches luminance to full range (0..255)"
+msgstr ""
+
+#: pref.cpp:892
+#, kde-format
+msgid ""
+"You are about to have all your settings overwritten with defaults.\n"
+"Please confirm.\n"
+msgstr ""
+
+#: pref.cpp:893
+#, kde-format
+msgid "Reset Settings?"
+msgstr ""
+
+#, fuzzy
+#~ msgid "plugin"
+#~ msgstr "प्लगइन %1"
+
+#, fuzzy
+#~ msgid "&OK"
+#~ msgstr "ठीक आहे (&O)"
+
+#~ msgid "&Cancel"
+#~ msgstr "रद्द करा (&C)"
+
+#, fuzzy
+#~ msgid "Url - "
+#~ msgstr "URL:"

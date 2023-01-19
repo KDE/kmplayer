@@ -1,0 +1,539 @@
+<?xml version="1.0" ?>
+<!DOCTYPE book PUBLIC "-//KDE//DTD DocBook XML V4.5-Based Variant V1.1//EN" "dtd/kdedbx45.dtd" [
+  <!ENTITY kmplayer "<application
+>KMPlayer</application
+>">
+  <!ENTITY kappname "&kmplayer;"
+><!-- replace kmplayer here -->
+  <!ENTITY package "kdeextragear-2">
+  <!ENTITY % addindex "IGNORE">
+  <!ENTITY % Catalan  "INCLUDE"
+><!-- change language only here -->
+ 
+]>
+
+<book id="kmplayer" lang="&language;">
+
+
+<bookinfo>
+<title
+>El manual del &kmplayer;</title>
+
+<authorgroup>
+<author
+><firstname
+>Koos</firstname
+> <surname
+>Vriezen</surname
+> <email
+>koos dot vriezen at gmail dot com</email
+> </author>
+</authorgroup>
+
+&traductor.JosepMa.Ferrer; 
+
+<copyright>
+<year
+>2002</year>
+<year
+>2006</year>
+<year
+>2007</year>
+<year
+>2008</year>
+<holder
+>Koos Vriezen</holder>
+</copyright>
+<!-- Translators: put here the copyright notice of the translation -->
+<!-- Put here the FDL notice.  Read the explanation in fdl-notice.docbook 
+     and in the FDL itself on how to use it. -->
+<legalnotice
+>&FDLNotice;</legalnotice>
+
+
+<date
+>13 de gener de 2008</date>
+<releaseinfo
+>0.07.00</releaseinfo>
+
+<!-- Abstract about this handbook -->
+
+<abstract>
+<para
+>El &kmplayer; és una aplicació que és un frontal del &kde; al <application
+>MPlayer</application
+> i el &phonon;. </para>
+</abstract>
+
+
+<keywordset>
+<keyword
+>KDE</keyword>
+<keyword
+>kdemultimedia</keyword>
+<keyword
+>MPlayer</keyword>
+<keyword
+>konqueror</keyword>
+<keyword
+>vídeo</keyword>
+</keywordset>
+
+</bookinfo>
+
+<chapter id="introduction">
+<title
+>Introducció</title>
+<para
+>El &kmplayer; és un frontal senzill per al <application
+>MPlayer</application
+>, el &phonon; i el <application
+>FFMpeg</application
+>. Podeu utilitzar-ho per veure tots els formats de fitxer de pel·lícula que permeten el <application
+>MPlayer</application
+>, o el &phonon;, així com per veure des de <acronym
+>DVD</acronym
+>, <acronym
+>VCD</acronym
+> o la <acronym
+>TV</acronym
+> i la <acronym
+>càmera</acronym
+>. </para>
+<para
+>La documentació per al &kappname; no s'ha acabat quan el &kde; es va instal·lar en aquest ordinador.</para
+> <para
+>Si necessiteu més ajuda, reviseu <ulink url="http://www.kde.org"
+>el lloc web del &kde;</ulink
+> per a les actualitzacions, o enviant les vostres preguntes a <ulink url="mailto:kde-user@kde.org"
+>la llista de correu d'usuaris de &kde;</ulink
+>. </para>
+<para
+><emphasis
+>L'equip del &kde;</emphasis
+></para>
+
+</chapter>
+<chapter id="gui">
+<title
+>La interfície d'usuari</title>
+<para
+>La finestra de l'aplicació està feta de les anomenades finestres acoblables. Sempre hi ha la finestra de visualització central. Hi ha la finestra opcional de la llista de reproducció. I finalment hi ha una finestra d'informació, que només es mostra quan hi ha alguna informació que s'ha de mostrar. </para>
+<section id="playlistwindow">
+<title
+>La finestra de la llista de reproducció</title>
+<para
+>La finestra de la llista de reproducció té en el moment d'escriure aquest article cinc categories, elements actuals, <guilabel
+>Discs òptics</guilabel
+>, <guilabel
+>Televisió</guilabel
+>, <guilabel
+>Llistes de reproducció persistents</guilabel
+> i <guilabel
+>Més recent</guilabel
+>. Quan es faci clic en el text d'una categoria, es mostrarà el contingut sota aquesta línia. Per descomptat que hi ha d'haver contingut, per exemple, vegeu <link linkend="tvsource"
+>configuració de la <acronym
+>TV</acronym
+></link
+> per afegir contingut a la categoria <guilabel
+>Televisió</guilabel
+>. La categoria <guilabel
+>Més recent</guilabel
+> s'omplirà quan es reprodueixin fitxers multimèdia locals o &URL; de xarxa. Aquesta categoria pot contenir 60 elements dels quals els últims 50 estan sota la branca <guilabel
+>Més...</guilabel
+>. </para>
+<section>
+<title
+>Categoria de llistes de reproducció persistents</title>
+<para
+>És possible emmagatzemar els vostres enllaços preferits en el menú <guilabel
+>Punts</guilabel
+>, però aquests són elements individuals. Si voleu crear una llista d'elements que es reprodueixen l'un darrere l'altre, haureu d'utilitzar la categoria <guilabel
+>Llistes de reproducció persistents</guilabel
+>. </para>
+<para
+>La manera més fàcil d'afegir un element en aquesta llista és arrossegar-lo des de <guilabel
+>Més recent</guilabel
+> i deixar-lo anar a <guilabel
+>Llistes de reproducció persistents</guilabel
+>. Com veureu, quan es deixa anar, apareix un menú emergent on es pot triar afegir a aquesta llista o crear un grup nou. Els elements de nivell superior es comporten com un punt d'interès, però els elements en grups reproduiran tot el grup on resideixen. Els elements d'aquesta categoria es poden moure, copiar, afegir a un nou grup o suprimir fàcilment només arrossegant aquest element a un altre lloc d'aquesta categoria. A més a més hi ha <guimenu
+>Suprimeix element</guimenu
+>, <guimenu
+>Mou amunt</guimenu
+> i <guimenu
+>Mou avall</guimenu
+> elements al menú contextual (en fer clic amb el botó dret del ratolí sobre un element). </para>
+<para
+>Per descomptat podeu afegir grups a grups per aconseguir una jerarquia més profunda. Quan es faci clic sobre un element, el seu grup i tots els seus grups fills es copiaran a la categoria actual i les reproduccions començaran a la posició de l'element clicat. </para>
+<section>
+<title
+>Format d'emmagatzematge</title>
+<para
+>Les dades s'emmagatzemen a <filename
+>~/.kde/share/apps/kmplayer/playlist.xml</filename
+>, i el seu format és com aquest exemple. Vegeu <link linkend="XML-editing"
+>aquí</link
+> per manipular aquestes dades directament. <programlisting>
+&lt;playlist&gt;
+    &lt;group title="feeds"&gt;
+        &lt;item url="http://www.lugradio.org/episodes.rss"/&gt;
+        &lt;item url="http://science.nasa.gov/podcast.xml"/&gt;
+        &lt;item url="http://www.theworld.org/rss/tech.xml"/&gt;
+    &lt;/group&gt;
+    &lt;group title="iradio"&gt;
+        &lt;group title="sunny"&gt;
+            &lt;item mplayeropts="-cache 256" url="http://www.swissgroove.ch/listen.m3u"/&gt;
+            &lt;item url="http://www.boombasticradio.com/shoutcast/64.pls"/&gt;
+        &lt;/group&gt;
+        &lt;group title="rainy"&gt;
+            &lt;item url="http://www.radioparadise.com/musiclinks/rp64.m3u"/&gt;
+            &lt;item url="http://www.woxy.com/stream/wma64.asx"/&gt;
+            &lt;item url="http://radionigel.com/winmedia.asx"/&gt;
+            &lt;item url="rtsp://livestreams.omroep.nl/live/vpro/vpro3voor12radioalt.rm"/&gt;
+        &lt;/group&gt;
+    &lt;/group&gt;
+&lt;/playlist&gt;
+</programlisting
+> També tingueu en compte que per al <application
+>MPlayer</application
+> les opcions personalitzades es poden establir utilitzant l'argument <computeroutput
+>mplayeropts</computeroutput
+>. El &kmplayer; cerca aquesta opció cap amunt a l'arbre, de manera que podeu establir-la per a un grup sencer i substituir-la per un grup fill o element. </para>
+</section>
+</section>
+</section>
+<section id="XML-editing">
+<title
+>Edició directa de l'&XML;</title>
+<para
+>Les categories actuals <guilabel
+>Televisió</guilabel
+> i <guilabel
+>Llistes de reproducció persistents</guilabel
+> també es poden manipular editant el seu emmagatzematge &XML;. Per descomptat, això es pot fer quan el &kmplayer; no està executant-se i editant diversos fitxers a <filename
+>~/.kde/share/apps/kmplayer/</filename
+>, però també en la mateixa aplicació. Simplement feu clic en una etiqueta de categoria, i després trieu <guimenu
+>Visualitza</guimenu
+> i després <guimenu
+>Mode d'edició</guimenu
+>. També podeu fer clic sobre una branca filla i després només veureu el contingut &XML; de la branca. </para>
+<para
+>Després d'haver editat alguns &XML;, feu clic a <guilabel
+>Sincronitza amb la llista de reproducció</guilabel
+> i desseleccioneu el <guimenu
+>Mode d'edició</guimenu
+> o feu clic en una altra categoria. <caution
+><para
+>Tots els canvis es perdran en sortir del mode d'edició o seleccionar una altra branca sense sincronitzar amb la llista de reproducció. </para
+></caution>
+</para>
+<para
+>A causa de la mandra dels autors del &kmplayer;, algunes característiques només es poden activar editant l'&XML;. </para>
+</section>
+</chapter>
+<chapter id="settings">
+<title
+>Configuració</title>
+<section>
+    <title
+>Animació d'entrada/sortida</title>
+    <para
+>Desactivar l'animació inicial/final es pot configurar editant <filename
+>~/.kde/share/config/kmplayerrc</filename
+> i modificant <programlisting>
+[General Options]
+  No Intro=0
+    </programlisting
+> l'opció anterior a «1». Afegiu aquesta opció si encara no hi és. </para>
+<para
+>També és possible establir una animació alternativa. El &kmplayer; cercarà els respectius <filename
+>~/.kde/share/apps/kmplayer/intro.xml</filename
+> i <filename
+>~/.kde/share/apps/kmplayer/exit.xml</filename
+>. El format ha de ser un fitxer &XML; compatible. </para>
+<para
+>L'animació d'entrada no ha de ser curta, perquè s'acaba automàticament quan s'obre una altra font. Per descomptat que per a l'animació de sortida això seria una mica molest, però l'usuari sempre pot acabar l'aplicació dues vegades. </para>
+<para
+>Un exemple senzill d'una entrada que mostra la vostra foto preferida pot ser <programlisting>
+&lt;smil&gt;
+  &lt;cos&gt;
+    &lt;img dur="indefinite" src="fitxer:///home/koos/mum.gif" fit="meet"/&gt;
+  &lt;/body&gt;
+&lt;/smil&gt;
+    </programlisting
+> En el paquet del codi font del &kmplayer;, en el <filename
+>tests/</filename
+> hi ha alguns exemples de <acronym
+>SMIL</acronym
+> que el &kmplayer; admet. </para>
+</section>
+</chapter>
+<chapter id="backends">
+<title
+>Els dorsals del reproductor</title>
+<para
+>El &kmplayer; utilitza programes externs per fer la reproducció real. </para>
+<section id="mplayer">
+<title
+>MPlayer</title>
+<para
+>Hi ha una pestanya de configuració per al MPlayer en el diàleg de configuració del &kmplayer;. Aquí podeu establir el camí del MPlayer i la mida de la memòria cau per al flux de xarxa, entre altres coses. </para>
+<para
+>Aquest nom de configuració del reproductor és <parameter
+>mplayer</parameter
+>. </para>
+<section id="mplayer-debug">
+<title
+>Resolució de problemes</title>
+<para
+>La millor manera de depurar aquest dorsal és iniciar el &kmplayer; des d'una aplicació de consola com el Konsole. Després inicieu una pel·lícula amb el &kmplayer; i vegeu la línia d'ordres exacta que s'utilitza per iniciar el MPlayer a l'aplicació de consola. Ara copieu-ho a una altra consola, elimineu les opcions «-wid 12344», i feu-ho reproduir. Probablement només cal escollir els paràmetres correctes -ao/-vo. Assegureu-vos que el MPlayer no s'inicia de manera predeterminada amb una &IGU;. </para>
+<para
+>Una altra eina de depuració és el botó «consola» a la barra d'eines del &kmplayer;. Aquí podeu veure la sortida del MPlayer. </para>
+</section>
+</section>
+<section id="phonon">
+<title
+>Phonon</title>
+<para
+>El &phonon; és l'entorn de treball multimèdia de l'escriptori &kde; i es pot configurar a l'&systemsettings;. </para>
+<para
+>Aquest nom de configuració del reproductor és <parameter
+>phonon</parameter
+>. </para>
+<section id="phonon-debug">
+<title
+>Resolució de problemes</title>
+<para
+>Bàsicament, la mateixa manera de resoldre problemes amb el <link linkend="mplayer-debug"
+>MPlayer</link
+>, però amb el nom de l'aplicació de <filename
+>kphononplayer</filename
+>. </para>
+</section>
+</section>
+<section id="npp">
+<title
+>Connector del navegador</title>
+<para
+>No hi ha cap pestanya de configuració per a aquest reproductor en el diàleg de configuració del &kmplayer;. Tot s'ha de configurar editant manualment el <filename
+>~/.kde/share/config/kmplayerrc</filename
+> com amb la configuració del <link linkend="backend-mimetype"
+>dorsal per tipus MIME</link
+>. Aquest és un exemple de com es pot reproduir el «flash» amb el connector «swfdec-mozilla»: <programlisting
+>[application/x-shockwave-flash]
+player=npp
+plugin=/usr/lib/mozilla/plugins/libswfdecmozilla.so
+</programlisting>
+</para>
+<para
+>Podeu reproduir «flash» dins del &kmplayer;, de fet, fins i tot podeu enganxar el camp especial <parameter
+>embed</parameter
+> per al <ulink url="http://www.youtube.com"
+>YouTube</ulink
+> a la <link linkend="XML-editing"
+>llista de reproducció &XML;</link
+>. </para>
+<para
+>Per tal de permetre que el &kmplayer; reprodueixi «flash» en pàgines HTML, haureu de fer que el connector del &kmplayer; sigui el proveïdor de serveis per al tipus MIME <parameter
+>application/x-shockwave-flash</parameter
+> en el diàleg de configuració d'<guilabel
+>Associacions de fitxers</guilabel
+> del &kde;. </para>
+<para
+>Com en l'exemple anterior, aquest nom de configuració del reproductor és <parameter
+>npp</parameter
+>. </para>
+<section id="npp-debug">
+<title
+>Resolució de problemes</title>
+<para
+>Inicieu el &konqueror; o el &kmplayer; en una aplicació de consola i cerqueu errors relatius a la càrrega de les biblioteques de connectors del navegador. El procés iniciat s'anomena <filename
+>knpplayer</filename
+>. Si això no dona cap error, reviseu la captura de la sortida del dorsal dins del &kmplayer; (<guimenu
+>Visualitza</guimenu
+>, <guimenuitem
+>Consola</guimenuitem
+>, o <guimenuitem
+>Consola</guimenuitem
+> des del menú emergent). </para>
+</section>
+</section>
+<section id="backend-mimetype">
+<title
+>Força el reproductor de dorsals per a un tipus MIME</title>
+<para
+>Per configurar que sempre s'usi un dorsal donat per a un tipus MIME en particular (si es detecta, per descomptat) es pot fer editant manualment el <filename
+>~/.kde/share/config/kmplayerrc</filename
+>. Per exemple, permetre que el «phonon» reprodueixi tots els arxius «ogg»: <programlisting
+>[audio/ogg]
+player=phonon
+</programlisting>
+</para>
+</section>
+</chapter>
+<chapter id="sources">
+<title
+>Les fonts reproduïbles</title>
+<para
+>El &kmplayer; pot reproduir a partir de diverses fonts. Aquestes fonts es llisten al menú Font. </para>
+<section id="tvsource">
+    <title
+>TV</title>
+    <para
+>El &kmplayer; pot reproduir a partir de targetes de TV utilitzant el <application
+>MPlayer</application
+> o el <acronym
+>XVideo</acronym
+> (usant <application
+>kxvplayer</application
+>). Abans de poder veure la televisió, cal configurar quin dispositiu utilitzar i els canals de televisió. Per això podeu utilitzar l'explorador del diàleg de configuració, o editar el fitxer de configuració manualment. </para>
+<para
+>El fitxer de configuració de la configuració de TV és un fitxer &XML; situat a <filename
+>~/.kde/share/apps/kmplayer/tv.xml</filename
+>. Vegeu <link linkend="XML-editing"
+>aquí</link
+> per manipular aquestes dades directament. El format &XML; és com aquest exemple: <programlisting>
+&lt;tvdevices&gt;
+    &lt;device path="/dev/video0"width="320" height="240" name="BT878 vídeo (Hauppauge (bt878))" audio="""
+              minwidth="48" minheight="32" maxwidth="924" maxheight="576" playback="0" xvport="240"&gt;
+        &lt;input name="Televisió" id="0" tuner="1" norm="PAL" xvenc="0"&gt;
+            &lt;channel name="Ned1" frequency="216"/&gt;
+            &lt;channel name="VCR" frequency="594.90"/&gt;
+        &lt;/input&gt;
+        &lt;input name="Composite1" id="1" xvenc="7"/&gt;
+        &lt;input name="S-Video" id="2" xvenc="14"/&gt;
+        &lt;input name="Composite3" id="3"/&gt;
+    &lt;/device&gt;
+    &lt;device path="/dev/video1" width="640" height="480" name="Philips 740 webcam" audio=""
+              minwidth="160" minheight="120" maxwidth="640" maxheight="480" playback="1"&gt;
+        &lt;input name="Webcam" id="0"/&gt;
+    &lt;/device&gt;
+&lt;/tvdevices&gt;
+</programlisting
+> Tingueu en compte que els elements «input» que tenen canals, hauria de tenir l'atribut «tuner» establert a «1». </para>
+<para
+>El <acronym
+>XVideo</acronym
+> només utilitza els atributs «xvport» i «xvenc» i només es poden establir editant manualment aquest fitxer. Els valors d'aquests dos atributs es poden recuperar executant el «kxvplayer» en una aplicació de terminal com el «konsole». Per a cada port, el «kxvplayer» generarà línies com la següent i es poden establir els nombres per als atributs esmentats. <programlisting>
+    xvport 240
+    ...
+    encoding: 0 PAL-television
+    encoding: 1 NTSC-television
+    encoding: 2 SECAM-television
+    ...   
+</programlisting
+> També els atributs d'amplada i alçada són ignorats pel reproductor <acronym
+>XVideo</acronym
+>. Aquest reproductor obté les mides del servidor X. Una de les coses bones del <acronym
+>XVideo</acronym
+> és que l'escalat es fa en el maquinari, a la targeta de vídeo, de manera que la implementació a pantalla completa és sense ús de la CPU i sense canvi de resolució del monitor. Tampoc hi ha cap parpelleig molest quan una altra finestra se superposa a aquesta finestra de vídeo. </para>
+<para
+>Vegeu la secció VDR per a més informació sobre l'ús del <acronym
+>XVideo</acronym
+>. </para>
+</section>
+<section id="vdrsource">
+    <title
+>VDR</title>
+<para
+>Per configurar les opcions del VDR al &kmplayer;, vegeu el plafó Configura->Font->VDR->Plafó del port del XVideo. Hauria d'haver-hi ports detectats, dels quals n'hauríeu de seleccionar un. Cal esbrinar quina codificació heu d'utilitzar (per exemple, per a l'Europa occidental, és a dir, PAL) i probablement la correcta té un nom amb «dvb» en ell. </para>
+<para
+>Per exemple, tinc una targeta de TV, una targeta DVB-S i una càmera web connectada al meu sistema. Amb aquestes, la meva configuració és que hi ha tres ports. El primer té una llista llarga d'entrades NTSC(-JP)/PAL(-M)/SECAM tot dient alguna cosa sobre la televisió/composició/svideo (la meva targeta de TV). El segon té NTSC-dvb/PAL-dvb/SECAM-dvb (la meva targeta DVB-S). I finalment la tercera només té ntsc/pal (probablement la meva càmera web). Per tant, hauria de configurar (només seleccionar-la) el segon port i la segona entrada (PAL-dvb). </para>
+<para
+>Com que el suport del VDR des del &kmplayer; només pot utilitzar el <acronym
+>XVideo</acronym
+>, per descomptat el <acronym
+>XVideo</acronym
+> hauria de funcionar (i crec que per a dispositius de vídeo, aquesta manera de visualització només funciona en el Linux). També això només funciona en la primera visualització (:0.0). Assegureu-vos que l'extensió «videoforlinux» funciona amb el servidor X. Per al servidor XFree86 i, per tant, en la seva configuració (<filename
+>/etc/X11/XF86Config</filename
+>) hauria de tenir: <programlisting
+>Section "Module" 
+     ... 
+     Load    "v4l" 
+EndSection
+</programlisting>
+</para>
+<para
+>Malauradament, quan actualitzeu el controlador de vídeo, haureu de reconfigurar aquesta opció. </para>
+</section>
+<section id="kmplayer_url">
+    <title
+>Línia d'ordres</title>
+<para
+>Internament per a les fonts, el &kmplayer; utilitza noms diferents. En el moment d'escriure això, aquests són «dvdnavsource», «dvdsource», «exitsource», «introsource», «pipesource», «tvscanner», «tvsource», «urlsource», «vcdsource» i «vdrsource». Quan s'activen, en la seva majoria comencen a reproduir la llista d'elements que es poden reproduir. </para>
+<para
+>Podeu activar una font en particular amb un <acronym
+>URL</acronym
+> de tipus <filename
+>kmplayer://</filename
+>. Només cal establir la part del servidor com a nom d'origen i la part opcional del camí com a arguments addicionals, de manera que per a un canal de la «vdrsource» això podria semblar <filename
+>kmplayer://vdrsource/22 MTV 2</filename
+>. P. ex. aquest script inicia el &kmplayer; utilitzant «dvdnavsource» i utilitzant el &DBus; per a reproduir a pantalla completa. <programlisting>
+/bin/bash
+kmplayer kmplayer://dvdnavsource/ &amp;
+PID=$!
+sleep 2
+qdbus org.kde.kmplayer-$PID /kmplayer/MainWindow_1 showFullScreen
+    </programlisting
+> Per a algunes fonts això no farà molt perquè no estan pensats per a una reproducció normal. Per a «pipesource» això està desactivat perquè seria un forat dolent de seguretat, per descomptat. </para>
+</section>
+</chapter>
+<chapter id="questionsanswersandtips">
+    <title
+>Preguntes, respostes i consells</title>
+
+    <qandaset id="faq">
+      <title
+>Preguntes més freqüents</title>
+      <qandaentry>
+        <question>
+            <para
+>Alguna pista perquè el CDROM sigui menys sorollós quan reprodueix (no VCD://)?</para>
+        </question>
+        <answer>
+            <para
+>És clar, proveu <command
+>hdparm -E 8 /dev/cdrom</command
+> com a arrel després de muntar el dispositiu. Però assegureu-vos de comprovar que <filename
+>/dev/cdrom</filename
+> apunti a la unitat de CDROM. </para>
+        </answer>
+      </qandaentry>
+    </qandaset>
+
+  </chapter>
+<chapter id="credits-and-license">
+<title
+>Crèdits i llicència</title>
+
+<para
+>Copyright del &kmplayer; 2002, 2003 Koos Vriezen</para>
+
+<para
+>Traductor de la documentació: &credits.JosepMa.Ferrer;</para
+> &underFDL; &underGPL; </chapter>
+
+&documentation.index;
+</book>
+<!--
+Local Variables:
+mode: sgml
+sgml-minimize-attributes:nil
+sgml-general-insert-case:lower
+sgml-indent-step:0
+sgml-indent-data:nil
+End:
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,2063 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lmplayer\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2019-08-30 07:39+0200\n"
+"PO-Revision-Date: 2009-02-02 22:53+0200\n"
+"Last-Translator: Omer Ensari <oensari@gmail.com>\n"
+"Language-Team: Kurdish <kde-i18n-doc@kde.org>\n"
+"Language: ku\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Kurdish\n"
+"X-Poedit-SourceCharset: utf8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Omer Ensari"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "oensari@gmail.com"
+
+#: kmplayer.cpp:151
+#, kde-format
+msgid "New window"
+msgstr "Paceya nû"
+
+#: kmplayer.cpp:161
+#, kde-format
+msgid "&Edit mode"
+msgstr "Mod &Serast Bike"
+
+#: kmplayer.cpp:164
+#, kde-format
+msgid "Pla&y List"
+msgstr "Lîsteya Lêdan&ê"
+
+#: kmplayer.cpp:169
+#, kde-format
+msgid "P&lay"
+msgstr "Lê &Bide"
+
+#: kmplayer.cpp:172
+#, kde-format
+msgid "&Pause"
+msgstr "&Bide Sekinandin"
+
+#: kmplayer.cpp:175
+#, kde-format
+msgid "&Stop"
+msgstr "&Raweste"
+
+#: kmplayer.cpp:181
+#, kde-format
+msgid "Fullscreen"
+msgstr "Dîmender Tije"
+
+#: kmplayer.cpp:184 kmplayer.cpp:345
+#, kde-format
+msgid "C&onsole"
+msgstr "K&onsol"
+
+#: kmplayer.cpp:189
+#, kde-format
+msgid "Reload"
+msgstr "Nû ve bar bike"
+
+#: kmplayer.cpp:200
+#, kde-format
+msgid "Clear &History"
+msgstr ""
+
+#: kmplayer.cpp:204
+#, fuzzy, kde-format
+#| msgid "General Options"
+msgid "&Generators"
+msgstr "Vebijêrkên Giştî"
+
+#. i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
+#. new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
+#. new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
+#. new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
+#. new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
+#. //KIconLoader::global ()->loadIconSet (QString ("video-television"), K3Icon::Small, 0,true)
+#. new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
+#. editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), ac, "edit_volume_up");
+#. editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), ac, "edit_volume_down");
+#. //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), ac, "view_video");
+#. new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), ac, "view_playlist");
+#. new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (slotMinimalMode ()), ac, "view_minimal");
+#. new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
+#. new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
+#. new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
+#. new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
+#. new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
+#. viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
+#. fileNewWindow->setStatusText(i18n("Opens a new application window"));
+#. fileOpen->setStatusText(i18n("Opens an existing file"));
+#. fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
+#. fileClose->setStatusText(i18n("Closes the actual source"));
+#. fileQuit->setStatusText(i18n("Quits the application"));
+#: kmplayer.cpp:235
+#, fuzzy, kde-format
+#| msgid "Enables/disables the statusbar"
+msgid "Enables/disables the status bar"
+msgstr "Darika rewşan çalak/neçalak dike"
+
+#: kmplayer.cpp:236
+#, fuzzy, kde-format
+#| msgid "Enables/disables the menubar"
+msgid "Enables/disables the menu bar"
+msgstr "Darika pêşekê çalak/neçalak dike"
+
+#: kmplayer.cpp:237
+#, kde-format
+msgid "Enables/disables the toolbar"
+msgstr "Darika amûrê çalak/neçalak dike"
+
+#: kmplayer.cpp:244 kmplayer.cpp:452 kmplayer.cpp:706 kmplayer.cpp:1050
+#: kmplayer.cpp:1199 kmplayer.cpp:1584 kmplayer.cpp:1716 kmplayer.cpp:1818
+#: kmplayer.cpp:1864
+#, kde-format
+msgid "Ready."
+msgstr "Amade."
+
+#: kmplayer.cpp:255 kmplayercontrolpanel.cpp:452
+#, kde-format
+msgid "&Bookmarks"
+msgstr "&Bijare"
+
+#: kmplayer.cpp:300 kmplayer.cpp:1321
+#, kde-format
+msgid "&Add to list"
+msgstr "&Têxe lîsteyê"
+
+#: kmplayer.cpp:302
+#, kde-format
+msgid "Add in new &Group"
+msgstr "Têxe di &Koma nû de"
+
+#: kmplayer.cpp:304
+#, kde-format
+msgid "&Copy here"
+msgstr "&Ji ber bigire li vir "
+
+#: kmplayer.cpp:306
+#, kde-format
+msgid "&Delete"
+msgstr "&Jê bibe"
+
+#: kmplayer.cpp:342 kmplayerview.cpp:341
+#, kde-format
+msgid "V&ideo"
+msgstr "V&îdeo"
+
+#: kmplayer.cpp:383
+#, kde-format
+msgid "More..."
+msgstr "Zêdetir..."
+
+#: kmplayer.cpp:432
+#, kde-format
+msgid "Opening DVD..."
+msgstr "DVD Tê Vekirin..."
+
+#: kmplayer.cpp:437
+#, kde-format
+msgid "Opening VCD..."
+msgstr "VCD Tê Vekirin..."
+
+#: kmplayer.cpp:442
+#, kde-format
+msgid "Opening Audio CD..."
+msgstr "CD ya Muzîkê Tê Vekirin..."
+
+#: kmplayer.cpp:447
+#, kde-format
+msgid "Opening pipe..."
+msgstr "Riya daneyê tê vekirin..."
+
+#: kmplayer.cpp:449
+#, kde-format
+msgid "Read From Pipe"
+msgstr "Jê Riya Daneyan Bixwîne"
+
+#: kmplayer.cpp:450
+#, kde-format
+msgid ""
+"Enter a command that will output an audio/video stream\n"
+"to the stdout. This will be piped to a player's stdin.\n"
+"\n"
+"Command:"
+msgstr ""
+"Fermana ku dê darêja muzîk/vîdeo yê jê stdout\n"
+"bîne têkevê. Ev tê riya dane bigihîne stdin a lêdarê.\n"
+"\n"
+"Ferman:"
+
+#: kmplayer.cpp:538 kmplayer.cpp:541
+#, kde-format
+msgid "Intro"
+msgstr "Destpêk"
+
+#: kmplayer.cpp:694 kmplayer.cpp:1086
+#, kde-format
+msgid "Opening file..."
+msgstr "Pel tê vekirin..."
+
+#: kmplayer.cpp:956 kmplayer.cpp:957
+#, kde-format
+msgid "Exit"
+msgstr "Derkeve"
+
+#: kmplayer.cpp:1045
+#, kde-format
+msgid "Opening a new application window..."
+msgstr "Paceya sepana nû tê vekirin..."
+
+#: kmplayer.cpp:1073
+#, kde-format
+msgid "Open File"
+msgstr "Pel Veke"
+
+#: kmplayer.cpp:1074
+#, kde-format
+msgid "*|All Files"
+msgstr "*|Hemû Pel"
+
+#: kmplayer.cpp:1106
+#, kde-format
+msgid "Save File"
+msgstr "Pelê Tomar Bike"
+
+#: kmplayer.cpp:1110 kmplayerbroadcast.cpp:535 kmplayerbroadcast.cpp:552
+#: kmplayerbroadcast.cpp:565 kmplayerconfig.cpp:655 kmplayerconfig.cpp:666
+#: kmplayerprocess.cpp:150 kmplayertvsource.cpp:611 kmplayertvsource.cpp:622
+#: kmplayervdr.cpp:444 kmplayervdr.cpp:446
+#, kde-format
+msgid "Error"
+msgstr "Çewtî"
+
+#: kmplayer.cpp:1110
+#, kde-format
+msgid ""
+"Error opening file %1.\n"
+"%2."
+msgstr ""
+"Vekirina pela  %1 de çewtiyek çêbû.\n"
+"%2"
+
+#: kmplayer.cpp:1195
+#, kde-format
+msgid "Closing file..."
+msgstr "Pel tê girtin..."
+
+#: kmplayer.cpp:1238 kmplayerpartbase.cpp:845 mediaobject.cpp:168
+#, kde-format
+msgid "Ready"
+msgstr "Amade"
+
+#: kmplayer.cpp:1241
+#, fuzzy, kde-format
+#| msgid "Show Menubar with %1"
+msgid "Show Menu Bar with %1"
+msgstr "Darika pêşekê bi %1 re nîşan bide"
+
+#: kmplayer.cpp:1321
+#, kde-format
+msgid "Move here"
+msgstr "Bikişîne li vir"
+
+#: kmplayer.cpp:1354
+#, kde-format
+msgid "New group"
+msgstr "Komekê nû"
+
+#: kmplayer.cpp:1441
+#, kde-format
+msgid "&Delete item"
+msgstr "Tiştê &jê bibe"
+
+#: kmplayer.cpp:1444
+#, kde-format
+msgid "&Move up"
+msgstr "&Bikişîne jor"
+
+#: kmplayer.cpp:1446
+#, kde-format
+msgid "Move &down"
+msgstr "Bikişîne &jêr"
+
+#: kmplayer.cpp:1478
+#, kde-format
+msgid "Auto play after opening DVD"
+msgstr "Piştî vebûna DVD yê bixweber lê bide"
+
+#: kmplayer.cpp:1479
+#, kde-format
+msgid "Start playing DVD right after opening DVD"
+msgstr "Hema piştî vebûna DVD yê destpê lêdana DVD yê bike"
+
+#: kmplayer.cpp:1480
+#, kde-format
+msgid "DVD device:"
+msgstr "Cîhaza DVD yê:"
+
+#: kmplayer.cpp:1482
+#, kde-format
+msgid "Path to your DVD device, you must have read rights to this device"
+msgstr "Pelrêça cîhaza DVD ya we, tu divê xwedî mafê xwendina vê cîhazê bî"
+
+#: kmplayer.cpp:1512
+#, kde-format
+msgid "Optical Disks"
+msgstr "Dîska Optîk"
+
+#: kmplayer.cpp:1543 kmplayer.cpp:1617 kmplayer.cpp:1643
+#, kde-format
+msgid "DVD"
+msgstr "DVD"
+
+#: kmplayer.cpp:1548
+#, kde-format
+msgid "CDROM - Audio Compact Disk"
+msgstr "CDROM - Dîska Tîr ya Muzîkê"
+
+#: kmplayer.cpp:1549
+#, kde-format
+msgid "VCD - Video Compact Disk"
+msgstr "VCD - Dîska Tîr ya Vîdeoyê"
+
+#: kmplayer.cpp:1550
+#, kde-format
+msgid "DVD - Digital Video Disk"
+msgstr "DVD - Dîska Dîjîtal ya Vîdeoyê"
+
+#: kmplayer.cpp:1568 kmplayer.cpp:1789
+#, kde-format
+msgid "Track %1"
+msgstr "Strana %1"
+
+#: kmplayer.cpp:1641 kmplayer.cpp:1755 kmplayertvsource.cpp:581
+#: kmplayervdr.cpp:718 pref.cpp:87 pref.cpp:92
+#, kde-format
+msgid "Source"
+msgstr "Çavkanî"
+
+#: kmplayer.cpp:1656
+#, kde-format
+msgid "Auto play after opening a VCD"
+msgstr "Piştî vebûna VCD yê bixweber lê bide"
+
+#: kmplayer.cpp:1657
+#, kde-format
+msgid "Start playing VCD right after opening VCD"
+msgstr "Hema piştî vebûna VCD yê destpê lêdanê bike"
+
+#: kmplayer.cpp:1658
+#, kde-format
+msgid "VCD (CDROM) device:"
+msgstr "Cîhaza VCD (CDROM)"
+
+#: kmplayer.cpp:1660
+#, kde-format
+msgid "Path to your CDROM/DVD device, you must have read rights to this device"
+msgstr "Pelrêça cîhaza CDROM/DVD, tu divê xwedî mafê xwendina vê cîhazê bî "
+
+#: kmplayer.cpp:1672 kmplayer.cpp:1731 kmplayer.cpp:1757
+#, kde-format
+msgid "VCD"
+msgstr "VCD"
+
+#: kmplayer.cpp:1690
+#, kde-format
+msgid "Track "
+msgstr "Stran "
+
+#: kmplayer.cpp:1768 kmplayer.cpp:1833
+#, kde-format
+msgid "Audio CD"
+msgstr "CD ya Muzîkê"
+
+#: kmplayer.cpp:1839
+#, kde-format
+msgid "Pipe"
+msgstr "Riya daneyan"
+
+#: kmplayer.cpp:1871
+#, kde-format
+msgid "Pipe - %1"
+msgstr "Riya daneya - %1"
+
+#: kmplayer_lists.cpp:95
+#, kde-format
+msgid "Most Recent"
+msgstr "Yên Herî Dawiyê"
+
+#: kmplayer_lists.cpp:194
+#, kde-format
+msgid "Persistent Playlists"
+msgstr "Lîsteyên Lêdanê yên Mayinde"
+
+#: kmplayer_part.cpp:112 main.cpp:46
+#, kde-format
+msgid "KMPlayer"
+msgstr "KMLêdar"
+
+#: kmplayer_part.cpp:113
+#, kde-format
+msgid "Embedded MPlayer for KDE"
+msgstr ""
+
+#: kmplayer_part.cpp:768
+#, no-c-format, kde-format
+msgid "% Cache fill"
+msgstr "% Pêşbîr a tijî"
+
+#: kmplayer_part.cpp:793
+#, kde-format
+msgid "KMPlayer: Playing"
+msgstr "KMPlayer: Lêdide"
+
+#: kmplayer_part.cpp:804
+#, kde-format
+msgid "KMPlayer: Stop Playing"
+msgstr "KMPlayer: Lêdanê Rawestîne"
+
+#: kmplayerbroadcast.cpp:160
+#, kde-format
+msgid "Bind address:"
+msgstr "Navnîşana girêdanê:"
+
+#: kmplayerbroadcast.cpp:162
+#, kde-format
+msgid "If you have multiple network devices, you can limit access"
+msgstr "Heke piranî cîhazên torê hebe, tu divê gihîştinê bi sînor bikî"
+
+#: kmplayerbroadcast.cpp:165
+#, kde-format
+msgid "Listen port:"
+msgstr "Dergeha guhdarî yê:"
+
+#: kmplayerbroadcast.cpp:169
+#, kde-format
+msgid "Maximum connections:"
+msgstr "Girêdanên gekektirîn:"
+
+#: kmplayerbroadcast.cpp:173
+#, kde-format
+msgid "Maximum bandwidth (kbit):"
+msgstr "Firehiya-bandê ya bêhtirîn (kbit):"
+
+#: kmplayerbroadcast.cpp:177
+#, kde-format
+msgid "Temporary feed file:"
+msgstr "Pela çavkanî ya demborî:"
+
+#: kmplayerbroadcast.cpp:181
+#, kde-format
+msgid "Feed file size (kB):"
+msgstr "Mezinahiya pela çavkaniyê (kB):"
+
+#: kmplayerbroadcast.cpp:204
+#, kde-format
+msgid "Format:"
+msgstr "Teşe:"
+
+#: kmplayerbroadcast.cpp:212
+#, kde-format
+msgid "Only avi, mpeg and rm work for mplayer playback"
+msgstr "mplayer dikare tenê pelên avi, mpeg û rm lê bide"
+
+#: kmplayerbroadcast.cpp:215
+#, kde-format
+msgid "Audio codec:"
+msgstr "Kodkerê Muzîkê:"
+
+#: kmplayerbroadcast.cpp:216
+#, kde-format
+msgid "Audio bit rate (kbit):"
+msgstr "Leza bit ya dengê (kbit):"
+
+#: kmplayerbroadcast.cpp:217
+#, kde-format
+msgid "Audio sample rate (Hz):"
+msgstr "Leza mînak ya dengê (Hz):"
+
+#: kmplayerbroadcast.cpp:218
+#, kde-format
+msgid "Video codec:"
+msgstr "Kodkerê Vîdeoyê:"
+
+#: kmplayerbroadcast.cpp:219
+#, kde-format
+msgid "Video bit rate (kbit):"
+msgstr "Leza bit ya vîdeoyê (kbit):"
+
+#: kmplayerbroadcast.cpp:220
+#, kde-format
+msgid "Quality (1-31):"
+msgstr "Qalîte (1-31):"
+
+#: kmplayerbroadcast.cpp:221
+#, kde-format
+msgid "Frame rate (Hz):"
+msgstr "Leza çarçoveyê (Hz):"
+
+#: kmplayerbroadcast.cpp:222
+#, kde-format
+msgid "Gop size:"
+msgstr "Mezinahiya Gop:"
+
+#: kmplayerbroadcast.cpp:223
+#, kde-format
+msgid "Width (pixels):"
+msgstr "Firehî (pîksel):"
+
+#: kmplayerbroadcast.cpp:224
+#, kde-format
+msgid "Height (pixels):"
+msgstr "Bilindahî (pîksel):"
+
+#: kmplayerbroadcast.cpp:225
+#, kde-format
+msgid "Allow access from:"
+msgstr "Destûr bide gihîştina jê:"
+
+#: kmplayerbroadcast.cpp:230
+#, kde-format
+msgid "'Single IP' or 'start-IP end-IP' for IP ranges"
+msgstr "'Single IP' an jî 'start-IP end-IP' ji bo navberên IP"
+
+#: kmplayerbroadcast.cpp:232
+#, kde-format
+msgid "Host/IP or IP Range"
+msgstr "Pêşkêşker/IP an jî Navbera IP"
+
+#: kmplayerbroadcast.cpp:245
+#, kde-format
+msgid "Load"
+msgstr "Bar Bike"
+
+#: kmplayerbroadcast.cpp:246
+#, kde-format
+msgid "Save"
+msgstr "Tomar Bike"
+
+#: kmplayerbroadcast.cpp:247 kmplayertvsource.cpp:122
+#, kde-format
+msgid "Delete"
+msgstr "Jê bibe"
+
+#: kmplayerbroadcast.cpp:265 kmplayerbroadcast.cpp:601
+#, kde-format
+msgid "Start"
+msgstr "Destpê Bike"
+
+#: kmplayerbroadcast.cpp:458 kmplayerbroadcast.cpp:658
+#, kde-format
+msgid "Broadcasting"
+msgstr "Weşan"
+
+#: kmplayerbroadcast.cpp:460
+#, kde-format
+msgid "Profiles"
+msgstr "Jînname "
+
+#: kmplayerbroadcast.cpp:523
+#, kde-format
+msgid "Stop"
+msgstr "Rawestîne"
+
+#: kmplayerbroadcast.cpp:535
+#, kde-format
+msgid "Failed to end ffserver process."
+msgstr "Dawî kirina pêvajoya ffserver têk çû."
+
+#: kmplayerbroadcast.cpp:552
+#, kde-format
+msgid "Failed to start ffserver.\n"
+msgstr "Destpêkirina ffserver pêk nehat.\n"
+
+#: kmplayerbroadcast.cpp:565
+#, kde-format
+msgid "Failed to start ffmpeg."
+msgstr "Destpêkirina ffmpeg pêk nehat."
+
+#: kmplayerbroadcast.cpp:660
+#, kde-format
+msgid "FFServer"
+msgstr "FFServer"
+
+#: kmplayerconfig.cpp:60 kmplayerconfig.cpp:76
+#, kde-format
+msgid "Auto"
+msgstr "Bixweber"
+
+#: kmplayerconfig.cpp:61
+#, kde-format
+msgid "Open Sound System"
+msgstr "Pergala Dengê Veke"
+
+#: kmplayerconfig.cpp:62
+#, kde-format
+msgid "Simple DirectMedia Layer"
+msgstr "Qada DirectMedia ya Hêsan"
+
+#: kmplayerconfig.cpp:63
+#, kde-format
+msgid "Advanced Linux Sound Architecture"
+msgstr "Avahiya Linux Deng ya Pêşketî"
+
+#: kmplayerconfig.cpp:64
+#, kde-format
+msgid "Analog Real-Time Synthesizer"
+msgstr "Hevedemkerê Dema-Rastîn ya Analog"
+
+#: kmplayerconfig.cpp:65
+#, kde-format
+msgid "JACK Audio Connection Kit"
+msgstr "Amûra JACK Girêdana Dengê"
+
+#: kmplayerconfig.cpp:66
+#, kde-format
+msgid "OpenAL"
+msgstr "OpenAL"
+
+#: kmplayerconfig.cpp:67
+#, kde-format
+msgid "Enlightened Sound Daemon"
+msgstr "Servîsa Dengê ya Enlightened"
+
+#: kmplayerconfig.cpp:68
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.5"
+msgstr "Avahiya Linux Deng ya Pêşketî v0.5"
+
+#: kmplayerconfig.cpp:69
+#, kde-format
+msgid "Advanced Linux Sound Architecture v0.9"
+msgstr "Avahiya Linux Deng ya Pêşketî v0.9"
+
+#: kmplayerconfig.cpp:70
+#, kde-format
+msgid "Use back-end defaults"
+msgstr "Standardên paş-dawî bi kar bîne"
+
+#: kmplayerconfig.cpp:71
+#, kde-format
+msgid "PulseAudio"
+msgstr ""
+
+#: kmplayerconfig.cpp:77
+#, kde-format
+msgid "X11Shm"
+msgstr "X11Shm"
+
+#: kmplayerconfig.cpp:78
+#, kde-format
+msgid "XVidix"
+msgstr "XVidix"
+
+#: kmplayerconfig.cpp:79
+#, kde-format
+msgid "XvMC"
+msgstr "XvMC"
+
+#: kmplayerconfig.cpp:80
+#, kde-format
+msgid "SDL"
+msgstr "SDL"
+
+#: kmplayerconfig.cpp:81
+#, kde-format
+msgid "OpenGL"
+msgstr "OpenGL"
+
+#: kmplayerconfig.cpp:82
+#, kde-format
+msgid "OpenGL MT"
+msgstr "OpenGL MT"
+
+#: kmplayerconfig.cpp:83
+#, kde-format
+msgid "XVideo"
+msgstr "XVideo"
+
+#: kmplayerconfig.cpp:84
+#, kde-format
+msgid "Video Decode and Presentation API for Unix"
+msgstr ""
+
+#: kmplayerconfig.cpp:95
+#, kde-format
+msgid "Playlist background"
+msgstr "Rûerda lîsteya lêdanê"
+
+#: kmplayerconfig.cpp:99
+#, kde-format
+msgid "Playlist foreground"
+msgstr "Pêş-erdê lîsteya lêdanê "
+
+#: kmplayerconfig.cpp:103
+#, kde-format
+msgid "Console background"
+msgstr "Rûerdê Konsol"
+
+#: kmplayerconfig.cpp:104
+#, kde-format
+msgid "Playlist active item"
+msgstr "Hêmana çalak ya lîsteya lêdanê"
+
+#: kmplayerconfig.cpp:110
+#, kde-format
+msgid "Console foreground"
+msgstr "Pêş-erdê Konsol"
+
+#: kmplayerconfig.cpp:113
+#, kde-format
+msgid "Video background"
+msgstr "Rûerdê vîdeoyê"
+
+#: kmplayerconfig.cpp:116
+#, kde-format
+msgid "Viewing area background"
+msgstr "Dîtina rûerda qadê"
+
+#: kmplayerconfig.cpp:119
+#, kde-format
+msgid "Info window background"
+msgstr "Rûerda paceya agahiyê"
+
+#: kmplayerconfig.cpp:123
+#, kde-format
+msgid "Info window foreground"
+msgstr "Pêş-erdê paceya agahiyê"
+
+#: kmplayerconfig.cpp:127 kmplayerview.cpp:167
+#, kde-format
+msgid "Playlist"
+msgstr "Lîsteya Lêdanê"
+
+#: kmplayerconfig.cpp:131
+#, kde-format
+msgid "Info window"
+msgstr "Paceya agahiyê"
+
+#: kmplayerconfig.cpp:655
+#, kde-format
+msgid "File %1 does not exist."
+msgstr "Pela %1 tune ye. "
+
+#: kmplayerconfig.cpp:666
+#, kde-format
+msgid "Sub title file %1 does not exist."
+msgstr "Pela binnivîsê %1 tuneye."
+
+#: kmplayercontrolpanel.cpp:311 kmplayercontrolpanel.cpp:325
+#, kde-format
+msgid "Volume is "
+msgstr "Deng"
+
+#: kmplayercontrolpanel.cpp:412
+#, kde-format
+msgid "&Play with"
+msgstr "&Lê bide bi"
+
+#: kmplayercontrolpanel.cpp:415 kmplayerview.cpp:337
+#, kde-format
+msgid "Con&sole"
+msgstr "Kon&sol"
+
+#: kmplayercontrolpanel.cpp:417
+#, kde-format
+msgid "Play&list"
+msgstr "Lîsteya&lêdanê "
+
+#: kmplayercontrolpanel.cpp:419
+#, kde-format
+msgid "&Zoom"
+msgstr "&Mezin Bike"
+
+#: kmplayercontrolpanel.cpp:422
+#, kde-format
+msgid "50%"
+msgstr "50%"
+
+#: kmplayercontrolpanel.cpp:423
+#, kde-format
+msgid "100%"
+msgstr "100%"
+
+#: kmplayercontrolpanel.cpp:424
+#, kde-format
+msgid "150%"
+msgstr "150%"
+
+#: kmplayercontrolpanel.cpp:426
+#, kde-format
+msgid "&Full Screen"
+msgstr "Dîmender &Tijî"
+
+#: kmplayercontrolpanel.cpp:431
+#, kde-format
+msgid "Co&lors"
+msgstr "Re&ng"
+
+#: kmplayercontrolpanel.cpp:456 kmplayercontrolpanel.cpp:458
+#, kde-format
+msgid "&Audio languages"
+msgstr "Zimanên &Dengê"
+
+#: kmplayercontrolpanel.cpp:459
+#, kde-format
+msgid "&Subtitles"
+msgstr "&Binnivîs"
+
+#: kmplayercontrolpanel.cpp:467
+#, kde-format
+msgid "Scale:"
+msgstr "Pîvan:"
+
+#: kmplayercontrolpanel.cpp:479
+#, kde-format
+msgid "&Configure KMPlayer..."
+msgstr "&Veavakirina KMPlayer..."
+
+#: kmplayerpartbase.cpp:1450
+#, kde-format
+msgid "Unknown"
+msgstr "Nayê Zanîn"
+
+#: kmplayerpartbase.cpp:1461 kmplayerpartbase.cpp:1530 pref.cpp:91
+#, kde-format
+msgid "URL"
+msgstr "URL"
+
+#: kmplayerpartbase.cpp:1554 kmplayerpartbase.cpp:1557
+#: kmplayerpartbase.cpp:1558
+#, kde-format
+msgid "URL - "
+msgstr ""
+
+#. i18n: ectx: Menu (view)
+#: kmplayerpartui.rc:4 kmplayerui.rc:31
+#, kde-format
+msgid "&View"
+msgstr "&Bibîne"
+
+#: kmplayerprocess.cpp:150
+#, kde-format
+msgid "Failed to end player process."
+msgstr "Dawî kirina pêvajoya lêdarê têk çû."
+
+#: kmplayerprocess.cpp:489
+#, kde-format
+msgid "&MPlayer"
+msgstr "&MLêdar"
+
+#: kmplayerprocess.cpp:1012
+#, kde-format
+msgid "Size pattern"
+msgstr "Nîgara mezinahiyê"
+
+#: kmplayerprocess.cpp:1013
+#, kde-format
+msgid "Cache pattern"
+msgstr "Nîgara pêşbîrê"
+
+#: kmplayerprocess.cpp:1014
+#, kde-format
+msgid "Position pattern"
+msgstr "Nîgara bicihbûnê"
+
+#: kmplayerprocess.cpp:1015
+#, kde-format
+msgid "Index pattern"
+msgstr "Nîgara pêristê"
+
+#: kmplayerprocess.cpp:1016
+#, kde-format
+msgid "Reference URL pattern"
+msgstr "Nîgara URL ya Jêder"
+
+#: kmplayerprocess.cpp:1017
+#, kde-format
+msgid "Reference pattern"
+msgstr "Nîgara jêder"
+
+#: kmplayerprocess.cpp:1018
+#, kde-format
+msgid "Start pattern"
+msgstr "Nîgara destpêkê"
+
+#: kmplayerprocess.cpp:1019
+#, kde-format
+msgid "VCD track pattern"
+msgstr "Nîgara stranê VCD yê"
+
+#: kmplayerprocess.cpp:1020
+#, kde-format
+msgid "Audio CD tracks pattern"
+msgstr "Nîgara stranên CD ya muzîkê"
+
+#: kmplayerprocess.cpp:1040
+#, kde-format
+msgid "MPlayer command:"
+msgstr "Fermana MPlayer:"
+
+#: kmplayerprocess.cpp:1042
+#, kde-format
+msgid "Additional command line arguments:"
+msgstr "Zêdetir şîroveyên rêza ferman:"
+
+#: kmplayerprocess.cpp:1044
+#, kde-format
+msgid "Cache size:"
+msgstr "Mezinahiya pêşbîrê:"
+
+#: kmplayerprocess.cpp:1044
+#, kde-format
+msgid "kB"
+msgstr "kB"
+
+#: kmplayerprocess.cpp:1049
+#, kde-format
+msgid "Build new index when possible"
+msgstr "Pêrista nû ava bike heke gengaz be"
+
+#: kmplayerprocess.cpp:1051
+#, kde-format
+msgid "Allows seeking in indexed files (AVIs)"
+msgstr "Destûr dide xwendina pelên pêristkirî (AVI)"
+
+#: kmplayerprocess.cpp:1117 pref.cpp:74 pref.cpp:84
+#, kde-format
+msgid "General Options"
+msgstr "Vebijêrkên Giştî"
+
+#: kmplayerprocess.cpp:1119
+#, kde-format
+msgid "MPlayer"
+msgstr "MLêdar"
+
+#: kmplayerprocess.cpp:1135
+#, kde-format
+msgid "M&Encoder"
+msgstr "M&Encoder"
+
+#: kmplayerprocess.cpp:1201
+#, kde-format
+msgid "&MPlayerDumpstream"
+msgstr "&MPlayerDumpstream"
+
+#: kmplayerprocess.cpp:1463
+#, kde-format
+msgid "&Phonon"
+msgstr "&Phonon"
+
+#: kmplayerprocess.cpp:1610 pref.cpp:674
+#, kde-format
+msgid "&FFMpeg"
+msgstr "&FFMpeg"
+
+#: kmplayerprocess.cpp:1709
+#, kde-format
+msgid "&Ice Ape"
+msgstr "&Ice Ape"
+
+#: kmplayertvsource.cpp:65
+#, kde-format
+msgid "Video device:"
+msgstr "Cîhaza Vîdeoyê:"
+
+#: kmplayertvsource.cpp:66
+#, kde-format
+msgid "Audio device:"
+msgstr "Cîhaza Muzîkê:"
+
+#: kmplayertvsource.cpp:68
+#, kde-format
+msgid "Name:"
+msgstr "Nav:"
+
+#: kmplayertvsource.cpp:70
+#, kde-format
+msgid "Width:"
+msgstr "Firehî:"
+
+#: kmplayertvsource.cpp:72
+#, kde-format
+msgid "Height:"
+msgstr "Dirêjî:"
+
+#: kmplayertvsource.cpp:74
+#, kde-format
+msgid "Do not immediately play"
+msgstr "Zûka lê nede"
+
+#: kmplayertvsource.cpp:76
+#, kde-format
+msgid "Only start playing after clicking the play button"
+msgstr "Tenê piştî tikandina bişkojka lê bide bila lêdan destpê bike"
+
+#: kmplayertvsource.cpp:87
+#, kde-format
+msgid "Norm:"
+msgstr "Norm:"
+
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Channel"
+msgstr "Kanal"
+
+#: kmplayertvsource.cpp:101
+#, kde-format
+msgid "Frequency (MHz)"
+msgstr "Freqans (MHz)"
+
+#: kmplayertvsource.cpp:148
+#, kde-format
+msgid ""
+"You are about to remove this device from the Source menu.\n"
+"Continue?"
+msgstr ""
+"Tu niha vê cîhazê jê pêşeka Çavkanî yê radikî.\n"
+"Bila bidomîne?"
+
+#: kmplayertvsource.cpp:148
+#, kde-format
+msgid "Confirm"
+msgstr "Pejirîne"
+
+#: kmplayertvsource.cpp:159
+#, kde-format
+msgid "Driver:"
+msgstr "Ajoker:"
+
+#: kmplayertvsource.cpp:161
+#, kde-format
+msgid "dummy, v4l or bsdbt848"
+msgstr "dummy, v4l or bsdbt848"
+
+#: kmplayertvsource.cpp:162
+#, kde-format
+msgid "Device:"
+msgstr "Cîhaz:"
+
+#: kmplayertvsource.cpp:164
+#, kde-format
+msgid "Path to your video device, eg. /dev/video0"
+msgstr "Pelrêça cîhaza vîdeoya we, mînak; /dev/video0"
+
+#: kmplayertvsource.cpp:165
+#, kde-format
+msgid "Scan..."
+msgstr "Dinihêre..."
+
+#: kmplayertvsource.cpp:179 pref.cpp:78 pref.cpp:118 pref.cpp:736
+#, kde-format
+msgid "General"
+msgstr "Giştî"
+
+#: kmplayertvsource.cpp:259
+#, kde-format
+msgid "tv device"
+msgstr "cîhaza tv yê"
+
+#: kmplayertvsource.cpp:346
+#, kde-format
+msgid "Television"
+msgstr "Televîzyon"
+
+#: kmplayertvsource.cpp:374 kmplayertvsource.cpp:532 kmplayertvsource.cpp:583
+#, kde-format
+msgid "TV"
+msgstr "TV"
+
+#: kmplayertvsource.cpp:499
+#, kde-format
+msgid "TV: "
+msgstr "TV:"
+
+#: kmplayertvsource.cpp:610
+#, kde-format
+msgid "Device already present."
+msgstr "Cîhaz jixwe heye."
+
+#: kmplayertvsource.cpp:622
+#, kde-format
+msgid "No device found."
+msgstr "Tu cîhaz nehat dîtin."
+
+#: kmplayertvsource.cpp:645
+#, kde-format
+msgid "TVScanner"
+msgstr "TVScanner"
+
+#. i18n: ectx: Menu (file)
+#: kmplayerui.rc:5
+#, kde-format
+msgid "&File"
+msgstr "&Pel"
+
+#. i18n: ectx: Menu (vdr)
+#: kmplayerui.rc:15
+#, kde-format
+msgid "VD&R"
+msgstr "VD&R"
+
+#. i18n: ectx: Menu (settings)
+#: kmplayerui.rc:51
+#, kde-format
+msgid "&Settings"
+msgstr "&Mîheng"
+
+#: kmplayervdr.cpp:87
+#, kde-format
+msgid "XVideo port"
+msgstr "Dergeha XVideo"
+
+#: kmplayervdr.cpp:89
+#, kde-format
+msgid ""
+"Port base of the X Video extension.\n"
+"If left to default (0), the first available port will be used. However if "
+"you have multiple XVideo instances, you might have to provide the port to "
+"use here.\n"
+"See the output from 'xvinfo' for more information"
+msgstr ""
+"Bingeha dergeha dirêjahiya X Vîdeo.\n"
+"Heke standard (0) bihêlî, dergeha yekemîn ya heyî dê were bikaranîn. Lê belê "
+"heke tu gelek servîsên XVideo hebin, tu divê dergeha dê were bikaranîn li "
+"vir nîşan bikî.\n"
+"Ji bo zêdetir agahiyan derketana 'xvinfo' binihêre"
+
+#: kmplayervdr.cpp:90
+#, kde-format
+msgid "Communication port:"
+msgstr "Dergeha ragihandinê:"
+
+#: kmplayervdr.cpp:93
+#, kde-format
+msgid ""
+"Communication port with VDR. Default is port 2001.\n"
+"If you use another port, with the '-p' option of 'vdr', you must set it here "
+"too."
+msgstr ""
+"Dergeha ragihanê bi VDR. Dergeha wekî heyî 2001 e.\n"
+"Heke tu dergehekê din bi kar bînî, bi bijareya '-p' yê 'vdr', pêwist e tu li "
+"vir jî veava bikî."
+
+#: kmplayervdr.cpp:97
+#, kde-format
+msgid "Scale"
+msgstr "Pîvanekê Bide"
+
+#: kmplayervdr.cpp:98
+#, kde-format
+msgid "4:3"
+msgstr "4:3"
+
+#: kmplayervdr.cpp:99
+#, kde-format
+msgid "16:9"
+msgstr "16:9"
+
+#: kmplayervdr.cpp:100
+#, kde-format
+msgid "Aspects to use when viewing VDR"
+msgstr "Dîtinên dê werin bikaranîn di wextê dîtina VDR de"
+
+#: kmplayervdr.cpp:171 kmplayervdr.cpp:720
+#, kde-format
+msgid "VDR"
+msgstr "VDR"
+
+#: kmplayervdr.cpp:236
+#, kde-format
+msgid "Dis&connect"
+msgstr "Girêdanê &Qut Bike"
+
+#: kmplayervdr.cpp:237
+#, kde-format
+msgid "VDR Key Up"
+msgstr "VDR Bişkojka Jor"
+
+#: kmplayervdr.cpp:238
+#, kde-format
+msgid "VDR Key Down"
+msgstr "VDR Bişkojka Jêr"
+
+#: kmplayervdr.cpp:239
+#, kde-format
+msgid "VDR Key Back"
+msgstr "VDR Bişkojka Paş"
+
+#: kmplayervdr.cpp:240
+#, kde-format
+msgid "VDR Key Ok"
+msgstr "VDR Bişkojka Erê"
+
+#: kmplayervdr.cpp:241
+#, kde-format
+msgid "VDR Key Setup"
+msgstr "VDR Bişkojka Avakirinê"
+
+#: kmplayervdr.cpp:242
+#, kde-format
+msgid "VDR Key Channels"
+msgstr "VDR Bişkojka Kanalan"
+
+#: kmplayervdr.cpp:243
+#, kde-format
+msgid "VDR Key Menu"
+msgstr "VDR Bişkojka Pêşekê"
+
+#: kmplayervdr.cpp:244
+#, kde-format
+msgid "VDR Key Red"
+msgstr "VDR Bişkojka Sor"
+
+#: kmplayervdr.cpp:245
+#, kde-format
+msgid "VDR Key Green"
+msgstr "VDR Bişkojka Kesk"
+
+#: kmplayervdr.cpp:246
+#, kde-format
+msgid "VDR Key Yellow"
+msgstr "VDR Bişkojka Zer"
+
+#: kmplayervdr.cpp:247
+#, kde-format
+msgid "VDR Key Blue"
+msgstr "VDR Bişkojka Şîn"
+
+#: kmplayervdr.cpp:250
+#, kde-format
+msgid "VDR Key 0"
+msgstr "VDR Bişkojka 0"
+
+#: kmplayervdr.cpp:251
+#, kde-format
+msgid "VDR Key 1"
+msgstr "VDR Bişkojka 1"
+
+#: kmplayervdr.cpp:252
+#, kde-format
+msgid "VDR Key 2"
+msgstr "VDR Bişkojka 2"
+
+#: kmplayervdr.cpp:253
+#, kde-format
+msgid "VDR Key 3"
+msgstr "VDR Bişkojka 3"
+
+#: kmplayervdr.cpp:254
+#, kde-format
+msgid "VDR Key 4"
+msgstr "VDR Bişkojka 4"
+
+#: kmplayervdr.cpp:255
+#, kde-format
+msgid "VDR Key 5"
+msgstr "VDR Bişkojka 5"
+
+#: kmplayervdr.cpp:256
+#, kde-format
+msgid "VDR Key 6"
+msgstr "VDR Bişkojka 6"
+
+#: kmplayervdr.cpp:257
+#, kde-format
+msgid "VDR Key 7"
+msgstr "VDR Bişkojka 7"
+
+#: kmplayervdr.cpp:258
+#, kde-format
+msgid "VDR Key 8"
+msgstr "VDR Bişkojka 8"
+
+#: kmplayervdr.cpp:259
+#, kde-format
+msgid "VDR Key 9"
+msgstr "VDR Bişkojka 9"
+
+#: kmplayervdr.cpp:281
+#, kde-format
+msgid "&Connect"
+msgstr "&Girê Bide"
+
+#: kmplayervdr.cpp:444
+#, kde-format
+msgid "Host not found"
+msgstr "Host nehat dîtin"
+
+#: kmplayervdr.cpp:446
+#, kde-format
+msgid "Connection refused"
+msgstr "Girêdan hate red kirin"
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid "Custom VDR command"
+msgstr "Fermana VDR ya taybet"
+
+#: kmplayervdr.cpp:487
+#, kde-format
+msgid ""
+"You can pass commands to VDR.\n"
+"Enter 'HELP' to see a list of available commands.\n"
+"You can see VDR response in the console window.\n"
+"\n"
+"VDR Command:"
+msgstr ""
+"Tu dikarî fermanan derbas bikî VDR yê.\n"
+"Ji bo dîtina lîsteya fermanên heyî 'HELP' binivîse.\n"
+"Tu dikarî bersîva VDR di paceya konsolê de bibînî.\n"
+"\n"
+"Fermana VDR: "
+
+#: kmplayervdr.cpp:685
+#, kde-format
+msgid "Port "
+msgstr "Dergeh"
+
+#: kmplayervdr.cpp:739
+#, kde-format
+msgid "X&Video"
+msgstr "X&Vîdeo"
+
+#: kmplayerview.cpp:172
+#, kde-format
+msgid "Information"
+msgstr "Agahî"
+
+#: main.cpp:48
+#, fuzzy, kde-format
+#| msgid "Media player."
+msgid "Media player"
+msgstr "Lêdarê Medya."
+
+#: main.cpp:49
+#, fuzzy, kde-format
+#| msgid "(c) 2002-2009, Koos Vriezen"
+msgid "(c) 2002-2016, Koos Vriezen"
+msgstr "(c) 2002-2009, Koos Vriezen"
+
+#: main.cpp:50
+#, kde-format
+msgid "Koos Vriezen"
+msgstr "Koos Vriezen"
+
+#: main.cpp:50
+#, kde-format
+msgid "Maintainer"
+msgstr "Peydeker"
+
+#: main.cpp:63
+#, kde-format
+msgid "file to open"
+msgstr "pel ku vebe"
+
+#: main.cpp:63
+#, fuzzy, kde-format
+#| msgid "&File"
+msgid "+[File]"
+msgstr "&Pel"
+
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Not Running"
+msgstr "Naxebite"
+
+#: mediaobject.cpp:168
+#, kde-format
+msgid "Buffering"
+msgstr "Tê rake bîrê"
+
+#: mediaobject.cpp:168 pref.cpp:231
+#, kde-format
+msgid "Playing"
+msgstr "Lê dide "
+
+#: mediaobject.cpp:168
+#, fuzzy, kde-format
+#| msgid "&Pause"
+msgid "Paused"
+msgstr "&Bide Sekinandin"
+
+#: mediaobject.cpp:190
+#, kde-format
+msgid "Player %1 %2"
+msgstr "Lêdar %1 %2"
+
+#: playlistview.cpp:140
+#, fuzzy, kde-format
+#| msgid "&Edit mode"
+msgid "Edit &item"
+msgstr "Mod &Serast Bike"
+
+#: playlistview.cpp:255
+#, kde-format
+msgid "&Copy to Clipboard"
+msgstr "&Ji ber bigire Gulovera-mişkê"
+
+#: playlistview.cpp:262
+#, kde-format
+msgid "&Add Bookmark"
+msgstr "&Bijareyekê Lê Zêde Bike"
+
+#: playlistview.cpp:265
+#, kde-format
+msgid "&Show all"
+msgstr "Hemûyan &Nîşan Bide"
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "unnamed"
+msgstr "bênav e"
+
+#: playmodel.cpp:360
+#, kde-format
+msgid "none"
+msgstr "tune"
+
+#: playmodel.cpp:378
+#, kde-format
+msgid "[attributes]"
+msgstr "[taybetî]"
+
+#: pref.cpp:69
+#, kde-format
+msgid "Preferences"
+msgstr "Vebijêrk"
+
+#: pref.cpp:80
+#, kde-format
+msgid "Looks"
+msgstr "Xuyanî"
+
+#: pref.cpp:83
+#, kde-format
+msgid "Output"
+msgstr "Anîn"
+
+#: pref.cpp:95 pref.cpp:120
+#, kde-format
+msgid "Recording"
+msgstr "Tê tomar kirin"
+
+#: pref.cpp:101
+#, kde-format
+msgid "MEncoder"
+msgstr "MEncoder"
+
+#: pref.cpp:105
+#, kde-format
+msgid "FFMpeg"
+msgstr "FFMpeg"
+
+#: pref.cpp:123
+#, kde-format
+msgid "Output Plugins"
+msgstr "Pêvekên Derketanê"
+
+#: pref.cpp:127 pref.cpp:128
+#, kde-format
+msgid "Postprocessing"
+msgstr "Piştî Pêvajoyê"
+
+#: pref.cpp:208
+#, kde-format
+msgid "Window"
+msgstr "Pace"
+
+#: pref.cpp:211
+#, kde-format
+msgid "Keep size ratio"
+msgstr "Mezinahiya rêjeyê biparêze"
+
+#: pref.cpp:212
+#, fuzzy, kde-format
+#| msgid ""
+#| "When checked, movie will keep its aspect ratio\n"
+#| "when window is resized"
+msgid ""
+"When checked, the movie will keep its aspect ratio\n"
+"when the window is resized."
+msgstr ""
+"Wextê were nîşan kirin, fîlim dê rêjeya xwe biparêze\n"
+"wextê mezinahiya paceyê were gyherandin"
+
+#: pref.cpp:213
+#, kde-format
+msgid "Dock in system tray"
+msgstr "Di berkêşka pergalê de bi cih be "
+
+#: pref.cpp:214
+#, fuzzy, kde-format
+#| msgid ""
+#| "When checked, an icon of KMPlayer will be added to the system tray.\n"
+#| "When clicked it will hide KMPlayer's main window and removing KMPlayer's "
+#| "taskbar button."
+msgid ""
+"When checked, an icon for KMPlayer will be added to the system tray.\n"
+"When clicked, it will hide KMPlayer's main window and remove KMPlayer's task "
+"bar button."
+msgstr ""
+"Heke were nîşan kirin, îkona KMPlayer dê lê berkêşka pergalê were "
+"zêdekirin.\n"
+"Tikandina ser îkonê dê paceya KMPlayer ya mak veşêre û bişkojka darika amûrê "
+"ya KMPlayer rake."
+
+#: pref.cpp:215
+#, kde-format
+msgid "Auto resize to video sizes"
+msgstr "Bixweber mezinahiyê biguherîne mezinahiya vîdeoyê"
+
+#: pref.cpp:216
+#, fuzzy, kde-format
+#| msgid ""
+#| "When checked, KMPlayer will resize to movie sizes\n"
+#| "when video starts"
+msgid ""
+"When checked, KMPlayer will resize to movie sizes\n"
+"when video starts."
+msgstr ""
+"Wextê were nîşan kirin, mezinahiya KMPlayer diguhere mezinahiya fîliman\n"
+"demê destpêka vîdeoyê de"
+
+#: pref.cpp:220
+#, kde-format
+msgid "Remember window size on exit"
+msgstr "Derketinê de mezinahiya paceyê bi bîr bîne"
+
+#: pref.cpp:221
+#, kde-format
+msgid "Always start with fixed size"
+msgstr "Herdem bi mezinahiya ne-guherbar re destpê bike"
+
+#: pref.cpp:232
+#, kde-format
+msgid "Loop"
+msgstr "Zivr (Loop)"
+
+#: pref.cpp:233
+#, kde-format
+msgid "Makes current movie loop"
+msgstr "Zivra (loop) fîlima heyî çêdike"
+
+#: pref.cpp:234
+#, fuzzy, kde-format
+#| msgid "Allow framedrops"
+msgid "Allow frame drops"
+msgstr "Destûr bide jê birîna dîmenên fîlmê"
+
+#: pref.cpp:235
+#, kde-format
+msgid "Allow dropping frames for better audio and video synchronization"
+msgstr "Ji bo hevedemî ya deng û vîdeoyê ya baştir hinek dîmenên fîlmê jê dibe"
+
+#: pref.cpp:236
+#, kde-format
+msgid "Auto set volume on start"
+msgstr "Destpêkê de bixweber dengê ava bike"
+
+#: pref.cpp:237
+#, kde-format
+msgid ""
+"When a new source is selected, the volume will be set according the volume "
+"control"
+msgstr ""
+"Wextê çavkaniyekê nû tê hilbijartin, bilindahiya dengê gorê kontrola dengê "
+"tê avakirin"
+
+#: pref.cpp:238
+#, kde-format
+msgid "Auto set colors on start"
+msgstr "Destpêkê de bixweber rengan ava bike"
+
+#: pref.cpp:239
+#, kde-format
+msgid ""
+"When a movie starts, the colors will be set according the sliders for colors"
+msgstr ""
+"Dema fîlmek destpê dike, reng dê gorê rengên şemitandinan were ava kirin "
+
+#: pref.cpp:247
+#, kde-format
+msgid "Control Panel"
+msgstr "Panela Kontrolê"
+
+#: pref.cpp:248
+#, kde-format
+msgid "Show config button"
+msgstr "Bişkojka veavakirinê nîşan bide"
+
+#: pref.cpp:249
+#, kde-format
+msgid "Add a button that will popup a config menu"
+msgstr "Bişkojka dê pêşeka veavakirinê veke lê zêde bike"
+
+#: pref.cpp:250
+#, kde-format
+msgid "Show playlist button"
+msgstr "Bişkojka lîsteya lêdanê nîşan bide"
+
+#: pref.cpp:251
+#, kde-format
+msgid "Add a playlist button to the control buttons"
+msgstr "Lê bişkojkên kontrolê bişkojka lîsteya lêdanê zêde bike"
+
+#: pref.cpp:252
+#, kde-format
+msgid "Show record button"
+msgstr "Bişkojka tomarkirina deng/vîdeo yê nîşan bide"
+
+#: pref.cpp:253
+#, kde-format
+msgid "Add a record button to the control buttons"
+msgstr "Lê bişkojkên kontrolê bişkojka tomarkirina deng/vîdeo zêde bike"
+
+#: pref.cpp:254
+#, kde-format
+msgid "Show broadcast button"
+msgstr "Bişkojka weşanê nîşan bide"
+
+#: pref.cpp:255
+#, kde-format
+msgid "Add a broadcast button to the control buttons"
+msgstr "Lê bişkojkên kontrolê bişkojka weşanê zêde bike"
+
+#: pref.cpp:262
+#, kde-format
+msgid "Forward/backward seek time:"
+msgstr "Demê pêşve/paşve çûnê:"
+
+#: pref.cpp:269 pref.cpp:485
+#, fuzzy, kde-format
+#| msgid "Time (seconds):"
+msgid " second"
+msgid_plural " seconds"
+msgstr[0] "Dem (çirke):"
+msgstr[1] "Dem (çirke):"
+
+#: pref.cpp:271 pref.cpp:487
+#, fuzzy, kde-format
+#| msgid "Time (seconds):"
+msgid " seconds"
+msgstr "Dem (çirke):"
+
+#: pref.cpp:292
+#, kde-format
+msgid "Colors"
+msgstr "Reng"
+
+#: pref.cpp:308
+#, kde-format
+msgid "Fonts"
+msgstr "Cureyê Nivîsê"
+
+#: pref.cpp:315
+#, kde-format
+msgid "AaBbCc"
+msgstr "AaBbCc"
+
+#: pref.cpp:365
+#, kde-format
+msgid "Location:"
+msgstr "Cih:"
+
+#: pref.cpp:370
+#, kde-format
+msgid "Location of the playable item"
+msgstr "Cihê hêmanên tên lêdan"
+
+#: pref.cpp:373
+#, kde-format
+msgid "Sub title:"
+msgstr "Bin sernav:"
+
+#: pref.cpp:378
+#, kde-format
+msgid "Optional location of a file containing the subtitles of the URL above"
+msgstr "Cihê bijare ya pela binnivîsên URL ya jor dihundirîne"
+
+#: pref.cpp:381
+#, kde-format
+msgid "Load on demand"
+msgstr "Destpêkê de bar bike"
+
+#: pref.cpp:382
+#, kde-format
+msgid ""
+"When enabled, all embedded movies will start with a image that needs to be "
+"clicked to start the video playback"
+msgstr ""
+"Wextê çalak be, hemû fîlmên heyî dê bi wêneyekê destpê bike yê ku hewce ye "
+"ji bo lêdana vîdeoyê were tikandin"
+
+#: pref.cpp:383
+#, kde-format
+msgid "Grab image when 'Click to Play' detected"
+msgstr "Wêne nîşan bide wextê 'Ji bo Lêdanê Bitikîne' were diyar kirin"
+
+#: pref.cpp:384
+#, kde-format
+msgid ""
+"When enabled and a HTML object has a HREF attribute, grab and save an image "
+"of the first frame of initial link. This image will be shown instead of a "
+"default picture."
+msgstr ""
+
+#: pref.cpp:391
+#, kde-format
+msgid "Use movie player:"
+msgstr "Lêdarê fîlm bi kar bîne:"
+
+#: pref.cpp:397
+#, kde-format
+msgid "Network bandwidth"
+msgstr "Firehiya banda torê"
+
+#: pref.cpp:400
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets how much bandwidth you would prefer to allocate to video."
+msgstr ""
+
+#: pref.cpp:403
+#, kde-format
+msgid ""
+"Sometimes it is possible to choose between various streams given a "
+"particular bitrate.\n"
+"This option sets the maximum bandwidth you have available for video."
+msgstr ""
+
+#: pref.cpp:405
+#, kde-format
+msgid "Preferred bitrate:"
+msgstr "Leza lêdanê ya tê tercîh kirin:"
+
+#: pref.cpp:407 pref.cpp:410
+#, kde-format
+msgid "kbit/s"
+msgstr "kbit/ç"
+
+#: pref.cpp:408
+#, kde-format
+msgid "Maximum bitrate:"
+msgstr "Leza-bit ya leztirîn:"
+
+#: pref.cpp:450
+#, kde-format
+msgid "Output file:"
+msgstr "Pela anînê:"
+
+#: pref.cpp:455
+#, kde-format
+msgid "Current source: "
+msgstr "Çavkaniya heyî:"
+
+#: pref.cpp:457
+#, kde-format
+msgid "Recorder"
+msgstr "Tomarker"
+
+#: pref.cpp:469
+#, kde-format
+msgid "Auto Playback"
+msgstr "Lêdana Bixweber"
+
+#: pref.cpp:472
+#, kde-format
+msgid "&No"
+msgstr "&Na"
+
+#: pref.cpp:475
+#, kde-format
+msgid "&When recording finished"
+msgstr "&Wextê tomarkirin qediya"
+
+#: pref.cpp:478
+#, kde-format
+msgid "A&fter"
+msgstr "P&iştî"
+
+#: pref.cpp:491
+#, fuzzy, kde-format
+#| msgid "Name:"
+msgid "Time:"
+msgstr "Nav:"
+
+#: pref.cpp:498 pref.cpp:532 pref.cpp:540
+#, kde-format
+msgid "Start &Recording"
+msgstr "&Tomarkirinê Bide Destpêkirin"
+
+#: pref.cpp:531
+#, kde-format
+msgid "Stop &Recording"
+msgstr "&Tomarkirinê Rawestîne"
+
+#: pref.cpp:552
+#, kde-format
+msgid "Current Source: "
+msgstr "Çavkaniya Heyî:"
+
+#: pref.cpp:605
+#, kde-format
+msgid "Format"
+msgstr "Teşe"
+
+#: pref.cpp:608
+#, kde-format
+msgid "Same as source"
+msgstr "Wekî çavkaniyê"
+
+#: pref.cpp:611 pref.cpp:723
+#, kde-format
+msgid "Custom"
+msgstr "Bijare"
+
+#: pref.cpp:615
+#, kde-format
+msgid "Mencoder arguments:"
+msgstr "Şîroveyên Mencoder:"
+
+#: pref.cpp:641
+#, kde-format
+msgid "&MEncoder"
+msgstr "&MEncoder"
+
+#: pref.cpp:649
+#, kde-format
+msgid "MPlayer -&dumpstream"
+msgstr "MPlayer -&dumpstream"
+
+#: pref.cpp:656
+#, kde-format
+msgid "FFMpeg arguments:"
+msgstr "Şîroveyên FFMpeg:"
+
+#: pref.cpp:683
+#, kde-format
+msgid "&Xine"
+msgstr "&Xine"
+
+#: pref.cpp:693
+#, kde-format
+msgid ""
+"Sets video driver. Recommended is XVideo, or, if it is not supported, X11, "
+"which is slower."
+msgstr ""
+"Ajokerê vîdeoyê ava dike. XVideo tê salixdan, an jî, heke ev nayê piştgirî "
+"dan, X11, ya hêdîtir e, tê salixdan. "
+
+#: pref.cpp:711
+#, kde-format
+msgid "Enable use of postprocessing filters"
+msgstr "Bikaranîna parzûnên piştî-pêvajo yê çalak bike"
+
+#: pref.cpp:713
+#, kde-format
+msgid "Disable use of postprocessing when watching TV/DVD"
+msgstr ""
+"Bikaranîna parzûnên piştî-pêvajo yê neçalak bike wextê temaşekirina TV/DVD de"
+
+#: pref.cpp:722
+#, kde-format
+msgid "Default"
+msgstr "Wekî heyî"
+
+#: pref.cpp:724
+#, kde-format
+msgid "Fast"
+msgstr "Bi lez"
+
+#: pref.cpp:751
+#, kde-format
+msgid "Horizontal deblocking"
+msgstr "Berwarî qufl bike"
+
+#: pref.cpp:752 pref.cpp:770 pref.cpp:788
+#, kde-format
+msgid "Auto quality"
+msgstr "Qalîteya bixweber"
+
+#: pref.cpp:754 pref.cpp:772 pref.cpp:790
+#, kde-format
+msgid "Chrominance filtering"
+msgstr "Rengînî tê parzûn kirin"
+
+#: pref.cpp:769
+#, kde-format
+msgid "Vertical deblocking"
+msgstr "Tîkane qufl bike"
+
+#: pref.cpp:787
+#, kde-format
+msgid "Dering filter"
+msgstr ""
+
+#: pref.cpp:805
+#, kde-format
+msgid "Auto brightness/contrast"
+msgstr "Bixweber ronakbûn/dijberî"
+
+#: pref.cpp:806
+#, kde-format
+msgid "Stretch luminance to full range"
+msgstr ""
+
+#: pref.cpp:814
+#, kde-format
+msgid "Temporal noise reducer"
+msgstr ""
+
+#: pref.cpp:836
+#, kde-format
+msgid "Custom Preset"
+msgstr ""
+
+#: pref.cpp:842
+#, kde-format
+msgid "Linear blend deinterlacer"
+msgstr ""
+
+#: pref.cpp:843
+#, kde-format
+msgid "Linear interpolating deinterlacer"
+msgstr ""
+
+#: pref.cpp:844
+#, kde-format
+msgid "Cubic interpolating deinterlacer"
+msgstr ""
+
+#: pref.cpp:845
+#, kde-format
+msgid "Median deinterlacer"
+msgstr ""
+
+#: pref.cpp:846
+#, kde-format
+msgid "FFmpeg deinterlacer"
+msgstr ""
+
+#: pref.cpp:854
+#, kde-format
+msgid "Deinterlacing"
+msgstr ""
+
+#: pref.cpp:879
+#, kde-format
+msgid "Enable mplayer's default postprocessing filters"
+msgstr ""
+
+#: pref.cpp:880
+#, kde-format
+msgid "Enable custom postprocessing filters (See: Custom preset -tab)"
+msgstr ""
+
+#: pref.cpp:881
+#, kde-format
+msgid "Enable mplayer's fast postprocessing filters"
+msgstr ""
+
+#: pref.cpp:882 pref.cpp:883 pref.cpp:884
+#, kde-format
+msgid "Filter is used if there is enough CPU"
+msgstr ""
+
+#. i18n( "Strength of the noise reducer" ) );
+#: pref.cpp:886
+#, kde-format
+msgid "Stretches luminance to full range (0..255)"
+msgstr ""
+
+#: pref.cpp:892
+#, kde-format
+msgid ""
+"You are about to have all your settings overwritten with defaults.\n"
+"Please confirm.\n"
+msgstr ""
+
+#: pref.cpp:893
+#, kde-format
+msgid "Reset Settings?"
+msgstr "Mîhengan Vegerîne Paş?"
+
+#~ msgid "plugin"
+#~ msgstr "pêvek"
+
+#~ msgid "http://kmplayer.kde.org"
+#~ msgstr "http://kmplayer.kde.org"
+
+#~ msgid "&OK"
+#~ msgstr "&Baş"
+
+#~ msgid "&Cancel"
+#~ msgstr "&Betal"
+
+#~ msgid "Exiting..."
+#~ msgstr "Tê derketin..."
+
+#~ msgid "Url - "
+#~ msgstr "Url - "
+
+#~ msgid "&Titles"
+#~ msgstr "&Sernav"
+
+#~ msgid "&Chapters"
+#~ msgstr "&Beş"
+
+#~ msgid "DVD language pattern"
+#~ msgstr "Nîgara zimanê DVD yê"
+
+#~ msgid "DVD subtitle pattern"
+#~ msgstr "Nîgara binnivîsê DVD yê"
+
+#~ msgid "DVD titles pattern"
+#~ msgstr "Nîgara sernavên DVD yê"
+
+#~ msgid "DVD chapters pattern"
+#~ msgstr "Nîgara beşên DVD yê"
+
+#~ msgid "DVD Navigation..."
+#~ msgstr "Darika gerokê ya DVD..."
+
+#~ msgid "DVDNav"
+#~ msgstr "DVDNav"
+
+#~ msgid "&Previous"
+#~ msgstr "&Paşde"
+
+#~ msgid "&Next"
+#~ msgstr "&Pêşve"
+
+#~ msgid "&Root"
+#~ msgstr "&Kok"
+
+#~ msgid "&Up"
+#~ msgstr "&jor"
+
+#~ msgid "Audio &Language"
+#~ msgstr "&Zimanê Muzîkê"
+
+#~ msgid "&SubTitles"
+#~ msgstr "&Binnivîs"
