@@ -2,13 +2,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Giovanni Sora <g.sora@kheper.it>, 2017, 2020.
-# giovanni <g.sora@tiscali.it>, 2021.
+# giovanni <g.sora@tiscali.it>, 2021, 2023.
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2019-08-30 07:39+0200\n"
-"PO-Revision-Date: 2021-11-10 21:56+0100\n"
+"PO-Revision-Date: 2023-02-01 12:45+0100\n"
 "Last-Translator: giovanni <g.sora@tiscali.it>\n"
 "Language-Team: Interlingua <kde-i18n-doc@kde.org>\n"
 "Language: ia\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Lokalize 21.08.3\n"
+"X-Generator: Lokalize 21.12.3\n"
 
 #, kde-format
 msgctxt "NAME OF TRANSLATORS"
@@ -1013,9 +1013,9 @@ msgid "Channel"
 msgstr "Canal"
 
 #: kmplayertvsource.cpp:101
-#, kde-format
+#, fuzzy, kde-format
 msgid "Frequency (MHz)"
-msgstr ""
+msgstr "Frequentia (MHz):"
 
 #: kmplayertvsource.cpp:148
 #, kde-format
@@ -1085,9 +1085,9 @@ msgid "Device already present."
 msgstr ""
 
 #: kmplayertvsource.cpp:622
-#, kde-format
+#, fuzzy, kde-format
 msgid "No device found."
-msgstr ""
+msgstr "Nulle dispositivo  trovate"
 
 #: kmplayertvsource.cpp:645
 #, kde-format
@@ -1358,7 +1358,7 @@ msgstr "Il non es in execution"
 #: mediaobject.cpp:168
 #, kde-format
 msgid "Buffering"
-msgstr ""
+msgstr "Ponente in buffer ..."
 
 #: mediaobject.cpp:168 pref.cpp:231
 #, kde-format
