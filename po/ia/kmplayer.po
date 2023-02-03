@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2019-08-30 07:39+0200\n"
-"PO-Revision-Date: 2023-02-01 12:45+0100\n"
+"PO-Revision-Date: 2023-02-02 11:02+0100\n"
 "Last-Translator: giovanni <g.sora@tiscali.it>\n"
 "Language-Team: Interlingua <kde-i18n-doc@kde.org>\n"
 "Language: ia\n"
@@ -1013,9 +1013,9 @@ msgid "Channel"
 msgstr "Canal"
 
 #: kmplayertvsource.cpp:101
-#, fuzzy, kde-format
+#, kde-format
 msgid "Frequency (MHz)"
-msgstr "Frequentia (MHz):"
+msgstr "Frequentia (MHz)"
 
 #: kmplayertvsource.cpp:148
 #, kde-format
@@ -1085,9 +1085,9 @@ msgid "Device already present."
 msgstr ""
 
 #: kmplayertvsource.cpp:622
-#, fuzzy, kde-format
+#, kde-format
 msgid "No device found."
-msgstr "Nulle dispositivo  trovate"
+msgstr "Nulle dispositivo  trovate."
 
 #: kmplayertvsource.cpp:645
 #, kde-format
@@ -1937,6 +1937,8 @@ msgid ""
 "You are about to have all your settings overwritten with defaults.\n"
 "Please confirm.\n"
 msgstr ""
+"Tu es per haber omne tu preferentias superscribite con los predefinite.\n"
+"Pro favor tu confirma.\n"
 
 #: pref.cpp:893
 #, kde-format
