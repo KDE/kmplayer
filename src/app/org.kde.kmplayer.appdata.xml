@@ -84,6 +84,7 @@
     <p xml:lang="fi">KMPlayer on yksinkertainen MPlayer/FFMpeg/Phonon-käyttöliittymä.</p>
     <p xml:lang="fr">KMPlayer est une interface simple pour MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="gl">KMPlayer é unha interface sinxela para MPlayer, FFMpeg e Phonon.</p>
+    <p xml:lang="ia">KMPlayer e un simple interfacie per MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="id">KMPlayer adalah sebuah frontend sederhana untuk MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="it">KMPlayer è una semplice interfaccia per MPlayer/FFMpeg/Phonon.</p>
     <p xml:lang="ka">KMPlayer მარტივი ინტერფეისია MPlayer/FFMpeg/Phonon– ისთვის.</p>
@@ -115,6 +116,7 @@
     <p xml:lang="fi">Joitakin ominaisuuksia:</p>
     <p xml:lang="fr">Quelques fonctionnalités :</p>
     <p xml:lang="gl">Algunhas funcionalidades:</p>
+    <p xml:lang="ia">Alcun characteristicas:</p>
     <p xml:lang="id">Beberapa fitur:</p>
     <p xml:lang="it">Alcune funzionalità:</p>
     <p xml:lang="ka">ზოგერთი ფუნქცია:</p>
@@ -147,6 +149,7 @@
       <li xml:lang="fi">DVD/VCD-toisto (tiedostosta, verkko-osoitteesta tai videolaitteelta)</li>
       <li xml:lang="fr">lecture de films DVD/VCD (depuis un fichier ou une « URL » et depuis un lecteur vidéo)</li>
       <li xml:lang="gl">reproducir películas de DVD ou VCD (desde un ficheiro, URL ou dispositivo de vídeo)</li>
+      <li xml:lang="ia">reproduce films DVD/VCD (ab file o url e ab un dispositivo video)</li>
       <li xml:lang="id">putar film DVD/VCD (dari file atau url dan dari peranti video)</li>
       <li xml:lang="it">riproduci film su DVD/VCD (da file o URL o da un dispositivo video)</li>
       <li xml:lang="ka">"DVD/VCD" ფილმების ყურება (ფაილიდან, URL-იდან ან ვიდეომოწყობილობიდან)</li>
@@ -178,6 +181,7 @@
       <li xml:lang="fi">upotus Konqueroriin (videotoisto Konqueror-ikkunassa)</li>
       <li xml:lang="fr">intégration au sein de konqueror (lecture du film au sein de konqueror)</li>
       <li xml:lang="gl">incrustar en konqueror (a película reprodúcese dentro de konqueror)</li>
+      <li xml:lang="ia">incorpora intra konqueror (film es reproducite intra konqueror)</li>
       <li xml:lang="id">tertanam di dalam konqueror (film diputar di dalam konqueror)</li>
       <li xml:lang="it">integrato in konqueror (il film viene riprodotto dentro konqueror)</li>
       <li xml:lang="ka">conqueror-ში ჩაშენება (ფილმი konqueror-ში იქნება დაკრული)</li>
@@ -209,6 +213,7 @@
       <li xml:lang="fi">upotus khtml:ään (videotoisto HTML-sivulla)</li>
       <li xml:lang="fr">intégration au sein de khtml (lecture du film au sein d'une page html)</li>
       <li xml:lang="gl">incrustar en khtml (reprodución da película nunha páxina html)</li>
+      <li xml:lang="ia">incorpora intra khtml (reproduction de film intra un pagina html)</li>
       <li xml:lang="id">tertanam di dalam khtml (film diputar di dalam halaman khtml)</li>
       <li xml:lang="it">integrato in khtml (il film viene riprodotto in una pagina html)</li>
       <li xml:lang="ka">khtml-ში ჩაშენება (ფილმი HTML გვერდში დაიკვრება)</li>
@@ -240,6 +245,7 @@
       <li xml:lang="fi">videotallennus mencoderilla (osa mplayer-pakettia)</li>
       <li xml:lang="fr">Enregistrement de films à l'aide de mencode (faisant partie du paquet mplayer)</li>
       <li xml:lang="gl">Gravación de películas con mencoder (parte do paquete mplayer)</li>
+      <li xml:lang="ia">Registrar film usante memcoder (parte del pacchetto mplayer)</li>
       <li xml:lang="id">Perekaman film menggunakan mencoder (bagian dari paket mplayer)</li>
       <li xml:lang="it">Registrazione dei file utilizzando mencoder (parte del pacchetto mplayer)</li>
       <li xml:lang="ka">ფილმების კოდირება mencoder-ით (წარმოადგენს mplayaer-ის პაკეტის ნაწილს)</li>
@@ -271,6 +277,7 @@
       <li xml:lang="fi">ei tallennuksen aikaista videota, mutta toistoa varten voi avata uuden ikkunan</li>
       <li xml:lang="fr">Pas de vidéo durant l'enregistrement, mais vous pouvez toujours ouvrir une nouvelle fenêtre et le jouer</li>
       <li xml:lang="gl">Non hai vídeo mentres se grava, pero pode abrir unha nova xanela e reproducilo</li>
+      <li xml:lang="ia">Nulle video durante registration, ma tu sempre pote aperir un nove fenestra e reproducer lo)</li>
       <li xml:lang="id">Tidak ada video selagi merekam, tetapi kamu selalu bisa membuka jendela baru dan memutarnya</li>
       <li xml:lang="it">Nessun video durante la registrazione, ma puoi sempre aprire una nuova finestra e riprodurlo</li>
       <li xml:lang="ka">ჩაწერის დროს ვიდეოს ვერ დაინახავთ, მაგრამ დასაკრავად ახალი ფანჯრის გასხსნას არავინ გიშლით</li>
@@ -302,6 +309,7 @@
       <li xml:lang="fi">lähetys ja HTTP-suoratoisto ffserverillä/ffmpegillä</li>
       <li xml:lang="fr">Diffusion, streaming http, grâce à ffserver / ffmpeg</li>
       <li xml:lang="gl">Emisión regular e por https usando ffserver ou ffmpeg</li>
+      <li xml:lang="ia">Diffunder (broadcasting), streaming http, usante ffserver/ffmpeg</li>
       <li xml:lang="id">Menyiarkan, http streaming, menggunakan ffserver/ffmpeg</li>
       <li xml:lang="it">Trasmissione, trasmissione http, utilizzando ffserver/ffmpeg</li>
       <li xml:lang="ka">მაუწყებლობა და http სტრიმინგი, ffserver/ffmpeg-ის გამოყენებით</li>
@@ -333,6 +341,7 @@
       <li xml:lang="fi">TV-lähteisiin tarvitaan v4lctl (osa xawtv-pakettia)</li>
       <li xml:lang="fr">Pour les sources TV, vous aurez besoin de v4lctl (qui fait partie du paquet xawtv)</li>
       <li xml:lang="gl">Para fontes de TV necesita v4lctl (parte do paquete xawtv)</li>
+      <li xml:lang="ia">Per fontes TV, tu necessita v4lctl (parte del pacchetto xawtv)</li>
       <li xml:lang="id">Untuk sumber TV, kamu perlu v4lctl (bagian dari paket xawtv)</li>
       <li xml:lang="it">Per le sorgenti TV, hai bisogno di v4lctl (parte del pacchetto xawtv)</li>
       <li xml:lang="ka">TV-ის წყაროსთვის v4cl გჭირდებათ (წარმოადგენს xawtv პაკეტის ნაწილს)</li>
