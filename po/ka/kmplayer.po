@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2019-08-30 07:39+0200\n"
-"PO-Revision-Date: 2023-02-08 08:11+0100\n"
+"PO-Revision-Date: 2023-02-18 07:44+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <kde-i18n-doc@kde.org>\n"
 "Language: ka\n"
@@ -416,7 +416,7 @@ msgstr "KMPlayer"
 #: kmplayer_part.cpp:113
 #, kde-format
 msgid "Embedded MPlayer for KDE"
-msgstr ""
+msgstr "ჩაშენებული MPlayer-ი KDE-სთვის"
 
 #: kmplayer_part.cpp:768
 #, no-c-format, kde-format
