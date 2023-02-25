@@ -547,8 +547,7 @@ qdbus org.kde.kmplayer-$PID /kmplayer/MainWindow_1 showFullScreen
 >Tradução de Marcus Gama <email
 >marcus.gama@gmail.com</email
 ></para
-> 
-&underFDL; &underGPL; </chapter>
+> &underFDL; &underGPL; </chapter>
 
 &documentation.index;
 </book>
