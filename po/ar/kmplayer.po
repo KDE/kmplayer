@@ -1923,7 +1923,7 @@ msgstr "أأصفّر اﻹعدادات؟"
 #: part/kmplayer_part.cpp:103
 #, kde-format
 msgid "Embedded MPlayer by KDE"
-msgstr "برنامج كي ام بلاير المضمَّن في كدي"
+msgstr "برنامج كي ام بلاير المضمَّن في كِيدِي"
 
 #: part/kmplayer_part.cpp:770
 #, no-c-format, kde-format
