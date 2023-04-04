@@ -1,6 +1,6 @@
 # KDE Finnish translation sprint participants:
 # Author: Artnay
-# Tommi Nieminen <translator@legisign.org>, 2012, 2014, 2018, 2019.
+# Tommi Nieminen <translator@legisign.org>, 2012, 2014, 2018, 2019, 2023.
 # Jiri Grönroos <jiri.gronroos+kde@iki.fi>, 2012.
 # Lasse Liehu <lasse.liehu@gmail.com>, 2013, 2014, 2022.
 msgid ""
@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2019-08-30 07:39+0200\n"
-"PO-Revision-Date: 2019-01-25 20:00+0200\n"
+"PO-Revision-Date: 2023-04-02 16:19+0300\n"
 "Last-Translator: Tommi Nieminen <translator@legisign.org>\n"
 "Language-Team: Finnish <kde-i18n-doc@kde.org>\n"
 "Language: fi\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-POT-Import-Date: 2012-12-01 22:20:54+0000\n"
-"X-Generator: Lokalize 22.08.2\n"
+"X-Generator: Lokalize 22.12.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #, kde-format
@@ -82,7 +82,7 @@ msgstr "Tyhjennä &historia"
 #: kmplayer.cpp:204
 #, kde-format
 msgid "&Generators"
-msgstr ""
+msgstr "&Generaattorit"
 
 #. i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
 #. new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
@@ -517,7 +517,7 @@ msgstr "Kuvataajuus (Hz):"
 #: kmplayerbroadcast.cpp:222
 #, kde-format
 msgid "Gop size:"
-msgstr ""
+msgstr "Gop-koko:"
 
 #: kmplayerbroadcast.cpp:223
 #, kde-format
