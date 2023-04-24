@@ -5,7 +5,7 @@
 # Marce Villarino <mvillarino@users.sourceforge.net>, 2009.
 # Marce Villarino <mvillarino@gmail.com>, 2010, 2013.
 # Adrián Chaves Fernández (Gallaecio) <adriyetichaves@gmail.com>, 2017.
-# Adrián Chaves (Gallaecio) <adrian@chaves.io>, 2017, 2018, 2019, 2020.
+# Adrián Chaves (Gallaecio) <adrian@chaves.io>, 2017, 2018, 2019, 2020, 2023.
 #
 # Manuel A. Vazquez <xixireiATyahooDOTes>, 2012.
 msgid ""
@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2019-08-30 07:39+0200\n"
-"PO-Revision-Date: 2020-01-12 12:00+0100\n"
+"PO-Revision-Date: 2023-04-23 07:53+0200\n"
 "Last-Translator: Adrián Chaves (Gallaecio) <adrian@chaves.io>\n"
 "Language-Team: Galician <proxecto@trasno.gal>\n"
 "Language: gl\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Lokalize 19.08.3\n"
+"X-Generator: Lokalize 22.12.3\n"
 
 #, kde-format
 msgctxt "NAME OF TRANSLATORS"
@@ -703,7 +703,7 @@ msgstr "XVideo"
 #: kmplayerconfig.cpp:84
 #, kde-format
 msgid "Video Decode and Presentation API for Unix"
-msgstr "API de decodificación de vídeo e presentación para UNIX"
+msgstr "API de descodificación de vídeo e presentación para UNIX"
 
 #: kmplayerconfig.cpp:95
 #, kde-format
@@ -823,7 +823,7 @@ msgstr "Core&s"
 #: kmplayercontrolpanel.cpp:456 kmplayercontrolpanel.cpp:458
 #, kde-format
 msgid "&Audio languages"
-msgstr "Idioma&as do audio"
+msgstr "Idioma&s de son"
 
 #: kmplayercontrolpanel.cpp:459
 #, kde-format
@@ -1387,7 +1387,7 @@ msgstr "Non está a executarse"
 #: mediaobject.cpp:168
 #, kde-format
 msgid "Buffering"
-msgstr "Cargando no buffer"
+msgstr "Cargando no búfer"
 
 #: mediaobject.cpp:168 pref.cpp:231
 #, kde-format
@@ -1585,7 +1585,7 @@ msgstr "Axustar automaticamente as cores no inicio"
 msgid ""
 "When a movie starts, the colors will be set according the sliders for colors"
 msgstr ""
-"Cando comece o filme, as cores serán axustadas segundo as barras deslizantes"
+"Cando comece o filme, as cores serán axustadas segundo os desprazadores"
 
 #: pref.cpp:247
 #, kde-format
@@ -1825,7 +1825,7 @@ msgstr "Formato"
 #: pref.cpp:608
 #, kde-format
 msgid "Same as source"
-msgstr "Idéntico ao da orixen"
+msgstr "Idéntico ao da orixe"
 
 #: pref.cpp:611 pref.cpp:723
 #, kde-format
@@ -1869,12 +1869,12 @@ msgstr ""
 #: pref.cpp:711
 #, kde-format
 msgid "Enable use of postprocessing filters"
-msgstr "Activar o uso dos filtros de post-procesamento"
+msgstr "Activar o uso dos filtros de posprocesamento"
 
 #: pref.cpp:713
 #, kde-format
 msgid "Disable use of postprocessing when watching TV/DVD"
-msgstr "Desactivar o uso dos filtros de post-procesamento ao ver TV/DVD"
+msgstr "Desactivar o uso dos filtros de posprocesamento ao ver TV/DVD"
 
 #: pref.cpp:722
 #, kde-format
@@ -1934,22 +1934,22 @@ msgstr "Predefinicións personalizadas"
 #: pref.cpp:842
 #, kde-format
 msgid "Linear blend deinterlacer"
-msgstr "Desentrelazamento por mestura linear"
+msgstr "Desentrelazado por mestura linear"
 
 #: pref.cpp:843
 #, kde-format
 msgid "Linear interpolating deinterlacer"
-msgstr "Desentrelazamento por interpolación linear"
+msgstr "Desentrelazado por interpolación linear"
 
 #: pref.cpp:844
 #, kde-format
 msgid "Cubic interpolating deinterlacer"
-msgstr "Desentrelazamento por interpolación cúbica"
+msgstr "Desentrelazado por interpolación cúbica"
 
 #: pref.cpp:845
 #, kde-format
 msgid "Median deinterlacer"
-msgstr "Desentrelazamento pola mediana"
+msgstr "Desentrelazado pola mediana"
 
 #: pref.cpp:846
 #, kde-format
@@ -1959,24 +1959,24 @@ msgstr "Desentrelazado de FFmpeg"
 #: pref.cpp:854
 #, kde-format
 msgid "Deinterlacing"
-msgstr "Desentrelazamento"
+msgstr "Desentrelazado"
 
 #: pref.cpp:879
 #, kde-format
 msgid "Enable mplayer's default postprocessing filters"
-msgstr "Activa os filtros de post-procesamento predeterminados de mplayer"
+msgstr "Activa os filtros de posprocesamento predeterminados de mplayer"
 
 #: pref.cpp:880
 #, kde-format
 msgid "Enable custom postprocessing filters (See: Custom preset -tab)"
 msgstr ""
-"Activa os filtros de post-procesamento personalizados (consulte o separador "
-"de predefinicións)"
+"Activa os filtros de posprocesamento personalizados (consulte o separador de "
+"predefinicións)"
 
 #: pref.cpp:881
 #, kde-format
 msgid "Enable mplayer's fast postprocessing filters"
-msgstr "Activa os filtros rápidos de post-procesamento de mplayer"
+msgstr "Activa os filtros rápidos de posprocesamento de mplayer"
 
 #: pref.cpp:882 pref.cpp:883 pref.cpp:884
 #, kde-format
@@ -1995,7 +1995,7 @@ msgid ""
 "You are about to have all your settings overwritten with defaults.\n"
 "Please confirm.\n"
 msgstr ""
-"Está a piques de sobrescriber todos os seus axustes cos valores "
+"Está a piques de sobrescribir todos os seus axustes cos valores "
 "predeterminados.\n"
 "Confírmeo.\n"
 
