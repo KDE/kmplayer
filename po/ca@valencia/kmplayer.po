@@ -1911,7 +1911,7 @@ msgstr "Filtre d'anells"
 #: pref.cpp:805
 #, kde-format
 msgid "Auto brightness/contrast"
-msgstr "Lluminositat/contrast automàtic"
+msgstr "Brillantor/contrast automàtic"
 
 #: pref.cpp:806
 #, kde-format
