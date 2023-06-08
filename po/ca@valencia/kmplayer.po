@@ -290,7 +290,7 @@ msgstr "Sup&rimix element"
 #: kmplayer.cpp:1444
 #, kde-format
 msgid "&Move up"
-msgstr "&Mou amunt"
+msgstr "&Mou cap amunt"
 
 #: kmplayer.cpp:1446
 #, kde-format
