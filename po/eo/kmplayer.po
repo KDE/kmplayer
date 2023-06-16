@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-11-12 00:46+0000\n"
-"PO-Revision-Date: 2023-03-22 19:13+0100\n"
+"PO-Revision-Date: 2023-06-15 21:48+0100\n"
 "Last-Translator: Oliver Kellogg <okellogg@users.sourceforge.net>\n"
 "Language-Team: esperanto <kde-i18n-eo@kde.org>\n"
 "Language: eo\n"
@@ -633,7 +633,7 @@ msgstr "Konfirmi"
 #: app/kmplayertvsource.cpp:160
 #, kde-format
 msgid "Driver:"
-msgstr "Ŝoforo:"
+msgstr "Pelilo:"
 
 #: app/kmplayertvsource.cpp:162
 #, kde-format
@@ -1822,7 +1822,7 @@ msgid ""
 "Sets video driver. Recommended is XVideo, or, if it is not supported, X11, "
 "which is slower."
 msgstr ""
-"Agordas video-ŝoforon. Rekomendita estas XVideo, aŭ, se ĝi ne estas "
+"Agordas video-pelilon. Rekomendita estas XVideo, aŭ, se ĝi ne estas "
 "subtenata, X11, kiu estas pli malrapida."
 
 #: lib/pref.cpp:696
