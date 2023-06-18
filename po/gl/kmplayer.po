@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-11-12 00:46+0000\n"
-"PO-Revision-Date: 2023-04-23 07:53+0200\n"
+"PO-Revision-Date: 2023-06-17 14:02+0200\n"
 "Last-Translator: Adrián Chaves (Gallaecio) <adrian@chaves.io>\n"
 "Language-Team: Galician <proxecto@trasno.gal>\n"
 "Language: gl\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Lokalize 22.12.3\n"
+"X-Generator: Lokalize 23.04.2\n"
 
 #, kde-format
 msgctxt "NAME OF TRANSLATORS"
@@ -156,7 +156,7 @@ msgstr "&Copiar aquí"
 #: app/kmplayer.cpp:291
 #, kde-format
 msgid "&Delete"
-msgstr "&Borrar"
+msgstr "&Eliminar"
 
 #: app/kmplayer.cpp:327 lib/kmplayerview.cpp:326
 #, kde-format
@@ -181,7 +181,7 @@ msgstr "Abrindo o VCD…"
 #: app/kmplayer.cpp:427
 #, kde-format
 msgid "Opening Audio CD..."
-msgstr "Abrindo o CD de música…"
+msgstr "Abrindo o CD de son…"
 
 #: app/kmplayer.cpp:432
 #, kde-format
@@ -282,7 +282,7 @@ msgstr "Novo grupo"
 #: app/kmplayer.cpp:1428
 #, kde-format
 msgid "&Delete item"
-msgstr "&Borrar o elemento"
+msgstr "&Eliminar o elemento"
 
 #: app/kmplayer.cpp:1431
 #, kde-format
@@ -327,7 +327,7 @@ msgstr "DVD"
 #: app/kmplayer.cpp:1539
 #, kde-format
 msgid "CDROM - Audio Compact Disk"
-msgstr "CDROM, disco compacto de audio"
+msgstr "CDROM, disco compacto de son"
 
 #: app/kmplayer.cpp:1540
 #, kde-format
@@ -455,17 +455,17 @@ msgstr "Só funcionan os formatos AVI, MPEG e RM para reproducir con mplayer"
 #: app/kmplayerbroadcast.cpp:204
 #, kde-format
 msgid "Audio codec:"
-msgstr "Códec de audio:"
+msgstr "Códec de son:"
 
 #: app/kmplayerbroadcast.cpp:205
 #, kde-format
 msgid "Audio bit rate (kbit):"
-msgstr "Taxa de bits do audio (kbit):"
+msgstr "Taxa de bits do son (kbit):"
 
 #: app/kmplayerbroadcast.cpp:206
 #, kde-format
 msgid "Audio sample rate (Hz):"
-msgstr "Taxa de mostraxe de audio (Hz):"
+msgstr "Taxa de mostraxe de son (Hz):"
 
 #: app/kmplayerbroadcast.cpp:207
 #, kde-format
@@ -530,7 +530,7 @@ msgstr "Gardar"
 #: app/kmplayerbroadcast.cpp:236 app/kmplayertvsource.cpp:111
 #, kde-format
 msgid "Delete"
-msgstr "Borrar"
+msgstr "Eliminar"
 
 #: app/kmplayerbroadcast.cpp:250 app/kmplayerbroadcast.cpp:586
 #, kde-format
@@ -580,7 +580,7 @@ msgstr "Dispositivo de vídeo:"
 #: app/kmplayertvsource.cpp:55
 #, kde-format
 msgid "Audio device:"
-msgstr "Dispositivo de audio:"
+msgstr "Dispositivo de son:"
 
 #: app/kmplayertvsource.cpp:57
 #, kde-format
@@ -1285,7 +1285,7 @@ msgstr "Patrón das pistas do VCD"
 #: lib/kmplayerprocess.cpp:1004
 #, kde-format
 msgid "Audio CD tracks pattern"
-msgstr "Patrón das pistas do CD de música"
+msgstr "Patrón das pistas do CD de son"
 
 #: lib/kmplayerprocess.cpp:1025
 #, kde-format
