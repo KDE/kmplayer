@@ -267,7 +267,7 @@ msgstr "Listo"
 #: app/kmplayer.cpp:1229
 #, kde-format
 msgid "Show Menu Bar with %1"
-msgstr "Mostrar a barra de menú con %1"
+msgstr "Amosar a barra de menú con %1"
 
 #: app/kmplayer.cpp:1308
 #, kde-format
@@ -1573,7 +1573,7 @@ msgstr "Panel de control"
 #: lib/pref.cpp:241
 #, kde-format
 msgid "Show config button"
-msgstr "Mostrar o botón de configuración"
+msgstr "Amosar o botón de configuración"
 
 #: lib/pref.cpp:242
 #, kde-format
@@ -1583,7 +1583,7 @@ msgstr "Engade un botón que mostra un menú de configuración"
 #: lib/pref.cpp:243
 #, kde-format
 msgid "Show playlist button"
-msgstr "Mostrar o botón da lista de reprodución"
+msgstr "Amosar o botón da lista de reprodución"
 
 #: lib/pref.cpp:244
 #, kde-format
@@ -1593,7 +1593,7 @@ msgstr "Engade un botón para a lista de reprodución aos botóns de control"
 #: lib/pref.cpp:245
 #, kde-format
 msgid "Show record button"
-msgstr "Mostrar o botón de gravación"
+msgstr "Amosar o botón de gravación"
 
 #: lib/pref.cpp:246
 #, kde-format
@@ -1603,7 +1603,7 @@ msgstr "Engade un botón de gravación aos botóns de control"
 #: lib/pref.cpp:247
 #, kde-format
 msgid "Show broadcast button"
-msgstr "Mostrar o botón de retransmitir"
+msgstr "Amosar o botón de retransmitir"
 
 #: lib/pref.cpp:248
 #, kde-format
@@ -1685,7 +1685,7 @@ msgid ""
 msgstr ""
 "Se escolle esta opción e un obxecto HTML ten un atributo HREF, captura e "
 "garda unha imaxe do primeiro fotograma da ligazón inicial. Esta imaxe será "
-"mostrada no canto da imaxe predeterminada."
+"amosada no canto da imaxe predeterminada."
 
 #: lib/pref.cpp:380
 #, kde-format
