@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2019-08-30 07:39+0200\n"
-"PO-Revision-Date: 2023-06-15 16:01+0200\n"
+"PO-Revision-Date: 2023-06-23 08:40+0200\n"
 "Last-Translator: Vit Pelcak <vit@pelcak.org>\n"
 "Language-Team: Czech <kde-i18n-doc@kde.org>\n"
 "Language: cs\n"
@@ -1467,7 +1467,7 @@ msgstr "Výstupní přídavné moduly"
 #: pref.cpp:127 pref.cpp:128
 #, kde-format
 msgid "Postprocessing"
-msgstr "Postprocessing"
+msgstr "Následné zpracování"
 
 #: pref.cpp:208
 #, kde-format
@@ -1856,12 +1856,12 @@ msgstr ""
 #: pref.cpp:711
 #, kde-format
 msgid "Enable use of postprocessing filters"
-msgstr "Povolit použití filtrů pro postprocessing"
+msgstr "Povolit použití filtrů pro následné zpracování"
 
 #: pref.cpp:713
 #, kde-format
 msgid "Disable use of postprocessing when watching TV/DVD"
-msgstr "Zakázat použití postprocessingu při sledování TV/DVD"
+msgstr "Zakázat použití následného zpracování při sledování TV/DVD"
 
 #: pref.cpp:722
 #, kde-format
