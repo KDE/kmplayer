@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-11-12 00:46+0000\n"
-"PO-Revision-Date: 2023-06-17 14:02+0200\n"
+"PO-Revision-Date: 2023-06-24 12:56+0200\n"
 "Last-Translator: Adrián Chaves (Gallaecio) <adrian@chaves.io>\n"
 "Language-Team: Galician <proxecto@trasno.gal>\n"
 "Language: gl\n"
@@ -186,12 +186,12 @@ msgstr "Abrindo o CD de son…"
 #: app/kmplayer.cpp:432
 #, kde-format
 msgid "Opening pipe..."
-msgstr "Abrindo o pipe…"
+msgstr "Abrindo o cano…"
 
 #: app/kmplayer.cpp:434
 #, kde-format
 msgid "Read From Pipe"
-msgstr "Ler do pipe"
+msgstr "Ler do cano"
 
 #: app/kmplayer.cpp:435
 #, kde-format
@@ -390,12 +390,12 @@ msgstr "CD de son"
 #: app/kmplayer.cpp:1830
 #, kde-format
 msgid "Pipe"
-msgstr "Pipe"
+msgstr "Cano"
 
 #: app/kmplayer.cpp:1862
 #, kde-format
 msgid "Pipe - %1"
-msgstr "Pipe - %1"
+msgstr "Cano — %1"
 
 #: app/kmplayer_lists.cpp:83
 #, kde-format
@@ -760,7 +760,7 @@ msgid ""
 "too."
 msgstr ""
 "O porto de comunicación co VDR. O predeterminado é o 2001.\n"
-"Se utiliza outro porto, coa opción '-p' de «vdr», debe indicalo aquí tamén."
+"Se utiliza outro porto, coa opción '-p' de «vdr», debe definilo aquí tamén."
 
 #: app/kmplayervdr.cpp:83
 #, kde-format
@@ -1400,7 +1400,7 @@ msgstr "&Engadir un marcador"
 #: lib/playlistview.cpp:250
 #, kde-format
 msgid "&Show all"
-msgstr "Mo&strar todo"
+msgstr "Amo&salo todo"
 
 #: lib/playmodel.cpp:350
 #, kde-format
@@ -1550,8 +1550,8 @@ msgid ""
 "When a new source is selected, the volume will be set according the volume "
 "control"
 msgstr ""
-"Cando escolla unha nova fonte, o volume será configurado de acordo co "
-"control de volume"
+"Cando escolla unha nova fonte, o volume definirase de acordo co control de "
+"volume"
 
 #: lib/pref.cpp:231
 #, kde-format
@@ -1563,7 +1563,7 @@ msgstr "Axustar automaticamente as cores no inicio"
 msgid ""
 "When a movie starts, the colors will be set according the sliders for colors"
 msgstr ""
-"Cando comece o filme, as cores serán axustadas segundo os desprazadores"
+"Cando comece o filme, as cores definiranse segundo os controis esvaradíos"
 
 #: lib/pref.cpp:240
 #, kde-format
@@ -1578,7 +1578,7 @@ msgstr "Amosar o botón de configuración"
 #: lib/pref.cpp:242
 #, kde-format
 msgid "Add a button that will popup a config menu"
-msgstr "Engade un botón que mostra un menú de configuración"
+msgstr "Engade un botón que amosa un menú de configuración"
 
 #: lib/pref.cpp:243
 #, kde-format
@@ -1715,9 +1715,8 @@ msgid ""
 "particular bitrate.\n"
 "This option sets the maximum bandwidth you have available for video."
 msgstr ""
-"Ás veces é posíbel escoller entre varias transmisións segundo a taxa de "
-"bits.\n"
-"Esta opción indica canta largura de banda ten como máximo para dedicar ao "
+"Ás veces pode escoller entre varias transmisións segundo a taxa de bits.\n"
+"Esta opción define canta largura de banda ten como máximo para dedicar ao "
 "vídeo."
 
 #: lib/pref.cpp:394
@@ -1836,8 +1835,8 @@ msgid ""
 "Sets video driver. Recommended is XVideo, or, if it is not supported, X11, "
 "which is slower."
 msgstr ""
-"Escolle o controlador de vídeo. Recoméndase o XVideo, ou, se este non está "
-"soportado, o X11, que é máis lento."
+"Define o controlador de vídeo. Recoméndase XVideo se é compatíbel, ou senón "
+"X11, que é máis lento."
 
 #: lib/pref.cpp:696
 #, kde-format
@@ -1954,7 +1953,7 @@ msgstr "Activa os filtros rápidos de posprocesamento de mplayer"
 #: lib/pref.cpp:867 lib/pref.cpp:868 lib/pref.cpp:869
 #, kde-format
 msgid "Filter is used if there is enough CPU"
-msgstr "O filtro é empregado se hai CPU de abondo"
+msgstr "O filtro úsase se hai procesador dabondo"
 
 #. i18n( "Strength of the noise reducer" ) );
 #: lib/pref.cpp:871
@@ -1975,7 +1974,7 @@ msgstr ""
 #: lib/pref.cpp:878
 #, kde-format
 msgid "Reset Settings?"
-msgstr "Desexa anular a configuración?"
+msgstr "Quere restabelecer a configuración?"
 
 #: part/kmplayer_part.cpp:103
 #, kde-format
