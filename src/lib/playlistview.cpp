@@ -588,3 +588,5 @@ void PlayListView::slotFindNext () {
     }
     m_find_next->setEnabled (!!m_current_find_elm);*/
 }
+
+#include "moc_playlistview.cpp"

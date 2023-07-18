@@ -1867,3 +1867,5 @@ void KMPlayerPipeSource::setCommand (const QString & cmd) {
     if (m_document)
         m_document->mrl ()->title = cmd;
 }
+
+#include "moc_kmplayer.cpp"

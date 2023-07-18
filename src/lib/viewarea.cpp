@@ -2660,3 +2660,5 @@ void VideoOutput::setCurrentBackgroundColor (const QColor & c) {
         xcb_flush(connection);
     }
 }
+
+#include "moc_viewarea.cpp"

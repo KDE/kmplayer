@@ -733,3 +733,5 @@ void ControlPanel::actionToggled (QAction* act) {
 }
 
 //-----------------------------------------------------------------------------
+
+#include "moc_kmplayercontrolpanel.cpp"

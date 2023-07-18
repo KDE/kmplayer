@@ -2309,3 +2309,5 @@ void NpPlayer::streamRedirected(uint32_t, const QUrl&) {}
 void NpPlayer::terminateJobs () {}
 
 #endif
+
+#include "moc_kmplayerprocess.cpp"

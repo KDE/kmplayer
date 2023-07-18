@@ -576,3 +576,5 @@ int View::statusBarHeight () const {
     }
     return 0;
 }
+
+#include "moc_kmplayerview.cpp"

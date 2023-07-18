@@ -714,3 +714,4 @@ KMPlayer::Node *GeneratorElement::childFromTag (const QString &tag) {
     return nullptr;
 }
 
+#include "moc_kmplayer_lists.cpp"

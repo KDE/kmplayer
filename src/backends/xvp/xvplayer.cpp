@@ -691,3 +691,5 @@ int main(int argc, char **argv) {
 }
 
 #include "xvplayer.moc"
+
+#include "moc_xvplayer.cpp"

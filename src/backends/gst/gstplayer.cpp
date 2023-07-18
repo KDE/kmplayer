@@ -1013,3 +1013,5 @@ int main(int argc, char **argv) {
 }
 
 #include "gstplayer.moc"
+
+#include "moc_gstplayer.cpp"

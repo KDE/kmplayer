@@ -454,3 +454,5 @@ PlayItem *PlayModel::updateTree (TopPlayItem *ritem, NodePtr active) {
 
     return curitem;
 }
+
+#include "moc_playmodel.cpp"

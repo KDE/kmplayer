@@ -766,3 +766,5 @@ void Settings::okPressed () {
 void Settings::getHelp () {
    // KApplication::kApplication()->invokeBrowser ("man:/mplayer");
 }
+
+#include "moc_kmplayerconfig.cpp"

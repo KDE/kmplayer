@@ -1531,3 +1531,5 @@ void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     args.push_back (qMakePair (KParts::LiveConnectExtension::TypeString, jscode));
     Q_EMIT partEvent (0, "eval", args);
 }
+
+#include "moc_kmplayer_part.cpp"

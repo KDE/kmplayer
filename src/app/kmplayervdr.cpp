@@ -773,3 +773,5 @@ bool XVideo::ready () {
 }
 
 #include "kmplayervdr.moc"
+
+#include "moc_kmplayervdr.cpp"

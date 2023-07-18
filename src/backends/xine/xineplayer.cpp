@@ -1223,3 +1223,5 @@ int main(int argc, char **argv) {
 }
 
 #include "xineplayer.moc"
+
+#include "moc_xineplayer.cpp"

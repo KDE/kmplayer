@@ -1576,3 +1576,5 @@ void URLSource::setUrl (const QString &url) {
 }
 
 //-----------------------------------------------------------------------------
+
+#include "moc_kmplayerpartbase.cpp"

@@ -905,3 +905,5 @@ void Preferences::setDefaults() {
 	m_OPPagePostproc->FfmpegDeinterlacer->setChecked(false);
 
 }
+
+#include "moc_pref.cpp"
