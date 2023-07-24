@@ -215,7 +215,7 @@ msgstr "종료"
 #: app/kmplayer.cpp:1033
 #, kde-format
 msgid "Opening a new application window..."
-msgstr "새 프로그램 창 열기..."
+msgstr "새 앱 창 열기..."
 
 #: app/kmplayer.cpp:1061
 #, kde-format
