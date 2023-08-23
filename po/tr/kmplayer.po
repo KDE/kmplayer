@@ -17,7 +17,7 @@ msgstr ""
 "Project-Id-Version: extragear-multimedia-kde4\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2019-08-30 07:39+0200\n"
-"PO-Revision-Date: 2023-08-02 01:10+0300\n"
+"PO-Revision-Date: 2023-08-22 23:07+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
 "Language: tr\n"
@@ -118,17 +118,17 @@ msgstr "&Oluşturucular"
 #: kmplayer.cpp:235
 #, kde-format
 msgid "Enables/disables the status bar"
-msgstr "Durum çubuğunu etkinleştirir/pasifleştirir"
+msgstr "Durum çubuğunu etkinleştirir/devre dışı bırakır"
 
 #: kmplayer.cpp:236
 #, kde-format
 msgid "Enables/disables the menu bar"
-msgstr "Menü çubuğunu etkinleştirir/pasifleştirir"
+msgstr "Menü çubuğunu etkinleştirir/devre dışı bırakır"
 
 #: kmplayer.cpp:237
 #, kde-format
 msgid "Enables/disables the toolbar"
-msgstr "Araç çubuğunu aktifleştir/devre dışı bırak"
+msgstr "Araç çubuğunu etkinleştirir/devre dışı bırakır"
 
 #: kmplayer.cpp:244 kmplayer.cpp:452 kmplayer.cpp:706 kmplayer.cpp:1050
 #: kmplayer.cpp:1199 kmplayer.cpp:1584 kmplayer.cpp:1716 kmplayer.cpp:1818
