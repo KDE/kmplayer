@@ -1061,7 +1061,7 @@ msgstr "Dispositiu:"
 #: kmplayertvsource.cpp:164
 #, kde-format
 msgid "Path to your video device, eg. /dev/video0"
-msgstr "Camí cap al dispositiu de vídeo, p. ex. /dev/video0"
+msgstr "Camí cap al dispositiu de vídeo, p. ex., /dev/video0"
 
 #: kmplayertvsource.cpp:165
 #, kde-format
