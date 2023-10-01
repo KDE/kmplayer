@@ -743,8 +743,7 @@ msgid ""
 msgstr ""
 "O porto base da extensión X Video.\n"
 "Se deixa valor por omisión (0), usarase o primeiro porto dispoñíbel. Porén "
-"se tivese varias instancias de XVideo pode ter que indicar o porto a "
-"utilizar.\n"
+"se tivese varias instancias de XVideo pode ter que indicar o porto a usar.\n"
 "Consulte a saída de «xvinfo» para máis información"
 
 #: app/kmplayervdr.cpp:76
@@ -760,7 +759,7 @@ msgid ""
 "too."
 msgstr ""
 "O porto de comunicación co VDR. O predeterminado é o 2001.\n"
-"Se utiliza outro porto, coa opción '-p' de «vdr», debe definilo aquí tamén."
+"Se usa outro porto, coa opción '-p' de «vdr», debe definilo aquí tamén."
 
 #: app/kmplayervdr.cpp:83
 #, kde-format
@@ -780,7 +779,7 @@ msgstr "16:9"
 #: app/kmplayervdr.cpp:86
 #, kde-format
 msgid "Aspects to use when viewing VDR"
-msgstr "Proporcións a utilizar ao ver VDR"
+msgstr "Proporcións a usar ao ver VDR"
 
 #: app/kmplayervdr.cpp:157 app/kmplayervdr.cpp:706
 #, kde-format
@@ -1034,7 +1033,7 @@ msgstr "Advanced Linux Sound Architecture v0.9"
 #: lib/kmplayerconfig.cpp:56
 #, kde-format
 msgid "Use back-end defaults"
-msgstr "Utilizar o predeterminado da infraestrutura"
+msgstr "Usar o predeterminado da infraestrutura"
 
 #: lib/kmplayerconfig.cpp:57
 #, kde-format
@@ -1479,7 +1478,7 @@ msgstr ""
 #: lib/pref.cpp:206
 #, kde-format
 msgid "Dock in system tray"
-msgstr "Acoplar na bandexa do sistema"
+msgstr "Acoplar na área de notificación"
 
 #: lib/pref.cpp:207
 #, kde-format
@@ -1690,7 +1689,7 @@ msgstr ""
 #: lib/pref.cpp:380
 #, kde-format
 msgid "Use movie player:"
-msgstr "Utilizar o reprodutor de filmes:"
+msgstr "Usar o reprodutor de filmes:"
 
 #: lib/pref.cpp:386
 #, kde-format
