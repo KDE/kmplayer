@@ -1410,7 +1410,7 @@ msgstr "Edita l'e&lement"
 #: playlistview.cpp:255
 #, kde-format
 msgid "&Copy to Clipboard"
-msgstr "&Copia al porta-retalls"
+msgstr "&Copia a dins del porta-retalls"
 
 #: playlistview.cpp:262
 #, kde-format
