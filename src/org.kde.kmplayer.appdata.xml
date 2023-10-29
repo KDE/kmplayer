@@ -235,7 +235,7 @@
       <li xml:lang="et">Filmi salvestamine mencoder'i abil (see kuulub tarkvarapaketti mplayer)</li>
       <li xml:lang="eu">Filma-grabatzea mencoder erabiliz (mplayer paketearen zati bat da)</li>
       <li xml:lang="fi">videotallennus mencoderilla (osa mplayer-pakettia)</li>
-      <li xml:lang="fr">Enregistrement de films à l'aide de mencode (faisant partie du paquet mplayer)</li>
+      <li xml:lang="fr">Enregistrement de films à l'aide du programme « mencoder » (faisant partie du paquet « mplayer »)</li>
       <li xml:lang="gl">Gravación de películas con mencoder (parte do paquete mplayer)</li>
       <li xml:lang="ia">Registrar film usante memcoder (parte del pacchetto mplayer)</li>
       <li xml:lang="id">Perekaman film menggunakan mencoder (bagian dari paket mplayer)</li>
@@ -328,7 +328,7 @@
       <li xml:lang="et">Teleallikate kasutamiseks läheb vaja v4lctl'i (see kuulub tarkvarapaketti xawtv)</li>
       <li xml:lang="eu">TB iturrietarako, v4lctl behar duzu (xawtv paketearen zati bat da)</li>
       <li xml:lang="fi">TV-lähteisiin tarvitaan v4lctl (osa xawtv-pakettia)</li>
-      <li xml:lang="fr">Pour les sources TV, vous aurez besoin de v4lctl (qui fait partie du paquet xawtv)</li>
+      <li xml:lang="fr">Pour les sources TV, vous aurez besoin du programme « v4lctl » (faisant partie du paquet « xa»wtv )</li>
       <li xml:lang="gl">Para fontes de TV necesita v4lctl (parte do paquete xawtv)</li>
       <li xml:lang="ia">Per fontes TV, tu necessita v4lctl (parte del pacchetto xawtv)</li>
       <li xml:lang="id">Untuk sumber TV, kamu perlu v4lctl (bagian dari paket xawtv)</li>
