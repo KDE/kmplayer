@@ -3,22 +3,22 @@
 # This file is distributed under the same license as the PACKAGE package.
 # Joëlle Cornavin <jcorn@free.fr>, 2008, 2009, 2010, 2011, 2012, 2013.
 # Simon Depiets <sdepiets@gmail.com>, 2018.
-# Xavier Besnard <xavier.besnard@neuf.fr>, 2021, 2022.
+# SPDX-FileCopyrightText: 2021, 2022, 2023 Xavier Besnard <xavier.besnard@neuf.fr>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2022-11-12 00:46+0000\n"
-"PO-Revision-Date: 2022-10-22 09:38+0200\n"
-"Last-Translator: Xavier Besnard <xavier.besnard@neuf.fr>\n"
-"Language-Team: French <kde-francophone@kde.org>\n"
+"PO-Revision-Date: 2023-10-28 23:04+0200\n"
+"Last-Translator: Xavier BESNARD <xavier.besnard@neuf.fr>\n"
+"Language-Team: fr\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Lokalize 22.08.2\n"
+"X-Generator: Lokalize 23.08.1\n"
 "X-Environment: kde\n"
 "X-Accelerator-Marker: &\n"
 "X-Text-Markup: kde4\n"
@@ -747,7 +747,7 @@ msgid ""
 "use here.\n"
 "See the output from 'xvinfo' for more information"
 msgstr ""
-"Port de l'extension X Video.\n"
+"Port de l'extension X-Vidéo.\n"
 "Si elle est laissée par défaut (0), le premier port disponible sera utilisé. "
 "Cependant si vous avez plusieurs instances XVideo, vous pourriez avoir à "
 "indiquer le port à utiliser ici.\n"
@@ -934,7 +934,7 @@ msgid ""
 "VDR Command:"
 msgstr ""
 "Vous pouvez transmettre des commande au VDR.\n"
-"Saisissez « HELP » pour voir une liste des commandes disponibles.\n"
+"Saisissez « AIDE » pour voir une liste des commandes disponibles.\n"
 "Vous pouvez voir la réponse de VDR dans la fenêtre de la console.\n"
 "\n"
 "Commande VDR :"
@@ -1817,7 +1817,7 @@ msgstr "Personnalisé"
 #: lib/pref.cpp:600
 #, kde-format
 msgid "Mencoder arguments:"
-msgstr "Arguments Mencoder :"
+msgstr "Arguments pour MEncoder :"
 
 #: lib/pref.cpp:626
 #, kde-format
