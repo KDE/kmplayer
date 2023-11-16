@@ -113,17 +113,17 @@ msgstr "&Generadors"
 #: app/kmplayer.cpp:218
 #, kde-format
 msgid "Enables/disables the status bar"
-msgstr "Activa/desactiva la barra d'estat"
+msgstr "Activa o desactiva la barra d'estat"
 
 #: app/kmplayer.cpp:219
 #, kde-format
 msgid "Enables/disables the menu bar"
-msgstr "Activa/desactiva la barra de menús"
+msgstr "Activa o desactiva la barra de menús"
 
 #: app/kmplayer.cpp:220
 #, kde-format
 msgid "Enables/disables the toolbar"
-msgstr "Activa/desactiva la barra d'eines"
+msgstr "Activa o desactiva la barra d'eines"
 
 #: app/kmplayer.cpp:227 app/kmplayer.cpp:437 app/kmplayer.cpp:693
 #: app/kmplayer.cpp:1038 app/kmplayer.cpp:1187 app/kmplayer.cpp:1575
@@ -1471,8 +1471,8 @@ msgid ""
 "When checked, the movie will keep its aspect ratio\n"
 "when the window is resized."
 msgstr ""
-"En marcar-la, la pel·lícula mantindrà la relació d'aspecte en redimensionar "
-"la finestra."
+"Quan se selecciona, la pel·lícula mantindrà la relació d'aspecte en "
+"redimensionar la finestra."
 
 #: lib/pref.cpp:206
 #, kde-format
@@ -1486,7 +1486,8 @@ msgid ""
 "When clicked, it will hide KMPlayer's main window and remove KMPlayer's task "
 "bar button."
 msgstr ""
-"En marcar-la, s'afig a la safata del sistema una icona per a KMPlayer.\n"
+"Quan se selecciona, s'afig a la safata del sistema una icona per a "
+"KMPlayer.\n"
 "En clicar-la, s'ocultarà la finestra principal de KMPlayer i s'eliminarà el "
 "botó de KMPlayer de la barra de tasques."
 
@@ -1501,7 +1502,7 @@ msgid ""
 "When checked, KMPlayer will resize to movie sizes\n"
 "when video starts."
 msgstr ""
-"En marcar-la, KMPlayer es redimensionarà a la mida\n"
+"Quan se selecciona, KMPlayer es redimensionarà a la mida\n"
 "de la pel·lícula en iniciar el vídeo."
 
 #: lib/pref.cpp:213
