@@ -1,50 +1,52 @@
 # Translation of kmplayer into esperanto.
+# Copyright (C) 2009 Free Software Foundation, Inc.
 # Axel Rousseau <axel@esperanto-jeunes.org>, 2009.
+# Oliver Kellogg <okellogg@users.sourceforge.net>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2019-08-30 07:39+0200\n"
-"PO-Revision-Date: 2009-11-15 12:06+0100\n"
-"Last-Translator: Axel Rousseau <axel@esperanto-jeunes.org>\n"
+"PO-Revision-Date: 2023-06-15 21:48+0100\n"
+"Last-Translator: Oliver Kellogg <okellogg@users.sourceforge.net>\n"
 "Language-Team: esperanto <kde-i18n-eo@kde.org>\n"
 "Language: eo\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: translate-po (https://github.com/zcribe/translate-po)\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: pology\n"
 
 #, kde-format
 msgctxt "NAME OF TRANSLATORS"
 msgid "Your names"
-msgstr "Axel Rousseau"
+msgstr "Axel Rousseau,Oliver Kellogg"
 
 #, kde-format
 msgctxt "EMAIL OF TRANSLATORS"
 msgid "Your emails"
-msgstr "axel@esperanto-jeunes.org"
+msgstr "axel@esperanto-jeunes.org,okellogg@users.sourceforge.net"
 
 #: kmplayer.cpp:151
 #, kde-format
 msgid "New window"
-msgstr ""
+msgstr "Nova fenestro"
 
 #: kmplayer.cpp:161
 #, kde-format
 msgid "&Edit mode"
-msgstr ""
+msgstr "R&edakti reĝimon"
 
 #: kmplayer.cpp:164
 #, kde-format
 msgid "Pla&y List"
-msgstr ""
+msgstr "Ludol&isto"
 
 #: kmplayer.cpp:169
 #, kde-format
 msgid "P&lay"
-msgstr ""
+msgstr "&Ludi"
 
 #: kmplayer.cpp:172
 #, kde-format
@@ -54,17 +56,17 @@ msgstr "&Paŭzi"
 #: kmplayer.cpp:175
 #, kde-format
 msgid "&Stop"
-msgstr "&Halti"
+msgstr "Ĉe&sigi"
 
 #: kmplayer.cpp:181
 #, kde-format
 msgid "Fullscreen"
-msgstr ""
+msgstr "Plenekrane"
 
 #: kmplayer.cpp:184 kmplayer.cpp:345
 #, kde-format
 msgid "C&onsole"
-msgstr ""
+msgstr "K&onzolo"
 
 #: kmplayer.cpp:189
 #, kde-format
@@ -74,12 +76,12 @@ msgstr "Reŝargi"
 #: kmplayer.cpp:200
 #, kde-format
 msgid "Clear &History"
-msgstr "&Forviŝi historion"
+msgstr "Forviŝi &historion"
 
 #: kmplayer.cpp:204
 #, kde-format
 msgid "&Generators"
-msgstr ""
+msgstr "&Generatoj"
 
 #. i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
 #. new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
@@ -107,17 +109,17 @@ msgstr ""
 #: kmplayer.cpp:235
 #, kde-format
 msgid "Enables/disables the status bar"
-msgstr ""
+msgstr "Ŝaltas/malŝaltas la statusbreton"
 
 #: kmplayer.cpp:236
 #, kde-format
 msgid "Enables/disables the menu bar"
-msgstr ""
+msgstr "Ŝaltas/malŝaltas la menubreton"
 
 #: kmplayer.cpp:237
 #, kde-format
 msgid "Enables/disables the toolbar"
-msgstr "(Mal)ŝaltas la ilobreto"
+msgstr "(Mal)ŝaltas la ilobreton"
 
 #: kmplayer.cpp:244 kmplayer.cpp:452 kmplayer.cpp:706 kmplayer.cpp:1050
 #: kmplayer.cpp:1199 kmplayer.cpp:1584 kmplayer.cpp:1716 kmplayer.cpp:1818
@@ -134,17 +136,17 @@ msgstr "&Legosignoj"
 #: kmplayer.cpp:300 kmplayer.cpp:1321
 #, kde-format
 msgid "&Add to list"
-msgstr ""
+msgstr "&Aldoni al listo"
 
 #: kmplayer.cpp:302
 #, kde-format
 msgid "Add in new &Group"
-msgstr ""
+msgstr "Aldonu en novan &Grupon"
 
 #: kmplayer.cpp:304
 #, kde-format
 msgid "&Copy here"
-msgstr ""
+msgstr "&Kopii ĉi tien"
 
 #: kmplayer.cpp:306
 #, kde-format
@@ -154,7 +156,7 @@ msgstr "&Forigi"
 #: kmplayer.cpp:342 kmplayerview.cpp:341
 #, kde-format
 msgid "V&ideo"
-msgstr ""
+msgstr "V&ideo"
 
 #: kmplayer.cpp:383
 #, kde-format
@@ -164,27 +166,27 @@ msgstr "Plia..."
 #: kmplayer.cpp:432
 #, kde-format
 msgid "Opening DVD..."
-msgstr ""
+msgstr "Malfermante DVD..."
 
 #: kmplayer.cpp:437
 #, kde-format
 msgid "Opening VCD..."
-msgstr ""
+msgstr "Malfermante VCD..."
 
 #: kmplayer.cpp:442
 #, kde-format
 msgid "Opening Audio CD..."
-msgstr ""
+msgstr "Malfermante Audio-KD..."
 
 #: kmplayer.cpp:447
 #, kde-format
 msgid "Opening pipe..."
-msgstr ""
+msgstr "Malfermante dukton..."
 
 #: kmplayer.cpp:449
 #, kde-format
 msgid "Read From Pipe"
-msgstr ""
+msgstr "Legi El Dukto"
 
 #: kmplayer.cpp:450
 #, kde-format
@@ -194,15 +196,15 @@ msgid ""
 "\n"
 "Command:"
 msgstr ""
-"Enter a command that will output an audio/video stream\n"
-"to the stdout. This will be piped to a player's stdin.\n"
+"Enigu komandon kiu eligos al aŭdio/video-fluon\n"
+"al stdout. Tiu ĉi estos transigata al stdin de la ludilo.\n"
 "\n"
 "Komando:"
 
 #: kmplayer.cpp:538 kmplayer.cpp:541
 #, kde-format
 msgid "Intro"
-msgstr ""
+msgstr "Enkonduko"
 
 #: kmplayer.cpp:694 kmplayer.cpp:1086
 #, kde-format
@@ -212,17 +214,17 @@ msgstr "Malfermante dosieron..."
 #: kmplayer.cpp:956 kmplayer.cpp:957
 #, kde-format
 msgid "Exit"
-msgstr "Finu"
+msgstr "Eliĝi"
 
 #: kmplayer.cpp:1045
 #, kde-format
 msgid "Opening a new application window..."
-msgstr ""
+msgstr "Malfermante novan aplikan fenestron..."
 
 #: kmplayer.cpp:1073
 #, kde-format
 msgid "Open File"
-msgstr "Malfermu dosieron"
+msgstr "Malfermi dosieron"
 
 #: kmplayer.cpp:1074
 #, kde-format
@@ -248,6 +250,8 @@ msgid ""
 "Error opening file %1.\n"
 "%2."
 msgstr ""
+"Eraro dum malfermo de dosiero %1.\n"
+"%2."
 
 #: kmplayer.cpp:1195
 #, kde-format
@@ -262,57 +266,57 @@ msgstr "Preta"
 #: kmplayer.cpp:1241
 #, kde-format
 msgid "Show Menu Bar with %1"
-msgstr ""
+msgstr "Montri Menubreton kun %1"
 
 #: kmplayer.cpp:1321
 #, kde-format
 msgid "Move here"
-msgstr ""
+msgstr "Movi ĉi tien"
 
 #: kmplayer.cpp:1354
 #, kde-format
 msgid "New group"
-msgstr ""
+msgstr "Nova grupo"
 
 #: kmplayer.cpp:1441
 #, kde-format
 msgid "&Delete item"
-msgstr ""
+msgstr "&Forigi eron"
 
 #: kmplayer.cpp:1444
 #, kde-format
 msgid "&Move up"
-msgstr ""
+msgstr "&Movi supren"
 
 #: kmplayer.cpp:1446
 #, kde-format
 msgid "Move &down"
-msgstr ""
+msgstr "Movi malsu&pren"
 
 #: kmplayer.cpp:1478
 #, kde-format
 msgid "Auto play after opening DVD"
-msgstr ""
+msgstr "Aŭtomata ludado post malfermo de DVD"
 
 #: kmplayer.cpp:1479
 #, kde-format
 msgid "Start playing DVD right after opening DVD"
-msgstr ""
+msgstr "Komenci ludi DVD tuj post malfermo de DVD"
 
 #: kmplayer.cpp:1480
 #, kde-format
 msgid "DVD device:"
-msgstr ""
+msgstr "DVD-aparato:"
 
 #: kmplayer.cpp:1482
 #, kde-format
 msgid "Path to your DVD device, you must have read rights to this device"
-msgstr ""
+msgstr "Vojo al via DVD-aparato, vi devas havi legi rajtojn al ĉi tiu aparato"
 
 #: kmplayer.cpp:1512
 #, kde-format
 msgid "Optical Disks"
-msgstr ""
+msgstr "Optikaj Diskoj"
 
 #: kmplayer.cpp:1543 kmplayer.cpp:1617 kmplayer.cpp:1643
 #, kde-format
@@ -322,17 +326,17 @@ msgstr "DVD"
 #: kmplayer.cpp:1548
 #, kde-format
 msgid "CDROM - Audio Compact Disk"
-msgstr ""
+msgstr "KDROM - Aŭda Kompakta Disko"
 
 #: kmplayer.cpp:1549
 #, kde-format
 msgid "VCD - Video Compact Disk"
-msgstr ""
+msgstr "VCD - Video Kompakta Disko"
 
 #: kmplayer.cpp:1550
 #, kde-format
 msgid "DVD - Digital Video Disk"
-msgstr ""
+msgstr "DVD - Cifereca Viddisko"
 
 #: kmplayer.cpp:1568 kmplayer.cpp:1789
 #, kde-format
@@ -348,22 +352,23 @@ msgstr "Fonto"
 #: kmplayer.cpp:1656
 #, kde-format
 msgid "Auto play after opening a VCD"
-msgstr ""
+msgstr "Aŭtomata ludado post malfermo de VCD"
 
 #: kmplayer.cpp:1657
 #, kde-format
 msgid "Start playing VCD right after opening VCD"
-msgstr ""
+msgstr "Komenci ludi VCD tuj post malfermo de VCD"
 
 #: kmplayer.cpp:1658
 #, kde-format
 msgid "VCD (CDROM) device:"
-msgstr ""
+msgstr "VCD (CDROM) aparato:"
 
 #: kmplayer.cpp:1660
 #, kde-format
 msgid "Path to your CDROM/DVD device, you must have read rights to this device"
 msgstr ""
+"Vojo al via KDROM/DVD-aparato, vi devas havi legrajtojn al ĉi tiu aparato"
 
 #: kmplayer.cpp:1672 kmplayer.cpp:1731 kmplayer.cpp:1757
 #, kde-format
@@ -383,27 +388,27 @@ msgstr "Sona KD"
 #: kmplayer.cpp:1839
 #, kde-format
 msgid "Pipe"
-msgstr ""
+msgstr "Pipo"
 
 #: kmplayer.cpp:1871
 #, kde-format
 msgid "Pipe - %1"
-msgstr ""
+msgstr "Pipo - %1"
 
 #: kmplayer_lists.cpp:95
 #, kde-format
 msgid "Most Recent"
-msgstr ""
+msgstr "Plej lasta"
 
 #: kmplayer_lists.cpp:194
 #, kde-format
 msgid "Persistent Playlists"
-msgstr ""
+msgstr "Konstantaj Ludlistoj"
 
 #: kmplayer_part.cpp:112 main.cpp:46
 #, kde-format
 msgid "KMPlayer"
-msgstr ""
+msgstr "KMPlayer"
 
 #: kmplayer_part.cpp:113
 #, kde-format
@@ -413,52 +418,52 @@ msgstr ""
 #: kmplayer_part.cpp:768
 #, no-c-format, kde-format
 msgid "% Cache fill"
-msgstr ""
+msgstr "% Kaŝmemorplenigo"
 
 #: kmplayer_part.cpp:793
 #, kde-format
 msgid "KMPlayer: Playing"
-msgstr ""
+msgstr "KMPlayer: Ludante"
 
 #: kmplayer_part.cpp:804
 #, kde-format
 msgid "KMPlayer: Stop Playing"
-msgstr ""
+msgstr "KMPlayer: Ĉesigi ludadon"
 
 #: kmplayerbroadcast.cpp:160
 #, kde-format
 msgid "Bind address:"
-msgstr ""
+msgstr "Bindi adreson:"
 
 #: kmplayerbroadcast.cpp:162
 #, kde-format
 msgid "If you have multiple network devices, you can limit access"
-msgstr ""
+msgstr "Se vi havas plurajn retajn aparatojn, vi povas limigi aliron"
 
 #: kmplayerbroadcast.cpp:165
 #, kde-format
 msgid "Listen port:"
-msgstr ""
+msgstr "Aŭskulta pordo:"
 
 #: kmplayerbroadcast.cpp:169
 #, kde-format
 msgid "Maximum connections:"
-msgstr ""
+msgstr "Maksimumaj konektoj:"
 
 #: kmplayerbroadcast.cpp:173
 #, kde-format
 msgid "Maximum bandwidth (kbit):"
-msgstr ""
+msgstr "Maksimuma bendolarĝo (kbit):"
 
 #: kmplayerbroadcast.cpp:177
 #, kde-format
 msgid "Temporary feed file:"
-msgstr ""
+msgstr "Provizora feed-dosiero:"
 
 #: kmplayerbroadcast.cpp:181
 #, kde-format
 msgid "Feed file size (kB):"
-msgstr ""
+msgstr "Grandeco de la dosierfluo (kB):"
 
 #: kmplayerbroadcast.cpp:204
 #, kde-format
@@ -468,72 +473,72 @@ msgstr "Formato:"
 #: kmplayerbroadcast.cpp:212
 #, kde-format
 msgid "Only avi, mpeg and rm work for mplayer playback"
-msgstr ""
+msgstr "Nur avi, mpeg kaj rm funkcias por mplayer-reludado"
 
 #: kmplayerbroadcast.cpp:215
 #, kde-format
 msgid "Audio codec:"
-msgstr ""
+msgstr "Sonkodeko:"
 
 #: kmplayerbroadcast.cpp:216
 #, kde-format
 msgid "Audio bit rate (kbit):"
-msgstr ""
+msgstr "Audiobitrapideco (kbit):"
 
 #: kmplayerbroadcast.cpp:217
 #, kde-format
 msgid "Audio sample rate (Hz):"
-msgstr ""
+msgstr "Aŭdiospecimena indico (Hz):"
 
 #: kmplayerbroadcast.cpp:218
 #, kde-format
 msgid "Video codec:"
-msgstr ""
+msgstr "Videokodeko:"
 
 #: kmplayerbroadcast.cpp:219
 #, kde-format
 msgid "Video bit rate (kbit):"
-msgstr ""
+msgstr "Videobitrapideco (kbit):"
 
 #: kmplayerbroadcast.cpp:220
 #, kde-format
 msgid "Quality (1-31):"
-msgstr ""
+msgstr "Kvalito (1-31):"
 
 #: kmplayerbroadcast.cpp:221
 #, kde-format
 msgid "Frame rate (Hz):"
-msgstr ""
+msgstr "Framfrekvenco (Hz):"
 
 #: kmplayerbroadcast.cpp:222
 #, kde-format
 msgid "Gop size:"
-msgstr ""
+msgstr "Gop-grandeco:"
 
 #: kmplayerbroadcast.cpp:223
 #, kde-format
 msgid "Width (pixels):"
-msgstr ""
+msgstr "Larĝo (pikseloj):"
 
 #: kmplayerbroadcast.cpp:224
 #, kde-format
 msgid "Height (pixels):"
-msgstr ""
+msgstr "Alteco (pikseloj):"
 
 #: kmplayerbroadcast.cpp:225
 #, kde-format
 msgid "Allow access from:"
-msgstr ""
+msgstr "Permesi aliron de:"
 
 #: kmplayerbroadcast.cpp:230
 #, kde-format
 msgid "'Single IP' or 'start-IP end-IP' for IP ranges"
-msgstr ""
+msgstr "'Ununura IP' aŭ 'komenco-IP-fino-IP' por IP-intervaloj"
 
 #: kmplayerbroadcast.cpp:232
 #, kde-format
 msgid "Host/IP or IP Range"
-msgstr ""
+msgstr "Gastiganto/IP aŭ IP-Gasto"
 
 #: kmplayerbroadcast.cpp:245
 #, kde-format
@@ -558,12 +563,12 @@ msgstr "Lanĉi"
 #: kmplayerbroadcast.cpp:458 kmplayerbroadcast.cpp:658
 #, kde-format
 msgid "Broadcasting"
-msgstr ""
+msgstr "Dissendado"
 
 #: kmplayerbroadcast.cpp:460
 #, kde-format
 msgid "Profiles"
-msgstr ""
+msgstr "Profiloj"
 
 #: kmplayerbroadcast.cpp:523
 #, kde-format
@@ -573,22 +578,22 @@ msgstr "Halti"
 #: kmplayerbroadcast.cpp:535
 #, kde-format
 msgid "Failed to end ffserver process."
-msgstr ""
+msgstr "Malsukcesis fini ffserver-procezon."
 
 #: kmplayerbroadcast.cpp:552
 #, kde-format
 msgid "Failed to start ffserver.\n"
-msgstr ""
+msgstr "Malsukcesis lanĉi ffservilon.\n"
 
 #: kmplayerbroadcast.cpp:565
 #, kde-format
 msgid "Failed to start ffmpeg."
-msgstr ""
+msgstr "Malsukcesis lanĉi ffmpeg."
 
 #: kmplayerbroadcast.cpp:660
 #, kde-format
 msgid "FFServer"
-msgstr ""
+msgstr "FFServer"
 
 #: kmplayerconfig.cpp:60 kmplayerconfig.cpp:76
 #, kde-format
@@ -603,22 +608,22 @@ msgstr "Open Sound System"
 #: kmplayerconfig.cpp:62
 #, kde-format
 msgid "Simple DirectMedia Layer"
-msgstr ""
+msgstr "Simpla DirectMedia Tavolo"
 
 #: kmplayerconfig.cpp:63
 #, kde-format
 msgid "Advanced Linux Sound Architecture"
-msgstr ""
+msgstr "Altnivela Linukso-Sona Arkitekturo"
 
 #: kmplayerconfig.cpp:64
 #, kde-format
 msgid "Analog Real-Time Synthesizer"
-msgstr ""
+msgstr "Analoga Realtempa Sintezilo"
 
 #: kmplayerconfig.cpp:65
 #, kde-format
 msgid "JACK Audio Connection Kit"
-msgstr ""
+msgstr "JACK-Audio-Konekto-Kiro"
 
 #: kmplayerconfig.cpp:66
 #, kde-format
@@ -633,17 +638,17 @@ msgstr "Enlightened Sound Daemon"
 #: kmplayerconfig.cpp:68
 #, kde-format
 msgid "Advanced Linux Sound Architecture v0.5"
-msgstr ""
+msgstr "Altnivela Linukso-Sona Arkitekturo v0.5"
 
 #: kmplayerconfig.cpp:69
 #, kde-format
 msgid "Advanced Linux Sound Architecture v0.9"
-msgstr ""
+msgstr "Altnivela Linukso-Sona Arkitekturo v0.9"
 
 #: kmplayerconfig.cpp:70
 #, kde-format
 msgid "Use back-end defaults"
-msgstr ""
+msgstr "Uzi back-end defaŭltojn"
 
 #: kmplayerconfig.cpp:71
 #, kde-format
@@ -653,12 +658,12 @@ msgstr "PulseAudio"
 #: kmplayerconfig.cpp:77
 #, kde-format
 msgid "X11Shm"
-msgstr ""
+msgstr "X11Shm"
 
 #: kmplayerconfig.cpp:78
 #, kde-format
 msgid "XVidix"
-msgstr ""
+msgstr "XVidix"
 
 #: kmplayerconfig.cpp:79
 #, kde-format
@@ -683,57 +688,57 @@ msgstr "OpenGL MT"
 #: kmplayerconfig.cpp:83
 #, kde-format
 msgid "XVideo"
-msgstr ""
+msgstr "XVideo"
 
 #: kmplayerconfig.cpp:84
 #, kde-format
 msgid "Video Decode and Presentation API for Unix"
-msgstr ""
+msgstr "Video Decode kaj Prezento API por Unikso"
 
 #: kmplayerconfig.cpp:95
 #, kde-format
 msgid "Playlist background"
-msgstr ""
+msgstr "Fono de ludlisto"
 
 #: kmplayerconfig.cpp:99
 #, kde-format
 msgid "Playlist foreground"
-msgstr ""
+msgstr "Ludlisto malfono"
 
 #: kmplayerconfig.cpp:103
 #, kde-format
 msgid "Console background"
-msgstr ""
+msgstr "Konzolo fono"
 
 #: kmplayerconfig.cpp:104
 #, kde-format
 msgid "Playlist active item"
-msgstr ""
+msgstr "Ludlisto aktiva ero"
 
 #: kmplayerconfig.cpp:110
 #, kde-format
 msgid "Console foreground"
-msgstr ""
+msgstr "Konzolo malfono"
 
 #: kmplayerconfig.cpp:113
 #, kde-format
 msgid "Video background"
-msgstr ""
+msgstr "Videofono"
 
 #: kmplayerconfig.cpp:116
 #, kde-format
 msgid "Viewing area background"
-msgstr ""
+msgstr "Vidante areofonon"
 
 #: kmplayerconfig.cpp:119
 #, kde-format
 msgid "Info window background"
-msgstr ""
+msgstr "Info-fenestra fono"
 
 #: kmplayerconfig.cpp:123
 #, kde-format
 msgid "Info window foreground"
-msgstr ""
+msgstr "Infofenestra malfono"
 
 #: kmplayerconfig.cpp:127 kmplayerview.cpp:167
 #, kde-format
@@ -743,7 +748,7 @@ msgstr "Ludlisto"
 #: kmplayerconfig.cpp:131
 #, kde-format
 msgid "Info window"
-msgstr ""
+msgstr "Informfenestro"
 
 #: kmplayerconfig.cpp:655
 #, kde-format
@@ -753,32 +758,32 @@ msgstr "Dosiero %1 ne ekzistas."
 #: kmplayerconfig.cpp:666
 #, kde-format
 msgid "Sub title file %1 does not exist."
-msgstr ""
+msgstr "Subtitola dosiero %1 ne ekzistas."
 
 #: kmplayercontrolpanel.cpp:311 kmplayercontrolpanel.cpp:325
 #, kde-format
 msgid "Volume is "
-msgstr ""
+msgstr "Laŭteco estas "
 
 #: kmplayercontrolpanel.cpp:412
 #, kde-format
 msgid "&Play with"
-msgstr ""
+msgstr "&Ludi per"
 
 #: kmplayercontrolpanel.cpp:415 kmplayerview.cpp:337
 #, kde-format
 msgid "Con&sole"
-msgstr ""
+msgstr "Kon&zolo"
 
 #: kmplayercontrolpanel.cpp:417
 #, kde-format
 msgid "Play&list"
-msgstr ""
+msgstr "Lud&listo"
 
 #: kmplayercontrolpanel.cpp:419
 #, kde-format
 msgid "&Zoom"
-msgstr "&Grandigo"
+msgstr "&Zomo"
 
 #: kmplayercontrolpanel.cpp:422
 #, kde-format
@@ -798,22 +803,22 @@ msgstr "150%"
 #: kmplayercontrolpanel.cpp:426
 #, kde-format
 msgid "&Full Screen"
-msgstr ""
+msgstr "&Plenekrane"
 
 #: kmplayercontrolpanel.cpp:431
 #, kde-format
 msgid "Co&lors"
-msgstr ""
+msgstr "Ko&loroj"
 
 #: kmplayercontrolpanel.cpp:456 kmplayercontrolpanel.cpp:458
 #, kde-format
 msgid "&Audio languages"
-msgstr ""
+msgstr "&Aŭdiolingvoj"
 
 #: kmplayercontrolpanel.cpp:459
 #, kde-format
 msgid "&Subtitles"
-msgstr ""
+msgstr "&Subtekstoj"
 
 #: kmplayercontrolpanel.cpp:467
 #, kde-format
@@ -823,7 +828,7 @@ msgstr "Skalo:"
 #: kmplayercontrolpanel.cpp:479
 #, kde-format
 msgid "&Configure KMPlayer..."
-msgstr ""
+msgstr "&Agordi KMPlayer..."
 
 #: kmplayerpartbase.cpp:1450
 #, kde-format
@@ -839,7 +844,7 @@ msgstr "Retadreso"
 #: kmplayerpartbase.cpp:1558
 #, kde-format
 msgid "URL - "
-msgstr ""
+msgstr "URL -"
 
 #. i18n: ectx: Menu (view)
 #: kmplayerpartui.rc:4 kmplayerui.rc:31
@@ -850,87 +855,87 @@ msgstr "&Rigardi"
 #: kmplayerprocess.cpp:150
 #, kde-format
 msgid "Failed to end player process."
-msgstr ""
+msgstr "Malsukcesis fini ludantoprocezon."
 
 #: kmplayerprocess.cpp:489
 #, kde-format
 msgid "&MPlayer"
-msgstr ""
+msgstr "&MPlayer"
 
 #: kmplayerprocess.cpp:1012
 #, kde-format
 msgid "Size pattern"
-msgstr ""
+msgstr "Grandeca ŝablono"
 
 #: kmplayerprocess.cpp:1013
 #, kde-format
 msgid "Cache pattern"
-msgstr ""
+msgstr "Kaŝmemoro ŝablono"
 
 #: kmplayerprocess.cpp:1014
 #, kde-format
 msgid "Position pattern"
-msgstr ""
+msgstr "Pozicia ŝablono"
 
 #: kmplayerprocess.cpp:1015
 #, kde-format
 msgid "Index pattern"
-msgstr ""
+msgstr "Indeksa ŝablono"
 
 #: kmplayerprocess.cpp:1016
 #, kde-format
 msgid "Reference URL pattern"
-msgstr ""
+msgstr "Referenca URL-ŝablono"
 
 #: kmplayerprocess.cpp:1017
 #, kde-format
 msgid "Reference pattern"
-msgstr ""
+msgstr "Referenca ŝablono"
 
 #: kmplayerprocess.cpp:1018
 #, kde-format
 msgid "Start pattern"
-msgstr ""
+msgstr "Komenci ŝablonon"
 
 #: kmplayerprocess.cpp:1019
 #, kde-format
 msgid "VCD track pattern"
-msgstr ""
+msgstr "VCD-traka ŝablono"
 
 #: kmplayerprocess.cpp:1020
 #, kde-format
 msgid "Audio CD tracks pattern"
-msgstr ""
+msgstr "Aŭdio-KD spuras ŝablono"
 
 #: kmplayerprocess.cpp:1040
 #, kde-format
 msgid "MPlayer command:"
-msgstr ""
+msgstr "Komando MPlayer:"
 
 #: kmplayerprocess.cpp:1042
 #, kde-format
 msgid "Additional command line arguments:"
-msgstr ""
+msgstr "Pliaj komandliniaj argumentoj:"
 
 #: kmplayerprocess.cpp:1044
 #, kde-format
 msgid "Cache size:"
-msgstr ""
+msgstr "Kaŝmemorgrando:"
 
 #: kmplayerprocess.cpp:1044
 #, kde-format
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: kmplayerprocess.cpp:1049
 #, kde-format
 msgid "Build new index when possible"
-msgstr ""
+msgstr "Konstrui novan indekson kiam eble"
 
 #: kmplayerprocess.cpp:1051
 #, kde-format
 msgid "Allows seeking in indexed files (AVIs)"
-msgstr ""
+msgstr "Ebligas serĉadon en indeksitaj dosieroj (AVIoj)"
 
 #: kmplayerprocess.cpp:1117 pref.cpp:74 pref.cpp:84
 #, kde-format
@@ -940,17 +945,17 @@ msgstr "Ĝeneralaj opcioj"
 #: kmplayerprocess.cpp:1119
 #, kde-format
 msgid "MPlayer"
-msgstr ""
+msgstr "MPlayer"
 
 #: kmplayerprocess.cpp:1135
 #, kde-format
 msgid "M&Encoder"
-msgstr ""
+msgstr "M&Encoder"
 
 #: kmplayerprocess.cpp:1201
 #, kde-format
 msgid "&MPlayerDumpstream"
-msgstr ""
+msgstr "&MPlayerDumpstream"
 
 #: kmplayerprocess.cpp:1463
 #, kde-format
@@ -970,12 +975,12 @@ msgstr "&Ice Ape"
 #: kmplayertvsource.cpp:65
 #, kde-format
 msgid "Video device:"
-msgstr ""
+msgstr "Video-aparato:"
 
 #: kmplayertvsource.cpp:66
 #, kde-format
 msgid "Audio device:"
-msgstr ""
+msgstr "Audio-aparato:"
 
 #: kmplayertvsource.cpp:68
 #, kde-format
@@ -995,17 +1000,17 @@ msgstr "Alteco:"
 #: kmplayertvsource.cpp:74
 #, kde-format
 msgid "Do not immediately play"
-msgstr ""
+msgstr "Ne tuj ludi"
 
 #: kmplayertvsource.cpp:76
 #, kde-format
 msgid "Only start playing after clicking the play button"
-msgstr ""
+msgstr "Komenci ludi nur post klakado de la ludbutono"
 
 #: kmplayertvsource.cpp:87
 #, kde-format
 msgid "Norm:"
-msgstr ""
+msgstr "Normo:"
 
 #: kmplayertvsource.cpp:101
 #, kde-format
@@ -1015,7 +1020,7 @@ msgstr "Kanalo"
 #: kmplayertvsource.cpp:101
 #, kde-format
 msgid "Frequency (MHz)"
-msgstr ""
+msgstr "Frekvenco (MHz)"
 
 #: kmplayertvsource.cpp:148
 #, kde-format
@@ -1030,16 +1035,14 @@ msgid "Confirm"
 msgstr "Konfirmi"
 
 #: kmplayertvsource.cpp:159
-#, fuzzy, kde-format
-#| msgctxt "City name (optional, probably does not need a translation)"
-#| msgid "Dover"
+#, kde-format
 msgid "Driver:"
-msgstr "Dover"
+msgstr "Pelilo:"
 
 #: kmplayertvsource.cpp:161
 #, kde-format
 msgid "dummy, v4l or bsdbt848"
-msgstr ""
+msgstr "imitaĵo, v4l aŭ bsdbt848"
 
 #: kmplayertvsource.cpp:162
 #, kde-format
@@ -1049,7 +1052,7 @@ msgstr "Aparato:"
 #: kmplayertvsource.cpp:164
 #, kde-format
 msgid "Path to your video device, eg. /dev/video0"
-msgstr ""
+msgstr "Vojo al via videoaparato, ekz. /dev/video0"
 
 #: kmplayertvsource.cpp:165
 #, kde-format
@@ -1064,37 +1067,37 @@ msgstr "Ĝeneralo"
 #: kmplayertvsource.cpp:259
 #, kde-format
 msgid "tv device"
-msgstr ""
+msgstr "televida aparato"
 
 #: kmplayertvsource.cpp:346
 #, kde-format
 msgid "Television"
-msgstr ""
+msgstr "Televido"
 
 #: kmplayertvsource.cpp:374 kmplayertvsource.cpp:532 kmplayertvsource.cpp:583
 #, kde-format
 msgid "TV"
-msgstr ""
+msgstr "televido"
 
 #: kmplayertvsource.cpp:499
 #, kde-format
 msgid "TV: "
-msgstr ""
+msgstr "Televido:"
 
 #: kmplayertvsource.cpp:610
 #, kde-format
 msgid "Device already present."
-msgstr ""
+msgstr "Aparato jam ĉeestas."
 
 #: kmplayertvsource.cpp:622
 #, kde-format
 msgid "No device found."
-msgstr ""
+msgstr "Neniu aparato trovita."
 
 #: kmplayertvsource.cpp:645
 #, kde-format
 msgid "TVScanner"
-msgstr ""
+msgstr "TVScanner"
 
 #. i18n: ectx: Menu (file)
 #: kmplayerui.rc:5
@@ -1117,7 +1120,7 @@ msgstr "A&gordo"
 #: kmplayervdr.cpp:87
 #, kde-format
 msgid "XVideo port"
-msgstr ""
+msgstr "XVideo-pordo"
 
 #: kmplayervdr.cpp:89
 #, kde-format
@@ -1128,11 +1131,16 @@ msgid ""
 "use here.\n"
 "See the output from 'xvinfo' for more information"
 msgstr ""
+"Pordobazo de la etendo X Video.\n"
+"Se lasita al defaŭlta (0), la unua disponebla pordo estos uzata. Tamen se vi "
+"havas plurajn XVideo-okazojn, vi eble devos provizi la pordon por uzi ĉi "
+"tie.\n"
+"Vidu la eligon de 'xvinfo' por pliaj informoj."
 
 #: kmplayervdr.cpp:90
 #, kde-format
 msgid "Communication port:"
-msgstr ""
+msgstr "Komunika pordo:"
 
 #: kmplayervdr.cpp:93
 #, kde-format
@@ -1141,6 +1149,9 @@ msgid ""
 "If you use another port, with the '-p' option of 'vdr', you must set it here "
 "too."
 msgstr ""
+"Komunika pordo kun VDR. Defaŭlte estas pordo 2001.\n"
+"Se vi uzas alian pordon, kun la opcio '-p' de 'vdr', vi ankaŭ devas agordi "
+"ĝin ĉi tie."
 
 #: kmplayervdr.cpp:97
 #, kde-format
@@ -1160,7 +1171,7 @@ msgstr "16:9"
 #: kmplayervdr.cpp:100
 #, kde-format
 msgid "Aspects to use when viewing VDR"
-msgstr ""
+msgstr "Aspektoj por uzi dum spektado de VDR"
 
 #: kmplayervdr.cpp:171 kmplayervdr.cpp:720
 #, kde-format
@@ -1170,122 +1181,122 @@ msgstr "VDR"
 #: kmplayervdr.cpp:236
 #, kde-format
 msgid "Dis&connect"
-msgstr ""
+msgstr "Mal&konekti"
 
 #: kmplayervdr.cpp:237
 #, kde-format
 msgid "VDR Key Up"
-msgstr ""
+msgstr "VDR Ŝlosilo Supre"
 
 #: kmplayervdr.cpp:238
 #, kde-format
 msgid "VDR Key Down"
-msgstr ""
+msgstr "VDR Ŝlosilo Malsupren"
 
 #: kmplayervdr.cpp:239
 #, kde-format
 msgid "VDR Key Back"
-msgstr ""
+msgstr "VDR Ŝlosilo Reen"
 
 #: kmplayervdr.cpp:240
 #, kde-format
 msgid "VDR Key Ok"
-msgstr ""
+msgstr "VDR Ŝlosilo Bone"
 
 #: kmplayervdr.cpp:241
 #, kde-format
 msgid "VDR Key Setup"
-msgstr ""
+msgstr "Agordo de Ŝlosilo VDR"
 
 #: kmplayervdr.cpp:242
 #, kde-format
 msgid "VDR Key Channels"
-msgstr ""
+msgstr "VDR Ŝlosilkanaloj"
 
 #: kmplayervdr.cpp:243
 #, kde-format
 msgid "VDR Key Menu"
-msgstr ""
+msgstr "VDR Ŝlosila Menuo"
 
 #: kmplayervdr.cpp:244
 #, kde-format
 msgid "VDR Key Red"
-msgstr ""
+msgstr "VDR Ŝlosilo Ruĝa"
 
 #: kmplayervdr.cpp:245
 #, kde-format
 msgid "VDR Key Green"
-msgstr ""
+msgstr "VDR Ŝlosilo Verda"
 
 #: kmplayervdr.cpp:246
 #, kde-format
 msgid "VDR Key Yellow"
-msgstr ""
+msgstr "VDR Ŝlosilo Flava"
 
 #: kmplayervdr.cpp:247
 #, kde-format
 msgid "VDR Key Blue"
-msgstr ""
+msgstr "VDR Ŝlosilo Blua"
 
 #: kmplayervdr.cpp:250
 #, kde-format
 msgid "VDR Key 0"
-msgstr ""
+msgstr "VDR-ŝlosilo 0"
 
 #: kmplayervdr.cpp:251
 #, kde-format
 msgid "VDR Key 1"
-msgstr ""
+msgstr "VDR-ŝlosilo 1"
 
 #: kmplayervdr.cpp:252
 #, kde-format
 msgid "VDR Key 2"
-msgstr ""
+msgstr "VDR-ŝlosilo 2"
 
 #: kmplayervdr.cpp:253
 #, kde-format
 msgid "VDR Key 3"
-msgstr ""
+msgstr "VDR-ŝlosilo 3"
 
 #: kmplayervdr.cpp:254
 #, kde-format
 msgid "VDR Key 4"
-msgstr ""
+msgstr "VDR-ŝlosilo 4"
 
 #: kmplayervdr.cpp:255
 #, kde-format
 msgid "VDR Key 5"
-msgstr ""
+msgstr "VDR-ŝlosilo 5"
 
 #: kmplayervdr.cpp:256
 #, kde-format
 msgid "VDR Key 6"
-msgstr ""
+msgstr "VDR-ŝlosilo 6"
 
 #: kmplayervdr.cpp:257
 #, kde-format
 msgid "VDR Key 7"
-msgstr ""
+msgstr "VDR-ŝlosilo 7"
 
 #: kmplayervdr.cpp:258
 #, kde-format
 msgid "VDR Key 8"
-msgstr ""
+msgstr "VDR-ŝlosilo 8"
 
 #: kmplayervdr.cpp:259
 #, kde-format
 msgid "VDR Key 9"
-msgstr ""
+msgstr "VDR-ŝlosilo 9"
 
 #: kmplayervdr.cpp:281
 #, kde-format
 msgid "&Connect"
-msgstr "&Konektu"
+msgstr "&Konekti"
 
 #: kmplayervdr.cpp:444
 #, kde-format
 msgid "Host not found"
-msgstr ""
+msgstr "Gastiganto ne trovita"
 
 #: kmplayervdr.cpp:446
 #, kde-format
@@ -1295,7 +1306,7 @@ msgstr "Konekto malakceptitis"
 #: kmplayervdr.cpp:487
 #, kde-format
 msgid "Custom VDR command"
-msgstr ""
+msgstr "Propra VDR-komando"
 
 #: kmplayervdr.cpp:487
 #, kde-format
@@ -1306,6 +1317,11 @@ msgid ""
 "\n"
 "VDR Command:"
 msgstr ""
+"Vi povas transdoni komandojn al VDR.\n"
+"Entajpu 'HELP' por vidi liston de disponeblaj komandoj.\n"
+"Vi povas vidi VDR-respondon en la konzola fenestro.\n"
+"\n"
+"VDR-Komando:"
 
 #: kmplayervdr.cpp:685
 #, kde-format
@@ -1315,7 +1331,7 @@ msgstr "Pordo "
 #: kmplayervdr.cpp:739
 #, kde-format
 msgid "X&Video"
-msgstr ""
+msgstr "X&Video"
 
 #: kmplayerview.cpp:172
 #, kde-format
@@ -1325,13 +1341,12 @@ msgstr "Informo"
 #: main.cpp:48
 #, kde-format
 msgid "Media player"
-msgstr ""
+msgstr "Media player"
 
 #: main.cpp:49
-#, fuzzy, kde-format
-#| msgid "Koos Vriezen"
+#, kde-format
 msgid "(c) 2002-2016, Koos Vriezen"
-msgstr "Koos Vriezen"
+msgstr "(c) 2002-2016, Koos Vriezen"
 
 #: main.cpp:50
 #, kde-format
@@ -1346,23 +1361,22 @@ msgstr "Prizorganto"
 #: main.cpp:63
 #, kde-format
 msgid "file to open"
-msgstr ""
+msgstr "dosiero por malfermi"
 
 #: main.cpp:63
-#, fuzzy, kde-format
-#| msgid "&File"
+#, kde-format
 msgid "+[File]"
-msgstr "&Dosiero"
+msgstr "+[Dosiero]"
 
 #: mediaobject.cpp:168
 #, kde-format
 msgid "Not Running"
-msgstr ""
+msgstr "Ne Rulante"
 
 #: mediaobject.cpp:168
 #, kde-format
 msgid "Buffering"
-msgstr ""
+msgstr "Bufrante"
 
 #: mediaobject.cpp:168 pref.cpp:231
 #, kde-format
@@ -1377,12 +1391,12 @@ msgstr "Paŭzita"
 #: mediaobject.cpp:190
 #, kde-format
 msgid "Player %1 %2"
-msgstr ""
+msgstr "Ludanto %1 %2"
 
 #: playlistview.cpp:140
 #, kde-format
 msgid "Edit &item"
-msgstr ""
+msgstr "Redakt&i elementon"
 
 #: playlistview.cpp:255
 #, kde-format
@@ -1397,7 +1411,7 @@ msgstr "&Aldoni al legosignoj"
 #: playlistview.cpp:265
 #, kde-format
 msgid "&Show all"
-msgstr ""
+msgstr "&Montri ĉion"
 
 #: playmodel.cpp:360
 #, kde-format
@@ -1412,7 +1426,7 @@ msgstr "nenio"
 #: playmodel.cpp:378
 #, kde-format
 msgid "[attributes]"
-msgstr ""
+msgstr "[atributoj]"
 
 #: pref.cpp:69
 #, kde-format
@@ -1422,7 +1436,7 @@ msgstr "Preferaĵoj"
 #: pref.cpp:80
 #, kde-format
 msgid "Looks"
-msgstr ""
+msgstr "Aspektoj"
 
 #: pref.cpp:83
 #, kde-format
@@ -1430,14 +1444,14 @@ msgid "Output"
 msgstr "Eligo"
 
 #: pref.cpp:95 pref.cpp:120
-#, fuzzy, kde-format
+#, kde-format
 msgid "Recording"
-msgstr "Rektangulo"
+msgstr "Registrado"
 
 #: pref.cpp:101
 #, kde-format
 msgid "MEncoder"
-msgstr ""
+msgstr "MEncoder"
 
 #: pref.cpp:105
 #, kde-format
@@ -1447,12 +1461,12 @@ msgstr "FFMpeg"
 #: pref.cpp:123
 #, kde-format
 msgid "Output Plugins"
-msgstr ""
+msgstr "Eligaj Kromaĵoj"
 
 #: pref.cpp:127 pref.cpp:128
 #, kde-format
 msgid "Postprocessing"
-msgstr ""
+msgstr "Posttraktado"
 
 #: pref.cpp:208
 #, kde-format
@@ -1462,7 +1476,7 @@ msgstr "Fenestro"
 #: pref.cpp:211
 #, kde-format
 msgid "Keep size ratio"
-msgstr ""
+msgstr "Konservi grandec-proporcion"
 
 #: pref.cpp:212
 #, kde-format
@@ -1470,11 +1484,13 @@ msgid ""
 "When checked, the movie will keep its aspect ratio\n"
 "when the window is resized."
 msgstr ""
+"Kiam estas kontrolita, la filmo konservos sian bildformaton\n"
+"kiam la fenestro estas regrandigita."
 
 #: pref.cpp:213
 #, kde-format
 msgid "Dock in system tray"
-msgstr ""
+msgstr "Doku en la sistempleto"
 
 #: pref.cpp:214
 #, kde-format
@@ -1483,11 +1499,14 @@ msgid ""
 "When clicked, it will hide KMPlayer's main window and remove KMPlayer's task "
 "bar button."
 msgstr ""
+"Kiam ĝi estas markita, ikono por KMPlayer estos aldonita al la sistempleto.\n"
+"Kiam klako, ĝi kaŝos la ĉefan fenestron de KMPlayer kaj forigos la butonon "
+"de taskobreto de KMPlayer."
 
 #: pref.cpp:215
 #, kde-format
 msgid "Auto resize to video sizes"
-msgstr ""
+msgstr "Aŭtomata regrandigo al videograndoj"
 
 #: pref.cpp:216
 #, kde-format
@@ -1495,16 +1514,18 @@ msgid ""
 "When checked, KMPlayer will resize to movie sizes\n"
 "when video starts."
 msgstr ""
+"Kiam estas kontrolita, KMPlayer regrandigos al filmaj regrandigoj\n"
+"kiam video komenciĝas."
 
 #: pref.cpp:220
 #, kde-format
 msgid "Remember window size on exit"
-msgstr ""
+msgstr "Memori fenestrograndecon ĉe eliro"
 
 #: pref.cpp:221
 #, kde-format
 msgid "Always start with fixed size"
-msgstr ""
+msgstr "Ĉiam komenci kun fiksa grandeco"
 
 #: pref.cpp:232
 #, kde-format
@@ -1514,22 +1535,22 @@ msgstr "Buklo"
 #: pref.cpp:233
 #, kde-format
 msgid "Makes current movie loop"
-msgstr ""
+msgstr "Faras aktualan filmbuklon"
 
 #: pref.cpp:234
 #, kde-format
 msgid "Allow frame drops"
-msgstr ""
+msgstr "Permesi kadrofalojn"
 
 #: pref.cpp:235
 #, kde-format
 msgid "Allow dropping frames for better audio and video synchronization"
-msgstr ""
+msgstr "Permesu faligi kadrojn por pli bona aŭda kaj video-sinkronigo"
 
 #: pref.cpp:236
 #, kde-format
 msgid "Auto set volume on start"
-msgstr ""
+msgstr "Aŭtomate agordi laŭtecon ĉe la komenco"
 
 #: pref.cpp:237
 #, kde-format
@@ -1537,67 +1558,70 @@ msgid ""
 "When a new source is selected, the volume will be set according the volume "
 "control"
 msgstr ""
+"Kiam nova fonto estas elektita, la laŭteco estos agordita laŭ la volumena "
+"kontrolo"
 
 #: pref.cpp:238
 #, kde-format
 msgid "Auto set colors on start"
-msgstr ""
+msgstr "Aŭtomate agordi kolorojn ĉe la komenco"
 
 #: pref.cpp:239
 #, kde-format
 msgid ""
 "When a movie starts, the colors will be set according the sliders for colors"
 msgstr ""
+"Kiam filmo komenciĝas, la koloroj estos fiksitaj laŭ la glitiloj por koloroj"
 
 #: pref.cpp:247
 #, kde-format
 msgid "Control Panel"
-msgstr ""
+msgstr "Kontrola Panelo"
 
 #: pref.cpp:248
 #, kde-format
 msgid "Show config button"
-msgstr ""
+msgstr "Montri agordan butonon"
 
 #: pref.cpp:249
 #, kde-format
 msgid "Add a button that will popup a config menu"
-msgstr ""
+msgstr "Aldoni butonon, kiu ŝprucigos agordmenuon"
 
 #: pref.cpp:250
 #, kde-format
 msgid "Show playlist button"
-msgstr ""
+msgstr "Montri ludlistbutonon"
 
 #: pref.cpp:251
 #, kde-format
 msgid "Add a playlist button to the control buttons"
-msgstr ""
+msgstr "Aldoni ludlistbutonon al la kontrolbutonoj"
 
 #: pref.cpp:252
 #, kde-format
 msgid "Show record button"
-msgstr ""
+msgstr "Montri rekordbutonon"
 
 #: pref.cpp:253
 #, kde-format
 msgid "Add a record button to the control buttons"
-msgstr ""
+msgstr "Aldoni registradbutonon al la kontrolbutonoj"
 
 #: pref.cpp:254
 #, kde-format
 msgid "Show broadcast button"
-msgstr ""
+msgstr "Montri elsendo butonon"
 
 #: pref.cpp:255
 #, kde-format
 msgid "Add a broadcast button to the control buttons"
-msgstr ""
+msgstr "Aldoni elsendobutonon al la kontrolbutonoj"
 
 #: pref.cpp:262
 #, kde-format
 msgid "Forward/backward seek time:"
-msgstr ""
+msgstr "Antaŭen/malantaŭen-serĉtempo:"
 
 #: pref.cpp:269 pref.cpp:485
 #, kde-format
@@ -1634,22 +1658,22 @@ msgstr "Loko:"
 #: pref.cpp:370
 #, kde-format
 msgid "Location of the playable item"
-msgstr ""
+msgstr "Loko de la ludebla objekto"
 
 #: pref.cpp:373
 #, kde-format
 msgid "Sub title:"
-msgstr ""
+msgstr "Subtitolo:"
 
 #: pref.cpp:378
 #, kde-format
 msgid "Optional location of a file containing the subtitles of the URL above"
-msgstr ""
+msgstr "Laŭvola loko de dosiero enhavanta la subtekstojn de la supra URL"
 
 #: pref.cpp:381
 #, kde-format
 msgid "Load on demand"
-msgstr ""
+msgstr "Ŝargi laŭpete"
 
 #: pref.cpp:382
 #, kde-format
@@ -1657,11 +1681,13 @@ msgid ""
 "When enabled, all embedded movies will start with a image that needs to be "
 "clicked to start the video playback"
 msgstr ""
+"Kiam ĝi estas ebligita, ĉiuj enigitaj filmoj komenciĝos per bildo, kiun oni "
+"devas klaki por komenci la videoludadon."
 
 #: pref.cpp:383
 #, kde-format
 msgid "Grab image when 'Click to Play' detected"
-msgstr ""
+msgstr "Preni bildon kiam 'Klaku por Ludi' detektita"
 
 #: pref.cpp:384
 #, kde-format
@@ -1670,16 +1696,19 @@ msgid ""
 "of the first frame of initial link. This image will be shown instead of a "
 "default picture."
 msgstr ""
+"Kiam ĝi estas ebligita kaj HTML-objekto havas HREF-atributon, prenu kaj "
+"konservu bildon de la unua kadro de komenca ligo. Ĉi tiu bildo estos "
+"montrita anstataŭ defaŭlta bildo."
 
 #: pref.cpp:391
 #, kde-format
 msgid "Use movie player:"
-msgstr ""
+msgstr "Uzi filmludilon:"
 
 #: pref.cpp:397
 #, kde-format
 msgid "Network bandwidth"
-msgstr ""
+msgstr "Reta bendolarĝo"
 
 #: pref.cpp:400
 #, kde-format
@@ -1688,6 +1717,8 @@ msgid ""
 "particular bitrate.\n"
 "This option sets how much bandwidth you would prefer to allocate to video."
 msgstr ""
+"Kelkfoje eblas elekti inter diversaj fluoj kun aparta bitrapideco.\n"
+"Ĉi tiu opcio fiksas kiom da bendolarĝo vi preferus asigni al video."
 
 #: pref.cpp:403
 #, kde-format
@@ -1696,16 +1727,19 @@ msgid ""
 "particular bitrate.\n"
 "This option sets the maximum bandwidth you have available for video."
 msgstr ""
+"Kelkfoje eblas elekti inter diversaj fluoj kun aparta bitrateco.\n"
+"Ĉi tiu opcio fiksas la maksimuman bendolarĝon, kiun vi havas disponebla por "
+"video."
 
 #: pref.cpp:405
 #, kde-format
 msgid "Preferred bitrate:"
-msgstr ""
+msgstr "Preferata bitrapideco:"
 
 #: pref.cpp:407 pref.cpp:410
 #, kde-format
 msgid "kbit/s"
-msgstr ""
+msgstr "kbit/s"
 
 #: pref.cpp:408
 #, kde-format
@@ -1715,12 +1749,12 @@ msgstr "Maksimuma bitkvanto:"
 #: pref.cpp:450
 #, kde-format
 msgid "Output file:"
-msgstr ""
+msgstr "Eliga dosiero:"
 
 #: pref.cpp:455
 #, kde-format
 msgid "Current source: "
-msgstr ""
+msgstr "Nuna fonto:"
 
 #: pref.cpp:457
 #, kde-format
@@ -1730,7 +1764,7 @@ msgstr "Bekfluto"
 #: pref.cpp:469
 #, kde-format
 msgid "Auto Playback"
-msgstr ""
+msgstr "Aŭtomata reprodukto"
 
 #: pref.cpp:472
 #, kde-format
@@ -1740,12 +1774,12 @@ msgstr "&Ne"
 #: pref.cpp:475
 #, kde-format
 msgid "&When recording finished"
-msgstr ""
+msgstr "&Kiam registrado finiĝis"
 
 #: pref.cpp:478
 #, kde-format
 msgid "A&fter"
-msgstr ""
+msgstr "&Post"
 
 #: pref.cpp:491
 #, kde-format
@@ -1755,17 +1789,17 @@ msgstr "Tempo:"
 #: pref.cpp:498 pref.cpp:532 pref.cpp:540
 #, kde-format
 msgid "Start &Recording"
-msgstr ""
+msgstr "Komenci &Registradon"
 
 #: pref.cpp:531
 #, kde-format
 msgid "Stop &Recording"
-msgstr ""
+msgstr "Ĉesigi &Registradon"
 
 #: pref.cpp:552
 #, kde-format
 msgid "Current Source: "
-msgstr ""
+msgstr "Nuna Fonto:"
 
 #: pref.cpp:605
 #, kde-format
@@ -1775,7 +1809,7 @@ msgstr "Formato"
 #: pref.cpp:608
 #, kde-format
 msgid "Same as source"
-msgstr ""
+msgstr "Same kiel fonto"
 
 #: pref.cpp:611 pref.cpp:723
 #, kde-format
@@ -1785,22 +1819,22 @@ msgstr "Propra"
 #: pref.cpp:615
 #, kde-format
 msgid "Mencoder arguments:"
-msgstr ""
+msgstr "Mencoder-argumentoj:"
 
 #: pref.cpp:641
 #, kde-format
 msgid "&MEncoder"
-msgstr ""
+msgstr "&MEncoder"
 
 #: pref.cpp:649
 #, kde-format
 msgid "MPlayer -&dumpstream"
-msgstr ""
+msgstr "MPlayer -&dumpstream"
 
 #: pref.cpp:656
 #, kde-format
 msgid "FFMpeg arguments:"
-msgstr ""
+msgstr "FFMpeg-argumentoj:"
 
 #: pref.cpp:683
 #, kde-format
@@ -1813,16 +1847,18 @@ msgid ""
 "Sets video driver. Recommended is XVideo, or, if it is not supported, X11, "
 "which is slower."
 msgstr ""
+"Agordas video-pelilon. Rekomendita estas XVideo, aŭ, se ĝi ne estas "
+"subtenata, X11, kiu estas pli malrapida."
 
 #: pref.cpp:711
 #, kde-format
 msgid "Enable use of postprocessing filters"
-msgstr ""
+msgstr "Ebligi uzon de postprocezaj filtriloj"
 
 #: pref.cpp:713
 #, kde-format
 msgid "Disable use of postprocessing when watching TV/DVD"
-msgstr ""
+msgstr "Malebligi uzon de posttraktado dum spektado de televido/DVD"
 
 #: pref.cpp:722
 #, kde-format
@@ -1837,72 +1873,72 @@ msgstr "Rapida"
 #: pref.cpp:751
 #, kde-format
 msgid "Horizontal deblocking"
-msgstr ""
+msgstr "Horizontala malblokado"
 
 #: pref.cpp:752 pref.cpp:770 pref.cpp:788
 #, kde-format
 msgid "Auto quality"
-msgstr ""
+msgstr "Aŭtomata kvalito"
 
 #: pref.cpp:754 pref.cpp:772 pref.cpp:790
 #, kde-format
 msgid "Chrominance filtering"
-msgstr ""
+msgstr "Filtrado de krominance"
 
 #: pref.cpp:769
 #, kde-format
 msgid "Vertical deblocking"
-msgstr ""
+msgstr "Vertikala malblokado"
 
 #: pref.cpp:787
 #, kde-format
 msgid "Dering filter"
-msgstr ""
+msgstr "Dering filtrilo"
 
 #: pref.cpp:805
 #, kde-format
 msgid "Auto brightness/contrast"
-msgstr ""
+msgstr "Aŭtomata brilo/kontrasto"
 
 #: pref.cpp:806
 #, kde-format
 msgid "Stretch luminance to full range"
-msgstr ""
+msgstr "Etendi lumecon al plena gamo"
 
 #: pref.cpp:814
 #, kde-format
 msgid "Temporal noise reducer"
-msgstr ""
+msgstr "Tempora bruoreduktilo"
 
 #: pref.cpp:836
 #, kde-format
 msgid "Custom Preset"
-msgstr ""
+msgstr "Propra Antaŭmetita"
 
 #: pref.cpp:842
 #, kde-format
 msgid "Linear blend deinterlacer"
-msgstr ""
+msgstr "Linia miksaĵo malinterplektilo"
 
 #: pref.cpp:843
 #, kde-format
 msgid "Linear interpolating deinterlacer"
-msgstr ""
+msgstr "Lineara interpola deinterplektilo"
 
 #: pref.cpp:844
 #, kde-format
 msgid "Cubic interpolating deinterlacer"
-msgstr ""
+msgstr "Kuba interpola deinterplektilo"
 
 #: pref.cpp:845
 #, kde-format
 msgid "Median deinterlacer"
-msgstr ""
+msgstr "Meza deinterplektilo"
 
 #: pref.cpp:846
 #, kde-format
 msgid "FFmpeg deinterlacer"
-msgstr ""
+msgstr "FFmpeg malinterplektilo"
 
 #: pref.cpp:854
 #, kde-format
@@ -1912,28 +1948,29 @@ msgstr "Malinterplektado"
 #: pref.cpp:879
 #, kde-format
 msgid "Enable mplayer's default postprocessing filters"
-msgstr ""
+msgstr "Ebligi la defaŭltajn postpretigajn filtrilojn de mplayer"
 
 #: pref.cpp:880
 #, kde-format
 msgid "Enable custom postprocessing filters (See: Custom preset -tab)"
 msgstr ""
+"Ebligi kutimajn posttraktajn filtrilojn (Vidu: Propra antaŭdifinita -tab)"
 
 #: pref.cpp:881
 #, kde-format
 msgid "Enable mplayer's fast postprocessing filters"
-msgstr ""
+msgstr "Ebligi la rapidajn postpretigajn filtrilojn de mplayer"
 
 #: pref.cpp:882 pref.cpp:883 pref.cpp:884
 #, kde-format
 msgid "Filter is used if there is enough CPU"
-msgstr ""
+msgstr "Filtrilo estas uzata se estas sufiĉe da CPU"
 
 #. i18n( "Strength of the noise reducer" ) );
 #: pref.cpp:886
 #, kde-format
 msgid "Stretches luminance to full range (0..255)"
-msgstr ""
+msgstr "Etendas lumecon al plena gamo (0..255)"
 
 #: pref.cpp:892
 #, kde-format
@@ -1941,32 +1978,10 @@ msgid ""
 "You are about to have all your settings overwritten with defaults.\n"
 "Please confirm.\n"
 msgstr ""
+"Vi estas surskribonta ĉiujn viajn agordojn per defaŭltoj.\n"
+"Bonvolu konfirmi.\n"
 
 #: pref.cpp:893
 #, kde-format
 msgid "Reset Settings?"
-msgstr ""
-
-#~ msgid "plugin"
-#~ msgstr "kromprogrameto"
-
-#~ msgid "http://kmplayer.kde.org"
-#~ msgstr "http://kmplayer.kde.org"
-
-#~ msgid "&OK"
-#~ msgstr "&Bone"
-
-#~ msgid "&Cancel"
-#~ msgstr "&Rezigni"
-
-#~ msgid "Exiting..."
-#~ msgstr "Finante..."
-
-#~ msgid "&Previous"
-#~ msgstr "An&taŭa"
-
-#~ msgid "&Next"
-#~ msgstr "Sek&va"
-
-#~ msgid "&Up"
-#~ msgstr "&Supren"
+msgstr "Ĉu restarigi agordojn?"
