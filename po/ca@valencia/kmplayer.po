@@ -460,7 +460,7 @@ msgstr "Màxim de connexions:"
 #: kmplayerbroadcast.cpp:173
 #, kde-format
 msgid "Maximum bandwidth (kbit):"
-msgstr "Amplada de banda màxima (kbit):"
+msgstr "Amplada de banda màxima (kbits):"
 
 #: kmplayerbroadcast.cpp:177
 #, kde-format
@@ -490,7 +490,7 @@ msgstr "Còdec d'àudio:"
 #: kmplayerbroadcast.cpp:216
 #, kde-format
 msgid "Audio bit rate (kbit):"
-msgstr "Taxa de bits de l'àudio (kbit):"
+msgstr "Taxa de bits de l'àudio (kbits):"
 
 #: kmplayerbroadcast.cpp:217
 #, kde-format
@@ -505,7 +505,7 @@ msgstr "Còdec de vídeo:"
 #: kmplayerbroadcast.cpp:219
 #, kde-format
 msgid "Video bit rate (kbit):"
-msgstr "Taxa de bits del vídeo (kbit):"
+msgstr "Taxa de bits del vídeo (kbits):"
 
 #: kmplayerbroadcast.cpp:220
 #, kde-format
@@ -1753,7 +1753,7 @@ msgstr "Taxa de bits preferida:"
 #: pref.cpp:407 pref.cpp:410
 #, kde-format
 msgid "kbit/s"
-msgstr "kbits"
+msgstr "kbits/s"
 
 #: pref.cpp:408
 #, kde-format
