@@ -89,9 +89,9 @@
 >MPlayer</application
 >, el &phonon; i el <application
 >FFMpeg</application
->. Podeu utilitzar-ho per veure tots els formats de fitxer de pel·lícula que permeten el <application
+>. Podeu utilitzar-ho per a veure tots els formats de fitxer de pel·lícula que permeten el <application
 >MPlayer</application
->, o el &phonon;, així com per veure des de <acronym
+>, o el &phonon;, així com per a veure des de <acronym
 >DVD</acronym
 >, <acronym
 >VCD</acronym
@@ -135,7 +135,7 @@
 >configuració de la <acronym
 >TV</acronym
 ></link
-> per afegir contingut a la categoria <guilabel
+> per a afegir contingut a la categoria <guilabel
 >Televisió</guilabel
 >. La categoria <guilabel
 >Més recent</guilabel
@@ -156,7 +156,7 @@
 >Més recent</guilabel
 > i deixar-lo anar a <guilabel
 >Llistes de reproducció persistents</guilabel
->. Com veureu, quan es deixa anar, apareix un menú emergent on es pot triar afegir a aquesta llista o crear un grup nou. Els elements de nivell superior es comporten com un punt d'interès, però els elements en grups reproduiran tot el grup on resideixen. Els elements d'aquesta categoria es poden moure, copiar, afegir a un nou grup o suprimir fàcilment només arrossegant aquest element a un altre lloc d'aquesta categoria. A més a més hi ha <guimenu
+>. Com veureu, quan es deixa anar, apareix un menú emergent on es pot triar afegir a aquesta llista o crear un grup nou. Els elements de nivell superior es comporten com un punt d'interès, però els elements en grups reproduiran tot el grup on resideixen. Els elements d'aquesta categoria es poden moure, copiar, afegir a un grup nou o suprimir fàcilment només arrossegant aquest element a un altre lloc d'aquesta categoria. A més a més, hi ha <guimenu
 >Suprimeix element</guimenu
 >, <guimenu
 >Mou amunt</guimenu
@@ -164,7 +164,7 @@
 >Mou avall</guimenu
 > elements al menú contextual (en fer clic amb el botó dret del ratolí sobre un element). </para>
 <para
->Per descomptat podeu afegir grups a grups per aconseguir una jerarquia més profunda. Quan es faci clic sobre un element, el seu grup i tots els seus grups fills es copiaran a la categoria actual i les reproduccions començaran a la posició de l'element clicat. </para>
+>Per descomptat podeu afegir grups a grups per a aconseguir una jerarquia més profunda. Quan es faci clic sobre un element, el seu grup i tots els seus grups fills es copiaran a la categoria actual i les reproduccions començaran a la posició de l'element clicat. </para>
 <section>
 <title
 >Format d'emmagatzematge</title>
@@ -173,7 +173,7 @@
 >~/.kde/share/apps/kmplayer/playlist.xml</filename
 >, i el seu format és com aquest exemple. Vegeu <link linkend="XML-editing"
 >aquí</link
-> per manipular aquestes dades directament. <programlisting>
+> per a manipular aquestes dades directament. <programlisting>
 &lt;playlist&gt;
     &lt;group title="feeds"&gt;
         &lt;item url="http://www.lugradio.org/episodes.rss"/&gt;
@@ -272,7 +272,7 @@
 <title
 >Els dorsals del reproductor</title>
 <para
->El &kmplayer; utilitza programes externs per fer la reproducció real. </para>
+>El &kmplayer; utilitza programes externs per a fer la reproducció real. </para>
 <section id="mplayer">
 <title
 >MPlayer</title>
@@ -286,7 +286,7 @@
 <title
 >Resolució de problemes</title>
 <para
->La millor manera de depurar aquest dorsal és iniciar el &kmplayer; des d'una aplicació de consola com el Konsole. Després inicieu una pel·lícula amb el &kmplayer; i vegeu la línia d'ordres exacta que s'utilitza per iniciar el MPlayer a l'aplicació de consola. Ara copieu-ho a una altra consola, elimineu les opcions «-wid 12344», i feu-ho reproduir. Probablement només cal escollir els paràmetres correctes -ao/-vo. Assegureu-vos que el MPlayer no s'inicia de manera predeterminada amb una &IGU;. </para>
+>La millor manera de depurar aquest dorsal és iniciar el &kmplayer; des d'una aplicació de consola com el Konsole. Després inicieu una pel·lícula amb el &kmplayer; i vegeu la línia d'ordres exacta que s'utilitza per a iniciar el MPlayer a l'aplicació de consola. Ara copieu-ho a una altra consola, elimineu les opcions «-wid 12344», i feu-ho reproduir. Probablement només cal escollir els paràmetres correctes -ao/-vo. Assegureu-vos que el MPlayer no s'inicia de manera predeterminada amb una &IGU;. </para>
 <para
 >Una altra eina de depuració és el botó «consola» a la barra d'eines del &kmplayer;. Aquí podeu veure la sortida del MPlayer. </para>
 </section>
@@ -362,7 +362,7 @@ plugin=/usr/lib/mozilla/plugins/libswfdecmozilla.so
 <title
 >Força el reproductor de dorsals per a un tipus MIME</title>
 <para
->Per configurar que sempre s'usi un dorsal donat per a un tipus MIME en particular (si es detecta, per descomptat) es pot fer editant manualment el <filename
+>Per a configurar que sempre s'usi un dorsal donat per a un tipus MIME en particular (si es detecta, per descomptat) es pot fer editant manualment el <filename
 >~/.kde/share/config/kmplayerrc</filename
 >. Per exemple, permetre que el «phonon» reprodueixi tots els arxius «ogg»: <programlisting
 >[audio/ogg]
@@ -392,7 +392,7 @@ player=phonon
 >~/.kde/share/apps/kmplayer/tv.xml</filename
 >. Vegeu <link linkend="XML-editing"
 >aquí</link
-> per manipular aquestes dades directament. El format &XML; és com aquest exemple: <programlisting>
+> per a manipular aquestes dades directament. El format &XML; és com aquest exemple: <programlisting>
 &lt;tvdevices&gt;
     &lt;device path="/dev/video0"width="320" height="240" name="BT878 vídeo (Hauppauge (bt878))" audio="""
               minwidth="48" minheight="32" maxwidth="924" maxheight="576" playback="0" xvport="240"&gt;
@@ -436,7 +436,7 @@ player=phonon
     <title
 >VDR</title>
 <para
->Per configurar les opcions del VDR al &kmplayer;, vegeu el plafó Configura->Font->VDR->Plafó del port del XVideo. Hauria d'haver-hi ports detectats, dels quals n'hauríeu de seleccionar un. Cal esbrinar quina codificació heu d'utilitzar (per exemple, per a l'Europa occidental, és a dir, PAL) i probablement la correcta té un nom amb «dvb» en ell. </para>
+>Per a configurar les opcions del VDR al &kmplayer;, vegeu el plafó Configura->Font->VDR->Plafó del port del XVideo. Hauria d'haver-hi ports detectats, dels quals n'hauríeu de seleccionar un. Cal esbrinar quina codificació heu d'utilitzar (per exemple, per a l'Europa occidental, és a dir, PAL) i probablement la correcta té un nom amb «dvb» en ell. </para>
 <para
 >Per exemple, tinc una targeta de TV, una targeta DVB-S i una càmera web connectada al meu sistema. Amb aquestes, la meva configuració és que hi ha tres ports. El primer té una llista llarga d'entrades NTSC(-JP)/PAL(-M)/SECAM tot dient alguna cosa sobre la televisió/composició/svideo (la meva targeta de TV). El segon té NTSC-dvb/PAL-dvb/SECAM-dvb (la meva targeta DVB-S). I finalment la tercera només té ntsc/pal (probablement la meva càmera web). Per tant, hauria de configurar (només seleccionar-la) el segon port i la segona entrada (PAL-dvb). </para>
 <para
