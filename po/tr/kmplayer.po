@@ -17,7 +17,7 @@ msgstr ""
 "Project-Id-Version: extragear-multimedia-kde4\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2023-11-05 12:31+0000\n"
-"PO-Revision-Date: 2024-02-08 18:02+0300\n"
+"PO-Revision-Date: 2024-02-09 19:03+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
 "Language: tr\n"
@@ -185,7 +185,7 @@ msgstr "VCD açılıyor..."
 #: app/kmplayer.cpp:427
 #, kde-format
 msgid "Opening Audio CD..."
-msgstr "Ses CD'si açılıyor..."
+msgstr "Ses CD’si açılıyor..."
 
 #: app/kmplayer.cpp:432
 #, kde-format
@@ -306,7 +306,7 @@ msgstr "DVD açtıktan sonra otomatik oynat"
 #: app/kmplayer.cpp:1468
 #, kde-format
 msgid "Start playing DVD right after opening DVD"
-msgstr "DVD'yi, DVD açıldıktan hemen sonra oynat"
+msgstr "DVD’yi, DVD açıldıktan hemen sonra oynat"
 
 #: app/kmplayer.cpp:1469
 #, kde-format
@@ -362,7 +362,7 @@ msgstr "VCD açtıktan sonra otomatik oynat"
 #: app/kmplayer.cpp:1648
 #, kde-format
 msgid "Start playing VCD right after opening VCD"
-msgstr "VCD'yi, VCD açıldıktan hemen sonra oynat"
+msgstr "VCD’yi, VCD açıldıktan hemen sonra oynat"
 
 #: app/kmplayer.cpp:1649
 #, kde-format
@@ -387,7 +387,7 @@ msgstr "Parça "
 #: app/kmplayer.cpp:1759 app/kmplayer.cpp:1824
 #, kde-format
 msgid "Audio CD"
-msgstr "Ses CD'si"
+msgstr "Ses CD’si"
 
 #: app/kmplayer.cpp:1830
 #, kde-format
@@ -1285,7 +1285,7 @@ msgstr "VCD parça şablonu"
 #: lib/kmplayerprocess.cpp:1004
 #, kde-format
 msgid "Audio CD tracks pattern"
-msgstr "Ses CD'si parça şablonu"
+msgstr "Ses CD’si parça şablonu"
 
 #: lib/kmplayerprocess.cpp:1025
 #, kde-format
