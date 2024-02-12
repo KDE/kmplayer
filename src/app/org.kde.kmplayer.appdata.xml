@@ -3,6 +3,7 @@
   <id>org.kde.kmplayer</id>
   <metadata_license>FSFAP</metadata_license>
   <project_license>GPL-2.0-or-later</project_license>
+  <developer_name translate="no">KDE</developer_name>
   <name>KMPlayer</name>
   <name xml:lang="ar">كي ام بلاير</name>
   <name xml:lang="ca">KMPlayer</name>
