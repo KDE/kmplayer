@@ -4,6 +4,14 @@
   <metadata_license>FSFAP</metadata_license>
   <project_license>GPL-2.0-or-later</project_license>
   <developer_name translate="no">KDE</developer_name>
+  <developer_name translate="no" xml:lang="ca">KDE</developer_name>
+  <developer_name translate="no" xml:lang="eo">KDE</developer_name>
+  <developer_name translate="no" xml:lang="es">KDE</developer_name>
+  <developer_name translate="no" xml:lang="nl">KDE</developer_name>
+  <developer_name translate="no" xml:lang="sl">KDE</developer_name>
+  <developer_name translate="no" xml:lang="tr">KDE</developer_name>
+  <developer_name translate="no" xml:lang="uk">KDE</developer_name>
+  <developer_name translate="no" xml:lang="x-test">xxKDExx</developer_name>
   <name>KMPlayer</name>
   <name xml:lang="ar">كي ام بلاير</name>
   <name xml:lang="ca">KMPlayer</name>
