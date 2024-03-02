@@ -17,7 +17,7 @@ msgstr ""
 "Project-Id-Version: extragear-multimedia-kde4\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2023-11-05 12:31+0000\n"
-"PO-Revision-Date: 2024-02-09 19:03+0300\n"
+"PO-Revision-Date: 2024-03-01 16:11+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
 "Language: tr\n"
@@ -25,7 +25,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Lokalize 24.01.95\n"
+"X-Generator: Lokalize 24.02.0\n"
 
 #, kde-format
 msgctxt "NAME OF TRANSLATORS"
@@ -1245,47 +1245,47 @@ msgstr "&MPlayer"
 #: lib/kmplayerprocess.cpp:996
 #, kde-format
 msgid "Size pattern"
-msgstr "Boyut şablonu"
+msgstr "Boyut dizgisi"
 
 #: lib/kmplayerprocess.cpp:997
 #, kde-format
 msgid "Cache pattern"
-msgstr "Tampon şablonu"
+msgstr "Önbellek dizgisi"
 
 #: lib/kmplayerprocess.cpp:998
 #, kde-format
 msgid "Position pattern"
-msgstr "Konum şablonu"
+msgstr "Konum dizgisi"
 
 #: lib/kmplayerprocess.cpp:999
 #, kde-format
 msgid "Index pattern"
-msgstr "Indeks şablonu"
+msgstr "Indeks dizgisi"
 
 #: lib/kmplayerprocess.cpp:1000
 #, kde-format
 msgid "Reference URL pattern"
-msgstr "Örnek URL başvurusu"
+msgstr "Başvuru URL'si dizgisi"
 
 #: lib/kmplayerprocess.cpp:1001
 #, kde-format
 msgid "Reference pattern"
-msgstr "Kaynak şablonu"
+msgstr "Kaynak dizgisi"
 
 #: lib/kmplayerprocess.cpp:1002
 #, kde-format
 msgid "Start pattern"
-msgstr "Başlangış şablonu"
+msgstr "Başlangıç dizgisi"
 
 #: lib/kmplayerprocess.cpp:1003
 #, kde-format
 msgid "VCD track pattern"
-msgstr "VCD parça şablonu"
+msgstr "VCD parça dizgisi"
 
 #: lib/kmplayerprocess.cpp:1004
 #, kde-format
 msgid "Audio CD tracks pattern"
-msgstr "Ses CD’si parça şablonu"
+msgstr "Ses CD’si parça dizgisi"
 
 #: lib/kmplayerprocess.cpp:1025
 #, kde-format
