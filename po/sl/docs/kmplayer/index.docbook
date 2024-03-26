@@ -1,0 +1,573 @@
+<?xml version="1.0" ?>
+<!DOCTYPE book PUBLIC "-//KDE//DTD DocBook XML V4.5-Based Variant V1.1//EN" "dtd/kdedbx45.dtd" [
+  <!ENTITY kmplayer "<application
+>KMPlayer</application
+>">
+  <!ENTITY kappname "&kmplayer;"
+><!-- replace kmplayer here -->
+  <!ENTITY package "kdeextragear-2">
+  <!ENTITY % addindex "IGNORE">
+  <!ENTITY % Slovenian "INCLUDE"
+><!-- change language only here -->
+ 
+]>
+
+<book id="kmplayer" lang="&language;">
+
+
+<bookinfo>
+<title
+>&kmplayer; Priročnik</title>
+
+<authorgroup>
+<author
+><firstname
+>Koos</firstname
+> <surname
+>Vriezen</surname
+> <email
+>koos dot vriezen at gmail dot com</email
+> </author>
+</authorgroup>
+
+<othercredit role="translator"
+><firstname
+>Matjaž</firstname
+><surname
+>Jeran</surname
+><affiliation
+><address
+><email
+>matjaz.jeran@amis.net</email
+></address
+></affiliation
+><contrib
+>Prevod</contrib
+></othercredit
+> 
+
+<copyright>
+<year
+>2002</year>
+<year
+>2006</year>
+<year
+>2007</year>
+<year
+>2008</year>
+<holder
+>Koos Vriezen</holder>
+</copyright>
+<!-- Translators: put here the copyright notice of the translation -->
+<!-- Put here the FDL notice.  Read the explanation in fdl-notice.docbook 
+     and in the FDL itself on how to use it. -->
+<legalnotice
+>&FDLNotice;</legalnotice>
+
+
+<date
+>13.01.2008</date>
+<releaseinfo
+>0.07.00</releaseinfo>
+
+<!-- Abstract about this handbook -->
+
+<abstract>
+<para
+>&kmplayer; je aplikacija, ki je &kde; vmesnik za <application
+>MPlayer</application
+> in &phonon;. </para>
+</abstract>
+
+
+<keywordset>
+<keyword
+>KDE</keyword>
+<keyword
+>kdemultimedija</keyword>
+<keyword
+>MPlayer</keyword>
+<keyword
+>konqueror</keyword>
+<keyword
+>video</keyword>
+</keywordset>
+
+</bookinfo>
+
+<chapter id="introduction">
+<title
+>Uvod</title>
+<para
+>&kmplayer; je preprost vmesnik za <application
+>MPlayer</application
+>, &phonon; in <application
+>FFMpeg</application
+>. Uporabite ga lahko za gledanje vseh formatov filmskih datotek, ki jih <application
+>MPlayer</application
+> ali &phonon; podpira kot tudi gledanje s <acronym
+>DVD</acronym
+>, <acronym
+>VCD</acronym
+> ali <acronym
+>TV</acronym
+> in <acronym
+>kamere</acronym
+>. </para>
+<para
+>Dokumentacija za &kappname; ni bila dokončana, ko je &kde; že bil nameščen na tem računalniku.</para
+> <para
+>Če potrebujete dodatno pomoč, preverite <ulink url="http://www.kde.org"
+>&kde; Spletno mesto</ulink
+> za posodobitve ali tako, da svoje vprašanje pošljete <ulink url="mailto:kde-user@kde.org"
+>&kde; na uporabniški poštni seznam</ulink
+>. </para>
+<para
+><emphasis
+>&kde; Ekipa</emphasis
+></para>
+
+</chapter>
+<chapter id="gui">
+<title
+>Uporabniški vmesnik</title>
+<para
+>Okno aplikacije je sestavljeno iz tako imenovanih dockable oken. Vedno je tam tudi osrednje okno. Izbirno okno je okno seznama predvajanja. In končno je tu okno z informacijami, ki se samo prikaže, ko je nekaj informacij tam za prikaz. </para>
+<section id="playlistwindow">
+<title
+>Okno seznama predvajanja</title>
+<para
+>Okno seznama predvajanja ima od tega pisanja pet kategorij, trenutni element(-e), <guilabel
+>Optični diski</guilabel
+>, <guilabel
+>Televizija</guilabel
+>, <guilabel
+>Trajni seznami predvajanja</guilabel
+> in <guilabel
+>Nedavno</guilabel
+>. Ko kliknete na besedilo kategorije, bo prikazana vsebina pod to vrstico. Seveda mora biti vsebina, npr. glejte <link linkend="tvsource"
+><acronym
+>Nastavitve TV</acronym
+></link
+> za dodajanje vsebine za kategorijo <guilabel
+>Televizija</guilabel
+>. Kategorija <guilabel
+>Najnovejše</guilabel
+> se bo sama zapolnila med predvajanjem področnih medijskih datotek ali omrežnih &URL;. Ta kategorija lahko vsebuje 60 elementov, od katerih je zadnjih 50 pod vejo <guilabel
+>Več..</guilabel
+>. </para>
+<section>
+<title
+>Kategorija Trajni seznami predvajanja</title>
+<para
+>Svoje priljubljene povezave lahko shranite v meni <guilabel
+>Zaznamek</guilabel
+>, vendar so to posamezni elementi. Če želite ustvariti seznam elementov, ki se predvajajo drug za drugim, uporabite kategorijo <guilabel
+>Trajni seznami predvajanja</guilabel
+>. </para>
+<para
+>Najlažji način za dodajanje elementa na ta seznam je, da ga povlečete iz <guilabel
+>Najnovejše</guilabel
+> in spustite na <guilabel
+>Trajne sezname predvajanja</guilabel
+>. Kot boste videli, se ob padcu prikaže pojavni meni, v katerem lahko izberete dodajanje na ta seznam ali ustvarjanje nove skupine. Elementi na najvišji ravni se obnašajo kot element z zaznamki, vendar bodo elementi v skupinah predvajali celotno skupino, v kateri se nahajajo. Elemente v tej kategoriji lahko preprosto premaknete, kopirate, dodate v novo skupino ali izbrišete tako, da ta element povlečete na drugo mesto v tej kategoriji. Poleg tega obstajajo elementi <guimenu
+>Izbriši element</guimenu
+>, <guimenu
+>Premakni navzgor</guimenu
+> in <guimenu
+>Premakni navzdol</guimenu
+> v kontekstnem meniju (ko z desnim gumbom miške kliknete na element). </para>
+<para
+>Seveda lahko skupine dodajate skupinam, da dobite globljo hierarhijo. Ko kliknete element, se njegova skupina in vse podrejene skupine kopirajo v trenutno kategorijo in predvajanje se začne na mestu kliknjenega predmeta. </para>
+<section>
+<title
+>Format shranjevanja</title>
+<para
+>Podatki so shranjeni v <filename
+>~/.kde/share/apps/kmplayer/playlist.xml</filename
+>, in format je podoben temu primeru. Poglejte <link linkend="XML-editing"
+>sem</link
+> za neposredno manipulacijo teh podatkov.. <programlisting>
+&lt;playlist&gt;
+    &lt;group title="feeds"&gt;
+        &lt;item url="http://www.lugradio.org/episodes.rss"/&gt;
+        &lt;item url="http://science.nasa.gov/podcast.xml"/&gt;
+        &lt;item url="http://www.theworld.org/rss/tech.xml"/&gt;
+    &lt;/group&gt;
+    &lt;group title="iradio"&gt;
+        &lt;group title="sunny"&gt;
+            &lt;item mplayeropts="-cache 256" url="http://www.swissgroove.ch/listen.m3u"/&gt;
+            &lt;item url="http://www.boombasticradio.com/shoutcast/64.pls"/&gt;
+        &lt;/group&gt;
+        &lt;group title="rainy"&gt;
+            &lt;item url="http://www.radioparadise.com/musiclinks/rp_64.m3u"/&gt;
+            &lt;item url="http://www.woxy.com/stream/wma64.asx"/&gt;
+            &lt;item url="http://radionigel.com/winmedia.asx"/&gt;
+            &lt;item url="rtsp://livestreams.omroep.nl/live/vpro/vpro3voor12radioalt.rm"/&gt;
+        &lt;/group&gt;
+    &lt;/group&gt;
+&lt;/playlist&gt;
+</programlisting
+> Upoštevajte tudi to za <application
+>MPlayer</application
+>možnosti po meri lahko nastavite s pomočjo <computeroutput
+>mplayeropts</computeroutput
+> argument. &kmplayer; išče to možnost navzgor v drevo, tako da ga lahko nastavite za celotno skupino in preglasite za podrejeno skupino ali predmet. </para>
+</section>
+</section>
+</section>
+<section id="XML-editing">
+<title
+>Neposredno &XML; urejanje</title>
+<para
+>S trenutnimi kategorijami <guilabel
+>Televizija</guilabel
+> in <guilabel
+>Trajni seznami predvajanja</guilabel
+> je mogoče manipulirati tudi z urejanjem njihovih &XML; shranjevanja. Seveda lahko to storite, ko &kmplayer; ne izvaja in ureja različnih datotek v <filename
+>~/.kde/share/apps/kmplayer/</filename
+>, ampak tudi v sami aplikaciji. Preprosto kliknite oznako kategorije, nato izberite <guimenu
+>Pogled</guimenu
+> in nato <guimenu
+>Način urejanja</guimenu
+>. Lahko tudi kliknete podrejeno vejo in boste videli samo &XML; vsebino veje. </para>
+<para
+>Ko uredite nekaj &XML;, kliknite na <guilabel
+>Sinhroniziraj s seznamom predvajanja</guilabel
+> in prekličite izbiro elementa <guimenu
+>Način urejanja</guimenu
+> ali kliknite drugo kategorijo. <caution
+><para
+>Vse spremembe se izgubijo, ko zapustite način urejanja ali izberete drugo vejo brez sinhronizacije s seznamom predvajanja. </para
+></caution>
+</para>
+<para
+>Zaradi lenobe avtorjev &kmplayer; je mogoče nekatere funkcije omogočiti samo z urejanjem datoteke &XML; . </para>
+</section>
+</chapter>
+<chapter id="settings">
+<title
+>Nastavitve</title>
+<section>
+    <title
+>Uvodna/izhodna animacija</title>
+    <para
+>Onemogočanje začetne/končne animacije lahko konfigurirate tako, da uredite <filename
+>~/.kde/share/config/kmplayerrc</filename
+> in spremenite <programlisting
+> [Splošne možnosti] No Intro=0 </programlisting
+> zgornjo možnost na ' 1'. Samo dodajte to možnost, če je še ni. </para>
+<para
+>Možna je tudi nastavitev alternativne animacije. &kmplayer; bo pogledal oz. <filename
+>~/.kde/share/apps/kmplayer/intro.xml</filename
+> in <filename
+>~/.kde/share/apps/kmplayer/exit.xml</filename
+>. Format mora biti podprt &XML;. </para>
+<para
+>Ni nujno, da je uvodna animacija kratka, saj se samodejno konča, ko se odpre drug vir. Seveda bi bilo to za izhodno animacijo nekoliko moteče, vendar lahko uporabnik aplikacijo vedno dvakrat zaključi. </para>
+<para
+>Preprost primer uvoda, ki prikazuje vašo najljubšo fotografijo, je lahko <programlisting>
+&lt;smil&gt;
+  &lt;body&gt;
+    &lt;img dur="indefinite" src="file:///home/koos/mum.gif" fit="meet"/&gt;
+  &lt;/body&gt;
+&lt;/smil&gt;
+</programlisting
+> V izvornem paketu &kmplayer;, v <filename
+>tests/</filename
+> je nekaj primerov <acronym
+>SMIL</acronym
+>, ki jih &kmplayer; podpira. </para>
+</section>
+</chapter>
+<chapter id="backends">
+<title
+>Zaledni predvajalniki</title>
+<para
+>&kmplayer; uporablja zunanje programe za dejansko igranje. </para>
+<section id="mplayer">
+<title
+>MPlayer</title>
+<para
+>V konfiguracijskem pogovornem oknu &kmplayer; je konfiguracijski zavihek za MPlayer. Tu lahko med drugim nastavite pot MPlayerja in velikost predpomnilnika za omrežni tok. </para>
+<para
+>Ime te konfiguracije predvajalnika je <parameter
+>mplayer</parameter
+>. </para>
+<section id="mplayer-debug">
+<title
+>Odpravljanje težav</title>
+<para
+>Najboljši način za odpravljanje napak v tem ozadju je zagon &kmplayer; iz konzolne aplikacije, kot je konsole. Nato zaženite film z &kmplayer; in si oglejte natančno ukazno vrstico, ki se uporablja za zagon mplayerja v konzolni aplikaciji. Zdaj kopirajte/prilepite to na drugo konzolo, odstranite možnosti '-wid 12344' in omogočite predvajanje. Verjetno gre samo za izbiro pravih parametrov -ao/-vo. Prepričajte se tudi, da se mplayer ne zažene privzeto z &GUI;. </para>
+<para
+>Drugo orodje za odpravljanje napak je gumb 'konzola' v orodni vrstici &kmplayer;. Tukaj si lahko ogledate izhod iz mplayerja. </para>
+</section>
+</section>
+<section id="phonon">
+<title
+>Phonon</title>
+<para
+>&phonon; je &kde; multimedijsko ogrodje za namizja in ga je mogoče konfigurirati v &systemsettings;. </para>
+<para
+>Ime te konfiguracije predvajalnika je <parameter
+>phonon</parameter
+>. </para>
+<section id="phonon-debug">
+<title
+>Odpravljanje težav</title>
+<para
+>V bistvu na enak način kot pri odpravljanju težav <link linkend="mplayer-debug"
+>MPlayer</link
+>, z imenom aplikacije <filename
+>kphononplayer</filename
+>. </para>
+</section>
+</section>
+<section id="npp">
+<title
+>Vtičnik za brskalnik</title>
+<para
+>V konfiguracijskem pogovornem oknu &kmplayer; ni zavihka s konfiguracijo za ta predvajalnik. Vse je treba konfigurirati z ročnim urejanjem datoteke <filename
+>~/.kde/share/config/kmplayerrc</filename
+>, kot pri konfiguraciji <link linkend="backend-mimetype"
+>zadnje strani na vrsto mime</link
+>. To je primer, kako omogočiti predvajanje flasha z vtičnikom swfdec-mozilla: <programlisting
+>[application/x-shockwave-flash]
+player=npp
+plugin=/usr/lib/mozilla/plugins/libswfdecmozilla.so
+</programlisting>
+</para>
+<para
+>Flash lahko predvajate znotraj &kmplayer;, pravzaprav lahko celo prilepite posebno polje <parameter
+>embed</parameter
+> za <ulink url="http://www.youtube.com"
+>YouTube</ulink
+> v <link linkend="XML-editing"
+>seznam predvajanja &XML;</link
+>. </para>
+<para
+>Če želite omogočiti &kmplayer;, da predvaja flash na straneh HTML, bi morali &kmplayer; vstaviti ponudnika storitev za vrsto mime <parameter
+>application/x-shockwave-flash</parameter
+> v konfiguracijskem pogovornem oknu <guilabel
+>Povezave datotek</guilabel
+> &kde;. </para>
+<para
+>Kot v zgornjem primeru je ime konfiguracije tega predvajalnika <parameter
+>npp</parameter
+>. </para>
+<section id="npp-debug">
+<title
+>Odpravljanje težav</title>
+<para
+>Zaženite &konqueror; ali &kmplayer; v konzolni aplikaciji in poiščite napake pri nalaganju knjižnice vtičnikov brskalnika. Začeti postopek se imenuje <filename
+>knpplayer</filename
+>. Če to ne povzroči nobenih napak, preverite zajem izpisa zaledja znotraj &kmplayer; (<guimenu
+>Pogled</guimenu
+>, <guimenuitem
+>Konzola</guimenuitem
+> ali <guimenuitem
+>Konzola</guimenuitem
+> iz pojavnega menija). </para>
+</section>
+</section>
+<section id="backend-mimetype">
+<title
+>Vsili zaledni predvajalnik za mimetip</title>
+<para
+>Konfiguracijo tako, da vedno uporablja določeno zaledje za določen tip mime (če je seveda zaznan), je mogoče narediti z ročnim urejanjem <filename
+>~/.kde/share/config/kmplayerrc</filename
+>. Na primer, naj phonon predvaja vse ogg datoteke: <programlisting
+>[audio/ogg]
+player=phonon
+</programlisting>
+</para>
+</section>
+</chapter>
+<chapter id="sources">
+<title
+>Viri, ki jih je mogoče predvajati</title>
+<para
+>&kmplayer; lahko predvaja iz različnih virov. Ti viri so navedeni v meniju Vir. </para>
+<section id="tvsource">
+    <title
+>TV</title>
+    <para
+>&kmplayer; lahko predvaja s TV kartic z <application
+>MPlayer</application
+> ali <acronym
+>XVideo</acronym
+> (z <application
+>kxvplayer</application
+>). Preden lahko gledate televizijo, morate konfigurirati, katero napravo boste uporabljali, in TV-kanale. Za to lahko uporabite skener iz konfiguracijskega pogovornega okna ali ročno uredite konfiguracijsko datoteko. </para>
+<para
+>Konfiguracijska datoteka za nastavitev TV &XML; se nahaja na <filename
+>~/.kde/share/apps/kmplayer/tv.xml</filename
+>. Poglejte <link linkend="XML-editing"
+>here</link
+> za neposredno manipulacijo s to datoteko. Format &XML; je kot ta primer: <programlisting>
+&lt;tvdevices&gt;
+    &lt;device path="/dev/video0" width="320" height="240" name="BT878 video (Hauppauge (bt878))" audio=""
+              minwidth="48" minheight="32" maxwidth="924" maxheight="576" playback="0" xvport="240"&gt;
+        &lt;input name="Television" id="0" tuner="1" norm="PAL" xvenc="0"&gt;
+            &lt;channel name="Ned1" frequency="216"/&gt;
+            &lt;channel name="VCR" frequency="594.90"/&gt;
+        &lt;/input&gt;
+        &lt;input name="Composite1" id="1" xvenc="7"/&gt;
+        &lt;input name="S-Video" id="2" xvenc="14"/&gt;
+        &lt;input name="Composite3" id="3"/&gt;
+    &lt;/device&gt;
+    &lt;device path="/dev/video1" width="640" height="480" name="Philips 740 webcam" audio=""
+              minwidth="160" minheight="120" maxwidth="640" maxheight="480" playback="1"&gt;
+        &lt;input name="Webcam" id="0"/&gt;
+    &lt;/device&gt;
+&lt;/tvdevices&gt;
+</programlisting
+> Upoštevajte, da elementi <quote
+>input</quote
+>, ki imajo kanale, morajo imeti atribut <quote
+>tuner</quote
+> nastavljen na <quote
+>1</quote
+>. </para>
+<para
+><acronym
+>XVideo</acronym
+> uporablja samo atribute <quote
+>xvport</quote
+> in<quote
+>xvenc</quote
+> in jih je mogoče nastaviti le z ročnim urejanjem te datoteke. Vrednosti teh dveh atributov je mogoče pridobiti z zagonom<quote
+>kxvplayer</quote
+> v terminalski aplikaciji, kot je <quote
+>konsole</quote
+>. Za vsaka vrata bo <quote
+>kxvplayer</quote
+> izpisal vrstice, kot so spodaj in številke lahko nastavite za omenjene atribute.<programlisting>
+    xvport 240
+    ....
+    encoding: 0 PAL-television
+    encoding: 1 NTSC-television
+    encoding: 2 SECAM-television
+    ....   
+</programlisting
+> Tudi atribute širine in višine predvajalnik ne upošteva<acronym
+>XVideo</acronym
+>. Ta predvajalnik dobi velikosti od strežnika X. Ena od lepih stvari <acronym
+>XVideo</acronym
+> je lestvičenje, ki se izvede v strojni opremi, z video kartico, tako da podpira celozaslonski način brez procesorja uporabe in brez spremembe ločljivosti monitorja. Tudi nič motečega utripa, ko drugo okno prekriva to video okno. </para>
+<para
+>Glejte razdelek VDR za več informacij o uporabi <acronym
+>XVideo</acronym
+>. </para>
+</section>
+<section id="vdrsource">
+    <title
+>VDR</title>
+<para
+>Če želite konfigurirati svoje nastavitve VDR v &kmplayer;, glejte ploščo Konfiguracija->Vir->VDR->plošča vrat XVideo. Morala bi biti zaznana vrata, med katerimi bi morali izbrati eno. Morate ugotoviti, katero kodiranje morate uporabiti (npr. za zahodno Evropo, to je PAL) in verjetno ima pravilno ime z <quote
+>dvb</quote
+> v njem. </para>
+<para
+>Na primer, v sistem imam priključeno TV kartico, kartico DVB-S in spletno kamero. S temi nastavitvami so tri vrata. Prvi ima dolg seznam vnosov NTSC(-JP)/PAL(-M)/SECAM, ki vsi govorijo o televiziji/kompozitu/svideo (moja TV kartica). Drugi ima NTSC-dvb/PAL-dvb/SECAM-dvb (moja kartica DVB-S). In končno ima tretji samo ntsc/pal (verjetno moja spletna kamera). Zato bi moral konfigurirati (le izbrati) druga vrata in drugi vnos (PAL-dvb). </para>
+<para
+>Ker podpora za VDR iz &kmplayer; lahko uporablja samo <acronym
+>XVideo</acronym
+>, seveda bi <acronym
+>XVideo</acronym
+> moral delovati (in verjamem, da za video naprave ta način gledanja deluje samo v linuxu). Tudi to deluje samo na vašem prvem zaslonu (:0.0). Zato se prepričajte, da razširitev <quote
+>videoforlinux</quote
+> deluje s strežnikom X. Za strežnik XFree86 bi torej v njegovi konfiguraciji moral imeti (<filename
+>/etc/X11/XF86Config</filename
+>)  <programlisting
+>Section "Module" 
+     .... 
+     Load    "v4l" 
+EndSection
+</programlisting>
+</para>
+<para
+>Na žalost morate to nastavitev znova konfigurirati, kadar koli posodobite gonilnik videoposnetka. </para>
+</section>
+<section id="kmplayer_url">
+    <title
+>Ukazna vrstica</title>
+<para
+>Interno za vire, &kmplayer; uporablja različna imena. V času tega pisanja so to "dvdnavsource", "dvdsource", "exitsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource" in "vdrsource". Ko so aktivirani, večinoma začnejo predvajati seznam predmetov, ki jih je mogoče igrati. </para>
+<para
+>Določen vir lahko aktivirate z <filename
+>kmplayer://</filename
+> tipom <acronym
+>URL</acronym
+>. Samo nastavite gostiteljski del kot izvorno ime in izbirni del poti kot dodatne argumente, tako da bi lahko za kanal za "vdrsource" to izgledalo kot <filename
+>kmplayer://vdrsource/22 MTV 2</filename
+>. Npr. ta skript zažene &kmplayer; z uporabo "dvdnavsource" in uporabo &DBus; za predvajanje v celozaslonskem načinu.<programlisting>
+/bin/bash
+kmplayer kmplayer://dvdnavsource/ &amp;
+PID=$!
+sleep 2
+qdbus org.kde.kmplayer-$PID /kmplayer/MainWindow_1 showFullScreen
+</programlisting
+>Za nekatere vire to ne bo veliko, ker niso namenjeni normalnemu igranju. Za "pipesource" je to onemogočeno, ker bi bila to seveda slaba varnostna luknja. </para>
+</section>
+</chapter>
+<chapter id="questionsanswersandtips">
+    <title
+>Vprašanja, odgovori in nasveti</title>
+
+    <qandaset id="faq">
+      <title
+>Pogosto zastavljena vprašanja</title>
+      <qandaentry>
+        <question>
+            <para
+>Kakšen namig, kako narediti moj CD-ROM manj hrupen pri predvajanju z njega (ne VCD://)?</para>
+        </question>
+        <answer>
+            <para
+>Seveda poskusite <command
+>hdparm -E 8 /dev/cdrom</command
+> kot root po namestitvi naprave. Vendar ne pozabite dvakrat preveriti <filename
+>/dev/cdrom</filename
+>, ki kaže na vaš pogon CDROM. </para>
+        </answer>
+      </qandaentry>
+    </qandaset>
+
+  </chapter>
+<chapter id="credits-and-license">
+<title
+>Zasluge in licenca</title>
+
+<para
+>&kmplayer; avtorske pravice 2002,2003 Koos Vriezen</para>
+
+<para
+>Prevod: Matjaž Jeran <email
+>matjaz.jeran@amis.net</email
+></para
+> &underFDL; &underGPL; </chapter>
+
+&documentation.index;
+</book>
+<!--
+Local Variables:
+mode: sgml
+sgml-minimize-attributes:nil
+sgml-general-insert-case:lower
+sgml-indent-step:0
+sgml-indent-data:nil
+End:
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+
