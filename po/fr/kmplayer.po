@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: kmplayer\n"
 "Report-Msgid-Bugs-To: https://bugs.kde.org\n"
 "POT-Creation-Date: 2019-08-30 07:39+0200\n"
-"PO-Revision-Date: 2024-05-02 11:50+0200\n"
+"PO-Revision-Date: 2024-05-03 08:46+0200\n"
 "Last-Translator: Xavier Besnard <xavier.besnard@kde.org>\n"
 "Language-Team: French <French <kde-francophone@kde.org>>\n"
 "Language: fr\n"
@@ -484,7 +484,8 @@ msgstr "Format :"
 #, kde-format
 msgid "Only avi, mpeg and rm work for mplayer playback"
 msgstr ""
-"Seuls les formats avi, mpeg et rm fonctionnent pour la lecture sur mplayer"
+"Seuls les formats « avi », « mpeg » et « rm » fonctionnent pour la lecture "
+"sur MPlayer"
 
 #: kmplayerbroadcast.cpp:215
 #, kde-format
@@ -1975,7 +1976,7 @@ msgstr "Désentrelacement"
 #: pref.cpp:879
 #, kde-format
 msgid "Enable mplayer's default postprocessing filters"
-msgstr "Activer les filtres de post-traitement par défaut de mplayer"
+msgstr "Activer les filtres de post-traitement par défaut de MPlayer"
 
 #: pref.cpp:880
 #, kde-format
@@ -1987,7 +1988,7 @@ msgstr ""
 #: pref.cpp:881
 #, kde-format
 msgid "Enable mplayer's fast postprocessing filters"
-msgstr "Activer les filtres de post-traitement rapide de mplayer"
+msgstr "Activer les filtres de post-traitement rapide de MPlayer"
 
 #: pref.cpp:882 pref.cpp:883 pref.cpp:884
 #, kde-format
