@@ -165,27 +165,27 @@ msgstr "V&ídeo"
 #: app/kmplayer.cpp:368
 #, kde-format
 msgid "More..."
-msgstr "Més..."
+msgstr "Més…"
 
 #: app/kmplayer.cpp:417
 #, kde-format
 msgid "Opening DVD..."
-msgstr "S'està obrint el DVD..."
+msgstr "S'està obrint el DVD…"
 
 #: app/kmplayer.cpp:422
 #, kde-format
 msgid "Opening VCD..."
-msgstr "S'està obrint el VCD..."
+msgstr "S'està obrint el VCD…"
 
 #: app/kmplayer.cpp:427
 #, kde-format
 msgid "Opening Audio CD..."
-msgstr "S'està obrint el CD d'àudio..."
+msgstr "S'està obrint el CD d'àudio…"
 
 #: app/kmplayer.cpp:432
 #, kde-format
 msgid "Opening pipe..."
-msgstr "S'està obrint el conducte..."
+msgstr "S'està obrint el conducte…"
 
 #: app/kmplayer.cpp:434
 #, kde-format
@@ -213,7 +213,7 @@ msgstr "Introducció"
 #: app/kmplayer.cpp:681 app/kmplayer.cpp:1074
 #, kde-format
 msgid "Opening file..."
-msgstr "S'està obrint el fitxer..."
+msgstr "S'està obrint el fitxer…"
 
 #: app/kmplayer.cpp:943 app/kmplayer.cpp:944
 #, kde-format
@@ -223,7 +223,7 @@ msgstr "Ix"
 #: app/kmplayer.cpp:1033
 #, kde-format
 msgid "Opening a new application window..."
-msgstr "S'està obrint una finestra nova de l'aplicació..."
+msgstr "S'està obrint una finestra nova de l'aplicació…"
 
 #: app/kmplayer.cpp:1061
 #, kde-format
@@ -256,7 +256,7 @@ msgstr ""
 #: app/kmplayer.cpp:1183
 #, kde-format
 msgid "Closing file..."
-msgstr "S'està tancant el fitxer..."
+msgstr "S'està tancant el fitxer…"
 
 #: app/kmplayer.cpp:1226 lib/kmplayerpartbase.cpp:831 lib/mediaobject.cpp:169
 #, kde-format
@@ -660,7 +660,7 @@ msgstr "Camí cap al dispositiu de vídeo, p. ex., /dev/video0"
 #: app/kmplayertvsource.cpp:166
 #, kde-format
 msgid "Scan..."
-msgstr "Explora..."
+msgstr "Explora…"
 
 #: app/kmplayertvsource.cpp:180 lib/pref.cpp:62 lib/pref.cpp:106
 #: lib/pref.cpp:721
@@ -1212,7 +1212,7 @@ msgstr "Escala:"
 #: lib/kmplayercontrolpanel.cpp:463
 #, kde-format
 msgid "&Configure KMPlayer..."
-msgstr "&Configura KMPlayer..."
+msgstr "&Configura KMPlayer…"
 
 #: lib/kmplayerpartbase.cpp:1432
 #, kde-format
@@ -1368,7 +1368,7 @@ msgstr "Precàrrega"
 #: lib/mediaobject.cpp:169 lib/pref.cpp:224
 #, kde-format
 msgid "Playing"
-msgstr "Reproducció"
+msgstr "Reproduïu"
 
 #: lib/mediaobject.cpp:169
 #, kde-format
@@ -1471,7 +1471,7 @@ msgid ""
 "When checked, the movie will keep its aspect ratio\n"
 "when the window is resized."
 msgstr ""
-"Quan se selecciona, la pel·lícula mantindrà la relació d'aspecte en "
+"Quan està marcada, la pel·lícula mantindrà la relació d'aspecte en "
 "redimensionar la finestra."
 
 #: lib/pref.cpp:206
@@ -1486,8 +1486,7 @@ msgid ""
 "When clicked, it will hide KMPlayer's main window and remove KMPlayer's task "
 "bar button."
 msgstr ""
-"Quan se selecciona, s'afig a la safata del sistema una icona per a "
-"KMPlayer.\n"
+"Quan està marcada, s'afig a la safata del sistema una icona per a KMPlayer.\n"
 "En clicar-la, s'ocultarà la finestra principal de KMPlayer i s'eliminarà el "
 "botó de KMPlayer de la barra de tasques."
 
@@ -1502,7 +1501,7 @@ msgid ""
 "When checked, KMPlayer will resize to movie sizes\n"
 "when video starts."
 msgstr ""
-"Quan se selecciona, KMPlayer es redimensionarà a la mida\n"
+"Quan està marcada, KMPlayer es redimensionarà a la mida\n"
 "de la pel·lícula en iniciar el vídeo."
 
 #: lib/pref.cpp:213
