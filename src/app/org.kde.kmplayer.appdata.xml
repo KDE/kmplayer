@@ -351,7 +351,7 @@
       <li xml:lang="et">Teleallikate kasutamiseks läheb vaja v4lctl'i (see kuulub tarkvarapaketti xawtv)</li>
       <li xml:lang="eu">TB iturrietarako, v4lctl behar duzu (xawtv paketearen zati bat da)</li>
       <li xml:lang="fi">TV-lähteisiin tarvitaan v4lctl (osa xawtv-pakettia)</li>
-      <li xml:lang="fr">Pour les sources TV, vous aurez besoin du programme « v4lctl » (faisant partie du paquet « xa»wtv )</li>
+      <li xml:lang="fr">Pour les sources TV, vous aurez besoin du programme « v4lctl » (faisant partie du paquet « xawtv »)</li>
       <li xml:lang="gl">Para fontes de TV necesita v4lctl (parte do paquete xawtv)</li>
       <li xml:lang="ia">Per fontes TV, tu necessita v4lctl (parte del pacchetto xawtv)</li>
       <li xml:lang="id">Untuk sumber TV, kamu perlu v4lctl (bagian dari paket xawtv)</li>
