@@ -17,7 +17,7 @@
 
 <bookinfo>
 <title
->El manual de &kmplayer;</title>
+>Manual de &kmplayer;</title>
 
 <authorgroup>
 <author
@@ -547,8 +547,7 @@ qdbus org.kde.kmplayer-$PID /kmplayer/MainWindow_1 showFullScreen
 > y Javier Viñal <email
 >fjvinal@gmail.com</email
 >.</para
-> 
-&underFDL; &underGPL; </chapter>
+> &underFDL; &underGPL; </chapter>
 
 &documentation.index;
 </book>
