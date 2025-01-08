@@ -448,11 +448,11 @@ player=phonon
 >XVideo</acronym
 > solo utiliza los atributos «xvport» y «xvenc» y solo puede establecerse manualmente editando este archivo.Los valores de estos dos atributos pueden obtenerse ejecutando «kxvplayer» en una aplicación de terminal como «konsole». Para cada puerto, «kxvplayer» tendrá unas líneas de salida como las de abajo y se pueden establecer los valores para los atributos mencionados. <programlisting>
     xvport 240
-    ....
+    ...
     encoding: 0 PAL-television
     encoding: 1 NTSC-television
     encoding: 2 SECAM-television
-    ....   
+    ...   
 </programlisting
 > En el reproductor <acronym
 >XVideo</acronym
@@ -480,7 +480,7 @@ player=phonon
 >/etc/X11/XF86Config</filename
 >) debería tenerlo <programlisting
 >Section "Module" 
-     .... 
+     ... 
      Load    "v4l" 
 EndSection
 </programlisting>
